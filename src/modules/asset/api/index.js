@@ -594,9 +594,8 @@ export const agentApi = {
    * GET /cmdb/api/cmdb/agent/host-info?hostIds=...
    */
   getHostAgentInfo: (hostIds) => {
-    // const ids = Array.isArray(hostIds) ? hostIds.join(',') : hostIds
-    // return apiService.get(`${ACM_BASE}/agent/host-info`, { params: { hostIds: ids } }).then(unwrapApiData)
-    return Promise.resolve([])
+    const ids = Array.isArray(hostIds) ? hostIds.join(',') : hostIds
+    return apiService.get(`${ACM_BASE}/agent/host-info`, { params: { hostIds: ids } }).then(unwrapApiData)
   },
 
   /**
@@ -627,6 +626,9 @@ export const AGENT_ERROR_MESSAGES = {
 export function getAgentErrorMessage(error, fallback = 'Agent 操作失败') {
   const data = error?.response?.data || error?.data || {}
   const code = data.errorCode || data.code || error?.errorCode || error?.code
+  if (error?.response?.status === 404) {
+    return 'Agent 管理服务尚未部署或版本不匹配，请联系管理员完成后端发布'
+  }
   return AGENT_ERROR_MESSAGES[code] || data.message || data.error || error?.message || fallback
 }
 

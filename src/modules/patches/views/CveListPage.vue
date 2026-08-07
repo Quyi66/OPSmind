@@ -101,7 +101,7 @@
               @keyup.enter="search"
             @clear="search" />
           </el-form-item>
-          <el-form-item label="系统">
+          <el-form-item label="漏洞数据源">
             <el-select v-model="searchParams.source" style="width: 100px" @change="search">
               <el-option
                 v-for="option in sourceOptions"
@@ -230,7 +230,7 @@
               {{ row.description || '-' }}
             </template>
           </el-table-column>
-          <el-table-column prop="sources" label="系统" width="140">
+          <el-table-column prop="sources" label="漏洞数据源" width="140">
             <template #default="{ row }">
               <template v-if="row.sources && row.sources.length > 0">
                 <el-tag

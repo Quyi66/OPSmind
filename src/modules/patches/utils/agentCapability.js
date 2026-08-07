@@ -45,24 +45,21 @@ export async function resolveAgentCapabilityHosts(hosts) {
   const hostIds = [...new Set(hostList.map(getAgentHostId).filter(Boolean))]
 
   if (hostIds.length === 0) {
-    return hostList
+    throw new Error('目标主机缺少资产 ID，无法确认 Agent 状态')
   }
 
-  try {
-    const infoByHostId = new Map()
-    for (let index = 0; index < hostIds.length; index += 100) {
-      const response = await agentApi.getHostAgentInfo(hostIds.slice(index, index + 100))
-      if (Array.isArray(response)) {
-        response.forEach(info => {
-          if (info?.hostId) infoByHostId.set(String(info.hostId), info)
-        })
-      }
+  const infoByHostId = new Map()
+  for (let index = 0; index < hostIds.length; index += 100) {
+    const response = await agentApi.getHostAgentInfo(hostIds.slice(index, index + 100))
+    if (!Array.isArray(response)) {
+      throw new Error('主机 Agent 状态接口返回格式异常')
     }
-
-    return hostList.map(host => mergeAgentInfo(host, infoByHostId.get(getAgentHostId(host))))
-  } catch {
-    return hostList
+    response.forEach(info => {
+      if (info?.hostId) infoByHostId.set(String(info.hostId), info)
+    })
   }
+
+  return hostList.map(host => mergeAgentInfo(host, infoByHostId.get(getAgentHostId(host))))
 }
 
 /**
@@ -209,7 +206,28 @@ export function formatAgentCapabilityIssues(issues = []) {
   return `已阻止操作：${issues.length} 台主机不可通过 Agent 执行。${details}${more}`
 }
 
+/**
+ * 用于批量操作界面，明确展示可执行/不可执行数量，避免用户误以为系统会静默跳过失败主机。
+ */
+export function formatAgentCapabilitySummary(hosts, issues = []) {
+  const total = extractHostList(hosts).length
+  if (!total) return ''
+
+  const executable = Math.max(total - issues.length, 0)
+  if (!issues.length) return `可执行 ${executable} 台`
+
+  const details = issues.slice(0, 3).map(item => `[${item.host}] ${item.reason}`).join('；')
+  const more = issues.length > 3 ? `；另有 ${issues.length - 3} 台不可执行` : ''
+  return `可执行 ${executable} 台 / 不可执行 ${issues.length} 台。${details}${more}`
+}
+
 export function validateAgentCapability(hosts, requiredCap = 'scan', availableHosts = []) {
-  // 不再拦截操作，直接放行
-  return true
+  const issues = getAgentCapabilityIssues(hosts, requiredCap, availableHosts)
+  if (issues.length === 0) return true
+
+  ElMessage.warning({
+    message: formatAgentCapabilityIssues(issues),
+    duration: 5000
+  })
+  return false
 }

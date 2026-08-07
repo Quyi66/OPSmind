@@ -100,7 +100,8 @@
           type="primary"
           plain
           size="small"
-          :disabled="batchSelectedHosts.length === 0"
+          :disabled="batchSelectedHosts.length === 0 || batchInstallCapabilityIssues.length > 0"
+          :title="batchInstallCapabilitySummary"
           @click="handleOpenBatchInstallDrawer"
         >
           <i class="fa fa-chevron-circle-right" />
@@ -110,7 +111,8 @@
           type="primary"
           plain
           size="small"
-          :disabled="batchSelectedHosts.length === 0"
+          :disabled="batchSelectedHosts.length === 0 || batchScanCapabilityIssues.length > 0"
+          :title="batchScanCapabilitySummary"
           :loading="rescanLoading"
           @click="handleRescan"
         >
@@ -138,6 +140,14 @@
           <el-icon v-show="!hostLoading"><Refresh /></el-icon>
         </el-button>
       </div>
+      <el-alert
+        v-if="batchSelectedHosts.length && (batchInstallCapabilityIssues.length || batchScanCapabilityIssues.length)"
+        class="mb-3"
+        type="warning"
+        :closable="false"
+        show-icon
+        :title="batchCapabilitySummary"
+      />
 
       <!-- 主机表格 -->
       <div class="ops-table-wrapper">
@@ -444,12 +454,12 @@ import CveLinkList from '../components/common/CveLinkList.vue'
 import { useTableSelectAll } from '../composables/useTableSelectAll'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import OperationLogsDialog from '../components/logs/OperationLogsDialog.vue'
-// [Agent 功能暂停] import {
-// [Agent 功能暂停]   validateAgentCapability,
-// [Agent 功能暂停]   getAgentCapabilityIssues,
-// [Agent 功能暂停]   formatAgentCapabilityIssues,
-// [Agent 功能暂停]   resolveAgentCapabilityHosts
-// [Agent 功能暂停] } from '../utils/agentCapability'
+import {
+  validateAgentCapability,
+  getAgentCapabilityIssues,
+  formatAgentCapabilitySummary,
+  resolveAgentCapabilityHosts
+} from '../utils/agentCapability'
 
 // Router & Route
 const route = useRoute()
@@ -503,14 +513,24 @@ const hostTableData = computed(() => {
   return hostFilteredData.value.slice(start, end)
 })
 
-// [Agent 功能暂停] const batchInstallCapabilityIssues = computed(() =>
-// [Agent 功能暂停]   getAgentCapabilityIssues(batchSelectedHosts.value, 'patch', hostTableData.value || [])
-// [Agent 功能暂停] )
-// [Agent 功能暂停] const batchScanCapabilityIssues = computed(() =>
-// [Agent 功能暂停]   getAgentCapabilityIssues(batchSelectedHosts.value, 'scan', hostTableData.value || [])
-// [Agent 功能暂停] )
-// [Agent 功能暂停] const batchInstallCapabilityHint = computed(() => formatAgentCapabilityIssues(batchInstallCapabilityIssues.value))
-// [Agent 功能暂停] const batchScanCapabilityHint = computed(() => formatAgentCapabilityIssues(batchScanCapabilityIssues.value))
+const batchInstallCapabilityIssues = computed(() =>
+  getAgentCapabilityIssues(batchSelectedHosts.value, 'patch', hostTableData.value || [])
+)
+const batchScanCapabilityIssues = computed(() =>
+  getAgentCapabilityIssues(batchSelectedHosts.value, 'scan', hostTableData.value || [])
+)
+const batchInstallCapabilitySummary = computed(() =>
+  formatAgentCapabilitySummary(batchSelectedHosts.value, batchInstallCapabilityIssues.value)
+)
+const batchScanCapabilitySummary = computed(() =>
+  formatAgentCapabilitySummary(batchSelectedHosts.value, batchScanCapabilityIssues.value)
+)
+const batchCapabilitySummary = computed(() => {
+  if (batchInstallCapabilityIssues.value.length) {
+    return `安装补丁：${batchInstallCapabilitySummary.value}`
+  }
+  return `重新扫描：${batchScanCapabilitySummary.value}`
+})
 
 const {
   allSelected: hostAllSelected,
@@ -552,11 +572,12 @@ async function loadHostData() {
       : Array.isArray(data.content)
         ? data.content
         : []
-    // [Agent 功能暂停] try {
-    //   await enrichHostAgentInfo(records)
-    // } catch (error) {
-    //   console.warn('获取主机 Agent 信息失败:', error)
-    // }
+    try {
+      await enrichHostAgentInfo(records)
+    } catch (error) {
+      // Agent 信息富化失败不能阻断原有 SSH 主机列表；提交时仍会执行能力校验。
+      console.warn('获取主机 Agent 信息失败:', error)
+    }
     mergeHostOsVersionOptions(records)
 
     allHostData.value = records
@@ -575,31 +596,31 @@ async function loadHostData() {
   }
 }
 
-// [Agent 功能暂停] async function enrichHostAgentInfo(records) {
-// [Agent 功能暂停]   const hostIds = [...new Set(records
-// [Agent 功能暂停]     .map(row => row.host_id || row.hostId || row.id || row.hosts_id || row.hostsId)
-// [Agent 功能暂停]     .filter(Boolean))]
-// [Agent 功能暂停]   if (hostIds.length === 0) return
-// [Agent 功能暂停] 
-// [Agent 功能暂停]   const infoByHostId = new Map()
-// [Agent 功能暂停]   for (let index = 0; index < hostIds.length; index += 100) {
-// [Agent 功能暂停]     const result = await agentApi.getHostAgentInfo(hostIds.slice(index, index + 100))
-// [Agent 功能暂停]     if (Array.isArray(result)) {
-// [Agent 功能暂停]       result.forEach(info => {
-// [Agent 功能暂停]         if (info?.hostId) infoByHostId.set(String(info.hostId), info)
-// [Agent 功能暂停]       })
-// [Agent 功能暂停]     }
-// [Agent 功能暂停]   }
-// [Agent 功能暂停] 
-// [Agent 功能暂停]   records.forEach(row => {
-// [Agent 功能暂停]     const hostId = String(row.host_id || row.hostId || row.id || row.hosts_id || row.hostsId || '')
-// [Agent 功能暂停]     const info = infoByHostId.get(hostId)
-// [Agent 功能暂停]     if (!info) return
-// [Agent 功能暂停]     row.connectionType = info.connectionType || row.connectionType
-// [Agent 功能暂停]     row.agentStatus = info.agentStatus ?? row.agentStatus
-// [Agent 功能暂停]     row.capabilities = info.capabilities ?? row.capabilities
-// [Agent 功能暂停]   })
-// [Agent 功能暂停] }
+async function enrichHostAgentInfo(records) {
+  const hostIds = [...new Set(records
+    .map(row => row.host_id || row.hostId || row.id || row.hosts_id || row.hostsId)
+    .filter(Boolean))]
+  if (hostIds.length === 0) return
+
+  const infoByHostId = new Map()
+  for (let index = 0; index < hostIds.length; index += 100) {
+    const result = await agentApi.getHostAgentInfo(hostIds.slice(index, index + 100))
+    if (Array.isArray(result)) {
+      result.forEach(info => {
+        if (info?.hostId) infoByHostId.set(String(info.hostId), info)
+      })
+    }
+  }
+
+  records.forEach(row => {
+    const hostId = String(row.host_id || row.hostId || row.id || row.hosts_id || row.hostsId || '')
+    const info = infoByHostId.get(hostId)
+    if (!info) return
+    row.connectionType = info.connectionType || row.connectionType
+    row.agentStatus = info.agentStatus ?? row.agentStatus
+    row.capabilities = info.capabilities ?? row.capabilities
+  })
+}
 
 function mergeHostOsVersionOptions(records = []) {
   const optionMap = new Map(hostOsVersionOptions.value.map(item => [item.value, item]))
@@ -747,19 +768,18 @@ function normalizeRescanHost(host) {
 }
 
 async function submitRescan(hosts) {
-// [Agent 功能暂停]   let resolvedHosts
-// [Agent 功能暂停]   try {
-// [Agent 功能暂停]     resolvedHosts = await resolveAgentCapabilityHosts(hosts)
-// [Agent 功能暂停]   } catch (error) {
-// [Agent 功能暂停]     console.error('Failed to refresh Agent status before scan:', error)
-// [Agent 功能暂停]     ElMessage.error(error?.message || '无法确认目标主机的 Agent 状态，已阻止扫描')
-// [Agent 功能暂停]     return false
-// [Agent 功能暂停]   }
-// [Agent 功能暂停] 
-// [Agent 功能暂停]   if (!validateAgentCapability(resolvedHosts, 'scan', [])) {
-// [Agent 功能暂停]     return false
-// [Agent 功能暂停]   }
-  const resolvedHosts = hosts // [Agent 功能暂停] 跳过 Agent 能力校验
+  let resolvedHosts
+  try {
+    resolvedHosts = await resolveAgentCapabilityHosts(hosts)
+  } catch (error) {
+    console.error('Failed to refresh Agent status before scan:', error)
+    ElMessage.error(error?.message || '无法确认目标主机的 Agent 状态，已阻止扫描')
+    return false
+  }
+
+  if (!validateAgentCapability(resolvedHosts, 'scan', [])) {
+    return false
+  }
 
   const normalizedHosts = resolvedHosts
     .map(normalizeRescanHost)
@@ -859,19 +879,18 @@ function handleViewAffectedHosts(row) {
 }
 
 async function handleOpenBatchInstallDrawer() {
-// [Agent 功能暂停]   let resolvedHosts
-// [Agent 功能暂停]   try {
-// [Agent 功能暂停]     resolvedHosts = await resolveAgentCapabilityHosts(batchSelectedHosts.value)
-// [Agent 功能暂停]   } catch (error) {
-// [Agent 功能暂停]     console.error('Failed to refresh Agent status before install:', error)
-// [Agent 功能暂停]     ElMessage.error(error?.message || '无法确认目标主机的 Agent 状态，已阻止安装')
-// [Agent 功能暂停]     return
-// [Agent 功能暂停]   }
-// [Agent 功能暂停] 
-// [Agent 功能暂停]   if (!validateAgentCapability(resolvedHosts, 'patch', [])) {
-// [Agent 功能暂停]     return
-// [Agent 功能暂停]   }
-  const resolvedHosts = batchSelectedHosts.value // [Agent 功能暂停] 跳过 Agent 能力校验
+  let resolvedHosts
+  try {
+    resolvedHosts = await resolveAgentCapabilityHosts(batchSelectedHosts.value)
+  } catch (error) {
+    console.error('Failed to refresh Agent status before install:', error)
+    ElMessage.error(error?.message || '无法确认目标主机的 Agent 状态，已阻止安装')
+    return
+  }
+
+  if (!validateAgentCapability(resolvedHosts, 'patch', [])) {
+    return
+  }
   batchSelectedHosts.value = resolvedHosts
   batchInstallDrawerVisible.value = true
 }

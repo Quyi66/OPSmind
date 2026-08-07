@@ -26,6 +26,14 @@
 
       <!-- 右侧内容区 -->
       <div class="content-view-area">
+        <el-alert
+          v-if="agentServiceError"
+          class="mb-3"
+          type="warning"
+          :closable="false"
+          show-icon
+          :title="agentServiceError"
+        />
         <!-- 筛选区域 -->
         <div class="ops-filter-bar">
           <el-form :inline="true" size="small">
@@ -37,7 +45,6 @@
               </el-select>
             </el-form-item>
 
-            <!-- [Agent 功能暂停]
             <el-form-item label="连接方式">
               <el-select v-model="filters.connectionType" style="width: 105px" @change="handleSearch">
                 <el-option label="全部" value="all" />
@@ -54,7 +61,6 @@
                 <el-option label="未知" value="unknown" />
               </el-select>
             </el-form-item>
-            -->
 
             <el-form-item label="最近连通">
               <el-select v-model="filters.connLatestStatus" style="width: 105px" @change="handleSearch">
@@ -114,12 +120,10 @@
               <i class="fa fa-plus" style="margin-right: 4px"></i>
               自动化设备录入
             </el-button>
-            <!-- [Agent 功能暂停]
-            <el-button type="success" size="small" @click="agentEnrollmentVisible = true">
+            <el-button v-if="canManageAgents" type="success" size="small" @click="agentEnrollmentVisible = true">
               <i class="fa fa-plug" style="margin-right: 4px"></i>
               Agent 接入
             </el-button>
-            -->
             <el-button size="small" @click="importDialogVisible = true">
               <i class="fa fa-file-import" style="margin-right: 4px"></i>
               导入设备
@@ -242,7 +246,7 @@
               </template>
             </el-table-column>
 
-            <!-- [Agent 功能暂停]
+            <!-- Agent 接入通道与能力列 (F3) -->
             <el-table-column label="接入通道" min-width="130">
               <template #default="{ row }">
                 <el-tag
@@ -277,7 +281,6 @@
                 <span v-else class="text-muted">-</span>
               </template>
             </el-table-column>
-            -->
 
             <!-- 4. 重启建议 -->
             <el-table-column label="重启建议" width="110" align="left">
@@ -597,9 +600,8 @@
       @success="loadAssetList"
     />
 
-    <!-- [Agent 功能暂停]
+    <!-- Agent 接入向导弹窗 -->
     <AgentEnrollmentDialog v-model="agentEnrollmentVisible" @success="handleAgentEnrollmentSuccess" />
-    -->
 
   </div>
 </template>
@@ -608,7 +610,7 @@
 import { ref, computed, nextTick, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-// [Agent 功能暂停] import AgentEnrollmentDialog from '../components/asset-info/AgentEnrollmentDialog.vue'
+import AgentEnrollmentDialog from '../components/asset-info/AgentEnrollmentDialog.vue'
 import {
   Edit,
   Delete,
@@ -619,8 +621,9 @@ import {
   RefreshRight,
   Clock as _Clock
 } from '@element-plus/icons-vue'
-import { assetApi, dataManageApi } from '../api'
+import { assetApi, dataManageApi, agentApi, getAgentErrorMessage } from '../api'
 import { apiService } from '@/core/api'
+import { authService } from '@/core/auth'
 import { pollJobStatus } from '@/composables/useJobPolling'
 import AssetSidebar from '../components/asset-info/AssetSidebar.vue'
 import AssetDetailDialog from '../components/asset-info/AssetDetailDialog.vue'
@@ -658,7 +661,18 @@ const currentTenantId = ref('')
 // 自定义列及视图配置 (R3)
 const customViewVisible = ref(false)
 const batchLocationVisible = ref(false)
-// [Agent 功能暂停] const agentEnrollmentVisible = ref(false)
+const agentEnrollmentVisible = ref(false)
+const agentServiceError = ref('')
+
+const canManageAgents = computed(() =>
+  authService.hasPermission('agent:manage') ||
+  [
+    'admin', 'role_admin',
+    'privuser', 'role_privuser',
+    'developer', 'role_developer',
+    'free', 'role_free'
+  ].some(role => authService.hasRole(role))
+)
 
 const activeColumns = ref(['OS', 'LOCATION', 'RUN_ENVIRONMENT', 'CONN_LATEST_STATUS', 'DEPT_NAME'])
 
@@ -809,7 +823,8 @@ const getAgentStatus = record => record.agentStatus || record.agent_status || 'u
 const getAgentStatusLabel = record => ({ online: '在线', offline: '离线', unknown: '未知' })[getAgentStatus(record)] || '未知'
 const getAgentStatusTag = record => ({ online: 'success', offline: 'danger', unknown: 'warning' })[getAgentStatus(record)] || 'warning'
 
-const hasAgentLocalFilter = () => false
+const hasAgentLocalFilter = () =>
+  filters.value.connectionType !== 'all' || filters.value.agentStatus !== 'all'
 
 const matchesAgentFilters = record => {
   const connectionType = getConnectionType(record)
@@ -820,8 +835,51 @@ const matchesAgentFilters = record => {
   return connectionType === 'koreops_agent' && getAgentStatus(record) === filters.value.agentStatus
 }
 
-// [Agent 功能暂停] 保持调用点兼容，但不再请求或修改资产的 Agent 信息。
-const enrichAssetAgentInfo = async records => records
+const enrichAssetAgentInfo = async records => {
+  const hostIds = records
+    .map(r => r.id || r.host_id || r.hostId)
+    .filter(Boolean)
+  if (hostIds.length === 0) {
+    agentServiceError.value = ''
+    return records
+  }
+
+  const agentInfoArr = []
+  // host-info 使用 GET query；分批避免大量资产导致 URL 过长。
+  for (let index = 0; index < hostIds.length; index += 100) {
+    const agentInfoList = await agentApi.getHostAgentInfo(hostIds.slice(index, index + 100))
+    if (!Array.isArray(agentInfoList)) {
+      throw new Error('主机 Agent 状态接口返回格式异常')
+    }
+    agentInfoArr.push(...agentInfoList)
+  }
+  const agentMap = new Map()
+  agentInfoArr.forEach(info => {
+    if (info?.hostId) agentMap.set(String(info.hostId), info)
+  })
+
+  records.forEach(record => {
+    const hid = String(record.id || record.host_id || record.hostId || '')
+    const agentInfo = agentMap.get(hid)
+    if (!agentInfo) {
+      record.connectionType = 'unknown'
+      record.agentStatus = 'unknown'
+      record.agentInfoUnavailable = true
+      return
+    }
+    record.connectionType = agentInfo.connectionType || record.connectionType
+    record.agentStatus = agentInfo.agentStatus ?? record.agentStatus
+    record.capabilities = agentInfo.capabilities ?? record.capabilities
+    record.clientId = agentInfo.agentClientId || agentInfo.clientId || record.clientId
+    record.agentVersion = agentInfo.agentVersion || record.agentVersion
+    record.lastSeenAt = agentInfo.lastSeenAt || record.lastSeenAt
+    record.agentMode = agentInfo.agentMode || record.agentMode
+    record.agentInfoUnavailable = false
+  })
+
+  agentServiceError.value = ''
+  return records
+}
 
 const buildAssetListParams = () => ({
   hostKeys: filters.value.hostKeys,
@@ -896,7 +954,12 @@ const fetchAllMatchedAssets = async () => {
   }
 
   if (!hasAgentLocalFilter()) return allRows
-  await enrichAssetAgentInfo(allRows)
+  try {
+    await enrichAssetAgentInfo(allRows)
+  } catch (error) {
+    agentServiceError.value = getAgentErrorMessage(error, '无法获取 Agent 主机状态')
+    throw error
+  }
   return allRows.filter(matchesAgentFilters)
 }
 
@@ -1112,6 +1175,18 @@ const loadAssetList = async ({ preserveSelection = false } = {}) => {
         filter: searchText.value
       })
       normalizedRecords = (res.records || []).map(normalizeAssetRecord)
+      try {
+        await enrichAssetAgentInfo(normalizedRecords)
+      } catch (agentErr) {
+        // Agent 富化不可用时保留原有资产列表，避免影响 SSH 主机管理。
+        console.warn('获取主机 Agent 附加信息失败（不影响主列表）:', agentErr)
+        agentServiceError.value = getAgentErrorMessage(agentErr, '无法获取 Agent 主机状态')
+        normalizedRecords.forEach(record => {
+          record.connectionType = 'unknown'
+          record.agentStatus = 'unknown'
+          record.agentInfoUnavailable = true
+        })
+      }
       total.value = res.total || 0
     }
 
@@ -1170,13 +1245,13 @@ const handleRefresh = () => {
   loadAssetList()
 }
 
-// [Agent 功能暂停] const handleAgentEnrollmentSuccess = async boundHostId => {
-// [Agent 功能暂停]   await loadAssetList()
-// [Agent 功能暂停]   if (boundHostId) {
-// [Agent 功能暂停]     currentAssetId.value = String(boundHostId)
-// [Agent 功能暂停]     detailDialogVisible.value = true
-// [Agent 功能暂停]   }
-// [Agent 功能暂停] }
+const handleAgentEnrollmentSuccess = async boundHostId => {
+  await loadAssetList()
+  if (boundHostId) {
+    currentAssetId.value = String(boundHostId)
+    detailDialogVisible.value = true
+  }
+}
 
 const loadCurrentTenantId = async () => {
   try {

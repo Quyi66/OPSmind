@@ -2,6 +2,7 @@
  * Agent 融合 CMDB 前端接口服务
  */
 import { apiService } from '@/core/api'
+import { agentApi } from '@/modules/asset/api'
 
 const CMDB_AGENT_BASE = '/cmdb/api/cmdb/agent'
 
@@ -12,17 +13,8 @@ const CMDB_AGENT_BASE = '/cmdb/api/cmdb/agent'
 export async function getHostAgentInfos(hostIds) {
   const idsParam = Array.isArray(hostIds) ? hostIds.join(',') : hostIds
   if (!idsParam) return []
-  try {
-    // 接口 /agent/host-info 返回 404，已注释掉调用
-    // const response = await apiService.get(`${CMDB_AGENT_BASE}/host-info`, {
-    //   params: { hostIds: idsParam }
-    // })
-    // return response.data || response || []
-    return []
-  } catch (error) {
-    console.error('获取主机 Agent 信息失败:', error)
-    return []
-  }
+  // 与资产模块共用同一个响应解包逻辑，避免把 { code, data: [] } 当作主机数组。
+  return agentApi.getHostAgentInfo(idsParam)
 }
 
 /**

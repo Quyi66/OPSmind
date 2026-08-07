@@ -15,7 +15,7 @@
           <template v-if="tab.name === 'overview'">
             <el-scrollbar max-height="calc(100vh - 240px)" class="overview-scroll">
               <template v-if="result">
-                <div v-if="!hasHostInfo" class="overview-header">
+                <div class="overview-header">
                   <div class="overview-status">
                     <div class="status-chip" :class="statusClass">{{ summary.statusLabel }}</div>
                     <div class="status-duration">{{ summary.duration }}</div>
@@ -52,6 +52,10 @@
                     <div v-if="summary.relayTraceId" class="meta-item">
                       <span class="meta-label">Relay 追踪 ID</span>
                       <span class="meta-value">{{ summary.relayTraceId }}</span>
+                    </div>
+                    <div v-if="summary.dispatchStatus" class="meta-item">
+                      <span class="meta-label">下发状态</span>
+                      <span class="meta-value">{{ summary.dispatchStatus }}</span>
                     </div>
                     <div class="meta-item">
                       <span class="meta-label">执行人</span>
@@ -1087,6 +1091,12 @@ function getDirectExecutionChannelInfo(data) {
       detail.relay_trace_id,
       detail.traceId,
       detail.trace_id
+    )),
+    dispatchStatus: joinDisplayValues(firstDefined(
+      data?.dispatchStatus,
+      data?.dispatch_status,
+      detail.dispatchStatus,
+      detail.dispatch_status
     ))
   }
 }
@@ -1158,7 +1168,8 @@ async function refreshExecutionChannelInfo(data) {
       ) || directInfo.agentClientId,
       agentVersion: joinDisplayValues(
         infos.map(info => info?.agentVersion).filter(Boolean)
-      ) || directInfo.agentVersion
+      ) || directInfo.agentVersion,
+      dispatchStatus: directInfo.dispatchStatus
     }
   } catch (error) {
     if (sequence === executionChannelRequestSequence) {
@@ -1195,6 +1206,7 @@ const summary = computed(() => {
     agentClientId: executionChannelInfo.value.agentClientId || '',
     agentVersion: executionChannelInfo.value.agentVersion || '',
     relayTraceId: executionChannelInfo.value.relayTraceId || '',
+    dispatchStatus: executionChannelInfo.value.dispatchStatus || '',
     errorTitle: parsedError.title,
     errorList: parsedError.list,
     errorDetails: parsedError.details
@@ -1749,6 +1761,8 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 24px;
   margin-bottom: 16px;
 }
 
@@ -1812,6 +1826,7 @@ onBeforeUnmount(() => {
 .overview-meta {
   display: flex;
   gap: 24px;
+  flex-wrap: wrap;
 }
 
 .meta-item {

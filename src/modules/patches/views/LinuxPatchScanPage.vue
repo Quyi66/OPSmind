@@ -133,7 +133,6 @@
                 />
               </el-select>
             </el-form-item>
-<!-- [Agent 功能暂停]
             <el-form-item label="接入方式">
               <el-select
                 v-model="hostFilters.connectionType"
@@ -159,7 +158,6 @@
                 <el-option label="离线" value="offline" />
               </el-select>
             </el-form-item>
--->
             <el-form-item label="标签">
               <el-select
                 v-model="hostFilters.tags"
@@ -210,10 +208,6 @@
             <i class="fa fa-bug" />
             扫描补丁
           </el-button>
-          <!-- <el-button type="primary" size="small" @click="agentEnrollDialogVisible = true" plain>
-            <i class="fa fa-plus-circle" />
-            Agent 接入
-          </el-button> -->
           <el-button
             type="primary"
             size="small"
@@ -253,7 +247,7 @@
                 </el-link>
               </template>
             </el-table-column>
-            <!-- <el-table-column label="接入方式" width="120">
+            <el-table-column label="接入方式" width="120">
               <template #default="{ row }">
                 <el-tag
                   v-if="isAgentConnectionType(row.connectionType)"
@@ -289,7 +283,7 @@
                 </template>
                 <span v-else class="text-muted">-</span>
               </template>
-            </el-table-column> -->
+            </el-table-column>
 
             <el-table-column prop="need_reboot" label="是否需要重启" width="110">
               <template #default="{ row }">
@@ -670,6 +664,13 @@
                 </a>
               </template>
             </el-table-column>
+            <el-table-column label="扫描来源" width="100">
+              <template #default="{ row }">
+                <el-tag :type="getVulnerabilityScanSourceTag(row)" size="small" effect="plain">
+                  {{ getVulnerabilityScanSourceLabel(row) }}
+                </el-tag>
+              </template>
+            </el-table-column>
             <el-table-column prop="os_distro" label="操作系统" width="90" />
             <el-table-column prop="os_major_version" label="系统版本" width="90" />
             <el-table-column
@@ -867,7 +868,8 @@
                   text
                   type="primary"
                   size="small"
-                  :disabled="row.patch_status !== '已修复' && row.patch_status !== '回滚失败'"
+                  :disabled="isRollbackActionDisabled(row)"
+                  :title="getRollbackActionDisabledReason(row)"
                   @click="handleRollback(row)"
                 >
                   回滚
@@ -906,17 +908,15 @@
               label: '选择主机'
             }"
           />
-          <!-- [Agent 功能暂停]
           <div v-if="selectedScanAgentLoading" class="text-muted mt-2">正在校验 Agent 实时状态…</div>
           <el-alert
-            v-else-if="selectedScanCapabilityHint"
+            v-else-if="selectedScanCapabilitySummary"
             class="mt-2"
             type="warning"
             :closable="false"
             show-icon
-            :title="selectedScanCapabilityHint"
+            :title="selectedScanCapabilitySummary"
           />
-          -->
         </el-form-item>
       </el-form>
       <template #footer>
@@ -924,7 +924,8 @@
         <el-button
           type="primary"
           :loading="rescanLoading"
-          :disabled="selectedHosts.length === 0"
+          :disabled="selectedHosts.length === 0 || selectedScanAgentLoading || selectedScanCapabilityIssues.length > 0"
+          :title="selectedScanCapabilitySummary"
           @click="executeRescan"
         >
           开始扫描
@@ -1102,11 +1103,6 @@
       </template>
     </el-dialog>
 
-    <!-- [Agent 功能暂停] Agent 纳管弹窗 -->
-    <!-- <AgentEnrollDialog
-      v-model="agentEnrollDialogVisible"
-      @success="handleAgentEnrollSuccess"
-    /> -->
   </div>
 </template>
 
@@ -1138,14 +1134,14 @@ import PatchDetailDialog from '../components/host-detail/dialogs/PatchDetailDial
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
 import RpmPackageDetailDialog from '../components/rpm/RpmPackageDetailDialog.vue'
 import CveLinkList from '../components/common/CveLinkList.vue'
-// [Agent 功能暂停] import AgentEnrollDialog from '@/modules/asset/components/asset-info/AgentEnrollmentDialog.vue'
-// import {
-//   validateAgentCapability,
-//   getAgentCapabilityIssues,
-//   formatAgentCapabilityIssues,
-//   getAgentHostId,
-//   resolveAgentCapabilityHosts
-// } from '../utils/agentCapability'
+import {
+  validateAgentCapability,
+  getAgentCapabilityIssues,
+  formatAgentCapabilitySummary,
+  getAgentHostId,
+  resolveAgentCapabilityHosts
+} from '../utils/agentCapability'
+import { getRollbackSupportInfo } from '../utils/rollbackCapability'
 
 
 // ECharts
@@ -1266,15 +1262,13 @@ const loading = ref(false)
 const hostTableData = ref([])
 const hostTagLoading = ref(false)
 const hostTagOptions = ref([])
-// [Agent 功能暂停] // Agent 纳管弹窗状态
-// [Agent 功能暂停] const agentEnrollDialogVisible = ref(false)
 
 const hostFilters = reactive({
   os_distro: '',
   os_version: '',
   os_sp_version: '',
-  // [Agent 功能暂停] connectionType: '',
-  // [Agent 功能暂停] agentStatus: '',
+  connectionType: '',
+  agentStatus: '',
   tags: [],
   keyword: ''
 })
@@ -1371,49 +1365,51 @@ const rescanForm = reactive({
   hostsInput: ''
 })
 const selectedHosts = ref([])
-// const selectedScanAgentLoading = ref(false)
-// let selectedScanResolveSequence = 0
-// const selectedScanCapabilityIssues = computed(() =>
-//   getAgentCapabilityIssues(selectedHosts.value, 'scan', hostTableData.value || [])
-// )
-// const selectedScanCapabilityHint = computed(() => formatAgentCapabilityIssues(selectedScanCapabilityIssues.value))
+const selectedScanAgentLoading = ref(false)
+let selectedScanResolveSequence = 0
+const selectedScanCapabilityIssues = computed(() =>
+  getAgentCapabilityIssues(selectedHosts.value, 'scan', hostTableData.value || [])
+)
+const selectedScanCapabilitySummary = computed(() =>
+  formatAgentCapabilitySummary(selectedHosts.value, selectedScanCapabilityIssues.value)
+)
 
-// const isAgentConnectionType = connectionType =>
-//   ['koreops_agent', 'agent', 'oplus_agent'].includes(connectionType)
+const isAgentConnectionType = connectionType =>
+  ['koreops_agent', 'agent', 'oplus_agent'].includes(connectionType)
 
-// watch(
-//   () => selectedHosts.value.map(getAgentHostId).join('|'),
-//   async hostKey => {
-//     const sequence = ++selectedScanResolveSequence
-//     if (!hostKey) {
-//       selectedScanAgentLoading.value = false
-//       return
-//     }
-// 
-//     selectedScanAgentLoading.value = true
-//     try {
-//       const resolvedHosts = await resolveAgentCapabilityHosts(selectedHosts.value)
-//       if (sequence !== selectedScanResolveSequence) return
-//       const infoByHostId = new Map(resolvedHosts.map(host => [getAgentHostId(host), host]))
-//       selectedHosts.value = selectedHosts.value.map(host => ({
-//         ...host,
-//         ...(infoByHostId.get(getAgentHostId(host)) || { agentInfoUnavailable: true })
-//       }))
-//     } catch (error) {
-//       if (sequence !== selectedScanResolveSequence) return
-//       console.error('Failed to resolve selected host Agent status:', error)
-//       selectedHosts.value = selectedHosts.value.map(host => ({
-//         ...host,
-//         agentInfoUnavailable: true
-//       }))
-//     } finally {
-//       if (sequence === selectedScanResolveSequence) {
-//         selectedScanAgentLoading.value = false
-//       }
-//     }
-//   },
-//   { flush: 'sync' }
-// )
+watch(
+  () => selectedHosts.value.map(getAgentHostId).join('|'),
+  async hostKey => {
+    const sequence = ++selectedScanResolveSequence
+    if (!hostKey) {
+      selectedScanAgentLoading.value = false
+      return
+    }
+
+    selectedScanAgentLoading.value = true
+    try {
+      const resolvedHosts = await resolveAgentCapabilityHosts(selectedHosts.value)
+      if (sequence !== selectedScanResolveSequence) return
+      const infoByHostId = new Map(resolvedHosts.map(host => [getAgentHostId(host), host]))
+      selectedHosts.value = selectedHosts.value.map(host => ({
+        ...host,
+        ...(infoByHostId.get(getAgentHostId(host)) || { agentInfoUnavailable: true })
+      }))
+    } catch (error) {
+      if (sequence !== selectedScanResolveSequence) return
+      console.error('Failed to resolve selected host Agent status:', error)
+      selectedHosts.value = selectedHosts.value.map(host => ({
+        ...host,
+        agentInfoUnavailable: true
+      }))
+    } finally {
+      if (sequence === selectedScanResolveSequence) {
+        selectedScanAgentLoading.value = false
+      }
+    }
+  },
+  { flush: 'sync' }
+)
 
 // 作业运行结果对话框
 const runResultDialogVisible = ref(false)
@@ -1644,8 +1640,8 @@ function buildRollbackWizardData(row) {
 // 修复漏洞对话框
 const fixDialogVisible = ref(false)
 const fixSubmitting = ref(false)
+const fixTargetHosts = ref([])
 const FIX_DIALOG_PREVIEW_LIMIT = 20
-const FIX_DIALOG_ID_BATCH_SIZE = 200
 const FIX_DIALOG_DETAIL_BATCH_SIZE = 1000
 const fixSectionCards = [
   {
@@ -1772,8 +1768,7 @@ async function loadKpiData() {
 async function loadHostData() {
   loading.value = true
   try {
-    // const usesLocalAgentFilter = Boolean(hostFilters.connectionType || hostFilters.agentStatus)
-    const usesLocalAgentFilter = false // [Agent 功能暂停]
+    const usesLocalAgentFilter = Boolean(hostFilters.connectionType || hostFilters.agentStatus)
     const params = {
       page: usesLocalAgentFilter ? 0 : pagination.page - 1,
       size: usesLocalAgentFilter ? 10000 : pagination.pageSize,
@@ -1843,10 +1838,9 @@ async function loadHostData() {
     }
 
     // 异步富化 Agent 信息
-    /* [Agent 功能暂停]
     try {
       const hostIds = records
-        .map(r => r.hosts_id || r.hostsId || r.host_id || r.hostId || r.id || r.host_key)
+        .map(r => r.hosts_id || r.hostsId || r.host_id || r.hostId || r.id)
         .filter(Boolean)
       if (hostIds.length > 0) {
         const agentInfos = []
@@ -1858,7 +1852,7 @@ async function loadHostData() {
         if (Array.isArray(agentInfos)) {
           const agentMap = new Map(agentInfos.map(info => [String(info.hostId), info]))
           records.forEach(r => {
-            const key = String(r.hosts_id || r.hostsId || r.host_id || r.hostId || r.id || r.host_key)
+            const key = String(r.hosts_id || r.hostsId || r.host_id || r.hostId || r.id || '')
             const info = agentMap.get(key)
             if (info) {
               r.connectionType = info.connectionType || 'ssh'
@@ -1885,10 +1879,8 @@ async function loadHostData() {
         record.agentInfoUnavailable = true
       })
     }
-    */
 
     // 本地 Filter: 接入方式 & 在线状态
-    /* [Agent 功能暂停]
     let filteredRecords = records
     if (hostFilters.connectionType) {
       filteredRecords = filteredRecords.filter(r => {
@@ -1901,8 +1893,6 @@ async function loadHostData() {
     if (hostFilters.agentStatus) {
       filteredRecords = filteredRecords.filter(r => r.agentStatus === hostFilters.agentStatus)
     }
-    */
-    let filteredRecords = records
 
     if (usesLocalAgentFilter) {
       pagination.total = filteredRecords.length
@@ -1919,20 +1909,6 @@ async function loadHostData() {
     pagination.total = 0
   } finally {
     loading.value = false
-  }
-}
-
-function handleAgentEnrollSuccess(boundHostId) {
-  loadHostData()
-  if (boundHostId) {
-    router.push({
-      name: 'patches-hostDetail',
-      query: {
-        host_id: boundHostId,
-        fromLabel: '主机概览',
-        fromRouteName: 'patches-machineScan'
-      }
-    })
   }
 }
 
@@ -1968,12 +1944,19 @@ async function loadVulnData() {
   try {
     const response = await vulnerabilityApi.getVulnerabilityList(buildVulnListParams())
     const data = response?.data || response || {}
-    vulnTableData.value = Array.isArray(data.content)
+    const records = Array.isArray(data.content)
       ? data.content
       : Array.isArray(data.records)
         ? data.records
         : []
-    vulnPagination.total = Number(data.totalElements ?? data.total ?? vulnTableData.value.length)
+    try {
+      await enrichVulnerabilityAgentInfo(records)
+    } catch (error) {
+      // 漏洞列表仍可展示已有任务字段；Agent 富化失败时不把来源误标为 SSH。
+      console.warn('Failed to load vulnerability Agent source:', error)
+    }
+    vulnTableData.value = records
+    vulnPagination.total = Number(data.totalElements ?? data.total ?? records.length)
   } catch (error) {
     console.error('Failed to load vulnerability data:', error)
     vulnTableData.value = []
@@ -1981,6 +1964,52 @@ async function loadVulnData() {
   } finally {
     vulnLoading.value = false
   }
+}
+
+async function enrichVulnerabilityAgentInfo(records) {
+  const hostIds = [...new Set(records.map(getRollbackHostId).filter(Boolean))]
+  if (hostIds.length === 0) return
+
+  const agentInfoByHostId = new Map()
+  for (let index = 0; index < hostIds.length; index += 100) {
+    const infos = await agentApi.getHostAgentInfo(hostIds.slice(index, index + 100))
+    if (!Array.isArray(infos)) {
+      throw new Error('主机 Agent 状态接口返回格式异常')
+    }
+    infos.forEach(info => {
+      if (info?.hostId) agentInfoByHostId.set(String(info.hostId), info)
+    })
+  }
+
+  records.forEach(record => {
+    const info = agentInfoByHostId.get(String(getRollbackHostId(record)))
+    if (!info) return
+    record.connectionType = info.connectionType || record.connectionType
+    record.agentStatus = info.agentStatus ?? record.agentStatus
+  })
+}
+
+function getVulnerabilityScanSource(row) {
+  const source = String(
+    row.scanSource ||
+    row.scan_source ||
+    row.executionChannel ||
+    row.execution_channel ||
+    row.connectionType ||
+    row.connection_type ||
+    ''
+  ).trim().toLowerCase()
+
+  if (isAgentConnectionType(source)) return 'agent'
+  return source === 'ssh' ? 'ssh' : 'unknown'
+}
+
+function getVulnerabilityScanSourceLabel(row) {
+  return ({ agent: 'Agent', ssh: 'SSH', unknown: '未知' })[getVulnerabilityScanSource(row)]
+}
+
+function getVulnerabilityScanSourceTag(row) {
+  return ({ agent: 'success', ssh: 'info', unknown: 'warning' })[getVulnerabilityScanSource(row)]
 }
 
 // 加载操作系统列表
@@ -2023,8 +2052,8 @@ function handleHostReset() {
   hostFilters.os_distro = ''
   hostFilters.os_version = ''
   hostFilters.os_sp_version = ''
-  // [Agent 功能暂停] hostFilters.connectionType = ''
-  // [Agent 功能暂停] hostFilters.agentStatus = ''
+  hostFilters.connectionType = ''
+  hostFilters.agentStatus = ''
   hostFilters.tags = []
   hostVersionFilter.value = ''
   hostFilters.keyword = ''
@@ -2154,8 +2183,32 @@ function handlePatchClick(row) {
   }
 }
 
-function handleRollback(row) {
+function isRollbackActionDisabled(row) {
+  const canRollbackByStatus = row.patch_status === '已修复' || row.patch_status === '回滚失败'
+  return !canRollbackByStatus || !getRollbackSupportInfo(row).supported
+}
+
+function getRollbackActionDisabledReason(row) {
+  if (row.patch_status !== '已修复' && row.patch_status !== '回滚失败') {
+    return '仅已修复或回滚失败的记录可发起回滚'
+  }
+  return getRollbackSupportInfo(row).reason
+}
+
+async function handleRollback(row) {
+  const rollbackSupport = getRollbackSupportInfo(row)
+  if (!rollbackSupport.supported) {
+    ElMessage.warning(`已阻止回滚：${rollbackSupport.reason}`)
+    return
+  }
+
   try {
+    const hostId = getRollbackHostId(row)
+    const resolvedHosts = await resolveAgentCapabilityHosts([
+      { hostId, hostKey: row.host_key || row.hostKey || row.hosts || hostId }
+    ])
+    if (!validateAgentCapability(resolvedHosts, 'rollback', [])) return
+
     buildRollbackWizardData(row)
     rollbackWizardVisible.value = true
   } catch (error) {
@@ -2295,6 +2348,7 @@ function resetFixDialogData() {
   fixDialogData.packages = []
   fixDialogData.patchStatusIds = []
   fixDialogData.selectedVulnerabilityCount = 0
+  fixTargetHosts.value = []
 
   Object.values(fixSectionState).forEach(state => {
     state.loaded = false
@@ -2305,13 +2359,12 @@ function resetFixDialogData() {
   })
 }
 
-async function collectSelectedPatchStatusIdsForFix() {
+async function collectSelectedVulnerabilityRows() {
   if (!vulnAllSelected.value) {
-    return resolvePatchStatusIds(selectedVulns.value)
+    return [...selectedVulns.value]
   }
 
   const excludedKeySet = new Set(vulnExcludedRowKeys.value)
-  const ids = new Set()
   let requestSize = Number(vulnPagination.total || 0)
 
   if (!requestSize) {
@@ -2322,25 +2375,36 @@ async function collectSelectedPatchStatusIdsForFix() {
     requestSize = Number(firstData.totalElements ?? firstData.total ?? 0)
   }
 
-  if (requestSize > 0) {
-    const response = await vulnerabilityApi.getVulnerabilityList(
-      buildVulnListParams({ page: 0, size: requestSize })
-    )
-    const data = response?.data || response || {}
-    const pageRows = Array.isArray(data.content)
-      ? data.content
-      : Array.isArray(data.records)
-        ? data.records
-        : []
+  if (requestSize <= 0) return []
 
-    pageRows.forEach(row => {
-      if (!excludedKeySet.has(getVulnRowKey(row))) {
-        extractPatchStatusIdsFromRow(row).forEach(id => ids.add(id))
-      }
-    })
-  }
+  const response = await vulnerabilityApi.getVulnerabilityList(
+    buildVulnListParams({ page: 0, size: requestSize })
+  )
+  const data = response?.data || response || {}
+  const pageRows = Array.isArray(data.content)
+    ? data.content
+    : Array.isArray(data.records)
+      ? data.records
+      : []
 
-  return Array.from(ids)
+  return pageRows.filter(row => !excludedKeySet.has(getVulnRowKey(row)))
+}
+
+function buildVulnerabilityTargetHosts(rows) {
+  const targets = new Map()
+  rows.forEach(row => {
+    const hostId = getRollbackHostId(row)
+    if (!hostId) {
+      throw new Error(`漏洞记录 ${row.vul_id || row.id || ''} 缺少 CMDB 主机 ID，无法确认 Agent 状态`)
+    }
+    if (!targets.has(String(hostId))) {
+      targets.set(String(hostId), {
+        hostId,
+        hostKey: row.host_key || row.hostKey || row.hosts || hostId
+      })
+    }
+  })
+  return Array.from(targets.values())
 }
 
 function getFixSectionItemsFromRecords(sectionKey, records) {
@@ -2574,14 +2638,24 @@ async function handleFixSelected() {
   fixDialogLoading.value = true
 
   try {
-    const ids = await collectSelectedPatchStatusIdsForFix()
+    const selectedRows = await collectSelectedVulnerabilityRows()
+    const ids = resolvePatchStatusIds(selectedRows)
     if (ids.length === 0) {
       ElMessage.warning('所选漏洞缺少补丁状态ID，无法修复')
       fixDialogVisible.value = false
       return
     }
 
+    const resolvedHosts = await resolveAgentCapabilityHosts(
+      buildVulnerabilityTargetHosts(selectedRows)
+    )
+    if (!validateAgentCapability(resolvedHosts, 'patch', [])) {
+      fixDialogVisible.value = false
+      return
+    }
+
     fixDialogData.patchStatusIds = ids
+    fixTargetHosts.value = resolvedHosts
   } catch (error) {
     ElMessage.error(`获取补丁信息失败: ${error.message || '未知错误'}`)
     fixDialogVisible.value = false
@@ -2602,6 +2676,10 @@ async function handleConfirmFix() {
 
   fixSubmitting.value = true
   try {
+    const resolvedHosts = await resolveAgentCapabilityHosts(fixTargetHosts.value)
+    if (!validateAgentCapability(resolvedHosts, 'patch', [])) return
+    fixTargetHosts.value = resolvedHosts
+
     // 调用作业执行 API
     const { executeJob } = await import('@/modules/automation/api/jao')
     const response = await executeJob({
@@ -2656,19 +2734,18 @@ function normalizeRescanHost(host) {
 }
 
 async function submitRescan(hosts, { closeDialog = false } = {}) {
-  // let resolvedHosts
-  // try {
-  //   resolvedHosts = await resolveAgentCapabilityHosts(hosts)
-  // } catch (error) {
-  //   console.error('Failed to refresh scan target Agent status:', error)
-  //   ElMessage.error(error?.message || '无法确认目标主机的 Agent 状态，已阻止扫描')
-  //   return false
-  // }
+  let resolvedHosts
+  try {
+    resolvedHosts = await resolveAgentCapabilityHosts(hosts)
+  } catch (error) {
+    console.error('Failed to refresh scan target Agent status:', error)
+    ElMessage.error(error?.message || '无法确认目标主机的 Agent 状态，已阻止扫描')
+    return false
+  }
 
-  // if (!validateAgentCapability(resolvedHosts, 'scan', [])) {
-  //   return false
-  // }
-  const resolvedHosts = hosts // [Agent 功能暂停] 跳过 Agent 能力校验
+  if (!validateAgentCapability(resolvedHosts, 'scan', [])) {
+    return false
+  }
 
   const normalizedHosts = resolvedHosts
     .map(normalizeRescanHost)

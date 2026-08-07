@@ -17,7 +17,6 @@
           <span class="label">主机名：</span>
           <span class="value">{{ machineInfo.hostKey }}</span>
         </div>
-        <!-- [Agent 功能暂停]
         <div class="info-item">
           <span class="label">接入方式：</span>
           <span class="value">
@@ -38,7 +37,18 @@
             </span>
           </span>
         </div>
-        -->
+        <div class="info-item" v-if="agentInfo && agentInfo.connectionType === 'koreops_agent'">
+          <span class="label">Agent Client ID：</span>
+          <span class="value font-mono">{{ agentInfo.agentClientId || agentInfo.clientId || '-' }}</span>
+        </div>
+        <div class="info-item" v-if="agentInfo && agentInfo.connectionType === 'koreops_agent'">
+          <span class="label">支持能力：</span>
+          <span class="value">{{ agentCapabilities.length ? agentCapabilities.join(', ') : '-' }}</span>
+        </div>
+        <div class="info-item" v-if="agentInfo && agentInfo.connectionType === 'koreops_agent'">
+          <span class="label">最后在线：</span>
+          <span class="value">{{ formatDateTime(agentInfo.lastSeenAt) }}</span>
+        </div>
         <div class="info-item">
           <span class="label">OS：</span>
           <span class="value">{{ machineInfo.os_distro }} {{ hostInfoRef.os_version }}</span>
@@ -51,17 +61,18 @@
           <span class="label">已安装软件包：</span>
           <span class="value">{{ getInstalledPkgsCount(machineInfo.installed_pkgs) }}</span>
         </div>
-<!-- [Agent 功能暂停]
-        <div class="info-item" v-if="agentInfo && agentInfo.connectionType === 'koreops_agent'">
+        <div
+          v-if="canViewAgentDiagnostics && agentInfo && agentInfo.connectionType === 'koreops_agent'"
+          class="info-item"
+        >
           <el-button type="primary" plain size="small" @click="agentDiagVisible = true">
             <i class="fa fa-stethoscope" /> Agent 通道诊断
           </el-button>
         </div>
--->
       </div>
     </div>
 
-<!-- [Agent 功能暂停] Agent 通道诊断弹窗 
+<!-- Agent 通道诊断弹窗 -->
     <el-dialog
       v-model="agentDiagVisible"
       title="Agent 通道诊断"
@@ -87,7 +98,7 @@
           <el-descriptions-item label="支持能力列表">
             <template v-if="agentInfo.capabilities">
               <el-tag
-                v-for="cap in agentInfo.capabilities.split(',')"
+                v-for="cap in agentCapabilities"
                 :key="cap"
                 size="small"
                 style="margin-right: 4px"
@@ -104,7 +115,6 @@
         <el-button @click="agentDiagVisible = false">关闭</el-button>
       </template>
     </el-dialog>
--->
 
 
     <!-- Tab 导航 -->
@@ -187,7 +197,8 @@
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { patchScanApi } from '../api' // [Agent 功能暂停] getHostAgentInfos removed
+import { authService } from '@/core/auth'
+import { patchScanApi, getHostAgentInfos } from '../api'
 import { formatDateTime, getInstalledPkgsCount } from '../composables/useFormatters'
 import { useHostDetail } from '../composables/useHostDetail'
 import { getAffectedPackageNames } from '../utils/vulnerabilityPackages'
@@ -229,28 +240,38 @@ const fromRouteQuery = computed(() => {
 // Tab 状态
 const activeTab = ref('patches')
 
-// [Agent 功能暂停] Agent 通道诊断状态
-// [Agent 功能暂停] const agentDiagVisible = ref(false)
+const agentDiagVisible = ref(false)
+const agentInfo = ref(null)
+const canViewAgentDiagnostics = computed(() =>
+  authService.hasPermission('agent:diagnose') ||
+  authService.hasRole('admin') ||
+  authService.hasRole('role_admin')
+)
+const agentCapabilities = computed(() => {
+  const capabilities = agentInfo.value?.capabilities
+  if (Array.isArray(capabilities)) return capabilities
+  return typeof capabilities === 'string' ? capabilities.split(',').map(item => item.trim()).filter(Boolean) : []
+})
 
-// [Agent 功能暂停] async function loadAgentInfo() {
-// [Agent 功能暂停]   if (!hostId.value) return
-// [Agent 功能暂停]   try {
-// [Agent 功能暂停]     const res = await getHostAgentInfos(hostId.value)
-// [Agent 功能暂停]     if (Array.isArray(res) && res.length > 0) {
-// [Agent 功能暂停]       agentInfo.value = res[0]
-// [Agent 功能暂停]     }
-// [Agent 功能暂停]   } catch (err) {
-// [Agent 功能暂停]     console.error('Failed to load Agent info for host detail:', err)
-// [Agent 功能暂停]   }
-// [Agent 功能暂停] }
+async function loadAgentInfo() {
+  if (!hostId.value) return
+  try {
+    const res = await getHostAgentInfos(hostId.value)
+    if (Array.isArray(res) && res.length > 0) {
+      agentInfo.value = res[0]
+    }
+  } catch (err) {
+    console.error('Failed to load Agent info for host detail:', err)
+  }
+}
 
-// [Agent 功能暂停] watch(
-// [Agent 功能暂停]   hostId,
-// [Agent 功能暂停]   () => {
-// [Agent 功能暂停]     loadAgentInfo()
-// [Agent 功能暂停]   },
-// [Agent 功能暂停]   { immediate: true }
-// [Agent 功能暂停] )
+watch(
+  hostId,
+  () => {
+    loadAgentInfo()
+  },
+  { immediate: true }
+)
 
 // 标签页组件引用
 const patchesTabRef = ref(null)
