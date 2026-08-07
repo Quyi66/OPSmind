@@ -35,8 +35,8 @@ function normalizeTarget(value: string | undefined, fallback: string): string {
  * 证书不存在时返回 undefined，Vite 将回退到 HTTP
  */
 function loadDevSSL(): { key: Buffer; cert: Buffer } | undefined {
-  const keyPath = resolve(__dirname, 'docker/nginx/ssl/server.key')
-  const certPath = resolve(__dirname, 'docker/nginx/ssl/server.crt')
+  const keyPath = resolve(import.meta.dirname, 'docker/nginx/ssl/server.key')
+  const certPath = resolve(import.meta.dirname, 'docker/nginx/ssl/server.crt')
   if (existsSync(keyPath) && existsSync(certPath)) {
     return {
       key: readFileSync(keyPath),
@@ -54,7 +54,7 @@ function buildVersionPlugin(buildHash: string, outDir: string): Plugin {
     apply: 'build',
     closeBundle() {
       const versionData = JSON.stringify({ hash: buildHash, buildTime: new Date().toISOString() })
-      writeFileSync(resolve(__dirname, outDir, 'version.json'), versionData)
+      writeFileSync(resolve(import.meta.dirname, outDir, 'version.json'), versionData)
     }
   }
 }
@@ -63,15 +63,22 @@ function buildVersionPlugin(buildHash: string, outDir: string): Plugin {
  * Vite 8 的 Rolldown/Oxc minifier 暂不支持 dropConsole，
  * 通过 esbuild transform API 在构建时移除 console/debugger 语句。
  */
-function dropConsolePlugin(drop: ('console' | 'debugger')[]): Plugin {
+function dropConsolePlugin(
+  drop: ('console' | 'debugger')[],
+  { sourceRoot, sourcemap }: { sourceRoot: string; sourcemap: boolean }
+): Plugin {
+  const normalizedSourceRoot = `${sourceRoot.replace(/\\/g, '/')}/`
+
   return {
     name: 'opsmind-drop-console',
     apply: 'build',
     enforce: 'post',
     async transform(code, id) {
-      const [filepath] = id.split('?')
+      const filepath = id.replace(/\\/g, '/')
       if (
-        !id.includes('node_modules') &&
+        !id.includes('?') &&
+        !id.startsWith('\0') &&
+        filepath.startsWith(normalizedSourceRoot) &&
         /\.(vue|ts|js|tsx|jsx|mts|cts)$/.test(filepath)
       ) {
         const ext = filepath.split('.').pop()
@@ -80,7 +87,7 @@ function dropConsolePlugin(drop: ('console' | 'debugger')[]): Plugin {
           loader,
           drop,
           minify: false,
-          sourcemap: true
+          sourcemap
         })
         return { code: result.code, map: result.map || null }
       }
@@ -92,6 +99,9 @@ export default defineConfig(({ command, mode }): UserConfig => {
   const env = loadEnv(mode, process.cwd(), '')
   const isProduction = mode === 'production'
   const isDevelopment = mode === 'development'
+  const shouldGenerateSourceMap = isDevelopment || env.VITE_BUILD_SOURCEMAP === 'true'
+  const shouldCompress = isProduction && env.VITE_BUILD_GZIP !== 'false'
+  const shouldReportPluginTimings = env.VITE_BUILD_PLUGIN_TIMINGS === 'true'
   const backendTarget = normalizeTarget(
     env.VITE_BACKEND_URL || env.VITE_BACKEND_PROXY_URL,
     DEFAULT_BACKEND_TARGET
@@ -116,7 +126,11 @@ export default defineConfig(({ command, mode }): UserConfig => {
       ...(isProduction
         ? [
             dropConsolePlugin(
-              env.VITE_DEBUG === 'true' ? ['debugger'] : ['console', 'debugger']
+              env.VITE_DEBUG === 'true' ? ['debugger'] : ['console', 'debugger'],
+              {
+                sourceRoot: resolve(import.meta.dirname, 'src'),
+                sourcemap: shouldGenerateSourceMap
+              }
             )
           ]
         : []),
@@ -209,8 +223,8 @@ export default defineConfig(({ command, mode }): UserConfig => {
         }
       },
 
-      // 生产环境启用 gzip 和 brotli 压缩
-      ...(isProduction
+      // 生产环境启用 gzip 和 brotli 压缩；可用 VITE_BUILD_GZIP=false 跳过本地预压缩。
+      ...(shouldCompress
         ? [
             compression({
               algorithms: ['gzip'],
@@ -285,7 +299,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
     build: {
       outDir: env.VITE_BUILD_OUTDIR || 'dist',
       assetsDir: env.VITE_BUILD_ASSETSDIR || 'assets',
-      sourcemap: isDevelopment || env.VITE_BUILD_SOURCEMAP === 'true',
+      sourcemap: shouldGenerateSourceMap,
       target: ['chrome89', 'edge89', 'firefox89', 'safari15'],
       assetsInlineLimit: 4096,
       // 启用 CSS 代码分割
@@ -294,8 +308,11 @@ export default defineConfig(({ command, mode }): UserConfig => {
       modulePreload: false,
 
       rolldownOptions: {
+        checks: {
+          pluginTimings: shouldReportPluginTimings
+        },
         input: {
-          main: resolve(__dirname, 'index.html')
+          main: resolve(import.meta.dirname, 'index.html')
         },
         output: {
           // 优化代码分割，减少首屏加载体积
@@ -382,7 +399,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
       },
 
 
-      reportCompressedSize: isProduction,
+      reportCompressedSize: shouldCompress,
       chunkSizeWarningLimit: 1000 // ECharts 体积较大但已懒加载，保留接近实际上限的预警阈值
     },
 
