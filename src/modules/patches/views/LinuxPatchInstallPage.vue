@@ -391,6 +391,7 @@
       v-if="runResultDialogVisible"
       v-model:visible="runResultDialogVisible"
       :run-id="runResultRunId"
+      @close="handleRunResultClose"
     />
 
     <!-- 操作记录对话框 -->
@@ -720,6 +721,12 @@ function handleBatchInstallSuccess() {
   resetHostAllSelected()
   batchSelectedHosts.value = []
   loadHostData()
+}
+
+function handleRunResultClose(payload) {
+  if (payload?.succeeded) {
+    loadHostData()
+  }
 }
 
 // 重新扫描逻辑

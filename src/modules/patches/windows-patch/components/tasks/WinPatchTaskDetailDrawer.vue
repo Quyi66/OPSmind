@@ -6,6 +6,7 @@
     destroy-on-close
     append-to-body
     :close-on-click-modal="false"
+    @close="handleClose"
   >
     <div class="win-patch-task-detail">
       <div class="ops-action-bar win-patch-task-detail__actions">
@@ -191,6 +192,7 @@ import { computed, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
+import { isSuccessfulRunStatus } from '@/utils/taskStatus'
 import WinPatchTaskScriptUploader from './WinPatchTaskScriptUploader.vue'
 import { winPatchApi } from '../../api'
 import { useWinPatchPolling } from '../../composables/useWinPatchPolling'
@@ -223,7 +225,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'close'])
 
 const visibleModel = computed({
   get: () => props.modelValue,
@@ -466,6 +468,15 @@ const stepActionHint = computed(() => {
 
 const { isPolling, start, stop } = useWinPatchPolling(3000)
 let loadTaskDetailRequestId = 0
+
+function handleClose() {
+  const status = currentTaskStatusValue.value
+  emit('close', {
+    taskId: currentTaskId.value,
+    status,
+    succeeded: isSuccessfulRunStatus(status)
+  })
+}
 
 function applyTaskSnapshot(taskSnapshot = null) {
   if (!taskSnapshot || typeof taskSnapshot !== 'object') {

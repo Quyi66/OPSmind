@@ -114,6 +114,7 @@ import * as jaoApi from '@/modules/automation/api/jao'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { JOB_TYPE_OPTIONS } from '@/modules/automation/stores/useJobStore'
 import { translateText } from '@/utils/i18n'
+import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
 
 const props = defineProps({
   ciType: { type: String, required: true },
@@ -137,6 +138,11 @@ const resultDialogVisible = ref(false)
 const currentRunId = ref('')
 const currentJobTitle = ref('')
 let isInternalUpdate = false
+
+useActiveTaskListPolling({
+  records: tableData,
+  refresh: fetchData
+})
 
 const isSingleSelector = computed(() => props.options.selector === 'single')
 

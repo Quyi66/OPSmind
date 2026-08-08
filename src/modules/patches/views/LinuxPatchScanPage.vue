@@ -945,6 +945,9 @@
       v-model:visible="historyDialogVisible"
       :job-id="historyJobId"
       :job-title="historyJobTitle"
+      :highlight-run-id="lastSubmittedRunId"
+      auto-refresh
+      @close="handleHistoryDialogClose"
     />
 
     <!-- 补丁详情弹窗 -->
@@ -2147,6 +2150,12 @@ function refreshPatchScanLists() {
   loadVulnData()
 }
 
+function handleHistoryDialogClose(payload) {
+  if (historyJobId.value === '0g3GfW' && payload?.succeeded) {
+    refreshPatchScanLists()
+  }
+}
+
 function handleVulnFilterChange() {
   resetVulnSelectionState()
   vulnPagination.page = 1
@@ -2703,6 +2712,7 @@ async function submitRescan(hosts, { closeDialog = false } = {}) {
       rescanDialogVisible.value = false
     }
 
+    lastSubmittedRunId.value = String(runId)
     historyJobId.value = '0g3GfW'
     historyJobTitle.value = '补丁扫描'
     historyDialogVisible.value = true

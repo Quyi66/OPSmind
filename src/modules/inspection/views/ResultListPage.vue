@@ -177,6 +177,7 @@ import {
   parseResultListRouteState
 } from '../utils/result-list-route-state'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
+import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
 
 const router = useRouter()
 const route = useRoute()
@@ -220,6 +221,12 @@ const pagination = ref({
 const executeResultVisible = ref(false)
 const currentRunId = ref('')
 const currentJobTitle = ref('')
+
+useActiveTaskListPolling({
+  records: tableData,
+  refresh: loadResults,
+  getStatus: row => row?.jobStatus
+})
 
 // 过滤后的模板列表（按名称排序）
 const filteredTemplates = computed(() => {

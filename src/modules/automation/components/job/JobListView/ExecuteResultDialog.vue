@@ -450,7 +450,9 @@ import { ElMessage } from 'element-plus'
 import { formatDateTime } from '@/modules/automation/utils/helpers'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { JOB_STATUS_LABELS, JOB_STATUS_TAG_TYPES } from '@/modules/automation/constants/jobStatus'
+import { isActiveRunStatus, isSuccessfulRunStatus, normalizeRunStatus } from '@/utils/taskStatus'
 import { AGENT_ERROR_MESSAGES, agentApi } from '@/modules/asset/api'
+import { authService } from '@/core/auth'
 import { translateText } from '@/utils/i18n'
 import AnsibleLogViewer from '../AnsibleLogViewer.vue'
 import JobUpgradeOverview from './JobUpgradeOverview.vue'
@@ -487,7 +489,6 @@ const HOST_STATUS_PRIORITY = [
   'unknown'
 ]
 const treeProps = { label: 'label', children: 'children' }
-const ACTIVE_RUN_STATUSES = ['WAITING', 'RUNNING', 'CALLBACK']
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -496,7 +497,7 @@ const props = defineProps({
   zIndex: { type: Number, default: undefined }
 })
 
-const emit = defineEmits(['update:visible', 'settled'])
+const emit = defineEmits(['update:visible', 'settled', 'close'])
 
 const dialogVisible = computed({
   get: () => props.visible,
@@ -717,6 +718,13 @@ watch(
 )
 
 function handleClose() {
+  const status = normalizeRunStatus(result.value?.status)
+  stopResultPolling()
+  emit('close', {
+    runId: props.runId,
+    status,
+    succeeded: isSuccessfulRunStatus(status)
+  })
   dialogVisible.value = false
   resetState()
 }
@@ -758,8 +766,8 @@ async function fetchResult() {
 }
 
 function syncResultPolling(data) {
-  const status = String(data?.status || '').toUpperCase()
-  if (ACTIVE_RUN_STATUSES.includes(status)) {
+  const status = normalizeRunStatus(data?.status)
+  if (isActiveRunStatus(status)) {
     hasObservedActiveRun.value = true
     scheduleResultPolling()
     return

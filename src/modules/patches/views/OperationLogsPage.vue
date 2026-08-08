@@ -306,10 +306,16 @@ import { useApi } from '@/core/api'
 import { authService } from '@/core/auth'
 import ScanReportDialog from '../components/logs/ScanReportDialog.vue'
 import WindowsScanReportDialog from '../components/logs/WindowsScanReportDialog.vue'
+import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
 
 // ========== 操作记录 ==========
 const loading = ref(false)
 const tableData = ref([])
+
+useActiveTaskListPolling({
+  records: tableData,
+  refresh: loadData
+})
 
 const pagination = reactive({
   page: 1,

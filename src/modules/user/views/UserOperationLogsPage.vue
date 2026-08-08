@@ -141,6 +141,7 @@ import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import * as userApi from '@/modules/user/api'
 import { translateI18nKey } from '@/utils/i18n'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
+import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
 
 const route = useRoute()
 
@@ -165,6 +166,11 @@ const filters = ref({
 
 const loading = ref(false)
 const tableData = ref([])
+
+useActiveTaskListPolling({
+  records: tableData,
+  refresh: loadData
+})
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)

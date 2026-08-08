@@ -214,6 +214,7 @@ import {
   getRunLogStatusLabel,
   getRunLogStatusType
 } from '@/modules/automation/constants/runLogStatus'
+import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
 
 const loading = ref(false)
 const tableData = ref([])
@@ -242,6 +243,12 @@ let searchTimeout = null
 const jobTypeOptions = JOB_TYPE_OPTIONS
 const validJobTypes = new Set(JOB_TYPE_OPTIONS.map(option => option.value).filter(Boolean))
 const statusMap = RUN_LOG_STATUS_MAP
+
+useActiveTaskListPolling({
+  records: tableData,
+  refresh: fetchData,
+  enabled: () => activeTab.value === 'logs'
+})
 
 onMounted(() => {
   syncFiltersFromRoute()

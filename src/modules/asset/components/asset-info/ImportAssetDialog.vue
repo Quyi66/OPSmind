@@ -60,6 +60,7 @@
     :run-id="currentRunId"
     job-title="资产导入"
     @settled="handleExecuteResultSettled"
+    @close="handleExecuteResultClose"
   />
 </template>
 
@@ -68,6 +69,7 @@ import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { apiService } from '@/core/api'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
+import { isSuccessfulRunStatus } from '@/utils/taskStatus'
 
 const props = defineProps({
   modelValue: {
@@ -92,6 +94,7 @@ const selectedFile = ref(null)
 const uploading = ref(false)
 const resultDialogVisible = ref(false)
 const currentRunId = ref('')
+const savedRunId = ref('')
 
 function createImportRunId() {
   if (globalThis.crypto?.randomUUID) {
@@ -103,10 +106,6 @@ function createImportRunId() {
     const value = char === 'x' ? random : (random & 0x3) | 0x8
     return value.toString(16)
   })
-}
-
-function isSuccessStatus(status) {
-  return ['COMPLETED', 'SUCCESS'].includes(String(status || '').toUpperCase())
 }
 
 // 文件选择变化
@@ -151,6 +150,7 @@ const handleUpload = async () => {
     })
 
     currentRunId.value = runId
+    savedRunId.value = ''
     uploading.value = false
     visible.value = false
     resultDialogVisible.value = true
@@ -166,9 +166,19 @@ const handleUpload = async () => {
 }
 
 function handleExecuteResultSettled(payload) {
-  if (isSuccessStatus(payload?.status)) {
-    emit('saved')
-  }
+  emitSavedForSuccessfulRun(payload)
+}
+
+function handleExecuteResultClose(payload) {
+  emitSavedForSuccessfulRun(payload)
+}
+
+function emitSavedForSuccessfulRun(payload) {
+  const runId = String(payload?.runId || currentRunId.value || '')
+  // settled 与 close 会在同一个成功任务上连续触发，按运行 ID 确保父列表只刷新一次。
+  if (!isSuccessfulRunStatus(payload?.status) || !runId || savedRunId.value === runId) return
+  savedRunId.value = runId
+  emit('saved')
 }
 
 // 弹窗关闭时重置

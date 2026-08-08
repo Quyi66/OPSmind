@@ -509,6 +509,7 @@ import ExecuteResultDialog from '@/modules/automation/components/job/JobListView
 import { usePatchProcessLogDetail } from '../../composables/usePatchProcessLogDetail'
 import ScriptStepContent from './PatchProcessLogScriptStep.vue'
 import SummaryRow from './PatchProcessLogSummaryRow.vue'
+import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
 
 const props = defineProps({
   modelValue: {
@@ -559,6 +560,13 @@ const {
   reset,
   getWizardStepState
 } = usePatchProcessLogDetail(sourceTask)
+
+useActiveTaskListPolling({
+  records: () => (detailTask.value ? [detailTask.value] : []),
+  refresh: load,
+  enabled: () => props.modelValue,
+  activeStatuses: ['PRE_CHECKING', 'INSTALLING', 'ROLLING_BACK', 'RESTARTING', 'VALIDATING']
+})
 
 watch(
   parsedPreCheckResult,

@@ -162,6 +162,7 @@ import { formatDateTime as formatDateTimeGlobal } from '@/utils/date'
 import { softwareLogsApi } from '../api'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { translateText } from '@/utils/i18n'
+import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
 
 const loading = ref(false)
 
@@ -175,6 +176,11 @@ const searchText = ref('')
 // 表格数据
 const tableData = ref([])
 const allData = ref([]) // 原始数据，用于本地筛选
+
+useActiveTaskListPolling({
+  records: tableData,
+  refresh: loadLogs
+})
 
 // 分页
 const pagination = ref({
