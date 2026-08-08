@@ -2,7 +2,7 @@
   <el-dialog
     v-model="visible"
     title="新增 Agent 主机 (纳管接入)"
-    width="860px"
+    width="min(1080px, calc(100vw - 32px))"
     destroy-on-close
     :close-on-click-modal="false"
     class="agent-enroll-dialog"
@@ -148,7 +148,7 @@
               </el-radio>
             </template>
           </el-table-column>
-          <el-table-column prop="clientId" label="Client ID" min-width="170" show-overflow-tooltip>
+          <el-table-column prop="clientId" label="Client ID" min-width="140" show-overflow-tooltip>
             <template #default="{ row }">
               <span class="font-mono font-bold text-primary">{{ row.clientId }}</span>
             </template>

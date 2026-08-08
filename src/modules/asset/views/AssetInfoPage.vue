@@ -216,7 +216,7 @@
             <el-table-column type="selection" width="40" fixed="left" />
 
             <!-- 1. 设备标识复合列 -->
-            <el-table-column label="设备标识" min-width="220" fixed="left">
+            <el-table-column label="设备标识" min-width="150" fixed="left">
               <template #default="{ row }">
                 <div class="composite-identity-cell">
                   <el-tag
@@ -247,35 +247,33 @@
             </el-table-column>
 
             <!-- Agent 接入通道与能力列 (F3) -->
-            <el-table-column label="接入通道" min-width="130">
+            <el-table-column label="接入通道" min-width="80">
               <template #default="{ row }">
-                <el-tag
-                  size="small"
-                  :type="getConnectionTypeTag(row)"
-                >
-                  {{ getConnectionTypeLabel(row) }}
-                </el-tag>
-                <div v-if="row.clientId || row.client_id" class="text-xs text-muted font-mono" :title="row.clientId || row.client_id">
-                  {{ (row.clientId || row.client_id).length > 10 ? (row.clientId || row.client_id).slice(0, 10) + '...' : (row.clientId || row.client_id) }}
+                <div class="agent-channel-cell">
+                  <el-tag size="small" :type="getConnectionTypeTag(row)">
+                    {{ getConnectionTypeLabel(row) }}<span v-if="isAgentAsset(row) && row.agentMode === 'gateway'">（跳板）</span>
+                  </el-tag>
                 </div>
               </template>
             </el-table-column>
 
-            <el-table-column label="Agent 状态与能力" min-width="160">
+            <el-table-column label="Agent 状态与能力" min-width="240">
               <template #default="{ row }">
-                <template v-if="['koreops_agent', 'agent', 'oplus_agent'].includes(row.connectionType || row.connection_type)">
-                  <el-tag
-                    size="small"
-                    :type="getAgentStatusTag(row)"
-                  >
-                    {{ getAgentStatusLabel(row) }}
-                  </el-tag>
-                  <span v-if="row.agentVersion" class="text-xs text-muted ms-1">v{{ row.agentVersion }}</span>
-                  <div v-if="row.capabilities" class="text-xs text-secondary mt-1">
-                    {{ Array.isArray(row.capabilities) ? row.capabilities.join(',') : row.capabilities }}
-                  </div>
-                  <div v-if="row.lastSeenAt" class="text-xs text-muted mt-1">
-                    最后在线：{{ formatDateTime(row.lastSeenAt) }}
+                <template v-if="isAgentAsset(row)">
+                  <div class="agent-status-cell">
+                    <el-tooltip :content="getAgentStatusDetail(row)" placement="top">
+                      <div class="agent-status-summary">
+                        <el-tag size="small" :type="getAgentStatusTag(row)">
+                          {{ getAgentStatusLabel(row) }}
+                        </el-tag>
+                        <span v-if="getAgentCapabilities(row).length" class="agent-capabilities-inline">
+                          {{ getAgentCapabilitySummary(row) }}
+                        </span>
+                      </div>
+                    </el-tooltip>
+                    <span v-if="getAgentStatus(row) === 'offline' && row.lastSeenAt" class="agent-offline-hint">
+                      最后在线 {{ formatDateTime(row.lastSeenAt, 'MM-DD HH:mm') }}
+                    </span>
                   </div>
                 </template>
                 <span v-else class="text-muted">-</span>
@@ -797,6 +795,22 @@ const normalizeAssetRecord = item => {
 }
 
 const isAgentConnection = connectionType => ['koreops_agent', 'agent', 'oplus_agent'].includes(connectionType)
+const isAgentAsset = record => isAgentConnection(record?.connectionType || record?.connection_type)
+
+const getAgentCapabilities = record => {
+  const capabilities = record?.capabilities
+  if (Array.isArray(capabilities)) return capabilities.map(item => String(item).trim()).filter(Boolean)
+  return typeof capabilities === 'string'
+    ? capabilities.split(',').map(item => item.trim()).filter(Boolean)
+    : []
+}
+
+const getAgentCapabilitySummary = record => {
+  const capabilities = getAgentCapabilities(record)
+  const visibleCapabilities = capabilities.slice(0, 3)
+  const moreCount = capabilities.length - visibleCapabilities.length
+  return `${visibleCapabilities.join(', ')}${moreCount > 0 ? ` +${moreCount}` : ''}`
+}
 
 const getConnectionType = record => {
   const connectionType = record.connectionType || record.connection_type
@@ -822,6 +836,16 @@ const getConnectionTypeTag = record => {
 const getAgentStatus = record => record.agentStatus || record.agent_status || 'unknown'
 const getAgentStatusLabel = record => ({ online: '在线', offline: '离线', unknown: '未知' })[getAgentStatus(record)] || '未知'
 const getAgentStatusTag = record => ({ online: 'success', offline: 'danger', unknown: 'warning' })[getAgentStatus(record)] || 'warning'
+
+const getAgentStatusDetail = record => {
+  const details = [`状态：${getAgentStatusLabel(record)}`]
+  if (record?.agentVersion) details.push(`版本：${record.agentVersion}`)
+
+  const capabilities = getAgentCapabilities(record)
+  if (capabilities.length) details.push(`支持能力：${capabilities.join('、')}`)
+  if (record?.lastSeenAt) details.push(`最后在线：${formatDateTime(record.lastSeenAt)}`)
+  return details.join('；')
+}
 
 const hasAgentLocalFilter = () =>
   filters.value.connectionType !== 'all' || filters.value.agentStatus !== 'all'
@@ -1637,6 +1661,47 @@ watch(
       color: var(--el-text-color-secondary);
     }
   }
+}
+
+.agent-channel-cell {
+  display: flex;
+  align-items: flex-start;
+  min-height: 24px;
+}
+
+.agent-status-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-height: 24px;
+}
+
+.agent-status-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  min-height: 24px;
+  cursor: help;
+}
+
+.agent-capabilities-inline {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-offline-hint {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
 }
 
 .os-env-cell {
