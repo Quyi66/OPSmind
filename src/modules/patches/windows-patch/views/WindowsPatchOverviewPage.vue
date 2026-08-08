@@ -344,7 +344,11 @@
       @task-submitted="handleTaskSubmitted"
     />
 
-    <WinPatchTaskDetailDrawer v-model="taskDrawerVisible" :task-id="currentTaskId" />
+    <WinPatchTaskDetailDrawer
+      v-model="taskDrawerVisible"
+      :task-id="currentTaskId"
+      @close="handleTaskDrawerClose"
+    />
   </div>
 </template>
 
@@ -575,6 +579,12 @@ function handleTaskSubmitted(task) {
     Boolean(currentTaskId.value) && pickValue(task, ['openDetail'], true) !== false
 
   if (pickValue(task, ['refreshOverview'], true) !== false) {
+    loadPageData()
+  }
+}
+
+function handleTaskDrawerClose(payload) {
+  if (payload?.succeeded) {
     loadPageData()
   }
 }

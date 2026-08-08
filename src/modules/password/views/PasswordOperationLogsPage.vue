@@ -106,9 +106,15 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import * as pmsApi from '@/modules/password/api'
+import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
 
 const loading = ref(false)
 const tableData = ref([])
+
+useActiveTaskListPolling({
+  records: tableData,
+  refresh: loadData
+})
 
 const filters = reactive({
   status: 'all',

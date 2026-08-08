@@ -103,6 +103,7 @@ import {
   getRunLogStatusType
 } from '@/modules/automation/constants/runLogStatus'
 import { JOB_TYPE_OPTIONS } from '@/modules/automation/stores/useJobStore'
+import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
 
 const props = defineProps({
   title: { type: String, default: '运行记录' },
@@ -142,6 +143,12 @@ const drawerLoading = ref(false)
 const drawerRecords = ref([])
 const drawerTotal = ref(0)
 const filters = reactive(createDefaultFilters())
+
+useActiveTaskListPolling({
+  records: drawerRecords,
+  refresh: loadRecords,
+  enabled: () => visible.value
+})
 
 const mergedLoading = computed(() => props.loading || drawerLoading.value)
 const hasActiveFilters = computed(

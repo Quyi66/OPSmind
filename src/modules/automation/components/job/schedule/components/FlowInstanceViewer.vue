@@ -224,6 +224,7 @@ import { computed, ref, watch } from 'vue'
 import { ElMessage, useZIndex } from 'element-plus'
 import { formatDateTime } from '@/modules/automation/utils/helpers'
 import * as jaoApi from '@/modules/automation/api/jao'
+import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -241,6 +242,14 @@ const visible = computed({
 const viewerZIndex = ref(2000)
 const loading = ref(false)
 const instanceData = ref(null)
+
+useActiveTaskListPolling({
+  records: () => (instanceData.value ? [instanceData.value] : []),
+  refresh: fetchInstanceView,
+  enabled: () => visible.value,
+  getStatus: record => record?.status || record?.instanceStatus || record?.runStatus || record?.state,
+  activeStatuses: ['WAITING', 'PENDING', 'QUEUED', 'RUNNING', 'STARTED', 'PROCESSING']
+})
 const hostStatusList = ref([])
 const hostOutputVisible = ref(false)
 const hostOutputLoading = ref(false)

@@ -414,6 +414,7 @@ import { formatDateTime } from '../../utils/helpers'
 import * as jaoApi from '@/modules/automation/api/jao'
 import FlowEditor from '../../components/job/schedule/components/FlowEditor.vue'
 import FlowInstanceViewer from '../../components/job/schedule/components/FlowInstanceViewer.vue'
+import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
 
 const flowList = ref([])
 const flowsLoading = ref(false)
@@ -437,6 +438,13 @@ const viewingInstanceId = ref('')
 const FLOW_STEP_PREVIEW_LIMIT = 10
 let flowDetailRequestId = 0
 let flowInstancesRequestId = 0
+
+useActiveTaskListPolling({
+  records: instanceRows,
+  refresh: () => fetchFlowInstances(activeFlowId.value),
+  enabled: () => Boolean(activeFlowId.value),
+  activeStatuses: ['WAITING', 'PENDING', 'QUEUED', 'RUNNING', 'STARTED', 'PROCESSING']
+})
 
 const visibleFlows = computed(() => {
   const term = flowFilter.value.trim().toLowerCase()

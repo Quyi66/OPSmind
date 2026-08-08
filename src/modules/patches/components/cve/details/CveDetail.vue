@@ -450,6 +450,7 @@
       v-if="rebootResultDialogVisible"
       v-model:visible="rebootResultDialogVisible"
       :run-id="rebootResultRunId"
+      @close="handleRebootResultClose"
     />
 
     <RpmPackageDetailDialog
@@ -891,6 +892,12 @@ function openRebootResult(host) {
 
   rebootResultRunId.value = runId
   rebootResultDialogVisible.value = true
+}
+
+function handleRebootResultClose(payload) {
+  if (!payload?.succeeded) return
+  affectedHostsLoaded.value = false
+  loadAffectedHosts()
 }
 
 function buildHostRebootPayload(host) {

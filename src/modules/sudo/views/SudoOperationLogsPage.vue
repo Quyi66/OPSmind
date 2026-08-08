@@ -144,9 +144,15 @@ import { ElMessage } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import * as sudoApi from '@/modules/sudo/api'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
+import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
 
 const loading = ref(false)
 const tableData = ref([])
+
+useActiveTaskListPolling({
+  records: tableData,
+  refresh: loadData
+})
 const resultDialogVisible = ref(false)
 const selectedRunId = ref('')
 const selectedJobTitle = ref('')

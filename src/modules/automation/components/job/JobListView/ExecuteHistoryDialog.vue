@@ -175,10 +175,10 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDateTime } from '@/modules/automation/utils/helpers'
-import { Search, RefreshRight, Refresh } from '@element-plus/icons-vue'
+import { Search, RefreshRight } from '@element-plus/icons-vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 import ExecuteResultDialog from './ExecuteResultDialog.vue'
 import {
@@ -186,6 +186,7 @@ import {
   JOB_STATUS_LABELS,
   JOB_STATUS_TAG_TYPES
 } from '@/modules/automation/constants/jobStatus'
+import { isActiveRunStatus, isSuccessfulRunStatus, normalizeRunStatus } from '@/utils/taskStatus'
 
 const timeRangeOptions = [
   { label: '全部', value: 'all' },
@@ -204,16 +205,18 @@ const timeRangeMap = {
 }
 
 const statusOptions = JOB_HISTORY_STATUS_OPTIONS
-const RUNNING_STATUSES = ['WAITING', 'RUNNING', 'CALLBACK']
 const DEFAULT_SORT = { field: 'start_time', order: 'desc' }
+const POLLING_INTERVAL = 5000
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
   jobId: { type: String, default: '' },
-  jobTitle: { type: String, default: '' }
+  jobTitle: { type: String, default: '' },
+  autoRefresh: { type: Boolean, default: true },
+  highlightRunId: { type: String, default: '' }
 })
 
-const emit = defineEmits(['update:visible'])
+const emit = defineEmits(['update:visible', 'close'])
 
 const dialogVisible = computed({
   get: () => props.visible,
@@ -231,6 +234,7 @@ const pageSize = ref(10)
 const sortState = ref({ ...DEFAULT_SORT })
 const resultDialogVisible = ref(false)
 const resultMeta = ref({ runId: '', jobTitle: '' })
+let pollingTimer = null
 
 watch(resultDialogVisible, visible => {
   if (!visible) {
@@ -256,14 +260,28 @@ watch(
   () => props.visible,
   visible => {
     if (!visible) {
+      stopPolling()
       resetState()
     }
   }
 )
 
 function handleClose() {
+  stopPolling()
+  const closeRun = resolveCloseRun()
+  const status = normalizeRunStatus(closeRun?.status)
+  emit('close', {
+    jobId: props.jobId,
+    runId: String(closeRun?.runId || closeRun?.id || props.highlightRunId || ''),
+    status,
+    succeeded: isSuccessfulRunStatus(status)
+  })
   dialogVisible.value = false
 }
+
+onBeforeUnmount(() => {
+  stopPolling()
+})
 
 function resetState() {
   timeRange.value = 'today'
@@ -293,6 +311,41 @@ function handleReset() {
 function handleRefresh() {
   if (!props.visible || !props.jobId) return
   fetchRunLogs()
+}
+
+function stopPolling() {
+  if (!pollingTimer) return
+  clearTimeout(pollingTimer)
+  pollingTimer = null
+}
+
+function schedulePolling() {
+  stopPolling()
+  if (!props.autoRefresh || !props.visible) return
+
+  const hasRunningTasks = tableData.value.some(row => isActiveRunStatus(row.status))
+  const targetRunId = String(props.highlightRunId || '').trim()
+  const isWaitingForTargetRun = Boolean(targetRunId) && !findRunById(targetRunId)
+  if (!hasRunningTasks && !isWaitingForTargetRun) return
+
+  pollingTimer = setTimeout(() => {
+    pollingTimer = null
+    fetchRunLogs()
+  }, POLLING_INTERVAL)
+}
+
+function resolveCloseRun() {
+  const targetRunId = String(props.highlightRunId || '').trim()
+  if (targetRunId) {
+    return findRunById(targetRunId)
+  }
+
+  // 未指定目标任务时，列表默认按开始时间倒序，首条即本次关闭所代表的最新运行。
+  return tableData.value[0] || null
+}
+
+function findRunById(runId) {
+  return tableData.value.find(row => String(row.runId || row.id || '') === runId) || null
 }
 
 function handlePageChange(page) {
@@ -349,7 +402,7 @@ function handleStatusClick(row) {
 function canRerun(row) {
   if (!row?.id) return false
   const effectiveRunId = String(row?.runId ?? row?.id ?? '')
-  const isBusy = RUNNING_STATUSES.includes(row.status)
+  const isBusy = isActiveRunStatus(row.status)
   return !isBusy && row.jobTypeKey === 'script' && !effectiveRunId.startsWith('step_')
 }
 
@@ -381,6 +434,7 @@ async function handleRerun(row) {
 }
 
 async function fetchRunLogs() {
+  stopPolling()
   if (!props.jobId) {
     tableData.value = []
     total.value = 0
@@ -420,6 +474,7 @@ async function fetchRunLogs() {
     ElMessage.error(error?.message || '获取运行记录失败')
   } finally {
     tableLoading.value = false
+    schedulePolling()
   }
 }
 
@@ -432,6 +487,7 @@ function mapRunLogRecord(record = {}) {
   const statsBadges = buildStatsBadges(statsRaw)
   return {
     id: record.id ? String(record.id) : '',
+    runId: String(record.runId ?? record.run_id ?? record.id ?? ''),
     jobTitle: record.job_title ?? record.jobTitle ?? '-',
     jobType: jobTypeRaw || '-',
     jobTypeKey,
@@ -495,8 +551,6 @@ function toDate(value) {
   const date = value instanceof Date ? value : new Date(value)
   return Number.isNaN(date.getTime()) ? null : date
 }
-
-
 
 function formatDuration(startValue, endValue) {
   const start = toDate(startValue)

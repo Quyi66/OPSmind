@@ -114,6 +114,7 @@ import { jobApi, paramApi } from '../../api'
 import { ElMessage } from 'element-plus'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import StructuralDiagram from '../../views/StructuralDiagramPage.vue'
+import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
 
 const props = defineProps({
   visible: {
@@ -139,6 +140,13 @@ const structuralEnabled = ref(false)
 const executeResultVisible = ref(false)
 const currentRunId = ref('')
 const currentJobTitle = ref('')
+
+useActiveTaskListPolling({
+  records: tableData,
+  refresh: loadData,
+  enabled: () => props.visible,
+  getStatus: row => row?.jobStatus
+})
 
 // 架构图弹窗
 const structuralDialogVisible = ref(false)

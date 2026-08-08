@@ -133,6 +133,7 @@ import { ElMessage } from 'element-plus'
 import { Refresh, RefreshRight, Search } from '@element-plus/icons-vue'
 import { patchLogsApi } from '../api'
 import PatchProcessLogDetailDialog from '../components/logs/PatchProcessLogDetailDialog.vue'
+import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
 import {
   formatDateTime,
   formatJsonArray,
@@ -150,6 +151,12 @@ const loading = ref(false)
 const tableData = ref([])
 const detailVisible = ref(false)
 const selectedTask = ref(null)
+
+useActiveTaskListPolling({
+  records: tableData,
+  refresh: loadData,
+  activeStatuses: ['PRE_CHECKING', 'INSTALLING', 'ROLLING_BACK', 'RESTARTING', 'VALIDATING']
+})
 
 const filters = reactive(createDefaultFilters())
 const pagination = reactive({

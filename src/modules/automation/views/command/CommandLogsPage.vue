@@ -228,6 +228,8 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { fetchJobRunLogs } from '@/modules/automation/api/jao'
+import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
+import { useApi } from '@/core/api'
 
 // 筛选条件
 const filters = reactive({
@@ -247,6 +249,12 @@ const total = ref(0)
 // 结果对话框
 const showResultDialog = ref(false)
 const currentLog = ref(null)
+const api = useApi()
+
+useActiveTaskListPolling({
+  records: logs,
+  refresh: loadData
+})
 
 // 过滤后的日志列表（本地搜索）
 const filteredLogs = computed(() => logs.value)
@@ -293,6 +301,16 @@ async function loadData() {
     const data = response.data || response || {}
     logs.value = data.records || data || []
     total.value = data.total || logs.value.length
+    if (showResultDialog.value && currentLog.value?.id) {
+      const refreshedLog = logs.value.find(item => String(item.id) === String(currentLog.value.id))
+      if (refreshedLog) {
+        currentLog.value = refreshedLog
+      } else {
+        // 记录可能因状态筛选、分页或删除离开当前结果集，避免继续展示过期详情。
+        showResultDialog.value = false
+        currentLog.value = null
+      }
+    }
   } catch (error) {
     console.error('加载日志失败:', error)
     ElMessage.error('加载日志失败')
@@ -311,7 +329,7 @@ async function handleViewResult(row) {
 async function handleRerun(row) {
   try {
     await ElMessageBox.confirm('确定要重新运行此运维工具吗？', '重新运行', { type: 'warning' })
-    await useApi().post('/workflow/api/workflow/job/rerun', {
+    await api.post('/workflow/api/workflow/job/rerun', {
       runId: row.id
     })
     ElMessage.success('已提交重新运行')
@@ -412,7 +430,7 @@ function formatJobStats(statsJson) {
     if (stats.unreachable) html += `<span class="text-danger">${stats.unreachable}</span>`
     if (stats.failed) html += `<span class="text-danger">${stats.failed}</span>`
     return html || '-'
-  } catch (e) {
+  } catch {
     return '-'
   }
 }

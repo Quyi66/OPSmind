@@ -212,6 +212,7 @@ import { operationLogApi } from '../api'
 import { translateI18nKey } from '@/utils/i18n'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { formatDateTime } from '../utils/helpers'
+import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
 
 const route = useRoute()
 const router = useRouter()
@@ -230,6 +231,11 @@ const searchKeyword = ref('')
 // 表格数据
 const loading = ref(false)
 const tableData = ref([])
+
+useActiveTaskListPolling({
+  records: tableData,
+  refresh: loadData
+})
 const ataNodes = ref([])
 const actionTypes = ref([
   { label: '设备连通性检测', value: '#{acm.job.check_conn}' },
