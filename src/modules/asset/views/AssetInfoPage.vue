@@ -1271,10 +1271,10 @@ const handleRefresh = () => {
 
 const handleAgentEnrollmentSuccess = async boundHostId => {
   await loadAssetList()
-  if (boundHostId) {
-    currentAssetId.value = String(boundHostId)
-    detailDialogVisible.value = true
-  }
+  // if (boundHostId) {
+  //   currentAssetId.value = String(boundHostId)
+  //   detailDialogVisible.value = true
+  // }
 }
 
 const loadCurrentTenantId = async () => {
