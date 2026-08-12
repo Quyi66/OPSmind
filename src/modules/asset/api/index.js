@@ -599,6 +599,22 @@ export const agentApi = {
   },
 
   /**
+   * 将 CMDB 主 IP 同步为 Agent 最近上报的 IP
+   * POST /cmdb/api/cmdb/agent/sync-ip
+   */
+  syncAssetIp: (data = {}) => {
+    return apiService.post(`${ACM_BASE}/agent/sync-ip`, data).then(unwrapApiData)
+  },
+
+  /**
+   * 查询当前租户下的 Agent 路由错位记录
+   * GET /cmdb/api/cmdb/agent/route-mismatch
+   */
+  getRouteMismatches: () => {
+    return apiService.get(`${ACM_BASE}/agent/route-mismatch`).then(unwrapApiData)
+  },
+
+  /**
    * 吊销 Token
    * DELETE /cmdb/api/cmdb/agent/enrollment-token/:tokenId
    */
@@ -610,9 +626,14 @@ export const agentApi = {
 export const AGENT_ERROR_MESSAGES = {
   AGENT_AUTH_FAILED: 'Agent 鉴权失败，Token 凭据可能无效或已被吊销',
   ENROLL_TOKEN_INVALID: 'Agent 安装 Token 已过期、耗尽或被撤销，请重新签发',
-  CLIENT_ALREADY_BOUND: '该 Agent 已绑定其他资产',
+  ENROLL_TOKEN_EXHAUSTED: 'Agent 安装 Token 已耗尽，请重新签发',
+  ENROLL_TOKEN_EXPIRED: 'Agent 安装 Token 已过期，请重新签发',
+  NEED_REENROLL: '该主机凭证已失效，需要重新纳管',
+  CLIENT_ALREADY_BOUND: 'Agent Client ID 与资产绑定关系不一致，请核对所选资产',
   HOST_ALREADY_BOUND: '该资产已绑定 Agent，请先解绑',
+  HOST_NOT_FOUND: '资产不存在或没有有效的 Agent 绑定',
   AGENT_OFFLINE: 'Agent 当前离线，请检查服务和网络后重试',
+  PLATFORM_SELF_BIND: '不能将平台自身地址同步为被纳管资产 IP',
   RELAY_UNAVAILABLE: 'Agent 通道不可达',
   CAPABILITY_UNSUPPORTED: '该 Agent 不支持此操作',
   MISSING_CAPABILITY: 'Agent 缺少执行此操作的必要能力',
@@ -629,7 +650,7 @@ export function getAgentErrorMessage(error, fallback = 'Agent 操作失败') {
   if (error?.response?.status === 404) {
     return 'Agent 管理服务尚未部署或版本不匹配，请联系管理员完成后端发布'
   }
-  return AGENT_ERROR_MESSAGES[code] || data.message || data.error || error?.message || fallback
+  return AGENT_ERROR_MESSAGES[code] || data.message || data.detail || data.error || error?.message || fallback
 }
 
 export default {

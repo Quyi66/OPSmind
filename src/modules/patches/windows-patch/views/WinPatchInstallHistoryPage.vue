@@ -63,6 +63,35 @@
             />
           </template>
         </el-table-column>
+        <el-table-column label="Windows 结果" min-width="220">
+          <template #default="{ row }">
+            <div v-if="getWindowsPatchResultMeta(row).hasData" class="windows-result-meta">
+              <el-tag
+                v-if="getWindowsPatchResultMeta(row).rebootRequired !== null"
+                :type="getWindowsPatchResultMeta(row).rebootRequired ? 'warning' : 'info'"
+                size="small"
+                effect="plain"
+              >
+                {{ getWindowsPatchResultMeta(row).rebootRequired ? '需重启生效' : '无需重启' }}
+              </el-tag>
+              <el-tag
+                v-if="getWindowsPatchResultMeta(row).uninstallable !== null"
+                :type="getWindowsPatchResultMeta(row).uninstallable ? 'success' : 'info'"
+                size="small"
+                effect="plain"
+              >
+                {{ getWindowsPatchResultMeta(row).uninstallable ? '支持卸载' : '不支持卸载' }}
+              </el-tag>
+              <span v-if="getWindowsPatchResultMeta(row).hresult" class="windows-result-code">
+                HRESULT {{ getWindowsPatchResultMeta(row).hresult }}
+              </span>
+              <span v-if="getWindowsPatchResultMeta(row).errorDescription" class="windows-result-description">
+                {{ getWindowsPatchResultMeta(row).errorDescription }}
+              </span>
+            </div>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
         <el-table-column label="更新时间" min-width="190" class-name="win-patch-table__time-column">
           <template #default="{ row }">
             {{
@@ -126,7 +155,13 @@ import WindowsKbDetailDialog from '../components/kb/WindowsKbDetailDialog.vue'
 import WindowsKbLinkList from '../components/kb/WindowsKbLinkList.vue'
 import { winPatchApi } from '../api'
 import { WIN_PATCH_PAGE_SIZE_OPTIONS } from '../constants'
-import { formatDateTime, isRollbackSelectable, parsePageResponse, pickValue } from '../utils'
+import {
+  formatDateTime,
+  getWindowsPatchResultMeta,
+  isRollbackSelectable,
+  parsePageResponse,
+  pickValue
+} from '../utils'
 
 const loading = ref(false)
 const logList = ref([])
@@ -266,6 +301,25 @@ onMounted(() => {
 .win-patch-selection-text {
   font-size: 13px;
   color: var(--el-text-color-secondary);
+}
+
+.windows-result-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+}
+
+.windows-result-code {
+  font-family: Consolas, Monaco, monospace;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.windows-result-description {
+  width: 100%;
+  color: var(--el-text-color-regular);
+  font-size: 12px;
 }
 
 :deep(.win-patch-table__time-column .cell) {

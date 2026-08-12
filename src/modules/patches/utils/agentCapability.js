@@ -29,6 +29,12 @@ function mergeAgentInfo(host, info) {
     agentClientId: info.agentClientId || info.clientId || host.agentClientId,
     agentVersion: info.agentVersion || host.agentVersion,
     agentMode: info.agentMode || host.agentMode,
+    agentPlatform: info.agentPlatform || host.agentPlatform,
+    agentOs: info.os || host.agentOs,
+    cmdbIp: info.cmdbIp || host.cmdbIp,
+    lastReportedIp: info.lastReportedIp || host.lastReportedIp,
+    lastReportedAt: info.lastReportedAt || host.lastReportedAt,
+    ipMismatch: info.ipMismatch ?? host.ipMismatch,
     targetIp: info.targetIp || host.targetIp,
     lastSeenAt: info.lastSeenAt || host.lastSeenAt,
     agentInfoUnavailable: false

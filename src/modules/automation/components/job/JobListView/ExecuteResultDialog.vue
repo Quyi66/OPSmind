@@ -68,6 +68,19 @@
                   :ansible-contents="ansibleContents"
                 />
 
+                <div v-if="agentRouteMismatchMessage" class="result-error route-mismatch-error">
+                  <div class="error-title-bar">
+                    <i class="fa fa-shield-alt error-icon" />
+                    <span class="error-title">Agent 路由安全检查未通过</span>
+                  </div>
+                  <pre class="route-mismatch-details">{{ agentRouteMismatchMessage }}</pre>
+                  <div class="route-mismatch-actions">
+                    <el-button type="danger" plain size="small" @click="openAgentHealthCheck">
+                      打开 Agent 接入体检
+                    </el-button>
+                  </div>
+                </div>
+
                 <div
                   v-if="summary.errorTitle || summary.errorDetails || (summary.errorList && summary.errorList.length)"
                   class="result-error"
@@ -446,6 +459,8 @@
       </el-tabs>
     </div>
   </el-dialog>
+
+  <AgentHealthCheckDrawer v-model="agentHealthCheckVisible" />
 </template>
 
 <script setup>
@@ -457,7 +472,9 @@ import { JOB_STATUS_LABELS, JOB_STATUS_TAG_TYPES } from '@/modules/automation/co
 import { isActiveRunStatus, isSuccessfulRunStatus, normalizeRunStatus } from '@/utils/taskStatus'
 import { AGENT_ERROR_MESSAGES, agentApi } from '@/modules/asset/api'
 import { authService } from '@/core/auth'
+import { extractAgentRouteMismatchMessage } from '@/modules/asset/utils/agentRouteMismatch'
 import { translateText } from '@/utils/i18n'
+import AgentHealthCheckDrawer from '@/modules/asset/components/asset-info/AgentHealthCheckDrawer.vue'
 import AnsibleLogViewer from '../AnsibleLogViewer.vue'
 import JobUpgradeOverview from './JobUpgradeOverview.vue'
 
@@ -511,6 +528,7 @@ const dialogVisible = computed({
 const activeTab = ref('overview')
 const loading = ref(false)
 const result = ref(null)
+const agentHealthCheckVisible = ref(false)
 const executionChannelInfo = ref({})
 let executionChannelRequestSequence = 0
 const pollTimer = ref()
@@ -526,6 +544,7 @@ const processModelPretty = computed(() =>
 const ansibleArtifacts = computed(() => buildAnsibleArtifacts(result.value, isAnsibleJob.value))
 const ansibleContents = computed(() => ansibleArtifacts.value.contents)
 const ansibleRawOutput = computed(() => ansibleArtifacts.value.raw)
+const agentRouteMismatchMessage = computed(() => extractAgentRouteMismatchMessage(result.value))
 const ansibleHostRows = computed(() => summarizeHostRows(ansibleContents.value))
 const hostTreeRef = ref(null)
 const hostFilterText = ref('')
@@ -733,8 +752,13 @@ function handleClose() {
   resetState()
 }
 
+function openAgentHealthCheck() {
+  agentHealthCheckVisible.value = true
+}
+
 function resetState() {
   activeTab.value = 'overview'
+  agentHealthCheckVisible.value = false
   result.value = null
   executionChannelInfo.value = {}
   executionChannelRequestSequence += 1
@@ -814,6 +838,17 @@ const KNOWN_MSG_MAP = {
 function translateAgentErrorText(value) {
   const text = String(value || '').trim()
   if (!text) return text
+
+  if (/No module named\s+['"]requests['"]/i.test(text)) {
+    return `执行机 Ansible 解释器缺少 requests 依赖，请联系平台运维处理（不是目标主机问题）。（${text}）`
+  }
+  if (/Request failed with status code 502|\bHTTP\s*502\b|\b502 Bad Gateway\b/i.test(text)) {
+    return `平台网关或后端暂时不可用，本次执行结果未知，请核验目标主机和任务最终状态后再决定是否重试。（${text}）`
+  }
+  if (/client.?id/i.test(text) && /not bound|unbound|missing|未绑定|缺少/i.test(text)) {
+    return `目标主机尚未绑定有效的 Agent Client ID，请先完成资产绑定。（${text}）`
+  }
+
   const matchedCode = Object.keys(AGENT_ERROR_MESSAGES).find(code => text.includes(code))
   if (!matchedCode) return text
   const translated = AGENT_ERROR_MESSAGES[matchedCode]
@@ -1191,7 +1226,9 @@ const summary = computed(() => {
   const start = data.startTime || data.start_time
   const end = data.endTime || data.end_time
   const status = data.status || ''
-  const parsedError = parseJobExecutionError(data.error || '', ansibleContents.value, status)
+  const parsedError = agentRouteMismatchMessage.value
+    ? { title: '', list: [], details: '' }
+    : parseJobExecutionError(data.error || '', ansibleContents.value, status)
   const connectionType = executionChannelInfo.value.connectionType || ''
   const isAgentConnection = connectionType === 'koreops_agent'
   return {
@@ -1917,6 +1954,30 @@ onBeforeUnmount(() => {
   max-height: 360px;
   overflow-y: auto;
   padding-right: 4px;
+}
+
+.route-mismatch-error {
+  border-color: var(--el-color-danger-light-7);
+}
+
+.route-mismatch-details {
+  margin: 10px 0 0;
+  padding: 12px;
+  overflow: auto;
+  border: 1px solid var(--el-color-danger-light-8);
+  border-radius: 6px;
+  background: var(--el-color-danger-light-9);
+  color: var(--el-text-color-primary);
+  font: inherit;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.route-mismatch-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
 }
 
 .result-section {

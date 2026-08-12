@@ -100,9 +100,14 @@ class ApiService {
         const agentErrorMap = {
           'AGENT_AUTH_FAILED': 'Agent 鉴权失败，Token 凭据可能无效或已被吊销',
           'ENROLL_TOKEN_INVALID': 'Agent 安装 Token 已用尽或失效，请重新签发',
-          'CLIENT_ALREADY_BOUND': '该 Agent 已绑定其他资产',
+          'ENROLL_TOKEN_EXHAUSTED': 'Agent 安装 Token 已耗尽，请重新签发',
+          'ENROLL_TOKEN_EXPIRED': 'Agent 安装 Token 已过期，请重新签发',
+          'NEED_REENROLL': '该主机凭证已失效，需要重新纳管',
+          'CLIENT_ALREADY_BOUND': 'Agent Client ID 与资产绑定关系不一致，请核对所选资产',
           'HOST_ALREADY_BOUND': '该资产已绑定 Agent，请先解绑',
+          'HOST_NOT_FOUND': '资产不存在或没有有效的 Agent 绑定',
           'AGENT_OFFLINE': '目标主机 Agent 处于离线状态，无法下发指令',
+          'PLATFORM_SELF_BIND': '不能将平台自身地址同步为被纳管资产 IP',
           'RELAY_UNAVAILABLE': 'Agent 通道不可达',
           'DISPATCH_TIMEOUT': 'Agent 指令下发/响应超时',
           'CAPABILITY_UNSUPPORTED': '该 Agent 不支持此操作',
@@ -127,9 +132,9 @@ class ApiService {
         } else if (
           isAgentManagementRequest &&
           ![401, 403].includes(response?.status) &&
-          (data?.message || data?.error)
+          (data?.message || data?.detail || data?.error)
         ) {
-          error.message = data.message || data.error
+          error.message = data.message || data.detail || data.error
           return Promise.reject(error)
         }
 
@@ -142,7 +147,7 @@ class ApiService {
 
         // 处理权限错误
         if (response?.status === 403) {
-          return Promise.reject(new Error('Access denied'))
+          return Promise.reject(new Error('无权执行此操作'))
         }
 
         // 重试逻辑

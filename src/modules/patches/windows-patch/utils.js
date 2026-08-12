@@ -68,6 +68,83 @@ export function normalizeBoolean(value) {
   return normalized === 'true' || normalized === '1' || normalized === 'yes'
 }
 
+const OPTIONAL_VALUE_MISSING = Symbol('optional-value-missing')
+
+function pickOptionalBoolean(source, keys) {
+  const value = pickValue(source, keys, OPTIONAL_VALUE_MISSING)
+  if (value === OPTIONAL_VALUE_MISSING) return null
+  if (typeof value === 'boolean') return value
+  if (typeof value === 'number') return value === 1
+
+  const normalized = String(value).trim().toLowerCase()
+  if (['true', '1', 'yes', 'y'].includes(normalized)) return true
+  if (['false', '0', 'no', 'n'].includes(normalized)) return false
+  return null
+}
+
+function pickNestedValue(sources, keys, fallback = '') {
+  for (const source of sources) {
+    const value = pickValue(source, keys, OPTIONAL_VALUE_MISSING)
+    if (value !== OPTIONAL_VALUE_MISSING) return value
+  }
+  return fallback
+}
+
+function formatWindowsResultCode(value) {
+  if (value === undefined || value === null || value === '') return ''
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return `0x${(value >>> 0).toString(16).toUpperCase().padStart(8, '0')}`
+  }
+  return String(value).trim()
+}
+
+const WINDOWS_RESULT_CODE_DESCRIPTIONS = {
+  '0X80240017': '此更新不适用于当前系统',
+  '0X80240022': '所有更新均未成功安装',
+  '0X80240034': 'Windows Update 下载更新失败',
+  '0X8024200D': '更新内容需要重新下载',
+  '0X800F081F': '找不到所需的源文件'
+}
+
+/**
+ * 前向兼容 Agent/WUA 返回字段。旧后端没有这些字段时 hasData=false，页面保持原状。
+ */
+export function getWindowsPatchResultMeta(row = {}) {
+  const nested = [
+    row,
+    row.resultDetail,
+    row.result_detail,
+    row.wuaResult,
+    row.wua_result
+  ].filter(Boolean)
+  const rebootRequired = nested
+    .map(source => pickOptionalBoolean(source, ['rebootRequired', 'reboot_required']))
+    .find(value => value !== null) ?? null
+  const uninstallable = nested
+    .map(source => pickOptionalBoolean(source, ['uninstallable', 'isUninstallable', 'is_uninstallable']))
+    .find(value => value !== null) ?? null
+  const hresult = formatWindowsResultCode(
+    pickNestedValue(nested, ['hresult', 'hResult', 'h_result'], '')
+  )
+  const resultCode = formatWindowsResultCode(
+    pickNestedValue(nested, ['resultCode', 'result_code', 'wuaResultCode', 'wua_result_code'], '')
+  )
+  const errorDescription = pickNestedValue(
+    nested,
+    ['errorDescription', 'error_description', 'resultMessage', 'result_message'],
+    WINDOWS_RESULT_CODE_DESCRIPTIONS[hresult.toUpperCase()] || ''
+  )
+
+  return {
+    rebootRequired,
+    uninstallable,
+    hresult,
+    resultCode,
+    errorDescription,
+    hasData: rebootRequired !== null || uninstallable !== null || Boolean(hresult || resultCode)
+  }
+}
+
 export function normalizeUpper(value) {
   return String(value || '')
     .trim()
@@ -370,12 +447,14 @@ export function isPatchInstallable(row) {
 }
 
 export function isPatchRollbackable(row) {
+  if (getWindowsPatchResultMeta(row).uninstallable === false) return false
   const status = normalizeUpper(pickValue(row, ['patchStatus', 'patch_status'], ''))
   // 仅已修复（工具安装）的补丁可回滚；人工已修复无安装记录，暂不支持回滚
   return ['IS_REPAIR', 'REPAIRD', 'INSTALLED'].includes(status)
 }
 
 export function isRollbackSelectable(row) {
+  if (getWindowsPatchResultMeta(row).uninstallable === false) return false
   const action = normalizeUpper(pickValue(row, ['action'], ''))
   const result = normalizeUpper(pickValue(row, ['result'], ''))
 

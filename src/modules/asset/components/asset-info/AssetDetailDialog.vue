@@ -29,6 +29,49 @@
           </div>
         </div>
 
+        <div v-if="isAgentAsset" class="agent-detail-card">
+          <el-alert
+            v-if="hasAgentIpMismatch(agentInfo)"
+            type="error"
+            :closable="false"
+            show-icon
+            class="mb-3"
+          >
+            <template #title>
+              Agent 实际地址与 CMDB 主 IP 不一致，任务下发会被安全闸门阻断。
+            </template>
+          </el-alert>
+          <div class="agent-detail-card__header">
+            <span>Agent 接入信息</span>
+            <el-tag size="small" :type="agentInfo?.agentStatus === 'online' ? 'success' : 'warning'">
+              {{ agentInfo?.agentStatus === 'online' ? '在线' : '离线/未知' }}
+            </el-tag>
+          </div>
+          <el-descriptions :column="2" border size="small">
+            <el-descriptions-item label="Agent 平台">{{ getAgentPlatformLabel(agentInfo) }}</el-descriptions-item>
+            <el-descriptions-item label="Agent 系统">{{ agentInfo?.os || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="Client ID">{{ agentInfo?.agentClientId || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="纳管模式">{{ agentInfo?.agentMode === 'gateway' ? 'Gateway 跳板' : 'Local 本机' }}</el-descriptions-item>
+            <el-descriptions-item label="CMDB 主 IP">{{ getAgentCmdbIp(agentInfo) || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="Agent 当前 IP">{{ getAgentReportedIp(agentInfo) || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="最近上报">{{ formatAgentTimestamp(agentInfo?.lastReportedAt) }}</el-descriptions-item>
+            <el-descriptions-item label="最后在线">{{ formatAgentTimestamp(agentInfo?.lastSeenAt) }}</el-descriptions-item>
+          </el-descriptions>
+          <div v-if="hasAgentIpMismatch(agentInfo)" class="agent-detail-card__actions">
+            <el-button
+              v-if="canManageAgents"
+              type="danger"
+              plain
+              size="small"
+              :loading="syncingIp"
+              @click="syncAssetIp"
+            >
+              同步资产 IP
+            </el-button>
+            <span v-else class="agent-detail-card__hint">请联系有 Agent 管理权限的用户同步资产 IP。</span>
+          </div>
+        </div>
+
         <!-- 扁平属性表格列表 -->
         <el-descriptions :column="2" border class="detail-descriptions mt-3">
           <el-descriptions-item
@@ -70,9 +113,17 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { ElMessage } from 'element-plus'
-import { assetApi } from '../../api'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { agentApi, assetApi, getAgentErrorMessage } from '../../api'
 import { viewConfigApi } from '@/modules/patches/api'
+import { authService } from '@/core/auth'
+import {
+  formatAgentTimestamp,
+  getAgentCmdbIp,
+  getAgentPlatformLabel,
+  getAgentReportedIp,
+  hasAgentIpMismatch
+} from '../../utils/agentInfo'
 
 const props = defineProps({
   modelValue: {
@@ -85,7 +136,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'saved'])
 
 const visible = computed({
   get: () => props.modelValue,
@@ -95,6 +146,22 @@ const visible = computed({
 const loading = ref(false)
 const assetType = ref(null)
 const attrValues = ref({})
+const agentInfo = ref(null)
+const syncingIp = ref(false)
+
+const isAgentAsset = computed(() =>
+  ['koreops_agent', 'agent', 'oplus_agent'].includes(agentInfo.value?.connectionType)
+)
+
+const canManageAgents = computed(() =>
+  authService.hasPermission('agent:manage') ||
+  [
+    'admin', 'role_admin',
+    'privuser', 'role_privuser',
+    'developer', 'role_developer',
+    'free', 'role_free'
+  ].some(role => authService.hasRole(role))
+)
 
 // 内置系统属性与后端模型属性合并的备选属性
 const defaultAvailableAttrs = [
@@ -230,14 +297,16 @@ const loadAssetDetail = async () => {
   loading.value = true
   try {
     // 并行请求资产属性值、资产类型定义和自定义视图配置
-    const [attrs, typeInfo, viewConfigRes] = await Promise.all([
+    const [attrs, typeInfo, viewConfigRes, agentInfoRes] = await Promise.all([
       assetApi.getAssetAttrs(props.assetId),
       assetApi.getAssetTypeByAssetId(props.assetId),
-      viewConfigApi.getViewConfig({ ciType: 'host', scope: 'user' }).catch(() => null)
+      viewConfigApi.getViewConfig({ ciType: 'host', scope: 'user' }).catch(() => null),
+      agentApi.getHostAgentInfo([props.assetId]).catch(() => [])
     ])
 
     attrValues.value = attrs || {}
     assetType.value = typeInfo
+    agentInfo.value = Array.isArray(agentInfoRes) ? agentInfoRes[0] || null : null
 
     // 解析自定义详情卡片属性，将其展平为单一显示列表
     const data = viewConfigRes?.data || viewConfigRes
@@ -272,11 +341,52 @@ const loadAssetDetail = async () => {
   }
 }
 
+const syncAssetIp = async () => {
+  const cmdbIp = getAgentCmdbIp(agentInfo.value)
+  const reportedIp = getAgentReportedIp(agentInfo.value)
+  if (!reportedIp) {
+    ElMessage.warning('Agent 尚未上报可同步的 IP')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确认将该资产的 CMDB 主 IP 从 ${cmdbIp || '-'} 修改为 ${reportedIp}？该地址可能被工单、审计、防火墙策略和 SSH 通道引用。`,
+      '同步资产主 IP',
+      {
+        confirmButtonText: '确认同步',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+  } catch {
+    return
+  }
+
+  syncingIp.value = true
+  try {
+    await agentApi.syncAssetIp({
+      hostId: props.assetId,
+      clientId: agentInfo.value?.agentClientId,
+      confirm: true
+    })
+    ElMessage.success('资产主 IP 已同步')
+    await loadAssetDetail()
+    emit('saved')
+  } catch (error) {
+    ElMessage.error(getAgentErrorMessage(error, '同步资产主 IP 失败'))
+  } finally {
+    syncingIp.value = false
+  }
+}
+
 // 关闭弹窗
 const handleClose = () => {
   visible.value = false
   attrValues.value = {}
   assetType.value = null
+  agentInfo.value = null
+  syncingIp.value = false
   displayAttrs.value = [
     'IP',
     'HOSTNAME',
@@ -342,6 +452,34 @@ watch(visible, val => {
 
   :deep(.desc-value) {
     color: var(--el-text-color-primary);
+  }
+}
+
+.agent-detail-card {
+  margin-bottom: 20px;
+  padding: 16px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+  background: var(--el-bg-color);
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-top: 12px;
+  }
+
+  &__hint {
+    color: var(--el-text-color-secondary);
+    font-size: 12px;
   }
 }
 

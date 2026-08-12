@@ -120,9 +120,13 @@
               <i class="fa fa-plus" style="margin-right: 4px"></i>
               自动化设备录入
             </el-button>
-            <el-button v-if="canManageAgents" type="success" size="small" @click="agentEnrollmentVisible = true">
+            <el-button v-if="canManageAgents" type="success" size="small" @click="openAgentEnrollment()">
               <i class="fa fa-plug" style="margin-right: 4px"></i>
               Agent 接入
+            </el-button>
+            <el-button size="small" @click="openAgentHealthCheck">
+              <i class="fa fa-heartbeat" style="margin-right: 4px"></i>
+              Agent 接入体检
             </el-button>
             <el-button size="small" @click="importDialogVisible = true">
               <i class="fa fa-file-import" style="margin-right: 4px"></i>
@@ -266,6 +270,9 @@
                         <el-tag size="small" :type="getAgentStatusTag(row)">
                           {{ getAgentStatusLabel(row) }}
                         </el-tag>
+                        <el-tag size="small" type="info" effect="plain">
+                          {{ getAgentPlatformLabel(row) }}
+                        </el-tag>
                         <span v-if="getAgentCapabilities(row).length" class="agent-capabilities-inline">
                           {{ getAgentCapabilitySummary(row) }}
                         </span>
@@ -274,8 +281,64 @@
                     <span v-if="getAgentStatus(row) === 'offline' && row.lastSeenAt" class="agent-offline-hint">
                       最后在线 {{ formatDateTime(row.lastSeenAt, 'MM-DD HH:mm') }}
                     </span>
+                    <el-tooltip
+                      v-if="canManageAgents && getAgentStatus(row) === 'offline'"
+                      content="重新签发一次性凭据，并在目标机执行后端返回的安装命令"
+                      placement="top"
+                    >
+                      <el-button
+                        text
+                        type="warning"
+                        size="small"
+                        class="agent-context-action"
+                        @click="openAgentReenrollment(row)"
+                      >
+                        重新纳管
+                      </el-button>
+                    </el-tooltip>
                   </div>
                 </template>
+                <span v-else class="text-muted">-</span>
+              </template>
+            </el-table-column>
+
+            <el-table-column label="Agent 地址" min-width="220">
+              <template #default="{ row }">
+                <div v-if="isAgentAsset(row)" class="agent-address-cell">
+                  <div class="agent-address-row">
+                    <span class="agent-address-label">CMDB 主 IP</span>
+                    <span class="agent-address-value">{{ getAgentCmdbIp(row) || '-' }}</span>
+                  </div>
+                  <div class="agent-address-row">
+                    <span class="agent-address-label">Agent 当前 IP</span>
+                    <span
+                      class="agent-address-value"
+                      :class="{ 'is-mismatch': hasAgentIpMismatch(row) }"
+                    >
+                      {{ getAgentReportedIp(row) || '-' }}
+                    </span>
+                  </div>
+                  <el-tag
+                    v-if="hasAgentIpMismatch(row)"
+                    size="small"
+                    type="danger"
+                    effect="light"
+                    class="agent-address-warning"
+                  >
+                    <i class="fa fa-exclamation-triangle me-1" />IP 已错位
+                  </el-tag>
+                  <el-button
+                    v-if="canManageAgents && hasAgentIpMismatch(row)"
+                    text
+                    type="danger"
+                    size="small"
+                    class="agent-context-action"
+                    :loading="syncingAgentIpId === String(row.id || row.hostId || row.host_id)"
+                    @click="handleSyncAssetIp(row)"
+                  >
+                    同步资产IP
+                  </el-button>
+                </div>
                 <span v-else class="text-muted">-</span>
               </template>
             </el-table-column>
@@ -538,7 +601,11 @@
     </div>
 
     <!-- 所有弹窗和抽屉组件 -->
-    <AssetDetailDialog v-model="detailDialogVisible" :asset-id="currentAssetId" />
+    <AssetDetailDialog
+      v-model="detailDialogVisible"
+      :asset-id="currentAssetId"
+      @saved="loadAssetList"
+    />
 
     <AssetEditDialog
       v-model="editDialogVisible"
@@ -599,7 +666,17 @@
     />
 
     <!-- Agent 接入向导弹窗 -->
-    <AgentEnrollmentDialog v-model="agentEnrollmentVisible" @success="handleAgentEnrollmentSuccess" />
+    <AgentEnrollmentDialog
+      v-model="agentEnrollmentVisible"
+      :initial-asset="agentEnrollmentInitialAsset"
+      :mode="agentEnrollmentMode"
+      @success="handleAgentEnrollmentSuccess"
+    />
+
+    <AgentHealthCheckDrawer
+      v-model="agentHealthCheckVisible"
+      @synced="loadAssetList"
+    />
 
   </div>
 </template>
@@ -609,6 +686,7 @@ import { ref, computed, nextTick, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import AgentEnrollmentDialog from '../components/asset-info/AgentEnrollmentDialog.vue'
+import AgentHealthCheckDrawer from '../components/asset-info/AgentHealthCheckDrawer.vue'
 import {
   Edit,
   Delete,
@@ -638,6 +716,12 @@ import BatchLocationDialog from '@/modules/patches/components/host-detail/dialog
 
 import { viewConfigApi } from '@/modules/patches/api'
 import { formatDateTime } from '../utils/helpers'
+import {
+  getAgentCmdbIp,
+  getAgentPlatformLabel,
+  getAgentReportedIp,
+  hasAgentIpMismatch
+} from '../utils/agentInfo'
 
 // 路由
 const route = useRoute()
@@ -660,7 +744,11 @@ const currentTenantId = ref('')
 const customViewVisible = ref(false)
 const batchLocationVisible = ref(false)
 const agentEnrollmentVisible = ref(false)
+const agentEnrollmentInitialAsset = ref(null)
+const agentEnrollmentMode = ref('enroll')
+const agentHealthCheckVisible = ref(false)
 const agentServiceError = ref('')
+const syncingAgentIpId = ref('')
 
 const canManageAgents = computed(() =>
   authService.hasPermission('agent:manage') ||
@@ -837,12 +925,20 @@ const getAgentStatus = record => record.agentStatus || record.agent_status || 'u
 const getAgentStatusLabel = record => ({ online: '在线', offline: '离线', unknown: '未知' })[getAgentStatus(record)] || '未知'
 const getAgentStatusTag = record => ({ online: 'success', offline: 'danger', unknown: 'warning' })[getAgentStatus(record)] || 'warning'
 
+const getAgentOs = record => String(
+  record?.agentOs || record?.agent_os || record?.osInfo || record?.agentOsInfo || ''
+).trim()
+
 const getAgentStatusDetail = record => {
   const details = [`状态：${getAgentStatusLabel(record)}`]
   if (record?.agentVersion) details.push(`版本：${record.agentVersion}`)
 
   const capabilities = getAgentCapabilities(record)
   if (capabilities.length) details.push(`支持能力：${capabilities.join('、')}`)
+  if (getAgentOs(record)) details.push(`Agent OS：${getAgentOs(record)}`)
+  if (record?.clientId || record?.agentClientId) details.push(`Client ID：${record.clientId || record.agentClientId}`)
+  if (getAgentReportedIp(record)) details.push(`Agent 当前 IP：${getAgentReportedIp(record)}`)
+  if (hasAgentIpMismatch(record)) details.push(`CMDB 主 IP：${getAgentCmdbIp(record)}（与 Agent 上报不一致）`)
   if (record?.lastSeenAt) details.push(`最后在线：${formatDateTime(record.lastSeenAt)}`)
   return details.join('；')
 }
@@ -898,6 +994,12 @@ const enrichAssetAgentInfo = async records => {
     record.agentVersion = agentInfo.agentVersion || record.agentVersion
     record.lastSeenAt = agentInfo.lastSeenAt || record.lastSeenAt
     record.agentMode = agentInfo.agentMode || record.agentMode
+    record.agentOs = agentInfo.os || record.agentOs
+    record.agentPlatform = agentInfo.agentPlatform || agentInfo.agent_platform || record.agentPlatform
+    record.cmdbIp = agentInfo.cmdbIp || agentInfo.cmdb_ip || record.cmdbIp || record.IP
+    record.lastReportedIp = agentInfo.lastReportedIp || agentInfo.last_reported_ip || record.lastReportedIp
+    record.lastReportedAt = agentInfo.lastReportedAt || agentInfo.last_reported_at || record.lastReportedAt
+    record.ipMismatch = agentInfo.ipMismatch ?? agentInfo.ip_mismatch ?? record.ipMismatch
     record.agentInfoUnavailable = false
   })
 
@@ -1081,6 +1183,17 @@ const handleView = row => {
   detailDialogVisible.value = true
 }
 
+const openAssetFromRouteQuery = query => {
+  const assetId = query?.assetId
+  if (!assetId) return
+  currentAssetId.value = String(assetId)
+  if (query.action === 'edit') {
+    editDialogVisible.value = true
+  } else {
+    detailDialogVisible.value = true
+  }
+}
+
 const handleEditRow = row => {
   currentAssetId.value = row.id
   editDialogVisible.value = true
@@ -1088,6 +1201,46 @@ const handleEditRow = row => {
 
 const handleEditSaved = () => {
   loadAssetList()
+}
+
+const handleSyncAssetIp = async row => {
+  const hostId = row?.id || row?.hostId || row?.host_id
+  const clientId = row?.agentClientId || row?.clientId
+  const cmdbIp = getAgentCmdbIp(row)
+  const reportedIp = getAgentReportedIp(row)
+  if (!hostId || !reportedIp) {
+    ElMessage.warning('缺少资产 ID 或 Agent 上报 IP，无法同步')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确认将资产“${row.hostname || hostId}”的 CMDB 主 IP 从 ${cmdbIp || '-'} 修改为 ${reportedIp}？该地址可能被工单、审计、防火墙策略和 SSH 通道引用。`,
+      '同步资产主 IP',
+      {
+        confirmButtonText: '确认同步',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+  } catch {
+    return
+  }
+
+  syncingAgentIpId.value = String(hostId)
+  try {
+    await agentApi.syncAssetIp({ hostId: String(hostId), clientId, confirm: true })
+    ElMessage.success('资产主 IP 已同步')
+    await loadAssetList()
+  } catch (error) {
+    ElMessage.error(getAgentErrorMessage(error, '同步资产主 IP 失败'))
+  } finally {
+    syncingAgentIpId.value = ''
+  }
+}
+
+const openAgentHealthCheck = () => {
+  agentHealthCheckVisible.value = true
 }
 
 const handleHistory = row => {
@@ -1269,12 +1422,41 @@ const handleRefresh = () => {
   loadAssetList()
 }
 
-const handleAgentEnrollmentSuccess = async boundHostId => {
+const handleAgentEnrollmentSuccess = async _boundHostId => {
   await loadAssetList()
   // if (boundHostId) {
   //   currentAssetId.value = String(boundHostId)
   //   detailDialogVisible.value = true
   // }
+}
+
+const openAgentEnrollment = (asset = null, mode = 'enroll') => {
+  agentEnrollmentInitialAsset.value = asset
+  agentEnrollmentMode.value = mode
+  agentEnrollmentVisible.value = true
+}
+
+const openAgentReenrollment = async row => {
+  try {
+    await ElMessageBox.confirm(
+      '普通网络中断也会显示为离线。请仅在确认该主机凭证失效或确需重新注册时继续；新命令仍需在目标机手工执行。',
+      '确认重新纳管',
+      {
+        confirmButtonText: '继续生成新凭据',
+        cancelButtonText: '先排查服务与网络',
+        type: 'warning'
+      }
+    )
+  } catch {
+    return
+  }
+
+  const assetId = row.id || row.hostId || row.host_id
+  openAgentEnrollment({
+    ...row,
+    key: String(assetId || ''),
+    value: row.IP || row.ip || row.hostname || String(assetId || '')
+  }, 'reenroll')
 }
 
 const loadCurrentTenantId = async () => {
@@ -1565,6 +1747,7 @@ onMounted(() => {
   if (route.query.ip) {
     searchText.value = route.query.ip
   }
+  openAssetFromRouteQuery(route.query)
   loadAssetTypes()
   loadCurrentTenantId()
   loadTableColumnsConfig()
@@ -1578,6 +1761,7 @@ watch(
       searchText.value = query.ip
       loadAssetList()
     }
+    openAssetFromRouteQuery(query)
   }
 )
 </script>
@@ -1660,7 +1844,53 @@ watch(
       font-size: 11px;
       color: var(--el-text-color-secondary);
     }
+
   }
+}
+
+.agent-address-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.agent-address-row {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr);
+  align-items: center;
+  width: 100%;
+  line-height: 18px;
+}
+
+.agent-address-label {
+  color: var(--el-text-color-secondary);
+  font-size: 11px;
+}
+
+.agent-address-value {
+  overflow: hidden;
+  color: var(--el-text-color-primary);
+  font-family: var(--el-font-family);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &.is-mismatch {
+    color: var(--el-color-danger);
+    font-weight: 600;
+  }
+}
+
+.agent-address-warning {
+  margin-top: 1px;
+}
+
+.agent-context-action {
+  height: auto;
+  margin: 0;
+  padding: 1px 0;
+  font-size: 12px;
 }
 
 .agent-channel-cell {

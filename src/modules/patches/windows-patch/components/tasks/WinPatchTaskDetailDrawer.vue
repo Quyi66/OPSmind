@@ -170,6 +170,38 @@
               {{ formatDateTime(pickValue(row, ['completedDate', 'completed_date'], '')) }}
             </template>
           </el-table-column>
+          <el-table-column label="Windows 结果" min-width="220">
+            <template #default="{ row }">
+              <div v-if="getWindowsPatchResultMeta(row).hasData" class="windows-result-meta">
+                <el-tag
+                  v-if="getWindowsPatchResultMeta(row).rebootRequired !== null"
+                  :type="getWindowsPatchResultMeta(row).rebootRequired ? 'warning' : 'info'"
+                  size="small"
+                  effect="plain"
+                >
+                  {{ getWindowsPatchResultMeta(row).rebootRequired ? '需重启生效' : '无需重启' }}
+                </el-tag>
+                <el-tag
+                  v-if="getWindowsPatchResultMeta(row).uninstallable !== null"
+                  :type="getWindowsPatchResultMeta(row).uninstallable ? 'success' : 'info'"
+                  size="small"
+                  effect="plain"
+                >
+                  {{ getWindowsPatchResultMeta(row).uninstallable ? '支持卸载' : '不支持卸载' }}
+                </el-tag>
+                <span v-if="getWindowsPatchResultMeta(row).hresult" class="windows-result-code">
+                  HRESULT {{ getWindowsPatchResultMeta(row).hresult }}
+                </span>
+                <span v-if="getWindowsPatchResultMeta(row).resultCode" class="windows-result-code">
+                  Result {{ getWindowsPatchResultMeta(row).resultCode }}
+                </span>
+                <span v-if="getWindowsPatchResultMeta(row).errorDescription" class="windows-result-description">
+                  {{ getWindowsPatchResultMeta(row).errorDescription }}
+                </span>
+              </div>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
           <el-table-column label="错误信息" min-width="240" show-overflow-tooltip>
             <template #default="{ row }">
               {{ pickValue(row, ['errorMessage', 'error_message'], '-') }}
@@ -207,6 +239,7 @@ import {
   getTaskStatusTagType,
   getTaskTypeLabel,
   getTaskTypeTagType,
+  getWindowsPatchResultMeta,
   isStepControlledTask,
   isTaskRunning,
   normalizeUpper,
@@ -813,6 +846,25 @@ watch(
   margin-top: 0;
   flex: 1 1 auto;
   min-height: 0;
+}
+
+.windows-result-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+}
+
+.windows-result-code {
+  font-family: Consolas, Monaco, monospace;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.windows-result-description {
+  width: 100%;
+  color: var(--el-text-color-regular);
+  font-size: 12px;
 }
 
 @media (max-width: 1200px) {
