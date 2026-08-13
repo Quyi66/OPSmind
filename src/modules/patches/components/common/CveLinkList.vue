@@ -24,7 +24,7 @@
       v-if="overflowCount > 0"
       v-model="dialogVisible"
       :title="dialogTitle"
-      width="760px"
+      width="680px"
       append-to-body
       destroy-on-close
     >
