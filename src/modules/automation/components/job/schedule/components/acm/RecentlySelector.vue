@@ -62,14 +62,13 @@
         </el-table-column>
         <el-table-column label="状态" width="90" align="left" sortable>
           <template #default="{ row }">
-            <el-tag
+            <RunLogStatusTag
               :type="getStatusStyle(row.status)"
               size="small"
-              class="clickable-status"
               @click="handleViewResult(row)"
             >
               {{ getStatusLabel(row.status) }}
-            </el-tag>
+            </RunLogStatusTag>
           </template>
         </el-table-column>
         <el-table-column label="详情" width="60" align="left">
@@ -115,6 +114,7 @@ import ExecuteResultDialog from '@/modules/automation/components/job/JobListView
 import { JOB_TYPE_OPTIONS } from '@/modules/automation/stores/useJobStore'
 import { translateText } from '@/utils/i18n'
 import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
+import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
 
 const props = defineProps({
   ciType: { type: String, required: true },
@@ -448,12 +448,4 @@ function handlePageSizeChange() {
   text-decoration: underline;
 }
 
-.clickable-status {
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.clickable-status:hover {
-  transform: scale(1.05);
-}
 </style>

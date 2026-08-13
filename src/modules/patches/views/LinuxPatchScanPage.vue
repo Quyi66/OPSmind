@@ -845,16 +845,14 @@
             </el-table-column>
             <el-table-column prop="patch_status" label="状态" width="110">
               <template #default="{ row }">
-                <el-tag
+                <RunLogStatusTag
                   :type="getPatchStatusType(row.patch_status)"
                   size="small"
-                  round
-                  :class="{ 'clickable-status': row.run_id }"
-                  @click="row.run_id && handleViewRunResult(row)"
+                  :clickable="!!row.run_id"
+                  @click="handleViewRunResult(row)"
                 >
-                  <i :class="getPatchStatusIcon(row.patch_status)" style="margin-right: 4px" />
                   {{ row.patch_status }}
-                </el-tag>
+                </RunLogStatusTag>
               </template>
             </el-table-column>
             <el-table-column prop="scan_date" label="扫描时间" width="110">
@@ -1137,6 +1135,7 @@ import PatchDetailDialog from '../components/host-detail/dialogs/PatchDetailDial
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
 import RpmPackageDetailDialog from '../components/rpm/RpmPackageDetailDialog.vue'
 import CveLinkList from '../components/common/CveLinkList.vue'
+import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
 import {
   validateAgentCapability,
   getAgentCapabilityIssues,
@@ -2252,21 +2251,6 @@ function getPatchStatusType(status) {
     回滚成功: 'info'
   }
   return typeMap[status] || 'info'
-}
-
-// 获取补丁状态图标
-function getPatchStatusIcon(status) {
-  const iconMap = {
-    未修复: 'fa fa-times',
-    已修复: 'fa fa-check',
-    '已修复(手动)': 'fa fa-check',
-    修复中: 'fa fa-cog fa-spin',
-    修复失败: 'fa fa-exclamation-triangle',
-    回滚中: 'fa fa-cog fa-spin',
-    回滚失败: 'fa fa-exclamation-triangle',
-    回滚成功: 'fa fa-check'
-  }
-  return iconMap[status] || 'fa fa-circle'
 }
 
 function resolvePatchStatusIds(rows) {
@@ -3449,16 +3433,6 @@ defineExpose({
 .reboot-service-hint {
   font-size: 12px;
   line-height: 1.4;
-}
-
-// 可点击的状态标签
-.clickable-status {
-  cursor: pointer;
-
-  &:hover {
-    opacity: 0.8;
-    transform: scale(1.05);
-  }
 }
 
 // 修复漏洞对话框

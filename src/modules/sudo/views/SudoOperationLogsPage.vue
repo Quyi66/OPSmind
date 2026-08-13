@@ -79,14 +79,14 @@
         <el-table-column prop="action" label="操作" min-width="140" />
         <el-table-column prop="status" label="状态" width="110">
           <template #default="{ row }">
-            <el-tag
+            <RunLogStatusTag
               :type="getStatusType(row.status)"
               size="small"
-              class="status-tag-clickable"
+              :clickable="!!row.run_id"
               @click="handleViewResult(row)"
             >
               {{ getStatusText(row.status) }}
-            </el-tag>
+            </RunLogStatusTag>
           </template>
         </el-table-column>
         <el-table-column prop="executor_node" label="执行引擎节点" min-width="140">
@@ -145,6 +145,7 @@ import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import * as sudoApi from '@/modules/sudo/api'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
+import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
 
 const loading = ref(false)
 const tableData = ref([])
@@ -298,11 +299,4 @@ function formatDuration(startTime, endTime) {
   color: var(--el-color-danger);
 }
 
-.status-tag-clickable {
-  cursor: pointer;
-
-  &:hover {
-    opacity: 0.8;
-  }
-}
 </style>

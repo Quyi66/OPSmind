@@ -135,13 +135,9 @@
 
               <el-table-column label="状态" width="100">
                 <template #default="{ row }">
-                  <el-tag
-                    :type="getStatusType(row.status)"
-                    style="cursor: pointer"
-                    @click="handleViewResult(row)"
-                  >
+                  <RunLogStatusTag :type="getStatusType(row.status)" @click="handleViewResult(row)">
                     {{ getStatusLabel(row.status) }}
-                  </el-tag>
+                  </RunLogStatusTag>
                 </template>
               </el-table-column>
 
@@ -215,6 +211,7 @@ import {
   getRunLogStatusType
 } from '@/modules/automation/constants/runLogStatus'
 import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
+import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
 
 const loading = ref(false)
 const tableData = ref([])

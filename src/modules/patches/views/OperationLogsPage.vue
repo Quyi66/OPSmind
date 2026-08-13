@@ -86,14 +86,14 @@
           </el-table-column>
           <el-table-column prop="status" label="状态" width="90">
             <template #default="{ row }">
-              <el-tag
+              <RunLogStatusTag
                 :type="getStatusType(row.status)"
                 size="small"
-                :style="{ cursor: row.run_record ? 'pointer' : 'default' }"
-                @click="row.run_record && handleViewRunResult(row)"
+                :clickable="!!row.run_record"
+                @click="handleViewRunResult(row)"
               >
                 {{ getStatusLabel(row.status) }}
-              </el-tag>
+              </RunLogStatusTag>
             </template>
           </el-table-column>
           <el-table-column prop="executor_node" label="执行引擎节点" width="120" />
@@ -307,6 +307,7 @@ import { authService } from '@/core/auth'
 import ScanReportDialog from '../components/logs/ScanReportDialog.vue'
 import WindowsScanReportDialog from '../components/logs/WindowsScanReportDialog.vue'
 import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
+import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
 
 // ========== 操作记录 ==========
 const loading = ref(false)
