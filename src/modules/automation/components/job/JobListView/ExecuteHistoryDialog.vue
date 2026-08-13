@@ -119,17 +119,15 @@
           </el-table-column>
           <el-table-column label="状态" width="120" sortable="custom" column-key="status">
             <template #default="{ row }">
-              <el-tag
+              <RunLogStatusTag
                 v-if="row.status"
                 :type="statusTagType(row.status)"
-                effect="dark"
                 size="small"
-                class="history-status-tag"
-                :class="{ 'is-clickable': !!row.id }"
-                @click.stop="row.id && handleStatusClick(row)"
+                :clickable="!!row.id"
+                @click.stop="handleStatusClick(row)"
               >
                 {{ statusLabel(row.status) }}
-              </el-tag>
+              </RunLogStatusTag>
               <span v-else>-</span>
             </template>
           </el-table-column>
@@ -187,6 +185,7 @@ import {
   JOB_STATUS_TAG_TYPES
 } from '@/modules/automation/constants/jobStatus'
 import { isActiveRunStatus, isSuccessfulRunStatus, normalizeRunStatus } from '@/utils/taskStatus'
+import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
 
 const timeRangeOptions = [
   { label: '全部', value: 'all' },
@@ -575,11 +574,6 @@ function formatDuration(startValue, endValue) {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.history-status-tag.is-clickable {
-  cursor: pointer;
-  text-decoration: underline;
 }
 
 .node-badges {

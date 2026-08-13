@@ -78,14 +78,13 @@
         </el-table-column>
         <el-table-column prop="status" label="状态" width="120">
           <template #default="{ row }">
-            <el-tag
+            <RunLogStatusTag
               :type="getTaskStatusTagType(row.status)"
               size="small"
-              class="status-tag--clickable"
               @click="openDetail(row)"
             >
               {{ formatTaskStatus(row.status) }}
-            </el-tag>
+            </RunLogStatusTag>
           </template>
         </el-table-column>
         <el-table-column prop="osType" label="系统类型" width="120">
@@ -134,6 +133,7 @@ import { Refresh, RefreshRight, Search } from '@element-plus/icons-vue'
 import { patchLogsApi } from '../api'
 import PatchProcessLogDetailDialog from '../components/logs/PatchProcessLogDetailDialog.vue'
 import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
+import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
 import {
   formatDateTime,
   formatJsonArray,
@@ -273,15 +273,4 @@ onMounted(loadData)
   height: 32px !important;
 }
 
-.status-tag--clickable {
-  cursor: pointer;
-  transition:
-    opacity 0.2s,
-    filter 0.2s;
-
-  &:hover {
-    opacity: 0.8;
-    filter: brightness(1.1);
-  }
-}
 </style>

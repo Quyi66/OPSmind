@@ -96,21 +96,17 @@
             </template>
           </el-table-column>
 
-          <!-- 3. 状态 (Clickable tags with glow) -->
+          <!-- 3. 状态 -->
           <el-table-column prop="status" label="执行状态" width="105" align="left" sortable>
             <template #default="{ row }">
-              <el-tag
+              <RunLogStatusTag
                 :type="getStatusType(row.status)"
                 size="small"
-                class="status-tag clickable"
+                :clickable="!!row.run_id"
                 @click="showRunResult(row)"
               >
-                <span
-                  class="status-indicator-dot"
-                  :class="`is-${row.status?.toLowerCase()}`"
-                ></span>
                 {{ getStatusLabel(row.status) }}
-              </el-tag>
+              </RunLogStatusTag>
             </template>
           </el-table-column>
 
@@ -213,6 +209,7 @@ import { translateI18nKey } from '@/utils/i18n'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { formatDateTime } from '../utils/helpers'
 import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
+import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -534,44 +531,6 @@ function goToDevice(ip) {
 </script>
 
 <style scoped lang="scss">
-.status-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border-radius: 4px;
-
-  &.clickable {
-    cursor: pointer;
-    transition: all 0.2s ease;
-
-    &:hover {
-      opacity: 0.85;
-      transform: scale(1.03);
-    }
-  }
-
-  .status-indicator-dot {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    display: inline-block;
-
-    &.is-completed {
-      background-color: var(--el-color-success);
-    }
-    &.is-error,
-    &.is-failed {
-      background-color: var(--el-color-danger);
-    }
-    &.is-running {
-      background-color: var(--el-color-primary);
-    }
-    &.is-waiting {
-      background-color: var(--el-color-info);
-    }
-  }
-}
-
 .node-badge {
   border-radius: 4px;
 }

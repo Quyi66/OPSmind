@@ -85,14 +85,14 @@
         </el-table-column>
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag
+            <RunLogStatusTag
               :type="getStatusType(row.status)"
               size="small"
-              :class="{ 'clickable-tag': row.run_id }"
-              @click="row.run_id && handleViewRunResult(row)"
+              :clickable="!!row.run_id"
+              @click="handleViewRunResult(row)"
             >
               {{ getStatusLabel(row.status) }}
-            </el-tag>
+            </RunLogStatusTag>
           </template>
         </el-table-column>
         <el-table-column prop="executor_node" label="执行引擎节点" width="140" sortable />
@@ -142,6 +142,7 @@ import * as userApi from '@/modules/user/api'
 import { translateI18nKey } from '@/utils/i18n'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
+import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
 
 const route = useRoute()
 
@@ -306,13 +307,4 @@ onMounted(() => {
   margin-left: 16px;
 }
 
-.clickable-tag {
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    opacity: 0.8;
-    transform: scale(1.05);
-  }
-}
 </style>

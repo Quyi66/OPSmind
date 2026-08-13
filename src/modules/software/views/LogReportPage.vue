@@ -101,15 +101,14 @@
         <el-table-column prop="action" label="操作" min-width="120" sortable />
         <el-table-column prop="status" label="状态" min-width="100" sortable>
           <template #default="{ row }">
-            <el-tag
+            <RunLogStatusTag
               :type="getStatusType(row.status)"
               size="small"
-              class="status-badge"
-              :class="{ clickable: row.run_record }"
-              @click="row.run_record && handleViewRunResult(row)"
+              :clickable="!!row.run_record"
+              @click="handleViewRunResult(row)"
             >
               {{ getStatusText(row.status) }}
-            </el-tag>
+            </RunLogStatusTag>
           </template>
         </el-table-column>
         <el-table-column prop="executor_node" label="执行引擎节点" min-width="130" sortable />
@@ -163,6 +162,7 @@ import { softwareLogsApi } from '../api'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { translateText } from '@/utils/i18n'
 import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
+import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
 
 const loading = ref(false)
 
@@ -434,13 +434,4 @@ onMounted(() => {
 <style scoped lang="scss">
 /* 此组件使用全局的 ops-page-layout 样式 */
 
-.status-badge {
-  &.clickable {
-    cursor: pointer;
-
-    &:hover {
-      opacity: 0.8;
-    }
-  }
-}
 </style>

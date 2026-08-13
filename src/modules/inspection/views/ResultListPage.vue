@@ -103,14 +103,13 @@
           <el-table-column prop="createdBy" label="执行人" width="100" />
           <el-table-column label="执行状态" width="100" align="left">
             <template #default="{ row }">
-              <el-tag
+              <RunLogStatusTag
                 :type="getStatusType(row.jobStatus)"
                 size="small"
-                style="cursor: pointer"
                 @click="showJobLog(row)"
               >
                 {{ getStatusText(row.jobStatus) }}
-              </el-tag>
+              </RunLogStatusTag>
             </template>
           </el-table-column>
           <el-table-column label="操作" width="90" align="left" fixed="right">
@@ -178,6 +177,7 @@ import {
 } from '../utils/result-list-route-state'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
+import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
 
 const router = useRouter()
 const route = useRoute()

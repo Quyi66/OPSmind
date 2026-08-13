@@ -121,14 +121,13 @@
 
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag
+            <RunLogStatusTag
               :type="getStatusTagType(row.status)"
               size="small"
-              style="cursor: pointer"
               @click="handleViewResult(row)"
             >
               {{ getStatusText(row.status) }}
-            </el-tag>
+            </RunLogStatusTag>
           </template>
         </el-table-column>
 
@@ -230,6 +229,7 @@ import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { fetchJobRunLogs } from '@/modules/automation/api/jao'
 import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
 import { useApi } from '@/core/api'
+import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
 
 // 筛选条件
 const filters = reactive({

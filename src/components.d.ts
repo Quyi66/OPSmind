@@ -76,6 +76,7 @@ declare module 'vue' {
     RouteLoadingFallback: typeof import('./components/common/RouteLoadingFallback.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    RunLogStatusTag: typeof import('./components/shared/RunLogStatusTag.vue')['default']
     ScrollPane: typeof import('./components/layout/TagsView/ScrollPane.vue')['default']
     SideMenu: typeof import('./components/layout/SideMenu.vue')['default']
     SkeletonLoader: typeof import('./components/shared/SkeletonLoader.vue')['default']
