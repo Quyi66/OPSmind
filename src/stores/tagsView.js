@@ -1,18 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { authService } from '@/core/auth'
-
-const LEGACY_PERSIST_KEY = 'tags-view-visited'
-const PERSIST_KEY_PREFIX = `${LEGACY_PERSIST_KEY}:`
+import { getTagsViewPersistKey, LEGACY_TAGS_VIEW_PERSIST_KEY } from '@/utils/tagsViewStorage'
 
 function getPersistKey() {
-  const user = authService.getCurrentUser()
-  const userId = user?.id || user?.login
-
-  if (!userId) return null
-
-  const tenantId = user?.tenantId || 'default'
-  return `${PERSIST_KEY_PREFIX}${encodeURIComponent(tenantId)}:${encodeURIComponent(userId)}`
+  return getTagsViewPersistKey(authService.getCurrentUser())
 }
 
 export const useTagsViewStore = defineStore('tagsView', () => {
@@ -54,7 +46,7 @@ export const useTagsViewStore = defineStore('tagsView', () => {
       if (!persistKey || loadedPersistKey === persistKey) return
 
       // 旧版本使用全局 key，无法安全归属到任何用户，升级后直接丢弃。
-      localStorage.removeItem(LEGACY_PERSIST_KEY)
+      localStorage.removeItem(LEGACY_TAGS_VIEW_PERSIST_KEY)
 
       // 账号发生切换时，连同 KeepAlive 和 iframe 状态一起清空，避免页面实例跨用户复用。
       clearViewState()
