@@ -2,7 +2,7 @@
   <el-dialog
     v-model="visible"
     title="扫描报告"
-    width="90%"
+    width="1000px"
     destroy-on-close
     class="scan-report-dialog"
   >
@@ -44,7 +44,7 @@
       </div>
 
       <el-table v-loading="loading" :data="tableData" max-height="500px" size="small">
-        <el-table-column prop="host_key" label="主机" min-width="150" show-overflow-tooltip>
+        <el-table-column prop="host_key" label="主机" width="130" show-overflow-tooltip>
           <template #default="{ row }">
             <el-button v-if="row.host_key" link type="primary" @click="handleViewHost(row)">
               {{ row.host_key }}
@@ -52,8 +52,8 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="os_distro" label="OS" width="110" />
-        <el-table-column prop="os_version" label="OS版本" width="120" />
+        <el-table-column prop="os_distro" label="OS" min-width="110" />
+        <el-table-column prop="os_version" label="OS版本" min-width="120" />
         <el-table-column prop="num_critical" width="90">
           <template #header>
             严重

@@ -17,8 +17,8 @@
               <template v-if="result">
                 <div class="overview-header">
                   <div class="overview-status">
-                    <div class="status-chip" :class="statusClass">{{ summary.statusLabel }}</div>
-                    <div class="status-duration">{{ summary.duration }}</div>
+                    <span class="status-chip" :class="statusClass">{{ summary.statusLabel }}</span>
+                    <span class="status-duration">{{ summary.duration }}</span>
                     <div class="status-range">
                       <span>{{ summary.startTime }}</span>
                       <span class="status-sep">→</span>
@@ -27,39 +27,40 @@
                   </div>
                   <div class="overview-meta">
                     <div class="meta-item">
-                      <span class="meta-label">运行 ID</span>
-                      <span class="meta-value">{{ summary.runId }}</span>
-                    </div>
-                    <div class="meta-item">
                       <span class="meta-label">执行通道</span>
-                      <span class="meta-value">
-                        <el-tag
-                          size="small"
-                          :type="summary.connectionType === 'mixed' ? 'warning' : (summary.isAgentConnection ? 'success' : summary.connectionType === 'ssh' ? 'info' : 'warning')"
-                        >
-                          {{ summary.connectionTypeLabel }}
-                        </el-tag>
-                      </span>
-                    </div>
-                    <div v-if="summary.agentClientId" class="meta-item">
-                      <span class="meta-label">Agent Client ID</span>
-                      <span class="meta-value">{{ summary.agentClientId }}</span>
-                    </div>
-                    <div v-if="summary.agentVersion" class="meta-item">
-                      <span class="meta-label">Agent 版本</span>
-                      <span class="meta-value">{{ summary.agentVersion }}</span>
-                    </div>
-                    <div v-if="summary.relayTraceId" class="meta-item">
-                      <span class="meta-label">Relay 追踪 ID</span>
-                      <span class="meta-value">{{ summary.relayTraceId }}</span>
-                    </div>
-                    <div v-if="summary.dispatchStatus" class="meta-item">
-                      <span class="meta-label">下发状态</span>
-                      <span class="meta-value">{{ summary.dispatchStatus }}</span>
+                      <el-tag
+                        class="connection-tag"
+                        size="small"
+                        effect="plain"
+                        :type="summary.connectionType === 'mixed' ? 'warning' : (summary.isAgentConnection ? 'success' : summary.connectionType === 'ssh' ? 'info' : 'warning')"
+                      >
+                        {{ summary.connectionTypeLabel }}
+                      </el-tag>
                     </div>
                     <div class="meta-item">
                       <span class="meta-label">执行人</span>
                       <span class="meta-value">{{ summary.username }}</span>
+                    </div>
+                  </div>
+                  <div
+                    v-if="summary.agentClientId || summary.agentVersion || summary.relayTraceId || summary.dispatchStatus"
+                    class="overview-details"
+                  >
+                    <div v-if="summary.agentClientId" class="detail-item">
+                      <span class="detail-label">Agent Client ID</span>
+                      <span class="detail-value">{{ summary.agentClientId }}</span>
+                    </div>
+                    <div v-if="summary.agentVersion" class="detail-item">
+                      <span class="detail-label">Agent 版本</span>
+                      <span class="detail-value">{{ summary.agentVersion }}</span>
+                    </div>
+                    <div v-if="summary.relayTraceId" class="detail-item">
+                      <span class="detail-label">Relay 追踪 ID</span>
+                      <span class="detail-value">{{ summary.relayTraceId }}</span>
+                    </div>
+                    <div v-if="summary.dispatchStatus" class="detail-item">
+                      <span class="detail-label">下发状态</span>
+                      <span class="detail-value">{{ summary.dispatchStatus }}</span>
                     </div>
                   </div>
                 </div>
@@ -1238,7 +1239,6 @@ const summary = computed(() => {
     startTime: formatDateTime(start),
     endTime: formatDateTime(end),
     username: data.username || '-',
-    runId: data.runId || data.id || props.runId || '-',
     connectionType,
     isAgentConnection,
     connectionTypeLabel: connectionType === 'mixed'
@@ -1259,8 +1259,8 @@ const summary = computed(() => {
 })
 
 const statusClass = computed(() => {
-  const status = summary.value.status?.toLowerCase?.()
-  return status ? `status-${status}` : 'status-default'
+  const type = JOB_STATUS_TAG_TYPES[summary.value.status]
+  return type ? `status-${type}` : 'status-default'
 })
 
 const batches = computed(() => {
@@ -1804,47 +1804,59 @@ onBeforeUnmount(() => {
 
 .overview-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px 24px;
-  margin-bottom: 16px;
+  gap: 8px 20px;
+  min-height: 36px;
+  padding: 2px 4px 10px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--el-border-color-extra-light);
 }
 
 .overview-status {
   display: flex;
   align-items: center;
-  gap: 16px;
+  flex: 0 1 auto;
+  min-width: 0;
+  gap: 10px;
 }
 
 .status-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 4px 14px;
+  min-width: 46px;
+  padding: 1px 9px;
   border-radius: 999px;
+  font-size: 13px;
+  line-height: 18px;
   font-weight: 600;
   border: 1px solid transparent;
 }
 
 .status-duration {
-  font-size: 22px;
+  font-size: 18px;
+  line-height: 24px;
   font-weight: 600;
+  color: var(--el-text-color-regular);
+  font-variant-numeric: tabular-nums;
 }
 
 .status-range {
-  font-size: 14px;
+  min-width: 0;
+  font-size: 13px;
   color: var(--result-text-secondary);
   display: flex;
   align-items: center;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .status-sep {
   color: var(--result-text-placeholder);
 }
 
-.status-failed {
+.status-danger {
   background: var(--result-danger-bg);
   border-color: var(--result-danger-border);
   color: var(--result-danger-text);
@@ -1856,10 +1868,16 @@ onBeforeUnmount(() => {
   color: var(--result-success-text);
 }
 
-.status-waiting {
+.status-info {
   background: var(--result-neutral-bg);
   border-color: var(--result-neutral-border);
   color: var(--result-neutral-text);
+}
+
+.status-warning {
+  background: var(--el-color-warning-light-9);
+  border-color: var(--el-color-warning-light-5);
+  color: var(--el-color-warning);
 }
 
 .status-default {
@@ -1870,24 +1888,84 @@ onBeforeUnmount(() => {
 
 .overview-meta {
   display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
 }
 
 .meta-item {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 6px;
+  padding-left: 16px;
+  border-left: 1px solid var(--el-border-color-lighter);
 }
 
 .meta-label {
-  font-size: 14px;
+  font-size: 12px;
+  line-height: 22px;
   color: var(--result-text-secondary);
 }
 
 .meta-value {
-  font-weight: 600;
-  color: var(--el-text-color-primary);
+  max-width: 140px;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--el-text-color-regular);
+}
+
+.connection-tag {
+  max-width: 180px;
+}
+
+.overview-details {
+  display: flex;
+  align-items: center;
+  flex: 1 0 100%;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  padding-top: 2px;
+}
+
+.detail-item {
+  display: inline-flex;
+  align-items: baseline;
+  min-width: 0;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.detail-label {
+  flex: 0 0 auto;
+  color: var(--result-text-secondary);
+}
+
+.detail-value {
+  overflow-wrap: anywhere;
+  color: var(--el-text-color-regular);
+}
+
+@media (max-width: 900px) {
+  .overview-status {
+    flex: 1 1 100%;
+  }
+
+  .overview-meta {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .overview-header {
+    padding-inline: 0;
+  }
+
+  .overview-status {
+    flex-wrap: wrap;
+  }
 }
 
 .result-error {

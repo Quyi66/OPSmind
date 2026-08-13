@@ -2,7 +2,7 @@
   <el-dialog
     v-model="visible"
     title="Windows扫描报告"
-    width="90%"
+    width="1000px"
     destroy-on-close
     class="windows-scan-report-dialog"
   >
@@ -35,9 +35,9 @@
       </div>
 
       <el-table v-loading="loading" :data="tableData" max-height="500px" size="small">
-        <el-table-column prop="host_key" label="主机" min-width="160" show-overflow-tooltip />
+        <el-table-column prop="host_key" label="主机" width="130" show-overflow-tooltip />
         <el-table-column prop="os_distro" label="操作系统" min-width="180" show-overflow-tooltip />
-        <el-table-column prop="os_version" label="系统版本" width="140" />
+        <el-table-column prop="os_version" label="系统版本" min-width="140" />
         <el-table-column prop="kb_count" label="漏洞数量" width="100" />
         <el-table-column prop="scan_date" label="扫描时间" width="180">
           <template #default="{ row }">
