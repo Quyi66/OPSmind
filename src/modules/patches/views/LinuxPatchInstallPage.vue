@@ -1125,9 +1125,11 @@ defineExpose({ refresh })
 }
 
 .tab-content {
+  flex: none;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-height: auto;
+  height: auto;
 }
 
 .host-list-tags {

@@ -10,6 +10,7 @@ import { accountService } from '@/core/account'
 import type { AccountInfo } from '@/core/account'
 import { appletService } from '@/core/applet'
 import type { AppletInfo } from '@/core/applet'
+import { clearPersistedTagsView } from '@/utils/tagsViewStorage'
 import type {
   User,
   LoginCredentials,
@@ -335,6 +336,9 @@ class AuthService implements IAuthService {
    */
   async logout(): Promise<void> {
     try {
+      // 登出后不保留当前账号的历史路由，下次登录从空白 TagsView 开始。
+      clearPersistedTagsView(authState.user)
+
       // 清除本地存储
       this.clearAuthState()
       appletService.clear()
