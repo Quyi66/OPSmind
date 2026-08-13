@@ -177,7 +177,7 @@
               </el-tab-pane>
 
               <!-- OTP 二维码 Tab -->
-              <el-tab-pane label="OTP二维码" name="qrcode" :disabled="authMode === 'AD'">
+              <!-- <el-tab-pane label="OTP二维码" name="qrcode" :disabled="authMode === 'AD'">
                 <div class="qrcode-section">
                   <div class="qrcode-info">
                     <p>
@@ -190,7 +190,7 @@
                     <el-empty v-else description="暂无二维码" :image-size="100" />
                   </div>
                 </div>
-              </el-tab-pane>
+              </el-tab-pane> -->
             </el-tabs>
           </div>
         </el-col>
