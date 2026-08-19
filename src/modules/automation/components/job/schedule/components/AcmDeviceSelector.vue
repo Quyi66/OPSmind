@@ -2,7 +2,7 @@
   <div class="acm-device-selector">
     <!-- 有设备时的显示 -->
     <div v-if="displayDevices.length" class="device-list-container">
-      <div class="device-header">
+      <div class="device-header" :class="{ 'device-header--without-tags': !showTagList }">
         <div
           class="device-summary btn btn-sm btn-default op-hover-trigger"
           :class="{ 'pe-none': disabled }"
@@ -227,6 +227,10 @@ function handleConfirm(selectedHosts) {
   align-items: center;
   gap: 12px;
   margin-bottom: 8px;
+}
+
+.device-header--without-tags {
+  margin-bottom: 0;
 }
 
 .device-summary {

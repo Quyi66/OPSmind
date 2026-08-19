@@ -93,6 +93,7 @@
         style="width: 100%"
         row-key="id"
         @selection-change="handleSelectionChange"
+        @select-all="handleSelectCurrentPage"
       >
         <el-table-column type="selection" width="55" reserve-selection />
         <el-table-column prop="IP" label="IP地址" min-width="120" show-overflow-tooltip />
@@ -446,16 +447,13 @@ function handleSelectionChange(selection) {
   let effectiveSelection = Array.isArray(selection) ? [...selection] : []
 
   if (isSingleSelector.value && effectiveSelection.length > 1) {
-    ElMessage.warning({
-      message: '当前为单选模式，仅支持选择单台主机',
-      customClass: 'high-z-index-message'
-    })
     // el-table 的 selection 数组按表格行顺序排列，而非用户点击顺序。
     // 以当前 v-model 中已选主机为基准，保留本次新加入的那一行，避免用户
     // 从靠后的主机切换到靠前主机时又被错误地保留为旧选择。
     const previousSelectedKey = props.modelValue?.[0]?.key
-    const latestRow = effectiveSelection.find(row => row.id !== previousSelectedKey)
-      || effectiveSelection[effectiveSelection.length - 1]
+    const latestRow =
+      effectiveSelection.find(row => row.id !== previousSelectedKey) ||
+      effectiveSelection[effectiveSelection.length - 1]
     effectiveSelection = latestRow ? [latestRow] : []
 
     isInternalUpdate = true
@@ -502,6 +500,17 @@ function handleSelectionChange(selection) {
   emit('update:modelValue', mergedSelection)
   nextTick(() => {
     isInternalUpdate = false
+  })
+}
+
+function handleSelectCurrentPage(selection) {
+  // Element Plus 先触发 selection-change，再触发 select-all。单选模式会在前一个
+  // 事件中将当前页的多选结果收敛为一台，因此这里不能用 selection.length > 1 判断。
+  if (!isSingleSelector.value || tableData.value.length <= 1 || selection.length === 0) return
+
+  ElMessage.warning({
+    message: '当前为单选模式，仅支持选择单台主机',
+    customClass: 'high-z-index-message'
   })
 }
 

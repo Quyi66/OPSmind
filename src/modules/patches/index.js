@@ -125,13 +125,13 @@ export const patchProcessLogsModule = {
   }))
 }
 
-// 虚拟子模块：中间件CVE
+// 虚拟子模块：中间件漏洞管理
 export const middlewareCveModule = {
   code: 'middleware-cve',
   groupCode: 'patch-testing',
-  name: '中间件CVE',
+  name: '中间件漏洞管理',
   icon: 'fas fa-shield-virus',
-  description: '中间件CVE漏洞管理',
+  description: 'WebLogic、Tomcat、Nginx 实例与漏洞管理',
   permissions: ['applet:vap'],
   defaultRoute: '/patches/middlewareCveList',
   isVirtual: true,

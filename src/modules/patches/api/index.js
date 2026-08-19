@@ -2033,23 +2033,60 @@ export const winKbApi = {
 
 export const middlewareCveApi = {
   /**
-  * 分页查询中间件 CVE 列表
-  * GET /secops/api/secops/v2/middleware-cve/list
-  * @param {Object} params - 查询参数
-  * @param {string} params.middlewareType - 中间件类型
-  * @param {string} params.severity - 严重等级
-  * @param {string} params.keyword - 关键字
-  * @param {string} params.startDate - 开始日期
-  * @param {string} params.endDate - 结束日期
-  * @param {number} params.page - 页码
-  * @param {number} params.size - 每页数量
-  * @param {string} params.sortBy - 排序字段
-  * @param {string} params.sortDir - 排序方向
-  * @returns {Promise}
+  * 分页查询中间件实例
+  * GET /secops/api/secops/v2/middleware/instances
   */
-  getList(params = {}) {
+  getInstances(params = {}) {
     const queryParams = {}
 
+    if (params.hostId) queryParams.hostId = params.hostId
+    if (params.middlewareType) queryParams.middlewareType = params.middlewareType
+    if (params.provenance) queryParams.provenance = params.provenance
+    if (params.keyword) queryParams.keyword = params.keyword
+    if (params.page !== undefined) queryParams.page = params.page
+    if (params.size !== undefined) queryParams.size = params.size
+
+    return apiService.get(`${VAP_API_PREFIX}/v2/middleware/instances`, { params: queryParams })
+  },
+
+  /**
+  * 分页查询实例漏洞，fixStatus 不传时后端只返回 open
+  */
+  getVulnerabilities(params = {}) {
+    const queryParams = {}
+
+    if (params.hostId) queryParams.hostId = params.hostId
+    if (params.instanceKey) queryParams.instanceKey = params.instanceKey
+    if (params.middlewareType) queryParams.middlewareType = params.middlewareType
+    if (params.severity) queryParams.severity = params.severity
+    if (params.cveId) queryParams.cveId = params.cveId
+    if (params.fixStatus) queryParams.fixStatus = params.fixStatus
+    if (params.includeIgnored !== undefined) queryParams.includeIgnored = params.includeIgnored
+    if (params.page !== undefined) queryParams.page = params.page
+    if (params.size !== undefined) queryParams.size = params.size
+
+    return apiService.get(`${VAP_API_PREFIX}/v2/middleware/vuls`, { params: queryParams })
+  },
+
+  getVulnerabilityStats(params = {}) {
+    const queryParams = {}
+    if (params.hostId) queryParams.hostId = params.hostId
+    return apiService.get(`${VAP_API_PREFIX}/v2/middleware/vuls/stats`, {
+      params: queryParams
+    })
+  },
+
+  setVulnerabilityIgnore(payload) {
+    return apiService.post(`${VAP_API_PREFIX}/v2/middleware/vuls/ignore`, payload)
+  },
+
+  scan(hostIds) {
+    return apiService.post(`${VAP_API_PREFIX}/v2/middleware/scan`, { hostIds })
+  },
+
+  // 兼容仍可能被旧详情组件引用的公告知识库接口。
+  getList(params = {}) {
+    const queryParams = {}
     if (params.middlewareType && params.middlewareType !== 'all')
       queryParams.middlewareType = params.middlewareType
     if (params.severity && params.severity !== 'all') queryParams.severity = params.severity
@@ -2060,25 +2097,13 @@ export const middlewareCveApi = {
     if (params.size !== undefined) queryParams.size = params.size
     if (params.sortBy) queryParams.sortBy = params.sortBy
     if (params.sortDir) queryParams.sortDir = params.sortDir
-
     return apiService.get(`${VAP_API_PREFIX}/v2/middleware-cve/list`, { params: queryParams })
   },
 
-  /**
-  * 查询 中间件 CVE 详情
-  * GET /secops/api/secops/v2/middleware-cve/detail/{cveId}
-  * @param {string} cveId - CVE编号
-  * @returns {Promise}
-  */
   getDetail(cveId) {
     return apiService.get(`${VAP_API_PREFIX}/v2/middleware-cve/detail/${encodeURIComponent(cveId)}`)
   },
 
-  /**
-  * 获取中间件类型列表
-  * GET /secops/api/secops/v2/middleware-cve/middleware-types
-  * @returns {Promise}
-  */
   getMiddlewareTypes() {
     return apiService.get(`${VAP_API_PREFIX}/v2/middleware-cve/middleware-types`)
   }
@@ -2502,4 +2527,3 @@ export default {
 }
 
 export * from './agent'
-

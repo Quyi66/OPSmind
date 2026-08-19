@@ -100,8 +100,8 @@ export const PATCHES_ROUTE_DEFS = [
     path: 'middlewareCveList',
     name: 'patches-middlewareCveList',
     menuCode: 'middleware-cve',
-    title: '中间件CVE',
-    navLabel: '中间件CVE',
+    title: '中间件漏洞管理',
+    navLabel: '中间件漏洞管理',
     icon: 'fas fa-shield-virus',
     platform: 'common',
     component: () => import('./views/MiddlewareCveListPage.vue')
