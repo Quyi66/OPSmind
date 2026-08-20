@@ -338,25 +338,9 @@
               <el-table-column label="扫描时间" width="180">
                 <template #default="{ row }">{{ formatDateTime(row.scanTimestamp) }}</template>
               </el-table-column>
-              <el-table-column label="操作" width="150" fixed="right">
+              <el-table-column label="操作" width="80" fixed="right">
                 <template #default="{ row }">
                   <el-button link type="primary" @click="showInstanceDetail(row)">详情</el-button>
-                  <el-button
-                    v-if="canRequestOneClickFix(row)"
-                    link
-                    type="danger"
-                    @click="openFixGuide(row)"
-                  >
-                    一键修复
-                  </el-button>
-                  <el-button
-                    v-else-if="hasFixGuide(row)"
-                    link
-                    type="success"
-                    @click="openFixGuide(row)"
-                  >
-                    修复指引
-                  </el-button>
                 </template>
               </el-table-column>
             </el-table>
@@ -467,6 +451,18 @@
           </div>
 
           <div class="ops-action-bar">
+            <el-button
+              type="success"
+              size="small"
+              :disabled="selectedFixInstanceKeys.length === 0"
+              @click="openSelectedFixGuides"
+            >
+              修复指引
+            </el-button>
+            <span class="selection-hint">
+              已选 {{ selectedVulnerabilities.length }} 条漏洞，涉及
+              {{ selectedFixInstanceKeys.length }} 个实例
+            </span>
             <span v-if="vulnerabilityFilters.instanceKey" class="instance-filter-tag">
               已限定具体实例
               <el-button link type="primary" @click="clearInstanceFilter">清除</el-button>
@@ -490,7 +486,10 @@
               :data="vulnerabilities"
               class="natural-height-table"
               empty-text="暂无符合条件的漏洞"
+              :row-key="vulnerabilityRowKey"
+              @selection-change="rows => (selectedVulnerabilities = rows)"
             >
+              <el-table-column type="selection" width="46" :selectable="canSelectForFixGuide" />
               <el-table-column label="CVE" width="155">
                 <template #default="{ row }">
                   <el-link
@@ -788,10 +787,8 @@
 
     <MiddlewareFixGuideDialog
       v-model:visible="fixGuideVisible"
-      :guide="currentFixGuide"
+      :guides="currentFixGuides"
       :loading="fixGuideLoading"
-      :submitting="fixSubmitting"
-      @fix="submitFix"
     />
 
     <el-dialog v-model="scanDialogVisible" title="派发中间件扫描" width="560px" destroy-on-close>
@@ -823,7 +820,7 @@
     <ExecuteResultDialog
       v-model:visible="runResultVisible"
       :run-id="currentRunId"
-      :job-title="currentRunTitle"
+      job-title="中间件扫描"
       @settled="refreshAfterRunResult"
       @close="refreshAfterRunResult"
     />
@@ -863,13 +860,13 @@ const activeTab = ref('instances')
 const instances = ref([])
 const vulnerabilities = ref([])
 const selectedInstances = ref([])
+const selectedVulnerabilities = ref([])
 
 const instanceLoading = ref(false)
 const vulnerabilityLoading = ref(false)
 const overviewLoading = ref(false)
 const scanSubmitting = ref(false)
 const fixGuideLoading = ref(false)
-const fixSubmitting = ref(false)
 
 const instanceDialogVisible = ref(false)
 const vulnerabilityDialogVisible = ref(false)
@@ -880,10 +877,8 @@ const runResultRefreshed = ref(false)
 
 const currentInstance = ref(null)
 const currentVulnerability = ref(null)
-const currentFixInstance = ref(null)
-const currentFixGuide = ref(null)
+const currentFixGuides = ref([])
 const currentRunId = ref('')
-const currentRunTitle = ref('中间件扫描')
 const instanceSelectedHosts = ref([])
 const vulnerabilitySelectedHosts = ref([])
 const scanSelectedHosts = ref([])
@@ -935,6 +930,12 @@ const selectedHostIds = computed(() => [
 ])
 
 const scanHostIds = computed(() => extractHostIds(scanSelectedHosts.value))
+
+const selectedFixInstanceKeys = computed(() => [
+  ...new Set(
+    selectedVulnerabilities.value.map(row => String(row.instanceKey || '').trim()).filter(Boolean)
+  )
+])
 
 const parsedAppliedPatches = computed(() =>
   parseAppliedPatches(currentInstance.value?.appliedPatches)
@@ -1014,6 +1015,7 @@ async function loadVulnerabilities() {
       size: vulnerabilityPagination.size
     })
     applyPage(unwrapResponse(response), vulnerabilities, vulnerabilityPagination)
+    selectedVulnerabilities.value = []
   } catch (error) {
     vulnerabilities.value = []
     vulnerabilityPagination.total = 0
@@ -1119,7 +1121,12 @@ function openInstanceVulnerabilities(row, fixStatus) {
 }
 
 function clearInstanceFilter() {
-  vulnerabilityFilters.instanceKey = ''
+  vulnerabilitySelectedHosts.value = []
+  Object.assign(vulnerabilityFilters, {
+    hostId: '',
+    instanceKey: '',
+    middlewareType: ''
+  })
   searchVulnerabilities()
 }
 
@@ -1133,19 +1140,57 @@ function showVulnerabilityDetail(row) {
   vulnerabilityDialogVisible.value = true
 }
 
+function vulnerabilityRowKey(row) {
+  return `${row?.instanceKey || row?.hostId || 'host'}:${row?.cveId || row?.id || 'vulnerability'}`
+}
+
+function canSelectForFixGuide(row) {
+  return (
+    Boolean(row?.instanceKey) &&
+    String(row?.fixStatus || '').toLowerCase() === 'open' &&
+    !row?.ignore
+  )
+}
+
 async function openFixGuide(row) {
   if (!row?.instanceKey) {
     ElMessage.warning('缺少实例信息，无法获取修复指引')
     return
   }
 
-  currentFixInstance.value = row
-  currentFixGuide.value = null
+  currentFixGuides.value = []
   fixGuideVisible.value = true
   fixGuideLoading.value = true
   try {
     const response = await middlewareCveApi.getFixGuide(row.instanceKey)
-    currentFixGuide.value = unwrapResponse(response) || null
+    const guide = unwrapResponse(response)
+    currentFixGuides.value = guide ? [guide] : []
+  } catch (error) {
+    fixGuideVisible.value = false
+    ElMessage.error(getErrorMessage(error, '加载修复指引失败'))
+  } finally {
+    fixGuideLoading.value = false
+  }
+}
+
+async function openSelectedFixGuides() {
+  const instanceKeys = selectedFixInstanceKeys.value
+  if (!instanceKeys.length) {
+    ElMessage.warning('请至少选择一条未修复漏洞')
+    return
+  }
+  if (instanceKeys.length > 50) {
+    ElMessage.warning('一次最多查看 50 个实例的修复指引')
+    return
+  }
+
+  currentFixGuides.value = []
+  fixGuideVisible.value = true
+  fixGuideLoading.value = true
+  try {
+    const response = await middlewareCveApi.getFixGuides(instanceKeys)
+    const data = unwrapResponse(response) || {}
+    currentFixGuides.value = Array.isArray(data.guides) ? data.guides : []
   } catch (error) {
     fixGuideVisible.value = false
     ElMessage.error(getErrorMessage(error, '加载修复指引失败'))
@@ -1202,64 +1247,6 @@ async function toggleIgnore(row) {
   }
 }
 
-async function submitFix({ instanceKey, localPackagePath }) {
-  const targetInstanceKey = instanceKey || currentFixInstance.value?.instanceKey || ''
-  if (!targetInstanceKey || !currentFixGuide.value?.canOneClick) {
-    ElMessage.warning('当前实例不支持一键修复，请按照修复指引处理')
-    return
-  }
-
-  try {
-    await ElMessageBox.confirm(
-      '修复过程中会升级软件包并重启相关服务，业务可能短暂中断。确定开始修复吗？',
-      '确认修复',
-      {
-        type: 'warning',
-        confirmButtonText: '开始修复',
-        cancelButtonText: '取消'
-      }
-    )
-  } catch {
-    return
-  }
-
-  const payload = { instanceKeys: [targetInstanceKey] }
-  if (localPackagePath) {
-    payload.localPackages = { [targetInstanceKey]: localPackagePath }
-  }
-
-  fixSubmitting.value = true
-  try {
-    const response = await middlewareCveApi.fix(payload)
-    const data = unwrapResponse(response) || {}
-    const submittedCount = Number(data.instances) || 0
-    const skippedCount = Array.isArray(data.skipped) ? data.skipped.length : 0
-
-    fixGuideVisible.value = false
-    instanceDialogVisible.value = false
-    currentRunId.value = data.runId || ''
-    currentRunTitle.value = '中间件修复'
-    runResultRefreshed.value = false
-
-    if (submittedCount > 0) {
-      ElMessage.success(`已提交 ${submittedCount} 个实例的修复任务`)
-    }
-    if (skippedCount > 0) {
-      ElMessage.warning(`${skippedCount} 个实例未执行修复`)
-    }
-
-    if (currentRunId.value) {
-      runResultVisible.value = true
-    } else {
-      await refreshAfterRunResult()
-    }
-  } catch (error) {
-    ElMessage.error(getErrorMessage(error, '修复任务提交失败'))
-  } finally {
-    fixSubmitting.value = false
-  }
-}
-
 function buildUniqueSelectorHostItems(hosts = []) {
   const seen = new Set()
   return buildSelectorHostItems(hosts).filter(item => {
@@ -1288,10 +1275,15 @@ async function submitScan() {
   try {
     const response = await middlewareCveApi.scan(scanHostIds.value)
     const data = unwrapResponse(response) || {}
+    const skippedHosts = Array.isArray(data.skippedHosts) ? data.skippedHosts : []
+    const returnedHostCount = Number(data.hosts)
+    const scannedHostCount = Number.isFinite(returnedHostCount)
+      ? returnedHostCount
+      : Math.max(scanHostIds.value.length - skippedHosts.length, 0)
     currentRunId.value = data.runId || ''
-    currentRunTitle.value = '中间件扫描'
     scanDialogVisible.value = false
-    ElMessage.success(`已派发 ${Number(data.hosts) || scanHostIds.value.length} 台主机`)
+    ElMessage.success(`已派发 ${scannedHostCount} 台主机`)
+    showSkippedHostsWarning(skippedHosts)
     if (currentRunId.value) {
       runResultRefreshed.value = false
       runResultVisible.value = true
@@ -1301,6 +1293,28 @@ async function submitScan() {
   } finally {
     scanSubmitting.value = false
   }
+}
+
+function skippedHostText(host) {
+  if (typeof host === 'string' || typeof host === 'number') return String(host)
+
+  const identity =
+    host?.hostName || host?.hostname || host?.hostKey || host?.hostId || host?.id || '未知主机'
+  const reason = host?.reason || host?.message || ''
+  return reason ? `${identity}（${reason}）` : identity
+}
+
+function showSkippedHostsWarning(skippedHosts) {
+  if (!skippedHosts.length) return
+
+  const visibleHosts = skippedHosts.slice(0, 5).map(skippedHostText)
+  const remaining = skippedHosts.length - visibleHosts.length
+  const moreText = remaining > 0 ? `，另有 ${remaining} 台` : ''
+  ElMessage.warning({
+    message: `${skippedHosts.length} 台主机未能发起扫描：${visibleHosts.join('、')}${moreText}`,
+    duration: 8000,
+    showClose: true
+  })
 }
 
 async function refreshAfterRunResult() {
@@ -1372,10 +1386,6 @@ function isPackageManaged(row) {
 function hasFixGuide(row) {
   const action = String(row?.fixAction || '').toLowerCase()
   return Boolean(row?.instanceKey) && Boolean(action) && action !== 'none'
-}
-
-function canRequestOneClickFix(row) {
-  return String(row?.fixAction || '').toLowerCase() === 'os_package'
 }
 
 function fixHintText(row) {

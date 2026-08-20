@@ -2086,8 +2086,8 @@ export const middlewareCveApi = {
     )
   },
 
-  fix(payload) {
-    return apiService.post(`${VAP_API_PREFIX}/v2/middleware/fix`, payload)
+  getFixGuides(instanceKeys) {
+    return apiService.post(`${VAP_API_PREFIX}/v2/middleware/fix-guide`, { instanceKeys })
   },
 
   scan(hostIds) {

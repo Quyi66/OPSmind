@@ -101,14 +101,11 @@ describe('middleware vulnerability API', () => {
     )
   })
 
-  it('posts one-click fix options without rewriting the payload', () => {
-    const payload = {
-      instanceKeys: ['instance-key'],
-      localPackages: { 'instance-key': '/tmp/tomcat.rpm' }
-    }
+  it('posts instance keys to get grouped fix guides', () => {
+    middlewareCveApi.getFixGuides(['instance-key-1', 'instance-key-2'])
 
-    middlewareCveApi.fix(payload)
-
-    expect(apiMocks.post).toHaveBeenCalledWith('/secops/api/secops/v2/middleware/fix', payload)
+    expect(apiMocks.post).toHaveBeenCalledWith('/secops/api/secops/v2/middleware/fix-guide', {
+      instanceKeys: ['instance-key-1', 'instance-key-2']
+    })
   })
 })
