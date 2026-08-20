@@ -257,6 +257,13 @@ export default defineConfig(({ command, mode }): UserConfig => {
         allow: ['..']
       },
       proxy: {
+        // 开发环境下将服务器挂载的 changelog 静态文件转发到目标 Nginx。
+        // 前端可与生产环境一致，始终使用 /KoreOPS/changelog/... 相对路径。
+        '/KoreOPS/changelog': {
+          target: backendTarget,
+          changeOrigin: true,
+          secure: false
+        },
         '/sjxy-console': {
           target: backendTarget,
           changeOrigin: true,
