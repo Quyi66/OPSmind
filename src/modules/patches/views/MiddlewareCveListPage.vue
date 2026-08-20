@@ -26,9 +26,7 @@
             <div class="stat-card__metric">
               <span class="stat-card__value">{{ vulnerabilityStats.total }}</span>
             </div>
-            <div class="stat-card__hint" title="已确认受影响且尚未修复">
-              已确认受影响且尚未修复
-            </div>
+            <div class="stat-card__hint" title="已确认受影响且尚未修复">已确认受影响且尚未修复</div>
           </button>
 
           <button
@@ -66,9 +64,7 @@
             <div class="stat-card__metric">
               <span class="stat-card__value">{{ vulnerabilityStats.fixed }}</span>
             </div>
-            <div class="stat-card__hint" title="已确认完成修复的漏洞">
-              已确认完成修复的漏洞
-            </div>
+            <div class="stat-card__hint" title="已确认完成修复的漏洞">已确认完成修复的漏洞</div>
           </button>
         </div>
       </div>
@@ -100,9 +96,7 @@
                 {{ vulnerabilityStats.bySeverity.critical }}
               </span>
             </div>
-            <div class="stat-card__hint" title="需最高优先级处置">
-              需最高优先级处置
-            </div>
+            <div class="stat-card__hint" title="需最高优先级处置">需最高优先级处置</div>
           </button>
 
           <button
@@ -122,9 +116,7 @@
                 {{ vulnerabilityStats.bySeverity.important }}
               </span>
             </div>
-            <div class="stat-card__hint" title="需优先安排处置">
-              需优先安排处置
-            </div>
+            <div class="stat-card__hint" title="需优先安排处置">需优先安排处置</div>
           </button>
         </div>
       </div>
@@ -133,19 +125,6 @@
     <el-tabs v-model="activeTab" class="middleware-tabs">
       <el-tab-pane label="实例清单" name="instances">
         <div class="tab-pane-layout">
-          <!-- <div v-if="instanceSummary.length" class="type-summary">
-            <button
-              v-for="item in instanceSummary"
-              :key="item.middlewareType"
-              type="button"
-              class="type-summary__item"
-              @click="filterInstancesByType(item.middlewareType)"
-            >
-              <span>{{ middlewareTypeLabel(item.middlewareType) }}</span>
-              <strong>{{ item.cnt }}</strong>
-            </button>
-          </div> -->
-
           <div class="ops-filter-bar">
             <el-form :model="instanceFilters" inline size="small">
               <el-form-item label="主机">
@@ -248,7 +227,7 @@
               @selection-change="rows => (selectedInstances = rows)"
             >
               <el-table-column type="selection" width="46" />
-              <el-table-column label="主机" min-width="210" show-overflow-tooltip>
+              <el-table-column label="主机" min-width="200" show-overflow-tooltip>
                 <template #default="{ row }">
                   <el-space :size="8">
                     <el-link type="primary" underline="never" @click="showInstanceDetail(row)">
@@ -265,7 +244,7 @@
                   </el-space>
                 </template>
               </el-table-column>
-              <el-table-column label="中间件" width="110">
+              <el-table-column label="中间件" width="90">
                 <template #default="{ row }">
                   <el-tag
                     :type="middlewareTagType(row.middlewareType)"
@@ -277,26 +256,30 @@
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="版本" min-width="140" show-overflow-tooltip>
+              <el-table-column label="版本" min-width="100" show-overflow-tooltip>
                 <template #default="{ row }">
                   <span v-if="row.version">{{ row.version }}</span>
                   <el-tag v-else type="info" size="small">版本未采到</el-tag>
                 </template>
               </el-table-column>
-              <el-table-column
-                prop="installPath"
-                label="安装路径"
-                min-width="230"
-                show-overflow-tooltip
-              />
-              <el-table-column label="运行状态" width="100" align="center">
+              <el-table-column label="安装位置" min-width="200" show-overflow-tooltip>
+                <template #default="{ row }">
+                  <div class="primary-cell">
+                    <span>{{ row.installPath || '-' }}</span>
+                    <span v-if="row.containerImage" class="secondary-text">
+                      镜像：{{ row.containerImage }}
+                    </span>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="运行状态" width="90" align="center">
                 <template #default="{ row }">
                   <el-tag :type="row.running ? 'success' : 'info'" size="small">
                     {{ row.running ? '运行中' : '未运行' }}
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="分发方式" width="125">
+              <el-table-column label="分发方式" width="110">
                 <template #default="{ row }">
                   <RunLogStatusTag
                     :type="isPackageManaged(row) ? 'success' : 'info'"
@@ -310,7 +293,7 @@
                   </RunLogStatusTag>
                 </template>
               </el-table-column>
-              <el-table-column label="漏洞" width="90" align="center">
+              <el-table-column label="漏洞" min-width="90" align="center">
                 <template #default="{ row }">
                   <RunLogStatusTag
                     v-if="Number(row.numVuls) > 0"
@@ -345,12 +328,35 @@
                   <span>{{ row.numCritical || 0 }} / {{ row.numImportant || 0 }}</span>
                 </template>
               </el-table-column>
-              <el-table-column label="扫描时间" width="170">
+              <el-table-column label="修复建议" min-width="300">
+                <template #default="{ row }">
+                  <span class="fix-hint-text" :title="fixHintText(row)">
+                    {{ fixHintText(row) }}
+                  </span>
+                </template>
+              </el-table-column>
+              <el-table-column label="扫描时间" width="180">
                 <template #default="{ row }">{{ formatDateTime(row.scanTimestamp) }}</template>
               </el-table-column>
-              <el-table-column label="操作" width="80" fixed="right">
+              <el-table-column label="操作" width="150" fixed="right">
                 <template #default="{ row }">
                   <el-button link type="primary" @click="showInstanceDetail(row)">详情</el-button>
+                  <el-button
+                    v-if="canRequestOneClickFix(row)"
+                    link
+                    type="danger"
+                    @click="openFixGuide(row)"
+                  >
+                    一键修复
+                  </el-button>
+                  <el-button
+                    v-else-if="hasFixGuide(row)"
+                    link
+                    type="success"
+                    @click="openFixGuide(row)"
+                  >
+                    修复指引
+                  </el-button>
                 </template>
               </el-table-column>
             </el-table>
@@ -522,17 +528,6 @@
               <el-table-column label="当前版本" min-width="130" show-overflow-tooltip>
                 <template #default="{ row }">{{ row.currVersion || '-' }}</template>
               </el-table-column>
-              <el-table-column label="修复建议" min-width="170" show-overflow-tooltip>
-                <template #default="{ row }">
-                  <div class="primary-cell">
-                    <span v-if="row.fixType === 'upgrade'">
-                      升级到 {{ row.fixedVersion || '修复版本' }}
-                    </span>
-                    <span v-else>安装厂商补丁{{ row.patchNo ? ` ${row.patchNo}` : '' }}</span>
-                    <span v-if="row.advisoryId" class="secondary-text">{{ row.advisoryId }}</span>
-                  </div>
-                </template>
-              </el-table-column>
               <el-table-column label="判定依据" width="130">
                 <template #default="{ row }">
                   <el-tooltip :content="matchSourceDescription(row.matchSource)" placement="top">
@@ -556,7 +551,7 @@
                   </div>
                 </template>
               </el-table-column>
-              <el-table-column label="首次发现" width="170">
+              <el-table-column label="首次发现" width="180">
                 <template #default="{ row }">{{ formatDateTime(row.firstFoundAt) }}</template>
               </el-table-column>
               <el-table-column label="操作" width="130" fixed="right">
@@ -633,6 +628,30 @@
           <el-descriptions-item v-if="currentInstance.containerImage" label="容器镜像">
             {{ currentInstance.containerImage }}
           </el-descriptions-item>
+          <el-descriptions-item v-if="currentInstance.fixTarget" label="修复目标">
+            {{ currentInstance.fixTarget }}
+          </el-descriptions-item>
+          <el-descriptions-item v-if="currentInstance.fixHint" label="修复建议">
+            <el-link
+              v-if="hasFixGuide(currentInstance)"
+              class="fix-hint-link"
+              type="primary"
+              underline="never"
+              @click="openFixGuide(currentInstance)"
+            >
+              {{ currentInstance.fixHint }}
+            </el-link>
+            <el-link
+              v-else-if="isPackageManaged(currentInstance)"
+              class="fix-hint-link"
+              type="primary"
+              underline="never"
+              @click="openLinuxPackages(currentInstance)"
+            >
+              {{ currentInstance.fixHint }}
+            </el-link>
+            <span v-else>{{ currentInstance.fixHint }}</span>
+          </el-descriptions-item>
           <el-descriptions-item label="WebLogic PSU">
             {{ currentInstance.patchLevel || '-' }}
           </el-descriptions-item>
@@ -657,17 +676,21 @@
             {{ formatDateTime(currentInstance.scanTimestamp) }}
           </el-descriptions-item>
         </el-descriptions>
-        <el-alert
-          v-if="isPackageManaged(currentInstance)"
-          type="success"
-          show-icon
-          :closable="false"
-          class="detail-alert"
-          title="该实例由操作系统软件包管理"
-          description="发行版可能回移安全修复且不改变上游版本号，因此这里不生成漏洞，请到 Linux 补丁页查看。"
-        />
       </template>
       <template #footer>
+        <el-button
+          v-if="currentInstance && isPackageManaged(currentInstance)"
+          @click="openLinuxPackages(currentInstance)"
+        >
+          查看 Linux 补丁
+        </el-button>
+        <el-button
+          v-if="currentInstance && hasFixGuide(currentInstance)"
+          type="primary"
+          @click="openFixGuide(currentInstance)"
+        >
+          修复指引
+        </el-button>
         <el-button @click="instanceDialogVisible = false">关闭</el-button>
       </template>
     </el-dialog>
@@ -675,7 +698,7 @@
     <el-dialog
       v-model="vulnerabilityDialogVisible"
       title="漏洞判定详情"
-      width="800px"
+      width="900px"
       append-to-body
       destroy-on-close
     >
@@ -696,10 +719,10 @@
             {{ severityLabel(currentVulnerability.severity) }} / CVSS
             {{ formatScore(currentVulnerability.cvss3Score) }}
           </el-descriptions-item>
-          <el-descriptions-item label="主机" :span="2">
+          <el-descriptions-item label="主机">
             {{ currentVulnerability.hostKey || currentVulnerability.hostId || '-' }}
           </el-descriptions-item>
-          <el-descriptions-item label="实例" :span="2">
+          <el-descriptions-item label="实例">
             {{ currentVulnerability.instanceKey || '-' }}
           </el-descriptions-item>
           <el-descriptions-item label="安装路径" :span="2">
@@ -749,12 +772,27 @@
             打开漏洞公告
           </el-button>
           <el-button @click="vulnerabilityDialogVisible = false">关闭</el-button>
+          <el-button
+            v-if="currentVulnerability.fixStatus === 'open'"
+            type="primary"
+            @click="openFixGuide(currentVulnerability)"
+          >
+            修复指引
+          </el-button>
           <el-button type="primary" @click="toggleIgnore(currentVulnerability)">
             {{ currentVulnerability.ignore ? '取消忽略' : '忽略此漏洞' }}
           </el-button>
         </template>
       </template>
     </el-dialog>
+
+    <MiddlewareFixGuideDialog
+      v-model:visible="fixGuideVisible"
+      :guide="currentFixGuide"
+      :loading="fixGuideLoading"
+      :submitting="fixSubmitting"
+      @fix="submitFix"
+    />
 
     <el-dialog v-model="scanDialogVisible" title="派发中间件扫描" width="560px" destroy-on-close>
       <el-alert
@@ -785,9 +823,9 @@
     <ExecuteResultDialog
       v-model:visible="runResultVisible"
       :run-id="currentRunId"
-      title="中间件扫描运行结果"
-      @settled="refreshAfterScanResult"
-      @close="refreshAfterScanResult"
+      :job-title="currentRunTitle"
+      @settled="refreshAfterRunResult"
+      @close="refreshAfterRunResult"
     />
   </div>
 </template>
@@ -810,6 +848,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
+import MiddlewareFixGuideDialog from '../components/middleware/MiddlewareFixGuideDialog.vue'
 import { middlewareCveApi } from '../api'
 import {
   buildSelectorHostItems,
@@ -823,23 +862,28 @@ const activeTab = ref('instances')
 
 const instances = ref([])
 const vulnerabilities = ref([])
-const instanceSummary = ref([])
 const selectedInstances = ref([])
 
 const instanceLoading = ref(false)
 const vulnerabilityLoading = ref(false)
 const overviewLoading = ref(false)
 const scanSubmitting = ref(false)
+const fixGuideLoading = ref(false)
+const fixSubmitting = ref(false)
 
 const instanceDialogVisible = ref(false)
 const vulnerabilityDialogVisible = ref(false)
+const fixGuideVisible = ref(false)
 const scanDialogVisible = ref(false)
 const runResultVisible = ref(false)
-const scanResultRefreshed = ref(false)
+const runResultRefreshed = ref(false)
 
 const currentInstance = ref(null)
 const currentVulnerability = ref(null)
+const currentFixInstance = ref(null)
+const currentFixGuide = ref(null)
 const currentRunId = ref('')
+const currentRunTitle = ref('中间件扫描')
 const instanceSelectedHosts = ref([])
 const vulnerabilitySelectedHosts = ref([])
 const scanSelectedHosts = ref([])
@@ -922,21 +966,7 @@ function getErrorMessage(error, fallback) {
 async function loadOverview() {
   overviewLoading.value = true
   try {
-    const [statsResult, ...typeResults] = await Promise.allSettled([
-      middlewareCveApi.getVulnerabilityStats(),
-      ...middlewareTypes.map(middlewareType =>
-        middlewareCveApi.getInstances({ middlewareType, page: 0, size: 1 })
-      )
-    ])
-
-    instanceSummary.value = middlewareTypes.map((middlewareType, index) => {
-      const result = typeResults[index]
-      const page = result?.status === 'fulfilled' ? unwrapResponse(result.value) : null
-      return {
-        middlewareType,
-        cnt: Number(page?.totalElements) || 0
-      }
-    })
+    const [statsResult] = await Promise.allSettled([middlewareCveApi.getVulnerabilityStats()])
 
     if (statsResult.status === 'fulfilled') {
       const data = unwrapResponse(statsResult.value) || {}
@@ -1013,11 +1043,6 @@ function handleInstanceHostChange(selection) {
 function resetInstanceFilters() {
   instanceSelectedHosts.value = []
   Object.assign(instanceFilters, { hostId: '', middlewareType: '', provenance: '', keyword: '' })
-  searchInstances()
-}
-
-function filterInstancesByType(type) {
-  instanceFilters.middlewareType = type
   searchInstances()
 }
 
@@ -1108,6 +1133,27 @@ function showVulnerabilityDetail(row) {
   vulnerabilityDialogVisible.value = true
 }
 
+async function openFixGuide(row) {
+  if (!row?.instanceKey) {
+    ElMessage.warning('缺少实例信息，无法获取修复指引')
+    return
+  }
+
+  currentFixInstance.value = row
+  currentFixGuide.value = null
+  fixGuideVisible.value = true
+  fixGuideLoading.value = true
+  try {
+    const response = await middlewareCveApi.getFixGuide(row.instanceKey)
+    currentFixGuide.value = unwrapResponse(response) || null
+  } catch (error) {
+    fixGuideVisible.value = false
+    ElMessage.error(getErrorMessage(error, '加载修复指引失败'))
+  } finally {
+    fixGuideLoading.value = false
+  }
+}
+
 async function toggleIgnore(row) {
   if (!row.instanceKey || !row.cveId) {
     ElMessage.warning('缺少实例标识或 CVE 编号，无法更新忽略状态')
@@ -1156,6 +1202,64 @@ async function toggleIgnore(row) {
   }
 }
 
+async function submitFix({ instanceKey, localPackagePath }) {
+  const targetInstanceKey = instanceKey || currentFixInstance.value?.instanceKey || ''
+  if (!targetInstanceKey || !currentFixGuide.value?.canOneClick) {
+    ElMessage.warning('当前实例不支持一键修复，请按照修复指引处理')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      '修复过程中会升级软件包并重启相关服务，业务可能短暂中断。确定开始修复吗？',
+      '确认修复',
+      {
+        type: 'warning',
+        confirmButtonText: '开始修复',
+        cancelButtonText: '取消'
+      }
+    )
+  } catch {
+    return
+  }
+
+  const payload = { instanceKeys: [targetInstanceKey] }
+  if (localPackagePath) {
+    payload.localPackages = { [targetInstanceKey]: localPackagePath }
+  }
+
+  fixSubmitting.value = true
+  try {
+    const response = await middlewareCveApi.fix(payload)
+    const data = unwrapResponse(response) || {}
+    const submittedCount = Number(data.instances) || 0
+    const skippedCount = Array.isArray(data.skipped) ? data.skipped.length : 0
+
+    fixGuideVisible.value = false
+    instanceDialogVisible.value = false
+    currentRunId.value = data.runId || ''
+    currentRunTitle.value = '中间件修复'
+    runResultRefreshed.value = false
+
+    if (submittedCount > 0) {
+      ElMessage.success(`已提交 ${submittedCount} 个实例的修复任务`)
+    }
+    if (skippedCount > 0) {
+      ElMessage.warning(`${skippedCount} 个实例未执行修复`)
+    }
+
+    if (currentRunId.value) {
+      runResultVisible.value = true
+    } else {
+      await refreshAfterRunResult()
+    }
+  } catch (error) {
+    ElMessage.error(getErrorMessage(error, '修复任务提交失败'))
+  } finally {
+    fixSubmitting.value = false
+  }
+}
+
 function buildUniqueSelectorHostItems(hosts = []) {
   const seen = new Set()
   return buildSelectorHostItems(hosts).filter(item => {
@@ -1185,10 +1289,11 @@ async function submitScan() {
     const response = await middlewareCveApi.scan(scanHostIds.value)
     const data = unwrapResponse(response) || {}
     currentRunId.value = data.runId || ''
+    currentRunTitle.value = '中间件扫描'
     scanDialogVisible.value = false
     ElMessage.success(`已派发 ${Number(data.hosts) || scanHostIds.value.length} 台主机`)
     if (currentRunId.value) {
-      scanResultRefreshed.value = false
+      runResultRefreshed.value = false
       runResultVisible.value = true
     }
   } catch (error) {
@@ -1198,9 +1303,9 @@ async function submitScan() {
   }
 }
 
-async function refreshAfterScanResult() {
-  if (scanResultRefreshed.value) return
-  scanResultRefreshed.value = true
+async function refreshAfterRunResult() {
+  if (runResultRefreshed.value) return
+  runResultRefreshed.value = true
 
   const requests = [loadOverview()]
   if (activeTab.value === 'vulnerabilities') {
@@ -1220,6 +1325,7 @@ function openLinuxPackages(row) {
     return
   }
 
+  instanceDialogVisible.value = false
   router.push({
     name: 'patches-hostDetail',
     query: {
@@ -1261,6 +1367,22 @@ function provenanceLabel(value) {
 
 function isPackageManaged(row) {
   return ['rpm', 'deb'].includes(String(row?.provenance || '').toLowerCase())
+}
+
+function hasFixGuide(row) {
+  const action = String(row?.fixAction || '').toLowerCase()
+  return Boolean(row?.instanceKey) && Boolean(action) && action !== 'none'
+}
+
+function canRequestOneClickFix(row) {
+  return String(row?.fixAction || '').toLowerCase() === 'os_package'
+}
+
+function fixHintText(row) {
+  if (row?.fixHint) return row.fixHint
+  if (isPackageManaged(row)) return '请前往 Linux 补丁模块查看和处理'
+  if (hasFixGuide(row)) return '请查看修复指引'
+  return '暂无待修漏洞'
 }
 
 function severityLabel(value) {
@@ -1340,8 +1462,9 @@ function matchSourceDescription(value) {
 }
 
 function formatScore(value) {
+  if (value === null || value === undefined || value === '') return '—'
   const score = Number(value)
-  return Number.isFinite(score) ? score.toFixed(1) : '-'
+  return Number.isFinite(score) ? score.toFixed(1) : '—'
 }
 
 function formatDateTime(value, dateOnly = false) {
@@ -1612,33 +1735,6 @@ onMounted(() => {
   flex-direction: column;
 }
 
-.type-summary {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
-}
-
-.type-summary__item {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  padding: 5px 10px;
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 6px;
-  background: var(--el-fill-color-lighter);
-  color: var(--el-text-color-regular);
-  cursor: pointer;
-
-  &:hover {
-    border-color: var(--el-color-primary-light-5);
-  }
-  strong {
-    color: var(--el-color-primary);
-    font-variant-numeric: tabular-nums;
-  }
-}
-
 .action-spacer {
   flex: 1;
 }
@@ -1653,6 +1749,25 @@ onMounted(() => {
   min-width: 0;
   flex-direction: column;
   line-height: 20px;
+}
+
+.fix-hint-link {
+  line-height: 1.5;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.fix-hint-text {
+  display: -webkit-box;
+  max-height: 40px;
+  overflow: hidden;
+  color: var(--el-text-color-regular);
+  line-height: 20px;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .status-cell {

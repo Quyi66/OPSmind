@@ -2080,6 +2080,16 @@ export const middlewareCveApi = {
     return apiService.post(`${VAP_API_PREFIX}/v2/middleware/vuls/ignore`, payload)
   },
 
+  getFixGuide(instanceKey) {
+    return apiService.get(
+      `${VAP_API_PREFIX}/v2/middleware/instances/${encodeURIComponent(instanceKey)}/fix-guide`
+    )
+  },
+
+  fix(payload) {
+    return apiService.post(`${VAP_API_PREFIX}/v2/middleware/fix`, payload)
+  },
+
   scan(hostIds) {
     return apiService.post(`${VAP_API_PREFIX}/v2/middleware/scan`, { hostIds })
   },
