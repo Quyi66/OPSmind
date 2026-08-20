@@ -49,6 +49,40 @@ function extractVersionFromPackageIdentifier(identifier, { name, architecture } 
   return matchedPrefix ? packageText.slice(matchedPrefix.length).trim() : ''
 }
 
+function stripRpmDistributionSuffix(version) {
+  const normalizedVersion = String(version || '').trim()
+  const distributionIndex = normalizedVersion.search(
+    /(?:\.module\+|[.+_-])el\d+(?=$|[._+~-])/i
+  )
+
+  return distributionIndex > 0 ? normalizedVersion.slice(0, distributionIndex) : ''
+}
+
+function extractRhelMajor(detail = {}) {
+  const normalizedDetail = normalizeRpmPackageDetail(detail)
+  const values = [
+    normalizedDetail.currentPackage,
+    normalizedDetail.completePackageName,
+    normalizedDetail.pkgId,
+    normalizedDetail.installedPkg,
+    normalizedDetail.rpmPath,
+    normalizedDetail.release,
+    normalizedDetail.version,
+    normalizedDetail.source
+  ]
+
+  for (const value of values) {
+    const normalizedValue = String(value || '').trim()
+    const elMatch = normalizedValue.match(/(?:^|[._+~-])el(\d+)(?=$|[._+~-])/i)
+    if (elMatch) return elMatch[1]
+
+    const rhelMatch = normalizedValue.match(/rhel[\s_-]?(\d+)/i)
+    if (rhelMatch) return rhelMatch[1]
+  }
+
+  return ''
+}
+
 function changelogHeaderMatchesVersion(header, version) {
   const normalizedHeader = String(header || '').trim()
   const normalizedVersion = String(version || '').trim()
@@ -71,6 +105,31 @@ export function buildRpmChangelogFileUrl(source) {
   if (!normalizedSource || !/^[a-z0-9_-]+$/.test(normalizedSource)) return ''
 
   return `${CHANGELOG_BASE_PATH}/${encodeURIComponent(normalizedSource)}.txt`
+}
+
+export function buildRpmChangelogFileUrls(detail = {}) {
+  const normalizedDetail = normalizeRpmPackageDetail(detail)
+  const normalizedSource = normalizePackageDetailSource({ source: normalizedDetail.source })
+
+  if (normalizedSource !== 'redhat') {
+    const legacyUrl = buildRpmChangelogFileUrl(normalizedDetail.source)
+    return legacyUrl ? [legacyUrl] : []
+  }
+
+  const rhelMajor = extractRhelMajor(normalizedDetail)
+  const packageName = String(normalizedDetail.name || '').trim()
+  const initial = packageName.charAt(0).toLowerCase()
+  if (!rhelMajor || !packageName || !/^[a-z0-9]$/.test(initial)) return []
+
+  const basePath = `${CHANGELOG_BASE_PATH}/rhel/rhel${encodeURIComponent(rhelMajor)}/${initial}`
+  const fileStems = []
+  addUniqueText(fileStems, packageName)
+
+  const versionCandidates = getRpmChangelogVersionCandidates(normalizedDetail)
+  const filenameVersions = [...versionCandidates].sort((left, right) => left.length - right.length)
+  filenameVersions.forEach(version => addUniqueText(fileStems, `${packageName}-${version}`))
+
+  return fileStems.map(stem => `${basePath}/${encodeURIComponent(stem)}.txt`)
 }
 
 export function getRpmChangelogVersionCandidates(detail = {}) {
@@ -100,6 +159,11 @@ export function getRpmChangelogVersionCandidates(detail = {}) {
         architecture: normalizedDetail.architecture
       })
     )
+  })
+
+  const distributionVersions = [...versions]
+  distributionVersions.forEach(candidate => {
+    addUniqueText(versions, stripRpmDistributionSuffix(candidate))
   })
 
   return versions.sort((left, right) => right.length - left.length)
@@ -223,7 +287,7 @@ function splitChangelogHeader(header) {
       ? ''
       : normalizedHeader.slice(separatorIndex + 3).trim()
   const headerMatch = headline.match(
-    /^([A-Z][a-z]{2}\s+[A-Z][a-z]{2}\s+\d{1,2}\s+\d{4})\s+(.+?)(?:\s+<([^>]+)>)?$/
+    /^((?:[A-Z][a-z]{2}\s+[A-Z][a-z]{2}\s+\d{1,2}\s+\d{4})|(?:\d{4}-\d{2}-\d{2}))\s+(.+?)(?:\s+<([^>]+)>)?$/
   )
 
   if (headerMatch) {

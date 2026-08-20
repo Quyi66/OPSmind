@@ -154,7 +154,7 @@
 import { ref, computed, watch } from 'vue'
 import { Search as SearchIcon } from '@element-plus/icons-vue'
 import {
-  buildRpmChangelogFileUrl,
+  buildRpmChangelogFileUrls,
   extractRpmPackageChangelog,
   formatRpmVersion,
   getRpmChangelogVersionCandidates,
@@ -255,9 +255,9 @@ watch(
     if (!visible || detailLoading) return
 
     const detail = normalizedDetail.value
-    const fileUrl = buildRpmChangelogFileUrl(detail.source)
-    if (!fileUrl) {
-      changelogStatusText.value = '缺少有效的软件包来源，无法加载 Changelog'
+    const fileUrls = buildRpmChangelogFileUrls(detail)
+    if (!fileUrls.length) {
+      changelogStatusText.value = '缺少有效的软件包来源、RHEL 版本或包名，无法加载 Changelog'
       return
     }
 
@@ -268,22 +268,36 @@ watch(
     }
 
     changelogLoading.value = true
+    let loadedFile = false
+    let lastLoadError = null
     try {
-      const fullChangelog = await fetchChangelogFile(fileUrl)
+      for (const fileUrl of fileUrls) {
+        try {
+          const fullChangelog = await fetchChangelogFile(fileUrl)
+          if (cancelled || requestId !== changelogRequestId) return
+
+          loadedFile = true
+          const matchedChangelog = extractRpmPackageChangelog(fullChangelog, detail)
+          if (matchedChangelog) {
+            changelogContent.value = matchedChangelog
+            changelogStatusText.value = ''
+            return
+          }
+        } catch (error) {
+          lastLoadError = error
+          if (cancelled || requestId !== changelogRequestId) return
+        }
+      }
+
       if (cancelled || requestId !== changelogRequestId) return
 
-      const matchedChangelog = extractRpmPackageChangelog(fullChangelog, detail)
-      if (matchedChangelog) {
-        changelogContent.value = matchedChangelog
-        changelogStatusText.value = ''
+      const packageVersion = versionCandidates[versionCandidates.length - 1]
+      if (loadedFile) {
+        changelogStatusText.value = `未找到版本 ${packageVersion} 对应的 Changelog`
       } else {
-        const packageVersion = versionCandidates[0]
-        changelogStatusText.value = `未在 ${detail.source}.txt 中找到版本 ${packageVersion} 对应的 Changelog`
+        console.error('Failed to load changelog files:', fileUrls, lastLoadError)
+        changelogStatusText.value = '未找到当前软件包对应的 Changelog 文件'
       }
-    } catch (error) {
-      if (cancelled || requestId !== changelogRequestId) return
-      console.error(`Failed to load changelog file ${fileUrl}:`, error)
-      changelogStatusText.value = `加载 ${detail.source}.txt 失败`
     } finally {
       if (!cancelled && requestId === changelogRequestId) {
         changelogLoading.value = false

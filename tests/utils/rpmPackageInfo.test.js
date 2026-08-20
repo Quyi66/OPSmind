@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   buildRpmChangelogFileUrl,
+  buildRpmChangelogFileUrls,
   extractRpmPackageChangelog,
   getRpmChangelogVersionCandidates,
   inferRpmSource,
@@ -47,6 +48,34 @@ describe('rpmPackageInfo - static changelog', () => {
     expect(buildRpmChangelogFileUrl('../unknown')).toBe('')
   })
 
+  it('builds RHEL changelog paths from NEVRA, package initial and version', () => {
+    const urls = buildRpmChangelogFileUrls({
+      source: 'redhat',
+      name: 'abrt',
+      currentPackage: 'abrt-2.1.11-60.el7.x86_64',
+      architecture: 'x86_64'
+    })
+
+    expect(urls[0]).toBe('/KoreOPS/changelog/rhel/rhel7/a/abrt.txt')
+    expect(urls).toContain('/KoreOPS/changelog/rhel/rhel7/a/abrt-2.1.11-60.txt')
+    expect(urls).toContain('/KoreOPS/changelog/rhel/rhel7/a/abrt-2.1.11-60.el7.txt')
+  })
+
+  it('uses a numeric initial and strips module RHEL metadata', () => {
+    const detail = {
+      source: 'redhat',
+      name: '389-ds-base-snmp',
+      currentPackage:
+        '389-ds-base-snmp-1.4.3.39-26.module+el8.10.0+24681+e3e72ab4.x86_64',
+      architecture: 'x86_64'
+    }
+    const urls = buildRpmChangelogFileUrls(detail)
+    const versions = getRpmChangelogVersionCandidates(detail)
+
+    expect(urls[0]).toBe('/KoreOPS/changelog/rhel/rhel8/3/389-ds-base-snmp.txt')
+    expect(versions).toContain('1.4.3.39-26')
+  })
+
   it('extracts version-release from RPM package identifiers', () => {
     expect(
       getRpmChangelogVersionCandidates({
@@ -76,6 +105,26 @@ describe('rpmPackageInfo - static changelog', () => {
     expect(result).toContain('[4.18.0-553.el8]')
     expect(result).toContain('cpuhotplug')
     expect(result).not.toContain('[4.18.0-552.el8]')
+  })
+
+  it('matches RPM headers after removing the el distribution suffix', () => {
+    const result = extractRpmPackageChangelog(
+      `* 2024-06-10 Red Hat Maintainer <maintainer@redhat.com> - 2.1.11-60
+- Target release
+
+* 2024-05-01 Red Hat Maintainer <maintainer@redhat.com> - 2.1.11-59
+- Previous release`,
+      {
+        source: 'redhat',
+        name: 'abrt',
+        currentPackage: 'abrt-2.1.11-60.el7.x86_64',
+        architecture: 'x86_64'
+      }
+    )
+
+    expect(result).toContain('2.1.11-60')
+    expect(result).toContain('Target release')
+    expect(result).not.toContain('Previous release')
   })
 
   it('parses bracketed versions for the structured changelog view', () => {
