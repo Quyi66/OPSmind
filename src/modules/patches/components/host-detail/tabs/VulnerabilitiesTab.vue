@@ -522,7 +522,12 @@ async function handleViewPackageDetail(pkg) {
         const response = await candidate.request()
         const responseData = response?.data || response || {}
         if (hasRpmDetailResponse(responseData)) {
-          detailData.value = responseData
+          detailData.value = {
+            ...responseData,
+            source: responseData.source || pkg?.source || '',
+            currentPackage:
+              pkg?.currentPackage || pkg?.rpmCompletePackageName || responseData.currentPackage || ''
+          }
           return
         }
       } catch (error) {

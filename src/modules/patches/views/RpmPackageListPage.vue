@@ -208,7 +208,13 @@ async function handleViewDetail(row) {
           arch: row?.architecture || row?.arch
         })
 
-    detailData.value = response?.data || response || {}
+    const responseData = response?.data || response || {}
+    detailData.value = {
+      ...responseData,
+      source: responseData.source || row?.source || filters.source,
+      currentPackage:
+        row?.currentPackage || row?.completePackageName || responseData.currentPackage || ''
+    }
   } catch (error) {
     console.error('Failed to load rpm package detail:', error)
     ElMessage.error('获取 RPM 包详情失败')

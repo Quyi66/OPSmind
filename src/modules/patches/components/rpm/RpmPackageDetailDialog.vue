@@ -46,7 +46,10 @@
           <span v-else class="service-empty-text">暂无关联服务</span>
         </section>
 
-        <section class="detail-section detail-section--changelog">
+        <section
+          v-loading="changelogLoading"
+          class="detail-section detail-section--changelog"
+        >
           <div class="detail-section__header">
             <h4 class="detail-section__title">Changelog</h4>
             <span v-if="parsedChangelog.isStructured" class="detail-section__meta">
@@ -136,7 +139,7 @@
             v-else
             class="detail-section__content changelog-raw pre-wrap mono-text"
             v-html="
-              highlightText(normalizedDetail.changelog || '暂无 changelog 信息', searchKeyword)
+              highlightText(changelogContent || changelogStatusText, searchKeyword)
             "
           ></div>
         </section>
@@ -151,7 +154,10 @@
 import { ref, computed, watch } from 'vue'
 import { Search as SearchIcon } from '@element-plus/icons-vue'
 import {
+  buildRpmChangelogFileUrl,
+  extractRpmPackageChangelog,
   formatRpmVersion,
+  getRpmChangelogVersionCandidates,
   normalizeRpmPackageDetail,
   parseRpmChangelog
 } from '../../utils/rpmPackageInfo'
@@ -179,7 +185,11 @@ const dialogVisible = computed({
 })
 
 const normalizedDetail = computed(() => normalizeRpmPackageDetail(props.detailData))
-const parsedChangelog = computed(() => parseRpmChangelog(normalizedDetail.value.changelog))
+const changelogContent = ref('')
+const changelogStatusText = ref('暂无 changelog 信息')
+const changelogLoading = ref(false)
+const changelogFileCache = new Map()
+const parsedChangelog = computed(() => parseRpmChangelog(changelogContent.value))
 const changelogEntryCount = computed(
   () => parsedChangelog.value.entries.filter(entry => entry.header).length
 )
@@ -187,6 +197,101 @@ const changelogEntryCount = computed(
 const currentPage = ref(1)
 const pageSize = ref(10)
 const searchKeyword = ref('')
+
+async function fetchChangelogFile(url) {
+  if (!changelogFileCache.has(url)) {
+    const request = fetch(url, { credentials: 'same-origin' })
+      .then(async response => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`)
+        }
+
+        const contentType = String(response.headers.get('content-type') || '').toLowerCase()
+        const content = await response.text()
+        if (contentType.includes('text/html') && /<(?:!doctype\s+html|html)\b/i.test(content)) {
+          throw new Error('Changelog file resolved to the SPA entry')
+        }
+
+        return content
+      })
+      .catch(error => {
+        changelogFileCache.delete(url)
+        throw error
+      })
+
+    changelogFileCache.set(url, request)
+  }
+
+  return changelogFileCache.get(url)
+}
+
+let changelogRequestId = 0
+
+watch(
+  () => [
+    dialogVisible.value,
+    props.loading,
+    normalizedDetail.value.source,
+    normalizedDetail.value.currentPackage,
+    normalizedDetail.value.completePackageName,
+    normalizedDetail.value.pkgId,
+    normalizedDetail.value.installedPkg,
+    normalizedDetail.value.name,
+    normalizedDetail.value.version,
+    normalizedDetail.value.release,
+    normalizedDetail.value.architecture
+  ],
+  async ([visible, detailLoading], _previousValue, onCleanup) => {
+    const requestId = ++changelogRequestId
+    let cancelled = false
+    onCleanup(() => {
+      cancelled = true
+    })
+
+    changelogContent.value = ''
+    changelogLoading.value = false
+    changelogStatusText.value = '暂无 changelog 信息'
+
+    if (!visible || detailLoading) return
+
+    const detail = normalizedDetail.value
+    const fileUrl = buildRpmChangelogFileUrl(detail.source)
+    if (!fileUrl) {
+      changelogStatusText.value = '缺少有效的软件包来源，无法加载 Changelog'
+      return
+    }
+
+    const versionCandidates = getRpmChangelogVersionCandidates(detail)
+    if (!versionCandidates.length) {
+      changelogStatusText.value = '缺少 currentPackage 或版本信息，无法匹配 Changelog'
+      return
+    }
+
+    changelogLoading.value = true
+    try {
+      const fullChangelog = await fetchChangelogFile(fileUrl)
+      if (cancelled || requestId !== changelogRequestId) return
+
+      const matchedChangelog = extractRpmPackageChangelog(fullChangelog, detail)
+      if (matchedChangelog) {
+        changelogContent.value = matchedChangelog
+        changelogStatusText.value = ''
+      } else {
+        const packageVersion = versionCandidates[0]
+        changelogStatusText.value = `未在 ${detail.source}.txt 中找到版本 ${packageVersion} 对应的 Changelog`
+      }
+    } catch (error) {
+      if (cancelled || requestId !== changelogRequestId) return
+      console.error(`Failed to load changelog file ${fileUrl}:`, error)
+      changelogStatusText.value = `加载 ${detail.source}.txt 失败`
+    } finally {
+      if (!cancelled && requestId === changelogRequestId) {
+        changelogLoading.value = false
+      }
+    }
+  },
+  { immediate: true }
+)
 
 function entryMatchesKeyword(entry, keyword) {
   const lowerKeyword = keyword.toLowerCase()
@@ -265,7 +370,7 @@ const hasDetail = computed(() => {
     detail.name ||
     detail.summary ||
     detail.description ||
-    detail.changelog ||
+    changelogContent.value ||
     detail.rpmPath ||
     detail.services.length
   )

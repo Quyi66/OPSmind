@@ -1582,7 +1582,12 @@ async function handleViewPackageDetail(pkg, row) {
         const response = await candidate.request()
         const responseData = response?.data || response || {}
         if (hasRpmDetailResponse(responseData)) {
-          rpmDetailData.value = responseData
+          rpmDetailData.value = {
+            ...responseData,
+            source: responseData.source || pkg?.source || '',
+            currentPackage:
+              pkg?.currentPackage || pkg?.rpmCompletePackageName || responseData.currentPackage || ''
+          }
           return
         }
       } catch (error) {

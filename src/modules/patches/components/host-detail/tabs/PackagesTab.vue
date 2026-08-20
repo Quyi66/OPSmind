@@ -281,7 +281,12 @@ async function handleViewPackageDetail(row) {
       arch
     })
 
-    detailData.value = response?.data || response || {}
+    const responseData = response?.data || response || {}
+    detailData.value = {
+      ...responseData,
+      source: responseData.source || source,
+      currentPackage: currentPackage || responseData.currentPackage || ''
+    }
   } catch (error) {
     console.error('Failed to load installed package detail:', error)
     ElMessage.error('获取软件包详情失败')

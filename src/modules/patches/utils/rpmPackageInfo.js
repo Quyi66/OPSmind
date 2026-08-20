@@ -6,6 +6,139 @@ function stringifyObject(value) {
   }
 }
 
+const CHANGELOG_BASE_PATH = '/KoreOPS/changelog'
+
+function addUniqueText(target, value) {
+  const normalizedValue = String(value || '').trim()
+  if (normalizedValue && !target.includes(normalizedValue)) {
+    target.push(normalizedValue)
+  }
+}
+
+function stripPackageFileSuffix(value) {
+  return String(value || '')
+    .trim()
+    .replace(/^.*[\\/]/, '')
+    .replace(/\.(?:rpm|deb)$/i, '')
+}
+
+function extractVersionFromPackageIdentifier(identifier, { name, architecture } = {}) {
+  let packageText = stripPackageFileSuffix(identifier)
+  const packageName = String(name || '').trim()
+  const arch = String(architecture || '').trim()
+
+  if (!packageText) return ''
+
+  if (arch) {
+    const architectureSuffixes = [`.${arch}`, `-${arch}`, `_${arch}`]
+    const matchedSuffix = architectureSuffixes.find(suffix =>
+      packageText.toLowerCase().endsWith(suffix.toLowerCase())
+    )
+    if (matchedSuffix) {
+      packageText = packageText.slice(0, -matchedSuffix.length)
+    }
+  }
+
+  if (!packageName) return ''
+
+  const packagePrefixes = [`${packageName}-`, `${packageName}_`, `${packageName}=`]
+  const matchedPrefix = packagePrefixes.find(prefix =>
+    packageText.toLowerCase().startsWith(prefix.toLowerCase())
+  )
+
+  return matchedPrefix ? packageText.slice(matchedPrefix.length).trim() : ''
+}
+
+function changelogHeaderMatchesVersion(header, version) {
+  const normalizedHeader = String(header || '').trim()
+  const normalizedVersion = String(version || '').trim()
+  if (!normalizedHeader || !normalizedVersion) return false
+
+  return (
+    normalizedHeader.includes(`[${normalizedVersion}]`) ||
+    normalizedHeader.includes(`(${normalizedVersion})`) ||
+    normalizedHeader.endsWith(` - ${normalizedVersion}`)
+  )
+}
+
+function isDebianChangelogHeader(line) {
+  return /^\S+\s+\([^)]+\)\s+[^;]+;\s*urgency=/i.test(String(line || '').trim())
+}
+
+export function buildRpmChangelogFileUrl(source) {
+  const rawSource = String(source || '').trim()
+  const normalizedSource = normalizePackageDetailSource({ source: rawSource }) || rawSource.toLowerCase()
+  if (!normalizedSource || !/^[a-z0-9_-]+$/.test(normalizedSource)) return ''
+
+  return `${CHANGELOG_BASE_PATH}/${encodeURIComponent(normalizedSource)}.txt`
+}
+
+export function getRpmChangelogVersionCandidates(detail = {}) {
+  const normalizedDetail = normalizeRpmPackageDetail(detail)
+  const versions = []
+  const version = String(normalizedDetail.version || '').trim()
+  const release = String(normalizedDetail.release || '').trim()
+
+  if (version && release) {
+    addUniqueText(versions, version.endsWith(`-${release}`) ? version : `${version}-${release}`)
+  }
+  addUniqueText(versions, version)
+
+  const packageIdentifiers = [
+    normalizedDetail.currentPackage,
+    normalizedDetail.completePackageName,
+    normalizedDetail.pkgId,
+    normalizedDetail.installedPkg,
+    normalizedDetail.rpmPath
+  ]
+
+  packageIdentifiers.forEach(identifier => {
+    addUniqueText(
+      versions,
+      extractVersionFromPackageIdentifier(identifier, {
+        name: normalizedDetail.name,
+        architecture: normalizedDetail.architecture
+      })
+    )
+  })
+
+  return versions.sort((left, right) => right.length - left.length)
+}
+
+export function extractRpmPackageChangelog(changelog, detail = {}) {
+  const rawText = normalizeChangelog(changelog).replace(/\r\n?/g, '\n')
+  const versions = getRpmChangelogVersionCandidates(detail)
+  if (!rawText || !versions.length) return ''
+
+  const lines = rawText.split('\n')
+  for (let start = 0; start < lines.length; start += 1) {
+    const header = lines[start]
+    const normalizedHeader = String(header || '').trim()
+    const isRpmHeader = /^\*\s+/.test(normalizedHeader)
+    const isDebianHeader = isDebianChangelogHeader(normalizedHeader)
+    if (!isRpmHeader && !isDebianHeader) continue
+
+    const matched = versions.some(version => changelogHeaderMatchesVersion(header, version))
+    if (!matched) continue
+
+    let end = lines.length
+    for (let index = start + 1; index < lines.length; index += 1) {
+      const candidateLine = String(lines[index] || '').trim()
+      const isNextHeader = isDebianHeader
+        ? isDebianChangelogHeader(candidateLine)
+        : /^\*\s+/.test(candidateLine)
+      if (isNextHeader) {
+        end = index
+        break
+      }
+    }
+
+    return lines.slice(start, end).join('\n').trim()
+  }
+
+  return ''
+}
+
 export function normalizeServiceList(value) {
   if (!value) return []
 
@@ -77,10 +210,18 @@ function splitChangelogHeader(header) {
     }
   }
 
-  const separatorIndex = normalizedHeader.lastIndexOf(' - ')
-  const headline =
-    separatorIndex === -1 ? normalizedHeader : normalizedHeader.slice(0, separatorIndex).trim()
-  const version = separatorIndex === -1 ? '' : normalizedHeader.slice(separatorIndex + 3).trim()
+  const bracketVersionMatch = normalizedHeader.match(/^(.*?)\s+\[([^\]]+)\]\s*$/)
+  const separatorIndex = bracketVersionMatch ? -1 : normalizedHeader.lastIndexOf(' - ')
+  const headline = bracketVersionMatch
+    ? bracketVersionMatch[1].trim()
+    : separatorIndex === -1
+      ? normalizedHeader
+      : normalizedHeader.slice(0, separatorIndex).trim()
+  const version = bracketVersionMatch
+    ? bracketVersionMatch[2].trim()
+    : separatorIndex === -1
+      ? ''
+      : normalizedHeader.slice(separatorIndex + 3).trim()
   const headerMatch = headline.match(
     /^([A-Z][a-z]{2}\s+[A-Z][a-z]{2}\s+\d{1,2}\s+\d{4})\s+(.+?)(?:\s+<([^>]+)>)?$/
   )
@@ -119,6 +260,15 @@ export function parseRpmChangelog(value) {
   if (!rawText) {
     return {
       rawText: '',
+      entries: [],
+      isStructured: false
+    }
+  }
+
+  const firstContentLine = rawText.split(/\r?\n/).find(line => String(line || '').trim())
+  if (isDebianChangelogHeader(firstContentLine)) {
+    return {
+      rawText,
       entries: [],
       isStructured: false
     }
@@ -251,6 +401,16 @@ export function normalizeRpmPackageDetail(rawDetail = {}) {
       '',
     version: baseDetail.version || rawDetail.version || '',
     release: baseDetail.release || rawDetail.release || '',
+    currentPackage:
+      baseDetail.currentPackage ||
+      rawDetail.currentPackage ||
+      rawDetail.pkgId ||
+      rawDetail.installedPkg ||
+      baseDetail.pkgId ||
+      baseDetail.installedPkg ||
+      baseDetail.completePackageName ||
+      rawDetail.completePackageName ||
+      '',
     summary: baseDetail.summary || rawDetail.summary || '',
     description:
       baseDetail.description || rawDetail.packageDescription || rawDetail.description || '',
