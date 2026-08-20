@@ -130,7 +130,7 @@
       </div>
     </div>
 
-    <el-tabs v-model="activeTab" class="middleware-tabs" @tab-change="handleTabChange">
+    <el-tabs v-model="activeTab" class="middleware-tabs">
       <el-tab-pane label="实例清单" name="instances">
         <div class="tab-pane-layout">
           <!-- <div v-if="instanceSummary.length" class="type-summary">
@@ -248,21 +248,31 @@
               @selection-change="rows => (selectedInstances = rows)"
             >
               <el-table-column type="selection" width="46" />
-              <el-table-column label="主机" min-width="170" show-overflow-tooltip>
+              <el-table-column label="主机" min-width="210" show-overflow-tooltip>
                 <template #default="{ row }">
-                  <div class="primary-cell">
+                  <el-space :size="8">
                     <el-link type="primary" underline="never" @click="showInstanceDetail(row)">
                       {{ row.hostName || row.hostKey || row.hostId || '-' }}
                     </el-link>
-                    <span v-if="row.hostName && row.hostKey" class="secondary-text">
+                    <el-tag
+                      v-if="row.hostName && row.hostKey && row.hostName !== row.hostKey"
+                      type="info"
+                      size="small"
+                      effect="plain"
+                    >
                       {{ row.hostKey }}
-                    </span>
-                  </div>
+                    </el-tag>
+                  </el-space>
                 </template>
               </el-table-column>
               <el-table-column label="中间件" width="110">
                 <template #default="{ row }">
-                  <el-tag size="small" effect="plain">
+                  <el-tag
+                    :type="middlewareTagType(row.middlewareType)"
+                    size="small"
+                    effect="light"
+                    round
+                  >
                     {{ middlewareTypeLabel(row.middlewareType) }}
                   </el-tag>
                 </template>
@@ -288,61 +298,51 @@
               </el-table-column>
               <el-table-column label="分发方式" width="125">
                 <template #default="{ row }">
-                  <div class="provenance-cell">
-                    <el-tag
-                      :type="isPackageManaged(row) ? 'success' : 'info'"
-                      size="small"
-                      effect="plain"
-                    >
-                      {{ provenanceLabel(row.provenance) }}
-                    </el-tag>
-                    <el-tooltip
-                      v-if="isPackageManaged(row)"
-                      content="发行版会回移安全修复，该实例由 Linux 补丁口径判断，不在这里生成漏洞"
-                      placement="top"
-                    >
-                      <el-button link type="primary" size="small" @click="openLinuxPackages(row)">
-                        查看补丁
-                      </el-button>
-                    </el-tooltip>
-                  </div>
+                  <RunLogStatusTag
+                    :type="isPackageManaged(row) ? 'success' : 'info'"
+                    size="small"
+                    effect="plain"
+                    :clickable="isPackageManaged(row)"
+                    tooltip="点击查看主机的软件包与补丁"
+                    @click="openLinuxPackages(row)"
+                  >
+                    {{ provenanceLabel(row.provenance) }}
+                  </RunLogStatusTag>
                 </template>
               </el-table-column>
-              <el-table-column label="漏洞" width="80" align="center">
+              <el-table-column label="漏洞" width="90" align="center">
                 <template #default="{ row }">
-                  <el-button
+                  <RunLogStatusTag
                     v-if="Number(row.numVuls) > 0"
-                    link
                     type="danger"
+                    effect="light"
+                    round
+                    :tooltip="`点击查看 ${row.numVuls} 条未修复漏洞`"
                     @click="openInstanceVulnerabilities(row, 'open')"
                   >
-                    {{ row.numVuls }}
-                  </el-button>
+                    {{ row.numVuls }} 条
+                  </RunLogStatusTag>
                   <span v-else>0</span>
                 </template>
               </el-table-column>
-              <el-table-column label="待确认" width="90" align="center">
+              <el-table-column label="待确认" width="100" align="center">
                 <template #default="{ row }">
-                  <el-button
+                  <RunLogStatusTag
                     v-if="Number(row.numUnconfirmed) > 0"
-                    link
                     type="warning"
+                    effect="light"
+                    round
+                    :tooltip="`点击查看 ${row.numUnconfirmed} 条待确认漏洞`"
                     @click="openInstanceVulnerabilities(row, 'unconfirmed')"
                   >
-                    {{ row.numUnconfirmed }}
-                  </el-button>
+                    {{ row.numUnconfirmed }} 条
+                  </RunLogStatusTag>
                   <span v-else>0</span>
                 </template>
               </el-table-column>
               <el-table-column label="严重 / 重要" width="120" align="center">
                 <template #default="{ row }">
-                  <span class="severity-count severity-count--critical">
-                    {{ row.numCritical || 0 }}
-                  </span>
-                  <span class="severity-divider">/</span>
-                  <span class="severity-count severity-count--important">
-                    {{ row.numImportant || 0 }}
-                  </span>
+                  <span>{{ row.numCritical || 0 }} / {{ row.numImportant || 0 }}</span>
                 </template>
               </el-table-column>
               <el-table-column label="扫描时间" width="170">
@@ -592,7 +592,13 @@
       </el-tab-pane>
     </el-tabs>
 
-    <el-drawer v-model="instanceDrawerVisible" title="中间件实例详情" size="560px">
+    <el-dialog
+      v-model="instanceDialogVisible"
+      title="中间件实例详情"
+      width="720px"
+      append-to-body
+      destroy-on-close
+    >
       <template v-if="currentInstance">
         <el-descriptions :column="1" border>
           <el-descriptions-item label="实例标识">
@@ -656,39 +662,48 @@
           type="success"
           show-icon
           :closable="false"
-          class="drawer-alert"
+          class="detail-alert"
           title="该实例由操作系统软件包管理"
           description="发行版可能回移安全修复且不改变上游版本号，因此这里不生成漏洞，请到 Linux 补丁页查看。"
         />
       </template>
-    </el-drawer>
+      <template #footer>
+        <el-button @click="instanceDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
 
-    <el-drawer v-model="vulnerabilityDrawerVisible" title="漏洞判定详情" size="620px">
+    <el-dialog
+      v-model="vulnerabilityDialogVisible"
+      title="漏洞判定详情"
+      width="800px"
+      append-to-body
+      destroy-on-close
+    >
       <template v-if="currentVulnerability">
         <el-alert
           :type="currentVulnerability.fixStatus === 'unconfirmed' ? 'warning' : 'info'"
           show-icon
           :closable="false"
-          class="drawer-alert drawer-alert--top"
+          class="detail-alert detail-alert--before"
           :title="`判定依据：${matchSourceLabel(currentVulnerability.matchSource)}`"
           :description="matchSourceDescription(currentVulnerability.matchSource)"
         />
-        <el-descriptions :column="1" border>
+        <el-descriptions :column="2" border>
           <el-descriptions-item label="CVE">
             {{ currentVulnerability.cveId || '-' }}
-          </el-descriptions-item>
-          <el-descriptions-item label="主机">
-            {{ currentVulnerability.hostKey || currentVulnerability.hostId || '-' }}
-          </el-descriptions-item>
-          <el-descriptions-item label="实例">
-            {{ currentVulnerability.instanceKey || '-' }}
-          </el-descriptions-item>
-          <el-descriptions-item label="安装路径">
-            {{ currentVulnerability.installPath || '-' }}
           </el-descriptions-item>
           <el-descriptions-item label="风险等级">
             {{ severityLabel(currentVulnerability.severity) }} / CVSS
             {{ formatScore(currentVulnerability.cvss3Score) }}
+          </el-descriptions-item>
+          <el-descriptions-item label="主机" :span="2">
+            {{ currentVulnerability.hostKey || currentVulnerability.hostId || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="实例" :span="2">
+            {{ currentVulnerability.instanceKey || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="安装路径" :span="2">
+            {{ currentVulnerability.installPath || '-' }}
           </el-descriptions-item>
           <el-descriptions-item label="当前版本">
             {{ currentVulnerability.currVersion || '-' }}
@@ -711,18 +726,20 @@
           <el-descriptions-item label="公开日期">
             {{ formatDateTime(currentVulnerability.publicDate, true) }}
           </el-descriptions-item>
-          <el-descriptions-item label="忽略状态">
+          <el-descriptions-item label="忽略状态" :span="2">
             {{
               currentVulnerability.ignore
                 ? `已忽略：${currentVulnerability.ignoreReason || '未填写原因'}`
                 : '未忽略'
             }}
           </el-descriptions-item>
-          <el-descriptions-item label="漏洞说明">
+          <el-descriptions-item label="漏洞说明" :span="2">
             {{ currentVulnerability.description || '-' }}
           </el-descriptions-item>
         </el-descriptions>
-        <div class="drawer-actions">
+      </template>
+      <template #footer>
+        <template v-if="currentVulnerability">
           <el-button
             v-if="currentVulnerability.webUrl"
             tag="a"
@@ -731,12 +748,13 @@
           >
             打开漏洞公告
           </el-button>
+          <el-button @click="vulnerabilityDialogVisible = false">关闭</el-button>
           <el-button type="primary" @click="toggleIgnore(currentVulnerability)">
             {{ currentVulnerability.ignore ? '取消忽略' : '忽略此漏洞' }}
           </el-button>
-        </div>
+        </template>
       </template>
-    </el-drawer>
+    </el-dialog>
 
     <el-dialog v-model="scanDialogVisible" title="派发中间件扫描" width="560px" destroy-on-close>
       <el-alert
@@ -775,7 +793,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Aim,
@@ -791,8 +809,14 @@ import {
 import { ElMessage, ElMessageBox } from 'element-plus'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
+import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
 import { middlewareCveApi } from '../api'
-import { buildSelectorHostItems, extractHostIds } from '../utils/linuxMachinePackageList'
+import {
+  buildSelectorHostItems,
+  extractHostIds,
+  resolveHostId,
+  resolveHostKey
+} from '../utils/linuxMachinePackageList'
 
 const router = useRouter()
 const activeTab = ref('instances')
@@ -807,8 +831,8 @@ const vulnerabilityLoading = ref(false)
 const overviewLoading = ref(false)
 const scanSubmitting = ref(false)
 
-const instanceDrawerVisible = ref(false)
-const vulnerabilityDrawerVisible = ref(false)
+const instanceDialogVisible = ref(false)
+const vulnerabilityDialogVisible = ref(false)
 const scanDialogVisible = ref(false)
 const runResultVisible = ref(false)
 const scanResultRefreshed = ref(false)
@@ -974,6 +998,8 @@ function handleTabChange(tabName) {
   if (tabName === 'vulnerabilities') loadVulnerabilities()
 }
 
+watch(activeTab, handleTabChange, { flush: 'post' })
+
 function searchInstances() {
   instancePagination.page = 1
   loadInstances()
@@ -1074,12 +1100,12 @@ function clearInstanceFilter() {
 
 function showInstanceDetail(row) {
   currentInstance.value = row
-  instanceDrawerVisible.value = true
+  instanceDialogVisible.value = true
 }
 
 function showVulnerabilityDetail(row) {
   currentVulnerability.value = row
-  vulnerabilityDrawerVisible.value = true
+  vulnerabilityDialogVisible.value = true
 }
 
 async function toggleIgnore(row) {
@@ -1123,7 +1149,7 @@ async function toggleIgnore(row) {
       reason
     })
     ElMessage.success(nextIgnore ? '已忽略该漏洞' : '已取消忽略')
-    vulnerabilityDrawerVisible.value = false
+    vulnerabilityDialogVisible.value = false
     await Promise.all([loadVulnerabilities(), loadOverview()])
   } catch (error) {
     ElMessage.error(getErrorMessage(error, '更新忽略状态失败'))
@@ -1186,12 +1212,22 @@ async function refreshAfterScanResult() {
 }
 
 function openLinuxPackages(row) {
+  const hostId = resolveHostId(row)
+  const hostKey = resolveHostKey(row)
+
+  if (!hostId) {
+    ElMessage.warning('缺少主机 ID，无法查看软件包')
+    return
+  }
+
   router.push({
     name: 'patches-hostDetail',
     query: {
-      hostId: row.hostId || '',
-      hostKey: row.hostKey || '',
-      hostname: row.hostName || '',
+      host_id: hostId,
+      host_key: hostKey === '-' ? '' : hostKey,
+      hostname: row.hostName || row.hostname || '',
+      os_distro: row.osDistro || row.os_distro || '',
+      os_version: row.osVersion || row.os_version || '',
       tab: 'packages',
       fromLabel: '中间件漏洞管理',
       fromRouteName: 'patches-middlewareCveList'
@@ -1202,6 +1238,11 @@ function openLinuxPackages(row) {
 function middlewareTypeLabel(type) {
   const key = String(type || '').toLowerCase()
   return { tomcat: 'Tomcat', weblogic: 'WebLogic', nginx: 'Nginx' }[key] || type || '-'
+}
+
+function middlewareTagType(type) {
+  const key = String(type || '').toLowerCase()
+  return { tomcat: 'primary', weblogic: 'warning', nginx: 'success' }[key] || 'info'
 }
 
 function provenanceLabel(value) {
@@ -1614,27 +1655,11 @@ onMounted(() => {
   line-height: 20px;
 }
 
-.provenance-cell,
 .status-cell {
   display: flex;
   align-items: center;
   gap: 4px;
   flex-wrap: wrap;
-}
-
-.severity-count {
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-.severity-count--critical {
-  color: var(--el-color-danger);
-}
-.severity-count--important {
-  color: var(--el-color-warning);
-}
-.severity-divider {
-  margin: 0 3px;
-  color: var(--el-text-color-placeholder);
 }
 
 .instance-filter-tag {
@@ -1645,23 +1670,16 @@ onMounted(() => {
   font-size: 12px;
 }
 
-.drawer-alert {
+.detail-alert {
   margin-top: 16px;
 }
-.drawer-alert--top {
+.detail-alert--before {
   margin-top: 0;
   margin-bottom: 16px;
 }
 .detail-tag {
   margin: 2px 4px 2px 0;
 }
-.drawer-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 16px;
-}
-
 .scan-form {
   margin-top: 16px;
 }

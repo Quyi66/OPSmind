@@ -194,7 +194,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { authService } from '@/core/auth'
@@ -211,13 +211,20 @@ import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWiza
 const route = useRoute()
 const router = useRouter()
 
-const hostInfoRef = computed(() => ({
-  host_key: route.query.host_key || route.query.hostKey || '',
-  host_id: route.query.host_id || route.query.hostId || '',
-  os_distro: route.query.os_distro || '',
-  os_version: route.query.os_version || '',
-  hostname: route.query.hostname || ''
-}))
+const hostInfoRef = computed(() => {
+  const hostKey = route.query.host_key || route.query.hostKey || ''
+  const hostId = route.query.host_id || route.query.hostId || ''
+
+  return {
+    hostKey,
+    host_key: hostKey,
+    hostId,
+    host_id: hostId,
+    os_distro: route.query.os_distro || '',
+    os_version: route.query.os_version || '',
+    hostname: route.query.hostname || ''
+  }
+})
 
 const hostId = computed(() => hostInfoRef.value.host_id || '')
 const hostKey = computed(() => hostInfoRef.value.host_key || hostInfoRef.value.hostKey || '')
@@ -318,20 +325,30 @@ function handleInstallSuccess() {
   }
 }
 
-// 监听Tab切换
-watch(activeTab, newTab => {
-  if (newTab === 'packages' && packagesTabRef.value) {
-    packagesTabRef.value.loadPackageList()
-  } else if (newTab === 'vulnerabilities' && vulnerabilitiesTabRef.value) {
-    vulnerabilitiesTabRef.value.loadVulnerabilityList()
+function loadActiveTabData(tab = activeTab.value) {
+  if (tab === 'packages') {
+    packagesTabRef.value?.loadPackageList()
+  } else if (tab === 'vulnerabilities') {
+    vulnerabilitiesTabRef.value?.loadVulnerabilityList()
   }
-})
+}
+
+// 使用 post 时序，确保通过 URL 直达标签页时子组件引用已经完成挂载。
+watch(activeTab, loadActiveTabData, { flush: 'post' })
 
 watch(
   () => route.query,
-  () => {
-    activeTab.value = route.query.tab || 'patches'
+  async () => {
+    const nextTab = route.query.tab || 'patches'
+    const tabChanged = activeTab.value !== nextTab
+    activeTab.value = nextTab
     loadMachineInfo()
+
+    // 同一详情页切换主机时 tab 值不会变化，需要主动刷新当前标签数据。
+    if (!tabChanged) {
+      await nextTick()
+      loadActiveTabData(nextTab)
+    }
   },
   { immediate: true }
 )
