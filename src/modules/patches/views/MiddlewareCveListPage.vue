@@ -770,7 +770,6 @@
           >
             打开漏洞公告
           </el-button>
-          <el-button @click="vulnerabilityDialogVisible = false">关闭</el-button>
           <el-button
             v-if="currentVulnerability.fixStatus === 'open'"
             type="primary"
