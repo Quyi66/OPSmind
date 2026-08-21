@@ -31,7 +31,7 @@
                   </el-input>
                   <div class="yum-sql-import-panel__tip mt-2">
                     文件需放置于服务器白名单目录中（未配置参数时默认：
-                    <code>/opt/oplus/assets/gfs/fs-repos</code>
+                    <code>/opt/sjxy/assets/gfs/fs-repos</code>
                     ）。
                     <br />
                     支持相对路径，支持扩展名：

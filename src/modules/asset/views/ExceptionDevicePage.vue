@@ -20,10 +20,18 @@
           </el-select>
         </el-form-item>
         <el-form-item label="状态筛选">
-          <el-select v-model="filters.conditions" placeholder="筛选条件" style="width: 180px" @change="handleSearch">
-            <el-option label="全部设备" value="sjxy_all" />
-            <el-option label="连通正常设备" value="recently_ok" />
-            <el-option label="连通异常设备" value="recently" />
+          <el-select
+            v-model="filters.conditions"
+            placeholder="筛选条件"
+            style="width: 240px"
+            @change="handleSearch"
+          >
+            <el-option
+              v-for="item in CONNECT_EXCEPTION_CONDITION_OPTIONS"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="设备 IP">
@@ -55,9 +63,26 @@
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button size="small" @click="openActionDialog('checkConnectivity')" type="primary">
+      <el-button
+        size="small"
+        type="primary"
+        :disabled="quickCheckLoading"
+        @click="openActionDialog('checkConnectivity')"
+      >
         <i class="fa fa-plug" style="margin-right: 4px"></i>
         连通性检测
+      </el-button>
+      <el-button
+        size="small"
+        type="primary"
+        plain
+        :disabled="selectedExceptionRows.length === 0"
+        :loading="quickCheckLoading"
+        @click="handleCheckSelected"
+      >
+        <i v-if="!quickCheckLoading" class="fa fa-bolt" style="margin-right: 4px"></i>
+        检测选中设备
+        <span v-if="selectedExceptionRows.length">（{{ selectedExceptionRows.length }}）</span>
       </el-button>
       <el-button size="small" @click="openActionDialog('collectInfo')">
         <i class="fa fa-download" style="margin-right: 4px"></i>
@@ -85,11 +110,22 @@
     <!-- 表格区域 -->
     <div class="ops-table-wrapper card-table">
       <el-table
+        ref="exceptionTableRef"
         v-loading="tableLoading"
         :data="tableData"
+        :row-key="getRowKey"
         class="natural-height-table"
         row-class-name="modern-table-row"
+        @selection-change="handleSelectionChange"
       >
+        <el-table-column
+          type="selection"
+          width="48"
+          align="center"
+          :selectable="isRowSelectable"
+          :reserve-selection="true"
+        />
+
         <!-- 1. 资产标识复合列 -->
         <el-table-column label="设备标识 (IP & 类型)" min-width="180">
           <template #default="{ row }">
@@ -232,30 +268,44 @@
           size="small"
           :disabled="actionHosts.length === 0"
           :loading="actionLoading"
-          @click="confirmAction"
+          @click="confirmAction()"
         >
           {{ currentActionMeta.confirmButtonText }}
         </el-button>
       </template>
     </el-dialog>
+
+    <ExecuteResultDialog
+      v-if="runResultDialogVisible"
+      v-model:visible="runResultDialogVisible"
+      :run-id="currentRunId"
+      :job-title="currentRunTitle"
+      @settled="handleRunResultSettled"
+      @close="handleRunResultClose"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import KpiCards from '../components/exception/KpiCards.vue'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import { normalizeAcmDeviceJobHosts } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
+import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { dataManageApi, exceptionApi } from '../api'
 import { apiService } from '@/core/api'
 import { formatDateTime } from '../utils/helpers'
+import {
+  CONNECT_EXCEPTION_CONDITION_OPTIONS,
+  CONNECT_EXCEPTION_DEFAULT_CONDITION,
+  normalizeConnectExceptionCondition
+} from '../constants/connectException'
 
 const route = useRoute()
 const router = useRouter()
-const EXCEPTION_QUERY_CONDITIONS = new Set(['sjxy_all', 'recently', 'recently_ok', 'today', 'low'])
 
 const ACTION_CONFIG = {
   checkConnectivity: {
@@ -266,8 +316,7 @@ const ACTION_CONFIG = {
     successMessage: '连通性检查完成',
     failureMessage: '连通性检查失败',
     startErrorMessage: '启动检查任务失败',
-    timeoutMessage: '检查超时，请稍后在后台查看结果',
-    pollErrorMessage: '检查结果轮询失败，请稍后在后台查看结果',
+    resultTitle: '连通性检测',
     jobId: 'M1x855'
   },
   collectInfo: {
@@ -278,8 +327,7 @@ const ACTION_CONFIG = {
     successMessage: '信息采集完成',
     failureMessage: '信息采集失败',
     startErrorMessage: '启动采集任务失败',
-    timeoutMessage: '采集超时，请稍后在后台查看结果',
-    pollErrorMessage: '采集结果轮询失败，请稍后在后台查看结果',
+    resultTitle: '信息数据采集',
     jobId: 'mjedwe'
   }
 }
@@ -300,7 +348,7 @@ const resourceTypes = ref([])
 // 筛选条件
 const filters = reactive({
   cit: 'sjxy_all',
-  conditions: 'recently',
+  conditions: CONNECT_EXCEPTION_DEFAULT_CONDITION,
   ip: ''
 })
 
@@ -311,6 +359,9 @@ const total = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const loading = computed(() => kpiLoading.value || tableLoading.value)
+const exceptionTableRef = ref(null)
+const selectedExceptionRows = ref([])
+const quickCheckLoading = ref(false)
 
 // 动作弹窗
 const actionDialogVisible = ref(false)
@@ -318,6 +369,11 @@ const currentActionKey = ref('checkConnectivity')
 const actionHosts = ref([])
 const actionLoading = ref(false)
 const currentActionMeta = computed(() => ACTION_CONFIG[currentActionKey.value])
+
+// 作业运行结果弹窗
+const runResultDialogVisible = ref(false)
+const currentRunId = ref('')
+const currentRunTitle = ref('')
 
 // 加载 KPI 数据
 const loadKpiData = async () => {
@@ -366,16 +422,10 @@ const loadTableData = async () => {
   }
 }
 
-const normalizeCondition = value => {
-  if (typeof value === 'string' && EXCEPTION_QUERY_CONDITIONS.has(value)) {
-    return value
-  }
-  return 'recently'
-}
-
 const applyRouteQuery = query => {
+  clearTableSelection()
   filters.cit = typeof query.cit === 'string' && query.cit ? query.cit : 'sjxy_all'
-  filters.conditions = normalizeCondition(query.conditions)
+  filters.conditions = normalizeConnectExceptionCondition(query.conditions)
   filters.ip = typeof query.ip === 'string' ? query.ip : ''
   currentPage.value = 1
   pageSize.value = 10
@@ -384,22 +434,44 @@ const applyRouteQuery = query => {
 
 // 处理 KPI 卡片点击
 const handleKpiClick = params => {
+  clearTableSelection()
   filters.conditions = params.conditions
   loadTableData()
 }
 
 // 处理搜索
 const handleSearch = () => {
+  clearTableSelection()
   currentPage.value = 1
   loadTableData()
 }
 
+const isRowSelectable = row => Boolean(row?.IP || row?.ip)
 
+const getRowKey = row =>
+  String(
+    row?.id ||
+      row?.key ||
+      row?.ci_id ||
+      row?.IP ||
+      row?.ip ||
+      `${row?.ci_name || 'device'}-${row?.updated_at || 'unknown'}`
+  )
+
+const handleSelectionChange = rows => {
+  selectedExceptionRows.value = Array.isArray(rows) ? rows : []
+}
+
+const clearTableSelection = () => {
+  selectedExceptionRows.value = []
+  exceptionTableRef.value?.clearSelection()
+}
 
 // 重置
 const handleReset = () => {
+  clearTableSelection()
   filters.cit = 'sjxy_all'
-  filters.conditions = 'recently'
+  filters.conditions = CONNECT_EXCEPTION_DEFAULT_CONDITION
   filters.ip = ''
   currentPage.value = 1
   pageSize.value = 10
@@ -454,14 +526,19 @@ const refreshExceptionData = () => {
   loadKpiData()
 }
 
-const pollTimerIds = new Set()
+const openRunResultDialog = (runId, jobTitle = '') => {
+  if (!runId) return
+  currentRunId.value = String(runId)
+  currentRunTitle.value = jobTitle
+  runResultDialogVisible.value = true
+}
 
-const schedulePolling = callback => {
-  const timerId = setTimeout(async () => {
-    pollTimerIds.delete(timerId)
-    await callback()
-  }, 5000)
-  pollTimerIds.add(timerId)
+const handleRunResultSettled = () => {
+  refreshExceptionData()
+}
+
+const handleRunResultClose = () => {
+  refreshExceptionData()
 }
 
 const isJobPending = result => result?.status === 'WAITING' || result?.status === 'RUNNING'
@@ -470,76 +547,37 @@ const isJobSuccess = result => result?.status === 'COMPLETED' || result?.status 
 
 const isJobFailed = result => result?.status === 'FAILED' || result?.status === 'ERROR'
 
-const pollActionResult = async (runId, actionKey) => {
-  const actionMeta = ACTION_CONFIG[actionKey]
-  const maxAttempts = 360
-  let attempts = 0
-  const poll = async () => {
-    attempts++
-    try {
-      const { data: result } = await apiService.get(
-        `/workflow/api/workflow/runlogs/${runId}/result`
-      )
-
-      if (isJobPending(result)) {
-        if (attempts < maxAttempts) {
-          schedulePolling(poll)
-        } else {
-          ElMessage.warning(actionMeta.timeoutMessage)
-        }
-        return
-      }
-
-      if (isJobSuccess(result)) {
-        ElMessage.success(actionMeta.successMessage)
-        refreshExceptionData()
-        return
-      }
-
-      if (isJobFailed(result)) {
-        ElMessage.error(result?.error || actionMeta.failureMessage)
-        return
-      }
-
-      if (attempts < maxAttempts) {
-        schedulePolling(poll)
-      }
-    } catch (error) {
-      console.error(`${actionMeta.title}轮询失败:`, error)
-      if (attempts < maxAttempts) {
-        schedulePolling(poll)
-      } else {
-        ElMessage.warning(actionMeta.pollErrorMessage)
-      }
-    }
-  }
-
-  schedulePolling(poll)
-}
-
-const confirmAction = async () => {
-  if (actionHosts.value.length === 0) {
+const confirmAction = async ({
+  selection = actionHosts.value,
+  actionKey = currentActionKey.value,
+  confirmMessage,
+  closeDialogOnSubmit = true
+} = {}) => {
+  if (selection.length === 0) {
     ElMessage.warning('请先选择设备')
-    return
+    return false
   }
 
-  const actionKey = currentActionKey.value
   const actionMeta = ACTION_CONFIG[actionKey]
 
   try {
-    await ElMessageBox.confirm(actionMeta.confirmMessage, '执行作业', {
+    await ElMessageBox.confirm(confirmMessage || actionMeta.confirmMessage, '执行作业', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'warning'
     })
   } catch {
-    return
+    return false
   }
 
   actionLoading.value = true
 
   try {
-    const hosts = normalizeAcmDeviceJobHosts(actionHosts.value, 'linux')
+    const hosts = normalizeAcmDeviceJobHosts(selection, 'linux')
+    if (hosts.length === 0) {
+      ElMessage.warning('没有可执行操作的有效设备')
+      return false
+    }
     const cacheBuster = Date.now()
     const { data } = await apiService.post(
       `/workflow/api/workflow/jobs/${actionMeta.jobId}/run?cacheBuster=${cacheBuster}`,
@@ -550,32 +588,79 @@ const confirmAction = async () => {
 
     const result = Array.isArray(data) ? data[0] : data
 
+    if (result?.runId) {
+      if (closeDialogOnSubmit) {
+        closeActionDialog()
+      }
+      openRunResultDialog(result.runId, actionMeta.resultTitle || actionMeta.title)
+      if (isJobSuccess(result)) {
+        refreshExceptionData()
+      }
+      return true
+    }
+
     if (isJobPending(result)) {
       ElMessage.success(actionMeta.pendingMessage)
-      closeActionDialog()
-      pollActionResult(result.runId, actionKey)
-      return
+      if (closeDialogOnSubmit) {
+        closeActionDialog()
+      }
+      return true
     }
 
     if (isJobSuccess(result)) {
       ElMessage.success(actionMeta.successMessage)
-      closeActionDialog()
+      if (closeDialogOnSubmit) {
+        closeActionDialog()
+      }
       refreshExceptionData()
-      return
+      return true
     }
 
     if (isJobFailed(result)) {
       ElMessage.error(result?.error || actionMeta.failureMessage)
-      return
+      return false
     }
 
     ElMessage.success(actionMeta.pendingMessage)
-    closeActionDialog()
+    if (closeDialogOnSubmit) {
+      closeActionDialog()
+    }
+    return true
   } catch (error) {
     console.error(`${actionMeta.startErrorMessage}:`, error)
     ElMessage.error(actionMeta.startErrorMessage)
+    return false
   } finally {
     actionLoading.value = false
+  }
+}
+
+const handleCheckSelected = async () => {
+  const rows = [...selectedExceptionRows.value]
+  if (rows.length === 0) {
+    ElMessage.warning('请先勾选需要检测的设备')
+    return
+  }
+
+  const selection = rows.map(row => ({
+    key: row.id || row.key || row.IP || row.ip,
+    value: row.IP || row.ip,
+    assetType: row.assetType || row.ciType || row.ci_type || 'linux'
+  }))
+
+  quickCheckLoading.value = true
+  try {
+    const submitted = await confirmAction({
+      selection,
+      actionKey: 'checkConnectivity',
+      confirmMessage: `即将对已选中的 ${rows.length} 台设备执行连通性检测，任务可能需要数分钟，是否继续？`,
+      closeDialogOnSubmit: false
+    })
+    if (submitted) {
+      clearTableSelection()
+    }
+  } finally {
+    quickCheckLoading.value = false
   }
 }
 
@@ -621,6 +706,12 @@ const handleCheckSingleConn = async row => {
 
     const result = Array.isArray(data) ? data[0] : data
 
+    if (result?.runId) {
+      removeCheckingId(targetId)
+      openRunResultDialog(result.runId, ACTION_CONFIG.checkConnectivity.resultTitle)
+      return
+    }
+
     const finishCheck = (success = true, errorMsg = '') => {
       removeCheckingId(targetId)
       if (success) {
@@ -629,47 +720,6 @@ const handleCheckSingleConn = async row => {
         ElMessage.error(errorMsg || '连通性检查失败')
       }
       refreshExceptionData()
-    }
-
-    if (isJobPending(result)) {
-      ElMessage.success('连通性检查任务已发起')
-
-      const maxAttempts = 360
-      let attempts = 0
-      const poll = async () => {
-        attempts++
-        try {
-          const { data: res } = await apiService.get(
-            `/workflow/api/workflow/runlogs/${result.runId}/result`
-          )
-          if (isJobPending(res)) {
-            if (attempts < maxAttempts) {
-              setTimeout(poll, 5000)
-            } else {
-              removeCheckingId(targetId)
-              ElMessage.warning('检查超时，请稍后在后台查看结果')
-            }
-            return
-          }
-          if (isJobSuccess(res)) {
-            finishCheck(true)
-            return
-          }
-          if (isJobFailed(res)) {
-            finishCheck(false, res?.error)
-            return
-          }
-        } catch (err) {
-          console.error('单个连通性检查轮询失败:', err)
-          if (attempts < maxAttempts) {
-            setTimeout(poll, 5000)
-          } else {
-            removeCheckingId(targetId)
-          }
-        }
-      }
-      setTimeout(poll, 5000)
-      return
     }
 
     if (isJobSuccess(result)) {
@@ -682,21 +732,14 @@ const handleCheckSingleConn = async row => {
       return
     }
 
-    ElMessage.success('连通性检查任务已启动')
     removeCheckingId(targetId)
+    ElMessage.warning('连通性检测任务未返回运行 ID，请稍后在历史日志中查看')
   } catch (error) {
     removeCheckingId(targetId)
     console.error('检查连通性失败:', error)
     ElMessage.error(`检查连通性失败: ${error.response?.data?.message || error.message}`)
   }
 }
-
-// 组件卸载时清理定时器
-onUnmounted(() => {
-  pollTimerIds.forEach(timerId => clearTimeout(timerId))
-  pollTimerIds.clear()
-})
-
 
 // 解决 ElProgress 异常连通率转换并进行类型安全防御
 const getProgressRate = rate => {
