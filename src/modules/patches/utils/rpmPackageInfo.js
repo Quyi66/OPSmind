@@ -83,16 +83,114 @@ function extractRhelMajor(detail = {}) {
   return ''
 }
 
-function changelogHeaderMatchesVersion(header, version) {
-  const normalizedHeader = String(header || '').trim()
-  const normalizedVersion = String(version || '').trim()
-  if (!normalizedHeader || !normalizedVersion) return false
+function extractChangelogHeaderParts(header) {
+  const normalizedHeader = String(header || '')
+    .trim()
+    .replace(/^\*\s*/, '')
+  if (!normalizedHeader) return { headline: '', version: '' }
 
-  return (
-    normalizedHeader.includes(`[${normalizedVersion}]`) ||
-    normalizedHeader.includes(`(${normalizedVersion})`) ||
-    normalizedHeader.endsWith(` - ${normalizedVersion}`)
+  const bracketVersionMatch = normalizedHeader.match(/^(.*?)\s+\[([^\]]+)\]\s*$/)
+  if (bracketVersionMatch) {
+    return {
+      headline: bracketVersionMatch[1].trim(),
+      version: bracketVersionMatch[2].trim()
+    }
+  }
+
+  const debianVersionMatch = normalizedHeader.match(/^\S+\s+\(([^)]+)\)\s+/)
+  if (debianVersionMatch) {
+    return {
+      headline: normalizedHeader,
+      version: debianVersionMatch[1].trim()
+    }
+  }
+
+  const separatorIndex = normalizedHeader.lastIndexOf(' - ')
+  if (separatorIndex !== -1) {
+    return {
+      headline: normalizedHeader.slice(0, separatorIndex).trim(),
+      version: normalizedHeader.slice(separatorIndex + 3).trim()
+    }
+  }
+
+  const suffixVersionMatch = normalizedHeader.match(/^(.*?)\s+((?:\d+:)?\d[^\s]*)$/)
+  if (suffixVersionMatch) {
+    return {
+      headline: suffixVersionMatch[1].trim(),
+      version: suffixVersionMatch[2].trim()
+    }
+  }
+
+  return { headline: normalizedHeader, version: '' }
+}
+
+function isPackageVersionCharacter(character) {
+  return Boolean(character && /[0-9a-z._+~^:-]/i.test(character))
+}
+
+function hasPackageVersionStartBoundary(header, versionStartIndex) {
+  const previousCharacter = header[versionStartIndex - 1]
+  if (!isPackageVersionCharacter(previousCharacter)) return true
+
+  // RPM headers may include a numeric epoch (for example, 1:2.7-5)
+  // even when the package detail only exposes the version after the colon.
+  if (previousCharacter !== ':') return false
+
+  let epochStartIndex = versionStartIndex - 2
+  if (epochStartIndex < 0 || !/[0-9]/.test(header[epochStartIndex])) return false
+
+  while (epochStartIndex >= 0 && /[0-9]/.test(header[epochStartIndex])) {
+    epochStartIndex -= 1
+  }
+
+  return !isPackageVersionCharacter(header[epochStartIndex])
+}
+
+function hasEarlierDigitInVersionRun(header, versionStartIndex) {
+  for (let index = versionStartIndex - 1; index >= 0; index -= 1) {
+    const character = header[index]
+    if (!isPackageVersionCharacter(character)) return false
+    if (/[0-9]/.test(character)) return true
+  }
+
+  return false
+}
+
+function hasKnownPackageVersionPrefix(header, versionStartIndex, packageName) {
+  const normalizedPackageName = String(packageName || '').trim().toLowerCase()
+  if (!normalizedPackageName) return false
+
+  const headerPrefix = header.slice(0, versionStartIndex).toLowerCase()
+  return [`${normalizedPackageName}-`, `${normalizedPackageName}_`, `${normalizedPackageName}=`].some(
+    prefix => headerPrefix.endsWith(prefix)
   )
+}
+
+function getChangelogHeaderVersionMatchLevel(header, version, packageName) {
+  const normalizedHeader = String(header || '')
+  const targetVersion = String(version || '').trim()
+  if (!normalizedHeader || !targetVersion) return 0
+
+  let relaxedMatchFound = false
+  let matchIndex = normalizedHeader.indexOf(targetVersion)
+  while (matchIndex !== -1) {
+    const nextCharacter = normalizedHeader[matchIndex + targetVersion.length]
+
+    if (!isPackageVersionCharacter(nextCharacter)) {
+      if (hasPackageVersionStartBoundary(normalizedHeader, matchIndex)) return 2
+
+      if (
+        !hasEarlierDigitInVersionRun(normalizedHeader, matchIndex) ||
+        hasKnownPackageVersionPrefix(normalizedHeader, matchIndex, packageName)
+      ) {
+        relaxedMatchFound = true
+      }
+    }
+
+    matchIndex = normalizedHeader.indexOf(targetVersion, matchIndex + 1)
+  }
+
+  return relaxedMatchFound ? 1 : 0
 }
 
 function isDebianChangelogHeader(line) {
@@ -138,7 +236,7 @@ export function getRpmChangelogVersionCandidates(detail = {}) {
   const version = String(normalizedDetail.version || '').trim()
   const release = String(normalizedDetail.release || '').trim()
 
-  if (version && release) {
+  if (version && release && version !== release) {
     addUniqueText(versions, version.endsWith(`-${release}`) ? version : `${version}-${release}`)
   }
   addUniqueText(versions, version)
@@ -171,10 +269,13 @@ export function getRpmChangelogVersionCandidates(detail = {}) {
 
 export function extractRpmPackageChangelog(changelog, detail = {}) {
   const rawText = normalizeChangelog(changelog).replace(/\r\n?/g, '\n')
-  const versions = getRpmChangelogVersionCandidates(detail)
+  const normalizedDetail = normalizeRpmPackageDetail(detail)
+  const versions = getRpmChangelogVersionCandidates(normalizedDetail)
   if (!rawText || !versions.length) return ''
 
   const lines = rawText.split('\n')
+  let relaxedMatch = ''
+  let relaxedMatchCount = 0
   for (let start = 0; start < lines.length; start += 1) {
     const header = lines[start]
     const normalizedHeader = String(header || '').trim()
@@ -182,8 +283,15 @@ export function extractRpmPackageChangelog(changelog, detail = {}) {
     const isDebianHeader = isDebianChangelogHeader(normalizedHeader)
     if (!isRpmHeader && !isDebianHeader) continue
 
-    const matched = versions.some(version => changelogHeaderMatchesVersion(header, version))
-    if (!matched) continue
+    const matchLevel = versions.reduce(
+      (level, version) =>
+        Math.max(
+          level,
+          getChangelogHeaderVersionMatchLevel(header, version, normalizedDetail.name)
+        ),
+      0
+    )
+    if (!matchLevel) continue
 
     let end = lines.length
     for (let index = start + 1; index < lines.length; index += 1) {
@@ -197,10 +305,14 @@ export function extractRpmPackageChangelog(changelog, detail = {}) {
       }
     }
 
-    return lines.slice(start, end).join('\n').trim()
+    const matchedBlock = lines.slice(start, end).join('\n').trim()
+    if (matchLevel === 2) return matchedBlock
+
+    relaxedMatch = matchedBlock
+    relaxedMatchCount += 1
   }
 
-  return ''
+  return relaxedMatchCount === 1 ? relaxedMatch : ''
 }
 
 export function normalizeServiceList(value) {
@@ -261,10 +373,8 @@ export function normalizeChangelog(value) {
 }
 
 function splitChangelogHeader(header) {
-  const normalizedHeader = String(header || '')
-    .trim()
-    .replace(/^\*\s*/, '')
-  if (!normalizedHeader) {
+  const { headline, version } = extractChangelogHeaderParts(header)
+  if (!headline) {
     return {
       headline: '',
       version: '',
@@ -273,19 +383,6 @@ function splitChangelogHeader(header) {
       email: ''
     }
   }
-
-  const bracketVersionMatch = normalizedHeader.match(/^(.*?)\s+\[([^\]]+)\]\s*$/)
-  const separatorIndex = bracketVersionMatch ? -1 : normalizedHeader.lastIndexOf(' - ')
-  const headline = bracketVersionMatch
-    ? bracketVersionMatch[1].trim()
-    : separatorIndex === -1
-      ? normalizedHeader
-      : normalizedHeader.slice(0, separatorIndex).trim()
-  const version = bracketVersionMatch
-    ? bracketVersionMatch[2].trim()
-    : separatorIndex === -1
-      ? ''
-      : normalizedHeader.slice(separatorIndex + 3).trim()
   const headerMatch = headline.match(
     /^((?:[A-Z][a-z]{2}\s+[A-Z][a-z]{2}\s+\d{1,2}\s+\d{4})|(?:\d{4}-\d{2}-\d{2}))\s+(.+?)(?:\s+<([^>]+)>)?$/
   )
@@ -297,16 +394,6 @@ function splitChangelogHeader(header) {
       dateText: headerMatch[1].trim(),
       maintainer: headerMatch[2].trim(),
       email: String(headerMatch[3] || '').trim()
-    }
-  }
-
-  if (separatorIndex === -1) {
-    return {
-      headline,
-      version,
-      dateText: '',
-      maintainer: '',
-      email: ''
     }
   }
 
@@ -453,7 +540,13 @@ export function normalizeRpmPackageDetail(rawDetail = {}) {
   return {
     ...baseDetail,
     id: baseDetail.id || rawDetail.id || '',
-    name: baseDetail.name || rawDetail.pkgName || rawDetail.packageName || rawDetail.name || '',
+    name:
+      baseDetail.name ||
+      baseDetail.pkgName ||
+      rawDetail.pkgName ||
+      rawDetail.packageName ||
+      rawDetail.name ||
+      '',
     source: baseDetail.source || rawDetail.source || '',
     architecture:
       baseDetail.architecture ||
@@ -463,8 +556,10 @@ export function normalizeRpmPackageDetail(rawDetail = {}) {
       rawDetail.architecture ||
       rawDetail.arch ||
       '',
-    version: baseDetail.version || rawDetail.version || '',
-    release: baseDetail.release || rawDetail.release || '',
+    version:
+      baseDetail.version || baseDetail.pkgVersion || rawDetail.version || rawDetail.pkgVersion || '',
+    release:
+      baseDetail.release || baseDetail.pkgRelease || rawDetail.release || rawDetail.pkgRelease || '',
     currentPackage:
       baseDetail.currentPackage ||
       rawDetail.currentPackage ||
@@ -474,6 +569,10 @@ export function normalizeRpmPackageDetail(rawDetail = {}) {
       baseDetail.installedPkg ||
       baseDetail.completePackageName ||
       rawDetail.completePackageName ||
+      baseDetail.rpmCompletePackageName ||
+      rawDetail.rpmCompletePackageName ||
+      baseDetail.pkgFullNevra ||
+      rawDetail.pkgFullNevra ||
       '',
     summary: baseDetail.summary || rawDetail.summary || '',
     description:

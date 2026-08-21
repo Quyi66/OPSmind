@@ -127,6 +127,119 @@ describe('rpmPackageInfo - static changelog', () => {
     expect(result).not.toContain('Previous release')
   })
 
+  it('matches RPM headers whose version has no dash separator', () => {
+    const detail = {
+      source: 'redhat',
+      name: 'chrony',
+      currentPackage: 'chrony-4.5-1.el8.x86_64',
+      version: '4.5-1.el8',
+      release: '4.5-1.el8',
+      architecture: 'x86_64'
+    }
+    const result = extractRpmPackageChangelog(
+      `* 2024-09-18 Miroslav Lichvar <mlichvar@redhat.com> 4.5-2.el8_10
+- Newer release
+
+* 2024-01-10 Miroslav Lichvar <mlichvar@redhat.com> 4.5-1
+- Target release
+
+* 2022-07-14 Miroslav Lichvar <mlichvar@redhat.com> 4.2-1
+- Previous release`,
+      detail
+    )
+    const parsed = parseRpmChangelog(result)
+
+    expect(getRpmChangelogVersionCandidates(detail)).not.toContain(
+      '4.5-1.el8-4.5-1.el8'
+    )
+    expect(result).toContain('Target release')
+    expect(result).not.toContain('Newer release')
+    expect(result).not.toContain('Previous release')
+    expect(parsed.entries[0].version).toBe('4.5-1')
+  })
+
+  it('matches an exact version independently of surrounding header symbols', () => {
+    const result = extractRpmPackageChangelog(
+      `* 2024-09-18 Maintainer <maintainer@example.com> 【release：4.5-10】
+- Different release
+
+* 2024-01-10 Maintainer <maintainer@example.com> 《版本=4.5-1》
+- Target release`,
+      {
+        name: 'chrony',
+        currentPackage: 'chrony-4.5-1.el8.x86_64',
+        architecture: 'x86_64'
+      }
+    )
+
+    expect(result).toContain('《版本=4.5-1》')
+    expect(result).toContain('Target release')
+    expect(result).not.toContain('Different release')
+  })
+
+  it('matches a version after an RPM epoch prefix', () => {
+    const detail = {
+      source: 'redhat',
+      name: 'bash-completion',
+      version: '2.7-5.el8',
+      architecture: 'noarch'
+    }
+    const result = extractRpmPackageChangelog(
+      `* 2019-01-01 Maintainer <maintainer@example.com> - 1:2.7-50
+- Different release
+
+* 2018-08-13 Siteshwar Vashisht <svashisht@redhat.com> - 1:2.7-5
+- Document how to override default completions
+  Resolves: #1575573`,
+      detail
+    )
+
+    expect(getRpmChangelogVersionCandidates(detail)).toContain('2.7-5')
+    expect(result).toContain('1:2.7-5')
+    expect(result).toContain('Document how to override default completions')
+    expect(result).not.toContain('Different release')
+  })
+
+  it('accepts raw package field aliases when building version candidates', () => {
+    expect(
+      getRpmChangelogVersionCandidates({
+        pkgName: 'bash-completion',
+        pkgVersion: '2.7-5.el8',
+        pkgRelease: '2.7-5.el8',
+        pkgArch: 'noarch'
+      })
+    ).toEqual(['2.7-5.el8', '2.7-5'])
+  })
+
+  it('uses a unique relaxed match for an unstructured third-party header prefix', () => {
+    const result = extractRpmPackageChangelog(
+      `* 2018-08-13 Maintainer <maintainer@example.com> release:2.7-5
+- Target release`,
+      {
+        pkgName: 'bash-completion',
+        pkgVersion: '2.7-5.el8',
+        pkgArch: 'noarch'
+      }
+    )
+
+    expect(result).toContain('release:2.7-5')
+    expect(result).toContain('Target release')
+  })
+
+  it('does not treat the suffix of a longer numeric version as a relaxed match', () => {
+    const result = extractRpmPackageChangelog(
+      `* 2018-08-13 Maintainer <maintainer@example.com> 12.7-5
+- Different release`,
+      {
+        pkgName: 'bash-completion',
+        pkgVersion: '2.7-5.el8',
+        pkgArch: 'noarch'
+      }
+    )
+
+    expect(result).toBe('')
+  })
+
   it('parses bracketed versions for the structured changelog view', () => {
     const parsed = parseRpmChangelog(
       extractRpmPackageChangelog(changelog, { version: '4.18.0-553.el8' })
