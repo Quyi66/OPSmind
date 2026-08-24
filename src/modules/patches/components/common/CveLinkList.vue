@@ -24,7 +24,8 @@
       v-if="overflowCount > 0"
       v-model="dialogVisible"
       :title="dialogTitle"
-      width="680px"
+      width="fit-content"
+      :style="{ minWidth: '680px', maxWidth: 'calc(100vw - 32px)' }"
       append-to-body
       destroy-on-close
     >
@@ -120,10 +121,11 @@ function resolveUrl(cve) {
 
 .cve-link-list--dialog {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(4, max-content);
   gap: 8px;
+  max-width: 100%;
   max-height: 50vh;
-  overflow-y: auto;
+  overflow: auto;
 }
 
 .cve-link {
