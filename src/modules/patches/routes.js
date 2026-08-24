@@ -107,17 +107,6 @@ export const PATCHES_ROUTE_DEFS = [
     component: () => import('./views/MiddlewareCveListPage.vue')
   },
   {
-    key: 'urgencyDashboard',
-    path: 'urgencyDashboard',
-    name: 'patches-urgencyDashboard',
-    title: '紧急度评估',
-    navLabel: '紧急度评估',
-    navGroup: 'vulnManage',
-    icon: 'fas fa-exclamation-triangle',
-    platform: 'linux',
-    component: () => import('./views/UrgencyDashboardPage.vue')
-  },
-  {
     key: 'packageSet',
     path: 'packageSet',
     name: 'patches-packageSet',

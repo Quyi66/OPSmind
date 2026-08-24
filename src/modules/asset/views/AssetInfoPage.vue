@@ -129,10 +129,6 @@
               <i class="fa fa-trash-alt" style="margin-right: 4px"></i>
               批量删除设备
             </el-button>
-            <el-button size="small" @click="handleCustomView">
-              <i class="fa fa-sliders-h" style="margin-right: 4px"></i>
-              自定义视图配置
-            </el-button>
             <el-button
               size="small"
               :type="allSelected ? 'default' : 'primary'"
@@ -173,10 +169,6 @@
                 批量修改
               </el-button>
 
-              <el-button size="small" @click="handleBatchLocation">
-                <i class="fa fa-map-marker-alt" style="margin-right: 4px"></i>
-                标记区域
-              </el-button>
               <el-button size="small" @click="handleAddTag">
                 <i class="fa fa-tag" style="margin-right: 4px"></i>
                 添加标签
@@ -305,206 +297,105 @@
               </template>
             </el-table-column>
 
-            <!-- 动态展示列 (R3) -->
-            <template v-for="col in activeColumns" :key="col">
-              <!-- 系统环境 -->
-              <el-table-column
-                v-if="col === 'OS'"
-                label="系统环境"
-                min-width="160"
-                show-overflow-tooltip
-              >
-                <template #default="{ row }">
-                  <div class="os-env-cell">
-                    <i :class="[getOsIcon(row.os_distro), 'os-brand-icon']"></i>
-                    <div class="os-text-wrapper">
-                      <span class="os-distro-name">{{ row.os_distro || '-' }}</span>
-                      <span class="os-version-sub">{{ row.os_version || '-' }}</span>
-                    </div>
+            <!-- 系统环境 -->
+            <el-table-column label="系统环境" min-width="160" show-overflow-tooltip>
+              <template #default="{ row }">
+                <div class="os-env-cell">
+                  <i :class="[getOsIcon(row.os_distro), 'os-brand-icon']"></i>
+                  <div class="os-text-wrapper">
+                    <span class="os-distro-name">{{ row.os_distro || '-' }}</span>
+                    <span class="os-version-sub">{{ row.os_version || '-' }}</span>
                   </div>
-                </template>
-              </el-table-column>
+                </div>
+              </template>
+            </el-table-column>
 
-              <!-- 网络区域 -->
-              <el-table-column
-                v-else-if="col === 'LOCATION'"
-                label="网络区域"
-                min-width="140"
-                show-overflow-tooltip
-              >
-                <template #default="{ row }">
-                  <el-tag v-if="row.location" size="small" effect="plain" type="info">
-                    {{ row.location }}
-                  </el-tag>
-                  <span v-else class="text-muted">-</span>
-                </template>
-              </el-table-column>
-
-              <!-- 运行环境 -->
-              <el-table-column v-else-if="col === 'RUN_ENVIRONMENT'" label="运行环境" width="120">
-                <template #default="{ row }">
-                  <span>{{ row.location || '-' }}</span>
-                </template>
-              </el-table-column>
-
-              <!-- 连通巡检 -->
-              <el-table-column
-                v-else-if="col === 'CONN_LATEST_STATUS'"
-                label="连通巡检"
-                min-width="190"
-                align="left"
-              >
-                <template #default="{ row }">
-                  <div class="health-cell">
-                    <el-tooltip content="点击发起连通性诊断" placement="top" :enterable="false">
-                      <el-tag
-                        :type="
-                          row.CONN_LATEST_STATUS === '1'
-                            ? 'success'
-                            : row.CONN_LATEST_STATUS === '0'
-                              ? 'danger'
-                              : 'warning'
-                        "
-                        size="small"
-                        effect="light"
-                        class="health-status-tag clickable-tag"
-                        :class="{ 'is-loading': checkingConnIds.includes(row.id) }"
-                        @click.stop="
-                          !checkingConnIds.includes(row.id) && handleCheckSingleConn(row)
-                        "
-                      >
-                        <i
-                          v-if="checkingConnIds.includes(row.id)"
-                          class="fa fa-spinner fa-spin"
-                        ></i>
-                        <i
-                          v-else
-                          :class="
-                            row.CONN_LATEST_STATUS === '1'
-                              ? 'fa fa-check-circle'
-                              : row.CONN_LATEST_STATUS === '0'
-                                ? 'fa fa-times-circle'
-                                : 'fa fa-question-circle'
-                          "
-                        ></i>
-                        <span style="margin-left: 4px">
-                          {{
-                            checkingConnIds.includes(row.id)
-                              ? '诊断中...'
-                              : row.CONN_LATEST_STATUS === '1'
-                                ? '正常'
-                                : row.CONN_LATEST_STATUS === '0'
-                                  ? '失联'
-                                  : '未知'
-                          }}
-                        </span>
-                      </el-tag>
-                    </el-tooltip>
-
-                    <div class="conn-rate-progress">
-                      <el-progress
-                        :percentage="getProgressRate(row.CONN_RATE)"
-                        :status="
-                          getProgressRate(row.CONN_RATE) >= 80
-                            ? 'success'
-                            : getProgressRate(row.CONN_RATE) >= 50
-                              ? 'warning'
-                              : 'exception'
-                        "
-                        :stroke-width="5"
-                        :show-text="false"
-                        style="width: 80px"
-                      />
-                    </div>
-                  </div>
-                </template>
-              </el-table-column>
-
-              <!-- 处置团队 (DEPT_NAME) -->
-              <el-table-column
-                v-else-if="col === 'DEPT_NAME'"
-                label="处置团队"
-                width="130"
-                show-overflow-tooltip
-              >
-                <template #default="{ row }">
-                  <span>{{ row.dept_name || row.DEPT_NAME || '-' }}</span>
-                </template>
-              </el-table-column>
-
-              <!-- 应用系统 (APPLICATION_SYSTEM) -->
-              <el-table-column
-                v-else-if="col === 'APPLICATION_SYSTEM'"
-                label="应用系统"
-                width="140"
-                show-overflow-tooltip
-              >
-                <template #default="{ row }">
-                  <span>{{ row.application_system || row.APPLICATION_SYSTEM || '-' }}</span>
-                </template>
-              </el-table-column>
-
-              <!-- 主机风险等级 (HOST_RISK_LEVEL) -->
-              <el-table-column
-                v-else-if="col === 'HOST_RISK_LEVEL'"
-                label="主机风险等级"
-                width="130"
-              >
-                <template #default="{ row }">
-                  <span>{{ row.host_risk_level || row.HOST_RISK_LEVEL || '-' }}</span>
-                </template>
-              </el-table-column>
-
-
-
-              <!-- 责任人 (负责人 / OWNER) -->
-              <el-table-column
-                v-else-if="col === 'OWNER'"
-                label="责任人"
-                width="120"
-                show-overflow-tooltip
-              >
-                <template #default="{ row }">
-                  <div class="owner-cell" v-if="row.负责人">
-                    <el-avatar
-                      :size="22"
-                      :style="{ backgroundColor: getAvatarColor(row.负责人) }"
-                      class="owner-avatar"
+            <!-- 连通巡检 -->
+            <el-table-column label="连通巡检" min-width="190" align="left">
+              <template #default="{ row }">
+                <div class="health-cell">
+                  <el-tooltip content="点击发起连通性诊断" placement="top" :enterable="false">
+                    <el-tag
+                      :type="
+                        row.CONN_LATEST_STATUS === '1'
+                          ? 'success'
+                          : row.CONN_LATEST_STATUS === '0'
+                            ? 'danger'
+                            : 'warning'
+                      "
+                      size="small"
+                      effect="light"
+                      class="health-status-tag clickable-tag"
+                      :class="{ 'is-loading': checkingConnIds.includes(row.id) }"
+                      @click.stop="!checkingConnIds.includes(row.id) && handleCheckSingleConn(row)"
                     >
-                      {{ getInitials(row.负责人) }}
-                    </el-avatar>
-                    <span class="owner-name">{{ row.负责人 }}</span>
+                      <i v-if="checkingConnIds.includes(row.id)" class="fa fa-spinner fa-spin"></i>
+                      <i
+                        v-else
+                        :class="
+                          row.CONN_LATEST_STATUS === '1'
+                            ? 'fa fa-check-circle'
+                            : row.CONN_LATEST_STATUS === '0'
+                              ? 'fa fa-times-circle'
+                              : 'fa fa-question-circle'
+                        "
+                      ></i>
+                      <span style="margin-left: 4px">
+                        {{
+                          checkingConnIds.includes(row.id)
+                            ? '诊断中...'
+                            : row.CONN_LATEST_STATUS === '1'
+                              ? '正常'
+                              : row.CONN_LATEST_STATUS === '0'
+                                ? '失联'
+                                : '未知'
+                        }}
+                      </span>
+                    </el-tag>
+                  </el-tooltip>
+
+                  <div class="conn-rate-progress">
+                    <el-progress
+                      :percentage="getProgressRate(row.CONN_RATE)"
+                      :status="
+                        getProgressRate(row.CONN_RATE) >= 80
+                          ? 'success'
+                          : getProgressRate(row.CONN_RATE) >= 50
+                            ? 'warning'
+                            : 'exception'
+                      "
+                      :stroke-width="5"
+                      :show-text="false"
+                      style="width: 80px"
+                    />
                   </div>
-                  <span v-else class="placeholder-dash">-</span>
-                </template>
-              </el-table-column>
+                </div>
+              </template>
+            </el-table-column>
 
-              <!-- 纳管IP -->
-              <el-table-column v-else-if="col === 'IP'" label="纳管IP" width="130">
-                <template #default="{ row }">
-                  <span>{{ row.IP || '-' }}</span>
-                </template>
-              </el-table-column>
+            <!-- 责任人 -->
+            <el-table-column label="责任人" width="120" show-overflow-tooltip>
+              <template #default="{ row }">
+                <div v-if="row.负责人" class="owner-cell">
+                  <el-avatar
+                    :size="22"
+                    :style="{ backgroundColor: getAvatarColor(row.负责人) }"
+                    class="owner-avatar"
+                  >
+                    {{ getInitials(row.负责人) }}
+                  </el-avatar>
+                  <span class="owner-name">{{ row.负责人 }}</span>
+                </div>
+                <span v-else class="placeholder-dash">-</span>
+              </template>
+            </el-table-column>
 
-              <!-- 主机名 -->
-              <el-table-column
-                v-else-if="col === 'HOSTNAME'"
-                label="主机名"
-                width="150"
-                show-overflow-tooltip
-              >
-                <template #default="{ row }">
-                  <span>{{ row.hostname || row.HOSTNAME || '-' }}</span>
-                </template>
-              </el-table-column>
-
-              <!-- 最后同步 -->
-              <el-table-column v-else-if="col === 'updated_at'" label="最后同步" width="180">
-                <template #default="{ row }">
-                  <span>{{ formatDateTime(row.updated_at) }}</span>
-                </template>
-              </el-table-column>
-            </template>
+            <!-- 最后同步 -->
+            <el-table-column label="最后同步" width="180">
+              <template #default="{ row }">
+                <span>{{ formatDateTime(row.updated_at) }}</span>
+              </template>
+            </el-table-column>
 
             <!-- 8. 操作 -->
             <el-table-column label="操作" width="120" fixed="right">
@@ -587,16 +478,6 @@
       @saved="handleAddGroupSaved"
     />
 
-    <!-- 自定义视图配置弹窗 -->
-    <CustomViewDialog v-model="customViewVisible" @success="loadTableColumnsConfig" />
-
-    <!-- 批量标记区域弹窗 -->
-    <BatchLocationDialog
-      v-model="batchLocationVisible"
-      :hosts="selectedRows"
-      @success="loadAssetList"
-    />
-
     <!-- [Agent 功能暂停]
     <AgentEnrollmentDialog v-model="agentEnrollmentVisible" @success="handleAgentEnrollmentSuccess" />
     -->
@@ -632,10 +513,6 @@ import DeleteAssetImportDialog from '../components/asset-info/DeleteAssetImportD
 import BatchEditDialog from '../components/asset-info/BatchEditDialog.vue'
 import AddTagDialog from '../components/asset-info/AddTagDialog.vue'
 import AddGroupDialog from '../components/asset-info/AddGroupDialog.vue'
-import CustomViewDialog from '@/modules/patches/components/host-detail/dialogs/CustomViewDialog.vue'
-import BatchLocationDialog from '@/modules/patches/components/host-detail/dialogs/BatchLocationDialog.vue'
-
-import { viewConfigApi } from '@/modules/patches/api'
 import { formatDateTime } from '../utils/helpers'
 
 // 路由
@@ -655,12 +532,7 @@ const currentAssetId = ref('')
 const currentAssetIp = ref('')
 const currentTenantId = ref('')
 
-// 自定义列及视图配置 (R3)
-const customViewVisible = ref(false)
-const batchLocationVisible = ref(false)
 // [Agent 功能暂停] const agentEnrollmentVisible = ref(false)
-
-const activeColumns = ref(['OS', 'LOCATION', 'RUN_ENVIRONMENT', 'CONN_LATEST_STATUS', 'DEPT_NAME'])
 
 // 设备类型列表
 const assetTypes = ref([])
@@ -759,29 +631,6 @@ const hasSelection = computed(() => selectedCount.value > 0)
 
 const getAssetRowId = row => row?.id || row?.host_id || row?.hostId || null
 
-const normalizeAssetRecord = item => {
-  const locationNames = ['互联网', '外联网', '内网环境、孤岛环境']
-  const tags = item.tags || item.Tags || []
-  const matchedTag = tags.find(tag => locationNames.includes(tag.name || tag))
-
-  const rawLocation = item.location || item.LOCATION || item.Location
-  let locationVal = ''
-  if (rawLocation) {
-    locationVal =
-      typeof rawLocation === 'object'
-        ? rawLocation.name || rawLocation.title || rawLocation.value || ''
-        : rawLocation
-  }
-  if (!locationVal && matchedTag) {
-    locationVal = matchedTag.name || matchedTag
-  }
-
-  return {
-    ...item,
-    location: locationVal || null
-  }
-}
-
 const isAgentConnection = connectionType => ['koreops_agent', 'agent', 'oplus_agent'].includes(connectionType)
 
 const getConnectionType = record => {
@@ -878,9 +727,7 @@ const fetchAllMatchedAssets = async () => {
       page,
       filter: searchText.value
     })
-    const pageRows = Array.isArray(response.records)
-      ? response.records.map(normalizeAssetRecord)
-      : []
+    const pageRows = Array.isArray(response.records) ? response.records : []
 
     allRows.push(...pageRows)
 
@@ -1111,7 +958,7 @@ const loadAssetList = async ({ preserveSelection = false } = {}) => {
         page: currentPage.value,
         filter: searchText.value
       })
-      normalizedRecords = (res.records || []).map(normalizeAssetRecord)
+      normalizedRecords = res.records || []
       total.value = res.total || 0
     }
 
@@ -1424,41 +1271,6 @@ const getInitials = name => {
   return name.trim().charAt(0).toUpperCase()
 }
 
-// 自定义列视图配置
-async function loadTableColumnsConfig() {
-  try {
-    const res = await viewConfigApi.getViewConfig({ ciType: 'host', scope: 'user' })
-    const data = res?.data || res
-    if (data && data.viewJson) {
-      let config = {}
-      if (typeof data.viewJson === 'string') {
-        try {
-          config = JSON.parse(data.viewJson)
-        } catch {
-          config = {}
-        }
-      } else {
-        config = data.viewJson
-      }
-      if (config.listColumns && config.listColumns.length > 0) {
-        activeColumns.value = config.listColumns
-      }
-    }
-  } catch (error) {
-    console.error('加载自定义列配置失败:', error)
-  }
-}
-
-function handleCustomView() {
-  customViewVisible.value = true
-}
-
-async function handleBatchLocation() {
-  const rows = await resolveSelectedRowsForAction('请先选择要配置区域的设备')
-  if (!rows?.length) return
-  batchLocationVisible.value = true
-}
-
 
 
 // 初始化
@@ -1468,7 +1280,6 @@ onMounted(() => {
   }
   loadAssetTypes()
   loadCurrentTenantId()
-  loadTableColumnsConfig()
 })
 
 // 监听路由参数变化进行联动搜索
