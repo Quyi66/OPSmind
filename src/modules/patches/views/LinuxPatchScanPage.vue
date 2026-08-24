@@ -432,19 +432,6 @@
                 <span v-else class="text-muted">-</span>
               </template>
             </el-table-column>
-            <!-- <el-table-column prop="location" label="网络区域环境" width="140">
-              <template #default="{ row }">
-                <el-tag v-if="row.location" size="small" type="success" effect="plain">
-                  {{ row.location }}
-                </el-tag>
-                <span v-else class="text-muted">-</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="run_environment" label="运行环境" width="120">
-              <template #default="{ row }">
-                {{ row.run_environment || '-' }}
-              </template>
-            </el-table-column> -->
             <el-table-column prop="scan_timestamp" label="最后扫描时间" width="200" sortable>
               <template #default="{ row }">
                 {{ formatDateTime(row.scan_timestamp) }}
@@ -1805,19 +1792,8 @@ async function loadHostData() {
         const assetInfoMap = {}
         assetRes.records.forEach(item => {
           if (item.IP) {
-            // 从标签筛选 LOCATION 区域
-            let location = null
-            const tags = item.tags || item.Tags || []
-            const locationNames = ['互联网', '外联网', '内网环境、孤岛环境']
-            const matchedTag = tags.find(t => locationNames.includes(t.name || t))
-            if (matchedTag) {
-              location = matchedTag.name || matchedTag
-            }
-
             assetInfoMap[item.IP] = {
               needReboot: item.needReboot,
-              run_environment: item.RUN_ENVIRONMENT || item.run_environment || '',
-              location,
               memoryOverview: buildMemoryOverview(
                 item.memtotal_mb ?? item.MEMTOTAL_MB,
                 item.memfree_mb ?? item.MEMFREE_MB
@@ -1829,8 +1805,6 @@ async function loadHostData() {
           if (record.host_key in assetInfoMap) {
             const assetInfo = assetInfoMap[record.host_key]
             record.need_reboot = assetInfo.needReboot
-            record.run_environment = assetInfo.run_environment
-            record.location = assetInfo.location
             record.memoryOverview = assetInfo.memoryOverview
           }
         })

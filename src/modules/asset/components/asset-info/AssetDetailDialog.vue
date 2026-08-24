@@ -9,7 +9,7 @@
     class="asset-detail-drawer"
   >
     <div v-loading="loading" class="drawer-body">
-      <template v-if="!loading && finalDisplayAttrs.length > 0">
+      <template v-if="!loading && visibleAttrs.length > 0">
         <!-- 头部资产摘要卡片 -->
         <div class="detail-header-card">
           <div class="avatar-area">
@@ -75,7 +75,7 @@
         <!-- 扁平属性表格列表 -->
         <el-descriptions :column="2" border class="detail-descriptions mt-3">
           <el-descriptions-item
-            v-for="attr in finalDisplayAttrs"
+            v-for="attr in visibleAttrs"
             :key="attr.code"
             :label="attr.title"
             label-class-name="desc-label"
@@ -115,7 +115,6 @@
 import { ref, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { agentApi, assetApi, getAgentErrorMessage } from '../../api'
-import { viewConfigApi } from '@/modules/patches/api'
 import { authService } from '@/core/auth'
 import {
   formatAgentTimestamp,
@@ -163,67 +162,11 @@ const canManageAgents = computed(() =>
   ].some(role => authService.hasRole(role))
 )
 
-// 内置系统属性与后端模型属性合并的备选属性
-const defaultAvailableAttrs = [
-  { code: 'IP', title: '纳管IP' },
-  { code: 'HOSTNAME', title: '主机名' },
-  { code: 'OS', title: '系统环境' },
-  { code: 'RUN_ENVIRONMENT', title: '运行环境' },
-  { code: 'CONN_LATEST_STATUS', title: '连通巡检' },
-  { code: 'DEPT_NAME', title: '处置团队' },
-  { code: 'APPLICATION_SYSTEM', title: '应用系统' },
-  { code: 'HOST_RISK_LEVEL', title: '主机风险等级' },
-  { code: 'SSH_PORT', title: 'SSH端口' },
-  { code: 'SERVICE_PORT', title: '业务端口' },
-  { code: 'OWNER', title: '责任人' },
-  { code: 'updated_at', title: '最后同步时间' }
-]
+const visibleAttrs = computed(() => {
+  if (!assetType.value?.attrs) return []
 
-const displayAttrs = ref([
-  'IP',
-  'HOSTNAME',
-  'OS',
-  'SSH_PORT',
-  'SERVICE_PORT',
-  'LOCATION',
-  'RUN_ENVIRONMENT',
-  'APPLICATION_SYSTEM',
-  'DEPT_NAME',
-  'HOST_RISK_LEVEL'
-])
-
-// 扁平化所有属性，构建统一的字典，用于快速查找标题
-const allAttrsMap = computed(() => {
-  const map = new Map()
-
-  // 1. 系统内置属性
-  defaultAvailableAttrs.forEach(attr => {
-    map.set(attr.code.toUpperCase(), attr.title)
-    map.set(attr.code.toLowerCase(), attr.title)
-  })
-
-  // 2. 动态模型属性
-  if (assetType.value?.attrs) {
-    assetType.value.attrs.forEach(attr => {
-      if (attr.code && attr.title) {
-        map.set(attr.code.toUpperCase(), attr.title)
-        map.set(attr.code.toLowerCase(), attr.title)
-      }
-    })
-  }
-
-  return map
+  return assetType.value.attrs.filter(attr => attr.code && attr.input?.control !== 'hidden')
 })
-
-function getAttrTitle(code) {
-  if (!code) return ''
-  return (
-    allAttrsMap.value.get(code) ||
-    allAttrsMap.value.get(code.toUpperCase()) ||
-    allAttrsMap.value.get(code.toLowerCase()) ||
-    code
-  )
-}
 
 function getAttrValue(code) {
   if (!code) return '-'
@@ -252,87 +195,21 @@ function getAttrValue(code) {
   return '-'
 }
 
-// 合并显示属性：自定义配置字段 + 其它所有在模型中定义且未在配置中勾选的属性
-const finalDisplayAttrs = computed(() => {
-  const result = []
-  const addedCodes = new Set()
-
-  // 1. 先加入自定义配置中的属性 (保持用户的配置先后排序)
-  displayAttrs.value.forEach(code => {
-    if (code) {
-      result.push({
-        code,
-        title: getAttrTitle(code)
-      })
-      addedCodes.add(code.toUpperCase())
-      addedCodes.add(code.toLowerCase())
-    }
-  })
-
-  // 2. 再加入原始模型中定义、且在自定义配置中未选择的其它所有属性
-  if (assetType.value?.attrs) {
-    assetType.value.attrs.forEach(attr => {
-      if (attr.code && attr.input?.control !== 'hidden') {
-        const upperCode = attr.code.toUpperCase()
-        const lowerCode = attr.code.toLowerCase()
-        if (!addedCodes.has(upperCode) && !addedCodes.has(lowerCode)) {
-          result.push({
-            code: attr.code,
-            title: attr.title || attr.code
-          })
-          addedCodes.add(upperCode)
-          addedCodes.add(lowerCode)
-        }
-      }
-    })
-  }
-
-  return result
-})
-
 // 加载资产详情
 const loadAssetDetail = async () => {
   if (!props.assetId) return
 
   loading.value = true
   try {
-    // 并行请求资产属性值、资产类型定义和自定义视图配置
-    const [attrs, typeInfo, viewConfigRes, agentInfoRes] = await Promise.all([
+    const [attrs, typeInfo, agentInfoRes] = await Promise.all([
       assetApi.getAssetAttrs(props.assetId),
       assetApi.getAssetTypeByAssetId(props.assetId),
-      viewConfigApi.getViewConfig({ ciType: 'host', scope: 'user' }).catch(() => null),
       agentApi.getHostAgentInfo([props.assetId]).catch(() => [])
     ])
 
     attrValues.value = attrs || {}
     assetType.value = typeInfo
     agentInfo.value = Array.isArray(agentInfoRes) ? agentInfoRes[0] || null : null
-
-    // 解析自定义详情卡片属性，将其展平为单一显示列表
-    const data = viewConfigRes?.data || viewConfigRes
-    if (data && data.viewJson) {
-      let configObj = {}
-      if (typeof data.viewJson === 'string') {
-        try {
-          configObj = JSON.parse(data.viewJson)
-        } catch {
-          configObj = {}
-        }
-      } else {
-        configObj = data.viewJson
-      }
-      if (configObj.overviewCard?.groups && configObj.overviewCard.groups.length > 0) {
-        const flatAttrs = []
-        configObj.overviewCard.groups.forEach(g => {
-          if (Array.isArray(g.attrs)) {
-            flatAttrs.push(...g.attrs)
-          }
-        })
-        if (flatAttrs.length > 0) {
-          displayAttrs.value = Array.from(new Set(flatAttrs))
-        }
-      }
-    }
   } catch (error) {
     console.error('加载资产详情失败:', error)
     ElMessage.error('加载资产详情失败')
@@ -387,18 +264,6 @@ const handleClose = () => {
   assetType.value = null
   agentInfo.value = null
   syncingIp.value = false
-  displayAttrs.value = [
-    'IP',
-    'HOSTNAME',
-    'OS',
-    'SSH_PORT',
-    'SERVICE_PORT',
-    'LOCATION',
-    'RUN_ENVIRONMENT',
-    'APPLICATION_SYSTEM',
-    'DEPT_NAME',
-    'HOST_RISK_LEVEL'
-  ]
 }
 
 // 监听弹窗打开

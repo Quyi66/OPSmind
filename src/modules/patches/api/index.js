@@ -1867,8 +1867,8 @@ export const cveApi = {
   },
 
   /**
-  * 4 档统计大卡
-  * GET /secops/api/secops/v2/urgency/statistics
+  * 获取 CVE 统计
+  * GET /secops/api/secops/v2/cve/statistics
   */
   getStatistics() {
     return apiService.get(`${VAP_API_PREFIX}/v2/cve/statistics`)
@@ -1964,8 +1964,8 @@ export const winCveApi = {
   },
 
   /**
-  * 4 档统计大卡
-  * GET /secops/api/secops/v2/urgency/statistics
+  * 获取 Windows CVE 统计
+  * GET /secops/api/secops/v2/win-cve/statistics
   */
   getStatistics() {
     return apiService.get(`${VAP_API_PREFIX}/v2/win-cve/statistics`)
@@ -2248,253 +2248,6 @@ export const rpmInfoApi = {
 }
 
 /**
-* R3 · 主机总览自定义视图 API
-*/
-export const viewConfigApi = {
-  /**
-  * 拉取生效视图
-  * GET /cmdb/api/cmdb/ci/view-config?ciType=host&scope=user
-  */
-  getViewConfig(params = {}) {
-    const query = buildGenericQuery({
-      ciType: params.ciType || 'host',
-      scope: params.scope || 'user'
-    })
-    return apiService.get(`/cmdb/api/cmdb/ci/view-config${query}`)
-  },
-
-  /**
-  * 保存视图
-  * PUT /cmdb/api/cmdb/ci/view-config
-  */
-  saveViewConfig(data) {
-    return apiService.put('/cmdb/api/cmdb/ci/view-config', data)
-  },
-
-  /**
-  * 可选属性列表
-  * GET /cmdb/api/cmdb/ci/view-config/attrs?ciType=host
-  */
-  getAttrs(params = {}) {
-    const query = buildGenericQuery({
-      ciType: params.ciType || 'host'
-    })
-    return apiService.get(`/cmdb/api/cmdb/ci/view-config/attrs${query}`)
-  }
-}
-
-/**
-* R4 · 主机端口与区域批量配置 API
-*/
-export const hostBatchApi = {
-  /**
-  * 批量配置端口
-  * POST /cmdb/api/cmdb/ci/batch/apply-ports
-  */
-  applyPorts(data) {
-    return apiService.post('/cmdb/api/cmdb/ci/batch/apply-ports', data)
-  },
-
-  /**
-  * 批量设置单个属性
-  * POST /cmdb/api/cmdb/ci/batch/save/attr
-  */
-  saveAttr(data) {
-    return apiService.post('/cmdb/api/cmdb/ci/batch/save/attr', data)
-  },
-
-  /**
-  * 列出 3 个保留区域名
-  * GET /cmdb/api/cmdb/ci/batch/locations
-  */
-  getLocations() {
-    return apiService.get('/cmdb/api/cmdb/ci/batch/locations')
-  },
-
-  /**
-  * 批量给主机标记区域
-  * POST /cmdb/api/cmdb/ci/batch/set-location
-  */
-  setLocation(data) {
-    return apiService.post('/cmdb/api/cmdb/ci/batch/set-location', data)
-  },
-
-  /**
-  * 查单台主机当前区域
-  * GET /cmdb/api/cmdb/ci/batch/get-location?hostId=...
-  */
-  getLocation(hostId) {
-    return apiService.get(`/cmdb/api/cmdb/ci/batch/get-location?hostId=${hostId}`)
-  }
-}
-
-/**
-* R2 · 漏洞紧急程度看板与规则 API
-*/
-export const urgencyApi = {
-  /**
-  * 4 档统计大卡
-  * GET /secops/api/secops/v2/urgency/statistics
-  */
-  getStatistics() {
-    return apiService.get('/secops/api/secops/v2/urgency/statistics')
-  },
-
-  /**
-  * 全量重算
-  * POST /secops/api/secops/v2/urgency/recompute?batchSize=1000
-  */
-  recompute(params = {}) {
-    const query = buildGenericQuery({
-      batchSize: params.batchSize || 1000
-    })
-    return apiService.post(`/secops/api/secops/v2/urgency/recompute${query}`)
-  },
-
-  /**
-  * 单台主机重算
-  * POST /secops/api/secops/v2/urgency/recompute-host?hostId=...
-  */
-  recomputeHost(hostId) {
-    return apiService.post(`/secops/api/secops/v2/urgency/recompute-host?hostId=${hostId}`)
-  },
-
-  /**
-  * 规则列表
-  * GET /secops/api/secops/v2/urgency/rule
-  */
-  getRules() {
-    return apiService.get('/secops/api/secops/v2/urgency/rule')
-  },
-
-  /**
-  * 多 CVE 查紧急程度 (即时计算, 0落库)
-  * POST /secops/api/secops/v2/urgency/lookup
-  */
-  lookupUrgency(data) {
-    return apiService.post('/secops/api/secops/v2/urgency/lookup', data)
-  },
-
-  /**
-  * 多 CVE 查询结果导出 Excel
-  * POST /secops/api/secops/v2/urgency/lookup/export
-  */
-  exportLookupUrgency(data) {
-    return apiService.post('/secops/api/secops/v2/urgency/lookup/export', data, {
-      responseType: 'blob'
-    })
-  },
-
-  /**
-  * 规则编辑
-  * PUT /secops/api/secops/v2/urgency/rule/{id}
-  */
-  updateRule(id, data) {
-    return apiService.put(`/secops/api/secops/v2/urgency/rule/${id}`, data)
-  },
-
-  /**
-  * 全量导入当前租户的紧急程度规则
-  * POST /secops/api/secops/v2/urgency/rule/import
-  */
-  importRules(file) {
-    const formData = new FormData()
-    formData.append('file', file)
-    return apiService.post('/secops/api/secops/v2/urgency/rule/import', formData)
-  },
-
-  /**
-  * 大卡下钻分页列表
-  * GET /secops/api/secops/v2/urgency/page?urgency=...&page=1&size=20
-  */
-  getUrgencyPage(params = {}) {
-    const query = buildGenericQuery({
-      urgency: params.urgency,
-      page: params.page ?? 1,
-      size: params.size ?? 20
-    })
-    return apiService.get(`/secops/api/secops/v2/urgency/page${query}`)
-  }
-}
-
-/**
-* R1 · CVE 文件导入比对 API
-*/
-export const cveImportApi = {
-  /**
-  * 上传 Excel
-  * POST /secops/api/secops/v2/cve/import/upload
-  */
-  uploadExcel(file) {
-    const formData = new FormData()
-    formData.append('file', file)
-    return apiService.post('/secops/api/secops/v2/cve/import/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
-  },
-
-  /**
-  * 触发比对
-  * POST /secops/api/secops/v2/cve/import/batch/{id}/compare
-  */
-  compareBatch(id) {
-    return apiService.post(`/secops/api/secops/v2/cve/import/batch/${id}/compare`)
-  },
-
-  /**
-  * 历史批次分页
-  * GET /secops/api/secops/v2/cve/import/batch?page=0&size=20
-  */
-  getBatches(params = {}) {
-    const query = buildGenericQuery({
-      page: params.page ?? 0,
-      size: params.size ?? 20
-    })
-    return apiService.get(`/secops/api/secops/v2/cve/import/batch${query}`)
-  },
-
-  /**
-  * 批次详情
-  * GET /secops/api/secops/v2/cve/import/batch/{id}
-  */
-  getBatchDetail(id) {
-    return apiService.get(`/secops/api/secops/v2/cve/import/batch/${id}`)
-  },
-
-  /**
-  * 涉及主机清单
-  * GET /secops/api/secops/v2/cve/import/batch/{id}/affected-hosts
-  */
-  getAffectedHosts(id) {
-    return apiService.get(`/secops/api/secops/v2/cve/import/batch/${id}/affected-hosts`)
-  },
-
-  /**
-  * 导出上报模板
-  * POST /secops/api/secops/v2/cve/import/batch/{id}/export-report
-  */
-  exportReport(id) {
-    return apiService.post(
-      `/secops/api/secops/v2/cve/import/batch/${id}/export-report`,
-      {},
-      {
-        responseType: 'blob'
-      }
-    )
-  },
-
-  /**
-  * 删除批次
-  * DELETE /secops/api/secops/v2/cve/import/batch/{id}
-  */
-  deleteBatch(id) {
-    return apiService.delete(`/secops/api/secops/v2/cve/import/batch/${id}`)
-  }
-}
-
-/**
  * 软件包集相关 API
  */
 export const packageSetApi = {
@@ -2529,11 +2282,7 @@ export default {
   winCve: winCveApi,
   winKb: winKbApi,
   middlewareCve: middlewareCveApi,
-  rpmInfo: rpmInfoApi,
-  viewConfig: viewConfigApi,
-  hostBatch: hostBatchApi,
-  urgency: urgencyApi,
-  cveImport: cveImportApi
+  rpmInfo: rpmInfoApi
 }
 
 export * from './agent'
