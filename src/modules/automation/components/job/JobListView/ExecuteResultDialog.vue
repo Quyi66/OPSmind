@@ -13,7 +13,7 @@
       <el-tabs v-model="activeTab">
         <el-tab-pane v-for="tab in visibleTabs" :key="tab.name" :label="tab.label" :name="tab.name">
           <template v-if="tab.name === 'overview'">
-            <el-scrollbar max-height="calc(100vh - 240px)" class="overview-scroll">
+            <el-scrollbar class="overview-scroll">
               <template v-if="result">
                 <div v-if="!hasHostInfo" class="overview-header">
                   <div class="overview-status">
@@ -662,8 +662,11 @@ watch(hostFilterText, () => {
 
 watch(
   () => ansibleTreeData.value,
-  () => {
-    nextTick(applyHostFilter)
+  tree => {
+    nextTick(() => {
+      applyHostFilter()
+      syncHostSelection(tree)
+    })
   }
 )
 
@@ -674,7 +677,6 @@ watch(treeRenderKey, () => {
 watch(
   () => ansibleContents.value,
   () => {
-    resetHostSelection()
     hostFilterText.value = ''
     hostTaskSearch.value = ''
     selectedPlayFilter.value = ''
@@ -1335,6 +1337,42 @@ function handleTreeNodeClick(data) {
   hostTaskSearch.value = ''
 }
 
+function findHostNode(nodes, hostId = '') {
+  for (const node of nodes || []) {
+    if (node.type === 'host' && (!hostId || node.id === hostId)) {
+      return node
+    }
+    const matchedChild = findHostNode(node.children, hostId)
+    if (matchedChild) {
+      return matchedChild
+    }
+  }
+  return null
+}
+
+function syncHostSelection(tree) {
+  const previousHostId = selectedHost.value?.id || ''
+  const hostNode =
+    (previousHostId && findHostNode(tree, previousHostId)) || findHostNode(tree)
+
+  if (!hostNode) {
+    resetHostSelection()
+    return
+  }
+
+  if (hostNode.id !== previousHostId) {
+    hostStatusFilter.value = ''
+    hostTaskSearch.value = ''
+  }
+  selectedHost.value = hostNode.host
+
+  let treeInstance = hostTreeRef.value
+  if (Array.isArray(treeInstance)) {
+    treeInstance = treeInstance[0]
+  }
+  treeInstance?.setCurrentKey?.(hostNode.id)
+}
+
 function toggleHostStatus(status) {
   hostStatusFilter.value = hostStatusFilter.value === status ? '' : status
 }
@@ -1742,7 +1780,23 @@ onBeforeUnmount(() => {
   --result-neutral-border: var(--el-border-color-light);
   --result-neutral-text: var(--el-text-color-secondary);
   --result-neutral-strong: var(--el-text-color-regular);
-  min-height: 360px;
+  height: 100%;
+  min-height: 0;
+}
+
+.result-dialog :deep(.el-tabs) {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.result-dialog :deep(.el-tabs__content) {
+  flex: 1;
+  min-height: 0;
+}
+
+.result-dialog :deep(.el-tab-pane) {
+  height: 100%;
 }
 
 :deep(.el-tabs__header) {
@@ -1751,6 +1805,10 @@ onBeforeUnmount(() => {
 
 :deep(.el-tabs__content) {
   padding-top: 4px !important;
+}
+
+.overview-scroll {
+  height: 100%;
 }
 
 .overview-header {
@@ -2003,7 +2061,7 @@ onBeforeUnmount(() => {
 .hosts-pane {
   display: flex;
   gap: 16px;
-  height: calc(100vh - 260px);
+  height: 100%;
 }
 
 .hosts-tree-panel {
@@ -2234,7 +2292,7 @@ onBeforeUnmount(() => {
 }
 
 .output-tab {
-  height: calc(100vh - 260px);
+  height: 100%;
 }
 
 .rest-tab {
@@ -2286,8 +2344,16 @@ onBeforeUnmount(() => {
 </style>
 
 <style>
+.execute-result-dialog-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: min(90vh, calc(100vh - 48px));
+}
+
 .execute-result-dialog-wrapper .el-dialog__body {
-  max-height: calc(100vh - 140px) !important;
+  flex: 1;
+  min-height: 0;
+  max-height: none !important;
   overflow-y: hidden !important;
 }
 </style>
