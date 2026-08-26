@@ -324,12 +324,12 @@
                   </el-link>
                 </template>
               </el-table-column>
-              <el-table-column prop="osDistro" label="操作系统" width="160" show-overflow-tooltip>
+              <el-table-column prop="osDistro" label="操作系统" min-width="180" show-overflow-tooltip>
                 <template #default="{ row }">
                   {{ row.osDistro }} {{ row.osVersion }} ({{ row.osArch }})
                 </template>
               </el-table-column>
-              <el-table-column prop="location" label="所处区域" width="140" show-overflow-tooltip>
+              <el-table-column prop="location" label="所处区域" min-width="150" show-overflow-tooltip>
                 <template #default="{ row }">
                   <el-tag v-if="row.location" size="small" effect="plain" type="info">
                     {{ row.location }}
@@ -337,7 +337,7 @@
                   <span v-else class="text-muted">未标记</span>
                 </template>
               </el-table-column>
-              <el-table-column prop="riskLevel" label="风险等级" width="110" align="center">
+              <el-table-column prop="riskLevel" label="风险等级" width="100" align="center">
                 <template #default="{ row }">
                   <el-tag size="small" effect="light" :type="getRiskTagType(row.riskLevel)">
                     {{ row.riskLevel }}
@@ -386,14 +386,14 @@
               <el-table-column
                 prop="affectedPkgs"
                 label="受影响包"
-                min-width="180"
+                min-width="200"
                 show-overflow-tooltip
               >
                 <template #default="{ row }">
                   <span>{{ row.affectedPkgs || '-' }}</span>
                 </template>
               </el-table-column>
-              <el-table-column prop="scanDate" label="扫描时间" width="170">
+              <el-table-column prop="scanDate" label="扫描时间" width="180">
                 <template #default="{ row }">
                   <span class="text-muted">{{ formatDateTime(row.scanDate) }}</span>
                 </template>
@@ -473,7 +473,7 @@
                 </template>
               </el-table-column>
 
-              <el-table-column prop="location" label="所处区域" width="140" show-overflow-tooltip>
+              <el-table-column prop="location" label="所处区域" min-width="150" show-overflow-tooltip>
                 <template #default="{ row }">
                   <el-tag v-if="row.location" size="small" effect="plain" type="info">
                     {{ row.location }}
@@ -482,7 +482,7 @@
                 </template>
               </el-table-column>
 
-              <el-table-column prop="riskLevel" label="风险等级" width="110" align="center">
+              <el-table-column prop="riskLevel" label="风险等级" width="100" align="center">
                 <template #default="{ row }">
                   <el-tag size="small" effect="light" :type="getRiskTagType(row.riskLevel)">
                     {{ row.riskLevel }}
