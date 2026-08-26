@@ -979,7 +979,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, nextTick } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import { formatDateTime } from '@/utils/date'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -1510,29 +1510,112 @@ function resetSkippedSteps() {
   isSkipped.restart = false
 }
 
-const parsedPreCheckResult = computed(() => {
-  if (!taskDetailData.value?.preCheckResult) return null
+const parsedPreCheckResult = ref(null)
+const activeCollapseNames = ref([])
+let hasCapturedPreCheckResult = false
+
+function parsePreCheckResult(rawResult) {
+  if (!rawResult) return null
   try {
-    return typeof taskDetailData.value.preCheckResult === 'string'
-      ? JSON.parse(taskDetailData.value.preCheckResult)
-      : taskDetailData.value.preCheckResult
+    return typeof rawResult === 'string' ? JSON.parse(rawResult) : rawResult
   } catch (e) {
     console.error('Failed to parse preCheckResult:', e)
     return null
   }
-})
+}
 
-const activeCollapseNames = ref([])
+function resetPreCheckResultSnapshot() {
+  parsedPreCheckResult.value = null
+  activeCollapseNames.value = []
+  hasCapturedPreCheckResult = false
+}
 
-watch(parsedPreCheckResult, (newVal) => {
-  if (newVal?.results) {
-    activeCollapseNames.value = newVal.results
-      .filter(r => r.blockers > 0 || r.warnings > 0)
-      .map(r => r.host_id)
-  } else {
-    activeCollapseNames.value = []
+function findScrollableAncestor(element) {
+  let ancestor = element?.parentElement
+
+  while (ancestor) {
+    const { overflowY } = window.getComputedStyle(ancestor)
+    const allowsScrolling = ['auto', 'scroll', 'overlay'].includes(overflowY)
+    const hasScrollableOverflow = ancestor.scrollHeight > ancestor.clientHeight + 1
+
+    if (allowsScrolling && hasScrollableOverflow) return ancestor
+    ancestor = ancestor.parentElement
   }
-}, { immediate: true })
+
+  return document.scrollingElement
+}
+
+async function scrollToPreCheckTaskStatus() {
+  await nextTick()
+  await new Promise(resolve => {
+    window.requestAnimationFrame(() => window.requestAnimationFrame(resolve))
+  })
+
+  const pipelineSection = pipelineSectionRef.value
+  const scrollContainer = findScrollableAncestor(pipelineSection)
+  if (!pipelineSection || !scrollContainer) return
+
+  const pipelineRect = pipelineSection.getBoundingClientRect()
+  const containerRect = scrollContainer.getBoundingClientRect()
+  const isDocumentScroller = scrollContainer === document.scrollingElement
+  const containerTop = isDocumentScroller ? 0 : containerRect.top
+  const topPadding = 16
+
+  scrollContainer.scrollTo({
+    top: scrollContainer.scrollTop + pipelineRect.top - containerTop - topPadding,
+    behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ? 'auto' : 'smooth'
+  })
+}
+
+watch(createdTaskId, resetPreCheckResultSnapshot, { flush: 'sync' })
+
+watch(
+  pipelineStatus,
+  status => {
+    if (status === 'running') resetPreCheckResultSnapshot()
+  },
+  { flush: 'sync' }
+)
+
+watch(
+  taskDetailData,
+  taskDetail => {
+    if (!taskDetail) {
+      resetPreCheckResultSnapshot()
+      return
+    }
+
+    // 重新检查会产生一份新结果，完成前不再展示上一轮结果。
+    if (taskDetail.status === 'PRE_CHECKING') {
+      if (hasCapturedPreCheckResult) resetPreCheckResultSnapshot()
+      return
+    }
+
+    // 后续安装阶段仍会轮询任务详情。这里只截取一次预检查终态结果，
+    // 避免轮询更新打断用户阅读或重置用户手动调整的折叠状态。
+    if (
+      hasCapturedPreCheckResult ||
+      !['PRE_CHECK_DONE', 'PRE_CHECK_FAILED', 'FAILED'].includes(taskDetail.status)
+    ) {
+      return
+    }
+
+    const result = parsePreCheckResult(taskDetail.preCheckResult)
+    if (!result) return
+
+    parsedPreCheckResult.value = result
+    hasCapturedPreCheckResult = true
+    if (Array.isArray(result.results)) {
+      activeCollapseNames.value = result.results
+        .filter(item => item.blockers > 0 || item.warnings > 0)
+        .map(item => item.host_id)
+    } else {
+      activeCollapseNames.value = []
+    }
+    scrollToPreCheckTaskStatus()
+  },
+  { immediate: true, flush: 'sync' }
+)
 
 function isHostUnreachable(hostResult) {
   return Array.isArray(hostResult.checks) && hostResult.checks.some(c => c.id === 'conn' && c.status === 'fail')
