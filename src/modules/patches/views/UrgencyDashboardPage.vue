@@ -435,38 +435,6 @@
                 <el-option value="一般" label="一般" />
               </el-select>
             </el-form-item>
-
-            <el-form-item label="资产网络区域" style="margin-bottom: 0; margin-right: 0">
-              <el-select v-model="listLocationFilter" style="width: 140px" placeholder="全部">
-                <el-option value="all" label="全部" />
-                <el-option value="互联网" label="互联网" />
-                <el-option value="外联网" label="外联网" />
-                <el-option value="内网环境、孤岛环境" label="内网环境、孤岛环境" />
-              </el-select>
-            </el-form-item>
-
-            <el-form-item label="补丁状态" style="margin-bottom: 0; margin-right: 0">
-              <el-select v-model="listPatchStatusFilter" style="width: 130px" placeholder="全部">
-                <el-option value="all" label="全部" />
-                <el-option value="no_repair" label="未修复" />
-                <el-option value="is_repair" label="已修复" />
-                <el-option value="is_repair_artificial" label="人工已修复" />
-                <el-option value="repairing" label="修复中" />
-                <el-option value="repair_faild" label="修复失败" />
-                <el-option value="rolling_back" label="回滚中" />
-                <el-option value="rolling_back_success" label="回滚成功" />
-                <el-option value="rolling_back_faild" label="回滚失败" />
-              </el-select>
-            </el-form-item>
-
-            <el-form-item label="模糊匹配" style="margin-bottom: 0; margin-right: 0">
-              <el-input
-                v-model="listSearchQuery"
-                placeholder="搜索漏洞编号 / 主机 IP"
-                clearable
-                style="width: 220px"
-              />
-            </el-form-item>
           </el-form>
         </div>
 
@@ -475,7 +443,7 @@
           <div class="ops-table-wrapper" v-loading="listLoading">
             <el-table
               class="lookup-table list-table natural-height-table"
-              :data="filteredListResults"
+              :data="listResults"
               style="width: 100%"
             >
               <el-table-column prop="cveId" label="漏洞编号" min-width="160">
@@ -852,9 +820,6 @@ const listTotal = ref(0)
 const listCurrentPage = ref(1)
 const listPageSize = ref(20)
 const listUrgency = ref('特急')
-const listLocationFilter = ref('all')
-const listPatchStatusFilter = ref('all')
-const listSearchQuery = ref('')
 
 // CVE 详情弹窗控制
 const cveDetailVisible = ref(false)
@@ -937,9 +902,6 @@ function snapshotHostBackRouteQuery() {
     lookupLocationFilter: lookupLocationFilter.value,
     lookupPatchStatusFilter: lookupPatchStatusFilter.value,
     listUrgency: listUrgency.value,
-    listLocationFilter: listLocationFilter.value,
-    listPatchStatusFilter: listPatchStatusFilter.value,
-    listSearchQuery: listSearchQuery.value,
     listCurrentPage: listCurrentPage.value,
     listPageSize: listPageSize.value,
     scrollTop
@@ -971,9 +933,6 @@ watch(
 
     // 漏洞紧急度下钻明细状态恢复
     if (query.listUrgency) listUrgency.value = query.listUrgency
-    if (query.listLocationFilter) listLocationFilter.value = query.listLocationFilter
-    if (query.listPatchStatusFilter) listPatchStatusFilter.value = query.listPatchStatusFilter
-    if (query.listSearchQuery) listSearchQuery.value = query.listSearchQuery
     if (query.listCurrentPage) listCurrentPage.value = Number(query.listCurrentPage)
     if (query.listPageSize) listPageSize.value = Number(query.listPageSize)
 
@@ -1064,26 +1023,6 @@ const filteredLookupResults = computed(() => {
   }
   if (lookupPatchStatusFilter.value !== 'all') {
     list = list.filter(item => item.patchStatus === lookupPatchStatusFilter.value)
-  }
-  return list
-})
-
-// 过滤后的漏洞紧急度明细结果 (在客户端二次过滤)
-const filteredListResults = computed(() => {
-  let list = listResults.value || []
-  if (listSearchQuery.value && listSearchQuery.value.trim()) {
-    const q = listSearchQuery.value.trim().toLowerCase()
-    list = list.filter(item => {
-      const cveMatch = (item.cveId || '').toLowerCase().includes(q)
-      const ipMatch = (item.hostKey || '').toLowerCase().includes(q)
-      return cveMatch || ipMatch
-    })
-  }
-  if (listLocationFilter.value !== 'all') {
-    list = list.filter(item => item.location === listLocationFilter.value)
-  }
-  if (listPatchStatusFilter.value !== 'all') {
-    list = list.filter(item => item.patchStatus === listPatchStatusFilter.value)
   }
   return list
 })
