@@ -289,7 +289,7 @@ const gridClass = computed(() => {
   padding: 10px 12px;
   background: var(--el-bg-color);
   font-size: 13px;
-  max-height: 240px;
+  max-height: clamp(240px, calc(90vh - 320px), 560px);
   overflow-y: auto;
 }
 
