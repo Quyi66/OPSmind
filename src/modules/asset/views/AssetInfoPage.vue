@@ -73,7 +73,7 @@
                 collapse-tags
                 collapse-tags-tooltip
                 clearable
-                style="width: 130px" @change="handleSearch">
+                style="width: 120px" @change="handleSearch">
                 <el-option
                   v-for="item in osVersionOptions"
                   :key="item.value"
@@ -88,7 +88,7 @@
                 v-model="searchText"
                 placeholder="IP/主机名"
                 clearable
-                style="width: 240px"
+                style="width: 180px"
                 @keyup.enter="handleSearch"
                 @clear="handleSearch"
               />
@@ -110,7 +110,7 @@
         <!-- 操作按钮区域 -->
         <div class="ops-action-bar">
           <div class="action-left">
-            <el-button type="primary" @click="handleAutoEntry" size="small">
+            <el-button type="primary" size="small" @click="handleAutoEntry">
               <i class="fa fa-plus" style="margin-right: 4px"></i>
               自动化设备录入
             </el-button>
@@ -124,26 +124,18 @@
               <i class="fa fa-file-import" style="margin-right: 4px"></i>
               导入设备
             </el-button>
-
-            <el-button type="danger" plain size="small" @click="deleteImportDialogVisible = true">
+            <el-button
+              type="danger"
+              plain
+              size="small"
+              @click="deleteImportDialogVisible = true"
+            >
               <i class="fa fa-trash-alt" style="margin-right: 4px"></i>
               批量删除设备
             </el-button>
             <el-button size="small" @click="handleCustomView">
               <i class="fa fa-sliders-h" style="margin-right: 4px"></i>
               自定义视图配置
-            </el-button>
-            <el-button
-              size="small"
-              :type="allSelected ? 'default' : 'primary'"
-              :loading="selectAllLoading"
-              @click="handleToggleSelectAll"
-            >
-              <i
-                :class="`fa fa-${allSelected ? 'times' : 'check-double'}`"
-                style="margin-right: 4px"
-              ></i>
-              {{ allSelected ? '一键取消' : '一键全选' }}
             </el-button>
           </div>
           <span style="flex: 1"></span>
@@ -159,21 +151,28 @@
           </el-button>
         </div>
 
-        <!-- 批量操作栏（设计为带滑动动画并在表格上方展示） -->
-        <transition name="slide-fade">
-          <div v-if="hasSelection" class="selection-action-bar-top animate-fade">
-            <div class="selection-action-bar__summary">
-              <i class="fa fa-info-circle text-primary" style="margin-right: 6px"></i>
-              已选择
-              <strong>{{ selectedCount }}</strong>
-              台主机设备
+        <!-- 选择引导 / 批量操作栏 -->
+        <transition name="slide-fade" mode="out-in">
+          <div v-if="hasSelection" key="selection-actions" class="selection-action-bar-top">
+            <div class="selection-action-bar-top__summary">
+              <el-tooltip content="取消选择" placement="top" :show-after="300">
+                <button
+                  type="button"
+                  class="selection-summary-icon"
+                  aria-label="取消选择"
+                  @click="resetSelectionState"
+                >
+                  <i class="fa fa-check selection-icon-checked"></i>
+                  <i class="fa fa-times selection-icon-clear"></i>
+                </button>
+              </el-tooltip>
+              <span>
+                已选择 <strong>{{ selectedCount }}</strong> 台设备
+                <span v-if="allSelected" class="selection-scope">（全部筛选结果）</span>
+              </span>
             </div>
-            <div class="selection-action-bar__actions">
-              <el-button :icon="Edit" size="small" type="primary" plain @click="handleEdit">
-                批量修改
-              </el-button>
-
-              <el-button size="small" @click="handleBatchLocation">
+            <div class="selection-action-bar-top__actions">
+              <el-button size="small" type="primary" plain @click="handleBatchLocation">
                 <i class="fa fa-map-marker-alt" style="margin-right: 4px"></i>
                 标记区域
               </el-button>
@@ -185,16 +184,53 @@
                 <i class="fa fa-folder" style="margin-right: 4px"></i>
                 添加分组
               </el-button>
-              <el-button :icon="Top" size="small" type="success" plain @click="handleOnline">
-                上线
-              </el-button>
-              <el-button :icon="Bottom" size="small" type="info" plain @click="handleOffline">
-                下线
-              </el-button>
-              <el-button type="danger" :icon="Delete" size="small" @click="handleDelete">
-                删除
+              <el-dropdown trigger="click" @command="handleBatchActionCommand">
+                <el-button size="small">
+                  更多操作
+                  <el-icon class="dropdown-arrow"><ArrowDown /></el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="edit" :icon="Edit">批量修改</el-dropdown-item>
+                    <el-dropdown-item command="online" :icon="Top">上线</el-dropdown-item>
+                    <el-dropdown-item command="offline" :icon="Bottom">下线</el-dropdown-item>
+                    <el-dropdown-item
+                      command="delete"
+                      :icon="Delete"
+                      divided
+                      class="batch-delete-menu-item"
+                    >
+                      删除所选设备
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+              <el-button text size="small" @click="resetSelectionState">
+                取消选择
               </el-button>
             </div>
+          </div>
+          <div v-else key="selection-hint" class="selection-hint-bar">
+            <div class="selection-hint-bar__content">
+              <span class="selection-hint-icon">
+                <i class="fa fa-mouse-pointer"></i>
+              </span>
+              <div>
+                <div class="selection-hint-title">勾选设备后可进行批量操作</div>
+                <div class="selection-hint-description">
+                  支持批量修改、添加标签、分组、上下线及删除等操作
+                </div>
+              </div>
+            </div>
+            <el-button
+              size="small"
+              :disabled="total === 0 || loading"
+              :loading="selectAllLoading"
+              @click="handleToggleSelectAll"
+            >
+              <i class="fa fa-check-double" style="margin-right: 4px"></i>
+              选择全部<span v-if="total > 0"> {{ total }} 台</span>
+            </el-button>
           </div>
         </transition>
 
@@ -617,6 +653,7 @@ import {
   Refresh,
   Search,
   RefreshRight,
+  ArrowDown,
   Clock as _Clock
 } from '@element-plus/icons-vue'
 import { assetApi, dataManageApi } from '../api'
@@ -1459,6 +1496,17 @@ async function handleBatchLocation() {
   batchLocationVisible.value = true
 }
 
+const handleBatchActionCommand = command => {
+  const actionMap = {
+    edit: handleEdit,
+    online: handleOnline,
+    offline: handleOffline,
+    delete: handleDelete
+  }
+
+  actionMap[command]?.()
+}
+
 
 
 // 初始化
@@ -1483,13 +1531,46 @@ watch(
 )
 </script>
 <style scoped lang="scss">
-// 批量操作栏
+// 页面级操作栏
+.action-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  :deep(.el-button + .el-button) {
+    margin-left: 0;
+  }
+}
+
+.dropdown-arrow {
+  margin-left: 6px;
+  font-size: 12px;
+}
+
+:global(.el-dropdown-menu__item.batch-delete-menu-item) {
+  color: var(--el-color-danger) !important;
+}
+
+:global(.el-dropdown-menu__item.batch-delete-menu-item:not(.is-disabled):focus) {
+  color: var(--el-color-danger) !important;
+  background-color: transparent !important;
+}
+
+:global(.el-dropdown-menu__item.batch-delete-menu-item:not(.is-disabled):hover) {
+  color: var(--el-color-danger) !important;
+  background-color: var(--el-color-danger-light-9) !important;
+}
+
+// 选择引导与批量操作栏
 .selection-action-bar-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   padding: 10px 16px;
+  min-height: 54px;
+  box-sizing: border-box;
   background: var(--el-color-primary-light-9);
   border: 1px solid var(--el-color-primary-light-8);
   border-radius: 8px;
@@ -1501,6 +1582,7 @@ watch(
     font-size: 13px;
     display: flex;
     align-items: center;
+    min-width: 210px;
 
     strong {
       color: var(--el-color-primary);
@@ -1509,12 +1591,112 @@ watch(
     }
   }
 
+  .selection-summary-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    margin-right: 8px;
+    color: #ffffff;
+    background: var(--el-color-primary);
+    border: 0;
+    border-radius: 50%;
+    font-size: 11px;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition:
+      background-color 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.2s ease;
+
+    .selection-icon-clear {
+      display: none;
+    }
+
+    &:hover {
+      background: var(--el-color-danger);
+      box-shadow: 0 0 0 3px var(--el-color-danger-light-8);
+      transform: scale(1.06);
+
+      .selection-icon-checked {
+        display: none;
+      }
+
+      .selection-icon-clear {
+        display: inline-block;
+      }
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--el-color-primary-light-3);
+      outline-offset: 2px;
+    }
+  }
+
+  .selection-scope {
+    color: var(--el-text-color-secondary);
+  }
+
   &__actions {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
     gap: 8px;
+
+    :deep(.el-button + .el-button) {
+      margin-left: 0;
+    }
   }
+}
+
+.selection-hint-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 54px;
+  padding: 8px 16px;
+  box-sizing: border-box;
+  color: var(--el-text-color-regular);
+  background: var(--el-fill-color-extra-light);
+  border: 1px dashed var(--el-border-color);
+  border-radius: 8px;
+  flex-shrink: 0;
+
+  &__content {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+}
+
+.selection-hint-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-right: 10px;
+  color: var(--el-color-primary);
+  background: var(--el-color-primary-light-9);
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.selection-hint-title {
+  color: var(--el-text-color-primary);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.selection-hint-description {
+  margin-top: 1px;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 // Table cell visual styles
