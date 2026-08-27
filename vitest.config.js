@@ -33,7 +33,7 @@ export default defineConfig({
     ],
 
     // 排除的文件
-    exclude: ['node_modules', 'dist', '.idea', '.git', '.cache'],
+    exclude: ['node_modules', 'dist', '.idea', '.git', '.cache', 'tests/e2e/**'],
 
     // 测试覆盖率配置
     coverage: {
