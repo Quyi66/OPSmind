@@ -29,14 +29,22 @@
         </div>
 
         <!-- 3. 目标主机 (Target Hosts) -->
-        <div v-if="patchOverviewInfo.hosts.length" class="overview-subcard">
+        <div
+          v-if="patchOverviewInfo.hosts.length"
+          class="overview-subcard"
+          :class="{ 'is-hosts-only': isHostsOnly }"
+        >
           <div class="subcard-header">
             <i class="fa fa-server" />
             <span>目标主机 ({{ patchOverviewInfo.hosts.length }})</span>
           </div>
           <div class="subcard-body">
-            <div v-for="host in patchOverviewInfo.hosts" :key="host.name" class="overview-item">
-              <span class="host-name">{{ host.name }}</span>
+            <div
+              v-for="host in patchOverviewInfo.hosts"
+              :key="host.name"
+              class="overview-item"
+            >
+              <span class="host-name" :title="host.name">{{ host.name }}</span>
               <el-tag size="small" :type="taskStatusTag(host.status)">
                 {{ taskStatusLabel(host.status) }}
               </el-tag>
@@ -231,6 +239,15 @@ const gridClass = computed(() => {
   if (patchOverviewInfo.value?.packages?.length) count++
   return `cols-${count}`
 })
+
+const isHostsOnly = computed(() => {
+  const overview = patchOverviewInfo.value
+  return Boolean(
+    overview?.hosts?.length &&
+    overview.patches.length === 0 &&
+    overview.packages.length === 0
+  )
+})
 </script>
 
 <style scoped>
@@ -308,6 +325,35 @@ const gridClass = computed(() => {
 .overview-item .host-name {
   color: var(--el-text-color-primary);
   font-weight: 500;
+}
+
+.overview-subcard.is-hosts-only .subcard-body {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  row-gap: 10px;
+  column-gap: 24px;
+  align-content: start;
+}
+
+.overview-subcard.is-hosts-only .overview-item {
+  min-width: 0;
+  gap: 12px;
+  padding: 9px 12px 9px 10px;
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 6px;
+  background: var(--el-fill-color-blank);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 8%);
+}
+
+.overview-subcard.is-hosts-only .host-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overview-subcard.is-hosts-only .overview-item :deep(.el-tag) {
+  flex-shrink: 0;
 }
 
 .patch-item-text,
