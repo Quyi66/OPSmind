@@ -45,10 +45,11 @@
                 type="primary"
                 size="small"
                 :loading="recomputing"
+                :disabled="recomputing"
                 @click="handleRecomputeAll"
               >
                 <el-icon><Refresh /></el-icon>
-                全量重算紧急度
+                {{ recomputing ? '后台重算中' : '全量重算紧急度' }}
               </el-button>
               <el-button size="small" @click="downloadRuleTemplate">
                 <i class="fas fa-download me-1"></i>
@@ -140,9 +141,15 @@
               </el-table-column>
               <el-table-column prop="exploit" label="漏洞利用程度" width="130">
                 <template #default="{ row }">
-                  <el-tag size="small" effect="light" :type="getExploitTagType(row.exploit)">
+                  <el-tag
+                    v-if="row.exploit"
+                    size="small"
+                    effect="light"
+                    :type="getExploitTagType(row.exploit)"
+                  >
                     {{ row.exploit }}
                   </el-tag>
+                  <el-tag v-else size="small" effect="plain" type="info">通配</el-tag>
                 </template>
               </el-table-column>
               <el-table-column prop="riskLevel" label="漏洞风险等级" width="130">
@@ -154,9 +161,16 @@
               </el-table-column>
               <el-table-column prop="urgency" label="漏洞紧急程度" width="130">
                 <template #default="{ row }">
-                  <el-tag size="small" round effect="dark" :type="getUrgencyTagType(row.urgency)">
+                  <el-tag
+                    v-if="row.urgency"
+                    size="small"
+                    round
+                    effect="dark"
+                    :type="getUrgencyTagType(row.urgency)"
+                  >
                     {{ row.urgency }}
                   </el-tag>
+                  <span v-else class="text-muted">未匹配规则</span>
                 </template>
               </el-table-column>
               <el-table-column prop="enabled" label="启用状态" width="110">
@@ -346,9 +360,16 @@
               </el-table-column>
               <el-table-column prop="urgency" label="漏洞紧急程度" width="120" align="center">
                 <template #default="{ row }">
-                  <el-tag size="small" round effect="dark" :type="getUrgencyTagType(row.urgency)">
+                  <el-tag
+                    v-if="row.urgency"
+                    size="small"
+                    round
+                    effect="dark"
+                    :type="getUrgencyTagType(row.urgency)"
+                  >
                     {{ row.urgency }}
                   </el-tag>
+                  <span v-else class="text-muted">未匹配规则</span>
                 </template>
               </el-table-column>
               <el-table-column prop="cvss" label="CVSS" width="80" align="center">
@@ -429,6 +450,7 @@
           >
             <el-form-item label="漏洞紧急程度" style="margin-bottom: 0; margin-right: 0">
               <el-select v-model="listUrgency" style="width: 110px" @change="handleListUrgencyChange">
+                <el-option value="all" label="全部" />
                 <el-option value="特急" label="特急" />
                 <el-option value="紧急" label="紧急" />
                 <el-option value="普通" label="普通" />
@@ -492,9 +514,16 @@
 
               <el-table-column prop="urgency" label="紧急程度" width="120" align="center">
                 <template #default="{ row }">
-                  <el-tag size="small" round effect="dark" :type="getUrgencyTagType(row.urgency)">
+                  <el-tag
+                    v-if="row.urgency"
+                    size="small"
+                    round
+                    effect="dark"
+                    :type="getUrgencyTagType(row.urgency)"
+                  >
                     {{ row.urgency }}
                   </el-tag>
+                  <span v-else class="text-muted">未匹配规则</span>
                 </template>
               </el-table-column>
 
@@ -565,21 +594,11 @@
         <el-alert
           title="重算影响提示"
           type="warning"
-          :description="`系统将分批读取全量资产与漏洞关联数据，并按照当前租户导入的 ${rules.length} 条规则对所有漏洞的紧急程度进行重新评估写入。未命中规则时按“一般”兜底。`"
+          :description="`系统将按照当前租户导入的 ${rules.length} 条规则，在后台重新评估全部漏洞紧急程度。未命中规则的数据会被清空为“未匹配规则”；规则表为空时，全部紧急程度都会被清空。`"
           :closable="false"
           show-icon
         />
       </div>
-      <el-form :model="reform" label-width="120px">
-        <el-form-item label="单批处理行数">
-          <el-select v-model="reform.batchSize" style="width: 100%">
-            <el-option :value="500" label="500 行" />
-            <el-option :value="1000" label="1000 行 (推荐)" />
-            <el-option :value="2000" label="2000 行" />
-            <el-option :value="5000" label="5000 行 (最大)" />
-          </el-select>
-        </el-form-item>
-      </el-form>
       <template #footer>
         <el-button @click="recomputeDialogVisible = false">取消</el-button>
         <el-button type="primary" :loading="recomputing" @click="executeRecompute">
@@ -706,7 +725,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { formatDateTime } from '@/utils/date'
 import { Refresh } from '@element-plus/icons-vue'
@@ -730,7 +749,8 @@ const statistics = ref({
   特急: 0,
   紧急: 0,
   普通: 0,
-  一般: 0
+  一般: 0,
+  未知: 0
 })
 
 // 看板统计卡片定义
@@ -790,9 +810,7 @@ const lookupPatchStatusFilter = ref('all')
 // 重算控制
 const recomputing = ref(false)
 const recomputeDialogVisible = ref(false)
-const reform = reactive({
-  batchSize: 1000
-})
+let recomputeStatusTimer = null
 
 // 编辑规则
 const editDialogVisible = ref(false)
@@ -819,7 +837,7 @@ const listResults = ref([])
 const listTotal = ref(0)
 const listCurrentPage = ref(1)
 const listPageSize = ref(20)
-const listUrgency = ref('特急')
+const listUrgency = ref('all')
 
 // CVE 详情弹窗控制
 const cveDetailVisible = ref(false)
@@ -1032,7 +1050,7 @@ async function loadStatistics() {
   statsLoading.value = true
   try {
     const res = await urgencyApi.getStatistics()
-    statistics.value = res?.data || res || { 特急: 0, 紧急: 0, 普通: 0, 一般: 0 }
+    statistics.value = res?.data || res || { 特急: 0, 紧急: 0, 普通: 0, 一般: 0, 未知: 0 }
   } catch (error) {
     console.error('加载紧急度统计失败:', error)
   } finally {
@@ -1190,30 +1208,77 @@ function getPatchStatusTagType(status) {
 
 // 打开全量重算弹窗
 function handleRecomputeAll() {
-  reform.batchSize = 1000
   recomputeDialogVisible.value = true
 }
 
-// 执行全量重算
+function stopRecomputeStatusPolling() {
+  if (recomputeStatusTimer) {
+    clearTimeout(recomputeStatusTimer)
+    recomputeStatusTimer = null
+  }
+}
+
+function scheduleRecomputeStatusPolling() {
+  stopRecomputeStatusPolling()
+  recomputeStatusTimer = setTimeout(() => {
+    pollRecomputeStatus({ notifyCompletion: true })
+  }, 3000)
+}
+
+function refreshUrgencyResults() {
+  loadStatistics()
+  if (activeViewTab.value === 'urgencyList') {
+    fetchUrgencyPageData()
+  }
+}
+
+async function pollRecomputeStatus({ notifyCompletion = false } = {}) {
+  try {
+    const res = await urgencyApi.getRecomputeStatus()
+    const data = res?.data || res || {}
+    recomputing.value = Boolean(data.running)
+
+    if (data.running) {
+      scheduleRecomputeStatusPolling()
+      return
+    }
+
+    stopRecomputeStatusPolling()
+    if (!notifyCompletion || !data.startedAt) return
+
+    if (data.error) {
+      ElMessage.error(`紧急程度重算失败：${data.error}`)
+      return
+    }
+
+    ElMessage.success(`紧急程度已更新 ${formatNumber(data.changed || 0)} 条`)
+    refreshUrgencyResults()
+  } catch (error) {
+    console.error('获取紧急程度重算进度失败:', error)
+    stopRecomputeStatusPolling()
+    recomputing.value = false
+    if (notifyCompletion) {
+      ElMessage.error('获取紧急程度重算进度失败')
+    }
+  }
+}
+
+// 提交异步全量重算并开始轮询进度
 async function executeRecompute() {
   recomputing.value = true
   recomputeDialogVisible.value = false
   try {
-    const res = await urgencyApi.recompute({ batchSize: reform.batchSize })
-    const data = res?.data || res
-    ElMessageBox.alert(
-      `重算已全部完成！<br/>更新数据行数：<strong>${data.updated || 0}</strong> 行<br/>累计耗时：<strong>${((data.elapsedMs || 0) / 1000).toFixed(2)}</strong> 秒`,
-      '重算成功',
-      {
-        dangerouslyUseHTMLString: true,
-        type: 'success'
-      }
-    )
-    refresh()
+    const res = await urgencyApi.recompute()
+    const data = res?.data || res || {}
+    if (data.accepted === false) {
+      ElMessage.warning(data.message || '已有一轮重算正在后台运行')
+    } else {
+      ElMessage.success(data.message || '重算已在后台开始')
+    }
+    scheduleRecomputeStatusPolling()
   } catch (error) {
     console.error('全量重算失败:', error)
     ElMessage.error('紧急度评估全量重算失败')
-  } finally {
     recomputing.value = false
   }
 }
@@ -1398,6 +1463,11 @@ function refresh() {
 
 onMounted(() => {
   refresh()
+  pollRecomputeStatus()
+})
+
+onBeforeUnmount(() => {
+  stopRecomputeStatusPolling()
 })
 </script>
 

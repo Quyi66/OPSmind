@@ -4,6 +4,9 @@
     title="批量配置主机区域环境"
     width="500px"
     destroy-on-close
+    :close-on-click-modal="!recomputing"
+    :close-on-press-escape="!recomputing"
+    :show-close="!recomputing"
     @close="handleClose"
   >
     <div v-loading="loading">
@@ -39,17 +42,23 @@
 
       <!-- 重算进度提示 -->
       <div v-if="recomputing" class="recompute-loading-panel mt-3">
-        <div class="recompute-loading-text">
+        <div v-if="globalRecomputing" class="recompute-loading-text">
           <el-icon class="is-loading"><Loading /></el-icon>
-          正在为 {{ hosts.length }} 台主机重新评估评估漏洞紧急度 ({{ recomputeProgress }}/{{
-            hosts.length
-          }})...
+          全量紧急程度重算正在后台执行，请稍候...
         </div>
-        <el-progress
-          :percentage="Math.round((recomputeProgress / hosts.length) * 100)"
-          :status="recomputeProgress === hosts.length ? 'success' : undefined"
-          class="mt-2"
-        />
+        <template v-else>
+          <div class="recompute-loading-text">
+            <el-icon class="is-loading"><Loading /></el-icon>
+            正在为 {{ hosts.length }} 台主机重新评估漏洞紧急程度 ({{ recomputeProgress }}/{{
+              hosts.length
+            }})...
+          </div>
+          <el-progress
+            :percentage="Math.round((recomputeProgress / hosts.length) * 100)"
+            :status="recomputeProgress === hosts.length ? 'success' : undefined"
+            class="mt-2"
+          />
+        </template>
       </div>
     </div>
 
@@ -68,7 +77,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onBeforeUnmount } from 'vue'
 import { Loading } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { hostBatchApi, urgencyApi } from '../../../api'
@@ -99,6 +108,9 @@ const locationOptions = ref([])
 // 重算状态
 const recomputing = ref(false)
 const recomputeProgress = ref(0)
+const globalRecomputing = ref(false)
+let recomputeStatusTimer = null
+let cancelRecomputeStatusPolling = null
 
 const form = reactive({
   location: ''
@@ -119,10 +131,88 @@ async function loadLocations() {
   }
 }
 
+function stopRecomputeStatusPolling() {
+  if (recomputeStatusTimer) {
+    clearTimeout(recomputeStatusTimer)
+    recomputeStatusTimer = null
+  }
+  const cancel = cancelRecomputeStatusPolling
+  cancelRecomputeStatusPolling = null
+  cancel?.()
+}
+
+function waitForGlobalRecompute() {
+  stopRecomputeStatusPolling()
+
+  return new Promise((resolve, reject) => {
+    let consecutiveErrors = 0
+    let missingStatusCount = 0
+    let cancelled = false
+
+    const finish = (callback, value) => {
+      if (recomputeStatusTimer) clearTimeout(recomputeStatusTimer)
+      recomputeStatusTimer = null
+      cancelRecomputeStatusPolling = null
+      callback(value)
+    }
+
+    const schedule = () => {
+      recomputeStatusTimer = setTimeout(poll, 3000)
+    }
+
+    const poll = async () => {
+      try {
+        const response = await urgencyApi.getRecomputeStatus()
+        if (cancelled) return
+        const status = response?.data || response || {}
+        consecutiveErrors = 0
+
+        if (status.running) {
+          schedule()
+          return
+        }
+
+        if (!status.startedAt) {
+          missingStatusCount++
+          if (missingStatusCount < 3) {
+            schedule()
+            return
+          }
+          finish(reject, new Error('服务未返回重算任务状态'))
+          return
+        }
+
+        if (status.error) {
+          finish(reject, new Error(String(status.error)))
+          return
+        }
+
+        finish(resolve, status)
+      } catch (error) {
+        if (cancelled) return
+        consecutiveErrors++
+        if (consecutiveErrors < 3) {
+          schedule()
+          return
+        }
+        finish(reject, error)
+      }
+    }
+
+    cancelRecomputeStatusPolling = () => {
+      cancelled = true
+      finish(resolve, null)
+    }
+    schedule()
+  })
+}
+
 function handleClose() {
+  stopRecomputeStatusPolling()
   visible.value = false
   recomputing.value = false
   recomputeProgress.value = 0
+  globalRecomputing.value = false
   form.location = ''
 }
 
@@ -137,7 +227,7 @@ async function handleSubmit() {
   saving.value = true
   try {
     // 1. 设置区域标签
-    const res = await hostBatchApi.setLocation({
+    await hostBatchApi.setLocation({
       hostIds,
       location: form.location
     })
@@ -148,14 +238,28 @@ async function handleSubmit() {
     saving.value = false
     recomputing.value = true
     recomputeProgress.value = 0
+    globalRecomputing.value = hostIds.length > 10
 
     if (hostIds.length > 10) {
-      // 主机数量较多时，调用全量重算接口（文档 §5.3 推荐）
+      // 主机数量较多时提交异步全量重算，不把接口受理误报为任务完成
       try {
-        await urgencyApi.recompute({ batchSize: 1000 })
+        const response = await urgencyApi.recompute()
+        const result = response?.data || response || {}
+        if (result.accepted === false) {
+          ElMessage.warning(result.message || '已有一轮全量重算正在后台运行')
+        } else {
+          ElMessage.success(result.message || '全量重算已在后台开始')
+        }
+
+        const status = await waitForGlobalRecompute()
+        if (!status) return
         recomputeProgress.value = hostIds.length
+        ElMessage.success(
+          `全量紧急程度重算完成，已更新 ${Number(status.changed ?? 0).toLocaleString()} 条`
+        )
       } catch (err) {
         console.error('全量重算紧急度失败:', err)
+        ElMessage.error(`区域设置成功，但全量紧急程度重算失败：${err?.message || '未知错误'}`)
       }
     } else {
       // 少量主机逐台重算
@@ -170,7 +274,9 @@ async function handleSubmit() {
       }
     }
 
-    ElMessage.success('所选主机漏洞紧急度重算已完毕！')
+    if (hostIds.length <= 10) {
+      ElMessage.success('所选主机漏洞紧急程度重算已完成！')
+    }
     emit('success')
     handleClose()
   } catch (error) {
@@ -185,6 +291,10 @@ watch(visible, val => {
   if (val) {
     loadLocations()
   }
+})
+
+onBeforeUnmount(() => {
+  stopRecomputeStatusPolling()
 })
 </script>
 

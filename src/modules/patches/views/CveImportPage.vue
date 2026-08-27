@@ -308,15 +308,15 @@
                     <template #default="{ row }">
                       <template v-if="row.urgencies && row.urgencies.length > 0">
                         <el-tag
-                          v-for="urg in row.urgencies"
-                          :key="urg"
+                          v-for="(urg, index) in row.urgencies"
+                          :key="`${urg || 'unmatched'}-${index}`"
                           size="small"
                           round
-                          effect="dark"
+                          :effect="urg ? 'dark' : 'plain'"
                           :type="getUrgencyTagType(urg)"
                           style="margin-right: 4px"
                         >
-                          {{ urg }}
+                          {{ urg || '未匹配规则' }}
                         </el-tag>
                       </template>
                       <span v-else class="text-muted">未重算评估</span>
@@ -673,7 +673,7 @@ const hostUrgencyOptions = computed(() => {
   const urgencies = new Set()
   affectedHosts.value.forEach(item => {
     if (Array.isArray(item.urgencies)) {
-      item.urgencies.forEach(urg => urgencies.add(urg))
+      item.urgencies.filter(Boolean).forEach(urg => urgencies.add(urg))
     }
   })
   return ['all', ...urgencies]

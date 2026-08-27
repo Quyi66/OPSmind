@@ -1867,8 +1867,8 @@ export const cveApi = {
   },
 
   /**
-  * 4 档统计大卡
-  * GET /secops/api/secops/v2/urgency/statistics
+  * CVE 严重等级统计
+  * GET /secops/api/secops/v2/cve/statistics
   */
   getStatistics() {
     return apiService.get(`${VAP_API_PREFIX}/v2/cve/statistics`)
@@ -2298,7 +2298,7 @@ export const hostBatchApi = {
 */
 export const urgencyApi = {
   /**
-  * 4 档统计大卡
+  * 固定五档统计（null 不计入任一档）
   * GET /secops/api/secops/v2/urgency/statistics
   */
   getStatistics() {
@@ -2306,14 +2306,19 @@ export const urgencyApi = {
   },
 
   /**
-  * 全量重算
-  * POST /secops/api/secops/v2/urgency/recompute?batchSize=1000
+  * 异步全量重算
+  * POST /secops/api/secops/v2/urgency/recompute
   */
-  recompute(params = {}) {
-    const query = buildGenericQuery({
-      batchSize: params.batchSize || 1000
-    })
-    return apiService.post(`/secops/api/secops/v2/urgency/recompute${query}`)
+  recompute() {
+    return apiService.post('/secops/api/secops/v2/urgency/recompute')
+  },
+
+  /**
+  * 查询全量重算进度
+  * GET /secops/api/secops/v2/urgency/recompute/status
+  */
+  getRecomputeStatus() {
+    return apiService.get('/secops/api/secops/v2/urgency/recompute/status')
   },
 
   /**
@@ -2321,7 +2326,9 @@ export const urgencyApi = {
   * POST /secops/api/secops/v2/urgency/recompute-host?hostId=...
   */
   recomputeHost(hostId) {
-    return apiService.post(`/secops/api/secops/v2/urgency/recompute-host?hostId=${hostId}`)
+    return apiService.post(
+      `/secops/api/secops/v2/urgency/recompute-host?hostId=${encodeURIComponent(hostId)}`
+    )
   },
 
   /**
@@ -2369,12 +2376,12 @@ export const urgencyApi = {
   },
 
   /**
-  * 大卡下钻分页列表
-  * GET /secops/api/secops/v2/urgency/page?urgency=...&page=1&size=20
+  * 紧急程度分页列表；urgency 不传时返回全部（包含 null）
+  * GET /secops/api/secops/v2/urgency/page?page=1&size=20
   */
   getUrgencyPage(params = {}) {
     const query = buildGenericQuery({
-      urgency: params.urgency,
+      urgency: params.urgency && params.urgency !== 'all' ? params.urgency : undefined,
       page: params.page ?? 1,
       size: params.size ?? 20
     })
@@ -2502,4 +2509,3 @@ export default {
 }
 
 export * from './agent'
-
