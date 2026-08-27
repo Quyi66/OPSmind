@@ -629,7 +629,9 @@
     <!-- 批量标记区域弹窗 -->
     <BatchLocationDialog
       v-model="batchLocationVisible"
-      :hosts="selectedRows"
+      :hosts="currentPageSelectedRows"
+      :selection-count="selectedCount"
+      :resolve-host-ids="resolveSelectedHostIdsForLocation"
       @success="loadAssetList"
     />
 
@@ -795,6 +797,15 @@ const selectedCount = computed(() => {
 const hasSelection = computed(() => selectedCount.value > 0)
 
 const getAssetRowId = row => row?.id || row?.host_id || row?.hostId || null
+const currentPageSelectedRows = computed(() => {
+  if (allSelected.value) {
+    const excludedIds = new Set(excludedRowIds.value)
+    return tableData.value.filter(row => !excludedIds.has(getAssetRowId(row)))
+  }
+
+  const selectedIds = new Set(selectedRows.value.map(getAssetRowId).filter(Boolean))
+  return tableData.value.filter(row => selectedIds.has(getAssetRowId(row)))
+})
 
 const normalizeAssetRecord = item => {
   const locationNames = ['互联网', '外联网', '内网环境、孤岛环境']
@@ -1490,10 +1501,31 @@ function handleCustomView() {
   customViewVisible.value = true
 }
 
-async function handleBatchLocation() {
-  const rows = await resolveSelectedRowsForAction('请先选择要配置区域的设备')
-  if (!rows?.length) return
+function handleBatchLocation() {
+  if (!hasSelection.value) {
+    ElMessage.warning('请先选择要配置区域的设备')
+    return
+  }
+
   batchLocationVisible.value = true
+}
+
+const resolveSelectedHostIdsForLocation = async () => {
+  if (!allSelected.value) {
+    return selectedRows.value.map(getAssetRowId).filter(Boolean)
+  }
+
+  try {
+    const excludedIdSet = new Set(excludedRowIds.value)
+    const allRows = await fetchAllMatchedAssets()
+    return allRows
+      .filter(row => !excludedIdSet.has(getAssetRowId(row)))
+      .map(getAssetRowId)
+      .filter(Boolean)
+  } catch (error) {
+    console.error('加载区域配置所需的主机 ID 失败:', error)
+    throw new Error('加载全量设备失败，请稍后重试')
+  }
 }
 
 const handleBatchActionCommand = command => {
