@@ -79,6 +79,7 @@
         ref="tableRef"
         v-loading="loading"
         :data="pagedData"
+        :row-key="getRollbackRowKey"
         max-height="calc(100vh - 264px)"
         @select="handleTableSelect"
         @select-all="handleTableSelect"
@@ -109,18 +110,20 @@
           </template>
         </el-table-column>
         <el-table-column
-          prop="update_id"
-          label="更新维度（漏洞/软件包）"
-          min-width="160"
-          show-overflow-tooltip
-        />
-        <el-table-column
           prop="patch_id"
           label="修复补丁编号"
           min-width="140"
           show-overflow-tooltip
         />
-        <el-table-column prop="update_pkgs" label="更新软件" min-width="280">
+        <el-table-column prop="update_id" label="更新维度（漏洞/软件包）" width="310">
+          <template #default="{ row }">
+            <CveLinkList
+              :cves="row.update_id"
+              :url-resolver="cve => getCveUrl(cve, resolvePatchDistro(row))"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column prop="update_pkgs" label="更新软件" min-width="300">
           <template #default="{ row }">
             <div class="update-pkgs-cell">
               <div
@@ -208,9 +211,17 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDateTime } from '@/utils/date'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchRollbackApi } from '../api'
+import { getCveUrl } from '../composables/useFormatters'
 import { useTableSelectAll } from '../composables/useTableSelectAll'
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
+import CveLinkList from '../components/common/CveLinkList.vue'
 // [Agent 功能暂停] import { resolveAgentCapabilityHosts, validateAgentCapability } from '../utils/agentCapability'
+import {
+  flattenRollbackSourceRecords,
+  getRollbackRecordIds,
+  getRollbackRowKey,
+  mergeRollbackHistoryRecords
+} from '../utils/rollbackHistory'
 
 // 加载状态
 const loading = ref(false)
@@ -230,7 +241,8 @@ const selectedRows = ref([])
 const sortState = reactive({ prop: 'update_time', order: 'descending' })
 
 // 选中的ID列表
-const selectedIds = computed(() => selectedRows.value.map(r => r.id))
+// 合并行执行操作时仍需携带其包含的全部原始记录
+const selectedIds = computed(() => getRollbackRecordIds(selectedRows.value))
 
 // 分页
 const pagination = reactive({
@@ -301,7 +313,7 @@ const {
   tableData: pagedData,
   filteredData,
   selectedItems: selectedRows,
-  matchFn: (a, b) => a.id === b.id
+  matchFn: (a, b) => getRollbackRowKey(a) === getRollbackRowKey(b)
 })
 
 // 监听筛选条件变化，自动重置分页和选择状态
@@ -330,6 +342,15 @@ function parseCommaSeparatedValues(value) {
     .split(',')
     .map(item => item.trim())
     .filter(Boolean)
+}
+
+function resolvePatchDistro(row) {
+  if (!row) return ''
+  if (row.os_distro || row.vendor) return row.os_distro || row.vendor
+  const patchId = String(row.patch_id || '').toUpperCase()
+  if (patchId.includes('KYSA')) return 'kylin'
+  if (patchId.includes('SUSE') || patchId.includes('SLES')) return 'suse'
+  return 'redhat'
 }
 
 function buildRollbackSelectionSummary(rows) {
@@ -446,9 +467,10 @@ async function openRollbackWizard(rows) {
     return
   }
 
-  const histUpdateIds = rows.map(row => row.id).filter(Boolean)
-  let targetHosts = buildRollbackTargetHosts(rows)
-  const patches = buildRollbackTaskPatches(rows)
+  const sourceRows = flattenRollbackSourceRecords(rows)
+  const histUpdateIds = getRollbackRecordIds(rows)
+  let targetHosts = buildRollbackTargetHosts(sourceRows)
+  const patches = buildRollbackTaskPatches(sourceRows)
 
   if (targetHosts.length === 0) {
     ElMessage.warning('当前记录缺少主机ID，无法创建回滚任务')
@@ -481,7 +503,7 @@ async function openRollbackWizard(rows) {
   rollbackHistUpdateIds.value = histUpdateIds
   rollbackTargetHosts.value = targetHosts
   rollbackTaskPatches.value = patches
-  rollbackPackageCandidates.value = buildRollbackPackageCandidates(rows)
+  rollbackPackageCandidates.value = buildRollbackPackageCandidates(sourceRows)
   rollbackSelectionSummary.value = buildRollbackSelectionSummary(rows)
   rollbackWizardVisible.value = true
 }
@@ -498,8 +520,10 @@ function parseHosts(hostsStr) {
 // 解析更新软件包
 function parseUpdatePkgs(pkgsStr) {
   if (!pkgsStr) return []
+  if (Array.isArray(pkgsStr)) return pkgsStr
   try {
-    return JSON.parse(pkgsStr)
+    const parsed = JSON.parse(pkgsStr)
+    return Array.isArray(parsed) ? parsed : []
   } catch {
     return []
   }
@@ -519,7 +543,7 @@ async function loadData() {
     }
     const response = await patchRollbackApi.getHistUpdatePkgs(params)
     if (response?.data) {
-      allData.value = response.data.records || []
+      allData.value = mergeRollbackHistoryRecords(response.data.records || [])
     }
     resetAllSelected()
     selectedRows.value = []
@@ -583,12 +607,18 @@ function handleRollbackSuccess() {
 
 // 单条删除
 function handleDelete(row) {
-  ElMessageBox.confirm('确定要删除这条更新记录吗？', '确认删除', {
+  const recordIds = getRollbackRecordIds([row])
+  const message =
+    recordIds.length > 1
+      ? `确定要删除该合并记录包含的 ${recordIds.length} 条原始记录吗？`
+      : '确定要删除这条更新记录吗？'
+
+  ElMessageBox.confirm(message, '确认删除', {
     type: 'warning'
   })
     .then(async () => {
       try {
-        await patchRollbackApi.deleteHistUpdatePkgs([row.id])
+        await patchRollbackApi.deleteHistUpdatePkgs(recordIds)
         ElMessage.success('删除成功')
         loadData()
       } catch {
@@ -604,7 +634,14 @@ function handleBatchDelete() {
     ElMessage.warning('请先选择要删除的记录')
     return
   }
-  ElMessageBox.confirm(`确定要删除选中的 ${selectedIds.value.length} 条记录吗？`, '确认删除', {
+  const groupCount = selectedRows.value.length
+  const recordCount = selectedIds.value.length
+  const message =
+    groupCount === recordCount
+      ? `确定要删除选中的 ${groupCount} 条记录吗？`
+      : `确定要删除选中的 ${groupCount} 条合并记录吗？这将删除其包含的 ${recordCount} 条原始记录。`
+
+  ElMessageBox.confirm(message, '确认删除', {
     type: 'warning'
   })
     .then(async () => {
