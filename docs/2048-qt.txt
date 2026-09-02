@@ -1,0 +1,76 @@
+Source package: 2048-qt
+Selected version: 0.1.6-2build1
+Extracted from: /mnt/repos/ubuntu-mirror/mirror/archive.ubuntu.com/ubuntu/pool/universe/2/2048-qt/2048-qt_0.1.6-2build1_amd64.deb
+Member: usr/share/doc/2048-qt/changelog.Debian.gz
+
+2048-qt (0.1.6-2build1) focal; urgency=medium
+
+  * No-change rebuild for libgcc-s1 package name change.
+
+ -- Matthias Klose <doko@ubuntu.com>  Sun, 22 Mar 2020 16:31:47 +0100
+
+2048-qt (0.1.6-2) unstable; urgency=medium
+
+  * d/control:
+      - Updated Vcs-Git and Vcs-Browser (moved to salsa)
+  * Added German translation to desktop file. (Closes: #781691)
+  * Pushed Standards-Version to latest (4.3.0).
+  * Updated debhelper version to 12~.
+  * Adding hardening option in d/rule.
+  * Added Window patch. (Closes: #850629)
+
+ -- Alejandro Garrido Mota <alejandro@debian.org>  Tue, 09 Apr 2019 18:51:06 +0100
+
+2048-qt (0.1.6-1) unstable; urgency=medium
+
+  * New upstream release to unstable. (Closes: #781689)
+  * d/copyright: Update copyright dates and fonts path.
+  * Remove d/patches/FixConfigDir.diff, fixed in the new upstrea release.
+  * Manpage fixed in the last release. (Closes: #781690)
+  * d/2048-qt.manpages: Update manpage path.
+  * Remove d/2048-qt.desktop, now using upstream desktop file.
+  * Include patch to 2048-qt.desktop file to include keyword
+
+ -- Alejandro Garrido Mota <alejandro@debian.org>  Mon, 30 Nov 2015 00:49:10 +0000
+
+2048-qt (0.1.5-3) experimental; urgency=medium
+
+  * d/control:
+      - replace qt5-default metapackage to qtbase5-dev in BDI.
+      - Push Standards-Version field.
+  * Set user dir configuration to from ~/.config/xiaoyong/ to
+    /.config/2048-qt/ (Closes: #767151).
+  * d/rules: export QT_SELECT=qt5 variable to set QT version.
+
+ -- Alejandro Garrido Mota <alejandro@debian.org>  Sat, 24 Jan 2015 19:33:11 -0430
+
+2048-qt (0.1.5-2) unstable; urgency=medium
+
+  * Add freedesktop menu (d/2048-qt.desktop) (Closes: #759137)
+
+ -- Alejandro Garrido Mota <alejandro@debian.org>  Sat, 30 Aug 2014 20:48:35 -0430
+
+2048-qt (0.1.5-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Alejandro Garrido Mota <alejandro@debian.org>  Sun, 22 Jun 2014 18:52:31 -0430
+
+2048-qt (0.1.4-3) unstable; urgency=medium
+
+  * Add font/DroidSansFallback.ttf's copyright and licence in d/copyright.
+
+ -- Alejandro Garrido Mota <alejandro@debian.org>  Sat, 10 May 2014 07:42:23 -0430
+
+2048-qt (0.1.4-2) unstable; urgency=medium
+
+  * Include XMP app icon and install it.
+  * Remove DH_VERBOSE from d/rules.
+
+ -- Alejandro Garrido Mota <alejandro@debian.org>  Wed, 07 May 2014 19:43:18 -0430
+
+2048-qt (0.1.4-1) unstable; urgency=low
+
+  * Initial release (Closes: #747327)
+
+ -- Alejandro Garrido Mota <alejandro@debian.org>  Mon, 28 Apr 2014 22:17:37 -0430

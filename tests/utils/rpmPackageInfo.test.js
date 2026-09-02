@@ -61,6 +61,60 @@ describe('rpmPackageInfo - static changelog', () => {
     expect(urls).toContain('/KoreOPS/changelog/rhel/rhel7/a/abrt-2.1.11-60.el7.txt')
   })
 
+  it('falls back to the Red Hat OS version when NEVRA has no el marker', () => {
+    expect(
+      buildRpmChangelogFileUrls({
+        source: 'redhat',
+        osVersion: '8.10',
+        name: 'chrony',
+        version: '4.5-1'
+      })[0]
+    ).toBe('/KoreOPS/changelog/rhel/rhel8/c/chrony.txt')
+  })
+
+  it('builds Ubuntu changelog paths from OS version, package initial and version', () => {
+    const urls = buildRpmChangelogFileUrls({
+      source: 'ubuntu',
+      osVersion: 'Ubuntu 20.04.6 LTS',
+      name: '2048-qt',
+      currentPackage: '2048-qt_0.1.6-2build1_amd64.deb',
+      architecture: 'amd64'
+    })
+
+    expect(urls[0]).toBe('/KoreOPS/changelog/ubuntu/20.04/2/2048-qt.txt')
+    expect(urls).toContain(
+      '/KoreOPS/changelog/ubuntu/20.04/2/2048-qt-0.1.6-2build1.txt'
+    )
+  })
+
+  it('keeps outer Ubuntu OS context when package details are nested', () => {
+    const urls = buildRpmChangelogFileUrls({
+      osDistro: 'ubuntu',
+      osVersion: '22.04',
+      packageInfo: {
+        source: 'ubuntu',
+        name: '4pane',
+        version: '7.0-1',
+        architecture: 'amd64'
+      }
+    })
+
+    expect(urls[0]).toBe('/KoreOPS/changelog/ubuntu/22.04/4/4pane.txt')
+  })
+
+  it('uses the same versioned directory rule for other package sources', () => {
+    const urls = buildRpmChangelogFileUrls({
+      source: 'kylin',
+      os_version: 'V10',
+      pkgName: 'audit',
+      pkgVersion: '3.0-5.ky10',
+      pkgArch: 'x86_64'
+    })
+
+    expect(urls[0]).toBe('/KoreOPS/changelog/kylin/V10/a/audit.txt')
+    expect(urls).toContain('/KoreOPS/changelog/kylin/V10/a/audit-3.0-5.ky10.txt')
+  })
+
   it('uses a numeric initial and strips module RHEL metadata', () => {
     const detail = {
       source: 'redhat',
@@ -271,6 +325,38 @@ linux (6.8.0-30.30) noble; urgency=medium
     expect(result).toContain('Fix an important issue')
     expect(result).toContain('Update packaging metadata')
     expect(result).not.toContain('Previous change')
-    expect(parseRpmChangelog(result).isStructured).toBe(false)
+    const parsed = parseRpmChangelog(result)
+
+    expect(parsed.isStructured).toBe(true)
+    expect(parsed.entries).toHaveLength(1)
+    expect(parsed.entries[0]).toMatchObject({
+      headline: 'linux',
+      contextText: 'linux · noble · urgency=medium',
+      version: '6.8.0-31.31',
+      maintainer: 'Ubuntu Kernel Team',
+      email: 'kernel-team@lists.ubuntu.com',
+      dateText: 'Fri, 10 May 2024 10:00:00 +0000'
+    })
+    expect(parsed.entries[0].items).toEqual([
+      'Fix an important issue',
+      'Update packaging metadata'
+    ])
+  })
+
+  it('keeps nested Debian changelog lines with their parent card item', () => {
+    const parsed = parseRpmChangelog(`2048-qt (0.1.6-2build1) focal; urgency=medium
+
+  * d/control:
+      - Updated Vcs-Git and Vcs-Browser
+  * Added German translation
+
+ -- Matthias Klose <doko@ubuntu.com>  Sun, 22 Mar 2020 16:31:47 +0100`)
+
+    expect(parsed.isStructured).toBe(true)
+    expect(parsed.entries[0].contextText).toBe('2048-qt · focal · urgency=medium')
+    expect(parsed.entries[0].items).toEqual([
+      'd/control:\n- Updated Vcs-Git and Vcs-Browser',
+      'Added German translation'
+    ])
   })
 })

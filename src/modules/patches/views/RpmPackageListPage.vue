@@ -212,6 +212,14 @@ async function handleViewDetail(row) {
     detailData.value = {
       ...responseData,
       source: responseData.source || row?.source || filters.source,
+      osDistro:
+        responseData.osDistro || responseData.os_distro || row?.osDistro || row?.os_distro || '',
+      osVersion:
+        responseData.osVersion ||
+        responseData.os_version ||
+        row?.osVersion ||
+        row?.os_version ||
+        '',
       currentPackage:
         row?.currentPackage || row?.completePackageName || responseData.currentPackage || ''
     }

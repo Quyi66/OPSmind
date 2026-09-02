@@ -68,7 +68,8 @@ function extractRhelMajor(detail = {}) {
     normalizedDetail.rpmPath,
     normalizedDetail.release,
     normalizedDetail.version,
-    normalizedDetail.source
+    normalizedDetail.source,
+    normalizedDetail.osVersion
   ]
 
   for (const value of values) {
@@ -78,6 +79,52 @@ function extractRhelMajor(detail = {}) {
 
     const rhelMatch = normalizedValue.match(/rhel[\s_-]?(\d+)/i)
     if (rhelMatch) return rhelMatch[1]
+  }
+
+  const osVersionMatch = String(normalizedDetail.osVersion || '').match(/^(\d+)/)
+  if (osVersionMatch) return osVersionMatch[1]
+
+  return ''
+}
+
+function normalizeChangelogPathSegment(value) {
+  const normalizedValue = String(value || '').trim()
+  if (
+    !normalizedValue ||
+    normalizedValue === '.' ||
+    normalizedValue === '..' ||
+    /[\\/\0]/.test(normalizedValue)
+  ) {
+    return ''
+  }
+
+  return normalizedValue
+}
+
+function extractChangelogOsVersion(detail = {}, source = '') {
+  const versionValues = [
+    detail.osVersion,
+    detail.os_version,
+    detail.osMajorVersion,
+    detail.os_major_version
+  ]
+
+  if (source === 'ubuntu') {
+    versionValues.push(detail.osDistro, detail.os_distro)
+  }
+
+  for (const value of versionValues) {
+    const normalizedValue = normalizeChangelogPathSegment(value)
+    if (!normalizedValue) continue
+
+    if (source === 'ubuntu') {
+      const ubuntuVersionMatch = normalizedValue.match(
+        /(?:^|\D)(\d{1,2}\.\d{2})(?:\.\d+)?(?:\D|$)/
+      )
+      if (ubuntuVersionMatch) return ubuntuVersionMatch[1]
+    } else {
+      return normalizedValue
+    }
   }
 
   return ''
@@ -197,6 +244,114 @@ function isDebianChangelogHeader(line) {
   return /^\S+\s+\([^)]+\)\s+[^;]+;\s*urgency=/i.test(String(line || '').trim())
 }
 
+function splitDebianChangelogHeader(header) {
+  const normalizedHeader = String(header || '').trim()
+  const headerMatch = normalizedHeader.match(
+    /^(\S+)\s+\(([^)]+)\)\s+([^;]+);\s*urgency=([^\s;]+)(?:\s.*)?$/i
+  )
+  if (!headerMatch) return null
+
+  const packageName = headerMatch[1].trim()
+  const version = headerMatch[2].trim()
+  const distribution = headerMatch[3].trim()
+  const urgency = headerMatch[4].trim()
+
+  return {
+    headline: packageName,
+    contextText: [packageName, distribution, `urgency=${urgency}`].filter(Boolean).join(' · '),
+    version
+  }
+}
+
+function parseDebianChangelog(value) {
+  const rawText = normalizeChangelog(value)
+  const lines = rawText.split(/\r?\n/)
+  const entries = []
+  const introLines = []
+  let currentEntry = null
+
+  const pushCurrentEntry = () => {
+    if (!currentEntry) return
+    entries.push(currentEntry)
+    currentEntry = null
+  }
+
+  const appendContinuation = text => {
+    if (!text || !currentEntry) return
+
+    if (currentEntry.items.length) {
+      const lastIndex = currentEntry.items.length - 1
+      currentEntry.items[lastIndex] = `${currentEntry.items[lastIndex]}\n${text}`
+    } else {
+      currentEntry.notes.push(text)
+    }
+  }
+
+  lines.forEach(rawLine => {
+    const line = String(rawLine || '').trimEnd()
+    const trimmedLine = line.trim()
+    if (!trimmedLine) return
+
+    const headerParts = splitDebianChangelogHeader(trimmedLine)
+    if (headerParts) {
+      pushCurrentEntry()
+      currentEntry = {
+        header: trimmedLine,
+        ...headerParts,
+        dateText: '',
+        maintainer: '',
+        email: '',
+        items: [],
+        notes: []
+      }
+      return
+    }
+
+    if (!currentEntry) {
+      introLines.push(trimmedLine)
+      return
+    }
+
+    const signatureMatch = trimmedLine.match(/^--\s+(.+?)\s+<([^>]+)>\s{2,}(.+)$/)
+    if (signatureMatch) {
+      currentEntry.maintainer = signatureMatch[1].trim()
+      currentEntry.email = signatureMatch[2].trim()
+      currentEntry.dateText = signatureMatch[3].trim()
+      return
+    }
+
+    const itemMatch = trimmedLine.match(/^\*\s+(.+)$/)
+    if (itemMatch) {
+      currentEntry.items.push(itemMatch[1].trim())
+      return
+    }
+
+    appendContinuation(trimmedLine)
+  })
+
+  pushCurrentEntry()
+
+  if (introLines.length) {
+    entries.unshift({
+      header: '',
+      headline: '',
+      contextText: '',
+      version: '',
+      dateText: '',
+      maintainer: '',
+      email: '',
+      items: [],
+      notes: introLines
+    })
+  }
+
+  return {
+    rawText,
+    entries,
+    isStructured: entries.some(entry => entry.header)
+  }
+}
+
 export function buildRpmChangelogFileUrl(source) {
   const rawSource = String(source || '').trim()
   const normalizedSource = normalizePackageDetailSource({ source: rawSource }) || rawSource.toLowerCase()
@@ -207,19 +362,30 @@ export function buildRpmChangelogFileUrl(source) {
 
 export function buildRpmChangelogFileUrls(detail = {}) {
   const normalizedDetail = normalizeRpmPackageDetail(detail)
-  const normalizedSource = normalizePackageDetailSource({ source: normalizedDetail.source })
-
-  if (normalizedSource !== 'redhat') {
-    const legacyUrl = buildRpmChangelogFileUrl(normalizedDetail.source)
-    return legacyUrl ? [legacyUrl] : []
-  }
-
-  const rhelMajor = extractRhelMajor(normalizedDetail)
+  const normalizedSource = normalizePackageDetailSource({
+    source: normalizedDetail.source,
+    osDistro: normalizedDetail.osDistro
+  })
+  const rawSource = String(normalizedDetail.source || '')
+    .trim()
+    .toLowerCase()
+  const sourceFolder = normalizedSource || (/^[a-z0-9_-]+$/.test(rawSource) ? rawSource : '')
   const packageName = String(normalizedDetail.name || '').trim()
   const initial = packageName.charAt(0).toLowerCase()
-  if (!rhelMajor || !packageName || !/^[a-z0-9]$/.test(initial)) return []
+  if (!sourceFolder || !packageName || !/^[a-z0-9]$/.test(initial)) return []
 
-  const basePath = `${CHANGELOG_BASE_PATH}/rhel/rhel${encodeURIComponent(rhelMajor)}/${initial}`
+  let basePath = ''
+  if (normalizedSource === 'redhat') {
+    const rhelMajor = extractRhelMajor(normalizedDetail)
+    if (!rhelMajor) return []
+
+    basePath = `${CHANGELOG_BASE_PATH}/rhel/rhel${encodeURIComponent(rhelMajor)}/${initial}`
+  } else {
+    const osVersion = extractChangelogOsVersion(normalizedDetail, sourceFolder)
+    if (!osVersion) return []
+
+    basePath = `${CHANGELOG_BASE_PATH}/${encodeURIComponent(sourceFolder)}/${encodeURIComponent(osVersion)}/${initial}`
+  }
   const fileStems = []
   addUniqueText(fileStems, packageName)
 
@@ -416,13 +582,11 @@ export function parseRpmChangelog(value) {
     }
   }
 
-  const firstContentLine = rawText.split(/\r?\n/).find(line => String(line || '').trim())
-  if (isDebianChangelogHeader(firstContentLine)) {
-    return {
-      rawText,
-      entries: [],
-      isStructured: false
-    }
+  const containsDebianChangelog = rawText
+    .split(/\r?\n/)
+    .some(line => isDebianChangelogHeader(line))
+  if (containsDebianChangelog) {
+    return parseDebianChangelog(rawText)
   }
 
   const lines = rawText.split(/\r?\n/)
@@ -548,6 +712,24 @@ export function normalizeRpmPackageDetail(rawDetail = {}) {
       rawDetail.name ||
       '',
     source: baseDetail.source || rawDetail.source || '',
+    osDistro:
+      baseDetail.osDistro ||
+      baseDetail.os_distro ||
+      rawDetail.osDistro ||
+      rawDetail.os_distro ||
+      '',
+    osVersion:
+      baseDetail.osVersion ||
+      baseDetail.os_version ||
+      rawDetail.osVersion ||
+      rawDetail.os_version ||
+      '',
+    osSpVersion:
+      baseDetail.osSpVersion ||
+      baseDetail.os_sp_version ||
+      rawDetail.osSpVersion ||
+      rawDetail.os_sp_version ||
+      '',
     architecture:
       baseDetail.architecture ||
       baseDetail.arch ||

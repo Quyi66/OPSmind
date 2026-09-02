@@ -147,6 +147,7 @@
       ref="packagesTabRef"
       :host-id="hostId"
       :os-distro="hostOsDistro"
+      :os-version="hostOsVersion"
       @patch-click="handlePatchClick"
       @update-packages="handleUpdatePackages"
     />
@@ -157,6 +158,7 @@
       ref="vulnerabilitiesTabRef"
       :host-id="hostId"
       :os-distro="hostOsDistro"
+      :os-version="hostOsVersion"
       @patch-click="handlePatchClick"
       @fix-vulnerabilities="handleFixVulnerabilities"
     />
@@ -212,6 +214,9 @@ const hostId = computed(() => hostInfoRef.value.host_id || '')
 const hostKey = computed(() => hostInfoRef.value.host_key || hostInfoRef.value.hostKey || '')
 const hostOsDistro = computed(
   () => machineInfo.value?.os_distro || hostInfoRef.value.os_distro || ''
+)
+const hostOsVersion = computed(
+  () => machineInfo.value?.os_version || hostInfoRef.value.os_version || ''
 )
 
 const fromLabel = computed(() => route.query.fromLabel || '主机概览')

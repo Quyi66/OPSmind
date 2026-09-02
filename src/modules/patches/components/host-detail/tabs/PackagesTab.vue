@@ -150,6 +150,10 @@ const props = defineProps({
   osDistro: {
     type: String,
     default: ''
+  },
+  osVersion: {
+    type: String,
+    default: ''
   }
 })
 
@@ -278,13 +282,27 @@ async function handleViewPackageDetail(row) {
       version,
       pkgName,
       source,
-      arch
+      arch,
+      osDistro: row?.osDistro || row?.os_distro || props.osDistro,
+      osVersion: row?.osVersion || row?.os_version || props.osVersion
     })
 
     const responseData = response?.data || response || {}
     detailData.value = {
       ...responseData,
       source: responseData.source || source,
+      osDistro:
+        responseData.osDistro ||
+        responseData.os_distro ||
+        row?.osDistro ||
+        row?.os_distro ||
+        props.osDistro,
+      osVersion:
+        responseData.osVersion ||
+        responseData.os_version ||
+        row?.osVersion ||
+        row?.os_version ||
+        props.osVersion,
       currentPackage: currentPackage || responseData.currentPackage || ''
     }
   } catch (error) {

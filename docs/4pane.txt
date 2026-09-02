@@ -1,0 +1,67 @@
+Source package: 4pane
+Selected version: 7.0-1
+Extracted from: /mnt/repos/ubuntu-mirror/mirror/archive.ubuntu.com/ubuntu/pool/universe/4/4pane/4pane_7.0-1_amd64.deb
+Member: usr/share/doc/4pane/changelog.Debian.gz
+
+4pane (7.0-1) unstable; urgency=medium
+
+  * New upstream release:
+    - Fixes lintian acute-accent-in-manual-page tag.
+  * debian/control:
+    - Bump standards to 4.5.1 and 13
+    - Fix lintian 'cute-field debian/control@source Vcs-browser vs Vcs-Browser'
+  * debian/copyright:
+    - Remove a duplicate entry from d/copyright.
+  * debian/upstream/metadata:
+    - Add missing fields.
+  * debian/source:
+    - remove override which is no longer necessary since the change from
+      'testsuite-autopkgtest-missing' to 'missing-tests-control'.
+
+ -- David Hart <david@4pane.co.uk>  Fri, 11 Dec 2020 11:16:42 +0000
+
+4pane (6.0-1) unstable; urgency=medium
+
+  * New upstream release:
+    - The appdata file now installs to the correct location (Closes: 943592).
+  * debian/rules:
+    - Remove unneeded line.
+  * debian/control:
+    - Bump standards to 4.4.1 and remove debian/compat.
+    - Use secure URI in Homepage field.
+    - Add Rules-Requires-Root field.
+  * debian/copyright:
+    - Update for new files.
+  * debian/upstream/metadata:
+    - Remove obsolete fields Name, Contact.
+    - Add Bug-Database, Bug-Submit fields.
+
+ -- David Hart <david@4pane.co.uk>  Sat, 28 Dec 2019 12:20:14 +0000
+
+4pane (5.0-2) unstable; urgency=medium
+
+  * Depend on the gtk+3 version of wxWidgets: see #894663
+  * Override testsuite-autopkgtest-missing
+  * Add an upstream/metadata file
+  * Move the appdata.xml file from appdata/ to metadata/
+  * Change some links from http: to https:
+  * Update to the latest debhelper and policy versions
+
+ -- David Hart <david@4pane.co.uk>  Mon, 08 Oct 2018 17:15:58 +0100
+
+4pane (5.0-1) unstable; urgency=medium
+
+  * New upstream version.
+    All the previous patches are now redundant and a dfsg tarball is
+    no longer needed.
+  * Bump std-version to 4.0.0, no changes needed
+  * Update copyright file.
+  * Add dependency on gettext, msgfmt is used by upstream build system
+  * Update watch file
+ -- David Hart <david@4pane.co.uk>  Thu, 20 Jul 2017 15:18:45 +0100
+
+4pane (4.0+dfsg-1) unstable; urgency=low
+
+  * Initial release (Closes: #764482)
+
+ -- David Hart <david@4pane.co.uk>  Tue, 28 Mar 2017 20:56:09 +0100

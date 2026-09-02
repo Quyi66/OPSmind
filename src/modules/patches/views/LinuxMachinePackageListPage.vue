@@ -244,13 +244,23 @@ async function handleViewDetail(row) {
       version,
       pkgName,
       source,
-      arch
+      arch,
+      osDistro: row?.osDistro || row?.os_distro || '',
+      osVersion: row?.osVersion || row?.os_version || ''
     })
 
     const responseData = response?.data || response || {}
     detailData.value = {
       ...responseData,
       source: responseData.source || source,
+      osDistro:
+        responseData.osDistro || responseData.os_distro || row?.osDistro || row?.os_distro || '',
+      osVersion:
+        responseData.osVersion ||
+        responseData.os_version ||
+        row?.osVersion ||
+        row?.os_version ||
+        '',
       currentPackage: currentPackage || responseData.currentPackage || ''
     }
   } catch (error) {
