@@ -28,6 +28,22 @@
 
         <button
           class="aw-metric-item"
+          @click="openAssetListDrawer(selectedAssetTypeCode)"
+        >
+          <span class="aw-metric-item__label">连通率</span>
+          <div class="aw-metric-item__value-group">
+            <span class="aw-metric-item__value-text">
+              {{ connectionStats.totalConnection ? `${connectionStats.successRate}%` : '--' }}
+            </span>
+            <span class="aw-metric-item__sub">
+              {{ formatCount(connectionStats.successCount) }}正常 /
+              {{ formatCount(connectionStats.failureCount) }}异常
+            </span>
+          </div>
+        </button>
+
+        <button
+          class="aw-metric-item"
           @click="openFailedLogDrawer"
         >
           <span class="aw-metric-item__label">失败日志</span>
@@ -42,22 +58,6 @@
           <div class="aw-metric-item__value-group">
             <span class="aw-metric-item__value-text">{{ groupCount }} / {{ tagTotal }}</span>
             <span class="aw-metric-item__sub">{{ governanceStats.permissionTeamCount }}个团队</span>
-          </div>
-        </button>
-
-        <button
-          class="aw-metric-item"
-          @click="openAssetListDrawer(selectedAssetTypeCode)"
-        >
-          <span class="aw-metric-item__label">连通率</span>
-          <div class="aw-metric-item__value-group">
-            <span class="aw-metric-item__value-text">
-              {{ connectionStats.totalConnection ? `${connectionStats.successRate}%` : '--' }}
-            </span>
-            <span class="aw-metric-item__sub">
-              {{ formatCount(connectionStats.successCount) }}正常 /
-              {{ formatCount(connectionStats.failureCount) }}异常
-            </span>
           </div>
         </button>
 
