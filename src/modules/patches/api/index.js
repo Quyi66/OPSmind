@@ -2112,6 +2112,15 @@ export const rpmInfoApi = {
   },
 
   /**
+  * 查询 OS 版本枚举
+  * GET /secops/api/secops/v2/rpm-info/os-versions
+  */
+  getOsVersions(params = {}) {
+    const query = buildGenericQuery({ source: params.source })
+    return apiService.get(`${VAP_API_PREFIX}/v2/rpm-info/os-versions${query}`)
+  },
+
+  /**
   * 全量 RPM 软件包分页查询
   * GET /secops/api/secops/v2/rpm-info/list
   */
@@ -2121,6 +2130,7 @@ export const rpmInfoApi = {
       keyword: params.keyword,
       name: params.name,
       arch: params.arch,
+      osVersion: params.osVersion,
       page: params.page ?? 0,
       size: params.size ?? 20
     })
