@@ -43,7 +43,7 @@
         v-loading="installDataLoading"
       >
         <!-- 更新补丁 -->
-        <div class="install-card">
+        <div class="install-card install-card--patches">
           <div class="card-header">
             <i class="fa fa-lock" />
             {{ selectionCardTitle }}
@@ -60,7 +60,7 @@
         </div>
 
         <!-- 待更新软件包 -->
-        <div class="install-card">
+        <div class="install-card install-card--packages">
           <div
             class="card-header"
             style="
@@ -676,8 +676,7 @@
                     <div
                       v-for="pkg in displayedPackages"
                       :key="pkg"
-                      class="install-summary-item"
-                      style="font-family: monospace; font-size: 12px; padding: 2px 0"
+                      class="install-summary-item package-summary-item"
                     >
                       {{ pkg }}
                     </div>
@@ -1865,7 +1864,7 @@ function handleSkipPreCheck() {
 
 .install-content {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: minmax(280px, 2fr) minmax(0, 3fr);
   gap: 16px;
   align-items: start;
 }
@@ -1884,5 +1883,17 @@ function handleSkipPreCheck() {
 
 .install-content > .install-card.install-card-full .card-body--scroll {
   max-height: 260px;
+}
+
+.install-card--packages .package-item {
+  font-size: 14px;
+  word-break: break-all;
+}
+
+.package-summary-item {
+  padding: 2px 0;
+  font-family: monospace;
+  font-size: 14px;
+  word-break: break-all;
 }
 </style>

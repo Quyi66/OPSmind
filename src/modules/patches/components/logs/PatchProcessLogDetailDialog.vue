@@ -791,7 +791,7 @@ function handleClosed() {
 
 .install-content {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: minmax(280px, 2fr) minmax(0, 3fr);
   gap: 16px;
   align-items: start;
 }
@@ -859,9 +859,10 @@ function handleClosed() {
 
 .package-item {
   font-family: monospace;
-  font-size: 12px;
+  font-size: 14px;
   margin-bottom: 4px;
   color: #666;
+  word-break: break-all;
 }
 
 .task-step-content {
