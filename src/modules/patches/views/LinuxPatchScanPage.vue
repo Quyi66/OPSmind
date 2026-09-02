@@ -1495,6 +1495,10 @@ function getRowOsDistro(row) {
   return String(row?.osDistro || row?.os_distro || '').trim()
 }
 
+function getRowOsVersion(row) {
+  return String(row?.osVersion || row?.os_version || row?.os_major_version || '').trim()
+}
+
 function getAffectedPackageKey(pkg, index) {
   return [pkg?.rpmInfoId, pkg?.currentPackage, index].filter(Boolean).join('-')
 }
@@ -1542,7 +1546,11 @@ function buildRpmDetailCandidates(pkg, row) {
     })
   }
 
-  const detailParams = getAffectedPackageDetailParams(pkg, getRowOsDistro(row))
+  const detailParams = getAffectedPackageDetailParams(
+    pkg,
+    getRowOsDistro(row),
+    getRowOsVersion(row)
+  )
   if (detailParams.installedDetail) {
     candidates.push({
       label: 'by installed currentPackage',
@@ -1574,6 +1582,18 @@ async function handleViewPackageDetail(pkg, row) {
           rpmDetailData.value = {
             ...responseData,
             source: responseData.source || pkg?.source || '',
+            osDistro:
+              responseData.osDistro ||
+              responseData.os_distro ||
+              pkg?.osDistro ||
+              pkg?.os_distro ||
+              getRowOsDistro(row),
+            osVersion:
+              responseData.osVersion ||
+              responseData.os_version ||
+              pkg?.osVersion ||
+              pkg?.os_version ||
+              getRowOsVersion(row),
             currentPackage:
               pkg?.currentPackage || pkg?.rpmCompletePackageName || responseData.currentPackage || ''
           }

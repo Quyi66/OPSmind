@@ -93,9 +93,14 @@
                         </span>
                       </div>
                       <div
-                        v-else
+                        v-else-if="!entry.contextText"
                         class="changelog-entry__headline"
                         v-html="highlightText(entry.headline || entry.header, searchKeyword)"
+                      ></div>
+                      <div
+                        v-if="entry.contextText"
+                        class="changelog-entry__headline"
+                        v-html="highlightText(entry.contextText, searchKeyword)"
                       ></div>
                     </div>
                     <span
@@ -232,6 +237,8 @@ watch(
     dialogVisible.value,
     props.loading,
     normalizedDetail.value.source,
+    normalizedDetail.value.osDistro,
+    normalizedDetail.value.osVersion,
     normalizedDetail.value.currentPackage,
     normalizedDetail.value.completePackageName,
     normalizedDetail.value.pkgId,
@@ -257,7 +264,7 @@ watch(
     const detail = normalizedDetail.value
     const fileUrls = buildRpmChangelogFileUrls(detail)
     if (!fileUrls.length) {
-      changelogStatusText.value = '缺少有效的软件包来源、RHEL 版本或包名，无法加载 Changelog'
+      changelogStatusText.value = '缺少有效的软件包来源、系统版本或包名，无法加载 Changelog'
       return
     }
 
@@ -311,6 +318,7 @@ function entryMatchesKeyword(entry, keyword) {
   const lowerKeyword = keyword.toLowerCase()
   if (entry.header && entry.header.toLowerCase().includes(lowerKeyword)) return true
   if (entry.headline && entry.headline.toLowerCase().includes(lowerKeyword)) return true
+  if (entry.contextText && entry.contextText.toLowerCase().includes(lowerKeyword)) return true
   if (entry.version && entry.version.toLowerCase().includes(lowerKeyword)) return true
   if (entry.maintainer && entry.maintainer.toLowerCase().includes(lowerKeyword)) return true
   if (entry.email && entry.email.toLowerCase().includes(lowerKeyword)) return true
