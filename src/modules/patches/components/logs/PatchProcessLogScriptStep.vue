@@ -61,37 +61,9 @@ defineEmits(['show-result'])
 </script>
 
 <style scoped lang="scss">
-.task-step-content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-height: 280px;
-}
+@use '../patch-task/PatchTaskStep' as patch-task-step;
 
-.task-step-editor {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.task-step-editor__title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-  padding: 4px 0;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.task-step-alert {
-  width: 100%;
-}
-
-.task-detail-info {
-  font-size: 13px;
-  color: var(--el-text-color-regular);
-}
+@include patch-task-step.base-layout;
 
 .execute-result-link {
   font-size: 14px;

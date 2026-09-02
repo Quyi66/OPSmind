@@ -10,103 +10,42 @@
       class="install-dialog"
       @closed="resetInstallState"
     >
-      <!-- 自定义步骤条 -->
-      <div class="ops-stepper">
-        <template v-for="(step, idx) in wizardSteps" :key="step.key">
-          <div
-            class="stepper-item"
-            :class="{
-              'is-active': installStep === idx,
-              'is-success': installStep > idx,
-              'is-failed': stepStates[idx] === 'failed'
-            }"
-          >
-            <div class="stepper-icon">
-              <i v-if="stepStates[idx] === 'failed'" class="fa fa-times"></i>
-              <i v-else-if="installStep > idx" class="fa fa-check"></i>
-              <span v-else>{{ idx + 1 }}</span>
-            </div>
-            <div class="stepper-title">{{ step.title }}</div>
-          </div>
-          <div
-            v-if="idx < wizardSteps.length - 1"
-            class="stepper-line"
-            :class="{ 'is-active': installStep > idx }"
-          ></div>
-        </template>
-      </div>
+      <PatchTaskStepper :steps="wizardSteps" :active-index="installStep" :states="stepStates" />
 
       <!-- Step 0: 选择目标主机 -->
-      <div
+      <PatchTaskSelectionOverview
         v-show="currentStepKey === 'select'"
-        class="install-content"
-        v-loading="installDataLoading"
+        :loading="installDataLoading"
+        :selection-title="selectionCardTitle"
+        :selection-items="selectionDisplayItems"
+        :package-title="packageCardTitle"
+        :host-title="hostCardTitle"
       >
-        <!-- 更新补丁 -->
-        <div class="install-card install-card--patches">
-          <div class="card-header">
-            <i class="fa fa-lock" />
-            {{ selectionCardTitle }}
-          </div>
-          <div class="card-body card-body--scroll">
-            <div v-if="selectionDisplayItems.length === 0" class="no-data">暂无数据</div>
-            <div v-for="item in selectionDisplayItems" :key="item.key" class="selection-item">
-              <div class="selection-item__primary">{{ item.primary }}</div>
-              <div v-if="item.secondary" class="selection-item__secondary">
-                {{ item.secondary }}
-              </div>
-            </div>
-          </div>
-        </div>
+        <template #package-actions>
+          <el-input
+            v-if="affectedPackages.length > 10"
+            v-model="packageSearchText"
+            placeholder="搜索..."
+            size="small"
+            clearable
+            style="width: 240px"
+          />
+        </template>
 
-        <!-- 待更新软件包 -->
-        <div class="install-card install-card--packages">
-          <div
-            class="card-header"
-            style="
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              padding: 4px 12px;
-              height: 36px;
-            "
-          >
-            <div>
-              <i class="fa fa-cube" style="margin-right: 6px" />
-              {{ packageCardTitle }}
-            </div>
-            <div v-if="affectedPackages.length > 10">
-              <el-input
-                v-model="packageSearchText"
-                placeholder="搜索..."
-                size="small"
-                clearable
-                style="width: 240px"
-              />
-            </div>
-          </div>
-          <div v-loading="affectedPackagesLoading" class="card-body card-body--scroll">
-            <div v-for="pkg in displayedPackages" :key="pkg" class="package-item">
-              {{ pkg }}
-            </div>
-            <div v-if="displayedPackages.length === 0" class="no-data">
-              {{ packageEmptyText }}
-            </div>
-            <div v-if="hasMorePackages" style="text-align: center; padding-top: 4px">
-              <el-button link type="primary" size="small" @click="loadMorePackages">
-                加载更多 (已显示 {{ displayedPackages.length }}/{{ filteredPackages.length }})
-              </el-button>
-            </div>
-          </div>
-        </div>
+        <template #packages>
+          <PatchTaskPackageList
+            class="card-body card-body--scroll"
+            :items="displayedPackages"
+            :loading="affectedPackagesLoading"
+            :empty-text="packageEmptyText"
+            :has-more="hasMorePackages"
+            :total="filteredPackages.length"
+            @load-more="loadMorePackages"
+          />
+        </template>
 
-        <!-- 更新主机 -->
-        <div class="install-card install-card-full">
-          <div class="card-header">
-            <i class="fa fa-list" />
-            {{ hostCardTitle }}
-          </div>
-          <div class="card-body card-body--scroll" v-if="hasFixedHosts">
+        <template #hosts>
+          <div v-if="hasFixedHosts" class="card-body card-body--scroll">
             <div class="selection-item__primary">共 {{ resolvedFixedHosts.length }} 台</div>
             <div
               v-for="host in resolvedFixedHosts"
@@ -116,7 +55,7 @@
               <div class="selection-item__primary">{{ formatHostDisplay(host) }}</div>
             </div>
           </div>
-          <div class="card-body" v-else>
+          <div v-else class="card-body">
             <div class="host-toolbar">
               <el-select v-model="hostFilter" size="small" style="width: 140px">
                 <el-option label="@@(linux)" value="@@(linux)">
@@ -177,300 +116,64 @@
               />
             </div>
           </div>
-        </div>
-      </div>
+        </template>
+      </PatchTaskSelectionOverview>
 
       <!-- Step 1: 预执行脚本 -->
-      <div v-show="currentStepKey === 'pre'" class="task-step-content">
-        <div class="task-step-editor">
-          <div class="task-step-header">
-            <div class="task-step-editor__title">
-              <i class="fa fa-code" style="margin-right: 6px"></i>
-              预执行脚本
-            </div>
-            <el-radio-group
-              v-model="scriptModes.pre"
-              size="small"
-              :disabled="
-                stepStates[stepIndexes.pre] === 'running' ||
-                stepStates[stepIndexes.pre] === 'success'
-              "
-            >
-              <el-radio-button value="edit">手动编辑</el-radio-button>
-              <el-radio-button value="upload">上传脚本</el-radio-button>
-            </el-radio-group>
-          </div>
-          <div v-if="scriptModes.pre === 'edit'">
-            <el-input
-              type="textarea"
-              v-model="installConfig.preScript"
-              :autosize="{ minRows: 8, maxRows: 24 }"
-              :placeholder="preScriptPlaceholder"
-              class="script-input"
-              :disabled="
-                stepStates[stepIndexes.pre] === 'running' ||
-                stepStates[stepIndexes.pre] === 'success'
-              "
-            />
-          </div>
-          <div v-else class="script-upload-panel">
-            <input
-              ref="preScriptUploadRef"
-              type="file"
-              accept=".sh,.bash,.txt,.conf,.cfg,.yaml,.yml,.json,.log,.ini,.cnf,text/plain"
-              class="script-upload-input"
-              @change="handleScriptUpload('pre', $event)"
-            />
-            <div class="script-upload-actions">
-              <el-button
-                type="primary"
-                plain
-                :disabled="
-                  stepStates[stepIndexes.pre] === 'running' ||
-                  stepStates[stepIndexes.pre] === 'success'
-                "
-                @click="triggerScriptUpload('pre')"
-              >
-                <i class="fa fa-upload" style="margin-right: 4px" />
-                上传脚本
-              </el-button>
-              <span class="script-upload-file">{{ scriptFiles.pre || '未选择文件' }}</span>
-            </div>
-            <div class="task-step-editor__hint">
-              上传后会暂存到当前向导，执行时再同步到补丁安装任务。
-            </div>
-            <el-input
-              type="textarea"
-              :model-value="installConfig.preScript"
-              :autosize="{ minRows: 8, maxRows: 24 }"
-              placeholder="上传后将在这里预览脚本内容"
-              class="script-input"
-              readonly
-            />
-          </div>
-        </div>
-        <!-- 执行状态展示 -->
-        <div class="task-step-action">
-          <el-alert
-            v-if="
-              stepStates[stepIndexes.pre] === 'success' || stepStates[stepIndexes.pre] === 'failed'
-            "
-            :type="stepStates[stepIndexes.pre] === 'success' ? 'success' : 'error'"
-            :closable="false"
-            show-icon
-            :title="
-              stepStates[stepIndexes.pre] === 'success'
-                ? isSkipped.pre
-                  ? '已跳过预执行脚本'
-                  : '预执行脚本执行完毕'
-                : '执行失败：' + taskErrorMessage
-            "
-            class="task-step-alert"
-          >
-            <template
-              #default
-              v-if="taskDetailData && taskDetailData.preCheckRunId && installConfig.preScript"
-            >
-              <div class="task-detail-info">
-                <el-button
-                  type="primary"
-                  link
-                  @click="openExecuteResult(taskDetailData.preCheckRunId, '预执行脚本')"
-                  style="font-size: 14px"
-                >
-                  查看执行详情
-                </el-button>
-              </div>
-            </template>
-          </el-alert>
-        </div>
-      </div>
+      <PatchTaskScriptConfigStep
+        v-show="currentStepKey === 'pre'"
+        v-model="installConfig.preScript"
+        v-model:mode="scriptModes.pre"
+        title="预执行脚本"
+        icon="fa-code"
+        :placeholder="preScriptPlaceholder"
+        :state="stepStates[stepIndexes.pre]"
+        :skipped="isSkipped.pre"
+        :file-name="scriptFiles.pre"
+        :run-id="taskDetailData?.preCheckRunId || ''"
+        :error-message="taskErrorMessage"
+        success-title="预执行脚本执行完毕"
+        skipped-title="已跳过预执行脚本"
+        failure-prefix="执行失败："
+        @upload="handleScriptUpload('pre', $event)"
+        @show-result="openExecuteResult"
+      />
 
       <!-- Step 3: 校验脚本 -->
-      <div v-show="currentStepKey === 'validate'" class="task-step-content">
-        <div class="task-step-editor">
-          <div class="task-step-header">
-            <div class="task-step-editor__title">
-              <i class="fa fa-check-square-o" style="margin-right: 6px"></i>
-              校验脚本
-            </div>
-            <el-radio-group
-              v-model="scriptModes.post"
-              size="small"
-              :disabled="
-                stepStates[stepIndexes.validate] === 'running' ||
-                stepStates[stepIndexes.validate] === 'success'
-              "
-            >
-              <el-radio-button value="edit">手动编辑</el-radio-button>
-              <el-radio-button value="upload">上传脚本</el-radio-button>
-            </el-radio-group>
-          </div>
-          <div v-if="scriptModes.post === 'edit'">
-            <el-input
-              type="textarea"
-              v-model="installConfig.postScript"
-              :autosize="{ minRows: 8, maxRows: 24 }"
-              :placeholder="postScriptPlaceholder"
-              class="script-input"
-              :disabled="
-                stepStates[stepIndexes.validate] === 'running' ||
-                stepStates[stepIndexes.validate] === 'success'
-              "
-            />
-          </div>
-          <div v-else class="script-upload-panel">
-            <input
-              ref="postScriptUploadRef"
-              type="file"
-              accept=".sh,.bash,.txt,.conf,.cfg,.yaml,.yml,.json,.log,.ini,.cnf,text/plain"
-              class="script-upload-input"
-              @change="handleScriptUpload('post', $event)"
-            />
-            <div class="script-upload-actions">
-              <el-button
-                type="primary"
-                plain
-                :disabled="
-                  stepStates[stepIndexes.validate] === 'running' ||
-                  stepStates[stepIndexes.validate] === 'success'
-                "
-                @click="triggerScriptUpload('post')"
-              >
-                <i class="fa fa-upload" style="margin-right: 4px" />
-                上传脚本
-              </el-button>
-              <span class="script-upload-file">{{ scriptFiles.post || '未选择文件' }}</span>
-            </div>
-            <div class="task-step-editor__hint">
-              上传后会暂存到当前向导，执行时再同步到补丁安装任务。
-            </div>
-            <el-input
-              type="textarea"
-              :model-value="installConfig.postScript"
-              :autosize="{ minRows: 8, maxRows: 24 }"
-              placeholder="上传后将在这里预览脚本内容"
-              class="script-input"
-              readonly
-            />
-          </div>
-        </div>
-        <!-- 执行状态展示 -->
-        <div class="task-step-action">
-          <el-alert
-            v-if="
-              stepStates[stepIndexes.validate] === 'success' ||
-              stepStates[stepIndexes.validate] === 'failed'
-            "
-            :type="stepStates[stepIndexes.validate] === 'success' ? 'success' : 'error'"
-            :closable="false"
-            show-icon
-            :title="
-              stepStates[stepIndexes.validate] === 'success'
-                ? isSkipped.validate
-                  ? '已跳过校验脚本'
-                  : '全部校验通过'
-                : '校验失败：' + taskErrorMessage
-            "
-            class="task-step-alert"
-          >
-            <template
-              #default
-              v-if="taskDetailData && taskDetailData.validateRunId && installConfig.postScript"
-            >
-              <div class="task-detail-info">
-                <el-button
-                  type="primary"
-                  link
-                  @click="openExecuteResult(taskDetailData.validateRunId, '校验脚本')"
-                  style="font-size: 14px"
-                >
-                  查看执行详情
-                </el-button>
-              </div>
-            </template>
-          </el-alert>
-        </div>
-      </div>
+      <PatchTaskScriptConfigStep
+        v-show="currentStepKey === 'validate'"
+        v-model="installConfig.postScript"
+        v-model:mode="scriptModes.post"
+        title="校验脚本"
+        icon="fa-check-square-o"
+        :placeholder="postScriptPlaceholder"
+        :state="stepStates[stepIndexes.validate]"
+        :skipped="isSkipped.validate"
+        :file-name="scriptFiles.post"
+        :run-id="taskDetailData?.validateRunId || ''"
+        :error-message="taskErrorMessage"
+        success-title="全部校验通过"
+        skipped-title="已跳过校验脚本"
+        failure-prefix="校验失败："
+        @upload="handleScriptUpload('post', $event)"
+        @show-result="openExecuteResult"
+      />
 
       <!-- Step 4: 重启策略 -->
-      <div v-show="currentStepKey === 'restart'" class="task-step-content">
-        <div class="task-step-editor">
-          <div class="task-step-editor__title">
-            <i class="fa fa-refresh" style="margin-right: 6px"></i>
-            重启策略
-          </div>
-          <el-alert
-            :title="restartAdviceTitle"
-            type="info"
-            show-icon
-            :closable="false"
-            style="margin-bottom: 16px; line-height: 1.4; width: 100%"
-          >
-            <template #default>
-              <div>{{ restartAdviceDescription }}</div>
-            </template>
-          </el-alert>
-          <div v-if="requiresRestartConfirm" class="restart-confirm-field mt-4">
-            <div class="confirm-label" style="font-size: 14px; margin-bottom: 8px">
-              请输入“
-              <span style="color: var(--el-color-primary); font-weight: bold">
-                {{ restartConfirmKeyword }}
-              </span>
-              ”进行确认操作
-            </div>
-            <el-input
-              v-model="restartConfirmText"
-              :placeholder="restartConfirmKeyword"
-              style="width: 320px"
-              :disabled="
-                stepStates[stepIndexes.restart] === 'running' ||
-                stepStates[stepIndexes.restart] === 'success'
-              "
-            />
-          </div>
-          <el-alert
-            v-else
-            title="当前策略为无需重启，可直接进入下一步。"
-            type="success"
-            :closable="false"
-            show-icon
-          />
-        </div>
-        <!-- 执行状态展示 -->
-        <div class="task-step-action">
-          <el-alert
-            v-if="
-              stepStates[stepIndexes.restart] === 'success' ||
-              stepStates[stepIndexes.restart] === 'failed'
-            "
-            :type="stepStates[stepIndexes.restart] === 'success' ? 'success' : 'error'"
-            :closable="false"
-            show-icon
-            :title="
-              stepStates[stepIndexes.restart] === 'success'
-                ? isSkipped.restart || installConfig.restartPolicy === 'none'
-                  ? '已跳过重启'
-                  : '重启完成'
-                : '重启失败：' + taskErrorMessage
-            "
-            class="task-step-alert"
-          >
-            <template #default v-if="taskDetailData && taskDetailData.restartRunId">
-              <div class="task-detail-info">
-                <el-button
-                  type="primary"
-                  link
-                  @click="openExecuteResult(taskDetailData.restartRunId, '执行重启')"
-                  style="font-size: 14px"
-                >
-                  查看执行详情
-                </el-button>
-              </div>
-            </template>
-          </el-alert>
-        </div>
-      </div>
+      <PatchTaskRestartStep
+        v-show="currentStepKey === 'restart'"
+        v-model="restartConfirmText"
+        :advice-title="restartAdviceTitle"
+        :advice-description="restartAdviceDescription"
+        :requires-confirm="requiresRestartConfirm"
+        :confirm-keyword="restartConfirmKeyword"
+        :restart-policy="installConfig.restartPolicy"
+        :state="stepStates[stepIndexes.restart]"
+        :skipped="isSkipped.restart"
+        :error-message="taskErrorMessage"
+        :run-id="taskDetailData?.restartRunId || ''"
+        @show-result="openExecuteResult"
+      />
 
       <!-- Step 5/6: 执行汇总 -->
       <div v-show="currentStepKey === 'execute'" class="task-step-content">
@@ -480,224 +183,50 @@
             {{ executeStepTitle }}
           </div>
           <div class="install-summary-card">
-            <div class="install-summary-row">
-              <span class="install-summary-label">{{ selectionSummaryLabel }}</span>
-              <div class="install-summary-list">
-                <div v-if="selectionDisplayItems.length === 0" class="install-summary-empty">
-                  暂无数据
-                </div>
-                <template v-else>
-                  <div
-                    v-if="selectionDisplayItems.length > 5"
-                    style="
-                      margin-bottom: 8px;
-                      display: flex;
-                      gap: 8px;
-                      align-items: center;
-                      flex-wrap: wrap;
-                      width: 100%;
-                    "
-                  >
-                    <el-input
-                      v-model="selectionSummarySearchText"
-                      placeholder="搜索内容..."
-                      size="small"
-                      clearable
-                      style="width: 200px"
-                    />
-                    <span style="font-size: 12px; color: var(--el-text-color-secondary)">
-                      共 {{ selectionDisplayItems.length }} 个，已显示
-                      {{ displayedSummarySelectionItems.length }} 个
-                    </span>
-                  </div>
-                  <div
-                    class="summary-selection-list-container"
-                    style="
-                      max-height: 150px;
-                      overflow-y: auto;
-                      border: 1px solid var(--el-border-color-lighter);
-                      padding: 8px;
-                      border-radius: 4px;
-                      width: 100%;
-                    "
-                  >
-                    <div
-                      v-for="item in displayedSummarySelectionItems"
-                      :key="item.key"
-                      class="install-summary-item"
-                      style="
-                        padding: 4px 0;
-                        border-bottom: 1px dashed var(--el-border-color-extra-light);
-                      "
-                    >
-                      <div style="font-weight: 500">{{ item.primary }}</div>
-                      <div
-                        v-if="item.secondary"
-                        class="install-summary-subtext"
-                        style="
-                          font-size: 12px;
-                          color: var(--el-text-color-secondary);
-                          margin-top: 2px;
-                        "
-                      >
-                        {{ item.secondary }}
-                      </div>
-                    </div>
-                    <div
-                      v-if="displayedSummarySelectionItems.length === 0"
-                      class="install-summary-empty"
-                      style="font-size: 12px"
-                    >
-                      未匹配到相关内容
-                    </div>
-                    <div
-                      v-if="hasMoreSummarySelectionItems"
-                      style="text-align: center; padding-top: 8px"
-                    >
-                      <el-button
-                        link
-                        type="primary"
-                        size="small"
-                        @click="loadMoreSummarySelectionItems"
-                      >
-                        加载更多 (已显示 {{ displayedSummarySelectionItems.length }}/{{
-                          filteredSummarySelectionItems.length
-                        }})
-                      </el-button>
-                    </div>
-                  </div>
-                </template>
-              </div>
-            </div>
-            <div class="install-summary-row">
-              <span class="install-summary-label">目标主机</span>
-              <div class="install-summary-list">
-                <div v-if="confirmedHosts.length === 0" class="install-summary-empty">暂无主机</div>
-                <template v-else>
-                  <div
-                    v-if="confirmedHosts.length > 5"
-                    style="
-                      margin-bottom: 8px;
-                      display: flex;
-                      gap: 8px;
-                      align-items: center;
-                      flex-wrap: wrap;
-                      width: 100%;
-                    "
-                  >
-                    <el-input
-                      v-model="hostSummarySearchText"
-                      placeholder="搜索目标主机..."
-                      size="small"
-                      clearable
-                      style="width: 200px"
-                    />
-                    <span style="font-size: 12px; color: var(--el-text-color-secondary)">
-                      共 {{ confirmedHosts.length }} 台，已显示
-                      {{ displayedSummaryHosts.length }} 台
-                    </span>
-                  </div>
-                  <div
-                    class="summary-host-list-container"
-                    style="
-                      max-height: 150px;
-                      overflow-y: auto;
-                      border: 1px solid var(--el-border-color-lighter);
-                      padding: 8px;
-                      border-radius: 4px;
-                      width: 100%;
-                    "
-                  >
-                    <div
-                      v-for="host in displayedSummaryHosts"
-                      :key="host.hostId || host.id || host.hostKey"
-                      class="install-summary-item"
-                      style="padding: 2px 0"
-                    >
-                      {{ formatHostDisplay(host) }}
-                    </div>
-                    <div
-                      v-if="displayedSummaryHosts.length === 0"
-                      class="install-summary-empty"
-                      style="font-size: 12px"
-                    >
-                      未匹配到相关主机
-                    </div>
-                    <div v-if="hasMoreSummaryHosts" style="text-align: center; padding-top: 8px">
-                      <el-button link type="primary" size="small" @click="loadMoreSummaryHosts">
-                        加载更多 (已显示 {{ displayedSummaryHosts.length }}/{{
-                          filteredSummaryHosts.length
-                        }})
-                      </el-button>
-                    </div>
-                  </div>
-                </template>
-              </div>
-            </div>
-            <div class="install-summary-row">
-              <span class="install-summary-label">{{ packageSummaryLabel }}</span>
-              <div class="install-summary-list">
-                <div v-if="affectedPackages.length === 0" class="install-summary-empty">
-                  暂无软件包
-                </div>
-                <template v-else>
-                  <div
-                    v-if="affectedPackages.length > 10"
-                    style="
-                      margin-bottom: 8px;
-                      display: flex;
-                      gap: 8px;
-                      align-items: center;
-                      flex-wrap: wrap;
-                    "
-                  >
-                    <el-input
-                      v-model="packageSearchText"
-                      placeholder="搜索软件包..."
-                      size="small"
-                      clearable
-                      style="width: 200px"
-                    />
-                    <span style="font-size: 12px; color: var(--el-text-color-secondary)">
-                      共 {{ affectedPackages.length }} 个，已显示 {{ displayedPackages.length }} 个
-                    </span>
-                  </div>
-                  <div
-                    class="package-list-container"
-                    style="
-                      max-height: 200px;
-                      overflow-y: auto;
-                      border: 1px solid var(--el-border-color-lighter);
-                      padding: 8px;
-                      border-radius: 4px;
-                      width: 100%;
-                    "
-                  >
-                    <div
-                      v-for="pkg in displayedPackages"
-                      :key="pkg"
-                      class="install-summary-item package-summary-item"
-                    >
-                      {{ pkg }}
-                    </div>
-                    <div
-                      v-if="displayedPackages.length === 0"
-                      class="install-summary-empty"
-                      style="font-size: 12px"
-                    >
-                      未匹配到相关软件包
-                    </div>
-                    <div v-if="hasMorePackages" style="text-align: center; padding-top: 8px">
-                      <el-button link type="primary" size="small" @click="loadMorePackages">
-                        加载更多 (已显示 {{ displayedPackages.length }}/{{
-                          filteredPackages.length
-                        }})
-                      </el-button>
-                    </div>
-                  </div>
-                </template>
-              </div>
-            </div>
+            <PatchTaskSummaryRow
+              v-model:search-text="selectionSummarySearchText"
+              :label="selectionSummaryLabel"
+              :items="displayedSummarySelectionItems"
+              :total="selectionDisplayItems.length"
+              :filtered-total="filteredSummarySelectionItems.length"
+              :has-more="hasMoreSummarySelectionItems"
+              :search-threshold="5"
+              contained
+              no-match-text="未匹配到相关内容"
+              @load-more="loadMoreSummarySelectionItems"
+            />
+            <PatchTaskSummaryRow
+              v-model:search-text="hostSummarySearchText"
+              label="目标主机"
+              :items="displayedSummaryHosts"
+              :total="confirmedHosts.length"
+              :filtered-total="filteredSummaryHosts.length"
+              :has-more="hasMoreSummaryHosts"
+              :search-threshold="5"
+              :item-formatter="formatHostDisplay"
+              unit="台"
+              contained
+              empty-text="暂无主机"
+              no-match-text="未匹配到相关主机"
+              search-placeholder="搜索目标主机..."
+              @load-more="loadMoreSummaryHosts"
+            />
+            <PatchTaskSummaryRow
+              v-model:search-text="packageSearchText"
+              :label="packageSummaryLabel"
+              :items="displayedPackages"
+              :total="affectedPackages.length"
+              :filtered-total="filteredPackages.length"
+              :has-more="hasMorePackages"
+              :search-threshold="10"
+              max-height="200px"
+              contained
+              package-style
+              empty-text="暂无软件包"
+              no-match-text="未匹配到相关软件包"
+              search-placeholder="搜索软件包..."
+              @load-more="loadMorePackages"
+            />
             <div class="install-summary-row">
               <span class="install-summary-label">重启策略</span>
               <span class="install-summary-value">{{ restartStrategySummary }}</span>
@@ -706,155 +235,12 @@
         </div>
         <!-- 任务链执行进度展示 -->
         <div ref="pipelineSectionRef" class="task-step-action" v-if="pipelineStatus !== 'idle'">
-          <div class="pipeline-timeline">
-            <div
-              v-for="(item, i) in pipelineItems"
-              :key="i"
-              class="timeline-item"
-              :class="{
-                'is-active': stepStates[item.idx] === 'running',
-                'is-success': stepStates[item.idx] === 'success',
-                'is-failed': stepStates[item.idx] === 'failed',
-                'is-skipped': isSkipped[item.key] && stepStates[item.idx] === 'success',
-                'is-pending': stepStates[item.idx] === 'idle'
-              }"
-            >
-              <div class="timeline-node">
-                <i v-if="stepStates[item.idx] === 'success'" class="fa fa-check" />
-                <i v-else-if="stepStates[item.idx] === 'failed'" class="fa fa-times" />
-                <i v-else-if="stepStates[item.idx] === 'running'" class="fa fa-spinner fa-spin" />
-                <span v-else>{{ i + 1 }}</span>
-              </div>
-              <div class="timeline-content">
-                <div class="timeline-info">
-                  <div class="timeline-title">{{ item.label }}</div>
-                  <div class="timeline-status-text">
-                    {{
-                      stepStates[item.idx] === 'running'
-                        ? '正在执行中...'
-                        : stepStates[item.idx] === 'success'
-                          ? isSkipped[item.key]
-                            ? '系统已跳过执行'
-                            : '任务执行成功'
-                          : stepStates[item.idx] === 'failed'
-                            ? (taskErrorMessage || '任务执行失败，请检查')
-                            : '等待调度中'
-                    }}
-                  </div>
-                </div>
-                <div class="timeline-actions" v-if="getTaskRunId(taskDetailData, item.runKey)">
-                  <el-button
-                    type="primary"
-                    link
-                    @click="
-                      openExecuteResult(getTaskRunId(taskDetailData, item.runKey), item.label)
-                    "
-                    size="small"
-                  >
-                    查看详情
-                  </el-button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <PatchTaskPipeline :items="pipelineItems" @show-result="openExecuteResult" />
 
-          <!-- 前置环境检查详细结果 -->
-          <div v-if="parsedPreCheckResult" class="pre-check-result-panel" style="margin-top: 20px; border: 1px solid #dcdfe6; border-radius: 4px; padding: 16px; background-color: #fafafa; width: 100%; box-sizing: border-box;">
-            <div class="panel-title" style="font-size: 15px; font-weight: bold; margin-bottom: 12px; color: #303133; display: flex; align-items: center;">
-              <i class="fa fa-heartbeat" style="margin-right: 6px; color: #409eff;"></i>
-              前置环境检查结果
-            </div>
-
-            <!-- 主机结果详情 -->
-            <div v-if="parsedPreCheckResult.results && parsedPreCheckResult.results.length > 0" style="width: 100%;">
-              <div
-                v-for="hostResult in parsedPreCheckResult.results"
-                :key="hostResult.host_id"
-                style="background: #ffffff; border: 1px solid #e4e7ed; border-radius: 6px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04); transition: all 0.3s;"
-              >
-                <div
-                  style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #f2f6fc; border-top-left-radius: 6px; border-top-right-radius: 6px; flex-wrap: wrap; gap: 8px; transition: all 0.3s;"
-                  :style="{
-                    backgroundColor: isHostUnreachable(hostResult) ? '#fef0f0' : '#fafafa',
-                    borderBottomColor: isHostUnreachable(hostResult) ? '#fde2e2' : '#f2f6fc'
-                  }"
-                >
-                  <span
-                    style="font-weight: 600; font-size: 14px; display: flex; align-items: center; transition: all 0.3s;"
-                    :style="{ color: isHostUnreachable(hostResult) ? '#f56c6c' : '#303133' }"
-                  >
-                    <i
-                      class="fa fa-server"
-                      style="margin-right: 8px; transition: all 0.3s;"
-                      :style="{ color: isHostUnreachable(hostResult) ? '#f56c6c' : '#909399' }"
-                    ></i>
-                    {{ getHostDisplayName(hostResult.host_id) }}
-                    <span v-if="isHostUnreachable(hostResult)" style="font-size: 12px; margin-left: 8px; font-weight: normal; color: #f56c6c;">
-                      (无法连通)
-                    </span>
-                  </span>
-                  <div style="display: flex; gap: 6px; align-items: center;">
-                    <el-tag v-if="hostResult.blockers > 0" type="danger" size="small" effect="dark">
-                      阻断项: {{ hostResult.blockers }}
-                    </el-tag>
-                    <el-tag v-if="hostResult.warnings > 0" type="warning" size="small" effect="dark">
-                      警告项: {{ hostResult.warnings }}
-                    </el-tag>
-                    <el-tag v-if="hostResult.blockers === 0 && hostResult.warnings === 0" type="success" size="small" effect="dark">
-                      检查通过
-                    </el-tag>
-                  </div>
-                </div>
-
-                <div style="padding: 16px;">
-                  <!-- 检查项明细折叠面板 -->
-                  <el-collapse v-model="activeCollapseNames" style="border: none;">
-                    <el-collapse-item title="查看检查项明细" :name="hostResult.host_id" style="border: none;">
-                      <div style="padding: 8px 0 0 0;">
-                        <div
-                          v-for="check in sortChecks(hostResult.checks)"
-                          :key="check.id"
-                          style="display: flex; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid #f2f6fc;"
-                        >
-                          <i
-                            class="fa"
-                            :class="{
-                              'fa-times-circle': check.status === 'fail',
-                              'fa-exclamation-circle': check.status === 'warn',
-                              'fa-check-circle': check.status === 'ok'
-                            }"
-                            :style="{
-                              color: check.status === 'fail' ? '#f56c6c' : check.status === 'warn' ? '#e6a23c' : '#67c23a',
-                              fontSize: '16px',
-                              marginTop: '2px',
-                              marginRight: '10px'
-                            }"
-                          />
-                          <div style="flex: 1;">
-                            <div style="display: flex; justify-content: flex-start; align-items: center; gap: 8px; flex-wrap: wrap;">
-                              <span style="font-weight: 600; font-size: 13px; color: #303133;">
-                                {{ getCheckTitle(check.id) }}
-                              </span>
-                              <el-tag
-                                :type="check.status === 'fail' ? 'danger' : check.status === 'warn' ? 'warning' : 'success'"
-                                size="small"
-                                style="font-size: 10px; height: 16px; line-height: 14px; padding: 0 4px;"
-                              >
-                                {{ check.status === 'fail' ? '阻断' : check.status === 'warn' ? '警告' : '通过' }}
-                              </el-tag>
-                            </div>
-                            <div style="font-size: 12px; color: #606266; margin-top: 4px; line-height: 1.4;">
-                              {{ check.detail }}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </el-collapse-item>
-                  </el-collapse>
-                </div>
-              </div>
-            </div>
-          </div>
+          <PatchTaskPreCheckResult
+            :result="parsedPreCheckResult"
+            :host-name-resolver="getHostDisplayName"
+          />
 
           <!-- 全流程终点提示 -->
           <el-alert
@@ -931,12 +317,14 @@
           </el-button>
 
           <!-- 预检查失败时的特定操作 -->
-          <template v-if="installStep === finalStepIndex && stepStates[stepIndexes.pre] === 'failed' && pipelineStatus === 'failed'">
-            <el-button
-              type="primary"
-              :loading="executionSubmitting"
-              @click="handleRetryPreCheck"
-            >
+          <template
+            v-if="
+              installStep === finalStepIndex &&
+              stepStates[stepIndexes.pre] === 'failed' &&
+              pipelineStatus === 'failed'
+            "
+          >
+            <el-button type="primary" :loading="executionSubmitting" @click="handleRetryPreCheck">
               <i class="fa fa-refresh" style="margin-right: 4px" />
               重新检查
             </el-button>
@@ -978,16 +366,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, nextTick, onBeforeUnmount } from 'vue'
+import { ref, reactive, computed, watch, nextTick } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import { formatDateTime } from '@/utils/date'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { patchInstallApi } from '../../../api'
-import {
-  getAgentHostId,
-  resolveAgentCapabilityHosts,
-  validateAgentCapability
-} from '../../../utils/agentCapability'
+import { ElMessageBox } from 'element-plus'
 import { getPatchTaskWizardSteps } from '../../../constants/task-display'
 import { formatHostDisplay } from './patchTaskWizardUtils'
 import { usePatchTaskBackendRestartAdvice } from './usePatchTaskBackendRestartAdvice'
@@ -1000,8 +382,16 @@ import { usePatchTaskScripts } from './usePatchTaskScripts'
 import { usePatchTaskTaskCreation } from './usePatchTaskTaskCreation'
 import { usePatchTaskTaskPreparation } from './usePatchTaskTaskPreparation'
 import { useLazyDisplayList } from '../../../composables/useLazyDisplayList'
-import { useTableSelectAll } from '../../../composables/useTableSelectAll'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
+import PatchTaskPackageList from '../PatchTaskPackageList.vue'
+import PatchTaskPipeline from '../PatchTaskPipeline.vue'
+import PatchTaskPreCheckResult from '../PatchTaskPreCheckResult.vue'
+import PatchTaskSelectionOverview from '../PatchTaskSelectionOverview.vue'
+import PatchTaskStepper from '../PatchTaskStepper.vue'
+import PatchTaskSummaryRow from '../PatchTaskSummaryRow.vue'
+import PatchTaskRestartStep from './PatchTaskRestartStep.vue'
+import PatchTaskScriptConfigStep from './PatchTaskScriptConfigStep.vue'
+import { usePatchTaskTargetSelection } from './usePatchTaskTargetSelection'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -1048,18 +438,35 @@ const {
   wizardDialogTitle
 } = usePatchTaskDisplay(props)
 
-const installDataLoading = ref(false)
-const affectedPackagesLoading = ref(false)
-const affectedPackages = ref([])
-const affectedHosts = ref([])
-const selectedHosts = ref([])
-const confirmedHosts = ref([])
-const packageEmptyText = computed(() => {
-  if (!hasFixedHosts.value && selectedHosts.value.length === 0) {
-    return '请选择目标主机后查看匹配的软件包'
-  }
-
-  return affectedPackages.value.length === 0 ? '暂无数据' : '未匹配到相关软件包'
+const {
+  affectedPackages,
+  affectedPackagesLoading,
+  closeTargetSelection,
+  confirmedHosts,
+  filteredHosts,
+  handleHostPageChange,
+  handleHostSizeChange,
+  handleHostTableSelect,
+  handleToggleHostSelectAll,
+  hostAllSelected,
+  hostFilter,
+  hostPagination,
+  hostSearchText,
+  hostTableRef,
+  installDataLoading,
+  openTargetSelection,
+  packageEmptyText,
+  resetHostAllSelected,
+  selectedHosts,
+  syncAffectedPackagesForHosts,
+  validateSelectedHostCapabilities
+} = usePatchTaskTargetSelection({
+  props,
+  hasFixedHosts,
+  resolvedFixedHosts,
+  isRollbackTask,
+  isPackageTask,
+  isVulnerabilityTask
 })
 
 // 软件包渲染性能优化：分页与过滤
@@ -1104,368 +511,15 @@ const {
   }
 })
 
-// watch visibility to load data
-watch(
-  () => props.visible,
-  val => {
-    if (val) {
-      if (hasFixedHosts.value) {
-        selectedHosts.value = [...resolvedFixedHosts.value]
-        confirmedHosts.value = [...resolvedFixedHosts.value]
-        affectedHosts.value = [...resolvedFixedHosts.value]
-      }
-      loadInstallData(props.patchesToInstall.map(p => p.patch_id))
-    } else {
-      cancelScheduledAffectedPackageRefresh()
-      invalidateAffectedPackageRequest()
-      resetInstallState()
-    }
-  }
-)
-
-// 加载安装相关数据（软件包列表、主机列表）
-async function loadInstallData(patchIds) {
-  cancelScheduledAffectedPackageRefresh()
-  invalidateAffectedPackageRequest()
-  installDataLoading.value = true
-  affectedPackages.value = []
-  if (hasFixedHosts.value) {
-    affectedHosts.value = [...resolvedFixedHosts.value]
-    selectedHosts.value = [...resolvedFixedHosts.value]
-    confirmedHosts.value = [...resolvedFixedHosts.value]
-  } else {
-    affectedHosts.value = []
-    selectedHosts.value = []
-    confirmedHosts.value = []
-    resetHostAllSelected()
-  }
-
-  if (isRollbackTask.value) {
-    affectedPackages.value = [...props.packageCandidates]
-    installDataLoading.value = false
-    return
-  }
-
-  if ((isPackageTask.value || isVulnerabilityTask.value) && props.packageCandidates.length > 0) {
-    affectedPackages.value = [...props.packageCandidates]
-    installDataLoading.value = false
-    return
-  }
-
-  if (!patchIds || patchIds.length === 0) {
-    installDataLoading.value = false
-    return
-  }
-
-  try {
-    if (hasFixedHosts.value) {
-      await loadAffectedPackagesForHosts(resolvedFixedHosts.value, { notifyOnError: true })
-    } else {
-      const hostResponse = await patchInstallApi.getMachinesByPatch({
-        patch_ids: patchIds,
-        hostId: '@@(linux)'
-      })
-      if (hostResponse?.data?.records) {
-        affectedHosts.value = hostResponse.data.records
-        try {
-          await refreshAgentInfoForHosts(affectedHosts.value)
-        } catch (error) {
-          affectedHosts.value.forEach(host => {
-            host.agentInfoUnavailable = true
-          })
-          console.error('Failed to load Agent capability data:', error)
-        }
-      }
-    }
-  } catch (error) {
-    console.error('Failed to load install data:', error)
-  } finally {
-    installDataLoading.value = false
-  }
-}
-
-function getHostId(host) {
-  return String(host?.hostId || host?.host_id || host?.id || '').trim()
-}
-
-function formatAffectedPackage(pkg = {}) {
-  const targetPackage = String(pkg.file_name || pkg.pkg_name || '').trim()
-  const installedPackage = String(pkg.installed_pkg || '').trim()
-
-  if (installedPackage && targetPackage && installedPackage !== targetPackage) {
-    return `${installedPackage} → ${targetPackage}`
-  }
-
-  return targetPackage || installedPackage
-}
-
-const AFFECTED_PACKAGE_DEBOUNCE_MS = 350
-let affectedPackageRequestId = 0
-let affectedPackageDebounceTimer = null
-let affectedPackageLoadedKey = ''
-let affectedPackageInFlightKey = ''
-let affectedPackageInFlightPromise = null
-
-function cancelScheduledAffectedPackageRefresh() {
-  if (affectedPackageDebounceTimer !== null) {
-    clearTimeout(affectedPackageDebounceTimer)
-    affectedPackageDebounceTimer = null
-  }
-}
-
-function invalidateAffectedPackageRequest() {
-  affectedPackageRequestId += 1
-  affectedPackageLoadedKey = ''
-  affectedPackageInFlightKey = ''
-  affectedPackageInFlightPromise = null
-  affectedPackagesLoading.value = false
-}
-
-function buildAffectedPackageQuery(hosts = []) {
-  const patchIds = Array.from(
-    new Set(props.patchesToInstall.map(patch => patch.patch_id).filter(Boolean))
-  ).sort()
-  const hostIds = Array.from(new Set(hosts.map(getHostId).filter(Boolean))).sort()
-
-  return {
-    patchIds,
-    hostIds,
-    key: JSON.stringify([patchIds, hostIds])
-  }
-}
-
-function scheduleAffectedPackageRefresh(hosts = []) {
-  cancelScheduledAffectedPackageRefresh()
-
-  if (isRollbackTask.value || isPackageTask.value || isVulnerabilityTask.value) {
-    loadAffectedPackagesForHosts(hosts)
-    return
-  }
-
-  const hostsSnapshot = [...hosts]
-  const { hostIds } = buildAffectedPackageQuery(hostsSnapshot)
-  if (hostIds.length === 0) {
-    loadAffectedPackagesForHosts(hostsSnapshot)
-    return
-  }
-
-  affectedPackageDebounceTimer = setTimeout(() => {
-    affectedPackageDebounceTimer = null
-    loadAffectedPackagesForHosts(hostsSnapshot, { notifyOnError: true })
-  }, AFFECTED_PACKAGE_DEBOUNCE_MS)
-}
-
-async function loadAffectedPackagesForHosts(hosts = [], { notifyOnError = false } = {}) {
-  cancelScheduledAffectedPackageRefresh()
-
-  if (isRollbackTask.value) {
-    invalidateAffectedPackageRequest()
-    affectedPackages.value = [...props.packageCandidates]
-    return true
-  }
-
-  if ((isPackageTask.value || isVulnerabilityTask.value) && props.packageCandidates.length > 0) {
-    invalidateAffectedPackageRequest()
-    affectedPackages.value = [...props.packageCandidates]
-    return true
-  }
-
-  const { patchIds, hostIds, key: queryKey } = buildAffectedPackageQuery(hosts)
-
-  if (patchIds.length === 0 || hostIds.length === 0) {
-    invalidateAffectedPackageRequest()
-    affectedPackages.value = []
-    return true
-  }
-
-  if (affectedPackageInFlightKey === queryKey && affectedPackageInFlightPromise) {
-    return affectedPackageInFlightPromise
-  }
-
-  if (affectedPackageLoadedKey === queryKey) {
-    return true
-  }
-
-  const requestId = ++affectedPackageRequestId
-  affectedPackageLoadedKey = ''
-  affectedPackageInFlightKey = queryKey
-  affectedPackagesLoading.value = true
-
-  const requestPromise = (async () => {
-    try {
-      const response = await patchInstallApi.getAffectedPackages({
-        patch_ids: patchIds,
-        host_ids: hostIds
-      })
-      if (requestId !== affectedPackageRequestId) return false
-
-      affectedPackages.value = Array.from(
-        new Set((response?.data || []).map(formatAffectedPackage).filter(Boolean))
-      )
-      affectedPackageLoadedKey = queryKey
-      return true
-    } catch (error) {
-      if (requestId !== affectedPackageRequestId) return false
-
-      affectedPackages.value = []
-      console.error('Failed to load affected packages:', error)
-      if (notifyOnError) {
-        ElMessage.error('获取所选主机的受影响软件包失败，请重试')
-      }
-      return false
-    } finally {
-      if (requestId === affectedPackageRequestId) {
-        affectedPackagesLoading.value = false
-        affectedPackageInFlightKey = ''
-        affectedPackageInFlightPromise = null
-      }
-    }
-  })()
-
-  affectedPackageInFlightPromise = requestPromise
-  return requestPromise
-}
-
-async function syncAffectedPackagesForHosts(hosts = []) {
-  let hostsToSync = [...hosts]
-
-  while (true) {
-    const queryKey = buildAffectedPackageQuery(hostsToSync).key
-    const synced = await loadAffectedPackagesForHosts(hostsToSync, { notifyOnError: true })
-    const currentHosts = [...selectedHosts.value]
-
-    if (buildAffectedPackageQuery(currentHosts).key === queryKey) {
-      return synced
-    }
-
-    hostsToSync = currentHosts
-  }
-}
-
-onBeforeUnmount(() => {
-  cancelScheduledAffectedPackageRefresh()
-  invalidateAffectedPackageRequest()
-})
-
-const hostTableRef = ref(null)
-const hostFilter = ref('@@(linux)')
-const hostSearchText = ref('')
-const hostPagination = reactive({ page: 1, pageSize: 10, total: 0 })
 const pipelineSectionRef = ref(null)
 const executionSubmitting = ref(false)
 const stepTransitionLoading = ref(false)
-
-async function refreshAgentInfoForHosts(hosts) {
-  const resolvedHosts = await resolveAgentCapabilityHosts(hosts)
-  const infoByHostId = new Map(
-    resolvedHosts.map(host => [getAgentHostId(host), host]).filter(([hostId]) => hostId)
-  )
-
-  hosts.forEach(host => {
-    const resolved = infoByHostId.get(getAgentHostId(host))
-    if (resolved) Object.assign(host, resolved)
-  })
-  return resolvedHosts
-}
-
-async function validateSelectedHostCapabilities(hosts) {
-  try {
-    const resolvedHosts = await refreshAgentInfoForHosts(hosts)
-    return validateAgentCapability(
-      resolvedHosts,
-      isRollbackTask.value ? 'rollback' : 'patch',
-      []
-    )
-  } catch (error) {
-    console.error('Failed to refresh Agent capability data:', error)
-    ElMessage.error(error?.message || '无法确认目标主机的 Agent 状态，已阻止继续操作')
-    return false
-  }
-}
-
-// 过滤后的主机列表
-const filteredHostList = computed(() => {
-  let hosts = affectedHosts.value
-  if (hostSearchText.value) {
-    const keyword = hostSearchText.value.toLowerCase()
-    hosts = hosts.filter(
-      h =>
-        h.hostKey?.toLowerCase().includes(keyword) || h.os_distro?.toLowerCase().includes(keyword)
-    )
-  }
-  return hosts
-})
-
-watch(
-  filteredHostList,
-  hosts => {
-    hostPagination.total = hosts.length
-    const maxPage = Math.max(1, Math.ceil(hosts.length / hostPagination.pageSize))
-    if (hostPagination.page > maxPage) {
-      hostPagination.page = maxPage
-    }
-  },
-  { immediate: true }
-)
-
-const filteredHosts = computed(() => {
-  const hosts = filteredHostList.value
-  const start = (hostPagination.page - 1) * hostPagination.pageSize
-  const end = start + hostPagination.pageSize
-  return hosts.slice(start, end)
-})
-
-// 主机分页处理
-function handleHostPageChange(page) {
-  hostPagination.page = page
-}
-
-function handleHostSizeChange(size) {
-  hostPagination.pageSize = size
-  hostPagination.page = 1
-}
-
-// 一键全选 / 跨页勾选
-const {
-  allSelected: hostAllSelected,
-  handleToggleAllSelection: toggleHostSelectAll,
-  handleTableSelect: updateHostTableSelection,
-  resetAllSelected: resetHostAllSelected
-} = useTableSelectAll(hostTableRef, {
-  tableData: filteredHosts,
-  filteredData: filteredHostList,
-  selectedItems: selectedHosts,
-  matchFn: (a, b) =>
-    (a.hostId || a.id || a.hostKey) === (b.hostId || b.id || b.hostKey)
-})
-
-function handleToggleHostSelectAll() {
-  toggleHostSelectAll()
-  scheduleAffectedPackageRefresh(selectedHosts.value)
-}
-
-function handleHostTableSelect(selection) {
-  updateHostTableSelection(selection)
-  scheduleAffectedPackageRefresh(selectedHosts.value)
-}
-
-watch(
-  () =>
-    selectedHosts.value
-      .map(host => host?.hostId || host?.id || host?.hostKey || host?.hostname || '')
-      .join('|'),
-  () => {
-    invalidatePreparedTask()
-  }
-)
 
 const installConfig = reactive({
   preScript: '',
   restartPolicy: 'none',
   postScript: ''
 })
-
-
 
 // ============================================================
 // 向导步骤定义
@@ -1570,20 +624,12 @@ const { resetPipelineState, canReusePreparedTask, invalidatePreparedTask } =
     taskDetailData,
     resetRestartOptions
   })
-const {
-  handleScriptUpload,
-  postScriptUploadRef,
-  preScriptUploadRef,
-  resetScriptState,
-  scriptFiles,
-  scriptModes,
-  syncScriptConfig,
-  triggerScriptUpload
-} = usePatchTaskScripts({
-  installConfig,
-  createdTaskId,
-  invalidatePreparedTask
-})
+const { handleScriptUpload, resetScriptState, scriptFiles, scriptModes, syncScriptConfig } =
+  usePatchTaskScripts({
+    installConfig,
+    createdTaskId,
+    invalidatePreparedTask
+  })
 const { loadRestartAdviceByHostPatch } = usePatchTaskBackendRestartAdvice({
   props,
   confirmedHosts,
@@ -1593,52 +639,79 @@ const { loadRestartAdviceByHostPatch } = usePatchTaskBackendRestartAdvice({
   restartAdviceCacheKey,
   applyLocalRestartAdvice
 })
-const { goBack, handleAdvanceStep, handlePrimaryAction, handleSkipStep, resetInstallState, executeStep } =
-  usePatchTaskFlow({
-    createdTaskId,
-    executionSubmitting,
-    pipelineStatus,
-    installStep,
-    getStepIndex,
-    confirmedHosts,
-    canReusePreparedTask,
-    resetPipelineState,
-    resetRestartOptions,
-    createExecutionTask,
-    syncScriptConfig,
-    loadRestartOptions,
-    loadRollbackInfo,
-    requiresRestartConfirm,
-    isSkipped,
-    restartConfirmText,
-    restartConfirmKeyword,
-    currentStepKey,
-    stepTransitionLoading,
-    selectedHosts,
-    stepStates,
-    resetSkippedSteps,
-    taskDetailData,
-    taskErrorMessage,
-    taskStatus,
-    pipelineFinished,
-    finalStepIndex,
-    loadRestartAdviceByHostPatch,
-    currentStepSkippable,
-    isVisible,
-    startPipeline,
-    resolveApiErrorMessage,
-    stopPolling,
-    backendRestartReason,
-    installConfig,
-    resetScriptState,
-    hasFixedHosts,
-    resetHostAllSelected,
-    validateSelectedHosts: validateSelectedHostCapabilities,
-    syncAffectedPackages: syncAffectedPackagesForHosts
-  })
+const {
+  goBack,
+  handleAdvanceStep,
+  handlePrimaryAction,
+  handleSkipStep,
+  resetInstallState,
+  executeStep
+} = usePatchTaskFlow({
+  createdTaskId,
+  executionSubmitting,
+  pipelineStatus,
+  installStep,
+  getStepIndex,
+  confirmedHosts,
+  canReusePreparedTask,
+  resetPipelineState,
+  resetRestartOptions,
+  createExecutionTask,
+  syncScriptConfig,
+  loadRestartOptions,
+  loadRollbackInfo,
+  requiresRestartConfirm,
+  isSkipped,
+  restartConfirmText,
+  restartConfirmKeyword,
+  currentStepKey,
+  stepTransitionLoading,
+  selectedHosts,
+  stepStates,
+  resetSkippedSteps,
+  taskDetailData,
+  taskErrorMessage,
+  taskStatus,
+  pipelineFinished,
+  finalStepIndex,
+  loadRestartAdviceByHostPatch,
+  currentStepSkippable,
+  isVisible,
+  startPipeline,
+  resolveApiErrorMessage,
+  stopPolling,
+  backendRestartReason,
+  installConfig,
+  resetScriptState,
+  hasFixedHosts,
+  resetHostAllSelected,
+  validateSelectedHosts: validateSelectedHostCapabilities,
+  syncAffectedPackages: syncAffectedPackagesForHosts
+})
+
+watch(
+  () => props.visible,
+  visible => {
+    if (visible) {
+      openTargetSelection()
+      return
+    }
+
+    closeTargetSelection()
+    resetInstallState()
+  }
+)
+
+watch(
+  () =>
+    selectedHosts.value
+      .map(host => host?.hostId || host?.id || host?.hostKey || host?.hostname || '')
+      .join('|'),
+  invalidatePreparedTask
+)
 
 const pipelineItems = computed(() => {
-  return [
+  const items = [
     { key: 'pre', label: '预检查', idx: stepIndexes.value.pre, runKey: 'preCheckRunId' },
     {
       key: 'execute',
@@ -1649,6 +722,29 @@ const pipelineItems = computed(() => {
     { key: 'restart', label: '重启策略', idx: stepIndexes.value.restart, runKey: 'restartRunId' },
     { key: 'validate', label: '脚本校验', idx: stepIndexes.value.validate, runKey: 'validateRunId' }
   ]
+
+  return items.map(item => {
+    const state = stepStates[item.idx] || 'idle'
+    const skipped = Boolean(isSkipped[item.key] && state === 'success')
+    const text =
+      state === 'running'
+        ? '正在执行中...'
+        : state === 'success'
+          ? skipped
+            ? '系统已跳过执行'
+            : '任务执行成功'
+          : state === 'failed'
+            ? taskErrorMessage.value || '任务执行失败，请检查'
+            : '等待调度中'
+
+    return {
+      ...item,
+      state,
+      skipped,
+      text,
+      runId: getTaskRunId(taskDetailData.value, item.runKey)
+    }
+  })
 })
 
 // 执行详情弹窗
@@ -1689,7 +785,6 @@ function resetSkippedSteps() {
 }
 
 const parsedPreCheckResult = ref(null)
-const activeCollapseNames = ref([])
 let hasCapturedPreCheckResult = false
 
 function parsePreCheckResult(rawResult) {
@@ -1704,7 +799,6 @@ function parsePreCheckResult(rawResult) {
 
 function resetPreCheckResultSnapshot() {
   parsedPreCheckResult.value = null
-  activeCollapseNames.value = []
   hasCapturedPreCheckResult = false
 }
 
@@ -1783,59 +877,14 @@ watch(
 
     parsedPreCheckResult.value = result
     hasCapturedPreCheckResult = true
-    if (Array.isArray(result.results)) {
-      activeCollapseNames.value = result.results
-        .filter(item => item.blockers > 0 || item.warnings > 0)
-        .map(item => item.host_id)
-    } else {
-      activeCollapseNames.value = []
-    }
     scrollToPreCheckTaskStatus()
   },
   { immediate: true, flush: 'sync' }
 )
 
-function isHostUnreachable(hostResult) {
-  return Array.isArray(hostResult.checks) && hostResult.checks.some(c => c.id === 'conn' && c.status === 'fail')
-}
-
-const checkTitles = {
-  conn: '连通性',
-  sudo: '提权权限',
-  os: '操作系统识别',
-  pkg_manager: '包管理器',
-  pkg_lock: '包管理器占用',
-  pkg_db: '包数据库健康',
-  disk: '磁盘空间',
-  disk_boot: '/boot 空间',
-  kernel_pending: '待重启内核',
-  repo: '软件仓库',
-  pkg_exists: '目标包存在性',
-  version_ok: '目标版本可用性',
-  depsolve: '依赖解析',
-  already_satisfied: '已是目标版本',
-  exec: '检查执行异常'
-}
-
-function getCheckTitle(id) {
-  return checkTitles[id] || id
-}
-
 function getHostDisplayName(hostId) {
-  const host = confirmedHosts.value.find(
-    h => (h.hostId || h.id || h.hostKey) === hostId
-  )
+  const host = confirmedHosts.value.find(h => (h.hostId || h.id || h.hostKey) === hostId)
   return host ? formatHostDisplay(host) : hostId
-}
-
-function sortChecks(checks) {
-  if (!Array.isArray(checks)) return []
-  const severityMap = { fail: 0, warn: 1, ok: 2 }
-  return [...checks].sort((a, b) => {
-    const aVal = severityMap[a.status] ?? 3
-    const bVal = severityMap[b.status] ?? 3
-    return aVal - bVal
-  })
 }
 
 function handleRetryPreCheck() {
@@ -1852,48 +901,15 @@ function handleSkipPreCheck() {
       cancelButtonText: '取消',
       type: 'warning'
     }
-  ).then(() => {
-    isSkipped.pre = true
-    executeStep()
-  }).catch(() => {})
+  )
+    .then(() => {
+      isSkipped.pre = true
+      executeStep()
+    })
+    .catch(() => {})
 }
 </script>
 
 <style scoped lang="scss">
 @use './PatchTaskWizard.scss' as *;
-
-.install-content {
-  display: grid;
-  grid-template-columns: minmax(280px, 2fr) minmax(0, 3fr);
-  gap: 16px;
-  align-items: start;
-}
-
-.install-card-full {
-  grid-column: span 2;
-}
-
-:deep(.install-card) {
-  margin-bottom: 0 !important;
-}
-
-.install-content > .install-card:not(.install-card-full) .card-body--scroll {
-  max-height: 320px;
-}
-
-.install-content > .install-card.install-card-full .card-body--scroll {
-  max-height: 260px;
-}
-
-.install-card--packages .package-item {
-  font-size: 14px;
-  word-break: break-all;
-}
-
-.package-summary-item {
-  padding: 2px 0;
-  font-family: monospace;
-  font-size: 14px;
-  word-break: break-all;
-}
 </style>
