@@ -732,12 +732,26 @@ export const patchInstallApi = {
   * 获取补丁影响的软件包列表
   * @param {Object} params - 查询参数
   * @param {Array<string>} params.patch_ids - 补丁ID列表
+  * @param {Array<string>} [params.host_ids] - 主机ID列表
+  * @param {string} [params.host_id] - 单台主机ID
   * @returns {Promise}
   */
   getAffectedPackages(params) {
     const requestBody = {
       patch_ids: params.patch_ids
     }
+
+    const hostIds = Array.isArray(params.host_ids)
+      ? params.host_ids.map(hostId => String(hostId || '').trim()).filter(Boolean)
+      : []
+    const hostId = String(params.host_id || '').trim()
+
+    if (hostIds.length > 0) {
+      requestBody.host_ids = hostIds
+    } else if (hostId) {
+      requestBody.host_id = hostId
+    }
+
     return apiService
       .post('/secops/api/secops/v2/patch/affected-pkgs', requestBody)
       .then(res => {
@@ -2098,6 +2112,15 @@ export const rpmInfoApi = {
   },
 
   /**
+  * 查询 OS 版本枚举
+  * GET /secops/api/secops/v2/rpm-info/os-versions
+  */
+  getOsVersions(params = {}) {
+    const query = buildGenericQuery({ source: params.source })
+    return apiService.get(`${VAP_API_PREFIX}/v2/rpm-info/os-versions${query}`)
+  },
+
+  /**
   * 全量 RPM 软件包分页查询
   * GET /secops/api/secops/v2/rpm-info/list
   */
@@ -2107,6 +2130,7 @@ export const rpmInfoApi = {
       keyword: params.keyword,
       name: params.name,
       arch: params.arch,
+      osVersion: params.osVersion,
       page: params.page ?? 0,
       size: params.size ?? 20
     })

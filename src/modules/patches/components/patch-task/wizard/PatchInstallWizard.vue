@@ -85,12 +85,12 @@
               />
             </div>
           </div>
-          <div class="card-body card-body--scroll">
+          <div v-loading="affectedPackagesLoading" class="card-body card-body--scroll">
             <div v-for="pkg in displayedPackages" :key="pkg" class="package-item">
               {{ pkg }}
             </div>
             <div v-if="displayedPackages.length === 0" class="no-data">
-              {{ affectedPackages.length === 0 ? '暂无数据' : '未匹配到相关软件包' }}
+              {{ packageEmptyText }}
             </div>
             <div v-if="hasMorePackages" style="text-align: center; padding-top: 4px">
               <el-button link type="primary" size="small" @click="loadMorePackages">
@@ -979,7 +979,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, nextTick } from 'vue'
+import { ref, reactive, computed, watch, nextTick, onBeforeUnmount } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import { formatDateTime } from '@/utils/date'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -1050,10 +1050,18 @@ const {
 } = usePatchTaskDisplay(props)
 
 const installDataLoading = ref(false)
+const affectedPackagesLoading = ref(false)
 const affectedPackages = ref([])
 const affectedHosts = ref([])
 const selectedHosts = ref([])
 const confirmedHosts = ref([])
+const packageEmptyText = computed(() => {
+  if (!hasFixedHosts.value && selectedHosts.value.length === 0) {
+    return '请选择目标主机后查看匹配的软件包'
+  }
+
+  return affectedPackages.value.length === 0 ? '暂无数据' : '未匹配到相关软件包'
+})
 
 // 软件包渲染性能优化：分页与过滤
 const {
@@ -1109,6 +1117,8 @@ watch(
       }
       loadInstallData(props.patchesToInstall.map(p => p.patch_id))
     } else {
+      cancelScheduledAffectedPackageRefresh()
+      invalidateAffectedPackageRequest()
       resetInstallState()
     }
   }
@@ -1116,6 +1126,8 @@ watch(
 
 // 加载安装相关数据（软件包列表、主机列表）
 async function loadInstallData(patchIds) {
+  cancelScheduledAffectedPackageRefresh()
+  invalidateAffectedPackageRequest()
   installDataLoading.value = true
   affectedPackages.value = []
   if (hasFixedHosts.value) {
@@ -1147,20 +1159,13 @@ async function loadInstallData(patchIds) {
   }
 
   try {
-    const promises = [patchInstallApi.getAffectedPackages({ patch_ids: patchIds })]
-    if (!hasFixedHosts.value) {
-      promises.push(
-        patchInstallApi.getMachinesByPatch({ patch_ids: patchIds, hostId: '@@(linux)' })
-      )
-    }
-    const responses = await Promise.all(promises)
-    const pkgResponse = responses[0]
-    if (pkgResponse?.data) {
-      affectedPackages.value = pkgResponse.data.map(r => r.file_name || r.pkg_name)
-    }
-
-    if (!hasFixedHosts.value) {
-      const hostResponse = responses[1]
+    if (hasFixedHosts.value) {
+      await loadAffectedPackagesForHosts(resolvedFixedHosts.value, { notifyOnError: true })
+    } else {
+      const hostResponse = await patchInstallApi.getMachinesByPatch({
+        patch_ids: patchIds,
+        hostId: '@@(linux)'
+      })
       if (hostResponse?.data?.records) {
         affectedHosts.value = hostResponse.data.records
         try {
@@ -1179,6 +1184,169 @@ async function loadInstallData(patchIds) {
     installDataLoading.value = false
   }
 }
+
+function getHostId(host) {
+  return String(host?.hostId || host?.host_id || host?.id || '').trim()
+}
+
+function formatAffectedPackage(pkg = {}) {
+  const targetPackage = String(pkg.file_name || pkg.pkg_name || '').trim()
+  const installedPackage = String(pkg.installed_pkg || '').trim()
+
+  if (installedPackage && targetPackage && installedPackage !== targetPackage) {
+    return `${installedPackage} → ${targetPackage}`
+  }
+
+  return targetPackage || installedPackage
+}
+
+const AFFECTED_PACKAGE_DEBOUNCE_MS = 350
+let affectedPackageRequestId = 0
+let affectedPackageDebounceTimer = null
+let affectedPackageLoadedKey = ''
+let affectedPackageInFlightKey = ''
+let affectedPackageInFlightPromise = null
+
+function cancelScheduledAffectedPackageRefresh() {
+  if (affectedPackageDebounceTimer !== null) {
+    clearTimeout(affectedPackageDebounceTimer)
+    affectedPackageDebounceTimer = null
+  }
+}
+
+function invalidateAffectedPackageRequest() {
+  affectedPackageRequestId += 1
+  affectedPackageLoadedKey = ''
+  affectedPackageInFlightKey = ''
+  affectedPackageInFlightPromise = null
+  affectedPackagesLoading.value = false
+}
+
+function buildAffectedPackageQuery(hosts = []) {
+  const patchIds = Array.from(
+    new Set(props.patchesToInstall.map(patch => patch.patch_id).filter(Boolean))
+  ).sort()
+  const hostIds = Array.from(new Set(hosts.map(getHostId).filter(Boolean))).sort()
+
+  return {
+    patchIds,
+    hostIds,
+    key: JSON.stringify([patchIds, hostIds])
+  }
+}
+
+function scheduleAffectedPackageRefresh(hosts = []) {
+  cancelScheduledAffectedPackageRefresh()
+
+  if (isRollbackTask.value || isPackageTask.value || isVulnerabilityTask.value) {
+    loadAffectedPackagesForHosts(hosts)
+    return
+  }
+
+  const hostsSnapshot = [...hosts]
+  const { hostIds } = buildAffectedPackageQuery(hostsSnapshot)
+  if (hostIds.length === 0) {
+    loadAffectedPackagesForHosts(hostsSnapshot)
+    return
+  }
+
+  affectedPackageDebounceTimer = setTimeout(() => {
+    affectedPackageDebounceTimer = null
+    loadAffectedPackagesForHosts(hostsSnapshot, { notifyOnError: true })
+  }, AFFECTED_PACKAGE_DEBOUNCE_MS)
+}
+
+async function loadAffectedPackagesForHosts(hosts = [], { notifyOnError = false } = {}) {
+  cancelScheduledAffectedPackageRefresh()
+
+  if (isRollbackTask.value) {
+    invalidateAffectedPackageRequest()
+    affectedPackages.value = [...props.packageCandidates]
+    return true
+  }
+
+  if ((isPackageTask.value || isVulnerabilityTask.value) && props.packageCandidates.length > 0) {
+    invalidateAffectedPackageRequest()
+    affectedPackages.value = [...props.packageCandidates]
+    return true
+  }
+
+  const { patchIds, hostIds, key: queryKey } = buildAffectedPackageQuery(hosts)
+
+  if (patchIds.length === 0 || hostIds.length === 0) {
+    invalidateAffectedPackageRequest()
+    affectedPackages.value = []
+    return true
+  }
+
+  if (affectedPackageInFlightKey === queryKey && affectedPackageInFlightPromise) {
+    return affectedPackageInFlightPromise
+  }
+
+  if (affectedPackageLoadedKey === queryKey) {
+    return true
+  }
+
+  const requestId = ++affectedPackageRequestId
+  affectedPackageLoadedKey = ''
+  affectedPackageInFlightKey = queryKey
+  affectedPackagesLoading.value = true
+
+  const requestPromise = (async () => {
+    try {
+      const response = await patchInstallApi.getAffectedPackages({
+        patch_ids: patchIds,
+        host_ids: hostIds
+      })
+      if (requestId !== affectedPackageRequestId) return false
+
+      affectedPackages.value = Array.from(
+        new Set((response?.data || []).map(formatAffectedPackage).filter(Boolean))
+      )
+      affectedPackageLoadedKey = queryKey
+      return true
+    } catch (error) {
+      if (requestId !== affectedPackageRequestId) return false
+
+      affectedPackages.value = []
+      console.error('Failed to load affected packages:', error)
+      if (notifyOnError) {
+        ElMessage.error('获取所选主机的受影响软件包失败，请重试')
+      }
+      return false
+    } finally {
+      if (requestId === affectedPackageRequestId) {
+        affectedPackagesLoading.value = false
+        affectedPackageInFlightKey = ''
+        affectedPackageInFlightPromise = null
+      }
+    }
+  })()
+
+  affectedPackageInFlightPromise = requestPromise
+  return requestPromise
+}
+
+async function syncAffectedPackagesForHosts(hosts = []) {
+  let hostsToSync = [...hosts]
+
+  while (true) {
+    const queryKey = buildAffectedPackageQuery(hostsToSync).key
+    const synced = await loadAffectedPackagesForHosts(hostsToSync, { notifyOnError: true })
+    const currentHosts = [...selectedHosts.value]
+
+    if (buildAffectedPackageQuery(currentHosts).key === queryKey) {
+      return synced
+    }
+
+    hostsToSync = currentHosts
+  }
+}
+
+onBeforeUnmount(() => {
+  cancelScheduledAffectedPackageRefresh()
+  invalidateAffectedPackageRequest()
+})
 
 const hostTableRef = ref(null)
 const hostFilter = ref('@@(linux)')
@@ -1261,8 +1429,8 @@ function handleHostSizeChange(size) {
 // 一键全选 / 跨页勾选
 const {
   allSelected: hostAllSelected,
-  handleToggleAllSelection: handleToggleHostSelectAll,
-  handleTableSelect: handleHostTableSelect,
+  handleToggleAllSelection: toggleHostSelectAll,
+  handleTableSelect: updateHostTableSelection,
   resetAllSelected: resetHostAllSelected
 } = useTableSelectAll(hostTableRef, {
   tableData: filteredHosts,
@@ -1271,6 +1439,16 @@ const {
   matchFn: (a, b) =>
     (a.hostId || a.id || a.hostKey) === (b.hostId || b.id || b.hostKey)
 })
+
+function handleToggleHostSelectAll() {
+  toggleHostSelectAll()
+  scheduleAffectedPackageRefresh(selectedHosts.value)
+}
+
+function handleHostTableSelect(selection) {
+  updateHostTableSelection(selection)
+  scheduleAffectedPackageRefresh(selectedHosts.value)
+}
 
 watch(
   () =>
@@ -1456,7 +1634,8 @@ const { goBack, handleAdvanceStep, handlePrimaryAction, handleSkipStep, resetIns
     resetScriptState,
     hasFixedHosts,
     resetHostAllSelected,
-    validateSelectedHosts: validateSelectedHostCapabilities
+    validateSelectedHosts: validateSelectedHostCapabilities,
+    syncAffectedPackages: syncAffectedPackagesForHosts
   })
 
 const pipelineItems = computed(() => {

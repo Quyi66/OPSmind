@@ -18,6 +18,9 @@
           <el-descriptions-item label="架构">
             {{ normalizedDetail.architecture || '-' }}
           </el-descriptions-item>
+          <el-descriptions-item label="OS版本">
+            {{ normalizedDetail.osVersion || '未知' }}
+          </el-descriptions-item>
           <el-descriptions-item label="版本">
             {{ versionText }}
           </el-descriptions-item>

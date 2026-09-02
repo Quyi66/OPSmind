@@ -8,6 +8,7 @@
             <el-option label="麒麟" value="kylin" />
             <el-option label="Oracle" value="oracle" />
             <el-option label="Red Hat" value="redhat" />
+            <el-option label="SUSE" value="suse" />
             <el-option label="ubuntu" value="ubuntu" />
           </el-select>
         </el-form-item>
@@ -23,6 +24,22 @@
         <el-form-item label="架构">
           <el-select v-model="filters.arch" clearable placeholder="全部" style="width: 160px" @change="handleSearch">
             <el-option v-for="arch in archOptions" :key="arch" :label="arch" :value="arch" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="OS版本">
+          <el-select
+            v-model="filters.osVersion"
+            clearable
+            placeholder="全部"
+            style="width: 160px"
+            @change="handleSearch"
+          >
+            <el-option
+              v-for="osVersion in osVersionOptions"
+              :key="osVersion"
+              :label="osVersion"
+              :value="osVersion"
+            />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -69,6 +86,11 @@
         </el-table-column>
         <el-table-column prop="version" label="版本" min-width="120" />
         <el-table-column prop="architecture" label="架构" width="120" />
+        <el-table-column prop="osVersion" label="OS版本" width="120">
+          <template #default="{ row }">
+            {{ row.osVersion || '未知' }}
+          </template>
+        </el-table-column>
         <el-table-column prop="source" label="数据源" width="120">
           <template #default="{ row }">
             <el-tag
@@ -158,7 +180,9 @@ const {
   pagination,
   tableData,
   archOptions,
+  osVersionOptions,
   loadArchOptions,
+  loadOsVersionOptions,
   loadData,
   handleSearch,
   handleReset,
@@ -174,6 +198,7 @@ function getSourceLabel(source) {
   if (source === 'kylin') return '麒麟'
   if (source === 'oracle') return 'Oracle'
   if (source === 'redhat') return 'Red Hat'
+  if (source === 'suse') return 'SUSE'
   return source || '-'
 }
 
@@ -234,6 +259,7 @@ async function handleViewDetail(row) {
 
 onMounted(() => {
   loadArchOptions()
+  loadOsVersionOptions()
   loadData()
 })
 </script>
