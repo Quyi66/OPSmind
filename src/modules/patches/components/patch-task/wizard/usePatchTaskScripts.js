@@ -1,10 +1,8 @@
-import { reactive, ref, watch } from 'vue'
+import { reactive, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { patchInstallApi } from '../../../api'
 
 export function usePatchTaskScripts({ installConfig, createdTaskId, invalidatePreparedTask }) {
-  const preScriptUploadRef = ref(null)
-  const postScriptUploadRef = ref(null)
   const scriptUploadFiles = reactive({ pre: null, post: null })
   const scriptModes = reactive({
     pre: 'edit',
@@ -21,11 +19,6 @@ export function usePatchTaskScripts({ installConfig, createdTaskId, invalidatePr
 
   function getScriptLabel(type) {
     return type === 'pre' ? '预执行脚本' : '校验脚本'
-  }
-
-  function triggerScriptUpload(type) {
-    const inputRef = type === 'pre' ? preScriptUploadRef.value : postScriptUploadRef.value
-    inputRef?.click()
   }
 
   async function uploadScriptToTask(type, file, silent = false) {
@@ -109,12 +102,9 @@ export function usePatchTaskScripts({ installConfig, createdTaskId, invalidatePr
 
   return {
     handleScriptUpload,
-    postScriptUploadRef,
-    preScriptUploadRef,
     resetScriptState,
     scriptFiles,
     scriptModes,
-    syncScriptConfig,
-    triggerScriptUpload
+    syncScriptConfig
   }
 }
