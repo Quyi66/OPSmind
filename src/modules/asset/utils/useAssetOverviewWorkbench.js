@@ -38,7 +38,7 @@ export function useAssetOverviewWorkbench() {
   const osDistributionData = ref([])
   const newAssetData = ref([])
   const groupAssetData = ref([])
-  const connectionData = ref([])
+  const connectionSummary = ref({ successCount: 0, failureCount: 0 })
   const groupRows = ref([])
   const tagRows = ref([])
   const permissionRows = ref([])
@@ -57,7 +57,9 @@ export function useAssetOverviewWorkbench() {
     assetTypeData.value.reduce((sum, item) => sum + toNumber(item?.count), 0)
   )
 
-  const assetTypeCount = computed(() => assetTypeData.value.length)
+  const assetTypeCount = computed(
+    () => assetTypeData.value.filter(item => toNumber(item?.count) > 0).length
+  )
 
   const topAssetType = computed(() => {
     if (!assetTypeData.value.length) return null
@@ -77,24 +79,12 @@ export function useAssetOverviewWorkbench() {
   })
 
   const connectionStats = computed(() => {
-    let successCount = 0
-    let failureCount = 0
-
-    connectionData.value.forEach(item => {
-      const statusStr = String(item?.status ?? item?.condi ?? '')
-      const countVal = toNumber(item?.count ?? item?.c ?? 0)
-      if (statusStr === '0' || statusStr === 'recently_ok') {
-        successCount = countVal
-      } else if (statusStr === '1' || statusStr === 'recently' || statusStr === 'sjxy_all') {
-        failureCount = countVal
-      }
-    })
+    const successCount = toNumber(connectionSummary.value.successCount)
+    const failureCount = toNumber(connectionSummary.value.failureCount)
 
     const totalConnection = successCount + failureCount
     const rawRate = totalConnection ? (successCount / totalConnection) * 100 : 0
-    const successRate = totalConnection
-      ? (successCount < totalConnection && rawRate > 99 ? rawRate.toFixed(1) : Math.round(rawRate))
-      : 0
+    const successRate = totalConnection ? Number(rawRate.toFixed(2)) : 0
 
     return {
       successCount,
@@ -104,6 +94,44 @@ export function useAssetOverviewWorkbench() {
       successRate
     }
   })
+
+  async function loadConnectionSummary(assetTypes) {
+    let successCount = 0
+
+    for (let index = 0; index < assetTypes.length; index += ASSET_TYPE_TOTAL_CONCURRENCY) {
+      const chunk = assetTypes.slice(index, index + ASSET_TYPE_TOTAL_CONCURRENCY)
+      const normalTotals = await Promise.all(
+        chunk.map(async item => {
+          const assetType = item?.code || item?.title || ''
+          if (!assetType) return 0
+
+          const response = await assetApi.getAssetList(
+            {
+              assetType,
+              permission: 'r',
+              status: 'all',
+              CONN_LATEST_STATUS: '1',
+              hostKeys: '@@'
+            },
+            { page: 1, size: 1, filter: '' }
+          )
+          return extractTotal(response, 0)
+        })
+      )
+
+      successCount += normalTotals.reduce((sum, total) => sum + toNumber(total), 0)
+    }
+
+    const totalConnection = assetTypes.reduce(
+      (sum, item) => sum + toNumber(item?.count),
+      0
+    )
+
+    return {
+      successCount,
+      failureCount: Math.max(totalConnection - successCount, 0)
+    }
+  }
 
   const topGroups = computed(() =>
     sortByField(
@@ -172,7 +200,7 @@ export function useAssetOverviewWorkbench() {
                 permission: 'r',
                 status: 'all',
                 CONN_LATEST_STATUS: '',
-                hostKeys: '/'
+                hostKeys: '@@'
               },
               { page: 1, size: 1, filter: '' }
             )
@@ -205,12 +233,11 @@ export function useAssetOverviewWorkbench() {
     const { forceAssetTypeTotals = false } = options
     overviewLoading.value = true
 
-    const [assetTypeRes, osRes, trendRes, groupRes, connectionRes] = await Promise.allSettled([
+    const [assetTypeRes, osRes, trendRes, groupRes] = await Promise.allSettled([
       overviewApi.getAssetTypeCount(),
       overviewApi.getOsDistribution(),
       overviewApi.getNewAssetCount(),
-      overviewApi.getGroupAssetCount(),
-      overviewApi.getConnectionCount()
+      overviewApi.getGroupAssetCount()
     ])
 
     if (assetTypeRes.status === 'fulfilled') {
@@ -251,11 +278,11 @@ export function useAssetOverviewWorkbench() {
       groupAssetData.value = []
     }
 
-    if (connectionRes.status === 'fulfilled') {
-      connectionData.value = extractRecords(connectionRes.value)
-    } else {
-      console.error('加载连通性统计失败:', connectionRes.reason)
-      connectionData.value = []
+    try {
+      connectionSummary.value = await loadConnectionSummary(assetTypeData.value)
+    } catch (error) {
+      console.error('加载连通性统计失败:', error)
+      connectionSummary.value = { successCount: 0, failureCount: 0 }
     }
 
     overviewLoading.value = false
@@ -360,7 +387,7 @@ export function useAssetOverviewWorkbench() {
     osDistributionData,
     newAssetData,
     groupAssetData,
-    connectionData,
+    connectionSummary,
     groupRows,
     tagRows,
     permissionRows,

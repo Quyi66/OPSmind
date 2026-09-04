@@ -815,7 +815,7 @@ const tagTotal = ref(0)
 // 异常与失败日志预览
 const exceptionPreviewRows = ref([])
 const exceptionPreviewLoading = ref(false)
-const exceptionDeviceTotal = ref(0)
+const exceptionDeviceTotal = computed(() => connectionStats.value.failureCount)
 const failedLogRows = ref([])
 const failedLogLoading = ref(false)
 const failedLogTotal = ref(0)
@@ -1084,7 +1084,7 @@ async function switchCardType(ciType) {
         permission: 'r',
         status: 'all',
         CONN_LATEST_STATUS: '',
-        hostKeys: '/'
+        hostKeys: '@@'
       },
       { page: 1, size: cardPreviewLimit.value, filter: '' }
     )
@@ -1113,10 +1113,8 @@ async function loadExceptionPreview() {
     )
     const normalized = normalizePagedResponse(r)
     exceptionPreviewRows.value = normalized.records
-    exceptionDeviceTotal.value = normalized.total
   } catch {
     exceptionPreviewRows.value = []
-    exceptionDeviceTotal.value = 0
   } finally {
     exceptionPreviewLoading.value = false
   }
