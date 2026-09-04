@@ -154,6 +154,14 @@ const props = defineProps({
   osVersion: {
     type: String,
     default: ''
+  },
+  osSpVersion: {
+    type: String,
+    default: ''
+  },
+  osArch: {
+    type: String,
+    default: ''
   }
 })
 
@@ -284,7 +292,8 @@ async function handleViewPackageDetail(row) {
       source,
       arch,
       osDistro: row?.osDistro || row?.os_distro || props.osDistro,
-      osVersion: row?.osVersion || row?.os_version || props.osVersion
+      osVersion: row?.osVersion || row?.os_version || props.osVersion,
+      osArch: row?.osArch || row?.os_arch || props.osArch
     })
 
     const responseData = response?.data || response || {}
@@ -303,6 +312,13 @@ async function handleViewPackageDetail(row) {
         row?.osVersion ||
         row?.os_version ||
         props.osVersion,
+      osSpVersion:
+        responseData.osSpVersion ||
+        responseData.os_sp_version ||
+        row?.osSpVersion ||
+        row?.os_sp_version ||
+        props.osSpVersion,
+      osArch: responseData.osArch || responseData.os_arch || row?.osArch || row?.os_arch || props.osArch,
       currentPackage: currentPackage || responseData.currentPackage || ''
     }
   } catch (error) {

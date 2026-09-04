@@ -246,7 +246,8 @@ async function handleViewDetail(row) {
       source,
       arch,
       osDistro: row?.osDistro || row?.os_distro || '',
-      osVersion: row?.osVersion || row?.os_version || ''
+      osVersion: row?.osVersion || row?.os_version || '',
+      osArch: row?.osArch || row?.os_arch || ''
     })
 
     const responseData = response?.data || response || {}
@@ -261,6 +262,13 @@ async function handleViewDetail(row) {
         row?.osVersion ||
         row?.os_version ||
         '',
+      osSpVersion:
+        responseData.osSpVersion ||
+        responseData.os_sp_version ||
+        row?.osSpVersion ||
+        row?.os_sp_version ||
+        '',
+      osArch: responseData.osArch || responseData.os_arch || row?.osArch || row?.os_arch || '',
       currentPackage: currentPackage || responseData.currentPackage || ''
     }
   } catch (error) {

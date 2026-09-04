@@ -101,7 +101,95 @@ function normalizeChangelogPathSegment(value) {
   return normalizedValue
 }
 
+function extractKylinChangelogOsVersion(detail = {}) {
+  const versionValues = [
+    detail.osVersion,
+    detail.os_version,
+    detail.osMajorVersion,
+    detail.os_major_version
+  ]
+  const spVersionValues = [detail.osSpVersion, detail.os_sp_version]
+  const versionCandidates = []
+
+  versionValues.forEach(version => {
+    spVersionValues.forEach(spVersion => {
+      const normalizedVersion = String(version || '').trim()
+      const normalizedSpVersion = String(spVersion || '').trim()
+      if (normalizedVersion && normalizedSpVersion) {
+        addUniqueText(versionCandidates, `${normalizedVersion} ${normalizedSpVersion}`)
+      }
+    })
+  })
+  addUniqueText(versionCandidates, detail.osDistro)
+  addUniqueText(versionCandidates, detail.os_distro)
+  versionValues.forEach(version => addUniqueText(versionCandidates, version))
+
+  const explicitMajorVersion = versionValues.reduce((majorVersion, value) => {
+    if (majorVersion) return majorVersion
+
+    const normalizedValue = String(value || '').trim()
+    const versionMatch = normalizedValue.match(/v\s*(\d+)/i) || normalizedValue.match(/^(\d+)/)
+    return versionMatch?.[1] || ''
+  }, '')
+  let selectedVersion = ''
+  let selectedVersionScore = -1
+  for (const candidate of versionCandidates) {
+    const normalizedValue = String(candidate || '')
+      .trim()
+      .replace(/_/g, ' ')
+    const versionMatch =
+      normalizedValue.match(/v\s*(\d+)(?:\s*sp\s*(\d+(?:\.\d+)?))?(?:[\s-]+(\d{4}))?/i) ||
+      normalizedValue.match(/^(\d+)(?:\s*sp\s*(\d+(?:\.\d+)?))?(?:[\s-]+(\d{4}))?/i)
+    if (!versionMatch) continue
+
+    const [, majorVersion, spVersion, buildVersion] = versionMatch
+    if (explicitMajorVersion && majorVersion !== explicitMajorVersion) continue
+
+    const versionScore = (spVersion ? 2 : 0) + (buildVersion ? 1 : 0)
+    if (versionScore > selectedVersionScore) {
+      selectedVersion = `kylinV${majorVersion}${spVersion ? `SP${spVersion}` : ''}${buildVersion ? `-${buildVersion}` : ''}`
+      selectedVersionScore = versionScore
+    }
+  }
+
+  return selectedVersionScore > 0 ? selectedVersion : ''
+}
+
+function extractOracleLinuxMajor(detail = {}) {
+  const values = [
+    detail.osVersion,
+    detail.os_version,
+    detail.osDistro,
+    detail.os_distro,
+    detail.source,
+    detail.currentPackage,
+    detail.completePackageName,
+    detail.release,
+    detail.version
+  ]
+
+  for (const value of values) {
+    const normalizedValue = String(value || '').trim()
+    if (!normalizedValue) continue
+
+    const oracleMatch = normalizedValue.match(/(?:oracle\s*linux|oraclelinux|ol)[\s_-]*v?(\d+)/i)
+    if (oracleMatch) return oracleMatch[1]
+
+    const elMatch = normalizedValue.match(/(?:^|[._+~-])el(\d+)(?=$|[._+~-])/i)
+    if (elMatch) return elMatch[1]
+
+    const plainVersionMatch = normalizedValue.match(/^v?(\d+)/i)
+    if (plainVersionMatch) return plainVersionMatch[1]
+  }
+
+  return ''
+}
+
 function extractChangelogOsVersion(detail = {}, source = '') {
+  if (source === 'kylin') {
+    return extractKylinChangelogOsVersion(detail)
+  }
+
   const versionValues = [
     detail.osVersion,
     detail.os_version,
@@ -124,6 +212,35 @@ function extractChangelogOsVersion(detail = {}, source = '') {
       if (ubuntuVersionMatch) return ubuntuVersionMatch[1]
     } else {
       return normalizedValue
+    }
+  }
+
+  return ''
+}
+
+function extractChangelogArchitecture(detail = {}) {
+  const architectureValues = [
+    detail.osArchitecture,
+    detail.os_architecture,
+    detail.osArch,
+    detail.os_arch,
+    detail.architecture,
+    detail.arch,
+    detail.pkgArch,
+    detail.pkg_arch
+  ]
+
+  for (const value of architectureValues) {
+    const normalizedValue = String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '')
+
+    if (/^(?:x86(?:_64|-64|64)?|amd64|x64|i[3-6]86)$/.test(normalizedValue)) {
+      return 'x86'
+    }
+    if (/^(?:aarch64|arm64|arm(?:32|hf|el|v\d+l?)?)$/.test(normalizedValue)) {
+      return 'arm'
     }
   }
 
@@ -374,17 +491,26 @@ export function buildRpmChangelogFileUrls(detail = {}) {
   const initial = packageName.charAt(0).toLowerCase()
   if (!sourceFolder || !packageName || !/^[a-z0-9]$/.test(initial)) return []
 
+  const architecture = extractChangelogArchitecture(normalizedDetail)
+  if (!architecture) return []
+
   let basePath = ''
   if (normalizedSource === 'redhat') {
     const rhelMajor = extractRhelMajor(normalizedDetail)
     if (!rhelMajor) return []
 
-    basePath = `${CHANGELOG_BASE_PATH}/rhel/rhel${encodeURIComponent(rhelMajor)}/${initial}`
+    basePath = `${CHANGELOG_BASE_PATH}/rhel/rhel${encodeURIComponent(rhelMajor)}_${architecture}/${initial}`
+  } else if (normalizedSource === 'oracle') {
+    const oracleLinuxMajor = extractOracleLinuxMajor(normalizedDetail)
+    if (!oracleLinuxMajor) return []
+
+    basePath = `${CHANGELOG_BASE_PATH}/oraclelinux/ol${encodeURIComponent(oracleLinuxMajor)}_${architecture}/${initial}`
   } else {
     const osVersion = extractChangelogOsVersion(normalizedDetail, sourceFolder)
     if (!osVersion) return []
 
-    basePath = `${CHANGELOG_BASE_PATH}/${encodeURIComponent(sourceFolder)}/${encodeURIComponent(osVersion)}/${initial}`
+    const versionArchitecture = `${osVersion}_${architecture}`
+    basePath = `${CHANGELOG_BASE_PATH}/${encodeURIComponent(sourceFolder)}/${encodeURIComponent(versionArchitecture)}/${initial}`
   }
   const fileStems = []
   addUniqueText(fileStems, packageName)
@@ -729,6 +855,16 @@ export function normalizeRpmPackageDetail(rawDetail = {}) {
       baseDetail.os_sp_version ||
       rawDetail.osSpVersion ||
       rawDetail.os_sp_version ||
+      '',
+    osArchitecture:
+      baseDetail.osArchitecture ||
+      baseDetail.os_architecture ||
+      baseDetail.osArch ||
+      baseDetail.os_arch ||
+      rawDetail.osArchitecture ||
+      rawDetail.os_architecture ||
+      rawDetail.osArch ||
+      rawDetail.os_arch ||
       '',
     architecture:
       baseDetail.architecture ||

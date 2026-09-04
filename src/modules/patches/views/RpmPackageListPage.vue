@@ -245,6 +245,13 @@ async function handleViewDetail(row) {
         row?.osVersion ||
         row?.os_version ||
         '',
+      osSpVersion:
+        responseData.osSpVersion ||
+        responseData.os_sp_version ||
+        row?.osSpVersion ||
+        row?.os_sp_version ||
+        '',
+      osArch: responseData.osArch || responseData.os_arch || row?.osArch || row?.os_arch || '',
       currentPackage:
         row?.currentPackage || row?.completePackageName || responseData.currentPackage || ''
     }

@@ -398,6 +398,14 @@ const props = defineProps({
   osVersion: {
     type: String,
     default: ''
+  },
+  osSpVersion: {
+    type: String,
+    default: ''
+  },
+  osArch: {
+    type: String,
+    default: ''
   }
 })
 
@@ -541,6 +549,18 @@ async function handleViewPackageDetail(pkg) {
               pkg?.osVersion ||
               pkg?.os_version ||
               props.osVersion,
+            osSpVersion:
+              responseData.osSpVersion ||
+              responseData.os_sp_version ||
+              pkg?.osSpVersion ||
+              pkg?.os_sp_version ||
+              props.osSpVersion,
+            osArch:
+              responseData.osArch ||
+              responseData.os_arch ||
+              pkg?.osArch ||
+              pkg?.os_arch ||
+              props.osArch,
             currentPackage:
               pkg?.currentPackage || pkg?.rpmCompletePackageName || responseData.currentPackage || ''
           }

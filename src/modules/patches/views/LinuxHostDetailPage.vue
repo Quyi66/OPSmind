@@ -148,6 +148,8 @@
       :host-id="hostId"
       :os-distro="hostOsDistro"
       :os-version="hostOsVersion"
+      :os-sp-version="hostOsSpVersion"
+      :os-arch="hostOsArch"
       @patch-click="handlePatchClick"
       @update-packages="handleUpdatePackages"
     />
@@ -159,6 +161,8 @@
       :host-id="hostId"
       :os-distro="hostOsDistro"
       :os-version="hostOsVersion"
+      :os-sp-version="hostOsSpVersion"
+      :os-arch="hostOsArch"
       @patch-click="handlePatchClick"
       @fix-vulnerabilities="handleFixVulnerabilities"
     />
@@ -207,6 +211,8 @@ const hostInfoRef = computed(() => ({
   host_id: route.query.host_id || route.query.hostId || '',
   os_distro: route.query.os_distro || '',
   os_version: route.query.os_version || '',
+  os_sp_version: route.query.os_sp_version || route.query.osSpVersion || '',
+  os_arch: route.query.os_arch || route.query.osArch || route.query.architecture || '',
   hostname: route.query.hostname || ''
 }))
 
@@ -217,6 +223,21 @@ const hostOsDistro = computed(
 )
 const hostOsVersion = computed(
   () => machineInfo.value?.os_version || hostInfoRef.value.os_version || ''
+)
+const hostOsSpVersion = computed(
+  () =>
+    machineInfo.value?.os_sp_version ||
+    machineInfo.value?.osSpVersion ||
+    hostInfoRef.value.os_sp_version ||
+    ''
+)
+const hostOsArch = computed(
+  () =>
+    machineInfo.value?.os_arch ||
+    machineInfo.value?.osArch ||
+    machineInfo.value?.architecture ||
+    hostInfoRef.value.os_arch ||
+    ''
 )
 
 const fromLabel = computed(() => route.query.fromLabel || '主机概览')
