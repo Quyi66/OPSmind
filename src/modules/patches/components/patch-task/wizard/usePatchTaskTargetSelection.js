@@ -10,6 +10,11 @@ import { useTableSelectAll } from '../../../composables/useTableSelectAll'
 
 const AFFECTED_PACKAGE_DEBOUNCE_MS = 350
 const MAX_AFFECTED_PACKAGE_SYNC_ATTEMPTS = 3
+const AFFECTED_PACKAGE_LOAD_STATUS = Object.freeze({
+  SUCCESS: 'success',
+  FAILED: 'failed',
+  SUPERSEDED: 'superseded'
+})
 
 export function usePatchTaskTargetSelection({
   props,
@@ -35,6 +40,7 @@ export function usePatchTaskTargetSelection({
   let affectedPackageLoadedKey = ''
   let affectedPackageInFlightKey = ''
   let affectedPackageInFlightPromise = null
+  let targetSelectionSessionId = 0
 
   const packageEmptyText = computed(() => {
     if (!hasFixedHosts.value && selectedHosts.value.length === 0) {
@@ -86,11 +92,13 @@ export function usePatchTaskTargetSelection({
   )
 
   function openTargetSelection() {
+    targetSelectionSessionId += 1
     if (hasFixedHosts.value) setFixedHosts()
     loadInstallData(props.patchesToInstall.map(patch => patch.patch_id))
   }
 
   function closeTargetSelection() {
+    targetSelectionSessionId += 1
     cancelScheduledAffectedPackageRefresh()
     invalidateAffectedPackageRequest()
   }
@@ -129,7 +137,7 @@ export function usePatchTaskTargetSelection({
 
     try {
       if (hasFixedHosts.value) {
-        await loadAffectedPackagesForHosts(resolvedFixedHosts.value, { notifyOnError: true })
+        await loadAffectedPackagesForHosts(resolvedFixedHosts.value)
       } else {
         const hostResponse = await patchInstallApi.getMachinesByPatch({
           patch_ids: patchIds,
@@ -156,15 +164,20 @@ export function usePatchTaskTargetSelection({
 
   async function syncAffectedPackagesForHosts(hosts = []) {
     let hostsToSync = [...hosts]
+    const sessionId = targetSelectionSessionId
 
     for (let attempt = 0; attempt < MAX_AFFECTED_PACKAGE_SYNC_ATTEMPTS; attempt += 1) {
       const queryKey = buildAffectedPackageQuery(hostsToSync).key
-      const synced = await loadAffectedPackagesForHosts(hostsToSync, { notifyOnError: true })
-      if (!synced) return false
+      const loadStatus = await loadAffectedPackagesForHosts(hostsToSync)
+      if (sessionId !== targetSelectionSessionId) return false
 
       const currentHosts = [...selectedHosts.value]
+      const currentQueryKey = buildAffectedPackageQuery(currentHosts).key
 
-      if (buildAffectedPackageQuery(currentHosts).key === queryKey) return true
+      if (loadStatus !== AFFECTED_PACKAGE_LOAD_STATUS.SUPERSEDED && currentQueryKey === queryKey) {
+        return loadStatus === AFFECTED_PACKAGE_LOAD_STATUS.SUCCESS
+      }
+
       hostsToSync = currentHosts
     }
 
@@ -268,36 +281,36 @@ export function usePatchTaskTargetSelection({
 
     affectedPackageDebounceTimer = setTimeout(() => {
       affectedPackageDebounceTimer = null
-      loadAffectedPackagesForHosts(hostsSnapshot, { notifyOnError: true })
+      loadAffectedPackagesForHosts(hostsSnapshot)
     }, AFFECTED_PACKAGE_DEBOUNCE_MS)
   }
 
-  async function loadAffectedPackagesForHosts(hosts = [], { notifyOnError = false } = {}) {
+  async function loadAffectedPackagesForHosts(hosts = []) {
     cancelScheduledAffectedPackageRefresh()
 
     if (isRollbackTask.value) {
       invalidateAffectedPackageRequest()
       affectedPackages.value = [...props.packageCandidates]
-      return true
+      return AFFECTED_PACKAGE_LOAD_STATUS.SUCCESS
     }
 
     if ((isPackageTask.value || isVulnerabilityTask.value) && props.packageCandidates.length > 0) {
       invalidateAffectedPackageRequest()
       affectedPackages.value = [...props.packageCandidates]
-      return true
+      return AFFECTED_PACKAGE_LOAD_STATUS.SUCCESS
     }
 
     const { patchIds, hostIds, key: queryKey } = buildAffectedPackageQuery(hosts)
     if (patchIds.length === 0 || hostIds.length === 0) {
       invalidateAffectedPackageRequest()
       affectedPackages.value = []
-      return true
+      return AFFECTED_PACKAGE_LOAD_STATUS.SUCCESS
     }
 
     if (affectedPackageInFlightKey === queryKey && affectedPackageInFlightPromise) {
       return affectedPackageInFlightPromise
     }
-    if (affectedPackageLoadedKey === queryKey) return true
+    if (affectedPackageLoadedKey === queryKey) return AFFECTED_PACKAGE_LOAD_STATUS.SUCCESS
 
     const requestId = ++affectedPackageRequestId
     affectedPackageLoadedKey = ''
@@ -310,20 +323,27 @@ export function usePatchTaskTargetSelection({
           patch_ids: patchIds,
           host_ids: hostIds
         })
-        if (requestId !== affectedPackageRequestId) return false
+        if (requestId !== affectedPackageRequestId) {
+          return AFFECTED_PACKAGE_LOAD_STATUS.SUPERSEDED
+        }
 
         affectedPackages.value = Array.from(
           new Set((response?.data || []).map(formatAffectedPackage).filter(Boolean))
         )
         affectedPackageLoadedKey = queryKey
-        return true
+        return AFFECTED_PACKAGE_LOAD_STATUS.SUCCESS
       } catch (error) {
-        if (requestId !== affectedPackageRequestId) return false
+        if (requestId !== affectedPackageRequestId) {
+          return AFFECTED_PACKAGE_LOAD_STATUS.SUPERSEDED
+        }
 
         affectedPackages.value = []
         console.error('Failed to load affected packages:', error)
-        if (notifyOnError) ElMessage.error('获取所选主机的受影响软件包失败，请重试')
-        return false
+        const currentQueryKey = buildAffectedPackageQuery(selectedHosts.value).key
+        if (currentQueryKey === queryKey) {
+          ElMessage.error('获取所选主机的受影响软件包失败，请重试')
+        }
+        return AFFECTED_PACKAGE_LOAD_STATUS.FAILED
       } finally {
         if (requestId === affectedPackageRequestId) {
           affectedPackagesLoading.value = false
