@@ -242,6 +242,7 @@ watch(
     normalizedDetail.value.source,
     normalizedDetail.value.osDistro,
     normalizedDetail.value.osVersion,
+    normalizedDetail.value.osSpVersion,
     normalizedDetail.value.currentPackage,
     normalizedDetail.value.completePackageName,
     normalizedDetail.value.pkgId,
@@ -249,6 +250,7 @@ watch(
     normalizedDetail.value.name,
     normalizedDetail.value.version,
     normalizedDetail.value.release,
+    normalizedDetail.value.osArchitecture,
     normalizedDetail.value.architecture
   ],
   async ([visible, detailLoading], _previousValue, onCleanup) => {

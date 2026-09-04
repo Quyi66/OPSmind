@@ -1499,6 +1499,14 @@ function getRowOsVersion(row) {
   return String(row?.osVersion || row?.os_version || row?.os_major_version || '').trim()
 }
 
+function getRowOsSpVersion(row) {
+  return String(row?.osSpVersion || row?.os_sp_version || '').trim()
+}
+
+function getRowOsArch(row) {
+  return String(row?.osArch || row?.os_arch || row?.architecture || '').trim()
+}
+
 function getAffectedPackageKey(pkg, index) {
   return [pkg?.rpmInfoId, pkg?.currentPackage, index].filter(Boolean).join('-')
 }
@@ -1594,6 +1602,18 @@ async function handleViewPackageDetail(pkg, row) {
               pkg?.osVersion ||
               pkg?.os_version ||
               getRowOsVersion(row),
+            osSpVersion:
+              responseData.osSpVersion ||
+              responseData.os_sp_version ||
+              pkg?.osSpVersion ||
+              pkg?.os_sp_version ||
+              getRowOsSpVersion(row),
+            osArch:
+              responseData.osArch ||
+              responseData.os_arch ||
+              pkg?.osArch ||
+              pkg?.os_arch ||
+              getRowOsArch(row),
             currentPackage:
               pkg?.currentPackage || pkg?.rpmCompletePackageName || responseData.currentPackage || ''
           }

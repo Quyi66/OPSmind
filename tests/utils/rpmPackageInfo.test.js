@@ -56,9 +56,9 @@ describe('rpmPackageInfo - static changelog', () => {
       architecture: 'x86_64'
     })
 
-    expect(urls[0]).toBe('/KoreOPS/changelog/rhel/rhel7/a/abrt.txt')
-    expect(urls).toContain('/KoreOPS/changelog/rhel/rhel7/a/abrt-2.1.11-60.txt')
-    expect(urls).toContain('/KoreOPS/changelog/rhel/rhel7/a/abrt-2.1.11-60.el7.txt')
+    expect(urls[0]).toBe('/KoreOPS/changelog/rhel/rhel7_x86/a/abrt.txt')
+    expect(urls).toContain('/KoreOPS/changelog/rhel/rhel7_x86/a/abrt-2.1.11-60.txt')
+    expect(urls).toContain('/KoreOPS/changelog/rhel/rhel7_x86/a/abrt-2.1.11-60.el7.txt')
   })
 
   it('falls back to the Red Hat OS version when NEVRA has no el marker', () => {
@@ -66,10 +66,11 @@ describe('rpmPackageInfo - static changelog', () => {
       buildRpmChangelogFileUrls({
         source: 'redhat',
         osVersion: '8.10',
+        osArch: 'x86_64',
         name: 'chrony',
         version: '4.5-1'
       })[0]
-    ).toBe('/KoreOPS/changelog/rhel/rhel8/c/chrony.txt')
+    ).toBe('/KoreOPS/changelog/rhel/rhel8_x86/c/chrony.txt')
   })
 
   it('builds Ubuntu changelog paths from OS version, package initial and version', () => {
@@ -81,10 +82,8 @@ describe('rpmPackageInfo - static changelog', () => {
       architecture: 'amd64'
     })
 
-    expect(urls[0]).toBe('/KoreOPS/changelog/ubuntu/20.04/2/2048-qt.txt')
-    expect(urls).toContain(
-      '/KoreOPS/changelog/ubuntu/20.04/2/2048-qt-0.1.6-2build1.txt'
-    )
+    expect(urls[0]).toBe('/KoreOPS/changelog/ubuntu/20.04_x86/2/2048-qt.txt')
+    expect(urls).toContain('/KoreOPS/changelog/ubuntu/20.04_x86/2/2048-qt-0.1.6-2build1.txt')
   })
 
   it('keeps outer Ubuntu OS context when package details are nested', () => {
@@ -99,20 +98,103 @@ describe('rpmPackageInfo - static changelog', () => {
       }
     })
 
-    expect(urls[0]).toBe('/KoreOPS/changelog/ubuntu/22.04/4/4pane.txt')
+    expect(urls[0]).toBe('/KoreOPS/changelog/ubuntu/22.04_x86/4/4pane.txt')
   })
 
   it('uses the same versioned directory rule for other package sources', () => {
     const urls = buildRpmChangelogFileUrls({
       source: 'kylin',
       os_version: 'V10',
+      os_sp_version: 'SP1',
       pkgName: 'audit',
       pkgVersion: '3.0-5.ky10',
       pkgArch: 'x86_64'
     })
 
-    expect(urls[0]).toBe('/KoreOPS/changelog/kylin/V10/a/audit.txt')
-    expect(urls).toContain('/KoreOPS/changelog/kylin/V10/a/audit-3.0-5.ky10.txt')
+    expect(urls[0]).toBe('/KoreOPS/changelog/kylin/kylinV10SP1_x86/a/audit.txt')
+    expect(urls).toContain('/KoreOPS/changelog/kylin/kylinV10SP1_x86/a/audit-3.0-5.ky10.txt')
+  })
+
+  it.each([
+    ['V10', 'SP1.1', 'kylinV10SP1.1_arm'],
+    ['V10', 'SP3 2403', 'kylinV10SP3-2403_arm'],
+    ['V11', '2503', 'kylinV11-2503_arm'],
+    ['V11', 'SP1-2603', 'kylinV11SP1-2603_arm']
+  ])('normalizes Kylin %s %s to the server directory', (osVersion, osSpVersion, directory) => {
+    const urls = buildRpmChangelogFileUrls({
+      source: 'kylin',
+      osVersion,
+      osSpVersion,
+      osArch: 'aarch64',
+      name: 'audit',
+      version: '3.0-5.ky10'
+    })
+
+    expect(urls[0]).toBe(`/KoreOPS/changelog/kylin/${directory}/a/audit.txt`)
+  })
+
+  it('uses the complete Kylin distro when the separate SP version is absent', () => {
+    const urls = buildRpmChangelogFileUrls({
+      source: 'kylin',
+      osDistro: 'Kylin Linux Advanced Server V10 SP2',
+      osVersion: 'V10',
+      architecture: 'x86_64',
+      name: 'audit',
+      version: '3.0-5.ky10'
+    })
+
+    expect(urls[0]).toBe('/KoreOPS/changelog/kylin/kylinV10SP2_x86/a/audit.txt')
+  })
+
+  it('does not guess a Kylin directory from an incomplete or conflicting version', () => {
+    expect(
+      buildRpmChangelogFileUrls({
+        source: 'kylin',
+        osDistro: 'Kylin V10 SP3',
+        osVersion: 'V11',
+        architecture: 'x86_64',
+        name: 'audit',
+        version: '3.0-5.ky10'
+      })
+    ).toEqual([])
+  })
+
+  it('maps Oracle Linux source and major version to oraclelinux/ol{major}', () => {
+    const urls = buildRpmChangelogFileUrls({
+      source: 'Oracle Linux',
+      osVersion: 'Oracle Linux 7.9',
+      architecture: 'aarch64',
+      name: '389-ds-base',
+      version: '1.3.10-1.el7'
+    })
+
+    expect(urls[0]).toBe('/KoreOPS/changelog/oraclelinux/ol7_arm/3/389-ds-base.txt')
+
+    expect(
+      buildRpmChangelogFileUrls({
+        source: 'oracle',
+        osVersion: '8.10',
+        architecture: 'x86_64',
+        name: 'audit',
+        version: '3.0-1.el8'
+      })[0]
+    ).toBe('/KoreOPS/changelog/oraclelinux/ol8_x86/a/audit.txt')
+  })
+
+  it('prefers the host architecture for architecture-independent packages', () => {
+    const urls = buildRpmChangelogFileUrls({
+      osVersion: 'kylinV10SP3-2403',
+      osDistro: 'Kylin V10',
+      osArch: 'aarch64',
+      packageInfo: {
+        source: 'kylin',
+        name: 'audit-help',
+        currentPackage: 'audit-help-3.0-5.ky10.noarch',
+        pkgArch: 'noarch'
+      }
+    })
+
+    expect(urls[0]).toBe('/KoreOPS/changelog/kylin/kylinV10SP3-2403_arm/a/audit-help.txt')
   })
 
   it('uses a numeric initial and strips module RHEL metadata', () => {
@@ -126,7 +208,7 @@ describe('rpmPackageInfo - static changelog', () => {
     const urls = buildRpmChangelogFileUrls(detail)
     const versions = getRpmChangelogVersionCandidates(detail)
 
-    expect(urls[0]).toBe('/KoreOPS/changelog/rhel/rhel8/3/389-ds-base-snmp.txt')
+    expect(urls[0]).toBe('/KoreOPS/changelog/rhel/rhel8_x86/3/389-ds-base-snmp.txt')
     expect(versions).toContain('1.4.3.39-26')
   })
 
