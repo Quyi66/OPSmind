@@ -912,4 +912,12 @@ function handleSkipPreCheck() {
 
 <style scoped lang="scss">
 @use './PatchTaskWizard.scss' as *;
+
+:deep(.patch-task-package-list__item) {
+  color: #666;
+}
+
+:global(html.dark) :deep(.patch-task-package-list__item) {
+  color: var(--el-text-color-secondary);
+}
 </style>
