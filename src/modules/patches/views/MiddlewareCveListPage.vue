@@ -244,7 +244,7 @@
                   </el-space>
                 </template>
               </el-table-column>
-              <el-table-column label="中间件" width="90">
+              <el-table-column label="中间件" width="100">
                 <template #default="{ row }">
                   <el-tag
                     :type="middlewareTagType(row.middlewareType)"
@@ -256,7 +256,7 @@
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="版本" min-width="100" show-overflow-tooltip>
+              <el-table-column label="版本" min-width="110" show-overflow-tooltip>
                 <template #default="{ row }">
                   <span v-if="row.version">{{ row.version }}</span>
                   <el-tag v-else type="info" size="small">版本未采到</el-tag>
@@ -293,7 +293,12 @@
                   </RunLogStatusTag>
                 </template>
               </el-table-column>
-              <el-table-column label="漏洞" min-width="90" align="center">
+              <el-table-column
+                label="漏洞"
+                :min-width="instanceVulnerabilityColumnWidth"
+                align="center"
+                class-name="instance-vulnerability-column"
+              >
                 <template #default="{ row }">
                   <RunLogStatusTag
                     v-if="Number(row.numVuls) > 0"
@@ -857,6 +862,14 @@ const router = useRouter()
 const activeTab = ref('instances')
 
 const instances = ref([])
+const instanceVulnerabilityColumnWidth = computed(() => {
+  const maxDigits = instances.value.reduce(
+    (length, row) => Math.max(length, Number(row.numVuls) > 0 ? String(row.numVuls).length : 1),
+    1
+  )
+  // 为数量、单位、查看图标和标签及单元格内边距预留空间。
+  return Math.max(90, 80 + maxDigits * 10)
+})
 const vulnerabilities = ref([])
 const selectedInstances = ref([])
 const selectedVulnerabilities = ref([])
@@ -1758,6 +1771,12 @@ onMounted(() => {
   min-width: 0;
   flex-direction: column;
   line-height: 20px;
+}
+
+:deep(.instance-vulnerability-column .cell) {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
 }
 
 .fix-hint-link {
