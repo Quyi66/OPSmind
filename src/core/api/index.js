@@ -147,7 +147,7 @@ class ApiService {
 
         // 处理权限错误
         if (response?.status === 403) {
-          return Promise.reject(new Error('无权执行此操作'))
+          return Promise.reject(new Error('Access denied'))
         }
 
         // 重试逻辑

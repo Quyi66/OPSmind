@@ -150,6 +150,18 @@ const props = defineProps({
   osDistro: {
     type: String,
     default: ''
+  },
+  osVersion: {
+    type: String,
+    default: ''
+  },
+  osSpVersion: {
+    type: String,
+    default: ''
+  },
+  osArch: {
+    type: String,
+    default: ''
   }
 })
 
@@ -278,10 +290,37 @@ async function handleViewPackageDetail(row) {
       version,
       pkgName,
       source,
-      arch
+      arch,
+      osDistro: row?.osDistro || row?.os_distro || props.osDistro,
+      osVersion: row?.osVersion || row?.os_version || props.osVersion,
+      osArch: row?.osArch || row?.os_arch || props.osArch
     })
 
-    detailData.value = response?.data || response || {}
+    const responseData = response?.data || response || {}
+    detailData.value = {
+      ...responseData,
+      source: responseData.source || source,
+      osDistro:
+        responseData.osDistro ||
+        responseData.os_distro ||
+        row?.osDistro ||
+        row?.os_distro ||
+        props.osDistro,
+      osVersion:
+        responseData.osVersion ||
+        responseData.os_version ||
+        row?.osVersion ||
+        row?.os_version ||
+        props.osVersion,
+      osSpVersion:
+        responseData.osSpVersion ||
+        responseData.os_sp_version ||
+        row?.osSpVersion ||
+        row?.os_sp_version ||
+        props.osSpVersion,
+      osArch: responseData.osArch || responseData.os_arch || row?.osArch || row?.os_arch || props.osArch,
+      currentPackage: currentPackage || responseData.currentPackage || ''
+    }
   } catch (error) {
     console.error('Failed to load installed package detail:', error)
     ElMessage.error('获取软件包详情失败')

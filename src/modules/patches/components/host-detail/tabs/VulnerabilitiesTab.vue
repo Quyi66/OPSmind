@@ -394,6 +394,18 @@ const props = defineProps({
   osDistro: {
     type: String,
     default: ''
+  },
+  osVersion: {
+    type: String,
+    default: ''
+  },
+  osSpVersion: {
+    type: String,
+    default: ''
+  },
+  osArch: {
+    type: String,
+    default: ''
   }
 })
 
@@ -493,7 +505,7 @@ function buildDetailCandidates(pkg) {
     })
   }
 
-  const detailParams = getAffectedPackageDetailParams(pkg, props.osDistro)
+  const detailParams = getAffectedPackageDetailParams(pkg, props.osDistro, props.osVersion)
   if (detailParams.installedDetail) {
     candidates.push({
       label: 'by installed currentPackage',
@@ -522,7 +534,36 @@ async function handleViewPackageDetail(pkg) {
         const response = await candidate.request()
         const responseData = response?.data || response || {}
         if (hasRpmDetailResponse(responseData)) {
-          detailData.value = responseData
+          detailData.value = {
+            ...responseData,
+            source: responseData.source || pkg?.source || '',
+            osDistro:
+              responseData.osDistro ||
+              responseData.os_distro ||
+              pkg?.osDistro ||
+              pkg?.os_distro ||
+              props.osDistro,
+            osVersion:
+              responseData.osVersion ||
+              responseData.os_version ||
+              pkg?.osVersion ||
+              pkg?.os_version ||
+              props.osVersion,
+            osSpVersion:
+              responseData.osSpVersion ||
+              responseData.os_sp_version ||
+              pkg?.osSpVersion ||
+              pkg?.os_sp_version ||
+              props.osSpVersion,
+            osArch:
+              responseData.osArch ||
+              responseData.os_arch ||
+              pkg?.osArch ||
+              pkg?.os_arch ||
+              props.osArch,
+            currentPackage:
+              pkg?.currentPackage || pkg?.rpmCompletePackageName || responseData.currentPackage || ''
+          }
           return
         }
       } catch (error) {

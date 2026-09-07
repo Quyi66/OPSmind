@@ -157,6 +157,9 @@
       ref="packagesTabRef"
       :host-id="hostId"
       :os-distro="hostOsDistro"
+      :os-version="hostOsVersion"
+      :os-sp-version="hostOsSpVersion"
+      :os-arch="hostOsArch"
       @patch-click="handlePatchClick"
       @update-packages="handleUpdatePackages"
     />
@@ -167,6 +170,9 @@
       ref="vulnerabilitiesTabRef"
       :host-id="hostId"
       :os-distro="hostOsDistro"
+      :os-version="hostOsVersion"
+      :os-sp-version="hostOsSpVersion"
+      :os-arch="hostOsArch"
       @patch-click="handlePatchClick"
       @fix-vulnerabilities="handleFixVulnerabilities"
     />
@@ -194,7 +200,7 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { authService } from '@/core/auth'
@@ -211,25 +217,38 @@ import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWiza
 const route = useRoute()
 const router = useRouter()
 
-const hostInfoRef = computed(() => {
-  const hostKey = route.query.host_key || route.query.hostKey || ''
-  const hostId = route.query.host_id || route.query.hostId || ''
-
-  return {
-    hostKey,
-    host_key: hostKey,
-    hostId,
-    host_id: hostId,
-    os_distro: route.query.os_distro || '',
-    os_version: route.query.os_version || '',
-    hostname: route.query.hostname || ''
-  }
-})
+const hostInfoRef = computed(() => ({
+  host_key: route.query.host_key || route.query.hostKey || '',
+  host_id: route.query.host_id || route.query.hostId || '',
+  os_distro: route.query.os_distro || '',
+  os_version: route.query.os_version || '',
+  os_sp_version: route.query.os_sp_version || route.query.osSpVersion || '',
+  os_arch: route.query.os_arch || route.query.osArch || route.query.architecture || '',
+  hostname: route.query.hostname || ''
+}))
 
 const hostId = computed(() => hostInfoRef.value.host_id || '')
 const hostKey = computed(() => hostInfoRef.value.host_key || hostInfoRef.value.hostKey || '')
 const hostOsDistro = computed(
   () => machineInfo.value?.os_distro || hostInfoRef.value.os_distro || ''
+)
+const hostOsVersion = computed(
+  () => machineInfo.value?.os_version || hostInfoRef.value.os_version || ''
+)
+const hostOsSpVersion = computed(
+  () =>
+    machineInfo.value?.os_sp_version ||
+    machineInfo.value?.osSpVersion ||
+    hostInfoRef.value.os_sp_version ||
+    ''
+)
+const hostOsArch = computed(
+  () =>
+    machineInfo.value?.os_arch ||
+    machineInfo.value?.osArch ||
+    machineInfo.value?.architecture ||
+    hostInfoRef.value.os_arch ||
+    ''
 )
 
 const fromLabel = computed(() => route.query.fromLabel || '主机概览')
@@ -325,30 +344,20 @@ function handleInstallSuccess() {
   }
 }
 
-function loadActiveTabData(tab = activeTab.value) {
-  if (tab === 'packages') {
-    packagesTabRef.value?.loadPackageList()
-  } else if (tab === 'vulnerabilities') {
-    vulnerabilitiesTabRef.value?.loadVulnerabilityList()
+// 监听Tab切换
+watch(activeTab, newTab => {
+  if (newTab === 'packages' && packagesTabRef.value) {
+    packagesTabRef.value.loadPackageList()
+  } else if (newTab === 'vulnerabilities' && vulnerabilitiesTabRef.value) {
+    vulnerabilitiesTabRef.value.loadVulnerabilityList()
   }
-}
-
-// 使用 post 时序，确保通过 URL 直达标签页时子组件引用已经完成挂载。
-watch(activeTab, loadActiveTabData, { flush: 'post' })
+})
 
 watch(
   () => route.query,
-  async () => {
-    const nextTab = route.query.tab || 'patches'
-    const tabChanged = activeTab.value !== nextTab
-    activeTab.value = nextTab
+  () => {
+    activeTab.value = route.query.tab || 'patches'
     loadMachineInfo()
-
-    // 同一详情页切换主机时 tab 值不会变化，需要主动刷新当前标签数据。
-    if (!tabChanged) {
-      await nextTick()
-      loadActiveTabData(nextTab)
-    }
   },
   { immediate: true }
 )

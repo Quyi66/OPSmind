@@ -1,0 +1,178 @@
+Package: 389-ds-base-snmp
+Selected NEVRA: 389-ds-base-snmp-1.4.3.39-26.module+el8.10.0+24681+e3e72ab4.x86_64
+Repository: /mnt/repos/rhel/rhel8/rhel-8-for-x86_64-appstream-rpms
+Changelog source: RPM header
+
+* 2026-07-27 Anuar Beisembayev <abeisemb@redhat.com> - 1.4.3.39-26
+- Bump version to 1.4.3.39-26
+- Resolves: RHEL-183073 - EMBARGOED CVE-2026-11770 389-ds-base: 389-ds-base: pre-auth LDAP filter injection in CleanAllRUV status check [rhel-8.10.z]
+- Resolves: RHEL-190782 - CVE-2026-11788 389-ds-base: 389-ds-base: NULL pointer dereference in deref control plugin BER parser [rhel-8.10.z]
+- Resolves: RHEL-210880 - EMBARGOED CVE-2026-15722 389-ds:1.4/389-ds-base: 389-ds-base: pre-authentication stack buffer overflow in get_ruvelement_from_berval() via unbounded replica ID parsing [rhel-8.10.z]
+
+* 2026-06-25 Anuar Beisembayev <abeisemb@redhat.com> - 1.4.3.39-25
+- Bump version to 1.4.3.39-25
+- Resolves: RHEL-182162 - EMBARGOED CVE-2026-11610 389-ds-base: 389-ds-base: Heap buffer overflow in sasl_io_recv() via padded SASL UNBIND [rhel-8.10.z]
+- Resolves: RHEL-183102 - CVE-2026-11774 389-ds-base: 389-ds-base: integer overflow in SASL packet length bypasses size limit
+
+* 2026-05-13 Arun Bansal <arbansal@redhat.com> - 1.4.3.39-24
+- Bump version to 1.4.3.39-24
+- Resolves: RHEL-170278 - Memory leaks in syncrepl plugin during persistent search operations [rhel-8.10.z]
+- Resolves: RHEL-163375 - WARN - keys2idl - received NULL idl from index_read_ext_allids
+- Resolves: RHEL-159306 - ns-slapd crash in libdb possible memory corruption [rhel-8.10.z]
+- Resolves: RHEL-170284 - access log - suspicious wtime optime negative and large values in internal op [rhel-8.10.z]
+- Resolves: RHEL-170507 - ns-slapd fails to shutdown when deferred memberof update is in progress [rhel-8.10.z]
+- Resolves: RHEL-170509 - Crash in trim_changelog() during the Retro Changelog trimming [rhel-8.10.z]
+- Resolves: RHEL-170514 - Possible memory leak when using the Retro Changelog plugin [rhel-8.10.z]
+- Resolves: RHEL-170512 - Crash in replica_config_add when manually configuring a replica with an incorrect nsds5ReplicaRoot [rhel-8.10.z]
+- Resolves: RHEL-174523 - [RFE] Add OS-level thread names to all server threads [rhel-8.10.z]
+- Resolves: RHEL-170483 - test_vlv_recreation_reindex fails on LMDB [rhel-8.10.z]
+- Resolves: RHEL-178076 - CVE-2026-9064 389-ds:1.4/389-ds-base: unbounded LDAP controls count in get_ldapmessage_controls_ext() causes CPU and heap amplification (remote DoS) [rhel-8.10.z]
+
+* 2026-03-04 Arun Bansal <arbansal@redhat.com> - 1.4.3.39-23
+- Resolves: RHEL-137074 - CVE-2025-14905 389-ds:1.4/389-ds-base: 389-ds-base: Remote Code Execution and Denial of Service via heap buffer overflow [rhel-8.10.z]
+- Resolves: RHEL-152098 - Scalability issue of replication online initialization with large database [rhel-8.10.z]
+
+* 2026-02-18 Viktor Ashirov <vashirov@redhat.com> - 1.4.3.39-22
+- Resolves: RHEL-148485 - Upgrading IDM to latest version: 389-ds-base and ipa-server breaks replication [rhel-8.10.z]
+
+* 2026-01-23 Arun Bansal <arbansal@redhat.com> - 1.4.3.39-21
+- Resolves: RHEL-141419 - (&(cn:dn:=groups)) no longer returns results [rhel-8.10.z]
+- Resolves: RHEL-140272 - ipa-healthcheck is complaining about missing or 
+                          incorrectly configured system indexes. [rhel-8.10.z]
+
+* 2026-01-13 Arun Bansal <arbansal@redhat.com> - 1.4.3.39-20
+- Resolves: RHEL-140086 - Upgrading IDM to latest version: 389-ds-base and ipa-server breaks replication [rhel-8.10.z]
+
+* 2025-12-05 Masahiro Matsuya <mmatsuya@redhat.com> - 1.4.3.39-19
+- Resolves: RHEL-117759 - Replication online reinitialization of a large database gets stalled. [rhel-8.10.z]
+
+* 2025-12-03 Masahiro Matsuya <mmatsuya@redhat.com> - 1.4.3.39-18
+- Reverts: RHEL-123241 - Attribute uniqueness is not enforced upon modrdn operation [rhel-8.10.z]
+
+* 2025-11-26 Masahiro Matsuya <mmatsuya@redhat.com> - 1.4.3.39-17
+- Resolves: RHEL-80491 - Can't rename users member of automember rule [rhel-8.10.z]
+- Resolves: RHEL-87191 - Some replication status data are reset upon a restart. [rhel-8.10.z]
+- Resolves: RHEL-89785 - Extend log of operations statistics in access log
+- Resolves: RHEL-111226 - Error showing local password policy on web UI [rhel-8.10.z]
+- Resolves: RHEL-113976 - AddressSanitizer: memory leak in memberof_add_memberof_attr [rhel-8.10.z]
+- Resolves: RHEL-117457 - subtree search statistics for index lookup does not report ancestorid/entryrdn lookups
+- Resolves: RHEL-117752 - Crash if repl keep alive entry can not be created [rhel-8.10.z]
+- Resolves: RHEL-117759 - Replication online reinitialization of a large database gets stalled. [rhel-8.10.z]
+- Resolves: RHEL-117765 - Statistics about index lookup report a wrong duration [rhel-8.10.z]
+- Resolves: RHEL-123228 - Improve the way to detect asynchronous operations in the access logs [rhel-8.10.z]
+- Resolves: RHEL-123241 - Attribute uniqueness is not enforced upon modrdn operation [rhel-8.10.z]
+- Resolves: RHEL-123254 - Typo in errors log after a Memberof fixup task. [rhel-8.10.z]
+- Resolves: RHEL-123269 - LDAP high CPU usage while handling indexes with IDL scan limit at INT_MAX [rhel-8.10.z]
+- Resolves: RHEL-123276 - The new ipahealthcheck test ipahealthcheck.ds.backends.BackendsCheck raises CRITICAL issue [rhel-8.10.z]
+- Resolves: RHEL-123363 - When deferred memberof update is enabled after the server crashed it should not launch memberof fixup task by default [rhel-8.10.z]
+- Resolves: RHEL-123365 - IPA health check up script shows time skew is over 24 hours [rhel-8.10.z]
+- Resolves: RHEL-123920 - Changelog trimming - add number of scanned entries to the log [rhel-8.10.z]
+- Resolves: RHEL-126512 - Created user password hash available to see in audit log [rhel-8.10.z]
+- Resolves: RHEL-129578 - Fix paged result search locking [rhel-8.10.z]
+- Resolves: RHEL-130900 - On RHDS 12.6 The user password policy for a user was created, but the pwdpolicysubentry attribute for this user incorrectly points to the People OU password policy instead of the specific user policy. [rhel-8.10.z]
+
+* 2025-08-18 Viktor Ashirov <vashirov@redhat.com> - 1.4.3.39-15
+- Resolves: RHEL-109028 - Allow Uniqueness plugin to search uniqueness attributes using custom matching rules [rhel-8.10.z]
+
+* 2025-06-05 Viktor Ashirov <vashirov@redhat.com> - 1.4.3.39-14
+- Reverts: RHEL-80704 - Increased memory consumption caused by NDN cache [rhel-8.10.z]
+- Resolves: RHEL-95442 - ns-slapd[xxxx]: segfault at 10d7d0d0 ip 00007ff734050cdb sp 00007ff6de9f1430 error 6 in libslapd.so.0.1.0[7ff733ec0000+1b3000] [rhel-8.10.z]
+
+* 2025-05-15 Viktor Ashirov <vashirov@redhat.com> - 1.4.3.39-13
+- Resolves: RHEL-89749 - Nested group does not receive memberOf attribute [rhel-8.10.z]
+- Resolves: RHEL-89758 - dsidm Error: float() argument must be a string or a number, not 'NoneType' [rhel-8.10.z]
+- Resolves: RHEL-89765 - Crash in __strlen_sse2 when using the nsRole filter rewriter. [rhel-8.10.z]
+- Resolves: RHEL-89778 - RHDS12.2 NSMMReplicationPlugin - release_replica Unable to parse the response [rhel-8.10.z]
+
+* 2025-04-03 Viktor Ashirov <vashirov@redhat.com> - 1.4.3.39-12
+- Resolves: RHEL-85499 - [RFE] defer memberof nested updates [rhel-8.10.z]
+- Resolves: RHEL-65663 - dsconf incorrectly setting up Pass-Through Authentication
+- Resolves: RHEL-80704 - Increased memory consumption caused by NDN cache [rhel-8.10.z]
+- Resolves: RHEL-81127 - nsslapd-idletimeout is ignored [rhel-8.10.z]
+- Resolves: RHEL-81136 - Healthcheck tool should warn admin about creating a substring index on membership attribute [rhel-8.10.z]
+- Resolves: RHEL-81143 - 389DirectoryServer Process Stops When Setting up Sorted VLV Index [rhel-8.10.z]
+- Resolves: RHEL-81152 - AddressSanitizer: double-free [rhel-8.10.z]
+- Resolves: RHEL-81176 - Verbose option for dsctl is not shown in help of actions [rhel-8.10.z]
+
+* 2025-01-23 Viktor Ashirov <vashirov@redhat.com> - 1.4.3.39-11
+- Resolves: RHEL-72487 - IPA LDAP error code T3 when no exceeded time limit from a paged search result [rhel-8.10.z]
+
+* 2025-01-17 Viktor Ashirov <vashirov@redhat.com> - 1.4.3.39-10
+- Resolves: RHEL-69822 - "Duplicated DN detected" errors when creating indexes or importing entries. [rhel-8.10.z]
+- Resolves: RHEL-71215 - Sub suffix causes "id2entry - Could not open id2entry err 0" error when the Directory Server starts [rhel-8.10.z]
+
+* 2024-11-22 Viktor Ashirov <vashirov@redhat.com> - 1.4.3.39-9
+- Resolves: RHEL-64360 - Cannot compact the replication changelog using dsconf. [rhel-8.10.z]
+
+* 2024-09-09 Viktor Ashirov <vashirov@redhat.com> - 1.4.3.39-8
+- Bump version to 1.4.3.39-8
+- Resolves: RHEL-40943 - CVE-2024-5953 389-ds:1.4/389-ds-base: Malformed userPassword hash may cause Denial of Service [rhel-8.10.z]
+- Resolves: RHEL-58069 - perf search result investigation for many large static groups and members [rhel-8.10.0.z]
+
+* 2024-06-13 Viktor Ashirov <vashirov@redhat.com> - 1.4.3.39-7
+- Bump version to 1.4.3.39-7
+- Resolves: RHEL-16277 - LDAP connections are closed with code T2 before the IO block timeout is reached. [rhel-8.10.0.z]
+
+* 2024-06-13 Viktor Ashirov <vashirov@redhat.com> - 1.4.3.39-6
+- Bump version to 1.4.3.39-6
+- Resolves: RHEL-16277 - LDAP connections are closed with code T2 before the IO block timeout is reached. [rhel-8.10.0.z]
+
+* 2024-06-11 Viktor Ashirov <vashirov@redhat.com> - 1.4.3.39-5
+- Bump version to 1.4.3.39-5
+- Resolves: RHEL-16277 - LDAP connections are closed with code T2 before the IO block timeout is reached. [rhel-8.10.0.z]
+
+* 2024-06-06 James Chapman <jachapma@redhat.com> - 1.4.3.39-4
+- Bump version to 1.4.3.39-4
+- Resolves: RHEL-34818 - redhat-ds:11/389-ds-base: Malformed userPassword may cause crash at do_modify in slapd/modify.c
+- Resolves: RHEL-34824 - redhat-ds:11/389-ds-base: potential denial of service via specially crafted kerberos AS-REQ request
+
+* 2024-03-14 Simon Pichugin <spichugi@redhat.com> - 1.4.3.39-3
+- Bump version to 1.4.3.39-3
+- Resolves: RHEL-19240 - RFE Add PROXY protocol support to 389-ds-base via confiuration item - similar to Postfix
+
+* 2024-02-05 Thierry Bordaz <tbordaz@redhat.com> - 1.4.3.39-2
+- Bump version to 1.4.3.39-2
+- Resolves: RHEL-23209 - CVE-2024-1062 389-ds:1.4/389-ds-base: a heap overflow leading to denail-of-servce while writing a value larger than 256 chars (in log_entry_attr)
+- Resolves: RHEL-5390  - schema-compat-plugin expensive with automember rebuild
+- Resolves: RHEL-5135  - crash in sync_update_persist_op() of content sync plugin
+
+* 2024-01-16 Simon Pichugin <spichugi@redhat.com> - 1.4.3.39-1
+- Bump version to 1.4.3.39-1
+- Resolves: RHEL-19028 - Rebase 389-ds-base in RHEL 8.10 to 1.4.3.39
+- Resolves: RHEL-19240 - [RFE] Add PROXY protocol support to 389-ds-base
+- Resolves: RHEL-5143  - SELinux labeling for dirsrv files seen during ipa install/uninstall should be moved to DEBUG.
+- Resolves: RHEL-5107  - bdb_start - Detected Disorderly Shutdown directory server is not starting
+- Resolves: RHEL-16338 - ns-slapd crash in slapi_attr_basetype
+- Resolves: RHEL-14025 - After an upgrade the LDAP server won't start if nsslapd-conntablesize is present in the dse.ldif file.
+
+* 2023-12-08 James Chapman <jachapma@redhat.com> - 1.4.3.38-1
+- Bump version to 1.4.3.38-1
+- Resolves: RHEL-19028 - Rebase 389-ds-base in RHEL 8.10 to 1.4.3.38
+
+* 2023-08-16 Mark Reynolds <mreynolds@redhat.com> - 1.4.3.37-1
+- Bump versionto 1.4.3.37-1
+- Resolves: rhbz#2224505 - Paged search impacts performance
+- Resolves: rhbz#2220890 - healthcheck tool needs to be updates for new default password storage scheme
+- Resolves: rhbz#2218235 - python3-lib389: Python tarfile extraction needs change to avoid a warning
+- Resolves: rhbz#2210491 - dtablesize being set to soft maxfiledescriptor limit causing massive slowdown in large enviroments.
+- Resolves: rhbz#2149967 - SELinux labeling for dirsrv files seen during ipa install/uninstall should be moved to DEBUG
+
+* 2023-07-11 Mark Reynolds <mreynolds@redhat.com> - 1.4.3.36-2
+- Bump version to 1.4.3.36-2
+- Resolves: rhbz#2220890 - healthcheck tool needs to be updates for new default password storage scheme
+
+* 2023-06-14 Mark Reynolds <mreynolds@redhat.com> - 1.4.3.36-1
+- Bump version to 1.4.3.36-1
+- Resolves: rhbz#2188628 - Rebase 389-ds-base in RHEL 8.9 to 1.4.3.36
+
+* 2023-05-22 Mark Reynolds <mreynolds@redhat.com> - 1.4.3.35-1
+- Bump version to 1.4.3.35-1
+- Resolves: rhbz#2188628 - Rebase 389-ds-base in RHEL 8.9 to 1.4.3.35
+
+* 2022-11-15 Mark Reynolds <mreynolds@redhat.com> - 1.4.3.32-1
+- Bump version to 1.4.3.32-1
+- Resolves: Bug 2098138 - broken nsslapd-subtree-rename-switch option in rhds11
+- Resolves: Bug 2119063 - entryuuid fixup tasks fails because entryUUID is not mutable
+- Resolves: Bug 2136610 - [RFE] Add 'cn' attribute to IPA audit logs 
+- Resolves: Bug 2142638 - pam mutex lock causing high etimes, affecting red hat internal sso
+- Resolves: Bug 2096795 - [RFE] Support ECDSA private keys for TLS

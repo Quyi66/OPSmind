@@ -133,8 +133,7 @@ const props = defineProps({
 
 const emit = defineEmits(['select-group', 'select-tag'])
 
-// 默认收起，为资产表格保留更充足的横向空间；用户仍可通过侧边按钮展开。
-const isCollapsed = ref(true)
+const isCollapsed = ref(false)
 const activeTab = ref('group')
 const filterText = ref('')
 const groupTreeRef = ref(null)

@@ -184,7 +184,9 @@ const STATUS_MAP = {
   COMPLETED: '已完成',
   SUCCESS: '已完成',
   FAILED: '失败',
-  ERROR: '错误'
+  ERROR: '错误',
+  CALLBACK: '回调中',
+  TIMEOUT: '超时'
 }
 
 const formData = reactive({

@@ -212,7 +212,7 @@
             <el-table-column type="selection" width="40" fixed="left" />
 
             <!-- 1. 设备标识复合列 -->
-            <el-table-column label="设备标识" min-width="150" fixed="left">
+            <el-table-column label="设备标识" min-width="220" fixed="left">
               <template #default="{ row }">
                 <div class="composite-identity-cell">
                   <el-tag

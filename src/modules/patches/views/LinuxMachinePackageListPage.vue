@@ -227,6 +227,9 @@ async function handleViewDetail(row) {
   const pkgName = String(row?.pkgName || '').trim()
   const source = inferRpmSource(row?.source, row?.osDistro)
   const arch = String(row?.pkgArch || row?.osArch || '').trim()
+  const currentPackage = String(
+    row?.currentPackage || row?.pkgId || row?.installedPkg || row?.completePackageName || ''
+  ).trim()
   if (!version || !pkgName || !source || !arch) {
     ElMessage.warning('当前行缺少详情接口必传参数，无法查看详情')
     return
@@ -241,10 +244,33 @@ async function handleViewDetail(row) {
       version,
       pkgName,
       source,
-      arch
+      arch,
+      osDistro: row?.osDistro || row?.os_distro || '',
+      osVersion: row?.osVersion || row?.os_version || '',
+      osArch: row?.osArch || row?.os_arch || ''
     })
 
-    detailData.value = response?.data || response || {}
+    const responseData = response?.data || response || {}
+    detailData.value = {
+      ...responseData,
+      source: responseData.source || source,
+      osDistro:
+        responseData.osDistro || responseData.os_distro || row?.osDistro || row?.os_distro || '',
+      osVersion:
+        responseData.osVersion ||
+        responseData.os_version ||
+        row?.osVersion ||
+        row?.os_version ||
+        '',
+      osSpVersion:
+        responseData.osSpVersion ||
+        responseData.os_sp_version ||
+        row?.osSpVersion ||
+        row?.os_sp_version ||
+        '',
+      osArch: responseData.osArch || responseData.os_arch || row?.osArch || row?.os_arch || '',
+      currentPackage: currentPackage || responseData.currentPackage || ''
+    }
   } catch (error) {
     console.error('Failed to load installed package detail:', error)
     ElMessage.error('获取软件包详情失败')

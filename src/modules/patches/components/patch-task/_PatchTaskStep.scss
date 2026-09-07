@@ -1,0 +1,41 @@
+@mixin base-layout {
+  .task-step-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 280px;
+  }
+
+  .task-step-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .task-step-editor__title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+    color: var(--el-text-color-primary);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .task-step-action {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 4px;
+  }
+
+  .task-step-alert {
+    width: 100%;
+  }
+
+  .task-detail-info {
+    color: var(--el-text-color-regular);
+    font-size: 13px;
+  }
+}

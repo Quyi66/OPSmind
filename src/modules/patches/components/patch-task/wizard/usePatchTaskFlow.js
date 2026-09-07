@@ -39,7 +39,8 @@ export function usePatchTaskFlow({
   resetScriptState,
   hasFixedHosts,
   resetHostAllSelected,
-  validateSelectedHosts
+  validateSelectedHosts,
+  syncAffectedPackages
 }) {
   function resetInstallState() {
     stopPolling()
@@ -120,6 +121,13 @@ export function usePatchTaskFlow({
           const valid = await validateSelectedHosts(selectedHosts.value)
           if (!valid) return
         }
+
+        if (typeof syncAffectedPackages === 'function') {
+          const affectedPackagesSynced = await syncAffectedPackages(selectedHosts.value)
+          if (affectedPackagesSynced === false) return
+        }
+
+        if (selectedHosts.value.length === 0) return
 
         confirmedHosts.value = [...selectedHosts.value]
         for (let i = 1; i < stepStates.length; i++) stepStates[i] = 'idle'

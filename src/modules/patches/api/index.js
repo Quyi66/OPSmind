@@ -732,12 +732,26 @@ export const patchInstallApi = {
   * 获取补丁影响的软件包列表
   * @param {Object} params - 查询参数
   * @param {Array<string>} params.patch_ids - 补丁ID列表
+  * @param {Array<string>} [params.host_ids] - 主机ID列表
+  * @param {string} [params.host_id] - 单台主机ID
   * @returns {Promise}
   */
   getAffectedPackages(params) {
     const requestBody = {
       patch_ids: params.patch_ids
     }
+
+    const hostIds = Array.isArray(params.host_ids)
+      ? params.host_ids.map(hostId => String(hostId || '').trim()).filter(Boolean)
+      : []
+    const hostId = String(params.host_id || '').trim()
+
+    if (hostIds.length > 0) {
+      requestBody.host_ids = hostIds
+    } else if (hostId) {
+      requestBody.host_id = hostId
+    }
+
     return apiService
       .post('/secops/api/secops/v2/patch/affected-pkgs', requestBody)
       .then(res => {
@@ -2033,70 +2047,23 @@ export const winKbApi = {
 
 export const middlewareCveApi = {
   /**
-  * 分页查询中间件实例
-  * GET /secops/api/secops/v2/middleware/instances
+  * 分页查询中间件 CVE 列表
+  * GET /secops/api/secops/v2/middleware-cve/list
+  * @param {Object} params - 查询参数
+  * @param {string} params.middlewareType - 中间件类型
+  * @param {string} params.severity - 严重等级
+  * @param {string} params.keyword - 关键字
+  * @param {string} params.startDate - 开始日期
+  * @param {string} params.endDate - 结束日期
+  * @param {number} params.page - 页码
+  * @param {number} params.size - 每页数量
+  * @param {string} params.sortBy - 排序字段
+  * @param {string} params.sortDir - 排序方向
+  * @returns {Promise}
   */
-  getInstances(params = {}) {
-    const queryParams = {}
-
-    if (params.hostId) queryParams.hostId = params.hostId
-    if (params.middlewareType) queryParams.middlewareType = params.middlewareType
-    if (params.provenance) queryParams.provenance = params.provenance
-    if (params.keyword) queryParams.keyword = params.keyword
-    if (params.page !== undefined) queryParams.page = params.page
-    if (params.size !== undefined) queryParams.size = params.size
-
-    return apiService.get(`${VAP_API_PREFIX}/v2/middleware/instances`, { params: queryParams })
-  },
-
-  /**
-  * 分页查询实例漏洞，fixStatus 不传时后端只返回 open
-  */
-  getVulnerabilities(params = {}) {
-    const queryParams = {}
-
-    if (params.hostId) queryParams.hostId = params.hostId
-    if (params.instanceKey) queryParams.instanceKey = params.instanceKey
-    if (params.middlewareType) queryParams.middlewareType = params.middlewareType
-    if (params.severity) queryParams.severity = params.severity
-    if (params.cveId) queryParams.cveId = params.cveId
-    if (params.fixStatus) queryParams.fixStatus = params.fixStatus
-    if (params.includeIgnored !== undefined) queryParams.includeIgnored = params.includeIgnored
-    if (params.page !== undefined) queryParams.page = params.page
-    if (params.size !== undefined) queryParams.size = params.size
-
-    return apiService.get(`${VAP_API_PREFIX}/v2/middleware/vuls`, { params: queryParams })
-  },
-
-  getVulnerabilityStats(params = {}) {
-    const queryParams = {}
-    if (params.hostId) queryParams.hostId = params.hostId
-    return apiService.get(`${VAP_API_PREFIX}/v2/middleware/vuls/stats`, {
-      params: queryParams
-    })
-  },
-
-  setVulnerabilityIgnore(payload) {
-    return apiService.post(`${VAP_API_PREFIX}/v2/middleware/vuls/ignore`, payload)
-  },
-
-  getFixGuide(instanceKey) {
-    return apiService.get(
-      `${VAP_API_PREFIX}/v2/middleware/instances/${encodeURIComponent(instanceKey)}/fix-guide`
-    )
-  },
-
-  getFixGuides(instanceKeys) {
-    return apiService.post(`${VAP_API_PREFIX}/v2/middleware/fix-guide`, { instanceKeys })
-  },
-
-  scan(hostIds) {
-    return apiService.post(`${VAP_API_PREFIX}/v2/middleware/scan`, { hostIds })
-  },
-
-  // 兼容仍可能被旧详情组件引用的公告知识库接口。
   getList(params = {}) {
     const queryParams = {}
+
     if (params.middlewareType && params.middlewareType !== 'all')
       queryParams.middlewareType = params.middlewareType
     if (params.severity && params.severity !== 'all') queryParams.severity = params.severity
@@ -2107,13 +2074,25 @@ export const middlewareCveApi = {
     if (params.size !== undefined) queryParams.size = params.size
     if (params.sortBy) queryParams.sortBy = params.sortBy
     if (params.sortDir) queryParams.sortDir = params.sortDir
+
     return apiService.get(`${VAP_API_PREFIX}/v2/middleware-cve/list`, { params: queryParams })
   },
 
+  /**
+  * 查询 中间件 CVE 详情
+  * GET /secops/api/secops/v2/middleware-cve/detail/{cveId}
+  * @param {string} cveId - CVE编号
+  * @returns {Promise}
+  */
   getDetail(cveId) {
     return apiService.get(`${VAP_API_PREFIX}/v2/middleware-cve/detail/${encodeURIComponent(cveId)}`)
   },
 
+  /**
+  * 获取中间件类型列表
+  * GET /secops/api/secops/v2/middleware-cve/middleware-types
+  * @returns {Promise}
+  */
   getMiddlewareTypes() {
     return apiService.get(`${VAP_API_PREFIX}/v2/middleware-cve/middleware-types`)
   }
@@ -2133,6 +2112,15 @@ export const rpmInfoApi = {
   },
 
   /**
+  * 查询 OS 版本枚举
+  * GET /secops/api/secops/v2/rpm-info/os-versions
+  */
+  getOsVersions(params = {}) {
+    const query = buildGenericQuery({ source: params.source })
+    return apiService.get(`${VAP_API_PREFIX}/v2/rpm-info/os-versions${query}`)
+  },
+
+  /**
   * 全量 RPM 软件包分页查询
   * GET /secops/api/secops/v2/rpm-info/list
   */
@@ -2142,6 +2130,7 @@ export const rpmInfoApi = {
       keyword: params.keyword,
       name: params.name,
       arch: params.arch,
+      osVersion: params.osVersion,
       page: params.page ?? 0,
       size: params.size ?? 20
     })

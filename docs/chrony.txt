@@ -1,0 +1,379 @@
+Package: chrony
+Selected NEVRA: chrony-4.5-2.el8_10.x86_64
+Repository: /mnt/repos/rhel/rhel8/rhel-8-for-x86_64-baseos-rpms
+Changelog source: RPM header
+
+* 2024-09-18 Miroslav Lichvar <mlichvar@redhat.com> 4.5-2.el8_10
+- fix crash on reload command during start (RHEL-59112)
+- enable AES-CMAC support using gnutls (RHEL-59032)
+
+* 2024-01-10 Miroslav Lichvar <mlichvar@redhat.com> 4.5-1
+- update to 4.5 (RHEL-21069 RHEL-10701)
+
+* 2022-07-14 Miroslav Lichvar <mlichvar@redhat.com> 4.2-1
+- update to 4.2 (#2062356)
+- fix chrony-helper to delete sources by their original name (#2061660)
+- update ntp2chrony script (#2018045 #2063766)
+
+* 2021-06-15 Miroslav Lichvar <mlichvar@redhat.com> 4.1-1
+- update to 4.1 (#1895003 #1847853 #1929157)
+- add NetworkManager dispatcher script to add servers from DHCP even without
+  dhclient (#1933139)
+- restrict permissions of /var/lib/chrony and /var/log/chrony (#1939295)
+- reset chrony-helper state after stopping chronyd (#1971697)
+- add gcc-c++ and make to build requirements
+- move default paths in /var/run to /run
+
+* 2019-05-21 Miroslav Lichvar <mlichvar@redhat.com> 3.5-1
+- update to 3.5 (#1685469 #1677218)
+- fix shellcheck warnings in helper scripts (#1711948)
+- update ntp2chrony script
+
+* 2018-08-13 Miroslav Lichvar <mlichvar@redhat.com> 3.3-3
+- fix PIDFile in local chronyd.service on upgrades from chrony < 3.3-2
+  (#1614800)
+- add workaround for late reload of unit file (#1614751)
+
+* 2018-06-18 Miroslav Lichvar <mlichvar@redhat.com> 3.3-2
+- move pidfile to /var/run/chrony to allow chronyd to remove it on exit
+  (#1584585)
+- avoid blocking in getrandom system call (#1592425)
+
+* 2018-04-05 Miroslav Lichvar <mlichvar@redhat.com> 3.3-1
+- update to 3.3
+- enable keyfile by default again
+- update ntp2chrony script
+
+* 2018-03-19 Miroslav Lichvar <mlichvar@redhat.com> 3.3-0.2.pre1
+- include ntp2chrony script in documentation (#1530987)
+
+* 2018-03-15 Miroslav Lichvar <mlichvar@redhat.com> 3.3-0.1.pre1
+- update to 3.3-pre1
+- switch to nettle for crypto hashing
+- add gcc to build requirements
+
+* 2018-02-07 Fedora Release Engineering <releng@fedoraproject.org> - 3.2-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_28_Mass_Rebuild
+
+* 2018-01-30 Miroslav Lichvar <mlichvar@redhat.com> 3.2-3
+- use systemd macro for scriptlet dependencies
+
+* 2018-01-25 Miroslav Lichvar <mlichvar@redhat.com> 3.2-2
+- fix chronyc getting stuck in infinite loop after clock step
+- don't allow packaging without vendor zone
+- suggest ntp-refclock
+- remove obsolete dependency
+- update description
+
+* 2017-09-15 Miroslav Lichvar <mlichvar@redhat.com> 3.2-1
+- update to 3.2
+- get TAI-UTC offset and leap seconds from tzdata by default
+
+* 2017-08-29 Miroslav Lichvar <mlichvar@redhat.com> 3.2-0.4.pre2
+- update to 3.2-pre2
+
+* 2017-08-02 Fedora Release Engineering <releng@fedoraproject.org> - 3.2-0.3.pre1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Binutils_Mass_Rebuild
+
+* 2017-07-26 Fedora Release Engineering <releng@fedoraproject.org> - 3.2-0.2.pre1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Mass_Rebuild
+
+* 2017-07-25 Miroslav Lichvar <mlichvar@redhat.com> 3.2-0.1.pre1
+- update to 3.2-pre1
+
+* 2017-05-04 Miroslav Lichvar <mlichvar@redhat.com> 3.1-5
+- check PEERNTP variable before loading existing dhclient files
+
+* 2017-04-20 Miroslav Lichvar <mlichvar@redhat.com> 3.1-4
+- use ID from /etc/os-release to set pool.ntp.org vendor zone (#1443599)
+- fix seccomp filter for new glibc once again
+- don't drop PHC samples with zero delay
+
+* 2017-03-13 Miroslav Lichvar <mlichvar@redhat.com> 3.1-3
+- fix seccomp filter for new glibc
+
+* 2017-02-10 Fedora Release Engineering <releng@fedoraproject.org> - 3.1-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_26_Mass_Rebuild
+
+* 2017-01-31 Miroslav Lichvar <mlichvar@redhat.com> 3.1-1
+- update to 3.1
+- enable seccomp support on more archs
+- package chronyd sysconfig file
+
+* 2017-01-24 Miroslav Lichvar <mlichvar@redhat.com> 3.1-0.1.pre1
+- update to 3.1-pre1
+
+* 2017-01-16 Miroslav Lichvar <mlichvar@redhat.com> 3.0-1
+- update to 3.0
+
+* 2017-01-06 Miroslav Lichvar <mlichvar@redhat.com> 3.0-0.3.pre3
+- update to 3.0-pre3
+
+* 2016-12-15 Miroslav Lichvar <mlichvar@redhat.com> 3.0-0.2.pre2
+- update to 3.0-pre2
+- enable support for MS-SNTP authentication in Samba
+
+* 2016-12-09 Miroslav Lichvar <mlichvar@redhat.com> 3.0-0.1.pre1
+- update to 3.0-pre1
+
+* 2016-11-21 Miroslav Lichvar <mlichvar@redhat.com> 2.4.1-1
+- update to 2.4.1
+
+* 2016-10-27 Miroslav Lichvar <mlichvar@redhat.com> 2.4-4
+- avoid AVC denials in chrony-wait service (#1350815)
+
+* 2016-09-13 Miroslav Lichvar <mlichvar@redhat.com> 2.4-3
+- fix chrony-helper to escape names of systemd units (#1374767)
+
+* 2016-06-28 Miroslav Lichvar <mlichvar@redhat.com> 2.4-2
+- fix chrony-helper to exit with correct status (#1350531)
+
+* 2016-06-07 Miroslav Lichvar <mlichvar@redhat.com> 2.4-1
+- update to 2.4
+- don't require info
+
+* 2016-05-16 Miroslav Lichvar <mlichvar@redhat.com> 2.4-0.1.pre1
+- update to 2.4-pre1
+- extend chrony-helper to allow management of static sources (#1331655)
+
+* 2016-02-16 Miroslav Lichvar <mlichvar@redhat.com> 2.3-1
+- update to 2.3
+
+* 2016-02-02 Miroslav Lichvar <mlichvar@redhat.com> 2.3-0.1.pre1
+- update to 2.3-pre1
+
+* 2016-01-21 Miroslav Lichvar <mlichvar@redhat.com> 2.2.1-1
+- update to 2.2.1 (CVE-2016-1567)
+- set NTP era split explicitly
+
+* 2015-10-19 Miroslav Lichvar <mlichvar@redhat.com> 2.2-1
+- update to 2.2
+
+* 2015-10-09 Miroslav Lichvar <mlichvar@redhat.com> 2.2-0.2.pre2
+- update to 2.2-pre2
+- require libseccomp-devel on supported archs only
+
+* 2015-10-02 Miroslav Lichvar <mlichvar@redhat.com> 2.2-0.1.pre1
+- update to 2.2-pre1
+- enable seccomp support
+- use weak dependency for timedatex on Fedora 24 and later
+
+* 2015-06-23 Miroslav Lichvar <mlichvar@redhat.com> 2.1.1-1
+- update to 2.1.1
+- add -n option to gzip command to not save timestamp
+
+* 2015-06-22 Miroslav Lichvar <mlichvar@redhat.com> 2.1-1
+- update to 2.1
+- extend chrony-helper to allow using servers from DNS SRV records (#1234406)
+- set random seed in testing to get deterministic results
+
+* 2015-06-17 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.1-0.2.pre1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+
+* 2015-06-10 Miroslav Lichvar <mlichvar@redhat.com> 2.1-0.1.pre1
+- update to 2.1-pre1
+
+* 2015-04-27 Miroslav Lichvar <mlichvar@redhat.com> 2.0-1
+- update to 2.0
+
+* 2015-04-08 Miroslav Lichvar <mlichvar@redhat.com> 2.0-0.3.pre2
+- update to 2.0-pre2 (CVE-2015-1853 CVE-2015-1821 CVE-2015-1822)
+
+* 2015-01-29 Miroslav Lichvar <mlichvar@redhat.com> 2.0-0.2.pre1
+- require timedatex (#1136905)
+
+* 2015-01-27 Miroslav Lichvar <mlichvar@redhat.com> 2.0-0.1.pre1
+- update to 2.0-pre1
+
+* 2014-09-11 Miroslav Lichvar <mlichvar@redhat.com> 1.31-1
+- update to 1.31
+- add servers from DHCP with iburst option by default
+- use upstream configuration files and scripts
+- don't package configuration examples
+- compress chrony.txt
+
+* 2014-08-21 Miroslav Lichvar <mlichvar@redhat.com> 1.31-0.1.pre1
+- update to 1.31-pre1
+- use license macro if available
+
+* 2014-08-16 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.30-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_22_Mass_Rebuild
+
+* 2014-08-15 Miroslav Lichvar <mlichvar@redhat.com> 1.30-2
+- reconnect client sockets (#1124059)
+
+* 2014-07-01 Miroslav Lichvar <mlichvar@redhat.com> 1.30-1
+- update to 1.30
+- enable debug messages
+
+* 2014-06-09 Miroslav Lichvar <mlichvar@redhat.com> 1.30-0.1.pre1
+- update to 1.30-pre1
+- execute test suite
+- avoid calling systemctl in helper script
+- call chronyc directly from logrotate and NM dispatcher scripts
+- add conflict with systemd-timesyncd service
+
+* 2014-06-07 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.29.1-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
+
+* 2014-01-31 Miroslav Lichvar <mlichvar@redhat.com> 1.29.1-1
+- update to 1.29.1 (CVE-2014-0021)
+- replace hardening build flags with _hardened_build
+
+* 2013-11-19 Miroslav Lichvar <mlichvar@redhat.com> 1.29-3
+- let systemd remove pid file (#974305)
+
+* 2013-10-03 Miroslav Lichvar <mlichvar@redhat.com> 1.29-2
+- add ordering dependency to not start chronyd before ntpd stopped
+
+* 2013-08-08 Miroslav Lichvar <mlichvar@redhat.com> 1.29-1
+- update to 1.29 (CVE-2012-4502, CVE-2012-4503)
+
+* 2013-08-03 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.28-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_20_Mass_Rebuild
+
+* 2013-07-17 Miroslav Lichvar <mlichvar@redhat.com> 1.28-1
+- update to 1.28
+- change default makestep limit to 10 seconds
+
+* 2013-06-24 Miroslav Lichvar <mlichvar@redhat.com> 1.28-0.2.pre1
+- buildrequire systemd-units
+
+* 2013-06-21 Miroslav Lichvar <mlichvar@redhat.com> 1.28-0.1.pre1
+- update to 1.28-pre1
+- listen for commands only on localhost by default
+
+* 2013-05-09 Miroslav Lichvar <mlichvar@redhat.com> 1.27-3
+- disable chrony-wait service by default (#961047)
+- drop old systemd scriptlets
+- don't own ntp-units.d directory
+- move files from /lib
+- remove unncessary dependency on syslog target
+
+* 2013-03-12 Miroslav Lichvar <mlichvar@redhat.com> 1.27-2
+- suppress error messages from tr when generating key (#907914)
+- fix delta calculation with extreme frequency offsets
+
+* 2013-02-01 Miroslav Lichvar <mlichvar@redhat.com> 1.27-1
+- update to 1.27
+- start chrony-wait service with chronyd
+- start chronyd service after sntp
+- remove obsolete macros
+
+* 2012-09-11 Miroslav Lichvar <mlichvar@redhat.com> 1.27-0.5.pre1.git1ca844
+- update to git snapshot 1ca844
+- update systemd integration (#846303)
+- use systemd macros if available (#850151)
+- use correct vendor pool.ntp.org zone on RHEL (#845981)
+- don't log output of chrony-wait service
+
+* 2012-07-18 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.27-0.4.pre1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
+
+* 2012-04-27 Miroslav Lichvar <mlichvar@redhat.com> 1.27-0.3.pre1
+- update service file for systemd-timedated-ntp target (#816493)
+
+* 2012-04-06 Miroslav Lichvar <mlichvar@redhat.com> 1.27-0.2.pre1
+use systemctl is-active instead of status in chrony-helper (#794771)
+
+* 2012-02-28 Miroslav Lichvar <mlichvar@redhat.com> 1.27-0.1.pre1
+- update to 1.27-pre1
+- generate SHA1 command key instead of MD5
+
+* 2012-02-15 Miroslav Lichvar <mlichvar@redhat.com> 1.26-6.20110831gitb088b7
+- remove old servers on DHCP update (#787042)
+
+* 2012-02-10 Miroslav Lichvar <mlichvar@redhat.com> 1.26-5.20110831gitb088b7
+- improve chrony-helper to keep track of servers added from DHCP (#787042)
+- fix dhclient script to always return with zero exit code (#767859)
+
+* 2012-01-12 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.26-4.20110831gitb088b7
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
+
+* 2011-09-06 Miroslav Lichvar <mlichvar@redhat.com> 1.26-3.20110831gitb088b7
+- update to git snapshot 20110831gitb088b7
+- on first start generate password with 16 chars
+- change systemd service type to forking
+- add forced-command to chrony-helper (#735821)
+
+* 2011-08-15 Miroslav Lichvar <mlichvar@redhat.com> 1.26-2
+- fix iburst with very high jitters and long delays
+- use timepps header from pps-tools-devel
+
+* 2011-07-13 Miroslav Lichvar <mlichvar@redhat.com> 1.26-1
+- update to 1.26
+- read options from sysconfig file if it exists
+
+* 2011-06-24 Miroslav Lichvar <mlichvar@redhat.com> 1.26-0.1.pre1
+- update to 1.26-pre1
+- fix service name in %triggerun
+- drop SysV init script
+- add chrony-wait service
+
+* 2011-05-06 Bill Nottingham <notting@redhat.com> 1.25-2
+- fix systemd scriptlets for the upgrade case
+
+* 2011-05-04 Miroslav Lichvar <mlichvar@redhat.com> 1.25-1
+- update to 1.25
+
+* 2011-04-20 Miroslav Lichvar <mlichvar@redhat.com> 1.25-0.3.pre2
+- update to 1.25-pre2
+- link with -Wl,-z,relro,-z,now options
+
+* 2011-02-08 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.25-0.2.pre1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
+
+* 2011-02-01 Miroslav Lichvar <mlichvar@redhat.com> 1.25-0.1.pre1
+- update to 1.25-pre1
+- use iburst, four pool servers, rtcsync, stratumweight in default config
+- add systemd support
+- drop sysconfig file 
+- suppress install-info errors
+
+* 2010-04-29 Miroslav Lichvar <mlichvar@redhat.com> 1.24-4.20100428git73d775
+- update to 20100428git73d775
+- replace initstepslew directive with makestep in default config
+- add NetworkManager dispatcher script
+- add dhclient script
+- retry server/peer name resolution at least once to workaround
+  NetworkManager race condition on boot
+- don't verify chrony.keys
+
+* 2010-03-12 Miroslav Lichvar <mlichvar@redhat.com> 1.24-3.20100302git5fb555
+- update to snapshot 20100302git5fb555
+- compile with PPS API support
+
+* 2010-02-04 Miroslav Lichvar <mlichvar@redhat.com> 1.24-1
+- update to 1.24 (#555367, CVE-2010-0292 CVE-2010-0293 CVE-2010-0294)
+- modify default config
+  - step clock on start if it is off by more than 100 seconds
+  - disable client log
+- build with -fPIE on sparc
+
+* 2009-12-15 Miroslav Lichvar <mlichvar@redhat.com> 1.24-0.1.pre1
+- update to 1.24-pre1
+
+* 2009-07-24 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.23-7.20081106gitbe42b4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_12_Mass_Rebuild
+
+* 2009-07-17 Miroslav Lichvar <mlichvar@redhat.com> 1.23-6.20081106gitbe42b4
+- switch to editline
+- support arbitrary chronyc commands in init script
+
+* 2009-06-08 Dan Horak <dan[at]danny.cz> 1.23-5.20081106gitbe42b4
+- add patch with support for s390/s390x
+
+* 2009-03-09 Miroslav Lichvar <mlichvar@redhat.com> 1.23-4.20081106gitbe42b4
+- fix building with broken libcap header (#483548)
+
+* 2009-02-23 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.23-3.20081106gitbe42b4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_11_Mass_Rebuild
+
+* 2008-11-19 Miroslav Lichvar <mlichvar@redhat.com> 1.23-2.20081106gitbe42b4
+- fix info uninstall
+- generate random command key in init script
+- support cyclelogs, online, offline commands in init script
+- add logrotate script
+
+* 2008-11-11 Miroslav Lichvar <mlichvar@redhat.com> 1.23-1.20081106gitbe42b4
+- initial release
