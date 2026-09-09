@@ -618,7 +618,7 @@ function isPatchScan(row) {
 }
 
 function isWindowsScan(row) {
-  return row?.action === ACTION_KEYS.winPatchScan || row?.action === 'Windows漏洞扫描' || translateAction(row?.action) === 'Windows漏洞扫描'
+  return row?.action === ACTION_KEYS.winPatchScan || row?.action === 'Windows漏洞扫描' || row?.action === 'Windows补丁扫描' || translateAction(row?.action) === 'Windows漏洞扫描'
 }
 
 function isPatchInstall(row) {
