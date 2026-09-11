@@ -32,19 +32,19 @@
         <div v-if="isAgentAsset" class="agent-detail-card">
           <el-alert
             v-if="hasAgentIpMismatch(agentInfo)"
-            type="error"
+            type="warning"
             :closable="false"
             show-icon
             class="mb-3"
           >
             <template #title>
-              Agent 实际地址与 CMDB 主 IP 不一致，任务下发会被安全闸门阻断。
+              Agent 实际地址与 CMDB 主 IP 不一致，仅作提示，不影响任务下发。
             </template>
           </el-alert>
           <div class="agent-detail-card__header">
             <span>Agent 接入信息</span>
             <el-tag size="small" :type="agentInfo?.agentStatus === 'online' ? 'success' : 'warning'">
-              {{ agentInfo?.agentStatus === 'online' ? '在线' : '离线/未知' }}
+              {{ agentInfo?.agentStatus === 'online' ? '在线' : '离线' }}
             </el-tag>
           </div>
           <el-descriptions :column="2" border size="small">
@@ -54,22 +54,9 @@
             <el-descriptions-item label="纳管模式">{{ agentInfo?.agentMode === 'gateway' ? 'Gateway 跳板' : 'Local 本机' }}</el-descriptions-item>
             <el-descriptions-item label="CMDB 主 IP">{{ getAgentCmdbIp(agentInfo) || '-' }}</el-descriptions-item>
             <el-descriptions-item label="Agent 当前 IP">{{ getAgentReportedIp(agentInfo) || '-' }}</el-descriptions-item>
-            <el-descriptions-item label="最近上报">{{ formatAgentTimestamp(agentInfo?.lastReportedAt) }}</el-descriptions-item>
             <el-descriptions-item label="最后在线">{{ formatAgentTimestamp(agentInfo?.lastSeenAt) }}</el-descriptions-item>
           </el-descriptions>
-          <div v-if="hasAgentIpMismatch(agentInfo)" class="agent-detail-card__actions">
-            <el-button
-              v-if="canManageAgents"
-              type="danger"
-              plain
-              size="small"
-              :loading="syncingIp"
-              @click="syncAssetIp"
-            >
-              同步资产 IP
-            </el-button>
-            <span v-else class="agent-detail-card__hint">请联系有 Agent 管理权限的用户同步资产 IP。</span>
-          </div>
+
         </div>
 
         <!-- 扁平属性表格列表 -->
@@ -113,9 +100,8 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { agentApi, assetApi, getAgentErrorMessage } from '../../api'
-import { authService } from '@/core/auth'
+import { ElMessage } from 'element-plus'
+import { agentApi, assetApi } from '../../api'
 import {
   formatAgentTimestamp,
   getAgentCmdbIp,
@@ -146,21 +132,11 @@ const loading = ref(false)
 const assetType = ref(null)
 const attrValues = ref({})
 const agentInfo = ref(null)
-const syncingIp = ref(false)
 
 const isAgentAsset = computed(() =>
   ['koreops_agent', 'agent', 'oplus_agent'].includes(agentInfo.value?.connectionType)
 )
 
-const canManageAgents = computed(() =>
-  authService.hasPermission('agent:manage') ||
-  [
-    'admin', 'role_admin',
-    'privuser', 'role_privuser',
-    'developer', 'role_developer',
-    'free', 'role_free'
-  ].some(role => authService.hasRole(role))
-)
 
 const visibleAttrs = computed(() => {
   if (!assetType.value?.attrs) return []
@@ -218,44 +194,6 @@ const loadAssetDetail = async () => {
   }
 }
 
-const syncAssetIp = async () => {
-  const cmdbIp = getAgentCmdbIp(agentInfo.value)
-  const reportedIp = getAgentReportedIp(agentInfo.value)
-  if (!reportedIp) {
-    ElMessage.warning('Agent 尚未上报可同步的 IP')
-    return
-  }
-
-  try {
-    await ElMessageBox.confirm(
-      `确认将该资产的 CMDB 主 IP 从 ${cmdbIp || '-'} 修改为 ${reportedIp}？该地址可能被工单、审计、防火墙策略和 SSH 通道引用。`,
-      '同步资产主 IP',
-      {
-        confirmButtonText: '确认同步',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
-  } catch {
-    return
-  }
-
-  syncingIp.value = true
-  try {
-    await agentApi.syncAssetIp({
-      hostId: props.assetId,
-      clientId: agentInfo.value?.agentClientId,
-      confirm: true
-    })
-    ElMessage.success('资产主 IP 已同步')
-    await loadAssetDetail()
-    emit('saved')
-  } catch (error) {
-    ElMessage.error(getAgentErrorMessage(error, '同步资产主 IP 失败'))
-  } finally {
-    syncingIp.value = false
-  }
-}
 
 // 关闭弹窗
 const handleClose = () => {
@@ -263,7 +201,6 @@ const handleClose = () => {
   attrValues.value = {}
   assetType.value = null
   agentInfo.value = null
-  syncingIp.value = false
 }
 
 // 监听弹窗打开

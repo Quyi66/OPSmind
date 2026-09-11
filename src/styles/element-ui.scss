@@ -334,3 +334,10 @@
 .el-notification.update-notification {
   width: 360px !important;
 }
+
+// 保留任务下发逐台错误与 Problem detail 的换行。
+.el-message__content,
+.el-message-box__message {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

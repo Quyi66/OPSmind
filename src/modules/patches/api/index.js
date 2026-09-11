@@ -450,6 +450,10 @@ export const patchInstallApi = {
     return apiService.get(`${PATCH_TASK_API_PREFIX}/${id}`).then(normalizePatchTaskResponse)
   },
 
+  runTask(id) {
+    return apiService.post(`${PATCH_TASK_API_PREFIX}/${id}/run`).then(normalizePatchTaskResponse)
+  },
+
   /**
   * 查询任务操作日志（分页）
   * GET /secops/api/secops/v2/patch/task/{id}/audit/history?page=0&size=50

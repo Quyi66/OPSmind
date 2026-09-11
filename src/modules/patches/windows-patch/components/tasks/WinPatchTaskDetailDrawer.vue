@@ -12,6 +12,13 @@
       <div class="ops-action-bar win-patch-task-detail__actions">
         <el-switch v-model="autoPollingEnabled" active-text="自动轮询 3 秒" />
         <span style="flex: 1"></span>
+        <PatchTaskRunControls
+          :task="taskDetail"
+          :enabled="visibleModel"
+          :disabled="loading || stepSubmitting"
+          @updated="handleAutoRunTaskUpdate"
+          @active-change="autoRunActive = $event"
+        />
         <el-button
           class="toolbar-icon-btn"
           circle
@@ -221,6 +228,7 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue'
+import PatchTaskRunControls from '@/modules/patches/components/patch-task/PatchTaskRunControls.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
@@ -267,6 +275,7 @@ const visibleModel = computed({
 
 const loading = ref(false)
 const autoPollingEnabled = ref(true)
+const autoRunActive = ref(false)
 const taskDetail = ref(null)
 const taskHosts = ref([])
 const taskAuditSteps = ref([])
@@ -445,7 +454,7 @@ const availableExecuteRuns = computed(() => {
 })
 const canExecuteCurrentStep = computed(() => {
   return (
-    showStepActions.value &&
+    showStepActions.value && !autoRunActive.value &&
     Boolean(currentStepValue.value) &&
     currentStepValue.value !== 'COMPLETED' &&
     ![
@@ -522,6 +531,13 @@ function applyTaskSnapshot(taskSnapshot = null) {
   }
 }
 
+function handleAutoRunTaskUpdate(taskSnapshot) {
+  applyTaskSnapshot(taskSnapshot)
+  // 包括执行中、失败及完成状态，刷新逐台结果和审计步骤。
+  // 保留本次轮询的任务快照，避免审计接口的旧快照覆盖当前状态。
+  loadTaskDetail({ silent: true, taskSnapshot })
+}
+
 async function loadTaskDetail(options = {}) {
   const taskId = currentTaskId.value
   if (!taskId) return
@@ -550,9 +566,15 @@ async function loadTaskDetail(options = {}) {
     taskAuditSteps.value = nextAuditSteps
     taskAuditLogs.value = nextAuditLogs
 
-    taskDetail.value = mergeTaskDetail(baseTask, null, nextHosts, nextAuditSteps, nextAuditLogs)
+    taskDetail.value = mergeTaskDetail(
+      baseTask,
+      options.taskSnapshot,
+      nextHosts,
+      nextAuditSteps,
+      nextAuditLogs
+    )
 
-    if (!autoPollingEnabled.value || !isTaskRunning(taskDetail.value)) {
+    if (autoRunActive.value || !autoPollingEnabled.value || !isTaskRunning(taskDetail.value)) {
       stop()
     } else if (!isPolling.value) {
       start(() => loadTaskDetail({ silent: true }))
@@ -590,7 +612,7 @@ async function handleExecuteStep() {
     applyTaskSnapshot(unwrapResponse(response))
     ElMessage.success(`${executeButtonText.value}已发起`)
 
-    if (autoPollingEnabled.value && isTaskRunning(taskDetail.value)) {
+    if (!autoRunActive.value && autoPollingEnabled.value && isTaskRunning(taskDetail.value)) {
       start(() => loadTaskDetail({ silent: true }))
     }
   } catch (error) {
@@ -622,7 +644,7 @@ async function handleSkipStep() {
     applyTaskSnapshot(unwrapResponse(response))
     ElMessage.success(`${getTaskStepLabel(taskDetail.value)}已跳过`)
 
-    if (autoPollingEnabled.value && isTaskRunning(taskDetail.value)) {
+    if (!autoRunActive.value && autoPollingEnabled.value && isTaskRunning(taskDetail.value)) {
       start(() => loadTaskDetail({ silent: true }))
     }
   } catch (error) {
@@ -675,7 +697,7 @@ watch(
       return
     }
 
-    if (visibleModel.value && currentTaskId.value && isTaskRunning(taskDetail.value)) {
+    if (!autoRunActive.value && visibleModel.value && currentTaskId.value && isTaskRunning(taskDetail.value)) {
       start(() => loadTaskDetail({ silent: true }))
     }
   }

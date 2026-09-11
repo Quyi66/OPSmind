@@ -71,14 +71,7 @@
     </div>
 
     <div class="ops-action-bar">
-      <el-button type="primary" size="small" @click="openScanDialog()">创建扫描任务</el-button>
-      <el-button
-        size="small"
-        :disabled="selectedHostRows.length === 0"
-        @click="openScanDialog(selectedHostRows)"
-      >
-        扫描选中主机
-      </el-button>
+      <el-button type="primary" size="small" @click="openScanDialog(selectedHostRows)">扫描</el-button>
       <el-button size="small" @click="openReportDialog(selectedHostRows)">导出报告</el-button>
       <span class="win-patch-selection-text">已选 {{ selectedHostRows.length }} 台主机</span>
       <span style="flex: 1"></span>
@@ -116,6 +109,17 @@
         <el-table-column label="操作系统" min-width="220">
           <template #default="{ row }">
             {{ pickValue(row, ['osDistro', 'os_distro'], '-') }}
+          </template>
+        </el-table-column>
+        <el-table-column label="接入方式 / Agent 状态" min-width="180">
+          <template #default="{ row }">
+            <template v-if="['koreops_agent', 'agent', 'oplus_agent'].includes(row.connectionType)">
+              <el-tag :type="row.agentStatus === 'online' ? 'success' : 'danger'" size="small">Agent {{ row.agentStatus === 'online' ? '在线' : '离线' }}</el-tag>
+              <div>{{ getAgentPlatformLabel(row) }} / {{ row.agentVersion || '-' }}</div>
+              <div>{{ row.agentIp || '-' }}</div>
+              <el-tag v-if="row.ipMismatch" type="warning" size="small">资产 IP 不一致（仅提示）</el-tag>
+            </template>
+            <span v-else>{{ row.connectionType === 'ssh' ? 'SSH / WinRM' : '-' }}</span>
           </template>
         </el-table-column>
         <el-table-column width="80" align="center">
@@ -363,6 +367,7 @@ import WinPatchTaskDetailDrawer from '../components/tasks/WinPatchTaskDetailDraw
 import { winPatchApi } from '../api'
 import { WIN_PATCH_PAGE_SIZE_OPTIONS } from '../constants'
 import { dataManageApi } from '@/modules/asset/api'
+import { getAgentPlatformLabel } from '@/modules/asset/utils/agentInfo'
 import { buildMemoryOverview } from '@/modules/patches/utils/linuxPatchScan'
 import { formatDateTime, parsePageResponse, pickValue, resolveHostKey } from '../utils'
 

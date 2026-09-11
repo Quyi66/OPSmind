@@ -443,8 +443,7 @@
                   text
                   type="primary"
                   size="small"
-                  :loading="rescanLoading && rescanningHostKey === getRescanTrackKey(row)"
-                  :disabled="rescanLoading"
+                  :disabled="isAgentConnectionType(row.connectionType) && (row.agentStatus !== 'online' || !String(row.capabilities || '').split(',').map(item => item.trim()).includes('scan'))"
                   @click="handleSingleHostRescan(row)"
                 >
                   扫描
@@ -880,43 +879,7 @@
       </div>
     </div>
 
-    <!-- 重新扫描对话框 -->
-    <el-dialog v-model="rescanDialogVisible" title="重新扫描补丁" width="600px">
-      <el-form ref="rescanFormRef" :model="rescanForm" label-width="100px">
-        <el-form-item label="选择主机">
-          <AcmDeviceSelector
-            v-model="selectedHosts"
-            ci-types="linux"
-            :options="{
-              selectMode: 'host',
-              selector: 'multiple',
-              label: '选择主机'
-            }"
-          />
-          <div v-if="selectedScanAgentLoading" class="text-muted mt-2">正在校验 Agent 实时状态…</div>
-          <el-alert
-            v-else-if="selectedScanCapabilitySummary"
-            class="mt-2"
-            type="warning"
-            :closable="false"
-            show-icon
-            :title="selectedScanCapabilitySummary"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="rescanDialogVisible = false">取消</el-button>
-        <el-button
-          type="primary"
-          :loading="rescanLoading"
-          :disabled="selectedHosts.length === 0 || selectedScanAgentLoading || selectedScanCapabilityIssues.length > 0"
-          :title="selectedScanCapabilitySummary"
-          @click="executeRescan"
-        >
-          开始扫描
-        </el-button>
-      </template>
-    </el-dialog>
+    <UnifiedPatchScanDialog v-model="rescanDialogVisible" :preselected-hosts="selectedHosts" @submitted="refresh" />
 
     <!-- 作业运行结果对话框 -->
     <ExecuteResultDialog
@@ -1113,7 +1076,7 @@ import {
 } from '../utils/vulnerabilityPackages'
 import { buildMemoryOverview, parseOsVersionFilter } from '../utils/linuxPatchScan'
 import { agentApi, assetApi, dataManageApi } from '@/modules/asset/api'
-import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import UnifiedPatchScanDialog from '../components/common/UnifiedPatchScanDialog.vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import ExecuteHistoryDialog from '@/modules/automation/components/job/JobListView/ExecuteHistoryDialog.vue'
 import OperationLogsDialog from '../components/logs/OperationLogsDialog.vue'
@@ -1125,9 +1088,6 @@ import CveLinkList from '../components/common/CveLinkList.vue'
 import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
 import {
   validateAgentCapability,
-  getAgentCapabilityIssues,
-  formatAgentCapabilitySummary,
-  getAgentHostId,
   resolveAgentCapabilityHosts
 } from '../utils/agentCapability'
 import { getRollbackSupportInfo } from '../utils/rollbackCapability'
@@ -1345,60 +1305,11 @@ const vulnSelectedCount = computed(() => {
   return Math.max(vulnPagination.total - vulnExcludedRowKeys.value.length, 0)
 })
 
-// 重新扫描对话框
+// Linux / Windows 共用扫描入口。
 const rescanDialogVisible = ref(false)
-const rescanLoading = ref(false)
-const rescanningHostKey = ref('')
-const rescanFormRef = ref(null)
-const rescanForm = reactive({
-  hostsInput: ''
-})
 const selectedHosts = ref([])
-const selectedScanAgentLoading = ref(false)
-let selectedScanResolveSequence = 0
-const selectedScanCapabilityIssues = computed(() =>
-  getAgentCapabilityIssues(selectedHosts.value, 'scan', hostTableData.value || [])
-)
-const selectedScanCapabilitySummary = computed(() =>
-  formatAgentCapabilitySummary(selectedHosts.value, selectedScanCapabilityIssues.value)
-)
-
 const isAgentConnectionType = connectionType =>
   ['koreops_agent', 'agent', 'oplus_agent'].includes(connectionType)
-
-watch(
-  () => selectedHosts.value.map(getAgentHostId).join('|'),
-  async hostKey => {
-    const sequence = ++selectedScanResolveSequence
-    if (!hostKey) {
-      selectedScanAgentLoading.value = false
-      return
-    }
-
-    selectedScanAgentLoading.value = true
-    try {
-      const resolvedHosts = await resolveAgentCapabilityHosts(selectedHosts.value)
-      if (sequence !== selectedScanResolveSequence) return
-      const infoByHostId = new Map(resolvedHosts.map(host => [getAgentHostId(host), host]))
-      selectedHosts.value = selectedHosts.value.map(host => ({
-        ...host,
-        ...(infoByHostId.get(getAgentHostId(host)) || { agentInfoUnavailable: true })
-      }))
-    } catch (error) {
-      if (sequence !== selectedScanResolveSequence) return
-      console.error('Failed to resolve selected host Agent status:', error)
-      selectedHosts.value = selectedHosts.value.map(host => ({
-        ...host,
-        agentInfoUnavailable: true
-      }))
-    } finally {
-      if (sequence === selectedScanResolveSequence) {
-        selectedScanAgentLoading.value = false
-      }
-    }
-  },
-  { flush: 'sync' }
-)
 
 // 作业运行结果对话框
 const runResultDialogVisible = ref(false)
@@ -2720,144 +2631,13 @@ async function handleConfirmFix() {
 }
 
 function handleRescan() {
-  rescanForm.hostsInput = ''
   selectedHosts.value = []
   rescanDialogVisible.value = true
 }
 
-function getRescanTrackKey(host) {
-  return String(host?.host_id || host?.hostId || host?.id || host?.host_key || host?.hostKey || '')
-}
-
-function normalizeRescanHost(host) {
-  if (typeof host === 'object' && host !== null) {
-    return {
-      key: host.key || host.id || host.host_id || host.hostId || '',
-      value: host.value || host.hostname || host.name || host.host_key || host.hostKey || '',
-      assetType: host.assetType || host.asset_type || 'linux'
-    }
-  }
-
-  return {
-    key: '',
-    value: String(host || '').trim(),
-    assetType: 'linux'
-  }
-}
-
-async function submitRescan(hosts, { closeDialog = false } = {}) {
-  let resolvedHosts
-  try {
-    resolvedHosts = await resolveAgentCapabilityHosts(hosts)
-  } catch (error) {
-    console.error('Failed to refresh scan target Agent status:', error)
-    ElMessage.error(error?.message || '无法确认目标主机的 Agent 状态，已阻止扫描')
-    return false
-  }
-
-  if (!validateAgentCapability(resolvedHosts, 'scan', [])) {
-    return false
-  }
-
-  const normalizedHosts = resolvedHosts
-    .map(normalizeRescanHost)
-    .filter(item => item.value)
-
-  if (normalizedHosts.length === 0) {
-    ElMessage.warning('请输入或选择至少一个主机')
-    return false
-  }
-
-  rescanLoading.value = true
-  try {
-    const { executeJob } = await import('@/modules/automation/api/jao')
-    const response = await executeJob({
-      jobId: '0g3GfW',
-      params: { hosts: normalizedHosts }
-    })
-
-    const runId = response?.data?.[0]?.runId || response?.[0]?.runId
-    if (!runId) {
-      ElMessage.error('扫描任务提交失败：未返回运行ID')
-      return false
-    }
-
-    ElMessage.success('扫描任务已提交')
-    if (closeDialog) {
-      rescanDialogVisible.value = false
-    }
-
-    lastSubmittedRunId.value = String(runId)
-    historyJobId.value = '0g3GfW'
-    historyJobTitle.value = '补丁扫描'
-    historyDialogVisible.value = true
-
-    setTimeout(() => {
-      loadKpiData()
-      loadHostData()
-    }, 2000)
-
-    return true
-  } catch (error) {
-    console.error('Scan failed:', error)
-    ElMessage.error(`扫描任务提交失败: ${error.message || '未知错误'}`)
-    return false
-  } finally {
-    rescanLoading.value = false
-  }
-}
-
-async function handleSingleHostRescan(row) {
-  const trackKey = getRescanTrackKey(row)
-  const scanTarget = row?.host_key || row?.hostKey || row?.hostname || ''
-
-  if (!trackKey && !scanTarget) {
-    ElMessage.warning('当前主机缺少扫描标识，无法执行扫描')
-    return
-  }
-
-  rescanningHostKey.value = trackKey || scanTarget
-  try {
-    await submitRescan([row])
-  } finally {
-    rescanningHostKey.value = ''
-  }
-}
-
-// 更新主机输入框内容
-function updateHostsInput() {
-  // 从选中的主机中提取主机名
-  const hostList = selectedHosts.value
-    .map(h => {
-      if (typeof h === 'object') {
-        return h.value || h.hostname || h.name || h.host_key || ''
-      }
-      return String(h)
-    })
-    .filter(Boolean)
-  rescanForm.hostsInput = hostList.join('\n')
-}
-
-async function executeRescan() {
-  // 先更新主机输入框（处理通过选择器选择的主机）
-  if (selectedHosts.value.length > 0) {
-    updateHostsInput()
-  }
-
-  // 准备主机参数
-  let hosts = []
-  if (selectedHosts.value.length > 0) {
-    hosts = selectedHosts.value
-  } else {
-    const hostLines = rescanForm.hostsInput.split('\n').filter(line => line.trim())
-    if (hostLines.length === 0) {
-      ElMessage.warning('请输入或选择至少一个主机')
-      return
-    }
-    hosts = hostLines.map(line => line.trim())
-  }
-
-  await submitRescan(hosts, { closeDialog: true })
+function handleSingleHostRescan(row) {
+  selectedHosts.value = [row]
+  rescanDialogVisible.value = true
 }
 
 function refresh() {
@@ -2889,14 +2669,6 @@ watch(fixDialogVisible, visible => {
   }
 })
 
-// 监听主机选择变化，自动更新输入框
-watch(
-  selectedHosts,
-  () => {
-    updateHostsInput()
-  },
-  { deep: true }
-)
 
 onMounted(() => {
   syncStateFromRoute()

@@ -74,11 +74,7 @@
                     <span class="error-title">Agent 路由安全检查未通过</span>
                   </div>
                   <pre class="route-mismatch-details">{{ agentRouteMismatchMessage }}</pre>
-                  <div class="route-mismatch-actions">
-                    <el-button type="danger" plain size="small" @click="openAgentHealthCheck">
-                      打开 Agent 接入体检
-                    </el-button>
-                  </div>
+
                 </div>
 
                 <div
@@ -460,7 +456,6 @@
     </div>
   </el-dialog>
 
-  <AgentHealthCheckDrawer v-model="agentHealthCheckVisible" />
 </template>
 
 <script setup>
@@ -474,7 +469,6 @@ import { AGENT_ERROR_MESSAGES, agentApi } from '@/modules/asset/api'
 import { authService } from '@/core/auth'
 import { extractAgentRouteMismatchMessage } from '@/modules/asset/utils/agentRouteMismatch'
 import { translateText } from '@/utils/i18n'
-import AgentHealthCheckDrawer from '@/modules/asset/components/asset-info/AgentHealthCheckDrawer.vue'
 import AnsibleLogViewer from '../AnsibleLogViewer.vue'
 import JobUpgradeOverview from './JobUpgradeOverview.vue'
 
@@ -528,7 +522,6 @@ const dialogVisible = computed({
 const activeTab = ref('overview')
 const loading = ref(false)
 const result = ref(null)
-const agentHealthCheckVisible = ref(false)
 const executionChannelInfo = ref({})
 let executionChannelRequestSequence = 0
 const pollTimer = ref()
@@ -754,13 +747,9 @@ function handleClose() {
   resetState()
 }
 
-function openAgentHealthCheck() {
-  agentHealthCheckVisible.value = true
-}
 
 function resetState() {
   activeTab.value = 'overview'
-  agentHealthCheckVisible.value = false
   result.value = null
   executionChannelInfo.value = {}
   executionChannelRequestSequence += 1

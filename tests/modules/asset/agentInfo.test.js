@@ -19,27 +19,27 @@ describe('agent host-info presentation', () => {
   })
 
   it('trusts the backend ipMismatch flag and formats timestamp fractions', () => {
-    expect(hasAgentIpMismatch({ cmdbIp: '10.0.0.1', lastReportedIp: '10.0.0.2' })).toBe(false)
+    expect(hasAgentIpMismatch({ cmdbIp: '10.0.0.1', agentIp: '10.0.0.2' })).toBe(false)
     expect(hasAgentIpMismatch({ ipMismatch: true })).toBe(true)
     expect(formatAgentTimestamp('2026-08-12 09:50:12.0')).toBe('2026-08-12 09:50:12')
   })
 })
 
-describe('AgentRouteMismatch error extraction', () => {
+describe('AgentRoute error extraction', () => {
   it('preserves the backend multiline message', () => {
-    const message = `${AGENT_ROUTE_MISMATCH_PREFIX} 已阻断。\n- [IP_MISMATCH] ciId=ci-1\n请先核对。`
+    const message = `${AGENT_ROUTE_MISMATCH_PREFIX} 已阻断。\n- [PLATFORM_SELF] ciId=ci-1\n请先核对。`
     expect(extractAgentRouteMismatchMessage({ error: { message } })).toBe(message)
   })
 
   it('finds the marker after an Ansible host prefix', () => {
-    expect(extractAgentRouteMismatchMessage('[host-a] [AgentRouteMismatch] blocked')).toBe(
-      '[AgentRouteMismatch] blocked'
+    expect(extractAgentRouteMismatchMessage('[host-a] [AgentRoute] blocked')).toBe(
+      '[AgentRoute] blocked'
     )
   })
 
   it('decodes a JSON-formatted error before extracting the message', () => {
     const encoded = JSON.stringify({
-      message: '[AgentRouteMismatch] 已阻断。\n- [PLATFORM_SELF] ciId=ci-2'
+      message: '[AgentRoute] 已阻断。\n- [PLATFORM_SELF] ciId=ci-2'
     })
     expect(extractAgentRouteMismatchMessage(encoded)).toContain('\n- [PLATFORM_SELF]')
   })

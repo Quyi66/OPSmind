@@ -1,4 +1,4 @@
-export const AGENT_ROUTE_MISMATCH_PREFIX = '[AgentRouteMismatch]'
+export const AGENT_ROUTE_MISMATCH_PREFIX = '[AgentRoute]'
 
 function findInValue(value, visited) {
   if (typeof value === 'string') {

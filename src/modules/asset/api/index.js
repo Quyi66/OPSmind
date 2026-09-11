@@ -541,117 +541,25 @@ export const operationLogApi = {
  * Agent 管理与接入 API
  */
 export const agentApi = {
-  /**
-   * 签发 Agent Enrollment Token
-   * POST /cmdb/api/cmdb/agent/enrollment-token
-   */
-  createEnrollmentToken: (data = {}) => {
-    return apiService.post(`${ACM_BASE}/agent/enrollment-token`, data).then(unwrapApiData)
-  },
-
-  /**
-   * 查询 Enrollment Token 状态
-   * GET /cmdb/api/cmdb/agent/enrollment-token/:tokenId
-   */
-  getEnrollmentToken: (tokenId) => {
-    return apiService.get(`${ACM_BASE}/agent/enrollment-token/${tokenId}`).then(unwrapApiData)
-  },
-
-  /**
-   * 获取待纳管在线 Agent 列表
-   * GET /cmdb/api/cmdb/agent/pending
-   */
-  getPendingAgents: () => {
-    return apiService.get(`${ACM_BASE}/agent/pending`).then(unwrapApiData)
-  },
-
-  /**
-   * 绑定主机与 Agent (Local 模式)
-   * POST /cmdb/api/cmdb/agent/bind
-   */
-  bindAgent: (data = {}) => {
-    return apiService.post(`${ACM_BASE}/agent/bind`, data).then(unwrapApiData)
-  },
-
-  /**
-   * 跳板代理模式绑定 Agent (Gateway 模式)
-   * POST /cmdb/api/cmdb/agent/bind-gateway
-   */
-  bindAgentGateway: (data = {}) => {
-    return apiService.post(`${ACM_BASE}/agent/bind-gateway`, data).then(unwrapApiData)
-  },
-
-  /**
-   * 解绑主机 Agent
-   * POST /cmdb/api/cmdb/agent/unbind
-   */
-  unbindAgent: (data = {}) => {
-    return apiService.post(`${ACM_BASE}/agent/unbind`, data).then(unwrapApiData)
-  },
-
-  /**
-   * 批量查询主机的 Agent 详情
-   * GET /cmdb/api/cmdb/agent/host-info?hostIds=...
-   */
-  getHostAgentInfo: (hostIds) => {
+  createEnrollmentToken: (data = {}) =>
+    apiService.post(`${ACM_BASE}/agent/enroll-tokens`, data).then(unwrapApiData),
+  revokeEnrollmentToken: tokenId =>
+    apiService.delete(`${ACM_BASE}/agent/enroll-tokens/${encodeURIComponent(tokenId)}`).then(unwrapApiData),
+  getPendingAgents: tokenId =>
+    apiService.get(`${ACM_BASE}/agent/pending`, { params: tokenId ? { tokenId } : {} }).then(unwrapApiData),
+  bindAgent: (data = {}) =>
+    apiService.post(`${ACM_BASE}/agent/bind`, data).then(unwrapApiData),
+  unbindAgent: (data = {}) =>
+    apiService.post(`${ACM_BASE}/agent/unbind`, data).then(unwrapApiData),
+  installAgent: hostIds =>
+    apiService.post(`${ACM_BASE}/agent/install`, { hostIds }).then(unwrapApiData),
+  getHostAgentInfo: hostIds => {
     const ids = Array.isArray(hostIds) ? hostIds.join(',') : hostIds
     return apiService.get(`${ACM_BASE}/agent/host-info`, { params: { hostIds: ids } }).then(unwrapApiData)
-  },
-
-  /**
-   * 将 CMDB 主 IP 同步为 Agent 最近上报的 IP
-   * POST /cmdb/api/cmdb/agent/sync-ip
-   */
-  syncAssetIp: (data = {}) => {
-    return apiService.post(`${ACM_BASE}/agent/sync-ip`, data).then(unwrapApiData)
-  },
-
-  /**
-   * 查询当前租户下的 Agent 路由错位记录
-   * GET /cmdb/api/cmdb/agent/route-mismatch
-   */
-  getRouteMismatches: () => {
-    return apiService.get(`${ACM_BASE}/agent/route-mismatch`).then(unwrapApiData)
-  },
-
-  /**
-   * 吊销 Token
-   * DELETE /cmdb/api/cmdb/agent/enrollment-token/:tokenId
-   */
-  revokeEnrollmentToken: (tokenId) => {
-    return apiService.delete(`${ACM_BASE}/agent/enrollment-token/${tokenId}`).then(unwrapApiData)
   }
 }
 
-export const AGENT_ERROR_MESSAGES = {
-  AGENT_AUTH_FAILED: 'Agent 鉴权失败，Token 凭据可能无效或已被吊销',
-  ENROLL_TOKEN_INVALID: 'Agent 安装 Token 已过期、耗尽或被撤销，请重新签发',
-  ENROLL_TOKEN_EXHAUSTED: 'Agent 安装 Token 已耗尽，请重新签发',
-  ENROLL_TOKEN_EXPIRED: 'Agent 安装 Token 已过期，请重新签发',
-  NEED_REENROLL: '该主机凭证已失效，需要重新纳管',
-  CLIENT_ALREADY_BOUND: 'Agent Client ID 与资产绑定关系不一致，请核对所选资产',
-  HOST_ALREADY_BOUND: '该资产已绑定 Agent，请先解绑',
-  HOST_NOT_FOUND: '资产不存在或没有有效的 Agent 绑定',
-  AGENT_OFFLINE: 'Agent 当前离线，请检查服务和网络后重试',
-  PLATFORM_SELF_BIND: '不能将平台自身地址同步为被纳管资产 IP',
-  RELAY_UNAVAILABLE: 'Agent 通道不可达',
-  CAPABILITY_UNSUPPORTED: '该 Agent 不支持此操作',
-  MISSING_CAPABILITY: 'Agent 缺少执行此操作的必要能力',
-  DISPATCH_TIMEOUT: 'Agent 指令下发或响应超时',
-  COMMAND_FAILED: 'Agent 主机命令执行失败',
-  RESULT_INGEST_FAILED: 'Agent 执行结果回写失败',
-  ROLLBACK_UNSUPPORTED: '该补丁不支持回滚',
-  ROLLBACK_FAILED: '补丁回滚失败'
-}
-
-export function getAgentErrorMessage(error, fallback = 'Agent 操作失败') {
-  const data = error?.response?.data || error?.data || {}
-  const code = data.errorCode || data.code || error?.errorCode || error?.code
-  if (error?.response?.status === 404) {
-    return 'Agent 管理服务尚未部署或版本不匹配，请联系管理员完成后端发布'
-  }
-  return AGENT_ERROR_MESSAGES[code] || data.message || data.detail || data.error || error?.message || fallback
-}
+export { AGENT_ERROR_MESSAGES, getAgentErrorMessage } from '../utils/agentErrors'
 
 export default {
   overviewApi,

@@ -151,7 +151,8 @@
 
     <template #footer>
       <div class="dialog-footer process-detail__footer">
-        <el-button @click="visible = false">关闭</el-button>
+        <PatchTaskRunControls :task="detailTask" :enabled="visible" :disabled="loading"
+          @updated="handleAutoRunTaskUpdate" @active-change="autoRunActive = $event" />
         <el-button :disabled="currentStep === 0" @click="currentStep -= 1">上一步</el-button>
         <el-button
           :disabled="currentStep >= wizardSteps.length - 1"
@@ -172,7 +173,8 @@
 </template>
 
 <script setup>
-import { computed, ref, toRef } from 'vue'
+import { computed, ref, toRef, watch } from 'vue'
+import PatchTaskRunControls from '../patch-task/PatchTaskRunControls.vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { usePatchProcessLogDetail } from '../../composables/usePatchProcessLogDetail'
 import ScriptStepContent from './PatchProcessLogScriptStep.vue'
@@ -201,6 +203,7 @@ const visible = computed({
   get: () => props.modelValue,
   set: value => emit('update:modelValue', value)
 })
+const autoRunActive = ref(false)
 const sourceTask = toRef(props, 'task')
 const executeResultVisible = ref(false)
 const executeRunId = ref('')
@@ -238,9 +241,35 @@ const detailStepStates = computed(() => wizardSteps.value.map(step => getWizardS
 useActiveTaskListPolling({
   records: () => (detailTask.value ? [detailTask.value] : []),
   refresh: load,
-  enabled: () => props.modelValue,
+  enabled: () => props.modelValue && !autoRunActive.value,
   activeStatuses: ['PRE_CHECKING', 'INSTALLING', 'ROLLING_BACK', 'RESTARTING', 'VALIDATING']
 })
+
+// P2 修复：一键执行期间同步刷新 steps / logs
+// PatchTaskRunControls 的内部轮询只调用 getTask 更新任务实体，
+// 不刷新 steps / history，导致 pipeline 和审计记录停止更新。
+let lastLoadedStatus = ''
+
+function handleAutoRunTaskUpdate(updatedTask) {
+  detailTask.value = updatedTask
+  // 任务状态变化时刷新完整详情（steps + logs）
+  const newStatus = updatedTask?.status || ''
+  if (newStatus && newStatus !== lastLoadedStatus) {
+    lastLoadedStatus = newStatus
+    load()
+  }
+}
+
+// 一键执行结束后刷新一次完整详情，确保最终状态正确
+watch(
+  () => autoRunActive.value,
+  (active, wasActive) => {
+    if (!active && wasActive && props.modelValue) {
+      lastLoadedStatus = ''
+      load()
+    }
+  }
+)
 
 function openExecuteResult(runId, jobTitle) {
   if (!runId) return
@@ -251,6 +280,7 @@ function openExecuteResult(runId, jobTitle) {
 
 function handleClosed() {
   reset()
+  lastLoadedStatus = ''
   executeResultVisible.value = false
   executeRunId.value = ''
   executeJobTitle.value = ''

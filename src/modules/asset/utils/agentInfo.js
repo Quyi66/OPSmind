@@ -24,7 +24,7 @@ export function getAgentCmdbIp(record) {
 }
 
 export function getAgentReportedIp(record) {
-  return String(record?.lastReportedIp || record?.last_reported_ip || '').trim()
+  return String(record?.agentIp || '').trim()
 }
 
 export function hasAgentIpMismatch(record) {

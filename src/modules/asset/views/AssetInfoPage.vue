@@ -124,10 +124,9 @@
               <i class="fa fa-plug" style="margin-right: 4px"></i>
               Agent 接入
             </el-button>
-            <el-button size="small" @click="openAgentHealthCheck">
-              <i class="fa fa-heartbeat" style="margin-right: 4px"></i>
-              Agent 接入体检
-            </el-button>
+            <el-button v-if="canManageAgents" size="small" @click="openAgentEnrollment(null, 'pending')">待处理 Agent</el-button>
+            <el-button v-if="canManageAgents" size="small" :disabled="selectedCount === 0" @click="openAgentInstall()">安装 Agent</el-button>
+            <el-button size="small" @click="openUnifiedScan">扫描</el-button>
             <el-button size="small" @click="importDialogVisible = true">
               <i class="fa fa-file-import" style="margin-right: 4px"></i>
               导入设备
@@ -273,21 +272,7 @@
                     <span v-if="getAgentStatus(row) === 'offline' && row.lastSeenAt" class="agent-offline-hint">
                       最后在线 {{ formatDateTime(row.lastSeenAt, 'MM-DD HH:mm') }}
                     </span>
-                    <el-tooltip
-                      v-if="canManageAgents && getAgentStatus(row) === 'offline'"
-                      content="重新签发一次性凭据，并在目标机执行后端返回的安装命令"
-                      placement="top"
-                    >
-                      <el-button
-                        text
-                        type="warning"
-                        size="small"
-                        class="agent-context-action"
-                        @click="openAgentReenrollment(row)"
-                      >
-                        重新纳管
-                      </el-button>
-                    </el-tooltip>
+
                   </div>
                 </template>
                 <span v-else class="text-muted">-</span>
@@ -317,19 +302,9 @@
                     effect="light"
                     class="agent-address-warning"
                   >
-                    <i class="fa fa-exclamation-triangle me-1" />IP 已错位
+                    <i class="fa fa-exclamation-triangle me-1" />IP 不一致（仅提示）
                   </el-tag>
-                  <el-button
-                    v-if="canManageAgents && hasAgentIpMismatch(row)"
-                    text
-                    type="danger"
-                    size="small"
-                    class="agent-context-action"
-                    :loading="syncingAgentIpId === String(row.id || row.hostId || row.host_id)"
-                    @click="handleSyncAssetIp(row)"
-                  >
-                    同步资产IP
-                  </el-button>
+
                 </div>
                 <span v-else class="text-muted">-</span>
               </template>
@@ -462,8 +437,13 @@
             </el-table-column>
 
             <!-- 8. 操作 -->
-            <el-table-column label="操作" width="120" fixed="right">
+            <el-table-column label="操作" width="230" fixed="right">
               <template #default="{ row }">
+                <template v-if="canManageAgents && !isAgentAsset(row)">
+                  <el-button text type="primary" size="small" :disabled="row.agentInfoUnavailable" @click="openAgentInstall(row)">安装Agent</el-button>
+                  <el-button text type="primary" size="small" :disabled="row.agentInfoUnavailable" @click="openAgentEnrollment(row)">生成本机安装命令</el-button>
+                </template>
+                <el-button v-if="canManageAgents && isAgentAsset(row)" text type="danger" size="small" @click="unbindAgent(row)">解绑Agent</el-button>
                 <el-button text type="primary" size="small" @click="handleEditRow(row)">
                   编辑
                 </el-button>
@@ -554,10 +534,8 @@
       @success="handleAgentEnrollmentSuccess"
     />
 
-    <AgentHealthCheckDrawer
-      v-model="agentHealthCheckVisible"
-      @synced="loadAssetList"
-    />
+    <AgentInstallDialog v-model="agentInstallVisible" :hosts="agentInstallHosts" @updated="loadAssetList" />
+    <UnifiedPatchScanDialog v-model="unifiedScanVisible" :preselected-hosts="scanHosts" @submitted="loadAssetList" />
 
   </div>
 </template>
@@ -567,7 +545,8 @@ import { ref, computed, nextTick, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import AgentEnrollmentDialog from '../components/asset-info/AgentEnrollmentDialog.vue'
-import AgentHealthCheckDrawer from '../components/asset-info/AgentHealthCheckDrawer.vue'
+import AgentInstallDialog from '../components/asset-info/AgentInstallDialog.vue'
+import UnifiedPatchScanDialog from '@/modules/patches/components/common/UnifiedPatchScanDialog.vue'
 import {
   Edit,
   Delete,
@@ -620,9 +599,11 @@ const currentTenantId = ref('')
 const agentEnrollmentVisible = ref(false)
 const agentEnrollmentInitialAsset = ref(null)
 const agentEnrollmentMode = ref('enroll')
-const agentHealthCheckVisible = ref(false)
+const agentInstallVisible = ref(false)
+const agentInstallHosts = ref([])
+const unifiedScanVisible = ref(false)
+const scanHosts = ref([])
 const agentServiceError = ref('')
-const syncingAgentIpId = ref('')
 
 const canManageAgents = computed(() =>
   authService.hasPermission('agent:manage') ||
@@ -846,8 +827,7 @@ const enrichAssetAgentInfo = async records => {
     record.agentOs = agentInfo.os || record.agentOs
     record.agentPlatform = agentInfo.agentPlatform || agentInfo.agent_platform || record.agentPlatform
     record.cmdbIp = agentInfo.cmdbIp || agentInfo.cmdb_ip || record.cmdbIp || record.IP
-    record.lastReportedIp = agentInfo.lastReportedIp || agentInfo.last_reported_ip || record.lastReportedIp
-    record.lastReportedAt = agentInfo.lastReportedAt || agentInfo.last_reported_at || record.lastReportedAt
+    record.agentIp = agentInfo.agentIp
     record.ipMismatch = agentInfo.ipMismatch ?? agentInfo.ip_mismatch ?? record.ipMismatch
     record.agentInfoUnavailable = false
   })
@@ -1050,46 +1030,6 @@ const handleEditSaved = () => {
   loadAssetList()
 }
 
-const handleSyncAssetIp = async row => {
-  const hostId = row?.id || row?.hostId || row?.host_id
-  const clientId = row?.agentClientId || row?.clientId
-  const cmdbIp = getAgentCmdbIp(row)
-  const reportedIp = getAgentReportedIp(row)
-  if (!hostId || !reportedIp) {
-    ElMessage.warning('缺少资产 ID 或 Agent 上报 IP，无法同步')
-    return
-  }
-
-  try {
-    await ElMessageBox.confirm(
-      `确认将资产“${row.hostname || hostId}”的 CMDB 主 IP 从 ${cmdbIp || '-'} 修改为 ${reportedIp}？该地址可能被工单、审计、防火墙策略和 SSH 通道引用。`,
-      '同步资产主 IP',
-      {
-        confirmButtonText: '确认同步',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
-  } catch {
-    return
-  }
-
-  syncingAgentIpId.value = String(hostId)
-  try {
-    await agentApi.syncAssetIp({ hostId: String(hostId), clientId, confirm: true })
-    ElMessage.success('资产主 IP 已同步')
-    await loadAssetList()
-  } catch (error) {
-    ElMessage.error(getAgentErrorMessage(error, '同步资产主 IP 失败'))
-  } finally {
-    syncingAgentIpId.value = ''
-  }
-}
-
-const openAgentHealthCheck = () => {
-  agentHealthCheckVisible.value = true
-}
-
 const handleHistory = row => {
   currentAssetId.value = row.id
   currentAssetIp.value = row.IP || ''
@@ -1269,12 +1209,12 @@ const handleRefresh = () => {
   loadAssetList()
 }
 
-const handleAgentEnrollmentSuccess = async _boundHostId => {
+const handleAgentEnrollmentSuccess = async boundHostId => {
   await loadAssetList()
-  // if (boundHostId) {
-  //   currentAssetId.value = String(boundHostId)
-  //   detailDialogVisible.value = true
-  // }
+  if (boundHostId) {
+    currentAssetId.value = String(boundHostId)
+    detailDialogVisible.value = true
+  }
 }
 
 const openAgentEnrollment = (asset = null, mode = 'enroll') => {
@@ -1283,27 +1223,29 @@ const openAgentEnrollment = (asset = null, mode = 'enroll') => {
   agentEnrollmentVisible.value = true
 }
 
-const openAgentReenrollment = async row => {
-  try {
-    await ElMessageBox.confirm(
-      '普通网络中断也会显示为离线。请仅在确认该主机凭证失效或确需重新注册时继续；新命令仍需在目标机手工执行。',
-      '确认重新纳管',
-      {
-        confirmButtonText: '继续生成新凭据',
-        cancelButtonText: '先排查服务与网络',
-        type: 'warning'
-      }
-    )
-  } catch {
-    return
-  }
+const openAgentInstall = async row => {
+  const hosts = row ? [row] : await resolveSelectedRowsForAction('请先选择要安装 Agent 的设备')
+  if (!hosts?.length) return
+  agentInstallHosts.value = hosts
+  agentInstallVisible.value = true
+}
 
-  const assetId = row.id || row.hostId || row.host_id
-  openAgentEnrollment({
-    ...row,
-    key: String(assetId || ''),
-    value: row.IP || row.ip || row.hostname || String(assetId || '')
-  }, 'reenroll')
+const openUnifiedScan = async () => {
+  const hosts = selectedCount.value ? await resolveSelectedRowsForAction('请选择主机') : []
+  if (!hosts) return
+  scanHosts.value = hosts
+  unifiedScanVisible.value = true
+}
+
+const unbindAgent = async row => {
+  try {
+    await ElMessageBox.confirm('确认解除当前资产与 Agent 的绑定？本机 Agent 将回到待处理列表，可重新绑定。', '解绑 Agent', { type: 'warning' })
+    await agentApi.unbindAgent({ hostId: String(row.id || row.hostId) })
+    ElMessage.success('Agent 已解绑')
+    await loadAssetList()
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') ElMessage.error(getAgentErrorMessage(error))
+  }
 }
 
 const loadCurrentTenantId = async () => {
