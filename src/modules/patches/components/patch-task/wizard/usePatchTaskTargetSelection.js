@@ -99,11 +99,13 @@ export function usePatchTaskTargetSelection({
 
   function closeTargetSelection() {
     targetSelectionSessionId += 1
+    installDataLoading.value = false
     cancelScheduledAffectedPackageRefresh()
     invalidateAffectedPackageRequest()
   }
 
   async function loadInstallData(patchIds) {
+    const sessionId = targetSelectionSessionId
     cancelScheduledAffectedPackageRefresh()
     invalidateAffectedPackageRequest()
     installDataLoading.value = true
@@ -143,11 +145,14 @@ export function usePatchTaskTargetSelection({
           patch_ids: patchIds,
           hostId: '@@(linux)'
         })
+        // 关闭或重新打开向导后，旧请求不能覆盖当前会话的主机列表。
+        if (sessionId !== targetSelectionSessionId) return
         if (hostResponse?.data?.records) {
           affectedHosts.value = hostResponse.data.records
           try {
             await refreshAgentInfoForHosts(affectedHosts.value)
           } catch (error) {
+            if (sessionId !== targetSelectionSessionId) return
             affectedHosts.value.forEach(host => {
               host.agentInfoUnavailable = true
             })
@@ -156,9 +161,10 @@ export function usePatchTaskTargetSelection({
         }
       }
     } catch (error) {
+      if (sessionId !== targetSelectionSessionId) return
       console.error('Failed to load install data:', error)
     } finally {
-      installDataLoading.value = false
+      if (sessionId === targetSelectionSessionId) installDataLoading.value = false
     }
   }
 
