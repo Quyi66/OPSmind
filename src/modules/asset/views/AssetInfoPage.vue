@@ -58,7 +58,6 @@
                 <el-option label="全部" value="all" />
                 <el-option label="在线" value="online" />
                 <el-option label="离线" value="offline" />
-                <el-option label="未知" value="unknown" />
               </el-select>
             </el-form-item>
 
@@ -574,6 +573,7 @@ import AddGroupDialog from '../components/asset-info/AddGroupDialog.vue'
 import { formatDateTime } from '../utils/helpers'
 import {
   getAgentCmdbIp,
+  getAgentNodeLabel,
   getAgentPlatformLabel,
   getAgentReportedIp,
   hasAgentIpMismatch
@@ -712,7 +712,7 @@ const hasSelection = computed(() => selectedCount.value > 0)
 
 const getAssetRowId = row => row?.id || row?.host_id || row?.hostId || null
 
-const isAgentConnection = connectionType => ['koreops_agent', 'agent', 'oplus_agent'].includes(connectionType)
+const isAgentConnection = connectionType => connectionType === 'koreops_agent'
 const isAgentAsset = record => isAgentConnection(record?.connectionType || record?.connection_type)
 
 const getAgentCapabilities = record => {
@@ -767,6 +767,7 @@ const getAgentStatusDetail = record => {
   if (capabilities.length) details.push(`支持能力：${capabilities.join('、')}`)
   if (getAgentOs(record)) details.push(`Agent OS：${getAgentOs(record)}`)
   if (record?.clientId || record?.agentClientId) details.push(`Client ID：${record.clientId || record.agentClientId}`)
+  if (isAgentAsset(record)) details.push(`接入节点：${getAgentNodeLabel(record)}`)
   if (getAgentReportedIp(record)) details.push(`Agent 当前 IP：${getAgentReportedIp(record)}`)
   if (hasAgentIpMismatch(record)) details.push(`CMDB 主 IP：${getAgentCmdbIp(record)}（与 Agent 上报不一致）`)
   if (record?.lastSeenAt) details.push(`最后在线：${formatDateTime(record.lastSeenAt)}`)
@@ -824,6 +825,7 @@ const enrichAssetAgentInfo = async records => {
     record.agentVersion = agentInfo.agentVersion || record.agentVersion
     record.lastSeenAt = agentInfo.lastSeenAt || record.lastSeenAt
     record.agentMode = agentInfo.agentMode || record.agentMode
+    record.agentNode = agentInfo.agentNode ?? record.agentNode ?? null
     record.agentOs = agentInfo.os || record.agentOs
     record.agentPlatform = agentInfo.agentPlatform || agentInfo.agent_platform || record.agentPlatform
     record.cmdbIp = agentInfo.cmdbIp || agentInfo.cmdb_ip || record.cmdbIp || record.IP

@@ -1,7 +1,7 @@
 import { ElMessage } from 'element-plus'
 import { agentApi } from '@/modules/asset/api'
 
-const AGENT_CONNECTION_TYPES = ['koreops_agent', 'agent', 'oplus_agent']
+const AGENT_CONNECTION_TYPE = 'koreops_agent'
 
 export function getAgentHostId(host) {
   if (!host || typeof host !== 'object') return ''
@@ -29,6 +29,7 @@ function mergeAgentInfo(host, info) {
     agentClientId: info.agentClientId || info.clientId || host.agentClientId,
     agentVersion: info.agentVersion || host.agentVersion,
     agentMode: info.agentMode || host.agentMode,
+    agentNode: info.agentNode ?? host.agentNode ?? null,
     agentPlatform: info.agentPlatform || host.agentPlatform,
     agentOs: info.os || host.agentOs,
     cmdbIp: info.cmdbIp || host.cmdbIp,
@@ -166,7 +167,7 @@ export function getAgentCapabilityIssues(hosts, requiredCap = 'scan', availableH
       continue
     }
 
-    const isAgent = AGENT_CONNECTION_TYPES.includes(connType)
+    const isAgent = connType === AGENT_CONNECTION_TYPE
     if (!isAgent) {
       issues.push({
         host: hostDisplayName,

@@ -113,10 +113,11 @@
         </el-table-column>
         <el-table-column label="接入方式 / Agent 状态" min-width="180">
           <template #default="{ row }">
-            <template v-if="['koreops_agent', 'agent', 'oplus_agent'].includes(row.connectionType)">
+            <template v-if="row.connectionType === 'koreops_agent'">
               <el-tag :type="row.agentStatus === 'online' ? 'success' : 'danger'" size="small">Agent {{ row.agentStatus === 'online' ? '在线' : '离线' }}</el-tag>
               <div>{{ getAgentPlatformLabel(row) }} / {{ row.agentVersion || '-' }}</div>
               <div>{{ row.agentIp || '-' }}</div>
+              <div>节点：{{ row.agentNode || '平台直连' }}</div>
               <el-tag v-if="row.ipMismatch" type="warning" size="small">资产 IP 不一致（仅提示）</el-tag>
             </template>
             <span v-else>{{ row.connectionType === 'ssh' ? 'SSH / WinRM' : '-' }}</span>

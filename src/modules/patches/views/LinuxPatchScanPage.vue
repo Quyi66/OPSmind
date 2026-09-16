@@ -1308,8 +1308,7 @@ const vulnSelectedCount = computed(() => {
 // Linux / Windows 共用扫描入口。
 const rescanDialogVisible = ref(false)
 const selectedHosts = ref([])
-const isAgentConnectionType = connectionType =>
-  ['koreops_agent', 'agent', 'oplus_agent'].includes(connectionType)
+const isAgentConnectionType = connectionType => connectionType === 'koreops_agent'
 
 // 作业运行结果对话框
 const runResultDialogVisible = ref(false)

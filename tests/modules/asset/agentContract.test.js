@@ -27,6 +27,22 @@ describe('simplified agent management API', () => {
       params: { tokenId: 'tok' }
     })
   })
+  it('passes the selected ingress node for a general enrollment token', async () => {
+    const result = {
+      id: 'tok-node',
+      server: 'https://executor-a/sjxy-console',
+      installCommand: 'curl https://executor-a/agent/i/token'
+    }
+    apiService.post.mockResolvedValue({ data: result })
+
+    expect(
+      await agentApi.createEnrollmentToken({ targetOs: 'linux', node: 'executor-a' })
+    ).toEqual(result)
+    expect(apiService.post).toHaveBeenCalledWith('/cmdb/api/cmdb/agent/enroll-tokens', {
+      targetOs: 'linux',
+      node: 'executor-a'
+    })
+  })
   it('sends new-host gateway binding to the unified bind endpoint', async () => {
     apiService.post.mockResolvedValue({ data: { hostId: 'created', hostCreated: true } })
     const binding = {

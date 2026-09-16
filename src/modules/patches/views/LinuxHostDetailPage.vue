@@ -42,6 +42,10 @@
           <span class="value font-mono">{{ agentInfo.agentClientId || agentInfo.clientId || '-' }}</span>
         </div>
         <div class="info-item" v-if="agentInfo && agentInfo.connectionType === 'koreops_agent'">
+          <span class="label">接入节点：</span>
+          <span class="value">{{ agentInfo.agentNode || '平台直连' }}</span>
+        </div>
+        <div class="info-item" v-if="agentInfo && agentInfo.connectionType === 'koreops_agent'">
           <span class="label">支持能力：</span>
           <span class="value">{{ agentCapabilities.length ? agentCapabilities.join(', ') : '-' }}</span>
         </div>
@@ -88,6 +92,9 @@
           </el-descriptions-item>
           <el-descriptions-item label="运行模式">
             {{ agentInfo.agentMode === 'gateway' ? `跳板模式 (目标 IP: ${agentInfo.targetIp || '-'})` : '本机直连 (Local)' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="接入节点">
+            {{ agentInfo.agentNode || '平台直连' }}
           </el-descriptions-item>
           <el-descriptions-item label="在线状态">
             <el-tag :type="agentInfo.agentStatus === 'online' ? 'success' : 'danger'">

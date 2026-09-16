@@ -33,6 +33,21 @@
           </el-radio-group>
           <span v-if="preboundHostId" class="hint">按资产类型自动选择</span>
         </el-form-item>
+        <el-form-item v-if="!preboundHostId" label="接入节点">
+          <el-select
+            v-model="tokenForm.node"
+            clearable
+            filterable
+            :disabled="generating"
+            :loading="loadingNodes"
+            placeholder="平台直连（默认）"
+            style="width: 280px"
+            @change="handleNodeChange"
+          >
+            <el-option v-for="item in nodeOptions" :key="item" :label="item" :value="item" />
+          </el-select>
+          <span class="hint">多节点部署时选择执行机实例组</span>
+        </el-form-item>
         <el-form-item label="有效期（分钟）">
           <el-input-number v-model="tokenForm.ttlMinutes" :min="1" :max="1440" :precision="0" />
         </el-form-item>
@@ -59,6 +74,7 @@
           <div class="command-result__meta">
             有效期至 {{ token.expiresAt }} / 剩余
             {{ token.remainingUses === null ? '不限' : token.remainingUses }} 次
+            <span v-if="token.server"> / 接入地址 {{ token.server }}</span>
           </div>
           <div class="command-result__actions">
             <el-button type="primary" size="small" :disabled="!installCommand || !tokenUsable" @click="copyCommand">
@@ -238,7 +254,7 @@
 import { computed, onUnmounted, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
-import { agentApi, getAgentErrorMessage } from '../../api'
+import { agentApi, automationApi, getAgentErrorMessage } from '../../api'
 import { getAgentPlatformLabel } from '../../utils/agentInfo'
 import {
   getEnrollmentInstallCommand,
@@ -258,7 +274,13 @@ const visible = computed({
 const hostId = host => String(host?.hostId || host?.id || host?.key || host?.host_id || '')
 const preboundHostId = computed(() => hostId(props.initialAsset))
 const page = ref('command')
-const tokenForm = reactive({ targetOs: 'linux', ttlMinutes: 1440, maxUses: 0, remark: '' })
+const tokenForm = reactive({
+  targetOs: 'linux',
+  ttlMinutes: 1440,
+  maxUses: 0,
+  remark: '',
+  node: ''
+})
 const token = ref(null)
 const tokenUsable = computed(() => isEnrollmentTokenUsable(token.value))
 const installCommand = computed(() => getEnrollmentInstallCommand(token.value))
@@ -267,6 +289,8 @@ const revoking = ref(false)
 const loadingPending = ref(false)
 const binding = ref(false)
 const downloading = ref(false)
+const loadingNodes = ref(false)
+const nodeOptions = ref([])
 const pendingAgents = ref([])
 const selectedClient = ref(null)
 const bindMode = ref('local')
@@ -341,6 +365,21 @@ function selectMatchedHost(id) {
 function handleTargetOsChange() {
   token.value = null
 }
+function handleNodeChange() {
+  token.value = null
+}
+async function loadNodeOptions() {
+  loadingNodes.value = true
+  try {
+    const nodes = await automationApi.getInstanceGroupList()
+    nodeOptions.value = [...new Set((nodes || []).map(item => String(item).trim()).filter(Boolean))]
+  } catch {
+    // 单机部署或实例组接口不可用时保持平台直连，不阻断凭证生成。
+    nodeOptions.value = []
+  } finally {
+    loadingNodes.value = false
+  }
+}
 async function generateToken() {
   if (generating.value) return
   const version = ++session
@@ -350,7 +389,11 @@ async function generateToken() {
   generating.value = true
   try {
     const result = await agentApi.createEnrollmentToken({
-      ...tokenForm,
+      targetOs: tokenForm.targetOs,
+      ttlMinutes: tokenForm.ttlMinutes,
+      maxUses: preboundHostId.value ? 1 : tokenForm.maxUses,
+      remark: tokenForm.remark,
+      ...(!preboundHostId.value && tokenForm.node ? { node: tokenForm.node } : {}),
       ...(preboundHostId.value ? { hostId: preboundHostId.value, maxUses: 1 } : {})
     })
     if (version !== session) return
@@ -467,7 +510,7 @@ watch(gatewayHosts, async hosts => {
     const infos = await agentApi.getHostAgentInfo([id])
     if (request !== gatewayRequest) return
     const info = infos[0]
-    if (['koreops_agent', 'agent', 'oplus_agent'].includes(info?.connectionType))
+    if (info?.connectionType === 'koreops_agent')
       gatewayInfo.value = { ...hosts[0], ...info }
     else ElMessage.warning('所选资产未绑定 Agent')
   } catch (error) {
@@ -510,8 +553,10 @@ watch(
           : 'linux',
       ttlMinutes: 1440,
       maxUses: preboundHostId.value ? 1 : 0,
-      remark: ''
+      remark: '',
+      node: ''
     })
+    if (!preboundHostId.value) loadNodeOptions()
     if (page.value === 'pending') fetchPending()
   },
   { immediate: true }

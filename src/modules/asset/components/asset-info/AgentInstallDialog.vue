@@ -91,9 +91,7 @@ async function refreshStatus() {
     const online = new Set(
       infos
         .filter(
-          info =>
-            ['koreops_agent', 'agent', 'oplus_agent'].includes(info.connectionType) &&
-            info.agentStatus === 'online'
+          info => info.connectionType === 'koreops_agent' && info.agentStatus === 'online'
         )
         .map(info => String(info.hostId))
     )

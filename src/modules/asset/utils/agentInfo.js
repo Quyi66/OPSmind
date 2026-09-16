@@ -27,6 +27,10 @@ export function getAgentReportedIp(record) {
   return String(record?.agentIp || '').trim()
 }
 
+export function getAgentNodeLabel(record) {
+  return String(record?.agentNode || '').trim() || '平台直连'
+}
+
 export function hasAgentIpMismatch(record) {
   return record?.ipMismatch === true || record?.ip_mismatch === true
 }

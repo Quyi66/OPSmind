@@ -49,6 +49,10 @@
                       <span class="meta-label">Agent 版本</span>
                       <span class="meta-value">{{ summary.agentVersion }}</span>
                     </div>
+                    <div v-if="summary.agentNode" class="meta-item">
+                      <span class="meta-label">接入节点</span>
+                      <span class="meta-value">{{ summary.agentNode }}</span>
+                    </div>
                     <div v-if="summary.relayTraceId" class="meta-item">
                       <span class="meta-label">Relay 追踪 ID</span>
                       <span class="meta-value">{{ summary.relayTraceId }}</span>
@@ -1067,11 +1071,9 @@ function parseJobExecutionError(errorRaw, ansibleContents = [], jobStatus = '') 
   }
 }
 
-const AGENT_CONNECTION_TYPES = ['koreops_agent', 'agent', 'oplus_agent']
-
 function normalizeConnectionType(value) {
   const connectionType = String(value || '').toLowerCase()
-  if (AGENT_CONNECTION_TYPES.includes(connectionType)) return 'koreops_agent'
+  if (connectionType === 'koreops_agent') return 'koreops_agent'
   if (connectionType === 'ssh') return 'ssh'
   if (connectionType === 'mixed') return 'mixed'
   return ''
@@ -1115,6 +1117,12 @@ function getDirectExecutionChannelInfo(data) {
       data?.agent_version,
       detail.agentVersion,
       detail.agent_version
+    )),
+    agentNode: joinDisplayValues(firstDefined(
+      data?.agentNode,
+      data?.agent_node,
+      detail.agentNode,
+      detail.agent_node
     )),
     relayTraceId: joinDisplayValues(firstDefined(
       data?.relayTraceId,
@@ -1203,6 +1211,11 @@ async function refreshExecutionChannelInfo(data) {
       agentVersion: joinDisplayValues(
         infos.map(info => info?.agentVersion).filter(Boolean)
       ) || directInfo.agentVersion,
+      agentNode: joinDisplayValues(
+        infos
+          .filter(info => info?.connectionType === 'koreops_agent')
+          .map(info => info?.agentNode || '平台直连')
+      ) || directInfo.agentNode,
       dispatchStatus: directInfo.dispatchStatus
     }
   } catch (error) {
@@ -1241,6 +1254,7 @@ const summary = computed(() => {
           : '未知',
     agentClientId: executionChannelInfo.value.agentClientId || '',
     agentVersion: executionChannelInfo.value.agentVersion || '',
+    agentNode: executionChannelInfo.value.agentNode || '',
     relayTraceId: executionChannelInfo.value.relayTraceId || '',
     dispatchStatus: executionChannelInfo.value.dispatchStatus || '',
     errorTitle: parsedError.title,

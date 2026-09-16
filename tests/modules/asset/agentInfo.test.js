@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   AGENT_PLATFORM,
   formatAgentTimestamp,
+  getAgentNodeLabel,
   getAgentPlatform,
   hasAgentIpMismatch
 } from '@/modules/asset/utils/agentInfo'
@@ -22,6 +23,11 @@ describe('agent host-info presentation', () => {
     expect(hasAgentIpMismatch({ cmdbIp: '10.0.0.1', agentIp: '10.0.0.2' })).toBe(false)
     expect(hasAgentIpMismatch({ ipMismatch: true })).toBe(true)
     expect(formatAgentTimestamp('2026-08-12 09:50:12.0')).toBe('2026-08-12 09:50:12')
+  })
+
+  it('formats the host-info ingress node', () => {
+    expect(getAgentNodeLabel({ agentNode: 'executor-a' })).toBe('executor-a')
+    expect(getAgentNodeLabel({ agentNode: null })).toBe('平台直连')
   })
 })
 

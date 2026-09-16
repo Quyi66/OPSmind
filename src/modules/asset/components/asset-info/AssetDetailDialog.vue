@@ -52,6 +52,7 @@
             <el-descriptions-item label="Agent 系统">{{ agentInfo?.os || '-' }}</el-descriptions-item>
             <el-descriptions-item label="Client ID">{{ agentInfo?.agentClientId || '-' }}</el-descriptions-item>
             <el-descriptions-item label="纳管模式">{{ agentInfo?.agentMode === 'gateway' ? 'Gateway 跳板' : 'Local 本机' }}</el-descriptions-item>
+            <el-descriptions-item label="接入节点">{{ getAgentNodeLabel(agentInfo) }}</el-descriptions-item>
             <el-descriptions-item label="CMDB 主 IP">{{ getAgentCmdbIp(agentInfo) || '-' }}</el-descriptions-item>
             <el-descriptions-item label="Agent 当前 IP">{{ getAgentReportedIp(agentInfo) || '-' }}</el-descriptions-item>
             <el-descriptions-item label="最后在线">{{ formatAgentTimestamp(agentInfo?.lastSeenAt) }}</el-descriptions-item>
@@ -105,6 +106,7 @@ import { agentApi, assetApi } from '../../api'
 import {
   formatAgentTimestamp,
   getAgentCmdbIp,
+  getAgentNodeLabel,
   getAgentPlatformLabel,
   getAgentReportedIp,
   hasAgentIpMismatch
@@ -133,9 +135,7 @@ const assetType = ref(null)
 const attrValues = ref({})
 const agentInfo = ref(null)
 
-const isAgentAsset = computed(() =>
-  ['koreops_agent', 'agent', 'oplus_agent'].includes(agentInfo.value?.connectionType)
-)
+const isAgentAsset = computed(() => agentInfo.value?.connectionType === 'koreops_agent')
 
 
 const visibleAttrs = computed(() => {
