@@ -124,6 +124,7 @@
           </h3>
           <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column; margin-bottom: 20px;">
             <AcmDeviceSelector
+              class="package-host-selector"
               v-model="selectedHosts"
               ci-types="[auto]"
               :options="{
@@ -1225,6 +1226,32 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 @use '../components/patch-task/wizard/PatchTaskWizard.scss' as *;
+
+.package-host-selector {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.package-host-selector :deep(.device-list-container) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+}
+
+.package-host-selector :deep(.device-list-container > div) {
+  flex-shrink: 0;
+}
+
+.package-host-selector :deep(.device-chip-list) {
+  min-height: 0;
+  max-height: none;
+  flex: 0 1 auto;
+  align-content: flex-start;
+}
+
 /* 遵循 UI 规范，不在 scoped 样式里包含任何 .el- 或 .ops- 前缀覆盖类 */
 .m-0 {
   margin: 0;
