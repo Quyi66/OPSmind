@@ -324,6 +324,7 @@
           ref="tableRef"
           v-loading="loading"
           :data="paginatedData"
+          row-key="patch_id"
           class="natural-height-table"
           @select="handleTableSelect"
           @select-all="handleTableSelect"
@@ -823,6 +824,7 @@ const filters = reactive({
 const tableRef = ref(null)
 const allData = ref([])
 const selectedRows = ref([])
+let patchLoadRequestId = 0
 
 const selectedPatchIds = computed(() => selectedRows.value.map(r => r.patch_id))
 
@@ -894,7 +896,6 @@ function handleInstallSelected() {
 }
 
 function handleInstallSuccess() {
-  resetAllSelected()
   loadData()
 }
 
@@ -930,35 +931,41 @@ function resolvePatchDistro(patch) {
 }
 
 async function loadData() {
+  const requestId = ++patchLoadRequestId
   loading.value = true
+  // 刷新后行对象会被替换，必须同时清空旧记录和表格勾选，避免再次选择时合并旧数据。
+  resetAllSelected()
+  selectedRows.value = []
+  tableRef.value?.clearSelection()
   try {
     const params = {}
     if (filters.severity.length > 0) {
       params.severity = filters.severity.join(',')
     }
     const response = await patchInstallApi.getAvailablePatches(params)
+    if (requestId !== patchLoadRequestId) return
     if (response?.data) {
       allData.value = response.data.records || response.data || []
     }
-    resetAllSelected()
   } catch (error) {
+    if (requestId !== patchLoadRequestId) return
     console.error('Failed to load patches:', error)
     ElMessage.error('加载可安装补丁失败，请稍后重试')
     allData.value = []
   } finally {
-    loading.value = false
-    patchDataLoaded.value = true
+    if (requestId === patchLoadRequestId) {
+      loading.value = false
+      patchDataLoaded.value = true
+    }
   }
 }
 
 function handleSearch() {
-  resetAllSelected()
   pagination.page = 1
   loadData()
 }
 
 function handleReset() {
-  resetAllSelected()
   filters.severity = ['Critical', 'Important', 'Moderate', 'Low']
   filters.keyword = ''
   pagination.page = 1
@@ -970,11 +977,13 @@ const {
   allSelected,
   handleToggleAllSelection: handleToggleSelectAll,
   handleTableSelect,
-  resetAllSelected
+  resetAllSelected,
+  restorePageSelection: restorePatchPageSelection
 } = useTableSelectAll(tableRef, {
   tableData: paginatedData,
   filteredData,
-  selectedItems: selectedRows
+  selectedItems: selectedRows,
+  matchFn: (a, b) => a.patch_id === b.patch_id
 })
 
 function handlePageChange(page) {
@@ -1025,10 +1034,14 @@ function handleTabChange(tab) {
       loadOsLists()
       loadHostTagOptions()
       loadHostData()
+    } else {
+      nextTick(restoreHostPageSelection)
     }
   } else {
     if (!patchDataLoaded.value) {
       loadData()
+    } else {
+      nextTick(restorePatchPageSelection)
     }
   }
 }

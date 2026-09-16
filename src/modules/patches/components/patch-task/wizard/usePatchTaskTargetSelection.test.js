@@ -14,8 +14,15 @@ vi.mock('element-plus', () => ({
 
 vi.mock('../../../api', () => ({
   patchInstallApi: {
-    getAffectedPackages: vi.fn()
+    getAffectedPackages: vi.fn(),
+    getMachinesByPatch: vi.fn()
   }
+}))
+
+vi.mock('../../../utils/agentCapability', () => ({
+  getAgentHostId: host => host.hostId,
+  resolveAgentCapabilityHosts: vi.fn(async hosts => hosts),
+  validateAgentCapability: vi.fn(() => true)
 }))
 
 function createDeferred() {
@@ -65,6 +72,44 @@ describe('usePatchTaskTargetSelection', () => {
     vi.restoreAllMocks()
     vi.clearAllMocks()
     vi.useRealTimers()
+  })
+
+  it('ignores hosts returned for an earlier wizard session after reopening', async () => {
+    const first = createDeferred()
+    const second = createDeferred()
+    patchInstallApi.getMachinesByPatch
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(second.promise)
+    const { targetSelection, wrapper } = mountTargetSelection()
+    targetSelection.openTargetSelection()
+    targetSelection.closeTargetSelection()
+    targetSelection.openTargetSelection()
+    const hosts = [{ hostId: 'current-host' }]
+    second.resolve({ data: { records: hosts } })
+    await flushPromises()
+    first.resolve({ data: { records: [{ hostId: 'stale-host' }] } })
+    await flushPromises()
+    expect(targetSelection.affectedHosts.value).toEqual(hosts)
+    wrapper.unmount()
+  })
+
+  it('keeps loading the current session when an older host request finishes', async () => {
+    const first = createDeferred()
+    const second = createDeferred()
+    patchInstallApi.getMachinesByPatch
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(second.promise)
+    const { targetSelection, wrapper } = mountTargetSelection()
+    targetSelection.openTargetSelection()
+    targetSelection.closeTargetSelection()
+    targetSelection.openTargetSelection()
+    first.resolve({ data: { records: [] } })
+    await flushPromises()
+    expect(targetSelection.installDataLoading.value).toBe(true)
+    second.resolve({ data: { records: [] } })
+    await flushPromises()
+    expect(targetSelection.installDataLoading.value).toBe(false)
+    wrapper.unmount()
   })
 
   it('retries the current selection when an A to B to A request supersedes the original request', async () => {
