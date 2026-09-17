@@ -131,12 +131,24 @@
           :type="pipelineStatus === 'success' ? 'success' : 'error'"
           :closable="false"
           show-icon
-          :title="pipelineStatus === 'success' ? '所有任务已全部完成' : '执行任务中断'"
+          :title="
+            pipelineStatus === 'success'
+              ? '所有任务已全部完成'
+              : pipelineStatus === 'paused'
+                ? '任务状态查询中断'
+                : '执行任务中断'
+          "
           class="task-step-alert"
         >
           <template #default>
             <div v-if="pipelineStatus === 'success'" class="timeline-status-text">
               Windows 补丁回滚流程已按既定步骤执行完成，可关闭向导或查看步骤详情确认结果。
+              <span v-if="rollbackOptions.rescanAfter">
+                系统将重新扫描补丁，请稍后查看最新补丁状态。
+              </span>
+            </div>
+            <div v-else-if="pipelineStatus === 'paused'" class="timeline-status-text">
+              {{ errorMessage }}。后端任务可能仍在执行，请点击“继续查询”恢复原任务。
             </div>
             <div v-else class="timeline-status-text">
               由于部分环节出现异常（{{
@@ -205,7 +217,9 @@ const props = defineProps({
 
 const emit = defineEmits(['view-run'])
 
-const pipelineFinished = computed(() => ['success', 'failed'].includes(props.pipelineStatus))
+const pipelineFinished = computed(() =>
+  ['success', 'failed', 'paused'].includes(props.pipelineStatus)
+)
 
 function getScriptSummary(scriptConfig = {}, stepKey = '') {
   if (props.skippedSteps?.[stepKey]) {
