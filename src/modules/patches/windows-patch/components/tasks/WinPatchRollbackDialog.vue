@@ -8,6 +8,8 @@
     class="install-dialog win-patch-rollback-wizard"
     :close-on-click-modal="false"
     :show-close="!dialogBusy"
+    :close-on-press-escape="!dialogBusy"
+    :before-close="handleBeforeClose"
     @closed="resetState"
   >
     <WinPatchInstallWizardStepper
@@ -58,7 +60,7 @@
       alert-title="这里统一配置回滚任务中的重启与自动重扫策略。"
       alert-description="当前向导会在校验脚本之后展示这一页，未启用的项会在任务推进时自动跳过。"
       reboot-hint="启用后，任务进入重启环节时会继续执行主机重启。"
-      rescan-hint="启用后，任务收尾阶段会自动刷新当前主机的补丁状态。"
+      rescan-hint="启用后，回滚完成时会自动重新扫描补丁。扫描需要一些时间，请稍后查看最新补丁状态。"
       @update:model-value="updateRollbackOptions"
     />
 
@@ -101,10 +103,14 @@
 
         <el-button v-else-if="dialogBusy" type="primary" loading disabled>执行中...</el-button>
 
+        <el-button v-else-if="pipelineStatus === 'paused'" type="primary" @click="startExecution">
+          继续查询
+        </el-button>
+
         <el-button
           v-else
           type="primary"
-          :disabled="selectedHistUpdateIds.length === 0"
+          :disabled="pipelineStatus === 'idle' && selectedHistUpdateIds.length === 0"
           @click="handlePrimaryAction"
         >
           {{ primaryButtonText }}
@@ -145,7 +151,10 @@ const emit = defineEmits(['update:modelValue', 'submitted', 'success'])
 
 const visibleModel = computed({
   get: () => props.modelValue,
-  set: value => emit('update:modelValue', value)
+  set: value => {
+    if (!value && dialogBusy.value) return
+    emit('update:modelValue', value)
+  }
 })
 
 const {
@@ -198,6 +207,10 @@ const primaryButtonText = computed(() => {
   if (pipelineStatus.value === 'failed') return '关闭'
   return '开始执行回滚'
 })
+
+function handleBeforeClose(done) {
+  if (!dialogBusy.value) done()
+}
 
 async function handlePrimaryAction() {
   if (pipelineStatus.value === 'success' || pipelineStatus.value === 'failed') {

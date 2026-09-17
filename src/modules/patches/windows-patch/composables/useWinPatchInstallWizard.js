@@ -35,7 +35,7 @@ function getStepFailedStatuses(stepKey) {
     case 'INSTALL':
       return ['INSTALL_FAILED', 'FAILED']
     case 'RESTART':
-      return ['FAILED']
+      return ['RESTART_FAILED', 'FAILED']
     case 'VALIDATE':
       return ['VALIDATE_FAILED', 'FAILED']
     default:
@@ -556,6 +556,8 @@ export function useWinPatchInstallWizard({
   }
 
   function waitForStepCompletion(stepKey, actionLabel) {
+    const normalizedStepKey = normalizeUpper(stepKey)
+
     return new Promise((resolve, reject) => {
       let settled = false
       const successStatuses = getStepSuccessStatuses(stepKey)
@@ -579,19 +581,46 @@ export function useWinPatchInstallWizard({
 
       const evaluate = () => {
         const stepStatus = getAuditStepStatus(stepKey)
+        const rawTaskStatus = normalizeUpper(
+          pickValue(taskDetail.value, ['taskStatus', 'task_status', 'status'], '')
+        )
         const taskStatus = getTaskStatusValue(taskDetail.value)
+
+        // 执行或跳过重启都须等待主任务进入 RESTART_DONE，审计状态不能替代校验前置条件
+        if (normalizedStepKey === 'RESTART') {
+          if (rawTaskStatus === 'RESTART_DONE') {
+            finalize(true)
+            return
+          }
+
+          if (
+            failedStatuses.includes(rawTaskStatus) ||
+            failedStatuses.includes(taskStatus) ||
+            ['FAILED', 'ERROR'].includes(stepStatus)
+          ) {
+            finalize(false, new Error(taskErrorMessage.value || `${actionLabel}失败`))
+            return
+          }
+
+          // 中间状态（RESTARTING, RESTART_RUNNING, INSTALL_DONE 等）继续轮询
+          return
+        }
 
         if (['SUCCESS', 'SKIPPED'].includes(stepStatus)) {
           finalize(true)
           return
         }
 
-        if (successStatuses.includes(taskStatus)) {
+        if (successStatuses.includes(taskStatus) || successStatuses.includes(rawTaskStatus)) {
           finalize(true)
           return
         }
 
-        if (['FAILED', 'ERROR'].includes(stepStatus) || failedStatuses.includes(taskStatus)) {
+        if (
+          ['FAILED', 'ERROR'].includes(stepStatus) ||
+          failedStatuses.includes(taskStatus) ||
+          failedStatuses.includes(rawTaskStatus)
+        ) {
           finalize(false, new Error(taskErrorMessage.value || `${actionLabel}失败`))
           return
         }
@@ -612,12 +641,23 @@ export function useWinPatchInstallWizard({
   }
 
   async function triggerTaskStep(stepKey, action, executeOptions = {}) {
+    const normalizedStepKey = normalizeUpper(stepKey)
     const currentStatus = getAuditStepStatus(stepKey)
-    if (['SUCCESS', 'SKIPPED'].includes(currentStatus)) {
+    const rawTaskStatus = normalizeUpper(
+      pickValue(taskDetail.value, ['taskStatus', 'task_status', 'status'], '')
+    )
+    if (normalizedStepKey === 'RESTART') {
+      if (rawTaskStatus === 'RESTART_DONE') {
+        return
+      }
+    } else if (['SUCCESS', 'SKIPPED'].includes(currentStatus)) {
       return
     }
 
-    if (['RUNNING', 'IN_PROGRESS'].includes(currentStatus)) {
+    if (
+      ['RUNNING', 'IN_PROGRESS'].includes(currentStatus) ||
+      (normalizedStepKey === 'RESTART' && ['RESTARTING', 'RESTART_RUNNING'].includes(rawTaskStatus))
+    ) {
       const stepLabel =
         WIN_PATCH_INSTALL_PIPELINE_STEPS.find(item => item.key === stepKey)?.label || stepKey
       await waitForStepCompletion(stepKey, stepLabel)
@@ -646,9 +686,9 @@ export function useWinPatchInstallWizard({
             })
       applyTaskSnapshot(unwrapResponse(response))
 
-      if (action === 'skip' && stepKey !== 'RESTART') {
+      if (action === 'skip' && normalizedStepKey !== 'RESTART') {
         taskAuditSteps.value = taskAuditSteps.value.map(step => {
-          if (normalizeUpper(step?.step) !== stepKey) {
+          if (normalizeUpper(step?.step) !== normalizedStepKey) {
             return step
           }
 
