@@ -31,7 +31,7 @@ export function usePatchTaskBackendRestartAdvice({
   restartAdviceCacheKey,
   applyLocalRestartAdvice
 }) {
-  async function loadRestartAdviceByHostPatch(force = false) {
+  async function loadRestartAdviceByHostPatch(force = false, isCurrent = () => true) {
     const hostEntries = Array.from(
       new Map(
         confirmedHosts.value
@@ -82,6 +82,7 @@ export function usePatchTaskBackendRestartAdvice({
     }))
 
     const settledResults = await Promise.allSettled(queryTasks.map(item => item.request))
+    if (!isCurrent()) return false
     const successfulResults = []
     let ignoredCount = 0
     let failedCount = 0

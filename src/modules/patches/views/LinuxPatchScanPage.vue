@@ -1114,6 +1114,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { usePatchScanCompletion } from '../composables/usePatchScanCompletion'
 import { ElMessage } from 'element-plus'
 import { formatDateTime } from '@/utils/date'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
@@ -2184,10 +2185,10 @@ function handleSeverityPatchInstallSuccess() {
 }
 
 function refreshPatchScanLists() {
-  loadKpiData()
-  loadHostData()
-  loadVulnData()
+  return Promise.all([loadKpiData(), loadHostData(), loadVulnData()])
 }
+
+const { trackScan } = usePatchScanCompletion(refreshPatchScanLists)
 
 function handleHistoryDialogClose(payload) {
   if (historyJobId.value === '0g3GfW' && payload?.succeeded) {
@@ -2732,6 +2733,7 @@ async function submitRescan(hosts, { closeDialog = false } = {}) {
     }
 
     ElMessage.success('扫描任务已提交')
+    trackScan(runId)
     if (closeDialog) {
       rescanDialogVisible.value = false
     }
@@ -2740,11 +2742,6 @@ async function submitRescan(hosts, { closeDialog = false } = {}) {
     historyJobId.value = '0g3GfW'
     historyJobTitle.value = '补丁扫描'
     historyDialogVisible.value = true
-
-    setTimeout(() => {
-      loadKpiData()
-      loadHostData()
-    }, 2000)
 
     return true
   } catch (error) {

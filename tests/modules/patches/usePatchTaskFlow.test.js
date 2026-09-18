@@ -67,3 +67,52 @@ describe('usePatchTaskFlow affected package synchronization', () => {
     expect(flow.confirmedHosts.value).toEqual([])
   })
 })
+
+describe('usePatchTaskFlow execution guards', () => {
+  function createFlow(status = 'running') {
+    const state = {
+      createdTaskId: ref('existing-task'),
+      executionSubmitting: ref(false),
+      pipelineStatus: ref(status),
+      installStep: ref(4),
+      currentStepKey: ref('restart'),
+      currentStepSkippable: ref(true),
+      stepTransitionLoading: ref(false),
+      isSkipped: reactive({ restart: false }),
+      startPipeline: vi.fn(),
+      createExecutionTask: vi.fn(),
+      syncScriptConfig: vi.fn(),
+      confirmedHosts: ref([]),
+      isVisible: ref(true)
+    }
+    return { state, flow: usePatchTaskFlow(state) }
+  }
+
+  it.each(['running', 'paused'])('blocks navigation and skip changes while %s', async status => {
+    const { state, flow } = createFlow(status)
+    flow.goBack()
+    flow.handleSkipStep()
+    flow.handleAdvanceStep()
+    await flow.handleNextStep()
+    expect(state.installStep.value).toBe(4)
+    expect(state.isSkipped.restart).toBe(false)
+    expect(state.createdTaskId.value).toBe('existing-task')
+  })
+
+  it('resumes a paused task without preparing or creating another task', async () => {
+    const { state, flow } = createFlow('paused')
+    await flow.executeStep()
+    expect(state.startPipeline).toHaveBeenCalledTimes(1)
+    expect(state.createExecutionTask).not.toHaveBeenCalled()
+    expect(state.syncScriptConfig).not.toHaveBeenCalled()
+    expect(state.createdTaskId.value).toBe('existing-task')
+    expect(state.executionSubmitting.value).toBe(false)
+  })
+
+  it('keeps completion independent of the current table selection', () => {
+    const { state, flow } = createFlow('success')
+    flow.handlePrimaryAction()
+    expect(state.isVisible.value).toBe(false)
+    expect(state.createExecutionTask).not.toHaveBeenCalled()
+  })
+})

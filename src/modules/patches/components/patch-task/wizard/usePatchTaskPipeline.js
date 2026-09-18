@@ -22,204 +22,203 @@ export function usePatchTaskPipeline({
   pipelineSectionRef,
   getStepIndex
 }) {
+  let session = 0
   let pollTimer = null
+  let cancelWait = null
+  let progress = null
 
-  async function refreshTaskDetail() {
-    if (!createdTaskId.value) return null
-    try {
-      const res = await patchInstallApi.getTask(createdTaskId.value)
-      const data = res?.data
-      if (data) {
-        taskStatus.value = data.status || ''
-        taskErrorMessage.value = data.errorMessage || ''
-        taskDetailData.value = data
-      }
-      return data || null
-    } catch {
-      return null
-    }
+  function clearTimer() {
+    clearTimeout(pollTimer)
+    pollTimer = null
   }
 
-  async function scrollToPipelineSection() {
-    await nextTick()
-    const target = pipelineSectionRef.value
-    if (!target) return
-    target.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
-
+  // Reset/close invalidates both pending requests and the suspended execution chain.
   function stopPolling() {
-    if (pollTimer) {
-      clearInterval(pollTimer)
-      pollTimer = null
+    session += 1
+    clearTimer()
+    cancelWait?.()
+    cancelWait = null
+    progress = null
+  }
+
+  function checkActive(token, taskId) {
+    if (token !== session || createdTaskId.value !== taskId) {
+      throw new Error('任务窗口已关闭')
     }
   }
 
-  function pollStatusPromise(step, successStatuses, failedStatuses) {
-    return new Promise(resolve => {
-      let settled = false
+  async function refreshTaskDetail(token = session, taskId = createdTaskId.value) {
+    if (!taskId) return null
+    const res = await patchInstallApi.getTask(taskId)
+    checkActive(token, taskId)
+    const data = res?.data
+    if (!data?.status) throw new Error('未获取到任务状态')
+    taskStatus.value = data.status
+    taskErrorMessage.value = data.errorMessage || ''
+    taskDetailData.value = data
+    return data
+  }
 
-      const finalize = success => {
+  function pollStatusPromise(step, successStatuses, failedStatuses, token, taskId) {
+    return new Promise((resolve, reject) => {
+      let settled = false
+      let failures = 0
+      const finish = (error = null) => {
         if (settled) return
         settled = true
-        if (step >= 0) {
-          stepStates[step] = success ? 'success' : 'failed'
+        clearTimer()
+        cancelWait = null
+        if (error) reject(error)
+        else {
+          stepStates[step] = 'success'
+          resolve()
         }
-        stopPolling()
-        resolve(success)
       }
-
-      const evaluateTask = data => {
-        if (!data?.status) return false
-
-        taskStatus.value = data.status
-        taskErrorMessage.value = data.errorMessage || taskErrorMessage.value
-        taskDetailData.value = data
-
-        if (successStatuses.includes(data.status)) {
-          finalize(true)
-          return true
-        }
-
-        if (failedStatuses.includes(data.status)) {
-          finalize(false)
-          return true
-        }
-
-        return false
-      }
-
-      if (evaluateTask(taskDetailData.value)) {
-        return
-      }
-
-      pollTimer = setInterval(async () => {
+      cancelWait = () => finish(new Error('任务窗口已关闭'))
+      const tick = async () => {
+        let data
         try {
-          const res = await patchInstallApi.getTask(createdTaskId.value)
-          const data = res?.data
-          evaluateTask(data)
+          data = await refreshTaskDetail(token, taskId)
         } catch (error) {
-          taskErrorMessage.value = resolveApiErrorMessage(error, '任务状态查询失败')
-          finalize(false)
+          if (settled || token !== session) return
+          failures += 1
+          if (failures >= 3) {
+            const queryError = new Error(resolveApiErrorMessage(error, '任务状态查询失败'))
+            queryError.queryInterrupted = true
+            finish(queryError)
+            return
+          }
         }
-      }, 3000)
+        if (settled || token !== session) return
+        if (data) {
+          failures = 0
+          if (successStatuses.includes(data.status)) {
+            finish()
+            return
+          }
+          if (failedStatuses.includes(data.status)) {
+            finish(new Error(data.errorMessage || '任务执行失败'))
+            return
+          }
+        }
+        // Schedule after the request completes, so slow requests cannot overlap.
+        pollTimer = setTimeout(tick, 3000)
+      }
+      void tick()
     })
   }
 
   async function startPipeline() {
-    const preStepIndex = getStepIndex('pre')
-    const validateStepIndex = getStepIndex('validate')
-    const restartStepIndex = getStepIndex('restart')
-    const executeStepIndex = getStepIndex('execute')
-
+    if (pipelineStatus.value === 'running') return
+    const taskId = createdTaskId.value
+    if (!taskId) return
+    const token = session
+    const isCurrent = () => token === session && createdTaskId.value === taskId
+    if (!progress || progress.taskId !== taskId || pipelineStatus.value !== 'paused') {
+      progress = { taskId, stage: 0, dispatched: false, skipRestart: false }
+    }
+    const execution = progress
+    const steps = ['pre', 'execute', 'restart', 'validate']
     pipelineStatus.value = 'running'
+    pipelineFinished.value = false
     taskErrorMessage.value = ''
-    stopPolling()
-    scrollToPipelineSection()
 
     try {
-      if (isSkipped.pre) {
-        stepStates[preStepIndex] = 'running'
-        await patchInstallApi.skipPreCheck(createdTaskId.value)
-        await refreshTaskDetail()
-        const preSkipped = await pollStatusPromise(
-          preStepIndex,
-          ['PRE_CHECK_DONE'],
-          ['PRE_CHECK_FAILED', 'FAILED']
-        )
-        if (!preSkipped) throw new Error('跳过预检查失败')
-      } else {
-        stepStates[preStepIndex] = 'running'
-        await patchInstallApi.executePreCheck(createdTaskId.value)
-        await refreshTaskDetail()
-        const preSuccess = await pollStatusPromise(
-          preStepIndex,
-          ['PRE_CHECK_DONE'],
-          ['PRE_CHECK_FAILED', 'FAILED']
-        )
-        if (!preSuccess) throw new Error('前置环境检查失败')
+      await nextTick()
+      checkActive(token, taskId)
+      pipelineSectionRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      for (; execution.stage < steps.length; execution.stage += 1) {
+        const key = steps[execution.stage]
+        const index = getStepIndex(key)
+        stepStates[index] = 'running'
+        let successStatuses
+        let failedStatuses
+
+        if (key === 'pre') {
+          if (!execution.dispatched) {
+            await (isSkipped.pre
+              ? patchInstallApi.skipPreCheck(taskId)
+              : patchInstallApi.executePreCheck(taskId))
+          }
+          successStatuses = ['PRE_CHECK_DONE']
+          failedStatuses = ['PRE_CHECK_FAILED', 'FAILED']
+        } else if (key === 'execute') {
+          if (!execution.dispatched) {
+            await (isRollbackTask.value
+              ? patchInstallApi.executeRollbackTask(taskId)
+              : patchInstallApi.executeInstallTask(taskId))
+          }
+          successStatuses = [isRollbackTask.value ? 'ROLLBACK_DONE' : 'INSTALL_DONE']
+          failedStatuses = [isRollbackTask.value ? 'ROLLBACK_FAILED' : 'INSTALL_FAILED', 'FAILED']
+        } else if (key === 'restart') {
+          if (!execution.dispatched) {
+            await loadRestartOptions(isCurrent)
+            checkActive(token, taskId)
+            await loadRollbackInfo(isCurrent)
+            checkActive(token, taskId)
+            execution.skipRestart = installConfig.restartPolicy === 'none' || isSkipped.restart
+            await patchInstallApi.confirmRestart(
+              taskId,
+              !execution.skipRestart,
+              execution.skipRestart ? undefined : restartConfirmSubmitText
+            )
+            checkActive(token, taskId)
+            if (!execution.skipRestart) await patchInstallApi.executeRestart(taskId)
+          }
+          successStatuses = ['RESTART_DONE']
+          failedStatuses = ['RESTART_FAILED', 'FAILED']
+        } else {
+          if (!execution.dispatched) {
+            if (installConfig.postScript && !isSkipped.validate) {
+              await patchInstallApi.executeValidate(taskId)
+            } else {
+              await patchInstallApi.skipValidate(taskId)
+              checkActive(token, taskId)
+              isSkipped.validate = true
+            }
+          }
+          successStatuses = ['COMPLETED']
+          failedStatuses = ['VALIDATE_FAILED', 'FAILED']
+        }
+        checkActive(token, taskId)
+        execution.dispatched = true
+        if (key === 'restart' && execution.skipRestart) {
+          // Preserve the existing confirm(false) contract; do not add a status gate here.
+          try {
+            await refreshTaskDetail(token, taskId)
+          } catch {
+            /* best-effort refresh */
+          }
+          checkActive(token, taskId)
+          stepStates[index] = 'success'
+          isSkipped.restart = true
+        } else {
+          await pollStatusPromise(index, successStatuses, failedStatuses, token, taskId)
+          checkActive(token, taskId)
+        }
+        execution.dispatched = false
       }
-
-      stepStates[executeStepIndex] = 'running'
-      if (isRollbackTask.value) {
-        await patchInstallApi.executeRollbackTask(createdTaskId.value)
-      } else {
-        await patchInstallApi.executeInstallTask(createdTaskId.value)
-      }
-      await refreshTaskDetail()
-      const installSuccess = await pollStatusPromise(
-        executeStepIndex,
-        [isRollbackTask.value ? 'ROLLBACK_DONE' : 'INSTALL_DONE'],
-        [isRollbackTask.value ? 'ROLLBACK_FAILED' : 'INSTALL_FAILED', 'FAILED']
-      )
-      if (!installSuccess) throw new Error(`${executeStepTitle.value}失败`)
-
-      await loadRestartOptions()
-      await loadRollbackInfo()
-
-      if (installConfig.restartPolicy !== 'none' && !isSkipped.restart) {
-        stepStates[restartStepIndex] = 'running'
-        await patchInstallApi.confirmRestart(createdTaskId.value, true, restartConfirmSubmitText)
-        await patchInstallApi.executeRestart(createdTaskId.value)
-        await refreshTaskDetail()
-        const restartSuccess = await pollStatusPromise(
-          restartStepIndex,
-          ['RESTART_DONE'],
-          ['RESTART_FAILED', 'FAILED']
-        )
-        if (!restartSuccess) throw new Error('重启执行失败')
-      } else {
-        await patchInstallApi.confirmRestart(createdTaskId.value, false)
-        await refreshTaskDetail()
-        stepStates[restartStepIndex] = 'success'
-        isSkipped.restart = true
-      }
-
-      if (installConfig.postScript && !isSkipped.validate) {
-        stepStates[validateStepIndex] = 'running'
-        await patchInstallApi.executeValidate(createdTaskId.value)
-        await refreshTaskDetail()
-        const validateSuccess = await pollStatusPromise(
-          validateStepIndex,
-          ['COMPLETED'],
-          ['VALIDATE_FAILED', 'FAILED']
-        )
-        if (!validateSuccess) throw new Error('脚本校验执行失败')
-      } else {
-        stepStates[validateStepIndex] = 'running'
-        await patchInstallApi.skipValidate(createdTaskId.value)
-        await refreshTaskDetail()
-        const validateSkipped = await pollStatusPromise(
-          validateStepIndex,
-          ['COMPLETED'],
-          ['VALIDATE_FAILED', 'FAILED']
-        )
-        if (!validateSkipped) throw new Error('脚本校验跳过失败')
-        isSkipped.validate = true
-      }
-
       pipelineFinished.value = true
       pipelineStatus.value = 'success'
       emitSuccess()
       ElMessage.success('全流程执行完毕')
     } catch (error) {
+      if (!isCurrent()) return
       pipelineFinished.value = true
-      pipelineStatus.value = 'failed'
-      const runningIdx = stepStates.findIndex(s => s === 'running')
-      if (runningIdx !== -1) {
-        stepStates[runningIdx] = 'failed'
+      pipelineStatus.value = error.queryInterrupted ? 'paused' : 'failed'
+      if (!error.queryInterrupted) {
+        const runningIdx = stepStates.findIndex(state => state === 'running')
+        if (runningIdx !== -1) stepStates[runningIdx] = 'failed'
       }
-      if (!taskErrorMessage.value) {
-        taskErrorMessage.value = resolveApiErrorMessage(error, '执行异常')
-      }
-      ElMessage.error(`任务执行中断：${taskErrorMessage.value}`)
+      taskErrorMessage.value = resolveApiErrorMessage(error, `${executeStepTitle.value}异常`)
+      ElMessage.error(
+        error.queryInterrupted
+          ? '暂时无法查询任务状态，请点击“继续查询”'
+          : `任务执行中断：${taskErrorMessage.value}`
+      )
     }
   }
 
-  onUnmounted(() => stopPolling())
-
-  return {
-    refreshTaskDetail,
-    startPipeline,
-    stopPolling
-  }
+  onUnmounted(stopPolling)
+  return { refreshTaskDetail, startPipeline, stopPolling }
 }
