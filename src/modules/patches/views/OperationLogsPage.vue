@@ -84,7 +84,7 @@
               {{ translateAction(row.action) }}
             </template>
           </el-table-column>
-          <el-table-column prop="status" label="状态" width="90">
+          <el-table-column prop="status" label="状态" width="110">
             <template #default="{ row }">
               <RunLogStatusTag
                 :type="getStatusType(row.status)"

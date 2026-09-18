@@ -383,12 +383,18 @@ export const patchScanApi = {
 */
 export const patchInstallApi = {
   /**
-   * 创建并运行补丁任务
+   * 提交定时安装任务（scheduledTime 必填，普通用户需管理员审批）
    * POST /secops/api/secops/v2/patch/task/create-and-run
    */
   createAndRunTask(params) {
     return apiService
       .post(`${PATCH_TASK_API_PREFIX}/create-and-run`, params)
+      .then(normalizePatchTaskResponse)
+  },
+
+  approveTask(id, params) {
+    return apiService
+      .post(`${PATCH_TASK_API_PREFIX}/${id}/approval`, params)
       .then(normalizePatchTaskResponse)
   },
 

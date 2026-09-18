@@ -11,6 +11,22 @@
   >
     <div v-loading="loading" class="process-detail">
       <template v-if="detailTask">
+        <section v-if="isRejected" class="rejection-banner" role="status" aria-label="审批已驳回，安装未执行">
+          <div class="rejection-banner__content">
+            <div class="rejection-banner__summary">
+              <span class="rejection-banner__title">审批已驳回，安装未执行</span>
+              <span class="rejection-banner__reason">{{ detailTask.approvalComment || detailTask.errorMessage || '管理员未通过本次安装申请。' }}</span>
+            </div>
+            <div class="rejection-banner__hint">以下为申请时的配置信息。如需安装，请修改后重新提交申请。</div>
+          </div>
+        </section>
+        <el-descriptions v-if="detailTask.scheduledTime" :column="2" border>
+          <el-descriptions-item label="任务状态">{{ detailTask.status === 'CREATED' ? '等待定时执行' : formatTaskStatus(detailTask.status) }}</el-descriptions-item>
+          <el-descriptions-item label="计划执行时间">{{ formatDateTime(detailTask.scheduledTime) }}</el-descriptions-item>
+          <el-descriptions-item label="申请人">{{ detailTask.createdBy || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="审批人">{{ detailTask.approvedBy || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="审批时间">{{ formatDateTime(detailTask.approvedTime) }}</el-descriptions-item>
+        </el-descriptions>
         <PatchTaskStepper
           class="process-detail__stepper"
           :steps="wizardSteps"
@@ -46,7 +62,7 @@
           <ScriptStepContent
             icon="fa-code"
             title="预执行脚本"
-            :alert="preCheckAlert"
+            :alert="isRejected ? rejectedStepAlert : preCheckAlert"
             :run-id="preCheckRunId"
             :script-content="preCheckScript"
             @show-result="openExecuteResult($event, '预执行脚本')"
@@ -59,7 +75,7 @@
           v-show="currentStepKey === 'validate'"
           icon="fa-check-square-o"
           title="校验脚本"
-          :alert="validateAlert"
+          :alert="isRejected ? rejectedStepAlert : validateAlert"
           :run-id="validateRunId"
           :script-content="validateScript"
           @show-result="openExecuteResult($event, '校验脚本')"
@@ -72,10 +88,10 @@
               重启策略
             </div>
             <el-alert
-              :type="restartAlert.type"
+              :type="isRejected ? 'info' : restartAlert.type"
               :closable="false"
               show-icon
-              :title="restartAlert.title"
+              :title="isRejected ? rejectedStepAlert.title : restartAlert.title"
               class="task-step-alert"
             >
               <template #default>
@@ -120,7 +136,7 @@
 
             <PatchTaskPipeline
               class="mt-3"
-              :items="pipelineItems"
+              :items="detailPipelineItems"
               pending-icon
               @show-result="openExecuteResult"
             />
@@ -173,6 +189,7 @@
 
 <script setup>
 import { computed, ref, toRef } from 'vue'
+import { formatDateTime, formatTaskStatus } from '../../utils/patchProcessLogs'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { usePatchProcessLogDetail } from '../../composables/usePatchProcessLogDetail'
 import ScriptStepContent from './PatchProcessLogScriptStep.vue'
@@ -229,17 +246,26 @@ const {
   isTaskFailed,
   parsedPreCheckResult,
   load,
+  refresh,
   reset,
   getWizardStepState
 } = usePatchProcessLogDetail(sourceTask)
 
-const detailStepStates = computed(() => wizardSteps.value.map(step => getWizardStepState(step.key)))
+const isRejected = computed(() => String(detailTask.value?.status || '').trim().toUpperCase() === 'REJECTED')
+const rejectedStepAlert = { type: 'info', title: '审批已驳回，本环节未执行；以下仅展示申请配置。' }
+const detailStepStates = computed(() =>
+  wizardSteps.value.map(step => isRejected.value ? 'idle' : getWizardStepState(step.key))
+)
+const detailPipelineItems = computed(() => isRejected.value
+  ? pipelineItems.value.map(item => ({ ...item, state: 'idle', runId: '', text: '审批驳回，未执行' }))
+  : pipelineItems.value
+)
 
 useActiveTaskListPolling({
   records: () => (detailTask.value ? [detailTask.value] : []),
-  refresh: load,
-  enabled: () => props.modelValue,
-  activeStatuses: ['PRE_CHECKING', 'INSTALLING', 'ROLLING_BACK', 'RESTARTING', 'VALIDATING']
+  refresh,
+  enabled: () => props.modelValue && !loading.value,
+  activeStatuses: ['PENDING_APPROVAL', 'CREATED', 'PRE_CHECKING', 'INSTALLING', 'ROLLING_BACK', 'RESTARTING', 'VALIDATING']
 })
 
 function openExecuteResult(runId, jobTitle) {
@@ -295,8 +321,49 @@ function handleClosed() {
   padding-right: 4px;
 }
 
-.process-detail__stepper {
-  margin-bottom: 24px;
+.rejection-banner {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--el-color-danger-light-7);
+  border-left: 3px solid var(--el-color-danger);
+  border-radius: 6px;
+  background: var(--el-color-danger-light-9);
+}
+
+.rejection-banner__content {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.rejection-banner__title {
+  color: var(--el-color-danger);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.rejection-banner__reason {
+  color: var(--el-text-color-primary);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.rejection-banner__hint {
+  margin-top: 4px;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.rejection-banner__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  line-height: 1.6;
+}
+
+.process-detail .process-detail__stepper {
+  margin: 24px 0 28px;
 }
 
 .process-detail__footer {

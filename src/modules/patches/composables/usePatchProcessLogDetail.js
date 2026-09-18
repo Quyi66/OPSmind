@@ -198,22 +198,30 @@ export function usePatchProcessLogDetail(sourceTask) {
   })
 
   async function load() {
-    const version = ++requestVersion
     initializeFromSource()
+    await fetchDetail(false)
+  }
 
+  async function refresh() {
+    await fetchDetail(true)
+  }
+
+  async function fetchDetail(silent) {
+    const version = ++requestVersion
     const taskId = sourceTask.value?.id || sourceTask.value?.taskId
     if (!taskId) return
 
-    loading.value = true
+    if (!silent) loading.value = true
     try {
       const response = await patchInstallApi.getAuditDetail(taskId)
       if (version !== requestVersion) return
 
       const detail = response?.data || response || {}
-      task.value = detail.task || sourceTask.value || null
+      task.value = detail.task || task.value || sourceTask.value || null
       steps.value = Array.isArray(detail.steps) ? detail.steps : []
       history.value = Array.isArray(detail.logs) ? detail.logs : []
     } catch {
+      if (version !== requestVersion) return
       await loadLegacyDetail(taskId, version)
     } finally {
       if (version === requestVersion) loading.value = false
@@ -260,6 +268,7 @@ export function usePatchProcessLogDetail(sourceTask) {
 
     if (taskResult.status === 'fulfilled') {
       task.value = taskResult.value?.data || taskResult.value || sourceTask.value
+      steps.value = []
     }
     if (historyResult.status === 'fulfilled') {
       const historyData = historyResult.value?.data || historyResult.value || []
@@ -323,6 +332,7 @@ export function usePatchProcessLogDetail(sourceTask) {
     isTaskFailed,
     parsedPreCheckResult,
     load,
+    refresh,
     reset,
     getWizardStepState
   }

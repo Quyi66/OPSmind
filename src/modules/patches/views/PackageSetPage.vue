@@ -3,6 +3,7 @@
     <!-- Tab 导航 -->
     <el-tabs v-model="activeTab" class="mb-3">
       <el-tab-pane label="一键分批安装" name="install" />
+      <el-tab-pane label="安装申请与任务" name="tasks" />
       <el-tab-pane label="软件包集管理" name="management" />
     </el-tabs>
 
@@ -95,6 +96,26 @@
               </div>
             </el-form-item>
 
+            <el-form-item label="计划执行时间" required>
+              <div style="display: flex; flex-wrap: wrap; gap: 8px; width: 100%;">
+                <el-date-picker v-model="scheduleDate" type="date" value-format="YYYY-MM-DD"
+                  :editable="false" placeholder="选择日期" style="flex: 1; min-width: 150px;" />
+                <el-select v-model="scheduleHour" filterable default-first-option placeholder="时" aria-label="执行小时，可输入筛选" no-match-text="请输入 00–23" style="width: 85px;">
+                  <el-option v-for="hour in scheduleHours" :key="hour" :label="`${hour} 时`" :value="hour" />
+                </el-select>
+                <el-select v-model="scheduleMinute" filterable default-first-option placeholder="分" aria-label="执行分钟，可输入筛选（每 5 分钟）" no-match-text="请选择 00、05 … 55" style="width: 85px;">
+                  <el-option v-for="minute in scheduleMinutes" :key="minute" :label="`${minute} 分`" :value="minute" />
+                </el-select>
+              </div>
+              <div class="mt-1" style="font-size: 12px; color: var(--el-text-color-secondary); width: 100%;">
+                时、分支持输入筛选，按回车选择。每 5 分钟一个执行时间点，分钟可选 00、05、10 … 55。
+              </div>
+              <div class="mt-1" style="font-size: 12px; color: var(--el-text-color-secondary);">
+                {{ isAdmin ? '提交后等待计划时间自动执行。' : '提交后须由管理员在计划时间前审批通过，否则申请自动失效。' }}
+                到点自动预检查并分批安装，默认不重启。
+              </div>
+            </el-form-item>
+
             <!-- 每批数量 -->
             <el-form-item label="分批大小 (每批主机数)" required>
               <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
@@ -138,19 +159,22 @@
               type="primary"
               size="default"
               :disabled="isSubmitDisabled"
+              :loading="submitting"
               style="width: 100%; font-weight: 600;"
               @click="handleStartOneClickInstall"
             >
               <i class="fa fa-play-circle me-1" />
-              立即开始一键分批更新
+              {{ isAdmin ? '提交定时安装' : '提交安装申请' }}
             </el-button>
           </div>
         </div>
       </div>
     </template>
 
+    <PackageInstallTasks v-if="activeTab === 'tasks'" :is-admin="isAdmin" @detail="openTaskDetail" />
+
     <!-- 软件包集管理 Tab -->
-    <template v-else-if="activeTab === 'management'">
+    <template v-if="activeTab === 'management'">
       <!-- 操作工具栏 -->
       <div class="ops-action-bar">
         <el-button type="primary" size="small" @click="handleCreatePackageSet">
@@ -255,13 +279,17 @@
     <!-- 一键更新执行进度对话框 -->
     <el-dialog
       v-model="progressVisible"
-      title="一键分批更新执行进度"
+      title="定时安装任务详情"
       width="900px"
       :close-on-click-modal="false"
       :close-on-press-escape="false"
       @closed="handleProgressClosed"
     >
       <div v-if="taskDetail" style="display: flex; flex-direction: column; gap: 16px;">
+        <el-alert v-if="['PENDING_APPROVAL', 'CREATED', 'REJECTED', 'EXPIRED'].includes(taskDetail.status)"
+          :title="getStatusLabel(taskDetail.status)" :type="['REJECTED', 'EXPIRED'].includes(taskDetail.status) ? 'error' : 'info'" :closable="false" show-icon>
+          {{ taskDetail.status === 'PENDING_APPROVAL' ? '等待管理员审批，计划时间前未获批准将自动失效。' : taskDetail.status === 'CREATED' ? '等待系统在计划时间自动触发预检查和分批安装，默认不重启。' : '本次任务不会执行，请重新提交安装申请。' }}
+        </el-alert>
         <!-- 自定义步骤条 -->
         <div class="ops-stepper">
           <!-- 步骤 1: 创建任务 -->
@@ -352,6 +380,13 @@
             </div>
           </div>
 
+          <div><strong>计划执行时间：</strong>{{ formatDateTime(taskDetail.scheduledTime) }}</div>
+          <div><strong>申请人：</strong>{{ taskDetail.createdBy || '-' }}</div>
+          <div><strong>审批人：</strong>{{ taskDetail.approvedBy || '-' }}</div>
+          <div><strong>审批时间：</strong>{{ formatDateTime(taskDetail.approvedTime) }}</div>
+          <div style="grid-column: span 2;"><strong>审批意见：</strong>{{ taskDetail.approvalComment || '-' }}</div>
+          <div style="grid-column: span 2;"><strong>软件包：</strong>{{ formatJsonArray(taskDetail.packages) || '-' }}</div>
+          <div style="grid-column: span 2;"><strong>目标主机：</strong>{{ formatJsonArray(taskDetail.hostIds) || '-' }}</div>
           <div style="grid-column: span 2;" v-if="formattedErrorMessage">
             <strong style="color: var(--el-color-danger);">异常原因：</strong>
             <span style="color: var(--el-color-danger);">{{ formattedErrorMessage }}</span>
@@ -481,7 +516,7 @@
 
         <!-- 任务结束成功提示 -->
         <el-alert
-          v-if="taskDetail.status === 'INSTALL_DONE'"
+          v-if="['INSTALL_DONE', 'COMPLETED'].includes(taskDetail.status)"
           title="分批自动安装任务已全部成功完成！"
           type="success"
           :closable="false"
@@ -503,7 +538,7 @@
       </div>
 
       <!-- 对话框操作区 -->
-      <template v-if="taskDetail && taskDetail.status === 'PRE_CHECK_FAILED'" #footer>
+      <template v-if="taskDetail && taskDetail.status === 'PRE_CHECK_FAILED' && !isTaskExecutionBlocked(taskDetail)" #footer>
         <div class="dialog-footer" style="display: flex; gap: 10px; justify-content: flex-end;">
           <el-button
             type="warning"
@@ -541,7 +576,14 @@ import { packageSetApi, patchInstallApi } from '../api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import { normalizeAcmDeviceSelection } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
+import { useAuth } from '@/core/auth'
+import PackageInstallTasks from '../components/PackageInstallTasks.vue'
+import { formatJsonArray, toDisplayArray } from '../utils/patchProcessLogs'
+import { isFutureSchedule, isTaskExecutionBlocked, isPackageInstallFinished } from '../utils/patchInstallSchedule'
 
+const { user } = useAuth()
+const isAdmin = computed(() => user.value?.login === 'admin')
+const submitting = ref(false)
 const activeTab = ref('install')
 
 // ============================================================
@@ -803,11 +845,21 @@ async function submitEditForm() {
 // 一键分批安装表单
 // ============================================================
 const selectedHosts = ref([])
+const scheduleDate = ref('')
+const scheduleHour = ref('')
+const scheduleMinute = ref('')
+const scheduleHours = Array.from({ length: 24 }, (_, hour) => String(hour).padStart(2, '0'))
+const scheduleMinutes = Array.from({ length: 12 }, (_, index) => String(index * 5).padStart(2, '0'))
 const installForm = reactive({
   useCustomPackages: false,
   packageSetId: '',
   customPackagesText: '',
-  batchSize: 50
+  batchSize: 50,
+  scheduledTime: ''
+})
+
+watch([scheduleDate, scheduleHour, scheduleMinute], ([date, hour, minute]) => {
+  installForm.scheduledTime = date && hour && minute ? `${date} ${hour}:${minute}` : ''
 })
 
 const selectedPackageSet = computed(() => {
@@ -825,6 +877,7 @@ const parsedSelectedPackages = computed(() => {
 })
 
 const isSubmitDisabled = computed(() => {
+  if (submitting.value || !installForm.scheduledTime) return true
   if (selectedHosts.value.length === 0) return true
   if (installForm.useCustomPackages) {
     return !installForm.customPackagesText.trim()
@@ -847,8 +900,7 @@ let pollingIntervalId = null
 
 const taskFinished = computed(() => {
   if (!taskDetail.value) return false
-  const finishedStatuses = ['INSTALL_DONE', 'INSTALL_FAILED', 'FAILED']
-  return finishedStatuses.includes(taskDetail.value.status)
+  return isPackageInstallFinished(taskDetail.value.status)
 })
 
 const stepStates = computed(() => {
@@ -860,7 +912,7 @@ const stepStates = computed(() => {
     states[1] = 'active'
   } else if (status === 'PRE_CHECK_FAILED') {
     states[1] = 'failed'
-  } else if (['PRE_CHECK_DONE', 'INSTALLING', 'INSTALL_DONE', 'INSTALL_FAILED', 'FAILED'].includes(status)) {
+  } else if (['PRE_CHECK_DONE', 'INSTALLING', 'INSTALL_DONE', 'COMPLETED', 'INSTALL_FAILED', 'FAILED'].includes(status)) {
     states[1] = 'success'
   }
 
@@ -868,7 +920,7 @@ const stepStates = computed(() => {
     states[2] = 'active'
   } else if (['INSTALL_FAILED', 'FAILED'].includes(status)) {
     states[2] = 'failed'
-  } else if (status === 'INSTALL_DONE') {
+  } else if (['INSTALL_DONE', 'COMPLETED'].includes(status)) {
     states[2] = 'success'
   }
   return states
@@ -888,11 +940,16 @@ const taskTargetCount = computed(() => {
   if (Array.isArray(taskDetail.value.targets)) {
     return taskDetail.value.targets.length
   }
-  return selectedHosts.value.length
+  return toDisplayArray(taskDetail.value.hostIds).length
 })
 
 function getStatusLabel(status) {
   const map = {
+    'PENDING_APPROVAL': '待管理员审批',
+    'CREATED': '等待定时执行',
+    'REJECTED': '审批驳回',
+    'EXPIRED': '已失效',
+    'COMPLETED': '安装任务完成',
     'PRE_CHECKING': '前置环境检查中',
     'PRE_CHECK_FAILED': '环境检查阻断',
     'PRE_CHECK_DONE': '准备分批安装',
@@ -1055,6 +1112,9 @@ function getCheckTitle(id) {
 
 function getStatusTagType(status) {
   if (!status) return 'info'
+  if (status === 'PENDING_APPROVAL') return 'warning'
+  if (['REJECTED', 'EXPIRED'].includes(status)) return 'danger'
+  if (status === 'COMPLETED') return 'success'
   if (status.includes('DONE') || status.includes('SUCCESS')) return 'success'
   if (status.includes('FAILED') || status.includes('ERROR')) return 'danger'
   if (status.includes('ING')) return 'primary'
@@ -1062,6 +1122,15 @@ function getStatusTagType(status) {
 }
 
 async function handleStartOneClickInstall() {
+  if (submitting.value) return
+  if (installForm.scheduledTime && !/^\d{4}-\d{2}-\d{2} \d{2}:[0-5][05]$/.test(installForm.scheduledTime)) {
+    ElMessage.warning('计划执行时间的分钟只能选择 5 的倍数')
+    return
+  }
+  if (!isFutureSchedule(installForm.scheduledTime)) {
+    ElMessage.warning('请选择晚于当前时间的计划执行时间')
+    return
+  }
   if (selectedHosts.value.length === 0) {
     ElMessage.warning('请选择目标主机')
     return
@@ -1071,6 +1140,7 @@ async function handleStartOneClickInstall() {
   const targets = normalizeAcmDeviceSelection(selectedHosts.value, 'linux')
   const payload = {
     targets,
+    scheduledTime: `${installForm.scheduledTime}:00`,
     batchSize: installForm.batchSize || 50
   }
 
@@ -1089,19 +1159,25 @@ async function handleStartOneClickInstall() {
     payload.packageSetId = installForm.packageSetId
   }
 
+  submitting.value = true
   try {
     await ElMessageBox.confirm(
-      `确定对已选中的 ${targets.length} 项目标资产执行软件包一键分批更新吗？（该任务将进行自动预检查、分批安装且默认不重启）`,
-      '确认一键分批安装',
+      `确定对已选中的 ${targets.length} 项目标资产提交定时安装吗？计划时间：${payload.scheduledTime}。${isAdmin.value ? '届时自动执行' : '需管理员提前审批通过'}，自动预检查、分批安装且默认不重启。`,
+      '确认提交定时安装',
       {
-        confirmButtonText: '确定开始',
+        confirmButtonText: '确认提交',
         cancelButtonText: '取消',
         type: 'info'
       }
     )
 
+    if (!isFutureSchedule(payload.scheduledTime)) {
+      ElMessage.warning('计划执行时间已过，请重新选择')
+      return
+    }
     const response = await patchInstallApi.createAndRunTask(payload)
     if (response?.data) {
+      ElMessage.success(response.data.status === 'PENDING_APPROVAL' ? '安装申请已提交，等待管理员审批' : '定时安装已提交，等待计划时间执行')
       taskDetail.value = response.data
       progressVisible.value = true
       startPollingTask()
@@ -1109,21 +1185,39 @@ async function handleStartOneClickInstall() {
       ElMessage.error('创建一键安装任务失败')
     }
   } catch (error) {
-    if (error !== 'cancel') {
+    if (error !== 'cancel' && error !== 'close') {
       console.error('Failed to create and run task:', error)
-      ElMessage.error(error?.response?.data?.error || error?.message || '创建任务失败，请检查参数')
+      ElMessage.error(error?.response?.data?.message || error?.response?.data?.error || error?.message || '创建任务失败，请检查参数')
     }
+  } finally {
+    submitting.value = false
+  }
+}
+
+async function openTaskDetail(task) {
+  try {
+    const response = await patchInstallApi.getTask(task.id)
+    taskDetail.value = response.data
+    progressVisible.value = true
+    startPollingTask()
+  } catch (error) {
+    ElMessage.error(error?.message || '获取任务详情失败')
   }
 }
 
 // 轮询任务状态
 function startPollingTask() {
   stopPollingTask()
+  if (taskFinished.value) return
 
   pollingIntervalId = setInterval(async () => {
     if (!taskDetail.value?.id) return
+    // 到点前仅检查本地时间，不请求任务结果；到点后沿用原有状态轮询。
+    if (isFutureSchedule(taskDetail.value.scheduledTime)) return
+    const taskId = taskDetail.value.id
     try {
-      const response = await patchInstallApi.getTask(taskDetail.value.id)
+      const response = await patchInstallApi.getTask(taskId)
+      if (!progressVisible.value || taskDetail.value?.id !== taskId) return
       if (response?.data) {
         taskDetail.value = response.data
         if (taskFinished.value) {
@@ -1146,7 +1240,7 @@ function stopPollingTask() {
 
 // 重新预检查
 async function handleRetryPreCheck() {
-  if (!taskDetail.value?.id) return
+  if (!taskDetail.value?.id || isTaskExecutionBlocked(taskDetail.value)) return
   stepActionLoading.value = true
   try {
     const response = await patchInstallApi.executePreCheck(taskDetail.value.id)
@@ -1165,7 +1259,7 @@ async function handleRetryPreCheck() {
 
 // 跳过检查并执行安装
 async function handleSkipPreCheck() {
-  if (!taskDetail.value?.id) return
+  if (!taskDetail.value?.id || isTaskExecutionBlocked(taskDetail.value)) return
   try {
     await ElMessageBox.confirm(
       '前置环境检查有未通过阻断项，跳过强行安装可能导致部署失败，是否确定跳过并执行安装？',
