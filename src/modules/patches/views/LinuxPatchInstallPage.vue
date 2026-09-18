@@ -443,6 +443,7 @@ import BatchInstallPatchDrawer from '../components/host-detail/dialogs/BatchInst
 import PatchDetailContent from '../components/common/PatchDetailContent.vue'
 import CveLinkList from '../components/common/CveLinkList.vue'
 import { useTableSelectAll } from '../composables/useTableSelectAll'
+import { usePatchScanCompletion } from '../composables/usePatchScanCompletion'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import OperationLogsDialog from '../components/logs/OperationLogsDialog.vue'
 // [Agent 功能暂停] import {
@@ -729,6 +730,8 @@ function handleRunResultClose(payload) {
   }
 }
 
+const { trackScan } = usePatchScanCompletion(() => loadHostData())
+
 // 重新扫描逻辑
 async function handleRescan() {
   if (batchSelectedHosts.value.length === 0) {
@@ -792,14 +795,11 @@ async function submitRescan(hosts) {
     }
 
     ElMessage.success('扫描任务已提交')
+    trackScan(runId)
 
     lastSubmittedRunId.value = runId
     runResultRunId.value = runId
     runResultDialogVisible.value = true
-
-    setTimeout(() => {
-      loadHostData()
-    }, 2000)
 
     return true
   } catch (error) {
