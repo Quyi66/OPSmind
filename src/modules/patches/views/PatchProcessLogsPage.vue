@@ -71,19 +71,25 @@
         </el-table-column>
         <el-table-column prop="taskType" label="任务类型" width="120">
           <template #default="{ row }">
-            <el-tag :type="getTaskTypeTagType(row.taskType)" size="small" effect="light">
+            <el-tag
+              :type="getTaskTypeTagType(row.taskType)"
+              :style="getTaskTypeTagStyle(row.taskType)"
+              size="small"
+              effect="plain"
+            >
               {{ formatTaskType(row.taskType) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="120">
+        <el-table-column prop="status" label="状态" width="150">
           <template #default="{ row }">
             <RunLogStatusTag
               :type="getTaskStatusTagType(row.status)"
+              :style="getTaskStatusTagStyle(row.status)"
               size="small"
               @click="openDetail(row)"
             >
-              {{ formatTaskStatus(row.status) }}
+              {{ row.status === 'CREATED' && row.scheduledTime ? '等待定时执行' : formatTaskStatus(row.status) }}
             </RunLogStatusTag>
           </template>
         </el-table-column>
@@ -141,7 +147,9 @@ import {
   formatTaskType,
   getOsIcon,
   getTaskStatusTagType,
-  getTaskTypeTagType
+  getTaskStatusTagStyle,
+  getTaskTypeTagType,
+  getTaskTypeTagStyle
 } from '../utils/patchProcessLogs'
 
 const DEFAULT_PAGE_SIZE = 20
@@ -155,7 +163,7 @@ const selectedTask = ref(null)
 useActiveTaskListPolling({
   records: tableData,
   refresh: loadData,
-  activeStatuses: ['PRE_CHECKING', 'INSTALLING', 'ROLLING_BACK', 'RESTARTING', 'VALIDATING']
+  activeStatuses: ['PENDING_APPROVAL', 'CREATED', 'PRE_CHECKING', 'INSTALLING', 'ROLLING_BACK', 'RESTARTING', 'VALIDATING']
 })
 
 const filters = reactive(createDefaultFilters())
