@@ -6,24 +6,40 @@
         目标主机
       </div>
       <div class="card-body card-body--scroll">
-        <div class="selection-item">
-          <div class="selection-item__primary">{{ resolveHostKey(hostSummary) }}</div>
-          <div class="selection-item__secondary">
-            主机 ID：{{ resolveHostId(hostSummary) || '-' }}
+        <template v-if="isMultiHost">
+          <div class="selection-item">
+            <div class="selection-item__primary">共 {{ hostSummaries.length }} 台主机</div>
           </div>
-        </div>
-        <div class="selection-item">
-          <div class="selection-item__primary">
-            {{ pickValue(hostSummary, ['osDistro', 'os_distro'], '-') }}
+          <div v-for="host in hostSummaries" :key="resolveHostId(host)" class="selection-item">
+            <div class="selection-item__primary">{{ resolveHostKey(host) }}</div>
+            <div class="selection-item__secondary">
+              主机 ID：{{ resolveHostId(host) || '-' }} · {{ pickValue(host, ['osDistro', 'os_distro'], '-') }}
+            </div>
           </div>
-          <div class="selection-item__secondary">
-            版本 / 架构：{{ pickValue(hostSummary, ['osVersion', 'os_version'], '-') }} /
-            {{ pickValue(hostSummary, ['osArch', 'os_arch'], '-') }}
+          <div class="selection-item">
+            <div class="selection-item__primary">待安装补丁 {{ patchItems.length }} 条</div>
           </div>
-        </div>
-        <div class="selection-item">
-          <div class="selection-item__primary">待安装补丁 {{ patchItems.length }} 条</div>
-        </div>
+        </template>
+        <template v-else>
+          <div class="selection-item">
+            <div class="selection-item__primary">{{ resolveHostKey(hostSummary) }}</div>
+            <div class="selection-item__secondary">
+              主机 ID：{{ resolveHostId(hostSummary) || '-' }}
+            </div>
+          </div>
+          <div class="selection-item">
+            <div class="selection-item__primary">
+              {{ pickValue(hostSummary, ['osDistro', 'os_distro'], '-') }}
+            </div>
+            <div class="selection-item__secondary">
+              版本 / 架构：{{ pickValue(hostSummary, ['osVersion', 'os_version'], '-') }} /
+              {{ pickValue(hostSummary, ['osArch', 'os_arch'], '-') }}
+            </div>
+          </div>
+          <div class="selection-item">
+            <div class="selection-item__primary">待安装补丁 {{ patchItems.length }} 条</div>
+          </div>
+        </template>
       </div>
     </div>
 
@@ -103,6 +119,10 @@ function resolveCveIds(row) {
 }
 
 const props = defineProps({
+  hostSummaries: {
+    type: Array,
+    default: () => []
+  },
   hostSummary: {
     type: Object,
     default: null
@@ -113,6 +133,7 @@ const props = defineProps({
   }
 })
 
+const isMultiHost = computed(() => props.hostSummaries.length > 0)
 const patchItems = computed(() => (Array.isArray(props.selectedRows) ? props.selectedRows : []))
 
 function formatBytes(value) {

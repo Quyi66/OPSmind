@@ -79,6 +79,14 @@
       >
         扫描选中主机
       </el-button>
+      <el-button
+        type="success"
+        size="small"
+        :disabled="selectedHostRows.length === 0"
+        @click="openBatchInstallDrawer(selectedHostRows)"
+      >
+        安装补丁
+      </el-button>
       <el-button size="small" @click="openReportDialog(selectedHostRows)">导出报告</el-button>
       <span class="win-patch-selection-text">已选 {{ selectedHostRows.length }} 台主机</span>
       <span style="flex: 1"></span>
@@ -344,6 +352,12 @@
       @task-submitted="handleTaskSubmitted"
     />
 
+    <WinPatchBatchInstallDrawer
+      v-model="batchInstallDrawerVisible"
+      :host-summaries="batchInstallHosts"
+      @task-submitted="handleTaskSubmitted"
+    />
+
     <WinPatchTaskDetailDrawer
       v-model="taskDrawerVisible"
       :task-id="currentTaskId"
@@ -357,6 +371,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Refresh, RefreshRight, Search } from '@element-plus/icons-vue'
 import WinPatchHostPatchesDrawer from '../components/overview/WinPatchHostPatchesDrawer.vue'
+import WinPatchBatchInstallDrawer from '../components/overview/WinPatchBatchInstallDrawer.vue'
 import WinPatchReportDialog from '../components/overview/WinPatchReportDialog.vue'
 import WinPatchScanDialog from '../components/overview/WinPatchScanDialog.vue'
 import WinPatchTaskDetailDrawer from '../components/tasks/WinPatchTaskDetailDrawer.vue'
@@ -383,8 +398,10 @@ const scanDialogVisible = ref(false)
 const hostDrawerVisible = ref(false)
 const reportDialogVisible = ref(false)
 const taskDrawerVisible = ref(false)
+const batchInstallDrawerVisible = ref(false)
 const reportDialogHosts = ref([])
 const scanDialogHosts = ref([])
+const batchInstallHosts = ref([])
 
 const pagination = reactive({
   page: 1,
@@ -481,6 +498,11 @@ function openScanDialog(rows = []) {
 function openReportDialog(rows = []) {
   reportDialogHosts.value = rows
   reportDialogVisible.value = true
+}
+
+function openBatchInstallDrawer(rows = []) {
+  batchInstallHosts.value = rows
+  batchInstallDrawerVisible.value = true
 }
 
 function handleSearch() {
