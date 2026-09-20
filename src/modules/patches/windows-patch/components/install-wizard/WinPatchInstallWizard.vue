@@ -18,6 +18,7 @@
 
     <WinPatchInstallWizardSummaryStep
       v-show="currentStepKey === 'summary'"
+      :host-summaries="hostSummaries"
       :host-summary="hostSummary"
       :selected-rows="selectedPatchItems"
     />
@@ -61,6 +62,7 @@
       v-show="currentStepKey === 'execute'"
       :available-run-items="availableRunItems"
       :error-message="taskErrorMessage"
+      :host-summaries="hostSummaries"
       :host-summary="hostSummary"
       :install-options="installOptions"
       :pipeline-items="pipelineItems"
@@ -136,6 +138,10 @@ const props = defineProps({
   hostSummary: {
     type: Object,
     default: null
+  },
+  hostSummaries: {
+    type: Array,
+    default: () => []
   },
   selectedRows: {
     type: Array,

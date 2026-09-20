@@ -32,15 +32,23 @@
           <div class="install-summary-row">
             <span class="install-summary-label">目标主机</span>
             <div class="install-summary-list">
-              <div class="install-summary-item">{{ resolveHostKey(hostSummary) }}</div>
-              <div class="install-summary-subtext">
-                主机 ID：{{ resolveHostId(hostSummary) || '-' }}
-              </div>
-              <div class="install-summary-subtext">
-                {{ pickValue(hostSummary, ['osDistro', 'os_distro'], '-') }} /
-                {{ pickValue(hostSummary, ['osVersion', 'os_version'], '-') }} /
-                {{ pickValue(hostSummary, ['osArch', 'os_arch'], '-') }}
-              </div>
+              <template v-if="isMultiHost">
+                <div class="install-summary-item">共 {{ hostSummaries.length }} 台主机</div>
+                <div v-for="host in hostSummaries" :key="resolveHostId(host)" class="install-summary-subtext">
+                  {{ resolveHostKey(host) }}（{{ resolveHostId(host) || '-' }}）
+                </div>
+              </template>
+              <template v-else>
+                <div class="install-summary-item">{{ resolveHostKey(hostSummary) }}</div>
+                <div class="install-summary-subtext">
+                  主机 ID：{{ resolveHostId(hostSummary) || '-' }}
+                </div>
+                <div class="install-summary-subtext">
+                  {{ pickValue(hostSummary, ['osDistro', 'os_distro'], '-') }} /
+                  {{ pickValue(hostSummary, ['osVersion', 'os_version'], '-') }} /
+                  {{ pickValue(hostSummary, ['osArch', 'os_arch'], '-') }}
+                </div>
+              </template>
             </div>
           </div>
           <div class="install-summary-row">
@@ -160,6 +168,10 @@ const props = defineProps({
     type: String,
     default: ''
   },
+  hostSummaries: {
+    type: Array,
+    default: () => []
+  },
   hostSummary: {
     type: Object,
     default: null
@@ -203,6 +215,7 @@ const props = defineProps({
 
 const emit = defineEmits(['view-run'])
 
+const isMultiHost = computed(() => props.hostSummaries.length > 0)
 const pipelineFinished = computed(() => ['success', 'failed'].includes(props.pipelineStatus))
 
 function getScriptSummary(scriptConfig = {}, stepKey = '') {
