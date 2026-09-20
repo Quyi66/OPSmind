@@ -100,7 +100,9 @@
         <el-button
           v-else
           type="primary"
-          :disabled="selectedPatchStatusIds.length === 0"
+          :disabled="
+            !['success', 'failed'].includes(pipelineStatus) && selectedPatchStatusIds.length === 0
+          "
           @click="handlePrimaryAction"
         >
           {{ primaryButtonText }}
