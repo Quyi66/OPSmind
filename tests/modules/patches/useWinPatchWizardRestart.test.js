@@ -306,4 +306,121 @@ describe.each([
       expect(wizard.pipelineStatus.value).toBe('success')
     }
   )
+
+  it('keeps restart step as running and waits when one host succeeds while another is still running', async () => {
+    state.status = 'RESTARTING'
+    let host2Status = 'RUNNING'
+
+    apiMocks.getTaskDetail.mockImplementation(async () => ({
+      data: {
+        task: {
+          id: 'task-123',
+          taskType,
+          status: state.status,
+          errorMessage: state.errorMessage,
+          currentStep: 'RESTART'
+        },
+        steps: [
+          { step: 'PRE_CHECK', status: 'SKIPPED' },
+          { step: taskType, status: 'SUCCESS' },
+          { hostId: 'host-1', step: 'RESTART', status: 'SUCCESS' },
+          { hostId: 'host-2', step: 'RESTART', status: host2Status },
+          { step: 'VALIDATE', status: state.validate }
+        ]
+      }
+    }))
+
+    const wizard = createWizard({ validate: true })
+    const execution = wizard.startExecution()
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(stepCalls(apiMocks.executeTaskStep, 'RESTART')).toHaveLength(1)
+    expectNoValidate()
+
+    // 即使 host-1 已经是 SUCCESS，因为 host-2 还在 RUNNING，RESTART 步骤 UI 必须为 running
+    expect(wizard.pipelineItemMap.value.RESTART.uiStatus).toBe('running')
+    expect(wizard.pipelineStatus.value).toBe('running')
+
+    // 推进轮询周期，状态未变时持续保持 running
+    await vi.advanceTimersByTimeAsync(3000)
+    expect(wizard.pipelineItemMap.value.RESTART.uiStatus).toBe('running')
+    expectNoValidate()
+
+    // host-2 也成功，但主任务仍是 RESTARTING，UI 依然不能提前显示成功或进入校验
+    host2Status = 'SUCCESS'
+    await vi.advanceTimersByTimeAsync(3000)
+    expect(wizard.pipelineItemMap.value.RESTART.uiStatus).toBe('running')
+    expectNoValidate()
+
+    // 主任务正式完成 RESTART_DONE
+    state.status = 'RESTART_DONE'
+    await vi.advanceTimersByTimeAsync(3000)
+    await execution
+
+    expect(stepCalls(apiMocks.executeTaskStep, 'VALIDATE')).toHaveLength(1)
+    expect(wizard.pipelineStatus.value).toBe('success')
+  })
+
+  it('does not mark subsequent steps as running when earlier step is running', async () => {
+    state.status = 'RUNNING'
+
+    apiMocks.getTaskDetail.mockImplementation(async () => ({
+      data: {
+        task: {
+          id: 'task-123',
+          taskType,
+          status: 'RUNNING',
+          currentStep: 'PRE_CHECK'
+        },
+        steps: [
+          { step: 'PRE_CHECK', status: 'RUNNING', remark: '正在执行中' },
+          { step: taskType, status: 'PENDING', remark: '等待执行' },
+          { step: 'RESTART', status: 'PENDING', remark: '等待执行' },
+          { step: 'VALIDATE', status: 'PENDING', remark: '等待执行' }
+        ]
+      }
+    }))
+
+    const wizard = createWizard({ validate: true })
+    wizard.startExecution()
+    await vi.advanceTimersByTimeAsync(0)
+
+    // 只有 PRE_CHECK 是 running，后续步骤必须稳定处于 pending，绝不能全显示 running
+    expect(wizard.pipelineItemMap.value.PRE_CHECK.uiStatus).toBe('running')
+    expect(wizard.pipelineItemMap.value[taskType].uiStatus).toBe('pending')
+    expect(wizard.pipelineItemMap.value.RESTART.uiStatus).toBe('pending')
+    expect(wizard.pipelineItemMap.value.VALIDATE.uiStatus).toBe('pending')
+  })
+
+  it('keeps completed steps as success and pending steps as pending when restart step fails', async () => {
+    state.status = 'FAILED'
+
+    apiMocks.getTaskDetail.mockImplementation(async () => ({
+      data: {
+        task: {
+          id: 'task-123',
+          taskType,
+          status: 'FAILED',
+          errorMessage: '重启节点超时',
+          currentStep: 'RESTART'
+        },
+        steps: [
+          { step: 'PRE_CHECK', status: 'SUCCESS' },
+          { step: taskType, status: 'SUCCESS' },
+          { step: 'RESTART', status: 'FAILED', remark: '重启失败' },
+          { step: 'VALIDATE', status: 'PENDING', remark: '等待执行' }
+        ]
+      }
+    }))
+
+    const wizard = createWizard({ validate: true })
+    wizard.startExecution()
+    await vi.advanceTimersByTimeAsync(0)
+
+    // 前置步骤应保持 success，只有失败的 RESTART 显示 failed，未执行的 VALIDATE 显示 pending
+    expect(wizard.pipelineItemMap.value.PRE_CHECK.uiStatus).toBe('success')
+    expect(wizard.pipelineItemMap.value[taskType].uiStatus).toBe('success')
+    expect(wizard.pipelineItemMap.value.RESTART.uiStatus).toBe('failed')
+    expect(wizard.pipelineItemMap.value.VALIDATE.uiStatus).toBe('pending')
+  })
 })

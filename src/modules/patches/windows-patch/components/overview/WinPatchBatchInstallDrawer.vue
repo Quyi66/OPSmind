@@ -11,7 +11,7 @@
   >
     <div class="win-patch-batch-install-dialog">
       <div class="win-patch-batch-hosts-summary">
-        <el-descriptions :column="1" border size="small" class="win-patch-descriptions">
+        <el-descriptions :column="1" border size="small" label-width="80px" class="win-patch-descriptions">
           <el-descriptions-item label="选中主机">
             <div class="win-patch-batch-hosts-list">
               <el-tag
@@ -74,8 +74,8 @@
         <el-button
           type="primary"
           size="small"
-          :disabled="installableSelection.length === 0"
-          @click="installWizardVisible = true"
+          :disabled="loading || installableSelection.length === 0"
+          @click="openInstallWizard"
         >
           安装选中补丁
         </el-button>
@@ -96,12 +96,19 @@
 
       <div class="ops-table-wrapper win-patch-batch-table">
         <el-table
+          ref="patchTableRef"
           v-loading="loading"
           :data="pagedPatchList"
+          :row-key="resolvePatchStatusId"
           height="100%"
           @selection-change="selection => (selectedRows = selection)"
         >
-          <el-table-column type="selection" width="48" :selectable="isPatchActionable" />
+          <el-table-column
+            type="selection"
+            width="48"
+            :selectable="isPatchActionable"
+            reserve-selection
+          />
           <el-table-column label="主机" width="130">
             <template #default="{ row }">
               {{ row._hostKey || '-' }}
@@ -163,9 +170,9 @@
 
       <WinPatchInstallWizard
         v-model="installWizardVisible"
-        :selected-rows="installableSelection"
+        :selected-rows="wizardRows"
         :host-summary="null"
-        :host-summaries="hostSummaries"
+        :host-summaries="wizardHosts"
         @submitted="handleInstallTaskCreated"
         @success="handleInstallSuccess"
       />
@@ -174,7 +181,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import WinPatchInstallWizard from '../install-wizard/WinPatchInstallWizard.vue'
@@ -195,7 +202,8 @@ import {
   parsePageResponse,
   pickValue,
   resolveHostId,
-  resolveHostKey
+  resolveHostKey,
+  resolvePatchStatusId
 } from '../../utils'
 
 const props = defineProps({
@@ -219,7 +227,11 @@ const visibleModel = computed({
 const loading = ref(false)
 const allPatchList = ref([])
 const selectedRows = ref([])
+const patchTableRef = ref(null)
 const installWizardVisible = ref(false)
+const wizardRows = ref([])
+const wizardHosts = ref([])
+let loadRequestId = 0
 
 const pagination = reactive({
   page: 1,
@@ -274,6 +286,21 @@ function isPatchActionable(row) {
   return isPatchInstallable(row)
 }
 
+function clearSelection() {
+  patchTableRef.value?.clearSelection()
+  selectedRows.value = []
+}
+
+function openInstallWizard() {
+  if (loading.value || !installableSelection.value.length) return
+
+  // 固定本次任务的选择，避免安装成功刷新列表后改变向导摘要。
+  wizardRows.value = [...installableSelection.value]
+  const hostIds = new Set(wizardRows.value.map(row => resolveHostId(row)))
+  wizardHosts.value = props.hostSummaries.filter(host => hostIds.has(resolveHostId(host)))
+  installWizardVisible.value = true
+}
+
 function formatBytes(value) {
   const size = Number(value)
   if (!Number.isFinite(size) || size <= 0) return '-'
@@ -291,8 +318,14 @@ function formatBytes(value) {
 }
 
 async function loadAllPatches() {
-  const hosts = props.hostSummaries
-  if (!hosts.length) return
+  const requestId = ++loadRequestId
+  const hosts = [...props.hostSummaries]
+  clearSelection()
+  allPatchList.value = []
+  if (!props.modelValue || !hosts.length) {
+    loading.value = false
+    return
+  }
 
   loading.value = true
   try {
@@ -300,18 +333,18 @@ async function loadAllPatches() {
       hosts.map(host => {
         const hostId = resolveHostId(host)
         const hostKey = resolveHostKey(host)
-        return winPatchApi
-          .getHostPatches(hostId, { page: 0, size: 9999 })
-          .then(response => {
-            const page = parsePageResponse(response)
-            return page.content.map(patch => ({
-              ...patch,
-              hostId: patch.hostId || patch.host_id || hostId,
-              _hostKey: hostKey
-            }))
-          })
+        return winPatchApi.getHostPatches(hostId, { page: 0, size: 9999 }).then(response => {
+          const page = parsePageResponse(response)
+          return page.content.map(patch => ({
+            ...patch,
+            hostId: patch.hostId || patch.host_id || hostId,
+            _hostKey: hostKey
+          }))
+        })
       })
     )
+
+    if (requestId !== loadRequestId) return
 
     const mergedPatches = results.flatMap(result =>
       result.status === 'fulfilled' ? result.value : []
@@ -325,19 +358,19 @@ async function loadAllPatches() {
     }
 
     allPatchList.value = mergedPatches
-    selectedRows.value = []
     pagination.page = 1
   } catch (error) {
+    if (requestId !== loadRequestId) return
     console.error('批量加载主机补丁失败:', error)
     ElMessage.error('批量加载主机补丁失败')
   } finally {
-    loading.value = false
+    if (requestId === loadRequestId) loading.value = false
   }
 }
 
 function handleSearch() {
   pagination.page = 1
-  selectedRows.value = []
+  clearSelection()
 }
 
 function handleReset() {
@@ -345,7 +378,7 @@ function handleReset() {
   filters.patchStatus = ''
   filters.keyword = ''
   pagination.page = 1
-  selectedRows.value = []
+  clearSelection()
 }
 
 function handlePageChange(page) {
@@ -370,8 +403,24 @@ function handleInstallSuccess() {
 }
 
 watch(
+  () => [filters.severity, filters.patchStatus, filters.keyword],
+  () => {
+    pagination.page = 1
+    clearSelection()
+  }
+)
+
+watch(
   [() => props.modelValue, () => props.hostSummaries],
   ([open, hosts]) => {
+    // 关闭或切换主机后，旧请求不能再更新列表、提示或 loading 状态。
+    loadRequestId += 1
+    loading.value = false
+    clearSelection()
+    allPatchList.value = []
+    installWizardVisible.value = false
+    wizardRows.value = []
+    wizardHosts.value = []
     if (!open || !hosts?.length) return
 
     pagination.page = 1
@@ -383,6 +432,10 @@ watch(
   },
   { immediate: true }
 )
+
+onBeforeUnmount(() => {
+  loadRequestId += 1
+})
 </script>
 
 <style scoped lang="scss">
