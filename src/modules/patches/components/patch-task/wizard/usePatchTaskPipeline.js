@@ -214,7 +214,7 @@ export function usePatchTaskPipeline({
       ElMessage.error(
         error.queryInterrupted
           ? '暂时无法查询任务状态，请点击“继续查询”'
-          : `任务执行中断：${taskErrorMessage.value}`
+          : '任务执行中断，请查看下方提示或点击“查看详情”'
       )
     }
   }
