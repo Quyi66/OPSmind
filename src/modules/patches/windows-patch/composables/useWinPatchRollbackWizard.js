@@ -23,7 +23,7 @@ function getStepSuccessStatuses(stepKey) {
     case 'RESTART':
       return ['RESTART_DONE']
     case 'VALIDATE':
-      return ['COMPLETED']
+      return ['COMPLETED', 'SUCCESS', 'PASS']
     default:
       return []
   }
@@ -32,15 +32,31 @@ function getStepSuccessStatuses(stepKey) {
 function getStepFailedStatuses(stepKey) {
   switch (normalizeUpper(stepKey)) {
     case 'PRE_CHECK':
-      return ['PRE_CHECK_FAILED', 'FAILED']
+      return ['PRE_CHECK_FAILED']
     case 'ROLLBACK':
-      return ['ROLLBACK_FAILED', 'FAILED']
+    case 'EXECUTE':
+      return ['ROLLBACK_FAILED']
     case 'RESTART':
-      return ['RESTART_FAILED', 'FAILED']
+      return ['RESTART_FAILED']
     case 'VALIDATE':
-      return ['VALIDATE_FAILED', 'FAILED']
+      return ['VALIDATE_FAILED']
     default:
-      return ['FAILED', 'ERROR']
+      return []
+  }
+}
+
+function getStepRunningStatuses(stepKey) {
+  switch (normalizeUpper(stepKey)) {
+    case 'PRE_CHECK':
+      return ['PRE_CHECKING']
+    case 'ROLLBACK':
+      return ['ROLLING_BACK']
+    case 'RESTART':
+      return ['RESTARTING', 'RESTART_RUNNING']
+    case 'VALIDATE':
+      return ['VALIDATING']
+    default:
+      return []
   }
 }
 
@@ -107,12 +123,54 @@ function getAuditStepKey(step) {
   return normalizeUpper(step?.step)
 }
 
-function findAuditStep(steps = [], stepKey) {
+function filterAuditSteps(steps = [], stepKey) {
   const normalizedKeys = (Array.isArray(stepKey) ? stepKey : [stepKey])
     .map(key => normalizeUpper(key))
     .filter(Boolean)
 
-  return steps.find(step => normalizedKeys.includes(getAuditStepKey(step))) || null
+  return steps.filter(step => normalizedKeys.includes(getAuditStepKey(step)))
+}
+
+function resolveAggregatedAuditStep(steps = [], stepKey) {
+  const matchingSteps = filterAuditSteps(steps, stepKey)
+  if (!matchingSteps.length) {
+    return null
+  }
+
+  const statuses = matchingSteps.map(step => normalizeUpper(step?.status))
+  let aggregatedStatus = 'PENDING'
+
+  if (statuses.some(status => ['FAILED', 'ERROR'].includes(status))) {
+    aggregatedStatus = 'FAILED'
+  } else if (statuses.every(status => status === 'SKIPPED')) {
+    aggregatedStatus = 'SKIPPED'
+  } else if (statuses.every(status => ['SUCCESS', 'COMPLETED', 'SKIPPED'].includes(status))) {
+    aggregatedStatus = 'SUCCESS'
+  } else if (
+    statuses.some(status => ['RUNNING', 'IN_PROGRESS'].includes(status)) ||
+    (statuses.some(status => ['SUCCESS', 'COMPLETED'].includes(status)) &&
+      statuses.some(status => ['PENDING', 'WAITING', 'CREATED'].includes(status)))
+  ) {
+    aggregatedStatus = 'RUNNING'
+  } else if (statuses.every(status => ['PENDING', 'WAITING', 'CREATED'].includes(status))) {
+    aggregatedStatus = 'PENDING'
+  } else {
+    aggregatedStatus = statuses[0] || 'PENDING'
+  }
+
+  const runId = matchingSteps.find(step => String(step?.runId || '').trim())?.runId || ''
+  const remark = matchingSteps.find(step => String(step?.remark || '').trim())?.remark || ''
+
+  return {
+    ...matchingSteps[0],
+    status: aggregatedStatus,
+    runId,
+    remark
+  }
+}
+
+function findAuditStep(steps = [], stepKey) {
+  return resolveAggregatedAuditStep(steps, stepKey)
 }
 
 function resolveExecuteStepKeys(task = null) {
@@ -130,7 +188,10 @@ function resolvePipelineStepKeys(stepKey, task = null) {
 }
 
 function resolvePipelineCurrentStep(task = null) {
-  const currentStep = normalizeUpper(pickValue(task, ['currentStep', 'current_step'], ''))
+  const currentStep = normalizeUpper(
+    pickValue(task, ['currentStep', 'current_step'], '') ||
+      deriveCurrentStep(task, task?.steps || [])
+  )
   if (currentStep === 'EXECUTE') {
     return resolveExecuteStepKeys(task)[0]
   }
@@ -254,6 +315,99 @@ function mapPipelineUiStatus(status) {
   return 'idle'
 }
 
+const PIPELINE_STEP_ORDER = {
+  PRE_CHECK: 0,
+  ROLLBACK: 1,
+  EXECUTE: 1,
+  INSTALL: 1,
+  RESTART: 2,
+  VALIDATE: 3
+}
+
+function resolvePipelineStepUiStatus({
+  stepKey,
+  auditStatus,
+  task,
+  pipelineStatus,
+  isSkipped
+}) {
+  if (isSkipped || auditStatus === 'SKIPPED') {
+    return 'skipped'
+  }
+
+  const normalizedStepKey = normalizeUpper(stepKey)
+  const rawTaskStatus = normalizeUpper(
+    pickValue(task, ['taskStatus', 'task_status', 'status'], '')
+  )
+  const taskStatus = getTaskStatusValue(task)
+  const currentStep = normalizeUpper(resolvePipelineCurrentStep(task))
+  const stepOrder = PIPELINE_STEP_ORDER[normalizedStepKey] ?? -1
+  const currentStepOrder = PIPELINE_STEP_ORDER[currentStep] ?? -1
+  const runningStatuses = getStepRunningStatuses(normalizedStepKey)
+  const successStatuses = getStepSuccessStatuses(normalizedStepKey)
+  const failedStatuses = getStepFailedStatuses(normalizedStepKey)
+
+  const isCurrentStep = currentStep === normalizedStepKey
+  const isTaskGlobalFailed =
+    ['FAILED', 'ERROR'].includes(taskStatus) ||
+    ['FAILED', 'ERROR'].includes(rawTaskStatus) ||
+    pipelineStatus === 'failed'
+
+  // 1. 优先判定失败状态：步骤专属失败、聚合审计失败，或当前正在执行的步骤发生全局失败
+  if (
+    auditStatus === 'FAILED' ||
+    failedStatuses.includes(rawTaskStatus) ||
+    failedStatuses.includes(taskStatus) ||
+    (isCurrentStep && isTaskGlobalFailed)
+  ) {
+    return 'failed'
+  }
+
+  // 2. 判定尚未开始的后置步骤：防止全局 running 穿透至尚未到达的步骤
+  if (currentStepOrder !== -1 && stepOrder > currentStepOrder) {
+    return 'pending'
+  }
+
+  // 3. 判定运行中状态：主任务处于该步骤运行中，或当前处于该步骤且处于全局运行中，或聚合审计仍在运行中
+  if (
+    runningStatuses.includes(rawTaskStatus) ||
+    runningStatuses.includes(taskStatus) ||
+    auditStatus === 'RUNNING' ||
+    (isCurrentStep &&
+      (['RUNNING', 'IN_PROGRESS'].includes(taskStatus) || pipelineStatus === 'running'))
+  ) {
+    return 'running'
+  }
+
+  // 4. 判定完成成功状态（以主任务接口状态为主）
+  // (1) 主任务明确返回了该步骤的成功状态（如 RESTART_DONE, ROLLBACK_DONE, PRE_CHECK_DONE, COMPLETED）
+  // (2) 主任务已推进到后续步骤（currentStepOrder > stepOrder），说明前置步骤必然已完成
+  const isStepDoneByMainTask =
+    successStatuses.includes(rawTaskStatus) ||
+    successStatuses.includes(taskStatus) ||
+    (currentStepOrder > stepOrder && currentStepOrder !== -1)
+
+  if (isStepDoneByMainTask) {
+    return 'success'
+  }
+
+  // (3) 所有主机的审计均已成功，但若主任务仍停留在本步骤的未完成态，则绝不能提前显示成功
+  if (auditStatus === 'SUCCESS') {
+    if (isCurrentStep && !successStatuses.includes(rawTaskStatus)) {
+      if (
+        pipelineStatus === 'running' ||
+        ['RUNNING', 'IN_PROGRESS', 'PENDING', 'CREATED'].includes(taskStatus)
+      ) {
+        return 'running'
+      }
+    }
+    return 'success'
+  }
+
+  // 5. 兜底映射
+  return mapPipelineUiStatus(auditStatus)
+}
+
 export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess } = {}) {
   const activeStep = ref(0)
   const rollbackOptions = ref(createRollbackOptions())
@@ -352,6 +506,13 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
   })
   const currentTaskStatus = computed(() => getTaskStatusValue(taskDetail.value))
   const currentPipelineStep = computed(() => resolvePipelineCurrentStep(taskDetail.value))
+  const stepKeyToSkipKeyMap = {
+    PRE_CHECK: 'pre-check',
+    ROLLBACK: 'execute',
+    RESTART: 'restart',
+    VALIDATE: 'validate'
+  }
+
   const pipelineItems = computed(() => {
     return WIN_PATCH_ROLLBACK_PIPELINE_STEPS.map(step => {
       const auditStep = findAuditStep(
@@ -359,31 +520,16 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
         resolvePipelineStepKeys(step.key, taskDetail.value)
       )
       const auditStatus = normalizeUpper(auditStep?.status)
-      let uiStatus = mapPipelineUiStatus(auditStatus)
+      const skipKey = stepKeyToSkipKeyMap[normalizeUpper(step.key)]
+      const isSkipped = skipKey ? Boolean(skippedSteps.value[skipKey]) : false
 
-      if (step.key === 'RESTART') {
-        if (['RESTARTING', 'RESTART_RUNNING'].includes(currentTaskStatus.value)) {
-          uiStatus = 'running'
-        } else if (currentTaskStatus.value === 'RESTART_FAILED') {
-          uiStatus = 'failed'
-        } else if (
-          currentTaskStatus.value === 'FAILED' &&
-          currentPipelineStep.value === 'RESTART'
-        ) {
-          uiStatus = 'failed'
-        }
-      }
-
-      if (!auditStatus && currentTaskId.value && currentPipelineStep.value === step.key) {
-        if (
-          ['FAILED', 'ERROR'].includes(currentTaskStatus.value) ||
-          pipelineStatus.value === 'failed'
-        ) {
-          uiStatus = 'failed'
-        } else if (pipelineStatus.value === 'running') {
-          uiStatus = 'running'
-        }
-      }
+      const uiStatus = resolvePipelineStepUiStatus({
+        stepKey: step.key,
+        auditStatus,
+        task: taskDetail.value,
+        pipelineStatus: pipelineStatus.value,
+        isSkipped
+      })
 
       return {
         key: step.key,
@@ -638,6 +784,22 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
           pickValue(taskDetail.value, ['taskStatus', 'task_status', 'status'], '')
         )
         const taskStatus = getTaskStatusValue(taskDetail.value)
+        const currentStep = normalizeUpper(resolvePipelineCurrentStep(taskDetail.value))
+        const runningStatuses = getStepRunningStatuses(stepKey)
+        const isMainTaskRunningCurrentStep =
+          currentStep === normalizedStepKey &&
+          (['RUNNING', 'IN_PROGRESS'].includes(taskStatus) ||
+            ['RUNNING', 'IN_PROGRESS'].includes(rawTaskStatus))
+
+        // 如果主任务状态表明当前步骤仍处于运行态，或聚合审计状态仍处于运行态，继续轮询等待
+        if (
+          runningStatuses.includes(rawTaskStatus) ||
+          runningStatuses.includes(taskStatus) ||
+          stepStatus === 'RUNNING' ||
+          isMainTaskRunningCurrentStep
+        ) {
+          return
+        }
 
         // 执行或跳过重启都须等待主任务进入 RESTART_DONE，审计状态不能替代校验前置条件
         if (normalizedStepKey === 'RESTART') {
@@ -647,6 +809,8 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
           }
 
           if (
+            ['FAILED', 'ERROR'].includes(rawTaskStatus) ||
+            ['FAILED', 'ERROR'].includes(taskStatus) ||
             failedStatuses.includes(rawTaskStatus) ||
             failedStatuses.includes(taskStatus) ||
             ['FAILED', 'ERROR'].includes(stepStatus)
@@ -671,6 +835,8 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
 
         if (
           ['FAILED', 'ERROR'].includes(stepStatus) ||
+          ['FAILED', 'ERROR'].includes(taskStatus) ||
+          ['FAILED', 'ERROR'].includes(rawTaskStatus) ||
           failedStatuses.includes(taskStatus) ||
           failedStatuses.includes(rawTaskStatus)
         ) {
