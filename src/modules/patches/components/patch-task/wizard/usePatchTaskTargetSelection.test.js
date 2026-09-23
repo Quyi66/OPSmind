@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import { ElMessage } from 'element-plus'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { patchInstallApi } from '../../../api'
+import { dataManageApi } from '@/modules/asset/api'
 import { usePatchTaskTargetSelection } from './usePatchTaskTargetSelection'
 
 vi.mock('element-plus', () => ({
@@ -17,6 +18,10 @@ vi.mock('../../../api', () => ({
     getAffectedPackages: vi.fn(),
     getMachinesByPatch: vi.fn()
   }
+}))
+
+vi.mock('@/modules/asset/api', () => ({
+  dataManageApi: { getAllGroups: vi.fn() }
 }))
 
 vi.mock('../../../utils/agentCapability', () => ({
@@ -72,6 +77,39 @@ describe('usePatchTaskTargetSelection', () => {
     vi.restoreAllMocks()
     vi.clearAllMocks()
     vi.useRealTimers()
+  })
+
+  it('loads Linux groups and refreshes hosts with selected group IDs', async () => {
+    dataManageApi.getAllGroups.mockResolvedValue({
+      records: [
+        { id: 'linux-root', ci_type: 'linux', path: '/' },
+        { id: 'windows-root', ci_type: 'windows', path: '/' },
+        { id: 'windows-group', ci_type: 'windows', path: '/Windows' },
+        { id: 'group-1', ci_type: 'linux', path: '/生产环境' },
+        { id: 'group-2', ci_type: 'linux', path: '/测试环境' }
+      ]
+    })
+    patchInstallApi.getMachinesByPatch.mockResolvedValue({ data: { records: [] } })
+    const { targetSelection, wrapper } = mountTargetSelection()
+
+    targetSelection.openTargetSelection()
+    await flushPromises()
+    expect(dataManageApi.getAllGroups).toHaveBeenCalledWith('linux')
+    expect(targetSelection.groupOptions.value).toEqual([
+      { id: 'group-1', label: '/生产环境' },
+      { id: 'group-2', label: '/测试环境' }
+    ])
+
+    targetSelection.selectedHosts.value = [{ hostId: 'old-host' }]
+    targetSelection.selectedGroupIds.value = ['group-1', 'group-2']
+    targetSelection.handleHostGroupChange()
+    expect(patchInstallApi.getMachinesByPatch).toHaveBeenLastCalledWith({
+      patch_ids: ['patch-1'],
+      hostId: '@@(linux)',
+      groupIds: ['group-1', 'group-2']
+    })
+    expect(targetSelection.selectedHosts.value).toEqual([])
+    wrapper.unmount()
   })
 
   it('ignores hosts returned for an earlier wizard session after reopening', async () => {

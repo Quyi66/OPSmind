@@ -87,11 +87,26 @@
           </div>
           <div class="card-body">
             <div class="host-toolbar">
-              <el-select v-model="hostFilter" size="small" style="width: 140px">
-                <el-option label="@@(linux)" value="@@(linux)">
-                  <i class="fa fa-server" />
-                  @@(linux)
-                </el-option>
+              <el-select
+                v-model="selectedGroupIds"
+                multiple
+                filterable
+                clearable
+                collapse-tags
+                collapse-tags-tooltip
+                :loading="groupLoading"
+                placeholder="全部分组"
+                aria-label="按分组筛选主机"
+                size="small"
+                style="width: 220px"
+                @change="loadStep0Data"
+              >
+                <el-option
+                  v-for="group in groupOptions"
+                  :key="group.id"
+                  :label="group.label"
+                  :value="group.id"
+                />
               </el-select>
               <el-input
                 v-model="hostSearchText"
@@ -281,7 +296,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, nextTick } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDateTime } from '@/utils/date'
@@ -291,6 +306,7 @@ import { useTableSelectAll } from '../../../composables/useTableSelectAll'
 import { normalizeAcmDeviceSelection } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
 import { isFutureSchedule } from '../../../utils/patchInstallSchedule'
 import { normalizeAffectedPackages } from '../../../utils/packageParser'
+import { usePatchHostGroupFilter } from '../usePatchHostGroupFilter'
 import PatchTaskStepper from '../PatchTaskStepper.vue'
 import PatchTaskPackageList from '../PatchTaskPackageList.vue'
 
@@ -333,8 +349,14 @@ const installDataLoading = ref(false)
 const affectedHosts = ref([])
 const selectedHosts = ref([])
 const hostTableRef = ref(null)
-const hostFilter = ref('@@(linux)')
 const hostSearchText = ref('')
+const {
+  selectedGroupIds,
+  groupOptions,
+  groupLoading,
+  loadGroupOptions,
+  resetGroupFilter
+} = usePatchHostGroupFilter()
 const hostPagination = reactive({
   page: 1,
   pageSize: 10
@@ -405,6 +427,7 @@ const packageSearchText = ref('')
 const packageDisplayLimit = ref(20)
 let packageRefreshTimer = null
 let packageRequestId = 0
+let hostRequestId = 0
 
 function formatAffectedPackageDisplay(pkg = {}) {
   const targetPackage = String(pkg.file_name || pkg.target_pkg || pkg.pkg_name || '').trim()
@@ -492,10 +515,18 @@ function scheduleAffectedPackageRefresh() {
 
 // 步骤一加载数据
 async function loadStep0Data() {
+  const requestId = ++hostRequestId
+  if (packageRefreshTimer) {
+    clearTimeout(packageRefreshTimer)
+    packageRefreshTimer = null
+  }
+  packageRequestId += 1
+  affectedPackagesLoading.value = false
   installDataLoading.value = true
   affectedHosts.value = []
   selectedHosts.value = []
   affectedPackagesRaw.value = []
+  hostPagination.page = 1
   resetHostAllSelected()
 
   const patchIds = props.selectedPatches.map(p => p.patch_id).filter(Boolean)
@@ -507,16 +538,19 @@ async function loadStep0Data() {
   try {
     const res = await patchInstallApi.getMachinesByPatch({
       patch_ids: patchIds,
-      hostId: '@@(linux)'
+      hostId: '@@(linux)',
+      groupIds: [...selectedGroupIds.value]
     })
+    if (requestId !== hostRequestId) return
     if (res?.data?.records) {
       affectedHosts.value = res.data.records
     }
   } catch (err) {
+    if (requestId !== hostRequestId) return
     console.error('Failed to load affected machines:', err)
     ElMessage.error('获取受影响主机失败，请稍后重试')
   } finally {
-    installDataLoading.value = false
+    if (requestId === hostRequestId) installDataLoading.value = false
   }
 }
 
@@ -644,11 +678,15 @@ async function handleSubmit() {
 }
 
 function handleClosed() {
+  hostRequestId += 1
+  installDataLoading.value = false
+  resetGroupFilter()
   if (packageRefreshTimer) {
     clearTimeout(packageRefreshTimer)
     packageRefreshTimer = null
   }
   packageRequestId += 1
+  affectedPackagesLoading.value = false
   currentStep.value = 0
   scheduleDate.value = ''
   scheduleHour.value = ''
@@ -666,6 +704,8 @@ watch(
   visible => {
     if (visible) {
       currentStep.value = 0
+      resetGroupFilter()
+      loadGroupOptions()
       loadStep0Data()
     }
   }

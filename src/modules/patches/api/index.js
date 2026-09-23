@@ -774,13 +774,15 @@ export const patchInstallApi = {
   * @param {Object} params - 查询参数
   * @param {Array<string>} params.patch_ids - 补丁ID列表
   * @param {string} params.hostId - 主机筛选条件
+  * @param {Array<string>} [params.groupIds] - 分组ID列表
   * @returns {Promise}
   */
   getMachinesByPatch(params) {
     return apiService
       .post(`${VAP_DASHBOARD_BASE}/machine-by-patch`, {
         patchIds: params.patch_ids,
-        hostId: params.hostId || '@@(linux)'
+        hostId: params.hostId || '@@(linux)',
+        ...(params.groupIds?.length ? { groupIds: params.groupIds } : {})
       })
       .then(wrapRecordsResponse)
       .then(res => {

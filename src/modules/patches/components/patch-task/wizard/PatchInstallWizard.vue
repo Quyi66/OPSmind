@@ -60,11 +60,26 @@
           </div>
           <div v-else class="card-body">
             <div class="host-toolbar">
-              <el-select v-model="hostFilter" size="small" style="width: 140px">
-                <el-option label="@@(linux)" value="@@(linux)">
-                  <i class="fa fa-server" />
-                  @@(linux)
-                </el-option>
+              <el-select
+                v-model="selectedGroupIds"
+                multiple
+                filterable
+                clearable
+                collapse-tags
+                collapse-tags-tooltip
+                :loading="groupLoading"
+                placeholder="全部分组"
+                aria-label="按分组筛选主机"
+                size="small"
+                style="width: 220px"
+                @change="handleHostGroupChange"
+              >
+                <el-option
+                  v-for="group in groupOptions"
+                  :key="group.id"
+                  :label="group.label"
+                  :value="group.id"
+                />
               </el-select>
               <el-input
                 v-model="hostSearchText"
@@ -462,12 +477,14 @@ const {
   closeTargetSelection,
   confirmedHosts,
   filteredHosts,
+  groupLoading,
+  groupOptions,
+  handleHostGroupChange,
   handleHostPageChange,
   handleHostSizeChange,
   handleHostTableSelect,
   handleToggleHostSelectAll,
   hostAllSelected,
-  hostFilter,
   hostPagination,
   hostSearchText,
   hostTableRef,
@@ -476,6 +493,7 @@ const {
   packageEmptyText,
   resetHostAllSelected,
   selectedHosts,
+  selectedGroupIds,
   syncAffectedPackagesForHosts,
   validateSelectedHostCapabilities
 } = usePatchTaskTargetSelection({

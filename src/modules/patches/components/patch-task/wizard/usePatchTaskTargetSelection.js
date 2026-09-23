@@ -7,6 +7,7 @@ import {
   validateAgentCapability
 } from '../../../utils/agentCapability'
 import { useTableSelectAll } from '../../../composables/useTableSelectAll'
+import { usePatchHostGroupFilter } from '../usePatchHostGroupFilter'
 
 const AFFECTED_PACKAGE_DEBOUNCE_MS = 350
 const MAX_AFFECTED_PACKAGE_SYNC_ATTEMPTS = 3
@@ -31,9 +32,15 @@ export function usePatchTaskTargetSelection({
   const selectedHosts = ref([])
   const confirmedHosts = ref([])
   const hostTableRef = ref(null)
-  const hostFilter = ref('@@(linux)')
   const hostSearchText = ref('')
   const hostPagination = reactive({ page: 1, pageSize: 10, total: 0 })
+  const {
+    selectedGroupIds,
+    groupOptions,
+    groupLoading,
+    loadGroupOptions,
+    resetGroupFilter
+  } = usePatchHostGroupFilter()
 
   let affectedPackageRequestId = 0
   let affectedPackageDebounceTimer = null
@@ -93,12 +100,21 @@ export function usePatchTaskTargetSelection({
 
   function openTargetSelection() {
     targetSelectionSessionId += 1
+    resetGroupFilter()
     if (hasFixedHosts.value) setFixedHosts()
+    else loadGroupOptions()
+    loadInstallData(props.patchesToInstall.map(patch => patch.patch_id))
+  }
+
+  function handleHostGroupChange() {
+    targetSelectionSessionId += 1
+    hostPagination.page = 1
     loadInstallData(props.patchesToInstall.map(patch => patch.patch_id))
   }
 
   function closeTargetSelection() {
     targetSelectionSessionId += 1
+    resetGroupFilter()
     installDataLoading.value = false
     cancelScheduledAffectedPackageRefresh()
     invalidateAffectedPackageRequest()
@@ -143,7 +159,8 @@ export function usePatchTaskTargetSelection({
       } else {
         const hostResponse = await patchInstallApi.getMachinesByPatch({
           patch_ids: patchIds,
-          hostId: '@@(linux)'
+          hostId: '@@(linux)',
+          groupIds: [...selectedGroupIds.value]
         })
         // 关闭或重新打开向导后，旧请求不能覆盖当前会话的主机列表。
         if (sessionId !== targetSelectionSessionId) return
@@ -384,12 +401,14 @@ export function usePatchTaskTargetSelection({
     affectedPackagesLoading,
     confirmedHosts,
     filteredHosts,
+    groupLoading,
+    groupOptions,
+    handleHostGroupChange,
     handleHostPageChange,
     handleHostSizeChange,
     handleHostTableSelect,
     handleToggleHostSelectAll,
     hostAllSelected,
-    hostFilter,
     hostPagination,
     hostSearchText,
     hostTableRef,
@@ -399,6 +418,7 @@ export function usePatchTaskTargetSelection({
     packageEmptyText,
     resetHostAllSelected,
     selectedHosts,
+    selectedGroupIds,
     syncAffectedPackagesForHosts,
     validateSelectedHostCapabilities
   }
