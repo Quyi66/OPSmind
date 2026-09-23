@@ -297,6 +297,16 @@
           安装选中的补丁 ({{ selectedPatchIds.length }})
         </el-button>
         <el-button
+          type="primary"
+          size="small"
+          plain
+          :disabled="selectedPatchIds.length === 0"
+          @click="handleScheduleInstallSelected"
+        >
+          <i class="fa fa-clock-o me-1" />
+          定时安装 ({{ selectedPatchIds.length }})
+        </el-button>
+        <el-button
           size="small"
           :type="allSelected ? 'default' : 'primary'"
           @click="handleToggleSelectAll"
@@ -425,6 +435,13 @@
       :patches-to-install="patchesToInstall"
       @success="handleInstallSuccess"
     />
+
+    <!-- 补丁定时安装对话框 -->
+    <PatchScheduleInstallDialog
+      v-model:visible="scheduleInstallDialogVisible"
+      :selected-patches="scheduleSelectedPatches"
+      @success="handleScheduleInstallSuccess"
+    />
   </div>
 </template>
 
@@ -439,6 +456,7 @@ import { dataManageApi, agentApi } from '@/modules/asset/api'
 import { parseOsVersionFilter } from '../utils/linuxPatchScan'
 import { formatDateTime } from '@/utils/date'
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
+import PatchScheduleInstallDialog from '../components/patch-task/schedule/PatchScheduleInstallDialog.vue'
 import BatchInstallPatchDrawer from '../components/host-detail/dialogs/BatchInstallPatchDrawer.vue'
 import PatchDetailContent from '../components/common/PatchDetailContent.vue'
 import CveLinkList from '../components/common/CveLinkList.vue'
@@ -894,6 +912,23 @@ function handleInstallSelected() {
 }
 
 function handleInstallSuccess() {
+  resetAllSelected()
+  loadData()
+}
+
+const scheduleInstallDialogVisible = ref(false)
+const scheduleSelectedPatches = ref([])
+
+function handleScheduleInstallSelected() {
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请先选择要安装的补丁')
+    return
+  }
+  scheduleSelectedPatches.value = [...selectedRows.value]
+  scheduleInstallDialogVisible.value = true
+}
+
+function handleScheduleInstallSuccess() {
   resetAllSelected()
   loadData()
 }
