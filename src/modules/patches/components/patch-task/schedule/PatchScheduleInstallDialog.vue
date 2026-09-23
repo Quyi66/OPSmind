@@ -853,4 +853,12 @@ watch(
     border-color: #409eff;
   }
 }
+
+:deep(.patch-task-package-list__item) {
+  color: #666;
+}
+
+:global(html.dark) :deep(.patch-task-package-list__item) {
+  color: var(--el-text-color-secondary);
+}
 </style>
