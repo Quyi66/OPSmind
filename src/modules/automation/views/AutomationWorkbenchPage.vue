@@ -2509,8 +2509,12 @@ onBeforeUnmount(() => {
   flex-direction: column;
   gap: 4px;
   min-height: 0;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
+  overflow-y: scroll;
+
+  @supports (scrollbar-gutter: stable) {
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+  }
 }
 
 .wb-run-log-item {

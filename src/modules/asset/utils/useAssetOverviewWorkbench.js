@@ -75,7 +75,7 @@ export function useAssetOverviewWorkbench() {
     if (!newAssetData.value.length) return null
     return [...newAssetData.value]
       .sort((a, b) => toTimestamp(a?.times) - toTimestamp(b?.times))
-      .at(-1)
+      .slice(-1)[0]
   })
 
   const connectionStats = computed(() => {

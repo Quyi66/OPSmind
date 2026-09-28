@@ -1,3 +1,11 @@
+// 必须先于应用及第三方模块执行：Vite 的 build.target 不会补齐运行时 API。
+import 'core-js/actual/object/has-own'
+import 'core-js/actual/array/at'
+import 'core-js/actual/array/to-sorted'
+import 'core-js/actual/array/to-reversed'
+import 'core-js/actual/array/to-spliced'
+import 'core-js/actual/structured-clone'
+
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 // Element Plus - 按需导入命令式组件和样式

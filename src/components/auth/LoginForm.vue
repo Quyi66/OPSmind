@@ -2,11 +2,7 @@
   <div class="login-form-shell">
     <!-- 品牌标题 -->
     <div class="login-heading">
-      <img
-        src="@/assets/icons/logo-transparent.png"
-        alt="KoreOPS Logo"
-        class="login-brand-logo"
-      />
+      <img src="@/assets/icons/logo-transparent.png" alt="KoreOPS Logo" class="login-brand-logo" />
       <h1>KoreOPS</h1>
     </div>
 
@@ -378,6 +374,8 @@ watch(
 </script>
 
 <style scoped>
+/* 表单容器占设计层宽度的 25%、高度的 37.12963%。
+   按相同比例使用 vw/vh，避免旧版 Chromium 不支持 cqw/cqh 时尺寸失效。 */
 .login-form-shell {
   position: relative;
   width: 100%;
@@ -394,27 +392,27 @@ watch(
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 15.461347cqh;
+  height: 5.740741vh;
 }
 
 .login-heading h1 {
   margin: 0;
   color: #0088ee;
   font-family: 'Arial Black', Arial, 'Helvetica Neue', sans-serif;
-  font-size: 8.333333cqw;
+  font-size: 2.083333vw;
   font-style: italic;
   font-weight: 900;
-  letter-spacing: 0.208333cqw;
-  line-height: 15.461347cqh;
-  text-shadow: 0 0.498753cqh 1.666667cqw rgba(0, 136, 238, 0.1);
+  letter-spacing: 0.052083vw;
+  line-height: 5.740741vh;
+  text-shadow: 0 0.185185vh 0.416667vw rgba(0, 136, 238, 0.1);
   user-select: none;
 }
 
 .login-brand-logo {
-  height: 9.3cqh;
+  height: 3.453056vh;
   width: auto;
   object-fit: contain;
-  margin-right: 0.8cqw;
+  margin-right: 0.2vw;
   user-select: none;
   pointer-events: none;
   flex-shrink: 0;
@@ -423,30 +421,30 @@ watch(
 .login-form-content {
   position: relative;
   width: 100%;
-  margin-top: 7.481297cqh;
+  margin-top: 2.777778vh;
 }
 
 .login-error {
   position: absolute;
-  top: -7.23192cqh;
+  top: -2.685185vh;
   left: 0;
   display: flex;
   align-items: center;
-  gap: 1.25cqw;
+  gap: 0.3125vw;
   max-width: 100%;
-  min-height: 5.985037cqh;
-  padding: 0 1.666667cqw;
+  min-height: 2.222222vh;
+  padding: 0 0.416667vw;
   color: #e5484d;
-  font-size: 2.5cqw;
-  line-height: 4.488778cqh;
+  font-size: 0.625vw;
+  line-height: 1.666667vh;
   border: 1px solid rgba(229, 72, 77, 0.32);
-  border-radius: 0.833333cqw;
+  border-radius: 0.208333vw;
   background: rgba(255, 245, 245, 0.92);
 }
 
 .login-error svg {
-  width: 2.916667cqw;
-  height: 3.491272cqh;
+  width: 0.729167vw;
+  height: 1.296296vh;
   flex: 0 0 auto;
 }
 
@@ -461,43 +459,43 @@ watch(
 
 .login-field label {
   display: block;
-  height: 4.987531cqh;
+  height: 1.851852vh;
   color: #344054;
-  font-size: 3.75cqw;
+  font-size: 0.9375vw;
   font-weight: 500;
-  line-height: 4.987531cqh;
+  line-height: 1.851852vh;
   text-align: left;
 }
 
 .login-field--username {
-  margin-bottom: 6.234414cqh;
+  margin-bottom: 2.314815vh;
 }
 
 .login-field--username label {
-  margin-bottom: 2.992519cqh;
+  margin-bottom: 1.111111vh;
 }
 
 .login-field--password label,
 .login-field--otp label {
-  margin-bottom: 2.992519cqh;
+  margin-bottom: 1.111111vh;
 }
 
 .login-field--otp {
-  margin-top: 6.234414cqh;
+  margin-top: 2.314815vh;
 }
 
 .login-text-input {
   box-sizing: border-box;
   display: block;
   width: 100%;
-  padding: 0 3.125cqw;
+  padding: 0 0.78125vw;
   color: #27364a;
   font-family: 'Source Code Pro', 'Microsoft YaHei', 'PingFang SC', sans-serif;
-  font-size: 3.75cqw;
+  font-size: 0.9375vw;
   font-weight: 400;
   line-height: 1;
   border: 1px solid #d9e0e8;
-  border-radius: 1.041667cqw;
+  border-radius: 0.260417vw;
   background: rgba(255, 255, 255, 0.96);
   box-shadow: inset 0 1px 2px rgba(40, 75, 115, 0.035);
   outline: none;
@@ -508,12 +506,12 @@ watch(
 }
 
 .login-text-input--username {
-  height: 12.468828cqh;
+  height: 4.62963vh;
 }
 
 .login-text-input--password,
 .login-text-input--otp {
-  height: 10.972569cqh;
+  height: 4.074074vh;
 }
 
 .login-password-control {
@@ -522,18 +520,18 @@ watch(
 }
 
 .login-password-control .login-text-input {
-  padding-right: 10cqw;
+  padding-right: 2.5vw;
 }
 
 .password-visibility-button {
   position: absolute;
   top: 50%;
-  right: 2.083333cqw;
+  right: 0.520833vw;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 6.666667cqw;
-  height: 7.98005cqh;
+  width: 1.666667vw;
+  height: 2.962963vh;
   padding: 0;
   color: #7a8ba0;
   border: 0;
@@ -552,8 +550,8 @@ watch(
 }
 
 .password-visibility-button:focus-visible {
-  outline: 0.416667cqw solid rgba(0, 136, 238, 0.32);
-  outline-offset: 0.208333cqw;
+  outline: 0.104167vw solid rgba(0, 136, 238, 0.32);
+  outline-offset: 0.052083vw;
 }
 
 .password-visibility-button:disabled {
@@ -562,8 +560,8 @@ watch(
 }
 
 .password-visibility-button svg {
-  width: 3.75cqw;
-  height: 4.488778cqh;
+  width: 0.9375vw;
+  height: 1.666667vh;
   fill: none;
   stroke: currentColor;
   stroke-linecap: round;
@@ -594,14 +592,14 @@ watch(
   border-color: #0088ee;
   background: #ffffff;
   box-shadow:
-    0 0 0 0.625cqw rgba(0, 136, 238, 0.09),
+    0 0 0 0.15625vw rgba(0, 136, 238, 0.09),
     inset 0 1px 2px rgba(40, 75, 115, 0.025);
 }
 
 .login-text-input:not(.login-text-input--error):-webkit-autofill:focus {
   -webkit-box-shadow:
     0 0 0 1000px #ffffff inset,
-    0 0 0 0.625cqw rgba(0, 136, 238, 0.09),
+    0 0 0 0.15625vw rgba(0, 136, 238, 0.09),
     inset 0 1px 2px rgba(40, 75, 115, 0.025);
 }
 
@@ -611,43 +609,43 @@ watch(
 
 .caps-lock-hint {
   position: absolute;
-  top: calc(100% + 0.74813cqh);
+  top: calc(100% + 0.277778vh);
   left: 0;
   margin: 0;
   color: #9a6700;
-  font-size: 2.291667cqw;
-  line-height: 4.488778cqh;
+  font-size: 0.572917vw;
+  line-height: 1.666667vh;
 }
 
 .login-options {
-  height: 4.239401cqh;
-  margin-top: 6.234414cqh;
+  height: 1.574074vh;
+  margin-top: 2.314815vh;
 }
 
 .login-options label {
   position: relative;
-  top: -1.870324cqh;
+  top: -0.694444vh;
   display: inline-flex;
   align-items: center;
   gap: 0;
-  height: 7.98005cqh;
+  height: 2.962963vh;
   color: #005cb2;
   font-family: 'Source Code Pro', 'Microsoft YaHei', 'PingFang SC', sans-serif;
-  font-size: 2.708333cqw;
+  font-size: 0.677083vw;
   font-weight: 400;
-  line-height: 4.239401cqh;
+  line-height: 1.574074vh;
   cursor: pointer;
   user-select: none;
 }
 
 .login-options input {
   appearance: none;
-  width: 2.916667cqw;
-  height: 3.491272cqh;
-  margin: 0 1.145833cqw;
+  width: 0.729167vw;
+  height: 1.296296vh;
+  margin: 0 0.286458vw;
   flex: 0 0 auto;
   border: 1px solid #005cb2;
-  border-radius: 0.625cqw;
+  border-radius: 0.15625vw;
   background: transparent;
   cursor: pointer;
   transition:
@@ -667,12 +665,12 @@ watch(
 
 .login-options input:hover:not(:disabled) {
   border-color: #0088ee;
-  box-shadow: 0 0 0 0.416667cqw rgba(0, 136, 238, 0.08);
+  box-shadow: 0 0 0 0.104167vw rgba(0, 136, 238, 0.08);
 }
 
 .login-options input:focus-visible {
-  outline: 0.416667cqw solid rgba(0, 136, 238, 0.28);
-  outline-offset: 0.416667cqw;
+  outline: 0.104167vw solid rgba(0, 136, 238, 0.28);
+  outline-offset: 0.104167vw;
 }
 
 .login-options input:disabled,
@@ -682,8 +680,8 @@ watch(
 
 .login-submit-wrap {
   width: 100%;
-  height: 13.466334cqh;
-  margin-top: 7.481297cqh;
+  height: 5vh;
+  margin-top: 2.777778vh;
 }
 
 .login-submit-button {
@@ -696,14 +694,14 @@ watch(
   padding: 0;
   color: #ffffff;
   font-family: 'Source Code Pro', 'Microsoft YaHei', 'PingFang SC', sans-serif;
-  font-size: 4.166667cqw;
+  font-size: 1.041667vw;
   font-weight: 600;
   line-height: 1;
   letter-spacing: 0;
   border: 0;
-  border-radius: 1.25cqw;
+  border-radius: 0.3125vw;
   background: linear-gradient(100deg, #078fe9 0%, #0088ee 55%, #087fe2 100%);
-  box-shadow: 0 1.995012cqh 3.75cqw rgba(0, 111, 205, 0.16);
+  box-shadow: 0 0.740741vh 0.9375vw rgba(0, 111, 205, 0.16);
   cursor: pointer;
   transition:
     transform 0.16s ease,
@@ -714,18 +712,18 @@ watch(
 .login-submit-button:hover:not(:disabled) {
   transform: translateY(-1px);
   background: linear-gradient(100deg, #0088ee 0%, #007edc 100%);
-  box-shadow: 0 2.493766cqh 4.583333cqw rgba(0, 111, 205, 0.2);
+  box-shadow: 0 0.925926vh 1.145833vw rgba(0, 111, 205, 0.2);
 }
 
 .login-submit-button:active:not(:disabled) {
   transform: translateY(0);
   background: #0078d2;
-  box-shadow: 0 0.997506cqh 2.083333cqw rgba(0, 111, 205, 0.15);
+  box-shadow: 0 0.37037vh 0.520833vw rgba(0, 111, 205, 0.15);
 }
 
 .login-submit-button:focus-visible {
-  outline: 0.416667cqw solid rgba(0, 136, 238, 0.35);
-  outline-offset: 0.416667cqw;
+  outline: 0.104167vw solid rgba(0, 136, 238, 0.35);
+  outline-offset: 0.104167vw;
 }
 
 .login-submit-button:disabled {
@@ -738,19 +736,19 @@ watch(
 .login-submit-button--loading:disabled {
   color: #ffffff;
   background: linear-gradient(100deg, #078fe9 0%, #0088ee 55%, #087fe2 100%);
-  box-shadow: 0 1.995012cqh 3.75cqw rgba(0, 111, 205, 0.16);
+  box-shadow: 0 0.740741vh 0.9375vw rgba(0, 111, 205, 0.16);
 }
 
 .login-loading {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1.666667cqw;
+  gap: 0.416667vw;
 }
 
 .login-loading svg {
-  width: 3.333333cqw;
-  height: 3.990025cqh;
+  width: 0.833333vw;
+  height: 1.481482vh;
 }
 
 .login-text-input--error {

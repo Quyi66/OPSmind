@@ -84,7 +84,6 @@ import LoginForm from '@/components/auth/LoginForm.vue'
   left: 37.5%;
   width: 25%;
   height: 37.12963%;
-  container-type: size;
 }
 
 .login-bottom-left-mask {

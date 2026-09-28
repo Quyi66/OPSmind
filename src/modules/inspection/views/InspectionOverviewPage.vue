@@ -376,9 +376,13 @@ onMounted(() => {
 .content-scroll-area {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  overflow-y: scroll;
   padding: 16px 18px 20px;
-  scrollbar-gutter: stable;
+
+  @supports (scrollbar-gutter: stable) {
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+  }
 
   &::-webkit-scrollbar {
     width: 7px;
