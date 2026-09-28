@@ -20,7 +20,7 @@
         <el-form-item label="类型">
           <el-select
             v-model="filters.jobType"
-            style="width: 120px"
+            style="width: 150px"
             placeholder="全部类型"
             @change="handleSearch"
           >
@@ -38,7 +38,7 @@
             v-model="filters.keyword"
             placeholder="搜索运维工具标题、描述..."
             clearable
-            style="width: 200px"
+            style="width: 230px"
             @keyup.enter="handleSearch"
             @clear="handleSearch"
           >
@@ -310,14 +310,19 @@ function filterList() {
     filtered = filtered.filter(job => job.type === filters.jobType)
   }
 
-  // 按关键词搜索（搜索标题、描述、ID）
+  // 按关键词搜索原始值和列表中显示的翻译值
   if (filters.keyword && filters.keyword.trim()) {
     const kw = filters.keyword.trim().toLowerCase()
     filtered = filtered.filter(job => {
-      return (
-        (job.title && job.title.toLowerCase().includes(kw)) ||
-        (job.description && job.description.toLowerCase().includes(kw)) ||
-        (job.id && job.id.toLowerCase().includes(kw))
+      const searchableValues = [
+        job.title,
+        translateText(job.title),
+        job.description,
+        translateText(job.description),
+        job.id
+      ]
+      return searchableValues.some(value =>
+        typeof value === 'string' && value.toLowerCase().includes(kw)
       )
     })
   }
