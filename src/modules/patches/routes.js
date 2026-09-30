@@ -129,6 +129,17 @@ export const PATCHES_ROUTE_DEFS = [
     component: () => import('./views/PackageSetPage.vue')
   },
   {
+    key: 'installTasks',
+    path: 'installTasks',
+    name: 'patches-installTasks',
+    title: '安装申请',
+    navLabel: '安装申请',
+    navGroup: 'installManage',
+    icon: 'fas fa-tasks',
+    platform: 'linux',
+    component: () => import('./views/InstallTasksPage.vue')
+  },
+  {
     key: 'localInstall',
     path: 'localInstall',
     name: 'patches-localInstall',

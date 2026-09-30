@@ -172,10 +172,10 @@
       <div class="assign-patch-picker">
         <div class="ops-filter-bar">
           <el-form :model="patchFilters" inline size="small">
-            <el-form-item label="关键词">
+            <el-form-item label="补丁编号">
               <el-input
                 v-model="patchFilters.keyword"
-                placeholder="搜索补丁编号、概要、漏洞编号"
+                placeholder="搜索补丁编号"
                 clearable
                 style="width: 240px"
               />
