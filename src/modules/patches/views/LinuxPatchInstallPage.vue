@@ -126,6 +126,16 @@
           <i :class="`fa fa-${hostAllSelected ? 'times' : 'check-double'} me-1`" />
           {{ hostAllSelected ? '一键取消' : '一键全选' }}
         </el-button>
+        <el-button
+          v-if="batchSelectedHosts.length > 0"
+          size="small"
+          type="info"
+          text
+          @click="handleClearHostSelection"
+        >
+          <i class="fa fa-times me-1" />
+          清空选择
+        </el-button>
         <span style="flex: 1"></span>
         <el-button
           class="toolbar-icon-btn"
@@ -315,6 +325,16 @@
           <i :class="`fa fa-${allSelected ? 'times' : 'check-double'} me-1`" />
           {{ allSelected ? '一键取消' : '一键全选' }}
         </el-button>
+        <el-button
+          v-if="selectedPatchIds.length > 0"
+          size="small"
+          type="info"
+          text
+          @click="handleClearPatchSelection"
+        >
+          <i class="fa fa-times me-1" />
+          清空选择
+        </el-button>
         <span style="flex: 1"></span>
         <el-button
           class="toolbar-icon-btn"
@@ -447,13 +467,13 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { getCveUrl } from '../composables/useFormatters'
 import { patchInstallApi, patchScanApi, vulnerabilityApi } from '../api'
-import { dataManageApi, agentApi } from '@/modules/asset/api'
+import { dataManageApi } from '@/modules/asset/api'
 import { parseOsVersionFilter } from '../utils/linuxPatchScan'
 import { formatDateTime } from '@/utils/date'
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
@@ -513,6 +533,9 @@ const hostPagination = reactive({
 
 const batchSelectedHosts = ref([])
 const batchInstallDrawerVisible = ref(false)
+let hostLoadRequestId = 0
+
+const getHostSelectionKey = host => host.host_id || host.id || host.host_key || ''
 
 const hostFilteredData = computed(() => {
   return allHostData.value
@@ -537,14 +560,15 @@ const {
   allSelected: hostAllSelected,
   handleToggleAllSelection: handleToggleHostSelectAll,
   handleTableSelect: handleHostTableSelect,
+  clearSelection: handleClearHostSelection,
   resetAllSelected: resetHostAllSelected,
   restorePageSelection: restoreHostPageSelection
 } = useTableSelectAll(hostTableRef, {
   tableData: hostTableData,
   filteredData: hostFilteredData,
   selectedItems: batchSelectedHosts,
-  matchFn: (a, b) =>
-    (a.host_id || a.id || a.host_key || '') === (b.host_id || b.id || b.host_key || '')
+  matchFn: (a, b) => getHostSelectionKey(a) === getHostSelectionKey(b),
+  preserveExistingSelection: true
 })
 
 // 重新扫描相关状态
@@ -555,6 +579,7 @@ const operationLogsVisible = ref(false)
 const lastSubmittedRunId = ref('')
 
 async function loadHostData() {
+  const requestId = ++hostLoadRequestId
   hostLoading.value = true
   try {
     const params = {
@@ -567,6 +592,7 @@ async function loadHostData() {
       keyword: hostFilters.keyword
     }
     const response = await patchScanApi.getScanResults(params)
+    if (requestId !== hostLoadRequestId) return
     const data = response?.data || response || {}
     const records = Array.isArray(data.records)
       ? data.records
@@ -581,18 +607,26 @@ async function loadHostData() {
     mergeHostOsVersionOptions(records)
 
     allHostData.value = records
+    // 更新再次出现的已选记录；未匹配当前筛选的记录仍保留在选择中。
+    const hostsById = new Map(records.map(host => [getHostSelectionKey(host), host]))
+    batchSelectedHosts.value = batchSelectedHosts.value.map(
+      host => hostsById.get(getHostSelectionKey(host)) || host
+    )
     hostPagination.total = records.length
 
     nextTick(() => {
       restoreHostPageSelection()
     })
   } catch (error) {
+    if (requestId !== hostLoadRequestId) return
     console.error('Failed to load host data:', error)
     allHostData.value = []
     hostPagination.total = 0
   } finally {
-    hostLoading.value = false
-    hostDataLoaded.value = true
+    if (requestId === hostLoadRequestId) {
+      hostLoading.value = false
+      hostDataLoaded.value = true
+    }
   }
 }
 
@@ -686,7 +720,6 @@ async function loadOsLists() {
 
 function handleHostFilter() {
   resetHostAllSelected()
-  batchSelectedHosts.value = []
   hostPagination.page = 1
   loadHostData()
 }
@@ -701,7 +734,6 @@ function handleHostVersionChange(value) {
 
 function handleHostReset() {
   resetHostAllSelected()
-  batchSelectedHosts.value = []
   hostFilters.os_distro = ''
   hostFilters.os_version = ''
   hostFilters.os_sp_version = ''
@@ -965,12 +997,12 @@ function resolvePatchDistro(patch) {
   return 'redhat'
 }
 
-async function loadData() {
+async function loadData({ preserveSelection = false } = {}) {
   const requestId = ++patchLoadRequestId
   loading.value = true
-  // 刷新后行对象会被替换，必须同时清空旧记录和表格勾选，避免再次选择时合并旧数据。
+  // 搜索保留累计选择；刷新和安装成功后仍清空选择。
   resetAllSelected()
-  selectedRows.value = []
+  if (!preserveSelection) selectedRows.value = []
   tableRef.value?.clearSelection()
   try {
     const params = {}
@@ -981,7 +1013,15 @@ async function loadData() {
     if (requestId !== patchLoadRequestId) return
     if (response?.data) {
       allData.value = response.data.records || response.data || []
+      if (preserveSelection) {
+        const patchesById = new Map(allData.value.map(patch => [patch.patch_id, patch]))
+        selectedRows.value = selectedRows.value.map(
+          patch => patchesById.get(patch.patch_id) || patch
+        )
+      }
     }
+    // 即使返回同一份数据，也恢复本次加载前清除的表格勾选。
+    nextTick(restorePatchPageSelection)
   } catch (error) {
     if (requestId !== patchLoadRequestId) return
     console.error('Failed to load patches:', error)
@@ -997,7 +1037,7 @@ async function loadData() {
 
 function handleSearch() {
   pagination.page = 1
-  loadData()
+  loadData({ preserveSelection: true })
 }
 
 function handleReset() {
@@ -1005,20 +1045,22 @@ function handleReset() {
   filters.keyword = ''
   pagination.page = 1
   pagination.pageSize = 10
-  loadData()
+  loadData({ preserveSelection: true })
 }
 
 const {
   allSelected,
   handleToggleAllSelection: handleToggleSelectAll,
   handleTableSelect,
+  clearSelection: handleClearPatchSelection,
   resetAllSelected,
   restorePageSelection: restorePatchPageSelection
 } = useTableSelectAll(tableRef, {
   tableData: paginatedData,
   filteredData,
   selectedItems: selectedRows,
-  matchFn: (a, b) => a.patch_id === b.patch_id
+  matchFn: (a, b) => a.patch_id === b.patch_id,
+  preserveExistingSelection: true
 })
 
 function handlePageChange(page) {

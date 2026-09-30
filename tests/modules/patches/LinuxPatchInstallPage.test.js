@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, nextTick } from 'vue'
 import { flushPromises, shallowMount } from '@vue/test-utils'
 import LinuxPatchInstallPage from '@/modules/patches/views/LinuxPatchInstallPage.vue'
-import { patchInstallApi } from '@/modules/patches/api'
+import { patchInstallApi, patchScanApi } from '@/modules/patches/api'
 import { ElMessage, ElPagination } from 'element-plus'
 
 vi.mock('element-plus', async importOriginal => ({
@@ -34,7 +34,7 @@ vi.mock('@/modules/patches/components/patch-task/wizard/PatchInstallWizard.vue',
   }
 }))
 vi.mock('@/modules/patches/components/host-detail/dialogs/BatchInstallPatchDrawer.vue', () => ({
-  default: { template: '<div />' }
+  default: { name: 'BatchInstallPatchDrawer', props: ['visible', 'hosts'], template: '<div />' }
 }))
 vi.mock('@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue', () => ({
   default: { template: '<div />' }
@@ -53,6 +53,7 @@ const TableStub = defineComponent({
 
 let wrapper
 let records
+let hostRecords
 
 async function mountPage({ realPagination = false } = {}) {
   wrapper = shallowMount(LinuxPatchInstallPage, {
@@ -98,6 +99,17 @@ beforeEach(() => {
     patch_id: `KYSA-202503-${1055 + index}`,
     effect_host_count: 10
   }))
+  hostRecords = Array.from({ length: 22 }, (_, index) => ({
+    host_id: `host-${index}`,
+    host_key: `192.168.1.${index + 1}`
+  }))
+  patchScanApi.getScanResults.mockImplementation(async ({ keyword }) => ({
+    data: {
+      records: hostRecords
+        .filter(host => !keyword || host.host_key === keyword)
+        .map(host => ({ ...host }))
+    }
+  }))
   // 每次刷新返回新的对象，模拟真实接口响应。
   patchInstallApi.getAvailablePatches.mockImplementation(async () => ({
     data: { records: records.map(record => ({ ...record })) }
@@ -123,6 +135,13 @@ function deferred() {
     reject = rejectPromise
   })
   return { promise, resolve, reject }
+}
+
+async function search(keyword) {
+  wrapper.findComponent({ name: 'ElInput' }).vm.$emit('update:modelValue', keyword)
+  await nextTick()
+  await buttonWithText('搜索').trigger('click')
+  await flushPromises()
 }
 
 describe('LinuxPatchInstallPage patch selection', () => {
@@ -202,25 +221,85 @@ describe('LinuxPatchInstallPage patch selection', () => {
     expect(installButton().text()).toContain('(1)')
   })
 
-  it.each(['搜索', '重置'])('clears selected rows on %s', async action => {
+  it.each(['搜索', '重置'])('preserves selected rows on %s', async action => {
     const table = await mountPage()
     await selectRows([table.props('data')[0]])
     await buttonWithText(action).trigger('click')
     await flushPromises()
-    expect(installButton().text()).toContain('(0)')
+    expect(installButton().text()).toContain('(1)')
     await selectRows([table.props('data')[0]])
     expect(installButton().text()).toContain('(1)')
   })
 
-  it('clears selection when severity filters change', async () => {
+  it('preserves selection outside the new severity results', async () => {
     const table = await mountPage()
     await selectRows([table.props('data')[0]])
+    const selected = { ...records[0] }
+    records = records.slice(1)
     const select = wrapper.findComponent({ name: 'ElSelect' })
     select.vm.$emit('update:modelValue', ['Critical'])
     select.vm.$emit('change', ['Critical'])
     await flushPromises()
     expect(patchInstallApi.getAvailablePatches).toHaveBeenLastCalledWith({ severity: 'Critical' })
+    expect(installButton().text()).toContain('(1)')
+    await installButton().trigger('click')
+    expect(wrapper.findComponent({ name: 'PatchInstallWizard' }).props('patchesToInstall')).toEqual(
+      [selected]
+    )
+  })
+
+  it('accumulates patches across searches, restores checks, and submits the complete selection', async () => {
+    const table = await mountPage()
+    await search(records[0].patch_id)
+    await selectRows([table.props('data')[0]])
+    await search('no-match')
+    expect(table.props('data')).toEqual([])
+    expect(installButton().text()).toContain('(1)')
+    await search(records[1].patch_id)
+    await selectRows([table.props('data')[0]])
+    expect(installButton().text()).toContain('(2)')
+    TableStub.methods.toggleRowSelection.mockClear()
+    records[0].effect_host_count = 3
+    await search(records[0].patch_id)
+    expect(TableStub.methods.toggleRowSelection).toHaveBeenCalledWith(records[0], true)
+    await selectRows([table.props('data')[0]])
+    expect(installButton().text()).toContain('(2)')
+    await installButton().trigger('click')
+    expect(wrapper.findComponent({ name: 'PatchInstallWizard' }).props('patchesToInstall')).toEqual(
+      expect.arrayContaining(records.slice(0, 2))
+    )
+    await buttonWithText('定时安装').trigger('click')
+    expect(
+      wrapper.findComponent({ name: 'PatchScheduleInstallDialog' }).props('selectedPatches')
+    ).toEqual(expect.arrayContaining(records.slice(0, 2)))
+    await selectRows([])
+    expect(installButton().text()).toContain('(1)')
+    await installButton().trigger('click')
+    expect(wrapper.findComponent({ name: 'PatchInstallWizard' }).props('patchesToInstall')).toEqual(
+      [records[1]]
+    )
+  })
+
+  it('adds all filtered patches to earlier selections and can explicitly clear everything', async () => {
+    const table = await mountPage()
+    await search(records[0].patch_id)
+    await selectRows([table.props('data')[0]])
+    await search(records[1].patch_id)
+    await buttonWithText('一键全选').trigger('click')
+    expect(installButton().text()).toContain('(2)')
+    await buttonWithText('一键取消').trigger('click')
     expect(installButton().text()).toContain('(0)')
+  })
+
+  it('keeps accumulated selection when a search fails and restores it after retry', async () => {
+    const table = await mountPage()
+    await selectRows([table.props('data')[0]])
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    patchInstallApi.getAvailablePatches.mockRejectedValueOnce(new Error('network failure'))
+    await search(records[0].patch_id)
+    expect(installButton().text()).toContain('(1)')
+    await search(records[0].patch_id)
+    expect(TableStub.methods.toggleRowSelection).toHaveBeenCalledWith(records[0], true)
   })
 
   it('clears stale selection on request failure and can select again after retry', async () => {
@@ -306,6 +385,107 @@ describe('LinuxPatchInstallPage patch selection', () => {
       await flushPromises()
       expect(table.props('data')).toEqual(latestRows)
       expect(ElMessage.error).not.toHaveBeenCalled()
+    }
+  )
+})
+
+describe('LinuxPatchInstallPage host selection', () => {
+  async function mountHostPage() {
+    await mountPage()
+    await wrapper.findAll('.nav-tab')[0].trigger('click')
+    await flushPromises()
+    return wrapper.findComponent(TableStub)
+  }
+
+  it('accumulates hosts across IP searches and submits them to the batch drawer', async () => {
+    const table = await mountHostPage()
+    await search(hostRecords[0].host_key)
+    await selectRows([table.props('data')[0]])
+    await search('no-match')
+    expect(table.props('data')).toEqual([])
+    expect(buttonWithText('安装选中主机补丁').text()).toContain('(1)')
+    await search(hostRecords[1].host_key)
+    await selectRows([table.props('data')[0]])
+    expect(buttonWithText('安装选中主机补丁').text()).toContain('(2)')
+    expect(buttonWithText('重新扫描补丁').text()).toContain('(2)')
+    TableStub.methods.toggleRowSelection.mockClear()
+    await search(hostRecords[0].host_key)
+    expect(TableStub.methods.toggleRowSelection).toHaveBeenCalledWith(hostRecords[0], true)
+    await selectRows([table.props('data')[0]])
+    await buttonWithText('安装选中主机补丁').trigger('click')
+    expect(wrapper.findComponent({ name: 'BatchInstallPatchDrawer' }).props('hosts')).toEqual(
+      expect.arrayContaining(hostRecords.slice(0, 2))
+    )
+    await selectRows([])
+    expect(buttonWithText('安装选中主机补丁').text()).toContain('(1)')
+  })
+
+  it('keeps cross-page selections when resetting host filters', async () => {
+    const table = await mountHostPage()
+    await selectRows([table.props('data')[0]])
+    wrapper.findComponent({ name: 'ElPagination' }).vm.$emit('current-change', 2)
+    await nextTick()
+    await selectRows([table.props('data')[0]])
+    await search(hostRecords[1].host_key)
+    await selectRows([table.props('data')[0]])
+    await buttonWithText('重置').trigger('click')
+    await flushPromises()
+    expect(buttonWithText('安装选中主机补丁').text()).toContain('(3)')
+    await buttonWithText('安装选中主机补丁').trigger('click')
+    expect(wrapper.findComponent({ name: 'BatchInstallPatchDrawer' }).props('hosts')).toEqual(
+      expect.arrayContaining([hostRecords[0], hostRecords[1], hostRecords[20]])
+    )
+  })
+
+  it('adds all filtered hosts to prior selections and clears after batch installation', async () => {
+    const table = await mountHostPage()
+    await search(hostRecords[0].host_key)
+    await selectRows([table.props('data')[0]])
+    await search(hostRecords[1].host_key)
+    await buttonWithText('一键全选').trigger('click')
+    expect(buttonWithText('安装选中主机补丁').text()).toContain('(2)')
+    await buttonWithText('一键取消').trigger('click')
+    expect(buttonWithText('安装选中主机补丁').text()).toContain('(0)')
+    await selectRows([table.props('data')[0]])
+    wrapper.findComponent({ name: 'BatchInstallPatchDrawer' }).vm.$emit('success')
+    await flushPromises()
+    expect(buttonWithText('安装选中主机补丁').text()).toContain('(0)')
+  })
+
+  it('preserves host selection on search failure and restores it on retry', async () => {
+    const table = await mountHostPage()
+    await selectRows([table.props('data')[0]])
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    patchScanApi.getScanResults.mockRejectedValueOnce(new Error('network failure'))
+    await search(hostRecords[1].host_key)
+    expect(table.props('data')).toEqual([])
+    expect(buttonWithText('安装选中主机补丁').text()).toContain('(1)')
+    await search(hostRecords[0].host_key)
+    expect(TableStub.methods.toggleRowSelection).toHaveBeenCalledWith(hostRecords[0], true)
+  })
+
+  it.each(['resolve', 'reject'])(
+    'ignores an older host search finishing via %s after the latest search',
+    async outcome => {
+      const table = await mountHostPage()
+      await selectRows([table.props('data')[0]])
+      const older = deferred()
+      const newer = deferred()
+      patchScanApi.getScanResults
+        .mockReturnValueOnce(older.promise)
+        .mockReturnValueOnce(newer.promise)
+      await search(hostRecords[1].host_key)
+      await search(hostRecords[2].host_key)
+      newer.resolve({ data: { records: [hostRecords[2]] } })
+      await flushPromises()
+      await selectRows([table.props('data')[0]])
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+      if (outcome === 'resolve') older.resolve({ data: { records: [hostRecords[1]] } })
+      else older.reject(new Error('old search failed'))
+      await flushPromises()
+      expect(table.props('data')).toEqual([hostRecords[2]])
+      expect(buttonWithText('安装选中主机补丁').text()).toContain('(2)')
+      expect(console.error).not.toHaveBeenCalled()
     }
   )
 })

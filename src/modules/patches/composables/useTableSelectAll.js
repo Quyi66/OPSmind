@@ -3,7 +3,7 @@ import { ref, computed, watch, nextTick } from 'vue'
 /**
  * 表格全选逻辑 Composable
  *
- * 提供跨页全选、翻页自动恢复勾选、筛选/加载时自动重置的通用能力。
+ * 提供跨页全选、翻页/筛选自动恢复勾选、手动重置全选标记的通用能力。
  *
  * @param {import('vue').Ref} tableRef       - el-table 的模板 ref
  * @param {Object}            options
@@ -12,10 +12,18 @@ import { ref, computed, watch, nextTick } from 'vue'
  * @param {import('vue').Ref}  options.selectedItems  - 已选中项 (ref)，由外部定义以便复用
  * @param {Function}          [options.matchFn]       - (a, b) => boolean，默认引用相等
  * @param {Function}          [options.selectableFn]  - (row) => boolean，行是否可被选中，默认全部可选
+ * @param {boolean}           [options.preserveExistingSelection] - 全选时保留其他筛选结果中的已选项
  */
 export function useTableSelectAll(
   tableRef,
-  { tableData, filteredData, selectedItems, matchFn = (a, b) => a === b, selectableFn } = {}
+  {
+    tableData,
+    filteredData,
+    selectedItems,
+    matchFn = (a, b) => a === b,
+    selectableFn,
+    preserveExistingSelection = false
+  } = {}
 ) {
   const allSelected = ref(false)
   const isAllSelected = computed(() => allSelected.value)
@@ -37,6 +45,13 @@ export function useTableSelectAll(
     })
   }
 
+  /** 清空所有页面、所有筛选结果中的选择。 */
+  function clearSelection() {
+    allSelected.value = false
+    selectedItems.value = []
+    tableRef.value?.clearSelection()
+  }
+
   /**
    * 一键全选 / 一键取消 切换
    */
@@ -44,12 +59,13 @@ export function useTableSelectAll(
     if (!tableRef.value) return
 
     if (allSelected.value) {
-      allSelected.value = false
-      selectedItems.value = []
-      tableRef.value.clearSelection()
+      clearSelection()
     } else {
       allSelected.value = true
-      selectedItems.value = [...filteredData.value]
+      const offFilterSelections = preserveExistingSelection
+        ? selectedItems.value.filter(item => !filteredData.value.some(row => matchFn(item, row)))
+        : []
+      selectedItems.value = [...offFilterSelections, ...filteredData.value]
       tableRef.value.clearSelection()
       tableData.value.forEach(row => {
         if (selectableFn && !selectableFn(row)) return
@@ -95,6 +111,7 @@ export function useTableSelectAll(
     isAllSelected,
     handleToggleAllSelection,
     handleTableSelect,
+    clearSelection,
     resetAllSelected,
     restorePageSelection
   }
