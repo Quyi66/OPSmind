@@ -2105,6 +2105,16 @@ export const middlewareCveApi = {
   },
 
   /**
+   * 查询中间件 CVE 受影响主机，middlewareType 可选
+   * GET /secops/api/secops/v2/middleware-cve/affected-hosts
+   */
+  getAffectedHosts(cveId, middlewareType) {
+    const params = { cveId }
+    if (middlewareType && middlewareType !== 'all') params.middlewareType = middlewareType
+    return apiService.get(`${VAP_API_PREFIX}/v2/middleware-cve/affected-hosts`, { params })
+  },
+
+  /**
   * 获取中间件类型列表
   * GET /secops/api/secops/v2/middleware-cve/middleware-types
   * @returns {Promise}
