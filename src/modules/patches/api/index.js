@@ -313,7 +313,7 @@ export const patchScanApi = {
 
   /**
   * 获取单个主机的可用补丁列表
-  * GET /secops/api/secops/v2/patch/host-patches
+  * GET /secops/api/secops/dashboard/patch-of-one-machine
   * @param {Object} params - 查询参数
   * @param {string} params.host_id - 主机ID
   * @param {string} params.severity - 严重程度筛选（逗号分隔：Critical,Important,Moderate,Low）
