@@ -457,6 +457,14 @@ export const patchInstallApi = {
   },
 
   /**
+   * 查询安装任务的预检失败、安装失败主机
+   * GET /secops/api/secops/v2/patch/task/{id}/failed-hosts
+   */
+  getFailedHosts(id) {
+    return apiService.get(`${PATCH_TASK_API_PREFIX}/${encodeURIComponent(id)}/failed-hosts`)
+  },
+
+  /**
   * 查询任务操作日志（分页）
   * GET /secops/api/secops/v2/patch/task/{id}/audit/history?page=0&size=50
   */

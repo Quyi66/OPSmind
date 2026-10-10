@@ -35,9 +35,18 @@
         </template>
       </el-table-column>
       <el-table-column prop="errorMessage" label="异常原因" min-width="160" show-overflow-tooltip />
-      <el-table-column label="操作" width="190" fixed="right">
+      <el-table-column label="操作" width="270" fixed="right">
         <template #default="{ row }">
           <el-button text type="primary" size="small" @click="$emit('detail', row)">详情</el-button>
+          <el-button
+            v-if="row.taskType !== 'rollback'"
+            text
+            type="primary"
+            size="small"
+            @click="openFailedHosts(row)"
+          >
+            失败主机
+          </el-button>
           <template v-if="isAdmin && row.status === 'PENDING_APPROVAL'">
             <el-button text type="success" size="small" :disabled="approving || !isFutureSchedule(row.scheduledTime)" @click="approve(row, true)">通过</el-button>
             <el-button text type="danger" size="small" :disabled="approving" @click="approve(row, false)">驳回</el-button>
@@ -49,6 +58,7 @@
   <div class="ops-pagination-wrapper">
     <el-pagination v-model:current-page="page" :page-size="20" :total="total" layout="total, prev, pager, next" background @current-change="load" />
   </div>
+  <PatchTaskFailedHostsDialog v-model="failedHostsVisible" :task-id="failedHostsTaskId" />
 </template>
 
 <script setup>
@@ -58,6 +68,7 @@ import { Refresh } from '@element-plus/icons-vue'
 import { patchInstallApi } from '../api'
 import { formatDateTime, formatJsonArray, formatTaskStatus, getTaskStatusTagType, getTaskStatusTagStyle } from '../utils/patchProcessLogs'
 import { isFutureSchedule } from '../utils/patchInstallSchedule'
+import PatchTaskFailedHostsDialog from './patch-task/dialogs/PatchTaskFailedHostsDialog.vue'
 
 const props = defineProps({ isAdmin: Boolean })
 defineEmits(['detail'])
@@ -73,8 +84,15 @@ const page = ref(1)
 const total = ref(0)
 const loading = ref(false)
 const approving = ref(false)
+const failedHostsVisible = ref(false)
+const failedHostsTaskId = ref('')
 let requestId = 0
 let timer
+
+function openFailedHosts(task) {
+  failedHostsTaskId.value = String(task.id || task.taskId || '')
+  failedHostsVisible.value = true
+}
 
 async function load() {
   const id = ++requestId

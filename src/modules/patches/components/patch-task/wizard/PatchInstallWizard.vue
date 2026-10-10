@@ -301,6 +301,15 @@
             上一步
           </el-button>
 
+          <el-button
+            v-if="currentStepKey === 'execute' && createdTaskId && !isRollbackTask"
+            type="primary"
+            plain
+            @click="failedHostsVisible = true"
+          >
+            查看失败主机
+          </el-button>
+
           <!-- 正在执行按钮 -->
           <el-button
             v-if="
@@ -387,6 +396,8 @@
       </template>
     </el-dialog>
 
+    <PatchTaskFailedHostsDialog v-model="failedHostsVisible" :task-id="createdTaskId" />
+
     <ExecuteResultDialog
       v-model:visible="executeResultVisible"
       :run-id="currentExecuteRunId"
@@ -421,6 +432,7 @@ import PatchTaskStepper from '../PatchTaskStepper.vue'
 import PatchTaskSummaryRow from '../PatchTaskSummaryRow.vue'
 import PatchTaskRestartStep from './PatchTaskRestartStep.vue'
 import PatchTaskScriptConfigStep from './PatchTaskScriptConfigStep.vue'
+import PatchTaskFailedHostsDialog from '../dialogs/PatchTaskFailedHostsDialog.vue'
 import { usePatchTaskTargetSelection } from './usePatchTaskTargetSelection'
 
 const props = defineProps({
@@ -576,10 +588,12 @@ const currentStepSkippable = computed(() =>
   ['pre', 'validate', 'restart'].includes(currentStepKey.value)
 )
 const createdTaskId = ref('')
+const failedHostsVisible = ref(false)
 const restartConfirmText = ref('')
 const pipelineStatus = ref('idle')
 const dialogBusy = computed(
-  () => executionSubmitting.value || stepTransitionLoading.value || pipelineStatus.value === 'running'
+  () =>
+    executionSubmitting.value || stepTransitionLoading.value || pipelineStatus.value === 'running'
 )
 const configurationLocked = computed(() => dialogBusy.value || pipelineStatus.value === 'paused')
 
@@ -741,6 +755,7 @@ watch(
       return
     }
 
+    failedHostsVisible.value = false
     closeTargetSelection()
     resetInstallState()
   }
@@ -883,7 +898,14 @@ async function scrollToPreCheckTaskStatus() {
   })
 }
 
-watch(createdTaskId, resetPreCheckResultSnapshot, { flush: 'sync' })
+watch(
+  createdTaskId,
+  () => {
+    failedHostsVisible.value = false
+    resetPreCheckResultSnapshot()
+  },
+  { flush: 'sync' }
+)
 
 watch(
   pipelineStatus,
