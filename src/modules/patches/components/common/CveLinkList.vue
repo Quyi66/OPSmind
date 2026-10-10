@@ -1,16 +1,18 @@
 <template>
   <div v-if="cveList.length" class="cve-link-list">
-    <a
-      v-for="cve in visibleCves"
-      :key="cve"
-      :href="resolveUrl(cve)"
-      target="_blank"
-      rel="noopener noreferrer"
-      class="cve-link"
-      @click.stop
-    >
-      {{ cve }}
-    </a>
+    <template v-for="cve in visibleCves" :key="cve.text">
+      <a
+        v-if="cve.url"
+        :href="cve.url"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="cve-link"
+        @click.stop
+      >
+        {{ cve.text }}
+      </a>
+      <span v-else class="cve-link-list__text">{{ cve.text }}</span>
+    </template>
     <button
       v-if="overflowCount > 0"
       type="button"
@@ -30,17 +32,19 @@
       destroy-on-close
     >
       <div class="cve-link-list cve-link-list--dialog">
-        <a
-          v-for="cve in cveList"
-          :key="cve"
-          :href="resolveUrl(cve)"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="cve-link"
-          @click.stop
-        >
-          {{ cve }}
-        </a>
+        <template v-for="cve in cveItems" :key="cve.text">
+          <a
+            v-if="cve.url"
+            :href="cve.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="cve-link"
+            @click.stop
+          >
+            {{ cve.text }}
+          </a>
+          <span v-else class="cve-link-list__text">{{ cve.text }}</span>
+        </template>
       </div>
       <template #footer>
         <el-button @click="dialogVisible = false">关闭</el-button>
@@ -59,7 +63,7 @@ const props = defineProps({
     type: [Array, String],
     default: () => []
   },
-  // 生成单个 CVE 跳转地址的解析函数：(cveId) => url
+  // 生成单个 CVE 跳转地址的解析函数：(cveId) => url；空地址显示普通文本
   urlResolver: {
     type: Function,
     default: null
@@ -95,11 +99,13 @@ const cveList = computed(() => {
     .filter(Boolean)
 })
 
+const cveItems = computed(() => cveList.value.map(text => ({ text, url: resolveUrl(text) })))
+
 const visibleCves = computed(() => {
   if (!props.max || props.max <= 0) {
-    return cveList.value
+    return cveItems.value
   }
-  return cveList.value.slice(0, props.max)
+  return cveItems.value.slice(0, props.max)
 })
 
 const overflowCount = computed(() => cveList.value.length - visibleCves.value.length)
@@ -176,5 +182,10 @@ function resolveUrl(cve) {
 
 .cve-link-list__empty {
   color: var(--el-text-color-secondary);
+}
+
+.cve-link-list__text {
+  color: var(--el-text-color-regular);
+  overflow-wrap: anywhere;
 }
 </style>

@@ -119,7 +119,7 @@
           <template #default="{ row }">
             <CveLinkList
               :cves="row.update_id"
-              :url-resolver="cve => getCveUrl(cve, resolvePatchDistro(row))"
+              :url-resolver="cve => getUpdateCveUrl(cve, row)"
             />
           </template>
         </el-table-column>
@@ -342,6 +342,12 @@ function parseCommaSeparatedValues(value) {
     .split(',')
     .map(item => item.trim())
     .filter(Boolean)
+}
+
+function getUpdateCveUrl(value, row) {
+  // 更新维度也可能是 packages 等普通文本，仅 CVE 编号生成漏洞链接。
+  if (!/^CVE-\d{4}-\d{4,}$/i.test(value)) return ''
+  return getCveUrl(value, resolvePatchDistro(row))
 }
 
 function resolvePatchDistro(row) {
