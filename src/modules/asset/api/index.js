@@ -163,6 +163,17 @@ export const overviewApi = {
  */
 export const assetApi = {
   /**
+   * 下载当前租户的资产导入模板（含网段区域 sheet）
+   * GET /cmdb/api/cmdb/cit/template2/{tenantId}
+   */
+  downloadImportTemplate(tenantId) {
+    return apiService.download(
+      `${ACM_BASE}/cit/template2/${encodeURIComponent(tenantId)}`,
+      '资产信息导入模板.xlsx'
+    )
+  },
+
+  /**
    * 获取资产类型列表
    * GET /cmdb/api/cmdb/dashboard/cit-manage
    */
