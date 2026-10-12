@@ -325,7 +325,11 @@ async function handlePasswordSubmit() {
   submitting.value = true
   try {
     // 构建hostKeys参数
-    const hostKeys = passwordForm.value.hosts.map(h => h.key || h)
+    const hostKeys = passwordForm.value.hosts.map(({ key, value, assetType }) => ({
+      key,
+      value,
+      assetType
+    }))
 
     const params = {
       hostKeys,
