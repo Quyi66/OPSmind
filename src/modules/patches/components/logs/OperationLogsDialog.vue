@@ -43,6 +43,8 @@
               <el-option label="补丁扫描" value="#{app_vap.menu.patch_scan.title}" />
               <el-option label="补丁安装" value="补丁安装" />
               <el-option label="补丁回滚" value="补丁回滚" />
+              <el-option label="Windows补丁安装" value="Windows补丁安装" />
+              <el-option label="Windows补丁回滚" value="Windows补丁回滚" />
             </el-select>
           </el-form-item>
           <el-form-item>
@@ -380,11 +382,23 @@ function isWindowsScan(row) {
 }
 
 function isPatchInstall(row) {
-  return row?.action === ACTION_KEYS.patchInstall || row?.action === '补丁安装' || formatAction(row?.action) === '补丁安装'
+  return (
+    row?.action === ACTION_KEYS.patchInstall ||
+    row?.action === '补丁安装' ||
+    row?.action === 'Windows补丁安装' ||
+    formatAction(row?.action) === '补丁安装'
+  )
 }
 
 function isPatchRollback(row) {
-  return row?.action === ACTION_KEYS.patchRollback || row?.action === '补丁回滚' || row?.action === '补丁回退' || formatAction(row?.action) === '补丁回滚' || formatAction(row?.action) === '补丁回退'
+  return (
+    row?.action === ACTION_KEYS.patchRollback ||
+    row?.action === '补丁回滚' ||
+    row?.action === 'Windows补丁回滚' ||
+    row?.action === '补丁回退' ||
+    formatAction(row?.action) === '补丁回滚' ||
+    formatAction(row?.action) === '补丁回退'
+  )
 }
 
 function isCompleted(row) {
@@ -434,7 +448,7 @@ async function fetchReportPath(runId, dir) {
       cacheBuster: Date.now()
     }
   })
-  return response?.data?.filePath || response?.filePath || response?.data?.path || response?.path
+  return response?.data?.filePath ?? response?.filePath ?? response?.data?.path ?? response?.path
 }
 
 async function fetchReportFileInfo(path) {
@@ -535,13 +549,13 @@ async function downloadInstallReport(row) {
   }
   try {
     const filePath = await fetchReportPath(row.run_id, 'patch_install')
-    const reportPath = filePath
-      ? `SECOPS_EXPORT_DATA/patch_install/${filePath}`
-      : 'SECOPS_EXPORT_DATA/patch_install/'
+    const reportPath = buildReportPath('patch_install', filePath)
     const fileInfo = await fetchReportFileInfo(reportPath)
+    if (fileInfo?.detail) {
+      throw new Error(fileInfo.message || '未找到报告文件')
+    }
     const downloadUri = fileInfo?.fileContent?.downloadUri || fileInfo?.downloadUri
-    const filename =
-      fileInfo?.fileContent?.name || `patch_install_${formatFilenameTimestamp(row.start_time)}.html`
+    const filename = resolveDownloadFilename(fileInfo, 'patch_install', row.start_time, filePath)
     if (!downloadUri) {
       throw new Error('未找到下载地址')
     }
@@ -552,15 +566,15 @@ async function downloadInstallReport(row) {
 }
 
 function buildReportPath(dir, filePath) {
-  if (!filePath) return `SECOPS_EXPORT_DATA/${dir}/`
+  if (!filePath) throw new Error('未找到报告文件')
   const normalized = filePath.startsWith(`${dir}/`)
     ? `SECOPS_EXPORT_DATA/${filePath}`
     : `SECOPS_EXPORT_DATA/${dir}/${filePath}`
   return normalized
 }
 
-function resolveDownloadFilename(fileInfo, fallbackBase, timestamp) {
-  const name = fileInfo?.fileContent?.name || fileInfo?.name
+function resolveDownloadFilename(fileInfo, fallbackBase, timestamp, filePath) {
+  const name = fileInfo?.fileContent?.name || fileInfo?.name || filePath?.split('/').pop()
   if (name) return name
   return `${fallbackBase}_${formatFilenameTimestamp(timestamp)}.xlsx`
 }
@@ -581,7 +595,7 @@ async function downloadRollbackReport(row) {
     if (!downloadUri) {
       throw new Error('未找到下载地址')
     }
-    const filename = resolveDownloadFilename(fileInfo, 'patch_rollback', row.start_time)
+    const filename = resolveDownloadFilename(fileInfo, 'patch_rollback', row.start_time, filePath)
     await downloadFromUri(`${downloadUri}?cacheBuster=${Date.now()}`, filename)
   } catch (error) {
     ElMessage.error(`下载回滚报告失败: ${error.message || '未知错误'}`)
