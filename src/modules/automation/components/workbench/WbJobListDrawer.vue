@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { appTableList } from '@/modules/automation/api/jao'
-import { translateText } from '@/utils/i18n'
+import { getAutomationToolTitle } from '../../utils/resourcePresentation'
 import { formatDateTime as formatDateTimeGlobal } from '../../utils/helpers'
 
 const props = defineProps({
@@ -38,7 +38,7 @@ const filteredJobs = computed(() => {
 
     if (!keyword) return true
 
-    return [job.title, jobTitle(job), job.id, job.description, job.updatedBy, job.createdBy]
+    return [job.title, jobTitle(job), job.description, job.updatedBy, job.createdBy]
       .filter(Boolean)
       .some(value => String(value).toLowerCase().includes(keyword))
   })
@@ -63,7 +63,7 @@ function typeTag(type) {
 }
 
 function jobTitle(job) {
-  return translateText(job?.title) || job?.title || job?.id || '-'
+  return getAutomationToolTitle(job)
 }
 
 function handleMoreCommand(job, command) {
@@ -190,7 +190,7 @@ onBeforeUnmount(() => { loadRequestId += 1 })
           <el-form-item label="关键词">
             <el-input
               v-model="filters.keyword"
-              placeholder="搜索运维工具标题、ID"
+              placeholder="搜索工具名称、描述或更新人"
               clearable
               style="width: 220px"
               @keyup.enter="handleSearch"
@@ -232,7 +232,6 @@ onBeforeUnmount(() => { loadRequestId += 1 })
               <span>更新人：{{ job.updatedBy || job.createdBy || '未提供' }}</span>
             </div>
             <span v-if="job.description" class="wb-job-card__description" :title="job.description">{{ job.description }}</span>
-            <span class="wb-job-card__id" :title="job.id">ID：{{ job.id }}</span>
           </div>
 
           <div class="wb-job-card__actions">

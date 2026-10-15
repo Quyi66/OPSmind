@@ -3,20 +3,6 @@
     <!-- 筛选栏 -->
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
-        <el-form-item label="应用范围">
-          <el-select
-            v-model="selectedAppletName"
-            filterable
-            style="width: 220px"
-            placeholder="全部应用" @change="handleSearch">
-            <el-option
-              v-for="applet in appOptions"
-              :key="applet.name || 'all'"
-              :label="applet.title"
-              :value="applet.name"
-            />
-          </el-select>
-        </el-form-item>
         <el-form-item label="类型">
           <el-select
             v-model="filters.jobType"
@@ -141,10 +127,10 @@
         <el-table-column prop="title" label="运维工具" min-width="160" show-overflow-tooltip>
           <template #default="{ row }">
             <!-- <span class="job-title__text" style="color: #0077EE; cursor: pointer;" @click="handleEditJob(row)">
-                {{ translateText(row.title) || '-' }}
+                {{ getAutomationToolTitle(row) }}
               </span> -->
             <el-button text type="primary" @click="handleEditJob(row)">
-              {{ translateText(row.title) || '-' }}
+              {{ getAutomationToolTitle(row) }}
             </el-button>
           </template>
         </el-table-column>
@@ -166,11 +152,6 @@
               <span>{{ typeLabel(row.type) }}</span>
             </el-tag>
             <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="appletCode" label="所属应用" min-width="100">
-          <template #default="{ row }">
-            {{ row.appletCode || '未分类' }}
           </template>
         </el-table-column>
         <el-table-column prop="updatedBy" label="修改人" width="100" />
@@ -249,6 +230,7 @@ import { useAutomationJobStore, JOB_TYPE_OPTIONS } from '@/modules/automation/st
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Delete, Refresh, Search, ArrowDown, RefreshRight } from '@element-plus/icons-vue'
 import { translateText } from '@/utils/i18n'
+import { getAutomationToolTitle } from '@/modules/automation/utils/resourcePresentation'
 import * as jaoApi from '@/modules/automation/api/jao'
 import ExecuteJobDialog from '../../components/job/JobListView/ExecuteJobDialog.vue'
 import ExecuteHistoryDialog from '../../components/job/JobListView/ExecuteHistoryDialog.vue'
@@ -291,16 +273,6 @@ const approveJobMeta = ref(null)
 // 统一的弹窗可见性（新建或编辑都使用同一个弹窗）
 const jobDialogVisible = ref(false)
 
-const selectedAppletName = computed({
-  get: () => currentApp.value?.name ?? '',
-  set: value => {
-    const app = appOptions.value.find(item => item.name === value)
-    if (app) {
-      selectApplet(app)
-    }
-  }
-})
-
 /** 过滤列表 - 支持关键词和类型筛选 */
 function filterList() {
   let filtered = originalJobs.value
@@ -316,10 +288,10 @@ function filterList() {
     filtered = filtered.filter(job => {
       const searchableValues = [
         job.title,
-        translateText(job.title),
+        getAutomationToolTitle(job),
         job.description,
         translateText(job.description),
-        job.id
+        job.updatedBy
       ]
       return searchableValues.some(value =>
         typeof value === 'string' && value.toLowerCase().includes(kw)

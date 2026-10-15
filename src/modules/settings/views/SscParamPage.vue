@@ -214,11 +214,11 @@
         <el-form-item label="域" prop="domain">
           <el-input
             v-model="sysForm.domain"
-            placeholder="请输入域，如: jao, acm, oplus"
+            placeholder="请输入参数所属域，与服务端配置保持一致"
             :disabled="sysForm.editValueOnly"
             maxlength="30"
           />
-          <div class="help-text">域用于区分不同模块，如 jao（作业自动化）、acm（资产管理）等</div>
+          <div class="help-text">域用于区分参数所属模块；已有域名需与服务端配置保持一致，请勿随意修改</div>
         </el-form-item>
         <el-form-item label="参数名称" prop="name">
           <el-input

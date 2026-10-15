@@ -7,12 +7,8 @@
     @close="handleClose"
   >
     <el-form ref="formRef" :model="formData" label-width="120px" size="default">
-      <el-form-item label="所属应用" v-if="appName">
-        <span>{{ appName }}</span>
-      </el-form-item>
-
       <el-form-item label="运维工具名称">
-        <span>{{ jobTitle }}</span>
+        <span>{{ getAutomationToolTitle({ id: jobId, title: jobTitle }) }}</span>
       </el-form-item>
 
       <el-form-item label="审批模式" required>
@@ -78,6 +74,7 @@
 <script setup>
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import { getAutomationToolTitle } from '@/modules/automation/utils/resourcePresentation'
 import * as jaoApi from '@/modules/automation/api/jao'
 
 const props = defineProps({
@@ -93,7 +90,6 @@ const emit = defineEmits(['update:visible', 'success'])
 const dialogVisible = ref(false)
 const formRef = ref(null)
 const submitting = ref(false)
-const appName = ref('')
 const scriptPaths = ref([])
 
 const formData = reactive({
@@ -151,23 +147,6 @@ function initForm() {
       })
   }
 
-  // 翻译应用名称
-  if (props.appletCode) {
-    appName.value = translateAppCode(props.appletCode)
-  }
-}
-
-function translateAppCode(code) {
-  const translations = {
-    cac: '系统巡检',
-    acm: '资产管理',
-    pms: '密码管理',
-    sudo: 'sudo权限管理',
-    vap: '补丁管理',
-    spm: 'Yum仓库管理',
-    uim: '用户管理'
-  }
-  return translations[code] || code
 }
 
 function handleViewScript(scriptPath) {

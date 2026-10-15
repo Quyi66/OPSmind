@@ -157,7 +157,7 @@
   "app_vap.log.patch_is_update": "补丁库数据已为最新",
   "app_vap.log.import_path_fail": "导入补丁库失败：{{msg_info}}",
   "app_vap.log.download_path_by_remote": "正在从远程服务器{{server}}上下载补丁",
-  "app_vap.log.deal_file_fail": "文件处理失败，请检查Oplus更新服务器{{server}}",
+  "app_vap.log.deal_file_fail": "文件处理失败，请检查KoreOPS更新服务器{{server}}",
   "app_vap.log.win_scan_fail": "Windows补丁扫描执行失败，原因是{{msg_info}}",
   "app_vap.log.win_scan_success": "Windows补丁扫描执行成功，扫描机器数量为{{machineCount}}，扫描存在漏洞数量为{{kbCount}}，ETL处理耗时为{{time}}s",
   "app_vap.log.win_install_fail": "执行Windows补丁安装出现错误，原因是{{msg_info}}",

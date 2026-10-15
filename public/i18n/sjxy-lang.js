@@ -134,7 +134,7 @@
       'acm.common.text.automation_comment':
         'Note:\nAutomation configuration is to modify the default connection configuration of each automation asset. The usage scenarios are as follows:\nExecution user/password, login user/password, execution engine node configuration wait',
       'acm.common.text.ansible_config_comment':
-        'Note:\nAnsible connection configuration is modified for the default configuration of automation equipment types supported by Oplus. The usage scenarios are as follows:\nWhether to escalate rights, how to escalate rights, how to connect, etc.',
+        'Note:\nAnsible connection configuration is modified for the default configuration of automation equipment types supported by KoreOPS. The usage scenarios are as follows:\nWhether to escalate rights, how to escalate rights, how to connect, etc.',
       'acm.common.text.model_import_comment':
         'Note:\nPlease download the asset model attribute first and import the Excel template. The Sheet name in the Excel template is the asset model code. The template can only be filled in. The attribute code, whether it is unique, or whether it is required .\nIf you need to set other information about model properties, please edit the asset model after importing.',
       'acm.common.text.add_ansible_config_comment':
@@ -186,7 +186,7 @@
         'Note:\nThis Ansible configuration acts on a specific machine, which is different from group Ansible configurations and asset type Ansible configurations. This Ansible configuration has the highest priority.',
       'acm.common.ansible.ssh_key_connect_host.tips':
         'Note:\nThe machine must fill in the Ansible execution node column (ie: INSTANCE_GROUP attribute) when importing\nIf you need to modify the node configuration, please go to the automatic configuration management->device storage Manage -> Manage user name and password and perform node configuration separately\nOtherwise, the task will be sent to the default node for execution',
-      'acm.common.ansible.ssh_key_connect_host.tips.conn_user': 'Oplus managed target user',
+      'acm.common.ansible.ssh_key_connect_host.tips.conn_user': 'KoreOPS managed target user',
       'acm.common.ansible.ssh_key_connect_host.tips.can_ssh_user':
         'The current user who can SSH to the target machine',
       'acm.common.ansible.ssh_key_connect_host.tips.can_ssh_passwd':
@@ -1346,7 +1346,7 @@
       'app_vap.log.import_path_fail': 'Import patch library failed: {{msg_info}}',
       'app_vap.log.download_path_by_remote': 'Downloading patches from remote server {{server}}',
       'app_vap.log.deal_file_fail':
-        'File processing failed, please check Oplus update server {{server}}',
+        'File processing failed, please check KoreOPS update server {{server}}',
       'app_vap.log.win_scan_fail': 'Windows patch scan failed due to {{msg_info}}',
       'app_vap.log.win_scan_success':
         'The Windows patch scan was executed successfully, the number of scanned machines is {{machineCount}}, the number of scanned vulnerabilities is {{kbCount}}, and the ETL processing time is {{time}}s',
@@ -3046,7 +3046,7 @@
       'gfs.settings.current_repo': 'Current Repo',
       'gfs.settings.repo_auth_type': 'Git repository authentication method',
       'gfs.settings.repo_auth_type_info':
-        'HTTPS: Secure authentication based on username and password<br/>SSH: Based on RSA asymmetric encryption, upload the custom generated public key to the Git library, and upload the private key to the Oplus platform',
+        'HTTPS: Secure authentication based on username and password<br/>SSH: Based on RSA asymmetric encryption, upload the custom generated public key to the Git library, and upload the private key to the KoreOPS platform',
       'gfs.settings.repo_url': 'Git Repository Address',
       'gfs.settings.repo_url_desc':
         'Used to configure the external Git repository address, currently supports Github, Bitbucket, Gitlab, Gitee, Coding',
@@ -3060,15 +3060,15 @@
       'gfs.settings.init_repo_success': 'Initialize external Git repository successfully',
       'gfs.settings.init_repo_error': 'Failed to initialize external Git repository',
       'gfs.settings.init_repo_info':
-        'Description: It is used to specify the script library. The built-in script library of oplus does not need this setting. If you need to specify an external Git library (currently supports Github, Bitbucket, Gitlab, Gitee, Coding), configure Oplus in the following way Synchronize the external Git library. This setting will clear all the content in the existing script library. Please read the instructions carefully before using it! ! ',
+        'Description: It is used to specify the script library. The built-in script library of KoreOPS does not need this setting. If you need to specify an external Git library (currently supports Github, Bitbucket, Gitlab, Gitee, Coding), configure KoreOPS in the following way Synchronize the external Git library. This setting will clear all the content in the existing script library. Please read the instructions carefully before using it! ! ',
       'gfs.settings.init_repo_confirm': 'External Git repository sync confirmation',
       'gfs.settings.init_repo_confirm_info':
-        'Confirm the synchronization {{repourt}} to the Oplus script library?',
-      'gfs.settings.reset_repo_success': 'Reset Oplus built-in script library successful',
-      'gfs.settings.reset_repo_error': 'Failed to reset Oplus built-in script library',
+        'Confirm the synchronization {{repourt}} to the KoreOPS script library?',
+      'gfs.settings.reset_repo_success': 'Reset KoreOPS built-in script library successful',
+      'gfs.settings.reset_repo_error': 'Failed to reset KoreOPS built-in script library',
       'gfs.settings.reset_repo_confirm': 'Reset Git repository confirm',
       'gfs.settings.reset_repo_confirm_info':
-        'Confirm to reset the current script library to Oplus built-in script library, this operation will clear all the contents of the current script library? ',
+        'Confirm to reset the current script library to KoreOPS built-in script library, this operation will clear all the contents of the current script library? ',
       'gfs.selector.refresh': 'Show Refresh Button',
       'gfs.list.refresh': 'Refresh',
       'gfs.list.refresh_title': 'Refresh the current page',
@@ -3363,7 +3363,7 @@
       'jao.job.process.run_settings': 'Execution Settings',
       'jao.job.process.callback': 'Callback API',
       'jao.job.process.callback_info':
-        'After the job is executed, the data will be passed to the caller through this API. This API needs to be accessible by the Oplus server. ',
+        'After the job is executed, the data will be passed to the caller through this API. This API needs to be accessible by the KoreOPS server. ',
       'jao.job.process.timeout': 'Task Timeout',
       'jao.job.process.timeout_info':
         'Set the maximum time (seconds) for a single host to execute a single task: <ul><li>0 or empty: use System default timeout </li><li> greater than 0: exceeding the set value will terminate the task of the host</li><li> less than 0: disable timeout </li></ul> ',
@@ -5486,7 +5486,7 @@
       'acm.common.text.automation_comment':
         '注意：\n自动化配置是针对每一个自动化资产的默认连接配置进行修改，使用场景如下：\n执行用户/密码、登录用户/密码、执行引擎节点配置等',
       'acm.common.text.ansible_config_comment':
-        '注意：\nAnsible连接配置是针对Oplus支持的自动化设备类型默认配置进行修改，使用场景如下：\n是否提权、提权方式、连接方式等',
+        '注意：\nAnsible连接配置是针对KoreOPS支持的自动化设备类型默认配置进行修改，使用场景如下：\n是否提权、提权方式、连接方式等',
       'acm.common.text.model_import_comment':
         '注意：\n请先下载资产模型属性导入Excel模板，Excel模板中Sheet名字即为资产模型代码，模板只能填写，属性代码、是否唯一、是否必填。\n如若需要设置模型属性的其他信息，请导入后编辑该资产模型。',
       'acm.common.text.add_ansible_config_comment':
@@ -5535,7 +5535,7 @@
         '注意：\n此Ansible配置作用于具体的机器上，区别于组Ansible配置和资产类型Ansible配置。该Ansible配置具有最高优先级。',
       'acm.common.ansible.ssh_key_connect_host.tips':
         '注意：\n机器必须在导入时填写Ansible执行节点列（即：INSTANCE_GROUP属性）\n若需修改节点配置，请前往自动化配置管理 -> 设备纳管 -> 用户名密码纳管中单独进行节点配置\n否则，任务将下发至default节点执行',
-      'acm.common.ansible.ssh_key_connect_host.tips.conn_user': 'Oplus纳管目标用户',
+      'acm.common.ansible.ssh_key_connect_host.tips.conn_user': 'KoreOPS纳管目标用户',
       'acm.common.ansible.ssh_key_connect_host.tips.can_ssh_user':
         '当前可以SSH连接到目标机器的用户',
       'acm.common.ansible.ssh_key_connect_host.tips.can_ssh_passwd':
@@ -6715,7 +6715,7 @@
       'app_vap.log.patch_is_update': '补丁库数据已为最新',
       'app_vap.log.import_path_fail': '导入补丁库失败：{{msg_info}}',
       'app_vap.log.download_path_by_remote': '正在从远程服务器{{server}}上下载补丁',
-      'app_vap.log.deal_file_fail': '文件处理失败，请检查Oplus更新服务器{{server}}',
+      'app_vap.log.deal_file_fail': '文件处理失败，请检查KoreOPS更新服务器{{server}}',
       'app_vap.log.win_scan_fail': 'Windows补丁扫描执行失败，原因是{{msg_info}}',
       'app_vap.log.win_scan_success':
         'Windows补丁扫描执行成功，扫描机器数量为{{machineCount}}，扫描存在漏洞数量为{{kbCount}}，ETL处理耗时为{{time}}s',
@@ -8421,7 +8421,7 @@
       'gfs.settings.current_repo': '当前脚本库',
       'gfs.settings.repo_auth_type': 'Git库认证方式',
       'gfs.settings.repo_auth_type_info':
-        'HTTPS：基于用户名密码安全认证<br/>SSH：基于RSA非对称加密，将自定义生成公钥上传Git库中，将私钥上传Oplus平台',
+        'HTTPS：基于用户名密码安全认证<br/>SSH：基于RSA非对称加密，将自定义生成公钥上传Git库中，将私钥上传KoreOPS平台',
       'gfs.settings.repo_url': 'Git库地址',
       'gfs.settings.repo_url_desc':
         '用于配置外部Git库地址，目前支持Github、Bitbucket、Gitlab、Gitee、Coding',
@@ -8434,14 +8434,14 @@
       'gfs.settings.init_repo_success': '初始化外部Git库成功',
       'gfs.settings.init_repo_error': '初始化外部Git库失败',
       'gfs.settings.init_repo_info':
-        '说明：用于指定脚本库，oplus内置脚本库无需该设定，如需指定外部Git库（目前支持Github、Bitbucket、Gitlab、Gitee、Coding），按照以下指定方式配置Oplus同步外部Git库，该设定会清空当前已存在脚本库中所有内容，请详细阅读说明后再使用！！',
+        '说明：用于指定脚本库，系统内置脚本库无需该设定，如需指定外部Git库（目前支持Github、Bitbucket、Gitlab、Gitee、Coding），按照以下指定方式配置KoreOPS同步外部Git库，该设定会清空当前已存在脚本库中所有内容，请详细阅读说明后再使用！！',
       'gfs.settings.init_repo_confirm': '外部Git库同步确认',
-      'gfs.settings.init_repo_confirm_info': '确认同步{{repoUrl}}到Oplus脚本库中？',
-      'gfs.settings.reset_repo_success': '重置Oplus内置脚本库成功',
-      'gfs.settings.reset_repo_error': '重置Oplus内置脚本库失败',
+      'gfs.settings.init_repo_confirm_info': '确认同步{{repoUrl}}到KoreOPS脚本库中？',
+      'gfs.settings.reset_repo_success': '重置KoreOPS内置脚本库成功',
+      'gfs.settings.reset_repo_error': '重置KoreOPS内置脚本库失败',
       'gfs.settings.reset_repo_confirm': '重置Git库确认',
       'gfs.settings.reset_repo_confirm_info':
-        '确认重置当前脚本库为Oplus内置脚本库，该操作会清空当前脚本库中所有内容？',
+        '确认重置当前脚本库为KoreOPS内置脚本库，该操作会清空当前脚本库中所有内容？',
       'gfs.selector.refresh': '显示刷新按钮',
       'gfs.list.refresh': '刷新',
       'gfs.list.refresh_title': '刷新当前页面',
@@ -8743,7 +8743,7 @@
       'jao.job.process.run_settings': '执行设置',
       'jao.job.process.callback': '回调API',
       'jao.job.process.callback_info':
-        '作业执行完成后，数据将通过这个API传给调用方。这个API要能够被Oplus服务器访问。',
+        '作业执行完成后，数据将通过这个API传给调用方。这个API要能够被KoreOPS服务器访问。',
       'jao.job.process.timeout': '任务超时',
       'jao.job.process.timeout_info':
         '设置单台主机执行单个任务的最长时间（秒）：<ul><li>0或空：使用系统默认的超时</li><li>大于0：超过设定值将终止该主机的任务</li><li>小于0：禁用超时</li></ul>',
@@ -10910,7 +10910,7 @@
       'acm.common.text.automation_comment':
         '注意：\n自動化配置是針對每一個自動化資產的預設連線配置進行修改，使用場景如下：\n執行使用者/密碼、登入使用者/密碼、執行引擎節點配置等',
       'acm.common.text.ansible_config_comment':
-        '注意：\nAnsible連線配置是針對Oplus支援的自動化裝置型別預設配置進行修改，使用場景如下：\n是否提權、提權方式、連線方式等',
+        '注意：\nAnsible連線配置是針對KoreOPS支援的自動化裝置型別預設配置進行修改，使用場景如下：\n是否提權、提權方式、連線方式等',
       'acm.common.text.model_import_comment':
         '注意：\n請先下載資產模型屬性匯入Excel模板，Excel模板中Sheet名字即為資產模型程式碼，模板只能填寫，屬性程式碼、是否唯一、是否必填。\n如若需要設定模型屬性的其他資訊，請匯入後編輯該資產模型。',
       'acm.common.text.add_ansible_config_comment':
@@ -10959,7 +10959,7 @@
         '注意：\n此Ansible配置作用於具體的機器上，區別於組Ansible配置和資產型別Ansible配置。該Ansible配置具有最高優先順序。',
       'acm.common.ansible.ssh_key_connect_host.tips':
         '注意：\n機器必須在匯入時填寫Ansible執行節點列（即：INSTANCE_GROUP屬性）\n若需修改節點配置，請前往自動化配置管理 -> 裝置納管 -> 使用者名稱密碼納管中單獨進行節點配置\n否則，任務將下發至default節點執行',
-      'acm.common.ansible.ssh_key_connect_host.tips.conn_user': 'Oplus納管目標使用者',
+      'acm.common.ansible.ssh_key_connect_host.tips.conn_user': 'KoreOPS納管目標使用者',
       'acm.common.ansible.ssh_key_connect_host.tips.can_ssh_user':
         '當前可以SSH連線到目標機器的使用者',
       'acm.common.ansible.ssh_key_connect_host.tips.can_ssh_passwd':
@@ -12137,7 +12137,7 @@
       'app_vap.log.patch_is_update': '補丁庫資料已為最新',
       'app_vap.log.import_path_fail': '匯入補丁庫失敗：{{msg_info}}',
       'app_vap.log.download_path_by_remote': '正在從遠端伺服器{{server}}上下載補丁',
-      'app_vap.log.deal_file_fail': '檔案處理失敗，請檢查Oplus更新伺服器{{server}}',
+      'app_vap.log.deal_file_fail': '檔案處理失敗，請檢查KoreOPS更新伺服器{{server}}',
       'app_vap.log.win_scan_fail': 'Windows補丁掃描執行失敗，原因是{{msg_info}}',
       'app_vap.log.win_scan_success':
         'Windows補丁掃描執行成功，掃描機器數量為{{machineCount}}，掃描存在漏洞數量為{{kbCount}}，ETL處理耗時為{{time}}s',
@@ -13842,7 +13842,7 @@
       'gfs.settings.current_repo': '當前腳本庫',
       'gfs.settings.repo_auth_type': 'Git庫認證方式',
       'gfs.settings.repo_auth_type_info':
-        'HTTPS：基於使用者名稱密碼安全認證<br/>SSH：基於RSA非對稱加密，將自定義生成公鑰上傳Git庫中，將私鑰上傳Oplus平臺',
+        'HTTPS：基於使用者名稱密碼安全認證<br/>SSH：基於RSA非對稱加密，將自定義生成公鑰上傳Git庫中，將私鑰上傳KoreOPS平臺',
       'gfs.settings.repo_url': 'Git庫地址',
       'gfs.settings.repo_url_desc':
         '用於配置外部Git庫地址，目前支援Github、Bitbucket、Gitlab、Gitee、Coding',
@@ -13855,14 +13855,14 @@
       'gfs.settings.init_repo_success': '初始化外部Git庫成功',
       'gfs.settings.init_repo_error': '初始化外部Git庫失敗',
       'gfs.settings.init_repo_info':
-        '說明：用於指定腳本庫，oplus內建腳本庫無需該設定，如需指定外部Git庫（目前支援Github、Bitbucket、Gitlab、Gitee、Coding），按照以下指定方式配置Oplus同步外部Git庫，該設定會清空當前已存在腳本庫中所有內容，請詳細閱讀說明後再使用！！',
+        '說明：用於指定腳本庫，oplus內建腳本庫無需該設定，如需指定外部Git庫（目前支援Github、Bitbucket、Gitlab、Gitee、Coding），按照以下指定方式配置KoreOPS同步外部Git庫，該設定會清空當前已存在腳本庫中所有內容，請詳細閱讀說明後再使用！！',
       'gfs.settings.init_repo_confirm': '外部Git庫同步確認',
-      'gfs.settings.init_repo_confirm_info': '確認同步{{repoUrl}}到Oplus指令碼庫中？',
-      'gfs.settings.reset_repo_success': '重置Oplus內建腳本庫成功',
-      'gfs.settings.reset_repo_error': '重置Oplus內建腳本庫失敗',
+      'gfs.settings.init_repo_confirm_info': '確認同步{{repoUrl}}到KoreOPS指令碼庫中？',
+      'gfs.settings.reset_repo_success': '重置KoreOPS內建腳本庫成功',
+      'gfs.settings.reset_repo_error': '重置KoreOPS內建腳本庫失敗',
       'gfs.settings.reset_repo_confirm': '重置Git庫確認',
       'gfs.settings.reset_repo_confirm_info':
-        '確認重置當前腳本庫為Oplus內建腳本庫，該操作會清空當前腳本庫中所有內容？',
+        '確認重置當前腳本庫為KoreOPS內建腳本庫，該操作會清空當前腳本庫中所有內容？',
       'gfs.selector.refresh': '顯示重新整理按鈕',
       'gfs.list.refresh': '重新整理',
       'gfs.list.refresh_title': '重新整理當前頁面',
@@ -14164,7 +14164,7 @@
       'jao.job.process.run_settings': '執行設定',
       'jao.job.process.callback': '回撥API',
       'jao.job.process.callback_info':
-        '作業執行完成後，資料將透過這個API傳給呼叫方。這個API要能夠被Oplus伺服器訪問。',
+        '作業執行完成後，資料將透過這個API傳給呼叫方。這個API要能夠被KoreOPS伺服器訪問。',
       'jao.job.process.timeout': '任務超時',
       'jao.job.process.timeout_info':
         '設定單臺主機執行單個任務的最長時間（秒）：<ul><li>0或空：使用系統預設的超時</li><li>大於0：超過設定值將終止該主機的任務</li><li>小於0：禁用超時</li></ul>',

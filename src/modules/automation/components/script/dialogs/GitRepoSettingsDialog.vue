@@ -10,8 +10,8 @@
     <el-alert type="success" :closable="false" class="mb-4">
       <p class="help-text">
         <strong>说明：</strong>
-        用于指定脚本库，oplus内置脚本库无需该设定，如需指定外部Git库
-        （目前支持Github、Bitbucket、Gitlab、Gitee、Coding），按照以下指定方式配置Oplus同步外部Git库，
+        用于指定脚本库，系统内置脚本库无需该设定，如需指定外部Git库
+        （目前支持Github、Bitbucket、Gitlab、Gitee、Coding），按照以下指定方式配置KoreOPS同步外部Git库，
         该设定会清空当前已存在脚本库中所有内容，请详细阅读说明后再使用！！
       </p>
     </el-alert>
@@ -24,7 +24,7 @@
             <div style="max-width: 300px">
               HTTPS：基于用户名密码安全认证
               <br />
-              SSH：基于RSA非对称加密，将自定义生成公钥上传Git库中，将私钥上传Oplus平台
+              SSH：基于RSA非对称加密，将自定义生成公钥上传Git库中，将私钥上传KoreOPS平台
             </div>
           </template>
           <el-radio-group v-model="form.authType">
@@ -250,7 +250,7 @@ async function handleSave() {
   // 确认提示
   try {
     await ElMessageBox.confirm(
-      `确认同步 ${form.value.repoUrl} 到Oplus脚本库中？`,
+      `确认同步 ${form.value.repoUrl} 到KoreOPS脚本库中？`,
       '外部Git库同步确认',
       { type: 'warning' }
     )

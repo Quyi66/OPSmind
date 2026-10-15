@@ -7,44 +7,12 @@
     destroy-on-close
   >
     <el-form ref="formRef" :model="formData" :rules="formRules" label-width="140px">
-      <el-form-item label="任务描述" prop="jobDesc">
-        <el-input v-model="formData.jobDesc" placeholder="请输入任务描述" maxlength="200" />
+      <h4 class="form-section__title">执行内容</h4>
+      <el-form-item label="任务名称" prop="jobDesc">
+        <el-input v-model="formData.jobDesc" placeholder="例如：每日服务器巡检" maxlength="200" />
       </el-form-item>
 
-      <el-form-item label="是否输出日志" prop="logOutput">
-        <el-select v-model="formData.logOutput" placeholder="请选择">
-          <el-option label="否" value="1" />
-          <el-option label="是" value="0" />
-        </el-select>
-      </el-form-item>
-
-      <el-form-item label="是否参数加密" prop="isEncrypt">
-        <el-select v-model="formData.isEncrypt" placeholder="请选择">
-          <el-option label="否" value="1" />
-          <el-option label="是" value="0" />
-        </el-select>
-      </el-form-item>
-
-      <el-form-item label="CRON表达式" prop="scheduleConf">
-        <el-input v-model="formData.scheduleConf" placeholder="例: 0 0 12 * * ?" maxlength="100">
-          <template #append>
-            <el-button @click="cronGeneratorVisible = true" :icon="Calendar">生成器</el-button>
-          </template>
-        </el-input>
-      </el-form-item>
-
-      <el-form-item label="应用资源" prop="appCode">
-        <el-select v-model="formData.appCode" placeholder="请选择应用资源" clearable filterable>
-          <el-option
-            v-for="app in appletsList"
-            :key="app.name"
-            :label="app.displayTitle || app.title || app.name"
-            :value="app.name"
-          />
-        </el-select>
-      </el-form-item>
-
-      <el-form-item label="执行运维工具类型" prop="jobType">
+      <el-form-item label="工具类型" prop="jobType">
         <el-select
           v-model="formData.jobType"
           placeholder="请选择运维工具类型"
@@ -59,7 +27,7 @@
         </el-select>
       </el-form-item>
 
-      <el-form-item label="选择执行运维工具" prop="jobId">
+      <el-form-item label="执行工具" prop="jobId">
         <el-select
           v-if="!isMultipleJobType"
           v-model="formData.jobId"
@@ -84,6 +52,18 @@
         </el-select>
       </el-form-item>
 
+      <div class="form-section">
+        <h4 class="form-section__title">执行时间</h4>
+        <el-form-item label="Cron 表达式" prop="scheduleConf">
+          <el-input v-model="formData.scheduleConf" placeholder="例：0 0 12 * * ?" maxlength="100">
+            <template #append>
+              <el-button @click="cronGeneratorVisible = true" :icon="Calendar">生成器</el-button>
+            </template>
+          </el-input>
+          <div class="form-help">可使用生成器配置执行计划，并在任务列表中查看下次执行时间。</div>
+        </el-form-item>
+      </div>
+
       <div v-if="showParamsSection" class="form-section">
         <div class="form-section__header">
           <div>
@@ -94,6 +74,30 @@
         </div>
         <CronJobParamsSection :params="jobParams" />
       </div>
+
+      <el-collapse v-model="expandedSections" class="advanced-settings">
+        <el-collapse-item name="advanced">
+          <template #title>
+            <span>高级设置</span>
+            <span class="advanced-settings__summary">
+              {{ formData.logOutput === '0' ? '输出日志' : '不输出日志' }} ·
+              {{ formData.isEncrypt === '0' ? '参数加密' : '参数不加密' }}
+            </span>
+          </template>
+          <el-form-item label="输出日志" prop="logOutput">
+            <el-select v-model="formData.logOutput">
+              <el-option label="不输出" value="1" />
+              <el-option label="输出" value="0" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="参数加密" prop="isEncrypt">
+            <el-select v-model="formData.isEncrypt">
+              <el-option label="不加密" value="1" />
+              <el-option label="加密" value="0" />
+            </el-select>
+          </el-form-item>
+        </el-collapse-item>
+      </el-collapse>
     </el-form>
 
     <template #footer>
@@ -151,10 +155,11 @@ const visible = computed({
 })
 
 const title = computed(() => {
-  return props.editingId ? `编辑CRON任务 ID: ${props.editingId}` : '新增CRON任务'
+  return props.editingId ? '编辑定时任务' : '新增定时任务'
 })
 
 const cronGeneratorVisible = ref(false)
+const expandedSections = ref([])
 
 // 使用表单管理 composable
 const {
@@ -226,10 +231,28 @@ function handleCronConfirm(cronExpression) {
 }
 
 .form-section__title {
-  margin: 0;
+  margin: 0 0 16px;
   font-size: 15px;
   font-weight: 600;
   color: var(--el-text-color-primary);
+}
+
+.form-help {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--el-text-color-secondary);
+}
+
+.advanced-settings {
+  margin-top: 20px;
+}
+
+.advanced-settings__summary {
+  margin-left: 12px;
+  font-size: 12px;
+  font-weight: normal;
+  color: var(--el-text-color-secondary);
 }
 
 .form-section__subtitle {

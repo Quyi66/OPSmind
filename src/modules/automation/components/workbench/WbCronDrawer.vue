@@ -19,7 +19,7 @@
           <el-form-item label="关键词">
             <el-input
               v-model="filters.keyword"
-              placeholder="搜索任务描述、表达式或作者"
+              placeholder="搜索任务名称或表达式"
               clearable
               style="width: 260px"
               @keyup.enter="handleSearch"
@@ -38,19 +38,16 @@
           v-for="item in filteredJobs"
           :key="item.id"
           class="wb-cron-item"
-            :class="{ 'wb-cron-item--enabled': String(item.triggerStatus) === '1' }"
+          :class="{ 'wb-cron-item--enabled': String(item.triggerStatus) === '1' }"
         >
           <div class="wb-cron-item__info">
-            <strong class="wb-cron-item__name" :title="item.jobDesc">
-              {{ item.jobDesc || `任务 ${item.id}` }}
-            </strong>
-            <div class="wb-cron-item__meta">
+            <div class="wb-cron-item__heading">
+              <strong class="wb-cron-item__name" :title="item.jobDesc">
+                {{ item.jobDesc || '未命名定时任务' }}
+              </strong>
               <el-tag size="small" :type="String(item.triggerStatus) === '1' ? 'success' : 'info'">{{ String(item.triggerStatus) === '1' ? '启用' : '停用' }}</el-tag>
-              <span>{{ getWorkbenchJobType(item).label }}</span>
-              <span>作者：{{ item.author || '未提供' }}</span>
             </div>
             <span class="wb-cron-item__cron">CRON：{{ item.scheduleConf || '未配置' }}</span>
-            <span class="wb-cron-item__meta" :title="String(item.jobId || '')">执行工具：{{ item.jobId || '未提供' }} · 调度 ID：{{ item.id }}</span>
           </div>
           <div class="wb-cron-item__actions">
             <el-button
@@ -106,7 +103,6 @@
 
 <script setup>
 import { computed, reactive, watch } from 'vue'
-import { getWorkbenchJobType } from '../../utils/workbenchPresentation'
 
 const props = defineProps({
   jobs: { type: Array, default: () => [] },
@@ -133,11 +129,8 @@ const filteredJobs = computed(() => {
 
   return jobs.filter(
     item =>
-      (item.id && String(item.id).toLowerCase().includes(keyword)) ||
       (item.jobDesc && item.jobDesc.toLowerCase().includes(keyword)) ||
-      (item.scheduleConf && item.scheduleConf.toLowerCase().includes(keyword)) ||
-      (item.jobType && item.jobType.toLowerCase().includes(keyword)) ||
-      (item.author && item.author.toLowerCase().includes(keyword))
+      (item.scheduleConf && item.scheduleConf.toLowerCase().includes(keyword))
   )
 })
 
@@ -162,7 +155,8 @@ watch(
   isVisible => {
     if (!isVisible) return
     handleReset()
-  }
+  },
+  { immediate: true }
 )
 </script>
 
@@ -198,15 +192,15 @@ watch(
 .wb-cron-drawer-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
 }
 
 .wb-cron-item {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 10px 12px;
   border-radius: 6px;
   border: 1px solid #f1f5f9;
   background: #fafafa;
@@ -227,13 +221,20 @@ watch(
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 6px;
     flex-basis: 360px;
   }
 
-  &__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 12px; line-height: 1.6; color: var(--el-text-color-secondary); overflow-wrap: anywhere; }
+  &__heading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    :deep(.el-tag) { flex-shrink: 0; }
+  }
 
   &__name {
+    min-width: 0;
     font-size: 12px;
     font-weight: 500;
     color: var(--wb-text-primary);

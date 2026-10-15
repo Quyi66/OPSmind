@@ -3,8 +3,8 @@
     <el-card class="config-card" v-loading="loading">
       <el-form label-width="260px" label-position="left">
         <!-- 引擎类型选择 -->
-        <el-form-item label="OPlus Execute Engine">
-          <div class="engine-hint">Ansible or Ansible Automation Platform</div>
+        <el-form-item label="执行引擎">
+          <div class="engine-hint">支持 Ansible 与 Ansible Automation Platform（AAP）</div>
           <el-radio-group v-model="usedEngine" @change="handleEngineChange">
             <el-radio-button
               v-for="engine in engineOptions"
@@ -20,15 +20,15 @@
         <template v-if="scriptEngine === 'ansible'">
           <el-divider content-position="left">Ansible 配置</el-divider>
 
-          <el-form-item label="Enable Host Forks">
+          <el-form-item label="启用主机并发执行">
             <el-switch v-model="jaoParamMap.is_fork" />
           </el-form-item>
 
-          <el-form-item label="Host Forks Size">
+          <el-form-item label="主机并发数">
             <el-input-number v-model="jaoParamMap.forks" :min="100" style="width: 200px" />
           </el-form-item>
 
-          <el-form-item label="Sync Git Project Before Starting Job">
+          <el-form-item label="执行前同步 Git 项目">
             <el-switch v-model="jaoParamMap.sync_script_git" />
           </el-form-item>
 
@@ -41,24 +41,24 @@
         <template v-if="scriptEngine === 'aap'">
           <el-divider content-position="left">AAP 配置</el-divider>
 
-          <el-form-item label="AAP Clear">
+          <el-form-item label="清理 AAP 执行资源">
             <el-switch v-model="ataParamMap.tower_clear" />
           </el-form-item>
 
           <!-- AAP Web Login 配置 -->
-          <el-form-item label="AAP Web Login Config">
+          <el-form-item label="AAP 连接配置">
             <el-card class="nested-card">
-              <el-form-item label="Login Host" label-width="140px">
+              <el-form-item label="服务地址" label-width="140px">
                 <el-input v-model="ataParamMap.tower_host" style="width: 300px" />
                 <div class="form-help">AAP 服务器地址</div>
               </el-form-item>
 
-              <el-form-item label="Login Name" label-width="140px">
+              <el-form-item label="登录用户" label-width="140px">
                 <el-input v-model="loginConfig.web_login_name" style="width: 300px" />
                 <div class="form-help">AAP 登录用户名</div>
               </el-form-item>
 
-              <el-form-item label="Login Password" label-width="140px">
+              <el-form-item label="登录密码" label-width="140px">
                 <el-input
                   v-model="loginConfig.web_login_pwd"
                   type="password"
@@ -73,25 +73,25 @@
 
           <!-- AAP Servers -->
           <template v-if="isConnectAap">
-            <el-form-item label="AAP Servers">
+            <el-form-item label="AAP 集群节点">
               <div class="form-help mb-2">AAP 集群服务器配置</div>
               <el-table :data="clusterServers" style="max-width: 800px" max-height="600px">
-                <el-table-column label="Host" min-width="150">
+                <el-table-column label="主机地址" min-width="150">
                   <template #default="{ row }">
                     <el-input v-model="row.host" size="small" />
                   </template>
                 </el-table-column>
-                <el-table-column label="Port" width="100">
+                <el-table-column label="端口" width="100">
                   <template #default="{ row }">
                     <el-input v-model="row.port" size="small" />
                   </template>
                 </el-table-column>
-                <el-table-column label="Username" min-width="150">
+                <el-table-column label="用户名" min-width="150">
                   <template #default="{ row }">
                     <el-input v-model="row.username" size="small" />
                   </template>
                 </el-table-column>
-                <el-table-column label="Password" min-width="150">
+                <el-table-column label="密码" min-width="150">
                   <template #default="{ row }">
                     <el-input
                       v-model="row.password"
@@ -115,12 +115,12 @@
             </el-form-item>
 
             <!-- AAP Execute Config -->
-            <el-form-item label="AAP Execute Config">
+            <el-form-item label="AAP 执行配置">
               <div class="form-help mb-2">AAP 执行配置</div>
               <el-card class="nested-card">
                 <el-row :gutter="20">
                   <el-col :span="12">
-                    <el-form-item label="Git Project" label-width="180px">
+                    <el-form-item label="Git 项目" label-width="180px">
                       <el-select v-model="towerConfig.git_project_id" style="width: 100%">
                         <el-option
                           v-for="project in gitProjects"
@@ -132,7 +132,7 @@
                     </el-form-item>
                   </el-col>
                   <el-col :span="12">
-                    <el-form-item label="Organization" label-width="180px">
+                    <el-form-item label="组织" label-width="180px">
                       <el-select v-model="towerConfig.organization_id" style="width: 100%">
                         <el-option
                           v-for="org in organizations"
@@ -147,7 +147,7 @@
 
                 <el-row :gutter="20">
                   <el-col :span="12">
-                    <el-form-item label="Manual Project" label-width="180px">
+                    <el-form-item label="本地项目" label-width="180px">
                       <el-select
                         v-model="towerConfig.template_project_id"
                         style="width: 100%"
@@ -163,7 +163,7 @@
                     </el-form-item>
                   </el-col>
                   <el-col :span="12">
-                    <el-form-item label="Manual Project Path" label-width="180px">
+                    <el-form-item label="本地项目路径" label-width="180px">
                       <el-input v-model="towerConfig.project_path" disabled style="width: 100%" />
                     </el-form-item>
                   </el-col>
@@ -171,7 +171,7 @@
 
                 <el-row :gutter="20">
                   <el-col :span="12">
-                    <el-form-item label="Credential" label-width="180px">
+                    <el-form-item label="连接凭据" label-width="180px">
                       <el-select
                         v-model="towerConfig.template_credentials_id"
                         multiple
@@ -187,7 +187,7 @@
                     </el-form-item>
                   </el-col>
                   <el-col :span="12">
-                    <el-form-item label="Instance Group" label-width="180px">
+                    <el-form-item label="实例组" label-width="180px">
                       <el-select v-model="towerConfig.instance_group" style="width: 100%">
                         <el-option
                           v-for="ig in instanceGroups"
@@ -202,7 +202,7 @@
 
                 <el-row :gutter="20">
                   <el-col :span="12">
-                    <el-form-item label="Execution Environment" label-width="180px">
+                    <el-form-item label="执行环境" label-width="180px">
                       <el-select v-model="towerConfig.execution_environment" style="width: 100%">
                         <el-option
                           v-for="ee in executionEnvironments"
@@ -219,17 +219,17 @@
 
                 <el-row :gutter="20">
                   <el-col :span="8">
-                    <el-form-item label="Template Become Enabled" label-width="200px">
+                    <el-form-item label="启用执行提权" label-width="200px">
                       <el-switch v-model="towerConfig.template_become" />
                     </el-form-item>
                   </el-col>
                   <el-col :span="8">
-                    <el-form-item label="Sync Git Before Job" label-width="200px">
+                    <el-form-item label="执行前同步 Git" label-width="200px">
                       <el-switch v-model="towerConfig.sync_git_project_before_starting_job" />
                     </el-form-item>
                   </el-col>
                   <el-col :span="8">
-                    <el-form-item label="Encrypt Host Pass" label-width="200px">
+                    <el-form-item label="加密主机密码" label-width="200px">
                       <el-switch v-model="towerConfig.encrypt_host_pass" />
                     </el-form-item>
                   </el-col>

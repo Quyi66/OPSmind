@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { authService } from '@/core/auth'
 import { getTagsViewPersistKey, LEGACY_TAGS_VIEW_PERSIST_KEY } from '@/utils/tagsViewStorage'
+import { isRetiredSettingsView } from '@/modules/settings/navigation'
 
 function getPersistKey() {
   return getTagsViewPersistKey(authService.getCurrentUser())
@@ -58,6 +59,8 @@ export const useTagsViewStore = defineStore('tagsView', () => {
         views.forEach(view => {
           addVisitedView(view)
         })
+        // Persist the filtered list even when every stored page has retired.
+        saveVisitedViews()
       }
     } catch (e) {
       console.error('Failed to load persisted tags', e)
@@ -80,6 +83,7 @@ export const useTagsViewStore = defineStore('tagsView', () => {
   }
 
   const addVisitedView = (view) => {
+    if (isRetiredSettingsView(view)) return
     if (visitedViews.value.some(v => v.path === view.path)) return
     
     // 确保有正确的 title
@@ -103,6 +107,7 @@ export const useTagsViewStore = defineStore('tagsView', () => {
   }
 
   const addCachedView = (view) => {
+    if (isRetiredSettingsView(view)) return
     if (cachedViews.value.includes(view.name)) return
     if (view.meta && !view.meta.noCache && view.name) {
       cachedViews.value.push(view.name)

@@ -414,7 +414,7 @@
             >
               <div class="wb-command-job-item__info">
                 <strong class="wb-command-job-item__name">
-                  {{ translateText(item.title) || item.title || item.id }}
+                  {{ getAutomationToolTitle(item) }}
                 </strong>
               </div>
               <div class="wb-command-job-item__actions">
@@ -567,6 +567,7 @@
       v-model:visible="resultDialogVisible"
       :run-id="resultMeta.runId"
       :job-title="resultMeta.jobTitle"
+      :raw-job-title="resultMeta.rawJobTitle"
       @settled="handleExecuteResultSettled"
     />
 
@@ -702,8 +703,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import { authService } from '@/core/auth'
 import { canAccessMenuCode } from '@/core/auth/permission-policy'
-import { translateText } from '@/utils/i18n'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
+import { getAutomationToolTitle, getAutomationRunTitle } from '@/modules/automation/utils/resourcePresentation'
 import { useAppletTranslation } from '@/modules/automation/components/job/composables/useAppletTranslation.js'
 import { useAutomationWorkbench } from '@/modules/automation/composables/useAutomationWorkbench.js'
 import { formatWorkbenchJobDate, getWorkbenchCardLayout, selectWorkbenchJobs } from '@/modules/automation/utils/workbenchPresentation'
@@ -845,7 +846,7 @@ const workbenchJobGridStyle = computed(() => ({
 const workbenchJobs = computed(() =>
   filteredWorkbenchJobs.value.slice(0, workbenchJobLimit.value).map(job => ({
     ...job,
-    displayTitle: translateText(job?.title) || job?.title || job?.id || '-',
+    displayTitle: getAutomationToolTitle(job),
     displayTime: formatWorkbenchJobDate(job),
     displayTypeLabel: workbenchJobTypeLabel(job?.type),
     displayTypeTag: workbenchJobTypeTag(job?.type)
@@ -1102,7 +1103,7 @@ async function handleExecuteCron(item) {
     if (runId) {
       resultMeta.value = {
         runId,
-        jobTitle: item?.jobDesc || item?.id || '-'
+        jobTitle: item?.jobDesc || '未命名定时任务'
       }
       resultDialogVisible.value = true
     }
@@ -1203,13 +1204,14 @@ function observeJobViewport() {
 function handleOpenRunResult(item) {
   resultMeta.value = {
     runId: item?.id || '',
-    jobTitle: translateText(item?.job_title) || '-'
+    rawJobTitle: item?.job_title || '',
+    jobTitle: getAutomationRunTitle(item)
   }
   resultDialogVisible.value = true
 }
 
 async function handleExecuteJobSuccess(payload = {}) {
-  const jobTitle = payload.jobTitle || executeJobMeta.title || payload.jobId || '-'
+  const jobTitle = payload.jobTitle || executeJobMeta.title || '运维工具执行'
   if (payload.runId) {
     resultMeta.value = {
       runId: payload.runId,
@@ -1230,7 +1232,7 @@ function handleExecuteJobFromDrawer(job) {
   executeJobMeta.id = job.id
   executeJobMeta.type = job.type || ''
   executeJobMeta.configJson = job.configJson || ''
-  executeJobMeta.title = translateText(job.title) || job.title || job.id || ''
+  executeJobMeta.title = getAutomationToolTitle(job)
   executeDialogVisible.value = true
 }
 
@@ -1243,7 +1245,7 @@ function handleEditJobFromDrawer(job) {
 function handleOpenJobHistory(job) {
   historyJobMeta.value = {
     id: job?.id || '',
-    title: translateText(job?.title) || job?.title || job?.id || '-'
+    title: getAutomationToolTitle(job)
   }
   historyDialogVisible.value = true
 }
@@ -1266,7 +1268,7 @@ async function handleDeleteJob(job) {
 
   try {
     await ElMessageBox.confirm(
-      `确定要删除运维工具「${translateText(job?.title) || job?.title || job?.id}」吗？`,
+      `确定要删除运维工具「${getAutomationToolTitle(job)}」吗？`,
       '删除运维工具',
       {
         type: 'warning',
@@ -1308,7 +1310,7 @@ async function handleDeleteCronFromDrawer(item) {
 
   try {
     await ElMessageBox.confirm(
-      `确定要删除定时任务「${item.jobDesc || item.id}」吗？`,
+      `确定要删除定时任务「${item.jobDesc || '未命名定时任务'}」吗？`,
       '删除定时任务',
       {
         type: 'warning',
@@ -1366,7 +1368,7 @@ function extractRunId(source) {
 function _normalizeApprovalRecord(item) {
   return {
     id: item.id,
-    name: item.jobName || '-',
+    name: getAutomationToolTitle(item),
     meta: item.description || item.approveMode || '-',
     tagType:
       item.status === 0

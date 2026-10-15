@@ -66,7 +66,7 @@
         <el-table-column label="运维工具" min-width="230" show-overflow-tooltip>
           <template #default="{ row }">
             <el-button link type="primary" class="wb-run-title" @click="$emit('open-result', row)">
-              {{ translateText(row.job_title) || row.job_title || '未命名运行' }}
+              {{ getAutomationRunTitle(row) }}
             </el-button>
           </template>
         </el-table-column>
@@ -156,7 +156,7 @@
 <script setup>
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import * as jaoApi from '@/modules/automation/api/jao'
-import { translateText } from '@/utils/i18n'
+import { getAutomationRunTitle } from '../../utils/resourcePresentation'
 import { formatDateTime as formatDateTimeGlobal } from '../../utils/helpers'
 import {
   getRunLogStatusLabel,
@@ -216,7 +216,7 @@ const displayRecords = computed(() => {
   if (!keyword) return drawerRecords.value
   return drawerRecords.value.filter(row =>
     [
-      translateText(row.job_title),
+      getAutomationRunTitle(row),
       row.job_title,
       row.username,
       row.review_user,

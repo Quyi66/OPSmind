@@ -21,10 +21,8 @@ export function useCronJobList() {
     const keyword = searchKeyword.value.toLowerCase()
     return tableData.value.filter(row => {
       return (
-        (row.id && String(row.id).toLowerCase().includes(keyword)) ||
         (row.jobDesc && row.jobDesc.toLowerCase().includes(keyword)) ||
         (row.scheduleConf && row.scheduleConf.toLowerCase().includes(keyword)) ||
-        (row.appCode && row.appCode.toLowerCase().includes(keyword)) ||
         (row.jobType && row.jobType.toLowerCase().includes(keyword)) ||
         (row.author && row.author.toLowerCase().includes(keyword))
       )

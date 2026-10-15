@@ -254,10 +254,10 @@ export function useAutomationWorkbench({ canViewJobs = true, canViewCommands = t
     try {
       if (isEnabled) {
         await jaoApi.stopCronJob(item.id)
-        ElMessage.success(`已停用：${item.jobDesc || item.id}`)
+        ElMessage.success(`已停用：${item.jobDesc || '未命名定时任务'}`)
       } else {
         await jaoApi.startCronJob(item.id)
-        ElMessage.success(`已启用：${item.jobDesc || item.id}`)
+        ElMessage.success(`已启用：${item.jobDesc || '未命名定时任务'}`)
       }
       await loadCronData()
     } catch {
@@ -268,7 +268,7 @@ export function useAutomationWorkbench({ canViewJobs = true, canViewCommands = t
   async function executeCronJobNow(item) {
     try {
       const response = await jaoApi.executeCronJob(item.id)
-      ElMessage.success(`已触发执行：${item.jobDesc || item.id}`)
+      ElMessage.success(`已触发执行：${item.jobDesc || '未命名定时任务'}`)
       return unwrapResponseData(response)
     } catch {
       ElMessage.error('执行失败，请重试')

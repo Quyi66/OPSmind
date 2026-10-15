@@ -258,7 +258,7 @@
           </el-table-column>
           <el-table-column prop="jobType" label="类型" width="80" />
           <el-table-column prop="endTime" label="结束时间" width="160" />
-          <el-table-column prop="ataNode" label="Ansible Node" min-width="130">
+          <el-table-column prop="ataNode" label="执行节点" min-width="130">
             <template #default="{ row }">
               <div class="ata-node-cell">
                 <span v-for="(node, idx) in row.ataNode" :key="idx" class="badge badge-secondary">

@@ -8,19 +8,12 @@
       @selection-change="$emit('selection-change', $event)"
     >
       <el-table-column type="selection" width="50" align="left" />
-      <el-table-column prop="id" label="任务ID" width="90" align="left" sortable />
 
-      <el-table-column prop="jobDesc" label="任务描述" show-overflow-tooltip />
+      <el-table-column prop="jobDesc" label="任务名称" min-width="180" show-overflow-tooltip />
 
       <el-table-column prop="scheduleConf" label="CRON表达式" width="140" align="left">
         <template #default="{ row }">
           <el-tag size="small" type="info">{{ row.scheduleConf }}</el-tag>
-        </template>
-      </el-table-column>
-
-      <el-table-column prop="appCode" label="应用资源" width="120" align="left">
-        <template #default="{ row }">
-          {{ getAppName(row.appCode) }}
         </template>
       </el-table-column>
 
@@ -129,14 +122,6 @@ const pagedData = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
   return props.data.slice(start, start + pageSize.value)
 })
-
-/**
- * 获取应用名称
- */
-function getAppName(appCode) {
-  if (!appCode) return '-'
-  return props.appletMap[appCode] || appCode
-}
 
 /**
  * 获取作业类型名称

@@ -123,7 +123,7 @@
       </el-tab-pane>
 
       <!-- 作业 -->
-      <el-tab-pane label="作业" name="jao">
+      <el-tab-pane label="运维工具" name="jao">
         <div class="tab-search-bar">
           <el-input
             v-model="jobsSearch"
@@ -144,7 +144,7 @@
           max-height="calc(100vh - 480px)"
         >
           <!-- <el-table-column type="selection" width="40" /> -->
-          <el-table-column prop="title" label="作业" min-width="120">
+          <el-table-column prop="title" label="运维工具" min-width="120">
             <template #default="{ row }">
               <div>{{ translateJobText(row.title) }}</div>
               <div class="job-desc" v-if="row.description">
@@ -160,7 +160,6 @@
               </span>
             </template>
           </el-table-column>
-          <el-table-column prop="appletCode" label="所属应用" width="100" />
           <el-table-column prop="updatedBy" label="修改人" width="80" />
           <el-table-column prop="updatedAt" label="修改时间" width="180">
             <template #default="{ row }">

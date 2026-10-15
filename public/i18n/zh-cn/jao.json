@@ -150,7 +150,7 @@
   "jao.job.process.title": "流程编排",
   "jao.job.process.run_settings": "执行设置",
   "jao.job.process.callback": "回调API",
-  "jao.job.process.callback_info": "作业执行完成后，数据将通过这个API传给调用方。这个API要能够被Oplus服务器访问。",
+  "jao.job.process.callback_info": "作业执行完成后，数据将通过这个API传给调用方。这个API要能够被KoreOPS服务器访问。",
   "jao.job.process.timeout": "任务超时",
   "jao.job.process.timeout_info": "设置单台主机执行单个任务的最长时间（秒）：<ul><li>0或空：使用系统默认的超时</li><li>大于0：超过设定值将终止该主机的任务</li><li>小于0：禁用超时</li></ul>",
   "jao.job.process.script": "运行脚本",

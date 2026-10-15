@@ -52,7 +52,7 @@
             {{ formatDateTime(row.endTime || row.startTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="Ansible Node" width="150" align="left">
+        <el-table-column label="执行节点" width="150" align="left">
           <template #default="{ row }">
             <el-tag v-if="getAnsibleNodeLabel(row.executor_node)" type="primary" size="small">
               {{ getAnsibleNodeLabel(row.executor_node) }}

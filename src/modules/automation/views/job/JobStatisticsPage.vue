@@ -65,7 +65,7 @@ import { CanvasRenderer } from 'echarts/renderers'
 import { BarChart, LineChart } from 'echarts/charts'
 import { DataZoomComponent, GridComponent, TooltipComponent } from 'echarts/components'
 import * as jaoApi from '@/modules/automation/api/jao'
-import { translateText } from '@/utils/i18n'
+import { getAutomationToolTitle } from '../../utils/resourcePresentation'
 import { useTheme } from '@/composables/useTheme'
 
 use([CanvasRenderer, BarChart, LineChart, DataZoomComponent, GridComponent, TooltipComponent])
@@ -197,7 +197,7 @@ const recentTrendRows = computed(() => {
 const translatedSummaryRows = computed(() =>
   summaryRows.value.map(row => ({
     ...row,
-    translatedTitle: translateText(row.job_title) || row.job_title || '-'
+    translatedTitle: getAutomationToolTitle(row)
   }))
 )
 

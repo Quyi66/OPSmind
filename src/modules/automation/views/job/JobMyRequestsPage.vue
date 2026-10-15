@@ -65,7 +65,7 @@
         <el-table-column label="运维工具" min-width="150">
           <template #default="{ row }">
             <el-button text type="primary" @click="handleViewDetail(row)">
-              {{ row.jobName }}
+              {{ getAutomationToolTitle(row) }}
             </el-button>
           </template>
         </el-table-column>
@@ -161,6 +161,7 @@
 </template>
 
 <script setup>
+import { getAutomationToolTitle } from '../../utils/resourcePresentation'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
@@ -189,7 +190,7 @@ const filteredData = computed(() => {
     const keyword = filters.keyword.toLowerCase()
     data = data.filter(
       item =>
-        item.jobName?.toLowerCase().includes(keyword) ||
+        item.jobName?.toLowerCase().includes(keyword) || getAutomationToolTitle(item).toLowerCase().includes(keyword) ||
         item.jobId?.toLowerCase().includes(keyword) ||
         item.approver?.toLowerCase().includes(keyword)
     )

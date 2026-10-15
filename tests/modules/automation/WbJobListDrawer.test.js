@@ -45,6 +45,8 @@ describe('工具列表取消旧所属应用概念', () => {
     expect(wrapper.text()).toContain('operator')
     expect(wrapper.text()).not.toContain('legacy-app-code')
     expect(wrapper.text()).not.toContain('应用范围')
+    expect(wrapper.text()).not.toContain('tool-1')
+    expect(appTableList).toHaveBeenCalledWith({ appletCode: '' })
   })
 
   it('关键词不再匹配隐藏的应用字段，仍可匹配工具说明和更新人', async () => {
@@ -52,7 +54,10 @@ describe('工具列表取消旧所属应用概念', () => {
     state.filters.keyword = 'legacy-app-code'
     state.handleSearch()
     expect(state.filteredJobs).toHaveLength(0)
-    for (const keyword of ['网络', 'operator', 'tool-1']) {
+    state.filters.keyword = 'tool-1'
+    state.handleSearch()
+    expect(state.filteredJobs).toHaveLength(0)
+    for (const keyword of ['网络', 'operator']) {
       state.filters.keyword = keyword
       state.handleSearch()
       expect(state.filteredJobs).toHaveLength(1)

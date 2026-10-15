@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    :title="`运维工具运行记录${jobTitle ? ` · ${jobTitle}` : ''}`"
+    :title="`运维工具运行记录${jobTitle ? ` · ${getAutomationToolTitle({ id: jobId, title: jobTitle })}` : ''}`"
     width="1360px"
     destroy-on-close
     @close="handleClose"
@@ -101,7 +101,7 @@
             sortable="custom"
             column-key="end_time"
           />
-          <el-table-column label="Ansible Node" min-width="120">
+          <el-table-column label="执行节点" min-width="120">
             <template #default="{ row }">
               <div v-if="row.executor_url" class="node-badges">
                 <el-tag
@@ -167,12 +167,14 @@
         v-model:visible="resultDialogVisible"
         :run-id="resultMeta.runId"
         :job-title="resultMeta.jobTitle"
+      :raw-job-title="resultMeta.rawJobTitle"
       />
     </div>
   </el-dialog>
 </template>
 
 <script setup>
+import { getAutomationRunTitle, getAutomationToolTitle } from '@/modules/automation/utils/resourcePresentation'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDateTime } from '@/modules/automation/utils/helpers'
@@ -393,6 +395,7 @@ function handleStatusClick(row) {
   if (!row?.id) return
   resultMeta.value = {
     runId: row.id,
+    rawJobTitle: row.rawJobTitle || props.jobTitle || '',
     jobTitle: row.jobTitle || props.jobTitle || ''
   }
   resultDialogVisible.value = true
@@ -487,7 +490,8 @@ function mapRunLogRecord(record = {}) {
   return {
     id: record.id ? String(record.id) : '',
     runId: String(record.runId ?? record.run_id ?? record.id ?? ''),
-    jobTitle: record.job_title ?? record.jobTitle ?? '-',
+    rawJobTitle: record.job_title ?? record.jobTitle ?? '',
+    jobTitle: getAutomationRunTitle({ ...record, job_id: record.job_id ?? props.jobId }),
     jobType: jobTypeRaw || '-',
     jobTypeKey,
     username: record.username ?? record.user_name ?? '-',

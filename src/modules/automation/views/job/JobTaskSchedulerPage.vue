@@ -4,7 +4,7 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="关键词">
-          <el-input v-model="searchKeyword" placeholder="搜索..." clearable style="width: 240px" @keyup.enter="handleSearch" @clear="handleSearch">
+          <el-input v-model="searchKeyword" placeholder="搜索任务名称、表达式或作者" clearable style="width: 240px" @keyup.enter="handleSearch" @clear="handleSearch">
             <template #prefix>
               <el-icon>
                 <Search />
@@ -40,7 +40,7 @@
         <el-icon>
           <Grid />
         </el-icon>
-        批量启停CRON
+        批量启停
       </el-button>
       <span style="flex: 1"></span>
       <el-button

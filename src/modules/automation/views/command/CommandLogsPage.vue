@@ -104,7 +104,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="ata_url" label="Ansible Node" width="140">
+        <el-table-column prop="ata_url" label="执行节点" width="140">
           <template #default="{ row }">
             <div class="ata-node-cell">
               <el-tag

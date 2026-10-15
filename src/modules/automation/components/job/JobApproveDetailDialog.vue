@@ -8,7 +8,7 @@
   >
     <el-form ref="formRef" :model="formData" label-width="120px" size="default">
       <el-form-item label="运维工具名称">
-        <span>{{ approveData.jobName }}</span>
+        <span>{{ getAutomationToolTitle({ jobId: approveData.jobId, title: approveData.jobName }) }}</span>
       </el-form-item>
 
       <el-form-item label="执行策略">
@@ -99,6 +99,7 @@
 </template>
 
 <script setup>
+import { getAutomationToolTitle } from '@/modules/automation/utils/resourcePresentation'
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { formatDateTime } from '@/modules/automation/utils/helpers'

@@ -19,10 +19,6 @@
               <em>运维工具类型</em>
               <strong>{{ currentTypeLabel }}</strong>
             </span>
-            <span class="create-job-drawer__meta-item">
-              <em>所属应用</em>
-              <strong>{{ currentAppletLabel }}</strong>
-            </span>
           </div>
         </div>
         <div class="create-job-drawer__nav">
@@ -68,7 +64,7 @@
 
             <!-- 脚本作业配置 -->
             <div v-if="job.type === 'script'" id="section-script" class="form-section">
-              <div class="section-title">脚本设置</div>
+              <div class="section-title">脚本与目标</div>
 
               <el-form-item label="脚本类型">
                 <el-radio-group v-model="jobConfig.scriptType">
@@ -148,29 +144,33 @@
                 </div>
               </el-form-item>
 
-              <el-form-item label="回调API">
-                <el-input v-model="jobConfig.callback" placeholder="执行完成后回调的URL" />
-              </el-form-item>
+              <el-collapse v-model="advancedSections">
+                <el-collapse-item title="高级执行设置" name="execution">
+                  <el-form-item label="完成后回调">
+                    <el-input v-model="jobConfig.callback" placeholder="执行完成后回调的URL" />
+                  </el-form-item>
 
-              <el-form-item label="任务超时">
-                <el-input-number v-model="jobConfig.taskTimeout" :min="-1" :step="60" />
-                <span style="margin-left: 8px">秒</span>
-              </el-form-item>
+                  <el-form-item label="任务超时">
+                    <el-input-number v-model="jobConfig.taskTimeout" :min="-1" :step="60" />
+                    <span style="margin-left: 8px">秒，-1 表示不限制</span>
+                  </el-form-item>
 
-              <el-form-item label="详细输出">
-                <el-select v-model="jobConfig.verbosity" style="width: 200px">
-                  <el-option label="正常" :value="0" />
-                  <el-option label="详细 (-v)" :value="1" />
-                  <el-option label="更详细 (-vv)" :value="2" />
-                  <el-option label="调试 (-vvv)" :value="3" />
-                  <el-option label="连接调试 (-vvvv)" :value="4" />
-                </el-select>
-              </el-form-item>
+                  <el-form-item label="详细输出">
+                    <el-select v-model="jobConfig.verbosity" style="width: 200px">
+                      <el-option label="正常" :value="0" />
+                      <el-option label="详细 (-v)" :value="1" />
+                      <el-option label="更详细 (-vv)" :value="2" />
+                      <el-option label="调试 (-vvv)" :value="3" />
+                      <el-option label="连接调试 (-vvvv)" :value="4" />
+                    </el-select>
+                  </el-form-item>
+                </el-collapse-item>
+              </el-collapse>
             </div>
 
             <!-- REST 作业配置 -->
             <div v-if="job.type === 'rest'" id="section-rest" class="form-section">
-              <div class="section-title">REST设置</div>
+              <div class="section-title">请求配置</div>
 
               <el-form-item label="CURL" required>
                 <el-input
@@ -189,7 +189,7 @@
 
             <!-- 命令作业配置 -->
             <div v-if="job.type === 'command'" id="section-command" class="form-section">
-              <div class="section-title">命令设置</div>
+              <div class="section-title">命令与目标</div>
 
               <el-form-item label="执行命令" required>
                 <div
@@ -330,7 +330,7 @@
 
             <!-- 日志和审核 -->
             <div id="section-audit" class="form-section">
-              <div class="section-title">日志和审核</div>
+              <div class="section-title">审批与日志</div>
 
               <el-form-item label="操作审批">
                 <el-checkbox v-model="job.needApprove" :disabled="job.needReview">
@@ -374,9 +374,6 @@
                 <div class="section-title">测试运维工具</div>
                 <div class="test-section-meta">
                   <span class="section-badge">{{ testStatusLabel }}</span>
-                  <span v-if="testRunId && !testJobResult" class="test-section-run-id">
-                    Run ID {{ testRunId }}
-                  </span>
                 </div>
               </div>
 
@@ -553,18 +550,6 @@ const currentTypeLabel = computed(() => {
   return typeOption?.label || '待选择'
 })
 
-const currentAppletLabel = computed(() => {
-  const currentAppletCode = job.appletCode || props.appletCode
-  if (!currentAppletCode) {
-    return '未指定'
-  }
-
-  const matchedApplet = props.appletsList.find(item => item.name === currentAppletCode)
-  return (
-    matchedApplet?.displayTitle || matchedApplet?.title || matchedApplet?.name || currentAppletCode
-  )
-})
-
 const scriptFileCount = computed(() =>
   jobConfig.tasks.reduce((count, task) => count + (task.scripts?.length || 0), 0)
 )
@@ -576,7 +561,7 @@ const commandCount = computed(() =>
 const testStatusLabel = computed(() => testJobStatus.value?.title || '未运行')
 
 const footerFacts = computed(() => {
-  const facts = [currentTypeLabel.value, currentAppletLabel.value]
+  const facts = [currentTypeLabel.value]
 
   if (job.type === 'script') {
     facts.push(`脚本 ${scriptFileCount.value}`)
@@ -610,6 +595,7 @@ const paramTypeList = [
 
 // 状态
 const submitting = ref(false)
+const advancedSections = ref([])
 const showFileSelector = ref(false)
 const showCommandSelector = ref(false)
 const currentTaskIndex = ref(0)
@@ -632,18 +618,18 @@ const navSections = computed(() => {
   const sections = [{ id: 'section-base', label: '基本设置' }]
 
   if (job.type === 'script') {
-    sections.push({ id: 'section-script', label: '脚本设置' })
+    sections.push({ id: 'section-script', label: '脚本与目标' })
   } else if (job.type === 'rest') {
-    sections.push({ id: 'section-rest', label: 'REST设置' })
+    sections.push({ id: 'section-rest', label: '请求配置' })
   } else if (job.type === 'command') {
-    sections.push({ id: 'section-command', label: '命令设置' })
+    sections.push({ id: 'section-command', label: '命令与目标' })
   }
 
   if (job.type !== 'command') {
     sections.push({ id: 'section-params', label: '运行参数' })
   }
 
-  sections.push({ id: 'section-audit', label: '日志和审核' })
+  sections.push({ id: 'section-audit', label: '审批与日志' })
   if (!props.viewMode) {
     sections.push({ id: 'section-test', label: '测试运维工具' })
   }
@@ -1091,7 +1077,7 @@ async function save() {
     const payload = {
       title: job.title,
       type: job.type,
-      appletCode: job.appletCode,
+      appletCode: job.appletCode, // Keep the original association even though it is no longer displayed.
       description: job.description,
       params: job.params,
       needApprove: job.needApprove,
@@ -1701,11 +1687,6 @@ watch(
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 8px;
-}
-
-.test-section-run-id {
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
 }
 
 .section-badge {

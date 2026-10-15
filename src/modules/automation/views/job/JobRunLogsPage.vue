@@ -84,7 +84,7 @@
 
               <el-table-column label="任务" show-overflow-tooltip min-width="200">
                 <template #default="{ row }">
-                  {{ translateText(row.job_title) }}
+                  {{ getAutomationRunTitle(row) }}
                 </template>
               </el-table-column>
 
@@ -118,7 +118,7 @@
                 </template>
               </el-table-column>
 
-              <el-table-column label="Ansible Node" width="150">
+              <el-table-column label="执行节点" width="150">
                 <template #default="{ row }">
                   <div class="node-list">
                     <el-tag
@@ -190,6 +190,7 @@
       v-model:visible="resultDialogVisible"
       :run-id="resultMeta.runId"
       :job-title="resultMeta.jobTitle"
+      :raw-job-title="resultMeta.rawJobTitle"
     />
   </div>
 </template>
@@ -203,7 +204,7 @@ import * as jaoApi from '@/modules/automation/api/jao'
 import { JOB_TYPE_OPTIONS } from '@/modules/automation/stores/useJobStore'
 import ExecuteResultDialog from '../../components/job/JobListView/ExecuteResultDialog.vue'
 import JobStatisticsPage from './JobStatisticsPage.vue'
-import { translateText } from '@/utils/i18n.js'
+import { getAutomationRunTitle } from '../../utils/resourcePresentation'
 import { formatDateTime } from '../../utils/helpers'
 import {
   RUN_LOG_STATUS_MAP,
@@ -501,7 +502,8 @@ function handleViewResult(row) {
   if (!row?.id) return
   resultMeta.value = {
     runId: row.id,
-    jobTitle: row.job_title
+    rawJobTitle: row.job_title || '',
+    jobTitle: getAutomationRunTitle(row)
   }
   resultDialogVisible.value = true
 }
@@ -515,7 +517,7 @@ async function handleRerun(row) {
     }
 
     await ElMessageBox.confirm(
-      `确定要重新启动运维工具 "${row.job_title}" 吗？`,
+      `确定要重新启动运维工具 "${getAutomationRunTitle(row)}" 吗？`,
       '重新启动运维工具',
       { type: 'warning' }
     )

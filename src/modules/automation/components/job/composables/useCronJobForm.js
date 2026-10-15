@@ -1,6 +1,7 @@
 import { ref, computed, watch, nextTick } from 'vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { ElMessage } from 'element-plus'
+import { getAutomationToolTitle } from '@/modules/automation/utils/resourcePresentation'
 
 function normalizeHostSelection(value) {
   if (Array.isArray(value)) {
@@ -97,7 +98,7 @@ export function useCronJobForm(props, emit) {
     jobId: '',
     jobParam: {},
     jobType: '',
-    appCode: '',
+    appCode: '', // Hidden compatibility field: keep defaults and edit round trips unchanged.
     logOutput: '1',
     isEncrypt: '1'
   })
@@ -351,18 +352,15 @@ export function useCronJobForm(props, emit) {
     if (!job) return ''
 
     if (isAuditJobType(formData.value.jobType)) {
-      return job.templateName || job.id
+      return getAutomationToolTitle({ title: job.templateName }, '未命名巡检任务')
     }
     if (formData.value.jobType === 'cmd') {
-      return job.name || job.id
+      return getAutomationToolTitle({ name: job.name }, '未命名命令任务')
     }
     if (formData.value.jobType === 'flows') {
-      return job.name || job.id
+      return getAutomationToolTitle({ name: job.name }, '未命名流程任务')
     }
-    if (job.id && job.id.length > 20) {
-      return job.templateName || job.title || job.id
-    }
-    return job.title || job.id
+    return getAutomationToolTitle(job)
   }
 
   /**

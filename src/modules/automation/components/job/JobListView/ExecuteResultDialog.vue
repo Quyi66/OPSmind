@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    :title="`运维工具运行结果${jobTitle ? ` · ${jobTitle}` : ''}`"
+    :title="`运维工具运行结果${jobTitle ? ` · ${getAutomationRunTitle({ job_title: jobTitle })}` : ''}`"
     width="1260px"
     :z-index="zIndex"
     append-to-body
@@ -27,10 +27,6 @@
                   </div>
                   <div class="overview-meta">
                     <div class="meta-item">
-                      <span class="meta-label">运行 ID</span>
-                      <span class="meta-value">{{ summary.runId }}</span>
-                    </div>
-                    <div class="meta-item">
                       <span class="meta-label">执行通道</span>
                       <span class="meta-value">
                         <el-tag
@@ -41,17 +37,9 @@
                         </el-tag>
                       </span>
                     </div>
-                    <div v-if="summary.agentClientId" class="meta-item">
-                      <span class="meta-label">Agent Client ID</span>
-                      <span class="meta-value">{{ summary.agentClientId }}</span>
-                    </div>
                     <div v-if="summary.agentVersion" class="meta-item">
                       <span class="meta-label">Agent 版本</span>
                       <span class="meta-value">{{ summary.agentVersion }}</span>
-                    </div>
-                    <div v-if="summary.relayTraceId" class="meta-item">
-                      <span class="meta-label">Relay 追踪 ID</span>
-                      <span class="meta-value">{{ summary.relayTraceId }}</span>
                     </div>
                     <div class="meta-item">
                       <span class="meta-label">执行人</span>
@@ -59,6 +47,16 @@
                     </div>
                   </div>
                 </div>
+                <el-collapse class="result-technical-info">
+                  <el-collapse-item title="技术信息" name="technical">
+                    <el-descriptions :column="1" size="small" border>
+                      <el-descriptions-item label="运行标识">{{ summary.runId }}</el-descriptions-item>
+                      <el-descriptions-item v-if="summary.agentClientId" label="Agent 标识">{{ summary.agentClientId }}</el-descriptions-item>
+                      <el-descriptions-item v-if="summary.relayTraceId" label="中继追踪标识">{{ summary.relayTraceId }}</el-descriptions-item>
+                      <el-descriptions-item v-if="rawJobTitle || jobTitle" label="原始任务名称">{{ rawJobTitle || jobTitle }}</el-descriptions-item>
+                    </el-descriptions>
+                  </el-collapse-item>
+                </el-collapse>
                 <JobUpgradeOverview
                   v-if="isAnsibleJob"
                   :ansible-contents="ansibleContents"
@@ -454,6 +452,7 @@ import { isActiveRunStatus, isSuccessfulRunStatus, normalizeRunStatus } from '@/
 import { AGENT_ERROR_MESSAGES, agentApi } from '@/modules/asset/api'
 import { authService } from '@/core/auth'
 import { translateText } from '@/utils/i18n'
+import { getAutomationRunTitle } from '@/modules/automation/utils/resourcePresentation'
 import AnsibleLogViewer from '../AnsibleLogViewer.vue'
 import JobUpgradeOverview from './JobUpgradeOverview.vue'
 
@@ -494,6 +493,7 @@ const props = defineProps({
   visible: { type: Boolean, default: false },
   runId: { type: String, default: '' },
   jobTitle: { type: String, default: '' },
+  rawJobTitle: { type: String, default: '' },
   zIndex: { type: Number, default: undefined }
 })
 
@@ -1809,6 +1809,13 @@ onBeforeUnmount(() => {
 
 .overview-scroll {
   height: 100%;
+}
+
+.result-technical-info {
+  margin: 0 0 16px;
+  :deep(.el-descriptions__content) {
+    overflow-wrap: anywhere;
+  }
 }
 
 .overview-header {
