@@ -127,8 +127,8 @@ export function useAutomationWorkbench({ canViewJobs = true, canViewCommands = t
 
     try {
       const [todayRunsResult, failedRunsResult, activeTotals] = await Promise.all([
-        fetchTodayRuns(20),
-        fetchFailedRuns(20),
+        fetchTodayRuns(1),
+        fetchFailedRuns(1),
         fetchActiveRunTotals()
       ])
 

@@ -270,9 +270,9 @@
                       class="hostname-link"
                       @click="handleView(row)"
                     >
-                      {{ row.hostname || '-' }}
+                      {{ getAssetDisplayName(row) }}
                     </el-link>
-                    <span class="ip-subtext">{{ row.IP || '-' }}</span>
+                    <span class="ip-subtext">{{ row.IP || 'IP 未采集' }}</span>
                   </div>
                 </div>
               </template>
@@ -283,9 +283,9 @@
               <template #default="{ row }">
                 <el-tag
                   size="small"
-                  :type="getConnectionTypeTag(row)"
+                  :type="_getConnectionTypeTag(row)"
                 >
-                  {{ getConnectionTypeLabel(row) }}
+                  {{ _getConnectionTypeLabel(row) }}
                 </el-tag>
                 <div v-if="row.clientId || row.client_id" class="text-xs text-muted font-mono" :title="row.clientId || row.client_id">
                   {{ (row.clientId || row.client_id).length > 10 ? (row.clientId || row.client_id).slice(0, 10) + '...' : (row.clientId || row.client_id) }}
@@ -298,9 +298,9 @@
                 <template v-if="['koreops_agent', 'agent', 'oplus_agent'].includes(row.connectionType || row.connection_type)">
                   <el-tag
                     size="small"
-                    :type="getAgentStatusTag(row)"
+                    :type="_getAgentStatusTag(row)"
                   >
-                    {{ getAgentStatusLabel(row) }}
+                    {{ _getAgentStatusLabel(row) }}
                   </el-tag>
                   <span v-if="row.agentVersion" class="text-xs text-muted ms-1">v{{ row.agentVersion }}</span>
                   <div v-if="row.capabilities" class="text-xs text-secondary mt-1">
@@ -676,6 +676,7 @@ import BatchLocationDialog from '@/modules/patches/components/host-detail/dialog
 
 import { viewConfigApi } from '@/modules/patches/api'
 import { formatDateTime } from '../utils/helpers'
+import { getAssetDisplayName } from '@/utils/workspacePresentation'
 
 // 路由
 const route = useRoute()
@@ -839,14 +840,14 @@ const getConnectionType = record => {
   return 'unknown'
 }
 
-const getConnectionTypeLabel = record => {
+const _getConnectionTypeLabel = record => {
   const connectionType = getConnectionType(record)
   if (connectionType === 'koreops_agent') return 'Agent'
   if (connectionType === 'ssh') return 'SSH'
   return '未知'
 }
 
-const getConnectionTypeTag = record => {
+const _getConnectionTypeTag = record => {
   const connectionType = getConnectionType(record)
   if (connectionType === 'koreops_agent') return 'success'
   if (connectionType === 'ssh') return 'info'
@@ -854,8 +855,8 @@ const getConnectionTypeTag = record => {
 }
 
 const getAgentStatus = record => record.agentStatus || record.agent_status || 'unknown'
-const getAgentStatusLabel = record => ({ online: '在线', offline: '离线', unknown: '未知' })[getAgentStatus(record)] || '未知'
-const getAgentStatusTag = record => ({ online: 'success', offline: 'danger', unknown: 'warning' })[getAgentStatus(record)] || 'warning'
+const _getAgentStatusLabel = record => ({ online: '在线', offline: '离线', unknown: '未知' })[getAgentStatus(record)] || '未知'
+const _getAgentStatusTag = record => ({ online: 'success', offline: 'danger', unknown: 'warning' })[getAgentStatus(record)] || 'warning'
 
 const hasAgentLocalFilter = () => false
 

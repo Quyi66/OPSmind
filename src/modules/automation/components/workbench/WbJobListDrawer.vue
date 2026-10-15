@@ -1,9 +1,8 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { appTableList } from '@/modules/automation/api/jao'
 import { translateText } from '@/utils/i18n'
 import { formatDateTime as formatDateTimeGlobal } from '../../utils/helpers'
-import { useAppletTranslation } from '@/modules/automation/components/job/composables/useAppletTranslation.js'
 
 const props = defineProps({
   title: { type: String, default: '运维工具列表' },
@@ -15,31 +14,20 @@ const emit = defineEmits(['navigate', 'execute', 'edit', 'copy', 'history', 'del
 const visible = defineModel('visible', { default: false })
 
 const loading = ref(false)
+const loadError = ref('')
 const jobs = ref([])
+let loadRequestId = 0
 const filters = reactive({
-  appletCode: '',
   jobType: 'all',
   keyword: ''
 })
 const appliedFilters = reactive({
-  appletCode: '',
   jobType: 'all',
   keyword: ''
 })
 
 const TYPE_LABELS = { rest: 'REST', script: '脚本', command: '命令' }
 const TYPE_TAGS = { rest: 'primary', script: 'success', command: 'warning' }
-const { appletsList, fetchApplets } = useAppletTranslation()
-
-const appletOptions = computed(() => [
-  { name: '', displayTitle: '所有应用' },
-  { name: '$NULL$', displayTitle: '未分类' },
-  ...appletsList.value.map(item => ({
-    name: item.name,
-    displayTitle: item.displayTitle || item.title || item.name
-  }))
-])
-
 const filteredJobs = computed(() => {
   const keyword = appliedFilters.keyword.trim().toLowerCase()
 
@@ -48,17 +36,9 @@ const filteredJobs = computed(() => {
       return false
     }
 
-    if (appliedFilters.appletCode === '$NULL$') {
-      if (job.appletCode && job.appletCode !== '$NULL$') {
-        return false
-      }
-    } else if (appliedFilters.appletCode && job.appletCode !== appliedFilters.appletCode) {
-      return false
-    }
-
     if (!keyword) return true
 
-    return [job.title, job.id, job.appletCode]
+    return [job.title, jobTitle(job), job.id, job.description, job.updatedBy, job.createdBy]
       .filter(Boolean)
       .some(value => String(value).toLowerCase().includes(keyword))
   })
@@ -66,7 +46,6 @@ const filteredJobs = computed(() => {
 
 const hasActiveFilters = computed(
   () =>
-    Boolean(appliedFilters.appletCode) ||
     appliedFilters.jobType !== 'all' ||
     Boolean(appliedFilters.keyword)
 )
@@ -97,9 +76,6 @@ function syncFilters(resetKeyword = true) {
   filters.jobType = defaultType
   appliedFilters.jobType = defaultType
 
-  filters.appletCode = ''
-  appliedFilters.appletCode = ''
-
   if (resetKeyword) {
     filters.keyword = ''
     appliedFilters.keyword = ''
@@ -107,7 +83,6 @@ function syncFilters(resetKeyword = true) {
 }
 
 function handleSearch() {
-  appliedFilters.appletCode = filters.appletCode
   appliedFilters.jobType = filters.jobType
   appliedFilters.keyword = filters.keyword.trim()
 }
@@ -117,34 +92,38 @@ function handleReset() {
 }
 
 function formatDateTime(value) {
-  return formatDateTimeGlobal(value, 'YYYY-MM-DD')
-}
-
-async function ensureAppletOptions() {
-  if (appletsList.value.length) return
-  await fetchApplets()
+  return formatDateTimeGlobal(value, 'YYYY-MM-DD HH:mm')
 }
 
 async function loadJobs() {
+  if (!visible.value) return
+  const currentId = ++loadRequestId
   loading.value = true
+  loadError.value = ''
   jobs.value = []
   try {
     const res = await appTableList({ appletCode: '' })
+    if (currentId !== loadRequestId || !visible.value) return
     jobs.value = Array.isArray(res?.data) ? res.data : []
   } catch {
+    if (currentId !== loadRequestId) return
+    loadError.value = '运维工具加载失败，请重试。'
     jobs.value = []
   } finally {
-    loading.value = false
+    if (currentId === loadRequestId) loading.value = false
   }
 }
 
 watch(
   () => visible.value,
   async isVisible => {
-    if (!isVisible) return
+    if (!isVisible) {
+      loadRequestId += 1
+      loading.value = false
+      return
+    }
     syncFilters(true)
     handleSearch()
-    await ensureAppletOptions()
     await loadJobs()
   },
   { immediate: true }
@@ -166,6 +145,7 @@ watch(
     handleSearch()
   }
 )
+onBeforeUnmount(() => { loadRequestId += 1 })
 </script>
 
 <template>
@@ -186,25 +166,11 @@ watch(
     </template>
 
     <div class="wb-drawer-body" v-loading="loading">
+      <el-alert v-if="loadError" :title="loadError" type="error" show-icon :closable="false">
+        <el-button link type="primary" @click="loadJobs">重试</el-button>
+      </el-alert>
       <div class="wb-job-filter-panel">
         <el-form :model="filters" inline size="small" class="wb-job-filter-form" @submit.prevent>
-          <el-form-item label="应用范围">
-            <el-select
-              v-model="filters.appletCode"
-              filterable
-              clearable
-              placeholder="全部应用"
-              style="width: 220px"
-              @change="handleSearch"
-            >
-              <el-option
-                v-for="option in appletOptions"
-                :key="option.name || 'all'"
-                :label="option.displayTitle"
-                :value="option.name"
-              />
-            </el-select>
-          </el-form-item>
           <el-form-item label="类型">
             <el-select
               v-model="filters.jobType"
@@ -261,7 +227,12 @@ watch(
                 {{ formatDateTime(job.updatedAt || job.createdAt) }}
               </span>
             </div>
-            <span class="wb-job-card__name">{{ jobTitle(job) }}</span>
+            <span class="wb-job-card__name" :title="jobTitle(job)">{{ jobTitle(job) }}</span>
+            <div class="wb-job-card__meta">
+              <span>更新人：{{ job.updatedBy || job.createdBy || '未提供' }}</span>
+            </div>
+            <span v-if="job.description" class="wb-job-card__description" :title="job.description">{{ job.description }}</span>
+            <span class="wb-job-card__id" :title="job.id">ID：{{ job.id }}</span>
           </div>
 
           <div class="wb-job-card__actions">
@@ -309,7 +280,7 @@ watch(
           </div>
         </article>
       </div>
-      <el-empty v-else-if="!loading" :description="emptyText" :image-size="60" />
+      <el-empty v-else-if="!loading && !loadError" :description="emptyText" :image-size="60" />
     </div>
   </el-drawer>
 </template>
@@ -368,7 +339,7 @@ watch(
   position: relative;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 108px;
+  min-height: 180px;
   border: 1px solid #cbd5e1;
   border-radius: 12px;
   background: var(--el-bg-color);
@@ -436,8 +407,8 @@ watch(
     word-break: break-word;
     min-height: 1.45em;
     display: -webkit-box;
-    -webkit-line-clamp: 1;
-    line-clamp: 1;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -449,6 +420,9 @@ watch(
     border-top: 1px solid #cbd5e1;
     background: #f8fafc;
   }
+
+  &__meta { display: flex; flex-wrap: wrap; gap: 4px 12px; color: var(--el-text-color-secondary); font-size: 12px; }
+  &__description, &__id { font-size: 12px; color: var(--el-text-color-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   &__action {
     display: inline-flex;

@@ -117,20 +117,29 @@
         <div class="wb-panel__header wb-panel__header--jobs">
           <div class="wb-panel__title-group wb-panel__title-group--jobs">
             <h3 class="wb-panel__title">运维工具分布</h3>
-            <div class="wb-job-panel-stats">
-              <span class="wb-job-panel-stat wb-job-panel-stat--total">
+            <div class="wb-job-panel-stats" aria-label="按运维工具类型筛选">
+              <button
+                type="button"
+                class="wb-job-panel-stat wb-job-panel-stat--total"
+                :class="{ 'is-active': !selectedJobType }"
+                :aria-pressed="!selectedJobType"
+                @click="selectedJobType = ''"
+              >
                 <span class="wb-job-panel-stat__label">全部</span>
                 <strong class="wb-job-panel-stat__value">{{ totalJobCount }}</strong>
-              </span>
-              <span
+              </button>
+              <button
                 v-for="item in jobTypeCounts"
                 :key="item.key"
+                type="button"
                 class="wb-job-panel-stat"
-                :class="`wb-job-panel-stat--${item.type}`"
+                :class="[`wb-job-panel-stat--${item.type}`, { 'is-active': selectedJobType === item.type }]"
+                :aria-pressed="selectedJobType === item.type"
+                @click="selectedJobType = item.type"
               >
                 <span class="wb-job-panel-stat__label">{{ item.label }}</span>
                 <strong class="wb-job-panel-stat__value">{{ item.value }}</strong>
-              </span>
+              </button>
             </div>
           </div>
           <div class="wb-panel__header-actions">
@@ -166,184 +175,92 @@
               link
               type="primary"
               size="small"
-              @click="openJobListDrawer('', '全部运维工具')"
+              @click="openFilteredJobListDrawer"
             >
               查看全部
             </el-button>
           </div>
         </div>
-        <transition-group
-          v-if="workbenchJobs.length"
-          name="wb-stack-slide"
-          tag="div"
-          class="wb-workbench-job-grid"
-        >
-          <article
-            v-for="job in workbenchJobs"
-            :key="job.id"
-            class="wb-workbench-job-card"
-            :class="`wb-workbench-job-card--${job.type || 'rest'}`"
-            @click="handleEditJobFromDrawer(job)"
+        <div class="wb-job-panel-summary" aria-live="polite">
+          <span>最近变更优先 · 当前展示 {{ workbenchJobs.length }} / {{ filteredWorkbenchJobs.length }} 项</span>
+          <span v-if="selectedJobType">已筛选：{{ workbenchJobTypeLabel(selectedJobType) }}</span>
+        </div>
+        <div ref="jobViewportRef" class="wb-workbench-job-viewport">
+          <transition-group
+            v-if="workbenchJobs.length"
+            name="wb-stack-slide"
+            tag="div"
+            class="wb-workbench-job-grid"
+            :style="workbenchJobGridStyle"
           >
-            <div class="wb-workbench-job-card__body">
-              <div class="wb-workbench-job-card__head">
-                <el-tag size="small" round :type="job.displayTypeTag">
-                  {{ job.displayTypeLabel }}
-                </el-tag>
-                <span class="wb-workbench-job-card__time">{{ job.displayTime }}</span>
+            <article
+              v-for="job in workbenchJobs"
+              :key="job.id"
+              class="wb-workbench-job-card"
+              :class="`wb-workbench-job-card--${job.type || 'rest'}`"
+              @click="handleEditJobFromDrawer(job)"
+            >
+              <div class="wb-workbench-job-card__body">
+                <div class="wb-workbench-job-card__head">
+                  <el-tag size="small" round :type="job.displayTypeTag">
+                    {{ job.displayTypeLabel }}
+                  </el-tag>
+                  <span class="wb-workbench-job-card__time" :title="job.displayTime.title">{{ job.displayTime.label }}</span>
+                </div>
+                <div class="wb-workbench-job-card__info">
+                  <strong class="wb-workbench-job-card__name" :title="job.displayTitle">{{ job.displayTitle }}</strong>
+                </div>
               </div>
-              <strong class="wb-workbench-job-card__name">{{ job.displayTitle }}</strong>
-            </div>
-            <div class="wb-workbench-job-card__actions">
-              <button
-                type="button"
-                class="wb-workbench-job-card__action"
-                @click.stop="handleExecuteJobFromDrawer(job)"
-              >
-                <i class="fa fa-play" />
-                <span>执行</span>
-              </button>
-              <button
-                type="button"
-                class="wb-workbench-job-card__action"
-                @click.stop="handleEditJobFromDrawer(job)"
-              >
-                <i class="fa fa-cog" />
-                <span>编辑</span>
-              </button>
-              <button
-                type="button"
-                class="wb-workbench-job-card__action wb-workbench-job-card__action--danger"
-                @click.stop="handleDeleteJob(job)"
-              >
-                <i class="fa fa-trash" />
-                <span>删除</span>
-              </button>
-              <el-dropdown
-                trigger="hover"
-                placement="bottom-end"
-                @command="handleWorkbenchJobCommand(job, $event)"
-              >
+              <div class="wb-workbench-job-card__actions">
                 <button
                   type="button"
-                  class="wb-workbench-job-card__action wb-workbench-job-card__action--more"
-                  @click.stop
+                  class="wb-workbench-job-card__action"
+                  @click.stop="handleExecuteJobFromDrawer(job)"
                 >
-                  <i class="fa fa-ellipsis-h" />
+                  <i class="fa fa-play" />
+                  <span>执行</span>
                 </button>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item command="copy">
-                      <i class="fa fa-copy wb-workbench-job-card__menu-icon" />
-                      <span>复制</span>
-                    </el-dropdown-item>
-                    <el-dropdown-item command="history">
-                      <i class="fa fa-history wb-workbench-job-card__menu-icon" />
-                      <span>历史</span>
-                    </el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
-            </div>
-          </article>
-        </transition-group>
-        <el-empty v-else description="暂无运维工具" :image-size="60" />
-      </section>
-
-      <!-- 定时调度 -->
-      <section v-if="canViewJobs" class="wb-panel wb-panel--cron">
-        <div class="wb-panel__header">
-          <h3 class="wb-panel__title">定时调度</h3>
-          <div class="wb-panel__header-actions">
-            <el-button
-              class="wb-inline-action"
-              link
-              type="primary"
-              size="small"
-              @click="handleLauncherAction('create-cron-job')"
-            >
-              + 新增
-            </el-button>
-            <el-button
-              class="wb-inline-action"
-              link
-              type="primary"
-              size="small"
-              @click="openCronDrawer"
-            >
-              全部任务
-            </el-button>
-          </div>
-        </div>
-
-        <transition-group
-          v-if="highlightedCronJobs.length"
-          name="wb-stack-slide"
-          tag="div"
-          class="wb-cron-list"
-        >
-          <div
-            v-for="item in highlightedCronJobs"
-            :key="item.id"
-            class="wb-cron-item"
-            :class="{ 'wb-cron-item--enabled': item.triggerStatus === '1' }"
-            @click="handleEditCronFromDrawer(item)"
-          >
-            <div class="wb-cron-item__info">
-              <strong class="wb-cron-item__name" :title="item.jobDesc">
-                {{ item.jobDesc || `任务 ${item.id}` }}
-              </strong>
-              <span class="wb-cron-item__cron">{{ item.scheduleConf || '-' }}</span>
-            </div>
-            <div class="wb-cron-item__actions">
-              <el-button
-                class="wb-inline-action"
-                text
-                type="primary"
-                size="small"
-                :loading="cronActionLoading[item.id + '_exec']"
-                @click.stop="handleExecuteCron(item)"
-              >
-                执行
-              </el-button>
-              <el-button
-                class="wb-inline-action"
-                text
-                size="small"
-                :type="item.triggerStatus === '1' ? 'danger' : 'success'"
-                :loading="cronActionLoading[item.id + '_toggle']"
-                @click.stop="handleToggleCron(item)"
-              >
-                {{ item.triggerStatus === '1' ? '停用' : '启用' }}
-              </el-button>
-              <el-button
-                class="wb-inline-action"
-                text
-                size="small"
-                @click.stop="handleCopyCronFromDrawer(item)"
-              >
-                复制
-              </el-button>
-              <el-button
-                class="wb-inline-action"
-                text
-                type="danger"
-                size="small"
-                @click.stop="handleDeleteCronFromDrawer(item)"
-              >
-                删除
-              </el-button>
-            </div>
-          </div>
-        </transition-group>
-        <el-empty v-else description="暂无定时任务" :image-size="60" />
-
-        <div v-if="cronSummary.total" class="wb-cron-footer">
-          <span class="wb-cron-footer__total">共 {{ cronSummary.total }} 个</span>
-          <el-tag size="small" type="success" effect="plain">启用 {{ cronSummary.enabled }}</el-tag>
-          <el-tag size="small" type="info" effect="plain" style="margin-left: 4px">
-            停用 {{ cronSummary.disabled }}
-          </el-tag>
+                <button
+                  type="button"
+                  class="wb-workbench-job-card__action"
+                  @click.stop="handleEditJobFromDrawer(job)"
+                >
+                  <i class="fa fa-cog" />
+                  <span>编辑</span>
+                </button>
+                <el-dropdown
+                  trigger="click"
+                  placement="bottom-end"
+                  @command="handleWorkbenchJobCommand(job, $event)"
+                >
+                  <button
+                    type="button"
+                    class="wb-workbench-job-card__action wb-workbench-job-card__action--more"
+                    aria-label="更多运维工具操作"
+                    @click.stop
+                  >
+                    <i class="fa fa-ellipsis-h" />
+                  </button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="copy">
+                        <i class="fa fa-copy wb-workbench-job-card__menu-icon" />
+                        <span>复制</span>
+                      </el-dropdown-item>
+                      <el-dropdown-item command="history">
+                        <i class="fa fa-history wb-workbench-job-card__menu-icon" />
+                        <span>历史</span>
+                      </el-dropdown-item>
+                      <el-dropdown-item command="delete" divided>
+                        <span class="wb-workbench-job-delete"><i class="fa fa-trash wb-workbench-job-card__menu-icon" />删除</span>
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </div>
+            </article>
+          </transition-group>
+          <el-empty v-else :description="selectedJobType ? '该类型暂无运维工具' : '暂无运维工具'" :image-size="60" />
         </div>
       </section>
 
@@ -557,64 +474,6 @@
         <el-empty v-else description="暂无命令与命令运维工具" :image-size="60" />
       </section>
 
-      <!-- 运行分布 -->
-      <section v-if="canViewJobs" class="wb-panel wb-panel--runs">
-        <div class="wb-panel__header">
-          <div class="wb-panel__title-group">
-            <h3 class="wb-panel__title">运行分布</h3>
-            <el-tag size="small" type="info" effect="plain" style="margin-left: 6px">今日</el-tag>
-          </div>
-          <el-button
-            class="wb-inline-action"
-            link
-            type="primary"
-            size="small"
-            @click="openTodayRunsDrawer"
-          >
-            查看全部
-          </el-button>
-        </div>
-        <transition-group
-          v-if="todayRunRecords.length"
-          name="wb-stack-slide"
-          tag="div"
-          class="wb-run-list"
-        >
-          <button
-            v-for="item in workbenchRunRecords"
-            :key="item.id"
-            type="button"
-            class="wb-run-log-item"
-            @click="handleOpenRunResult(item)"
-          >
-            <strong class="wb-run-log-item__name">{{ item.displayTitle }}</strong>
-            <span
-              class="wb-run-log-item__type"
-              :class="`wb-run-log-item__type--${item.displayTypeClass}`"
-            >
-              {{ item.displayTypeLabel }}
-            </span>
-            <span class="wb-run-log-item__time">{{ item.displayTime }}</span>
-            <el-tag
-              class="wb-run-log-item__status"
-              size="small"
-              effect="plain"
-              :type="item.displayStatusType"
-            >
-              {{ item.displayStatusLabel }}
-            </el-tag>
-            <i class="fas fa-chevron-right wb-run-log-item__arrow" />
-          </button>
-        </transition-group>
-        <el-empty v-else description="今日暂无运行记录" :image-size="60" />
-        <div class="wb-run-entries__footer">
-          今日共运行
-          <strong>{{ todayRunTotal }}</strong>
-          次，失败
-          <strong :class="failedRunTotal ? 'text-danger' : ''">{{ failedRunTotal }}</strong>
-          次
-        </div>
-      </section>
     </div>
 
     <!-- ── 弹窗 ── -->
@@ -714,13 +573,11 @@
     <!-- ── 抽屉面板 ── -->
     <WbRunLogsDrawer
       v-model:visible="todayRunsDrawer.visible"
+      :initial-type="todayRunsDrawer.filterType"
       :title="todayRunsDrawer.title"
-      :records="todayRunsDrawer.records"
-      :loading="todayRunsDrawer.loading"
-      :total="todayRunsDrawer.total"
+      :reload-version="runLogsReloadVersion"
       link="/run-records/logs?day=0"
       link-label="查看完整记录"
-      empty-text="今日暂无运行记录"
       @open-result="handleOpenRunResult"
       @navigate="handleNavigate"
     />
@@ -728,12 +585,9 @@
     <WbRunLogsDrawer
       v-model:visible="failedRunsDrawer.visible"
       title="今日失败运行"
-      :records="failedRunsDrawer.records"
-      :loading="failedRunsDrawer.loading"
-      :total="failedRunsDrawer.total"
+      :reload-version="runLogsReloadVersion"
       link="/run-records/logs?day=0&status=FAILED"
       link-label="查看完整记录"
-      empty-text="今日暂无失败运行"
       failed-only
       @open-result="handleOpenRunResult"
       @navigate="handleNavigate"
@@ -842,17 +696,18 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, defineAsyncComponent, onActivated, onBeforeUnmount, onDeactivated, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import { authService } from '@/core/auth'
 import { canAccessMenuCode } from '@/core/auth/permission-policy'
 import { translateText } from '@/utils/i18n'
-import { formatDateTime as formatDateTimeGlobal } from '../utils/helpers'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { useAppletTranslation } from '@/modules/automation/components/job/composables/useAppletTranslation.js'
 import { useAutomationWorkbench } from '@/modules/automation/composables/useAutomationWorkbench.js'
+import { formatWorkbenchJobDate, getWorkbenchCardLayout, selectWorkbenchJobs } from '@/modules/automation/utils/workbenchPresentation'
+import './workbench/workbench-drawers.scss'
 import {
   fetchFlowInstances as fetchFlowInstancesApi,
   passApprove,
@@ -868,10 +723,6 @@ import {
   deleteCommand as deleteCommandApi
 } from '@/modules/automation/api/command'
 import { copyJob as copyJobApi, deleteJob as deleteJobApi } from '@/modules/automation/api/jobApi'
-import {
-  getRunLogStatusLabel as runStatusLabel,
-  getRunLogStatusType as runStatusType
-} from '@/modules/automation/constants/runLogStatus'
 import WbRunLogsDrawer from '@/modules/automation/components/workbench/WbRunLogsDrawer.vue'
 import WbReviewDrawer from '@/modules/automation/components/workbench/WbReviewDrawer.vue'
 import WbCronDrawer from '@/modules/automation/components/workbench/WbCronDrawer.vue'
@@ -930,7 +781,6 @@ const {
   todayRunTotal,
   failedRunTotal,
   activeRunCount,
-  todayRunRecords,
   hasActiveRuns,
   jobList,
   jobTypeCounts,
@@ -940,13 +790,9 @@ const {
   flows,
   cronSummary,
   cronJobs,
-  highlightedCronJobs,
   refreshRunLogData,
   toggleCronJob,
   executeCronJobNow,
-  fetchFailedRuns,
-  fetchTodayRuns,
-  fetchRunsByType,
   fetchApproveItems,
   fetchCommandReviewItems,
   fetchScriptReviewItems,
@@ -976,42 +822,33 @@ const WORKBENCH_JOB_TYPE_TAGS = {
   command: 'warning'
 }
 
-const WORKBENCH_RUN_LIMIT = 8
 const RUN_FEEDBACK_RETRY_DELAYS = [1200, 3200, 6500]
-const viewportWidth = ref(1920)
+const jobViewportRef = ref(null)
+const jobViewportWidth = ref(0)
+const jobViewportHeight = ref(0)
+let jobResizeObserver
 
 const totalJobCount = computed(() => jobList.value.length)
+const selectedJobType = ref('')
+const filteredWorkbenchJobs = computed(() => selectWorkbenchJobs(jobList.value, selectedJobType.value))
 
-const workbenchJobColumnCount = computed(() => {
-  const width = viewportWidth.value
-  if (width <= 720) return 1
-  if (width <= 960) return 2
-  if (width <= 1480) return 3
-  if (width <= 1680) return 4
-  return 5
-})
-
-const workbenchJobLimit = computed(() => workbenchJobColumnCount.value * 2)
+const workbenchJobLayout = computed(() => getWorkbenchCardLayout(jobViewportWidth.value, jobViewportHeight.value))
+const workbenchJobLimit = computed(() => workbenchJobLayout.value.limit)
+const workbenchJobGridStyle = computed(() => ({
+  '--wb-job-columns': workbenchJobLayout.value.columns,
+  '--wb-job-rows': workbenchJobLayout.value.rows,
+  '--wb-job-gap': `${workbenchJobLayout.value.gap}px`,
+  '--wb-job-max-height': `${workbenchJobLayout.value.maxHeight}px`,
+  '--wb-job-min-height': `${workbenchJobLayout.value.minHeight}px`
+}))
 
 const workbenchJobs = computed(() =>
-  pickRecentWorkbenchJobs(jobList.value, workbenchJobLimit.value).map(job => ({
+  filteredWorkbenchJobs.value.slice(0, workbenchJobLimit.value).map(job => ({
     ...job,
     displayTitle: translateText(job?.title) || job?.title || job?.id || '-',
-    displayTime: formatDateTime(job?.updatedAt || job?.createdAt),
+    displayTime: formatWorkbenchJobDate(job),
     displayTypeLabel: workbenchJobTypeLabel(job?.type),
     displayTypeTag: workbenchJobTypeTag(job?.type)
-  }))
-)
-
-const workbenchRunRecords = computed(() =>
-  todayRunRecords.value.slice(0, WORKBENCH_RUN_LIMIT).map(item => ({
-    ...item,
-    displayTitle: translateText(item?.job_title) || '-',
-    displayTypeClass: String(item?.job_type || item?.type || 'rest').toLowerCase(),
-    displayTypeLabel: runTypeLabel(item?.job_type || item?.type),
-    displayTime: formatDateTime(item?.start_time),
-    displayStatusLabel: runStatusLabel(item?.status),
-    displayStatusType: runStatusType(item?.status)
   }))
 )
 
@@ -1058,13 +895,11 @@ const cronActionLoading = reactive({})
 // 抽屉状态
 const todayRunsDrawer = reactive({
   visible: false,
-  loading: false,
-  records: [],
-  total: 0,
   title: '今日运行记录',
   filterType: ''
 })
-const failedRunsDrawer = reactive({ visible: false, loading: false, records: [], total: 0 })
+const failedRunsDrawer = reactive({ visible: false })
+const runLogsReloadVersion = ref(0)
 const cronDrawer = reactive({ visible: false })
 const jobListDrawer = reactive({ visible: false, filterType: '', title: '全部运维工具' })
 const jobListReloadVersion = ref(0)
@@ -1324,35 +1159,6 @@ function handleJobTypeCreate(type) {
   if (action) handleLauncherAction(action)
 }
 
-function resolveJobTimestamp(job) {
-  return new Date(job?.updatedAt || job?.createdAt || 0).getTime() || 0
-}
-
-function pickRecentWorkbenchJobs(rows, limit = WORKBENCH_JOB_LIMIT) {
-  if (!Array.isArray(rows) || !rows.length || limit <= 0) return []
-
-  const selected = []
-
-  rows.forEach(job => {
-    const currentTime = resolveJobTimestamp(job)
-    const insertAt = selected.findIndex(item => currentTime > resolveJobTimestamp(item))
-
-    if (insertAt === -1) {
-      if (selected.length < limit) {
-        selected.push(job)
-      }
-      return
-    }
-
-    selected.splice(insertAt, 0, job)
-    if (selected.length > limit) {
-      selected.length = limit
-    }
-  })
-
-  return selected
-}
-
 function workbenchJobTypeLabel(type) {
   return (
     WORKBENCH_JOB_TYPE_LABELS[String(type || '').toLowerCase()] ||
@@ -1365,6 +1171,10 @@ function workbenchJobTypeTag(type) {
 }
 
 function handleWorkbenchJobCommand(job, command) {
+  if (command === 'delete') {
+    void handleDeleteJob(job)
+    return
+  }
   if (command === 'copy') {
     handleCopyJob(job)
     return
@@ -1375,9 +1185,19 @@ function handleWorkbenchJobCommand(job, command) {
   }
 }
 
-function syncWorkbenchViewportWidth() {
-  if (typeof window === 'undefined') return
-  viewportWidth.value = window.innerWidth || document.documentElement?.clientWidth || 1920
+function openFilteredJobListDrawer() {
+  openJobListDrawer(selectedJobType.value, selectedJobType.value ? `${workbenchJobTypeLabel(selectedJobType.value)}运维工具` : '全部运维工具')
+}
+
+function observeJobViewport() {
+  if (!jobViewportRef.value) return
+  jobResizeObserver?.disconnect()
+  jobResizeObserver = new ResizeObserver(([entry]) => {
+    if (entry.contentRect.width <= 0 || entry.contentRect.height <= 0) return
+    jobViewportWidth.value = entry.contentRect.width
+    jobViewportHeight.value = entry.contentRect.height
+  })
+  jobResizeObserver.observe(jobViewportRef.value)
 }
 
 function handleOpenRunResult(item) {
@@ -1615,19 +1435,6 @@ async function handleRejectItem(item) {
   }
 }
 
-function formatDateTime(value) {
-  return formatDateTimeGlobal(value, 'MM-DD HH:mm')
-}
-
-function runTypeLabel(type) {
-  const labels = {
-    rest: 'REST运维工具',
-    command: '命令运维工具',
-    script: '脚本运维工具'
-  }
-  return labels[String(type || '').toLowerCase()] || '运行记录'
-}
-
 function safeJsonArray(source) {
   if (!source) return []
   if (Array.isArray(source)) return source
@@ -1729,56 +1536,19 @@ function openFlowListDrawer() {
   flowListDrawer.visible = true
 }
 
-async function openFailedRunsDrawer() {
+function openFailedRunsDrawer() {
   failedRunsDrawer.visible = true
-  await refreshFailedRunsDrawerInPlace()
 }
 
-async function refreshFailedRunsDrawerInPlace() {
-  failedRunsDrawer.loading = true
-  try {
-    const r = await fetchFailedRuns(20)
-    failedRunsDrawer.records = r.records
-    failedRunsDrawer.total = r.total
-  } finally {
-    failedRunsDrawer.loading = false
-  }
-}
-
-async function openTodayRunsDrawer() {
+function openTodayRunsDrawer() {
   todayRunsDrawer.title = '今日运行记录'
   todayRunsDrawer.filterType = ''
   todayRunsDrawer.visible = true
-  await refreshTodayRunsDrawerInPlace()
-}
-
-async function refreshTodayRunsDrawerInPlace() {
-  todayRunsDrawer.loading = true
-  try {
-    const r = todayRunsDrawer.filterType
-      ? await fetchRunsByType(todayRunsDrawer.filterType, 20)
-      : await fetchTodayRuns(20)
-    todayRunsDrawer.records = r.records
-    todayRunsDrawer.total = r.total
-  } finally {
-    todayRunsDrawer.loading = false
-  }
-}
-
-async function openRunsByTypeDrawer(type = '', label = '') {
-  const typeLabel = { rest: 'REST', script: '脚本', command: '命令' }[type] || label
-  todayRunsDrawer.title = type ? `${typeLabel}运维工具今日运行` : '今日运行记录'
-  todayRunsDrawer.filterType = type || ''
-  todayRunsDrawer.visible = true
-  await refreshTodayRunsDrawerInPlace()
 }
 
 async function refreshWorkbenchRunFeedback() {
-  await Promise.allSettled([
-    refreshRunLogData(),
-    todayRunsDrawer.visible ? refreshTodayRunsDrawerInPlace() : Promise.resolve(),
-    failedRunsDrawer.visible ? refreshFailedRunsDrawerInPlace() : Promise.resolve()
-  ])
+  runLogsReloadVersion.value += 1
+  await refreshRunLogData()
 }
 
 function clearScheduledWorkbenchRunFeedback() {
@@ -1918,15 +1688,15 @@ async function openScriptReviewDrawer() {
 }
 
 onMounted(() => {
-  syncWorkbenchViewportWidth()
-  window.addEventListener('resize', syncWorkbenchViewportWidth)
+  observeJobViewport()
   refreshAll()
 })
 
+onActivated(observeJobViewport)
+onDeactivated(() => jobResizeObserver?.disconnect())
+
 onBeforeUnmount(() => {
-  if (typeof window !== 'undefined') {
-    window.removeEventListener('resize', syncWorkbenchViewportWidth)
-  }
+  jobResizeObserver?.disconnect()
   clearScheduledWorkbenchRunFeedback()
 })
 </script>
@@ -1950,12 +1720,14 @@ onBeforeUnmount(() => {
   --wb-info: #3b82f6;
 
   display: flex;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   flex-direction: column;
   gap: 16px;
   padding: 20px;
   background: var(--wb-bg);
-  min-height: 100%;
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
   box-sizing: border-box;
 
   :deep(.wb-inline-action.el-button) {
@@ -1975,6 +1747,7 @@ onBeforeUnmount(() => {
 // ── 头部 ──
 .wb-header {
   display: flex;
+  flex-shrink: 0;
   flex-direction: column;
   gap: 12px;
 }
@@ -2235,9 +2008,9 @@ onBeforeUnmount(() => {
 // ── 工作台网格 ──
 .wb-dashboard {
   display: grid;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   gap: 16px;
   min-height: 0;
   align-content: stretch;
@@ -2305,6 +2078,7 @@ onBeforeUnmount(() => {
 }
 
 .wb-job-panel-stat {
+  appearance: none;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -2313,6 +2087,12 @@ onBeforeUnmount(() => {
   border-radius: 999px;
   background: #f8fafc;
   line-height: 1;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:hover { border-color: var(--el-color-primary-light-5); }
+  &:focus-visible { outline: 2px solid var(--el-color-primary); outline-offset: 2px; }
 
   &__label {
     font-size: 12px;
@@ -2362,16 +2142,7 @@ onBeforeUnmount(() => {
 .wb-panel--jobs {
   order: 1;
   grid-column: span 12;
-}
-
-.wb-panel--runs {
-  order: 2;
-  grid-column: span 7;
-}
-
-.wb-panel--cron {
-  order: 3;
-  grid-column: span 5;
+  min-height: 0;
 }
 
 .wb-panel--flows {
@@ -2501,123 +2272,6 @@ onBeforeUnmount(() => {
 // ── 失败运行列表 ──
 // (已移除)
 
-// ── 运行分布明细 ──
-.wb-run-list {
-  padding: 8px;
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  gap: 4px;
-  min-height: 0;
-  overflow-y: scroll;
-
-  @supports (scrollbar-gutter: stable) {
-    overflow-y: auto;
-    scrollbar-gutter: stable;
-  }
-}
-
-.wb-run-log-item {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 112px 96px 84px 14px;
-  align-items: center;
-  column-gap: 8px;
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid #edf2f7;
-  background: #fafafa;
-  cursor: pointer;
-  transition:
-    background 0.15s,
-    border-color 0.15s;
-  text-align: left;
-
-  &:hover {
-    background: #f1f5f9;
-    border-color: #e2e8f0;
-
-    .wb-run-log-item__arrow {
-      transform: translateX(2px);
-    }
-  }
-
-  &__name {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--wb-text-primary);
-    min-width: 0;
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  &__time {
-    font-size: 12px;
-    color: var(--wb-text-muted);
-    white-space: nowrap;
-  }
-
-  &__status {
-    justify-self: start;
-  }
-
-  &__type {
-    display: inline-flex;
-    align-items: center;
-    padding: 1px 6px;
-    border-radius: 999px;
-    font-size: 12px;
-    background: rgba(148, 163, 184, 0.12);
-    width: fit-content;
-
-    &--rest {
-      color: var(--wb-info);
-      background: rgba(59, 130, 246, 0.1);
-    }
-
-    &--command {
-      color: var(--wb-warning);
-      background: rgba(245, 158, 11, 0.1);
-    }
-
-    &--script {
-      color: var(--wb-success);
-      background: rgba(34, 197, 94, 0.1);
-    }
-  }
-
-  &__arrow {
-    font-size: 10px;
-    color: var(--wb-text-muted);
-    transition: transform 0.15s;
-    justify-self: end;
-  }
-}
-
-@media (max-width: 1280px) {
-  .wb-run-log-item {
-    grid-template-columns: minmax(0, 1fr) 100px 90px 76px 14px;
-  }
-}
-
-.wb-run-entries__footer {
-  padding: 8px 16px;
-  border-top: 1px solid var(--wb-panel-border);
-  font-size: 12px;
-  color: var(--wb-text-muted);
-  background: #fafafa;
-  margin-top: auto;
-
-  strong {
-    color: var(--wb-text-secondary);
-  }
-  .text-danger {
-    color: var(--wb-danger);
-  }
-}
-
 // ── 流程列表 ──
 .wb-flow-list {
   padding: 8px;
@@ -2660,79 +2314,6 @@ onBeforeUnmount(() => {
   &__actions {
     display: flex;
     align-items: center;
-    gap: 0;
-    flex-wrap: wrap;
-    flex-shrink: 0;
-
-    :deep(.el-button) {
-      min-height: auto;
-      height: 22px;
-      padding: 0 3px;
-      font-size: 12px;
-      line-height: 1;
-    }
-
-    :deep(.el-button + .el-button) {
-      margin-left: 0;
-    }
-  }
-}
-
-// ── 定时调度 ──
-.wb-cron-list {
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.wb-cron-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px solid #f1f5f9;
-  background: #fafafa;
-  transition: all 0.15s;
-  cursor: pointer;
-
-  &:hover {
-    background: #f1f5f9;
-    border-color: #e2e8f0;
-  }
-
-  &--enabled {
-    border-left: 3px solid var(--wb-success);
-    background: rgba(34, 197, 94, 0.03);
-  }
-
-  &__info {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  &__name {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--wb-text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: block;
-  }
-
-  &__cron {
-    font-size: 12px;
-    color: var(--wb-text-muted);
-    font-family: monospace;
-  }
-
-  &__actions {
-    display: flex;
     gap: 0;
     flex-wrap: wrap;
     flex-shrink: 0;
@@ -2805,14 +2386,38 @@ onBeforeUnmount(() => {
   }
 }
 
+.wb-job-panel-stats .wb-job-panel-stat.is-active {
+  border-color: var(--el-color-primary);
+  box-shadow: 0 0 0 1px var(--el-color-primary);
+}
+
 // ── 作业分布卡片 ──
-.wb-workbench-job-grid {
-  padding: 12px;
+.wb-job-panel-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  flex-shrink: 0;
+  padding: 6px 12px 0;
+  font-size: 12px;
+  color: var(--wb-text-secondary);
+}
+
+.wb-workbench-job-delete { color: var(--el-color-danger); }
+
+.wb-workbench-job-viewport {
+  flex: 1 1 0;
+  min-height: 0;
+  padding: 16px;
+  overflow: auto;
+}
+
+.wb-panel--jobs .wb-workbench-job-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  grid-auto-rows: 1fr;
-  gap: 20px;
-  align-content: start;
+  grid-template-columns: repeat(var(--wb-job-columns), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--wb-job-rows), minmax(var(--wb-job-min-height), 1fr));
+  gap: var(--wb-job-gap);
+  height: 100%;
   position: relative;
 }
 
@@ -2821,7 +2426,9 @@ onBeforeUnmount(() => {
   display: flex;
   position: relative;
   flex-direction: column;
-  min-height: 108px;
+  min-height: var(--wb-job-min-height, 112px);
+  max-height: var(--wb-job-max-height, 148px);
+  min-width: 0;
   border: 1px solid #cbd5e1;
   border-radius: 12px;
   background: var(--wb-panel-bg);
@@ -2861,7 +2468,7 @@ onBeforeUnmount(() => {
     flex-direction: column;
     gap: 4px;
     min-width: 0;
-    padding: 10px 14px 4px 12px;
+    padding: 6px 12px;
     background: linear-gradient(180deg, rgba(248, 250, 252, 0.8) 0%, rgba(255, 255, 255, 1) 100%);
   }
 
@@ -2874,13 +2481,21 @@ onBeforeUnmount(() => {
 
   &__time {
     flex-shrink: 0;
-    font-size: 12px;
+    font-size: 11px;
     color: var(--wb-text-muted);
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
   }
 
   &__name {
     display: -webkit-box;
-    min-height: 1.45em;
+    height: 2.9em;
+    min-height: 2.9em;
     font-size: 14px;
     font-weight: 700;
     line-height: 1.45;
@@ -2888,16 +2503,14 @@ onBeforeUnmount(() => {
     word-break: break-word;
     overflow: hidden;
     text-overflow: ellipsis;
-    -webkit-line-clamp: 1;
-    line-clamp: 1;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
-    flex: 1;
-    padding-top: 4px;
   }
 
   &__actions {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) 52px;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) 40px;
     border-top: 1px solid #cbd5e1;
     background: #f8fafc;
   }
@@ -2909,7 +2522,7 @@ onBeforeUnmount(() => {
     align-items: center;
     justify-content: center;
     gap: 6px;
-    height: 36px;
+    height: 32px;
     padding: 0 8px;
     border: none;
     border-right: 1px solid #cbd5e1;
@@ -2922,10 +2535,9 @@ onBeforeUnmount(() => {
       background 0.15s,
       color 0.15s;
 
-    &:focus,
     &:focus-visible {
-      outline: none;
-      box-shadow: none;
+      outline: 2px solid var(--el-color-primary);
+      outline-offset: -2px;
     }
 
     &:hover {
@@ -2947,7 +2559,7 @@ onBeforeUnmount(() => {
   }
 
   &__action--more {
-    width: 52px;
+    width: 40px;
     border-right: none;
     border-bottom-right-radius: 11px;
   }
@@ -2955,11 +2567,6 @@ onBeforeUnmount(() => {
   &__menu-icon {
     margin-right: 6px;
   }
-}
-
-.wb-cron-list,
-.wb-run-list {
-  position: relative;
 }
 
 .wb-stack-slide-enter-active,
@@ -3133,45 +2740,22 @@ onBeforeUnmount(() => {
 }
 
 // ── 响应式 ──
-@media (max-width: 1680px) {
-  .wb-workbench-job-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 1480px) {
-  .wb-workbench-job-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
 @media (max-width: 1280px) {
   .wb-panel__header-actions {
     width: 100%;
     justify-content: flex-start;
   }
 
-  .wb-workbench-job-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 960px) {
-  .wb-workbench-job-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 1100px) {
   .wb-dashboard {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: none;
+    grid-template-rows: minmax(0, 1fr);
   }
 
   .wb-panel--jobs,
   .wb-panel--commands,
-  .wb-panel--runs,
-  .wb-panel--cron,
   .wb-panel--flows {
     grid-column: 1 / -1;
   }
@@ -3200,7 +2784,7 @@ onBeforeUnmount(() => {
 
   .wb-dashboard {
     grid-template-columns: 1fr;
-    grid-template-rows: none;
+    grid-template-rows: minmax(0, 1fr);
   }
 
   .wb-panel__title-group--jobs {
@@ -3212,9 +2796,7 @@ onBeforeUnmount(() => {
   }
 
   .wb-panel--jobs,
-  .wb-panel--cron,
   .wb-panel--commands,
-  .wb-panel--runs,
   .wb-panel--flows {
     grid-column: span 1;
   }
@@ -3228,10 +2810,6 @@ onBeforeUnmount(() => {
     align-items: center;
   }
 
-  .wb-workbench-job-grid {
-    grid-template-columns: 1fr;
-    padding: 10px;
-  }
 
   .wb-job-type-item {
     align-items: flex-start;
@@ -3300,16 +2878,6 @@ html.dark .automation-workbench .wb-stat--running .wb-stat__hint {
   color: #5eead4;
 }
 
-html.dark .automation-workbench .wb-run-log-item {
-  background: #253044;
-  border-color: #334155;
-}
-
-html.dark .automation-workbench .wb-run-log-item:hover {
-  background: #2d3d56;
-  border-color: #475569;
-}
-
 html.dark .automation-workbench .wb-command-job-item {
   background: #253044;
   border-color: #334155;
@@ -3320,11 +2888,6 @@ html.dark .automation-workbench .wb-command-job-item:hover {
   border-color: #475569;
 }
 
-html.dark .automation-workbench .wb-run-entries__footer {
-  background: #1a2a3d;
-  border-color: #334155;
-}
-
 html.dark .automation-workbench .wb-flow-item {
   background: #253044;
   border-color: #334155;
@@ -3333,20 +2896,6 @@ html.dark .automation-workbench .wb-flow-item {
 html.dark .automation-workbench .wb-flow-item:hover {
   background: #2d3d56;
   border-color: #475569;
-}
-
-html.dark .automation-workbench .wb-cron-item {
-  background: #253044;
-  border-color: #334155;
-}
-
-html.dark .automation-workbench .wb-cron-item:hover {
-  background: #2d3d56;
-  border-color: #475569;
-}
-
-html.dark .automation-workbench .wb-cron-item--enabled {
-  background: rgba(34, 197, 94, 0.06);
 }
 
 html.dark .automation-workbench .wb-cron-footer {
