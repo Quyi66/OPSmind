@@ -23,11 +23,23 @@
       <template v-else-if="result">
         <section v-for="group in groups" :key="group.key" class="failed-host-group">
           <h3>{{ group.label }}（{{ group.rows.length }}）</h3>
-          <el-table :data="group.rows" max-height="260" size="small" empty-text="暂无失败主机">
+          <p v-if="group.key === 'skipped'" class="skipped-host-hint">
+            未下发主机不计入失败，不参与重新建任务。
+          </p>
+          <el-table
+            :data="group.rows"
+            max-height="260"
+            size="small"
+            :empty-text="group.key === 'skipped' ? '暂无未下发主机' : '暂无失败主机'"
+          >
             <el-table-column prop="hostKey" label="主机" min-width="160">
               <template #default="{ row }">{{ row.hostKey || '-' }}</template>
             </el-table-column>
-            <el-table-column prop="reason" label="失败原因" min-width="360">
+            <el-table-column
+              prop="reason"
+              :label="group.key === 'skipped' ? '未下发原因' : '失败原因'"
+              min-width="360"
+            >
               <template #default="{ row }">
                 <span class="failure-reason">{{ row.reason || '-' }}</span>
               </template>
@@ -56,15 +68,20 @@ const result = ref(null)
 const errorMessage = ref('')
 let requestId = 0
 
-const groups = computed(() => [
+const failureGroups = computed(() => [
   { key: 'preCheckFailed', label: '预检失败', rows: result.value?.preCheckFailed || [] },
   { key: 'installFailed', label: '安装失败', rows: result.value?.installFailed || [] }
+])
+const groups = computed(() => [
+  ...failureGroups.value,
+  { key: 'skipped', label: '未下发（无可更新包）', rows: result.value?.skipped || [] }
 ])
 const failedHostCount = computed(() => {
   const ids = result.value?.failedHostIds
   if (Array.isArray(ids)) return new Set(ids).size
-  return new Set(groups.value.flatMap(group => group.rows.map(row => row.hostId)).filter(Boolean))
-    .size
+  return new Set(
+    failureGroups.value.flatMap(group => group.rows.map(row => row.hostId)).filter(Boolean)
+  ).size
 })
 
 async function load() {
@@ -116,6 +133,11 @@ onBeforeUnmount(() => {
 .failed-host-group h3 {
   margin: 0 0 8px;
   font-size: 14px;
+}
+.skipped-host-hint {
+  margin: 0 0 8px;
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
 }
 .failure-reason {
   white-space: pre-wrap;

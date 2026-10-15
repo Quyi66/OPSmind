@@ -457,7 +457,7 @@ export const patchInstallApi = {
   },
 
   /**
-   * 查询安装任务的预检失败、安装失败主机
+   * 查询安装任务的预检失败、安装失败及未下发（无可更新包）主机
    * GET /secops/api/secops/v2/patch/task/{id}/failed-hosts
    */
   getFailedHosts(id) {
