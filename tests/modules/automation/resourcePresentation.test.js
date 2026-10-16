@@ -59,6 +59,9 @@ describe('资源名称只影响展示', () => {
 
   it('运行记录使用工具标识匹配，不能使用运行标识误匹配', () => {
     expect(
+      getAutomationRunTitle({ id: 'M1x855', job_title: '【ACM】设备连通性检测' })
+    ).toBe('【ACM】设备连通性检测')
+    expect(
       getAutomationRunTitle({ id: 'run-1', job_id: '0g3GfW', job_title: '【VAP2】 补丁扫描' })
     ).toBe('补丁扫描')
     expect(
