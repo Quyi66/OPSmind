@@ -171,7 +171,8 @@ import { ElMessage } from 'element-plus'
 import { formatDateTime } from '@/utils/date'
 import { Refresh } from '@element-plus/icons-vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
-import { translateText } from '@/utils/i18n'
+import { initTranslations, translateText } from '@/utils/i18n'
+import { formatPatchLogMessage } from '../../utils/operationLogMessages'
 import { useApi } from '@/core/api'
 import { patchLogsApi } from '../../api'
 import { authService } from '@/core/auth'
@@ -245,13 +246,16 @@ async function loadData() {
       actionParam = '补丁回滚'
     }
 
-    const response = await patchLogsApi.getLogs({
-      page: pagination.value.page,
-      size: pagination.value.pageSize,
-      action: actionParam === 'all' ? 'all' : actionParam,
-      status: statusFilter.value === 'all' ? 'all' : statusFilter.value,
-      day: dayFilter.value
-    })
+    const [response] = await Promise.all([
+      patchLogsApi.getLogs({
+        page: pagination.value.page,
+        size: pagination.value.pageSize,
+        action: actionParam === 'all' ? 'all' : actionParam,
+        status: statusFilter.value === 'all' ? 'all' : statusFilter.value,
+        day: dayFilter.value
+      }),
+      initTranslations()
+    ])
 
     tableData.value = response?.records || []
     pagination.value.total = response?.total || 0
@@ -319,35 +323,8 @@ function getStatusText(status) {
 }
 
 // 格式化消息
-function applyTemplateParams(template, params = {}) {
-  if (!template) return ''
-  return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-    if (Object.prototype.hasOwnProperty.call(params, key)) {
-      const value = params[key]
-      return value === null || value === undefined ? '' : String(value)
-    }
-    return ''
-  })
-}
-
 function formatMessage(message) {
-  if (!message) return '-'
-
-  if (message.includes('#{')) {
-    return translateText(message)
-  }
-
-  try {
-    const msg = JSON.parse(message)
-    const msgId = msg.msg_id
-    if (!msgId) return message
-
-    const template = translateText(`#{${msgId}}`)
-    return applyTemplateParams(template, msg) || msgId
-  } catch {
-    const translated = translateText(`#{${message}}`)
-    return translated || message
-  }
+  return formatPatchLogMessage(message) || '-'
 }
 
 // 计算耗时

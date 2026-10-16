@@ -303,7 +303,8 @@ import { ElMessage, ElTag } from 'element-plus'
 import { Refresh, Search, RefreshRight, Monitor } from '@element-plus/icons-vue'
 import { patchLogsApi } from '../api'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
-import { translateText } from '@/utils/i18n'
+import { initTranslations, translateText } from '@/utils/i18n'
+import { formatPatchLogMessage } from '../utils/operationLogMessages'
 import { useApi } from '@/core/api'
 import { authService } from '@/core/auth'
 import ScanReportDialog from '../components/logs/ScanReportDialog.vue'
@@ -442,36 +443,9 @@ function translateAction(action) {
   return translated
 }
 
-function applyTemplateParams(template, params = {}) {
-  if (!template) return ''
-  return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-    if (Object.prototype.hasOwnProperty.call(params, key)) {
-      const value = params[key]
-      return value === null || value === undefined ? '' : String(value)
-    }
-    return ''
-  })
-}
-
 // 翻译消息（基于 i18n 模板）
 function translateMessage(messageStr) {
-  if (!messageStr) return ''
-
-  if (messageStr.includes('#{')) {
-    return translateText(messageStr)
-  }
-
-  try {
-    const msg = JSON.parse(messageStr)
-    const msgId = msg.msg_id
-    if (!msgId) return messageStr
-
-    const template = translateText(`#{${msgId}}`)
-    return applyTemplateParams(template, msg) || msgId
-  } catch (e) {
-    const translated = translateText(`#{${messageStr}}`)
-    return translated || messageStr
-  }
+  return formatPatchLogMessage(messageStr)
 }
 
 function parseHosts(hostsStr) {
@@ -560,14 +534,17 @@ async function loadData() {
     } else if (actionParam === '#{app_vap.menu.patch_rollback.title}') {
       actionParam = '补丁回滚'
     }
-    const response = await patchLogsApi.getLogs({
-      page: pagination.page,
-      size: pagination.pageSize,
-      action: actionParam,
-      status: statusFilter.value,
-      day: dayFilter.value,
-      filter: keywordFilter
-    })
+    const [response] = await Promise.all([
+      patchLogsApi.getLogs({
+        page: pagination.page,
+        size: pagination.pageSize,
+        action: actionParam,
+        status: statusFilter.value,
+        day: dayFilter.value,
+        filter: keywordFilter
+      }),
+      initTranslations()
+    ])
     tableData.value = response?.records || []
     pagination.total = response?.total || 0
   } catch (error) {

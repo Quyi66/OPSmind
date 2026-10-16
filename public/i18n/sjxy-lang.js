@@ -1316,7 +1316,7 @@
       'app_vap.menu.log_report.available_patches_title': 'Patches Available',
       'app_vap.log.machine_count': 'Number of machines: {{machine_count}}',
       'app_vap.log.exec_script_fail':
-        'An error occurred while executing the script job, the result file was not output, please check the details',
+        'An error occurred while executing the script, the result file was not output, please check the details',
       'app_vap.log.scan_success':
         'The patch scan is successfully executed, the number of scanned machines is {{scan_count}}, the number of scanned software packages is {{scan_packages}}, the number of scanned vulnerabilities is {{scan_patch}}, and the ETL processing time is {{scan_time}}s',
       'app_vap.log.scan_fail': 'Patch scan failed due to {{msg_info}}',
@@ -6694,7 +6694,7 @@
       'app_vap.menu.log_report.patch_report': '补丁报表',
       'app_vap.menu.log_report.available_patches_title': '可用的补丁',
       'app_vap.log.machine_count': '机器数量：{{machine_count}}',
-      'app_vap.log.exec_script_fail': '执行脚本作业出错，未输出结果文件，请检查详细信息',
+      'app_vap.log.exec_script_fail': '执行脚本出错，未输出结果文件，请检查详细信息',
       'app_vap.log.scan_success':
         '补丁扫描执行成功，扫描机器数量为{{scan_count}}，扫描软件包数量为{{scan_packages}}，扫描存在漏洞数量为{{scan_patch}}，ETL处理耗时为{{scan_time}}s',
       'app_vap.log.scan_fail': '补丁扫描执行失败，原因是{{msg_info}}',
@@ -12116,7 +12116,7 @@
       'app_vap.menu.log_report.patch_report': '補丁報表',
       'app_vap.menu.log_report.available_patches_title': '可用的補丁',
       'app_vap.log.machine_count': '機器數量：{{machine_count}}',
-      'app_vap.log.exec_script_fail': '執行腳本作業出錯，未輸出結果檔案，請檢查詳細資訊',
+      'app_vap.log.exec_script_fail': '執行腳本出錯，未輸出結果檔案，請檢查詳細資訊',
       'app_vap.log.scan_success':
         '補丁掃描執行成功，掃描機器數量為{{scan_count}}，掃描軟體包數量為{{scan_packages}}，掃描存在漏洞數量為{{scan_patch}}，ETL處理耗時為{{scan_time}}s',
       'app_vap.log.scan_fail': '補丁掃描執行失敗，原因是{{msg_info}}',

@@ -138,7 +138,7 @@
   "app_vap.menu.log_report.patch_report": "补丁报表",
   "app_vap.menu.log_report.available_patches_title": "可用的补丁",
   "app_vap.log.machine_count": "机器数量：{{machine_count}}",
-  "app_vap.log.exec_script_fail": "执行脚本作业出错，未输出结果文件，请检查详细信息",
+  "app_vap.log.exec_script_fail": "执行脚本出错，未输出结果文件，请检查详细信息",
   "app_vap.log.scan_success": "补丁扫描执行成功，扫描机器数量为{{scan_count}}，扫描软件包数量为{{scan_packages}}，扫描存在漏洞数量为{{scan_patch}}，ETL处理耗时为{{scan_time}}s",
   "app_vap.log.scan_fail": "补丁扫描执行失败，原因是{{msg_info}}",
   "app_vap.log.install_fail": "补丁安装结果处理执行错误，原因是{{msg_info}}",
