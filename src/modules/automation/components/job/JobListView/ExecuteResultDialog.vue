@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    :title="`运维工具运行结果${jobTitle ? ` · ${getAutomationRunTitle({ job_title: jobTitle })}` : ''}`"
+    :title="`运维工具运行结果${jobTitle ? ` · ${getAutomationRunTitle({ job_title: jobTitle, job_id: jobId || result?.job_id || result?.jobId })}` : ''}`"
     width="1260px"
     :z-index="zIndex"
     append-to-body
@@ -493,6 +493,7 @@ const props = defineProps({
   visible: { type: Boolean, default: false },
   runId: { type: String, default: '' },
   jobTitle: { type: String, default: '' },
+  jobId: { type: [String, Number], default: '' },
   rawJobTitle: { type: String, default: '' },
   zIndex: { type: Number, default: undefined }
 })
@@ -1015,7 +1016,7 @@ function parseJobExecutionError(errorRaw, ansibleContents = [], jobStatus = '') 
   }
 
   if (isJsonFormatted || ansibleMsgs.length > 0 || isStatusFailed) {
-    let title = '作业执行失败'
+    let title = '执行失败'
     if (failedTaskCount !== null) {
       title += `（${failedTaskCount} 个任务失败）`
     }

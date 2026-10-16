@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { appTableList } from '@/modules/automation/api/jao'
 import { getAutomationToolTitle } from '../../utils/resourcePresentation'
+import { translateText } from '@/utils/i18n'
 import { formatDateTime as formatDateTimeGlobal } from '../../utils/helpers'
 
 const props = defineProps({
@@ -38,7 +39,7 @@ const filteredJobs = computed(() => {
 
     if (!keyword) return true
 
-    return [job.title, jobTitle(job), job.description, job.updatedBy, job.createdBy]
+    return [job.title, jobTitle(job), jobDescription(job), job.updatedBy, job.createdBy]
       .filter(Boolean)
       .some(value => String(value).toLowerCase().includes(keyword))
   })
@@ -64,6 +65,10 @@ function typeTag(type) {
 
 function jobTitle(job) {
   return getAutomationToolTitle(job)
+}
+
+function jobDescription(job) {
+  return translateText(job.description) || ''
 }
 
 function handleMoreCommand(job, command) {
@@ -231,7 +236,7 @@ onBeforeUnmount(() => { loadRequestId += 1 })
             <div class="wb-job-card__meta">
               <span>更新人：{{ job.updatedBy || job.createdBy || '未提供' }}</span>
             </div>
-            <span v-if="job.description" class="wb-job-card__description" :title="job.description">{{ job.description }}</span>
+            <span v-if="job.description" class="wb-job-card__description" :title="jobDescription(job)">{{ jobDescription(job) }}</span>
           </div>
 
           <div class="wb-job-card__actions">

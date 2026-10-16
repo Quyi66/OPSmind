@@ -167,7 +167,8 @@
         v-model:visible="resultDialogVisible"
         :run-id="resultMeta.runId"
         :job-title="resultMeta.jobTitle"
-      :raw-job-title="resultMeta.rawJobTitle"
+        :job-id="jobId"
+        :raw-job-title="resultMeta.rawJobTitle"
       />
     </div>
   </el-dialog>

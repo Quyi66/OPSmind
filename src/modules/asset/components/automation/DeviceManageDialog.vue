@@ -48,7 +48,7 @@
         </el-form-item>
 
         <!-- 执行引擎节点 (非 AAP) -->
-        <el-form-item v-if="scriptEngine !== 'aap'" label="执行引擎节点">
+        <el-form-item v-if="scriptEngine !== 'aap'" label="执行节点">
           <el-select
             v-model="passwordForm.instanceGroup"
             placeholder="请选择"

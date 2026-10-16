@@ -567,6 +567,7 @@
       v-model:visible="resultDialogVisible"
       :run-id="resultMeta.runId"
       :job-title="resultMeta.jobTitle"
+      :job-id="resultMeta.jobId"
       :raw-job-title="resultMeta.rawJobTitle"
       @settled="handleExecuteResultSettled"
     />
@@ -704,7 +705,7 @@ import { Refresh } from '@element-plus/icons-vue'
 import { authService } from '@/core/auth'
 import { canAccessMenuCode } from '@/core/auth/permission-policy'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
-import { getAutomationToolTitle, getAutomationRunTitle } from '@/modules/automation/utils/resourcePresentation'
+import { getAutomationToolTitle, getAutomationRunTitle, getAutomationExecutionPresentation } from '@/modules/automation/utils/resourcePresentation'
 import { useAppletTranslation } from '@/modules/automation/components/job/composables/useAppletTranslation.js'
 import { useAutomationWorkbench } from '@/modules/automation/composables/useAutomationWorkbench.js'
 import { formatWorkbenchJobDate, getWorkbenchCardLayout, selectWorkbenchJobs } from '@/modules/automation/utils/workbenchPresentation'
@@ -1204,6 +1205,7 @@ function observeJobViewport() {
 function handleOpenRunResult(item) {
   resultMeta.value = {
     runId: item?.id || '',
+    jobId: item?.job_id || item?.jobId || '',
     rawJobTitle: item?.job_title || '',
     jobTitle: getAutomationRunTitle(item)
   }
@@ -1211,11 +1213,10 @@ function handleOpenRunResult(item) {
 }
 
 async function handleExecuteJobSuccess(payload = {}) {
-  const jobTitle = payload.jobTitle || executeJobMeta.title || '运维工具执行'
   if (payload.runId) {
     resultMeta.value = {
       runId: payload.runId,
-      jobTitle
+      ...getAutomationExecutionPresentation(payload, executeJobMeta)
     }
     resultDialogVisible.value = true
   }

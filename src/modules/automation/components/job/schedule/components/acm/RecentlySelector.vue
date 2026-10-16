@@ -31,7 +31,7 @@
           sortable
         >
           <template #default="{ row }">
-            {{ translateText(row.jobTitle) || '-' }}
+            {{ getAutomationRunTitle({ job_title: row.jobTitle, job_id: row.jobId || row.job_id }, '-') }}
           </template>
         </el-table-column>
         <el-table-column label="执行主机" width="120" show-overflow-tooltip sortable>
@@ -100,6 +100,7 @@
       v-model:visible="resultDialogVisible"
       :run-id="currentRunId"
       :job-title="currentJobTitle"
+      :job-id="currentJobId"
       :z-index="6000"
     />
   </div>
@@ -112,7 +113,7 @@ import { formatDateTime } from '@/modules/automation/utils/helpers'
 import * as jaoApi from '@/modules/automation/api/jao'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { JOB_TYPE_OPTIONS } from '@/modules/automation/stores/useJobStore'
-import { translateText } from '@/utils/i18n'
+import { getAutomationRunTitle } from '@/modules/automation/utils/resourcePresentation'
 import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
 import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
 
@@ -137,6 +138,7 @@ const pagination = ref({
 const resultDialogVisible = ref(false)
 const currentRunId = ref('')
 const currentJobTitle = ref('')
+const currentJobId = ref('')
 let isInternalUpdate = false
 
 useActiveTaskListPolling({
@@ -150,7 +152,7 @@ const isSingleSelector = computed(() => props.options.selector === 'single')
 const filteredData = computed(() => {
   if (!searchKeyword.value) return tableData.value
   const keyword = searchKeyword.value.toLowerCase()
-  return tableData.value.filter(item => item.jobTitle?.toLowerCase().includes(keyword))
+  return tableData.value.filter(item => getAutomationRunTitle({ job_title: item.jobTitle, job_id: item.jobId || item.job_id }, '').toLowerCase().includes(keyword))
 })
 
 const pagedData = computed(() => {
@@ -288,6 +290,7 @@ function handleViewResult(row) {
 
   currentRunId.value = row.runId || row.id
   currentJobTitle.value = row.jobTitle || ''
+  currentJobId.value = row.jobId || row.job_id || ''
   resultDialogVisible.value = true
 }
 

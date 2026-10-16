@@ -139,7 +139,7 @@
               </el-table-column>
 
               <!-- 3. 执行引擎 -->
-              <el-table-column prop="instanceGroup" label="执行引擎节点" min-width="160">
+              <el-table-column prop="instanceGroup" label="执行节点" min-width="160">
                 <template #default="{ row }">
                   <span class="engine-node-text">{{ row.instanceGroup || '-' }}</span>
                 </template>
@@ -218,7 +218,7 @@
               <el-form-item label="关键词">
                 <el-input
                   v-model="ansibleSearch"
-                  placeholder="模板名 / 引擎节点 / 登录用户..."
+                  placeholder="模板名 / 执行节点 / 登录用户..."
                   clearable
                   style="width: 260px"
                   maxlength="50"
@@ -272,7 +272,7 @@
                 fixed="left"
                 class-name="font-bold-column"
               />
-              <el-table-column prop="instanceGroup" label="执行引擎节点" min-width="150" />
+              <el-table-column prop="instanceGroup" label="执行节点" min-width="150" />
               <el-table-column prop="aapInstanceGroup" label="AAP 引擎节点" min-width="140" />
 
               <el-table-column prop="loginUser" label="登录账号" width="120">
@@ -381,10 +381,10 @@
             <el-input v-model="automationForm.ip" disabled />
           </el-form-item>
 
-          <el-form-item label="执行引擎节点" v-if="scriptEngine !== 'aap'">
+          <el-form-item label="执行节点" v-if="scriptEngine !== 'aap'">
             <el-select
               v-model="automationForm.instanceGroup"
-              placeholder="请选择连接所适用的执行引擎节点"
+              placeholder="请选择连接所适用的执行节点"
               style="width: 100%"
               clearable
             >
@@ -546,7 +546,7 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item label="执行引擎节点" v-if="scriptEngine !== 'aap'">
+          <el-form-item label="执行节点" v-if="scriptEngine !== 'aap'">
             <el-select
               v-model="ansibleForm.instanceGroup"
               placeholder="请选择"

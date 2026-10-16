@@ -111,7 +111,7 @@
             </RunLogStatusTag>
           </template>
         </el-table-column>
-        <el-table-column prop="executor_node" label="执行引擎节点" min-width="130" sortable />
+        <el-table-column prop="executor_node" label="执行节点" min-width="130" sortable />
         <el-table-column prop="message" label="结果" min-width="200" sortable show-overflow-tooltip>
           <template #default="{ row }">
             {{ formatMessage(row.message) }}
@@ -294,6 +294,9 @@ function applyTemplateParams(template, params = {}) {
 function formatMessage(message) {
   if (!message) return ''
 
+  // This backend log uses the short form of the existing translation key.
+  const messageKey = key => key === 'patch_is_update' ? 'app_vap.log.patch_is_update' : key
+
   if (message.includes('#{')) {
     return translateText(message)
   }
@@ -303,10 +306,10 @@ function formatMessage(message) {
     const msgId = obj.msg_id
     if (!msgId) return message
 
-    const template = translateText(`#{${msgId}}`)
+    const template = translateText(`#{${messageKey(msgId)}}`)
     return applyTemplateParams(template, obj) || msgId
   } catch {
-    const translated = translateText(`#{${message}}`)
+    const translated = translateText(`#{${messageKey(message)}}`)
     return translated || message
   }
 }

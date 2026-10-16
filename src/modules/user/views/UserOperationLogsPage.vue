@@ -29,7 +29,7 @@
         <el-form-item label="关键词">
           <el-input
             v-model="filters.keyword"
-            placeholder="用户名、执行引擎节点、结果"
+            placeholder="用户名、执行节点、结果"
             clearable
             style="width: 220px" @keyup.enter="handleSearch" @clear="handleSearch">
             <template #prefix>
@@ -95,7 +95,7 @@
             </RunLogStatusTag>
           </template>
         </el-table-column>
-        <el-table-column prop="executor_node" label="执行引擎节点" width="140" sortable />
+        <el-table-column prop="executor_node" label="执行节点" width="140" sortable />
         <el-table-column prop="message" label="结果" min-width="200" show-overflow-tooltip>
           <template #default="{ row }">
             {{ row.message || '-' }}

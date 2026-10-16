@@ -35,10 +35,10 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item label="引擎节点">
+          <el-form-item label="执行节点">
             <el-input
               v-model="searchKeyword"
-              placeholder="搜索执行引擎..."
+              placeholder="搜索执行节点..."
               clearable
               style="width: 170px"
               @keyup.enter="handleFilterChange"
@@ -111,7 +111,7 @@
           </el-table-column>
 
           <!-- 4. 引擎节点 -->
-          <el-table-column prop="executor_node" label="执行引擎节点" width="150" align="left">
+          <el-table-column prop="executor_node" label="执行节点" width="150" align="left">
             <template #default="{ row }">
               <el-tag
                 v-if="row.executor_node"
@@ -466,6 +466,11 @@ function getStatusType(status) {
 // 格式化消息
 function formatMessage(message) {
   if (!message) return '-'
+  const messageLabels = {
+    'cmdb.common.log.conn_success': '设备连通性检测成功',
+    'cmdb.common.log.collect_success': '设备信息采集成功'
+  }
+  if (typeof message === 'string' && messageLabels[message]) return messageLabels[message]
   try {
     const msgObj = typeof message === 'string' ? JSON.parse(message) : message
     if (msgObj.exception?.message) {
@@ -481,7 +486,7 @@ function formatMessage(message) {
         'acm.common.log.collect_success': '设备信息采集成功',
         'acm.common.log.collect_failed': '设备信息采集失败'
       }
-      return msgIdMap[msgObj.msg_id] || msgObj.msg_id
+      return msgIdMap[msgObj.msg_id] || messageLabels[msgObj.msg_id] || msgObj.msg_id
     }
     return JSON.stringify(msgObj)
   } catch {

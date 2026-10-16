@@ -6,6 +6,10 @@ import { translateText } from '@/utils/i18n'
 const BUILTIN_TOOL_LABELS = {
   M1x855: { title: '【ACM】设备连通性检测', label: '设备连通性检测' },
   mjedwe: { title: '【ACM】资产信息采集', label: '资产信息采集' },
+  '3TRE7d': { title: '【ACM】更新已纳管设备信息', label: '更新已纳管设备信息' },
+  eGfsxb: { title: '【ACM】设备纳管', label: '设备纳管' },
+  c7WN62: { title: '【ACM】保存ansible配置信息', label: '保存 Ansible 配置信息' },
+  '0MKtcJ': { title: '【ACM】主机录入', label: '主机录入' },
   '0g3GfW': { title: '【VAP2】补丁扫描', label: '补丁扫描' }
 }
 
@@ -32,4 +36,10 @@ export function getAutomationRunTitle(record, fallback = '未命名运行') {
   // Keep the real path on the record for diagnostics; show the file in the list.
   const scriptPath = title.match(/^\[script\](.+[/\\])([^/\\]+)$/i)
   return scriptPath ? `脚本执行：${scriptPath[2]}` : title
+}
+
+export function getAutomationExecutionPresentation(payload, fallback = {}) {
+  const jobId = payload?.jobId || fallback.id || ''
+  const rawJobTitle = payload?.jobTitle || fallback.title || '运维工具执行'
+  return { jobId, rawJobTitle, jobTitle: getAutomationRunTitle({ job_id: jobId, job_title: rawJobTitle }) }
 }
