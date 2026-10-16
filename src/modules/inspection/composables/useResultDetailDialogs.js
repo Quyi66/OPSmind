@@ -77,7 +77,7 @@ export function useResultDetailDialogs(jobId, jobInfo) {
       OK: '检查通过',
       FAILED: '检查失败',
       CHECK: '人工检查',
-      SKIPPING: '黑名单',
+      SKIPPING: '已跳过',
       UNREACHABLE: '数据缺失'
     }
 

@@ -66,7 +66,7 @@
             </div>
           </div>
           <div v-if="availableRunItems.length" class="install-summary-row">
-            <span class="install-summary-label">作业详情</span>
+            <span class="install-summary-label">执行结果</span>
             <div class="win-patch-execute-step__runs-list">
               <el-tag
                 v-for="item in availableRunItems"

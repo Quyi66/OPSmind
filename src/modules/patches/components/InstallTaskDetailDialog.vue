@@ -84,7 +84,7 @@
               size="small"
               @click="openExecuteResult"
             >
-              查看作业详情
+              查看执行结果
             </el-button>
           </div>
           <div>
@@ -209,7 +209,7 @@
   <ExecuteResultDialog
     v-model:visible="executeResultVisible"
     :run-id="taskDetail?.executeRunId || ''"
-    job-title="一键安装作业详情"
+    job-title="定时安装执行结果"
   />
 </template>
 

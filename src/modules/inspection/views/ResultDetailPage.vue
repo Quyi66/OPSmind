@@ -51,10 +51,23 @@
         <span class="info-label">脚本</span>
         <span class="info-value">
           <template v-for="(script, index) in scriptList" :key="index">
-            <el-tag type="info" class="script-tag">{{ script.scriptPath }}</el-tag>
+            <el-tag type="info" class="script-tag">{{ getInspectionScriptLabel(script) }}</el-tag>
           </template>
         </span>
       </div>
+      <el-collapse v-if="scriptList.length">
+        <el-collapse-item title="脚本技术信息" name="scripts">
+          <el-descriptions :column="1" border size="small">
+            <el-descriptions-item
+              v-for="(script, index) in scriptList"
+              :key="index"
+              :label="getInspectionScriptLabel(script)"
+            >
+              <span style="overflow-wrap: anywhere">{{ script.scriptPath || '未提供路径' }}</span>
+            </el-descriptions-item>
+          </el-descriptions>
+        </el-collapse-item>
+      </el-collapse>
     </div>
 
     <!-- 统计卡片 -->
@@ -197,11 +210,11 @@
               </el-button>
             </template>
           </el-table-column>
-          <el-table-column label="黑名单" width="100" align="left">
+          <el-table-column label="已跳过" width="100" align="left">
             <template #header>
               <span>
                 <!-- <i class="fa fa-adjust"></i> -->
-                黑名单
+                已跳过
               </span>
             </template>
             <template #default="{ row }">
@@ -308,7 +321,7 @@
             <el-option label="通过" value="OK" />
             <el-option label="失败" value="FAILED" />
             <el-option label="人工检查" value="CHECK" />
-            <el-option label="黑名单" value="SKIPPING" />
+            <el-option label="已跳过" value="SKIPPING" />
             <el-option label="无数据" value="UNREACHABLE" />
           </el-select>
           <el-input
@@ -341,7 +354,7 @@
             <el-tag v-if="row.status === 'OK'" type="success" size="small">通过</el-tag>
             <el-tag v-else-if="row.status === 'FAILED'" type="danger" size="small">失败</el-tag>
             <el-tag v-else-if="row.status === 'CHECK'" type="warning" size="small">人工检查</el-tag>
-            <el-tag v-else-if="row.status === 'SKIPPING'" type="info" size="small">黑名单</el-tag>
+            <el-tag v-else-if="row.status === 'SKIPPING'" type="info" size="small">已跳过</el-tag>
             <el-tag v-else type="info" size="small">无数据</el-tag>
           </template>
         </el-table-column>
@@ -464,6 +477,7 @@ import { pickResultListRouteQuery } from '../utils/result-list-route-state'
 
 // 导入拆分的模块
 import { formatDateTime } from '../utils/helpers'
+import { getInspectionScriptLabel } from '../utils/scriptPresentation'
 import { getJobStatusType, getJobStatusText } from '../constants/status'
 import { useResultDetailData } from '../composables/useResultDetailData'
 import { useResultDetailDialogs } from '../composables/useResultDetailDialogs'

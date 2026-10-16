@@ -64,9 +64,11 @@
                   class="script-table"
                   max-height="300px"
                 >
-                  <el-table-column prop="scriptPath" label="脚本路径" min-width="200">
+                  <el-table-column prop="scriptPath" label="脚本" min-width="200">
                     <template #default="{ row }">
-                      <span>{{ row.scriptPath }}</span>
+                      <el-tooltip :content="row.scriptPath || '未提供路径'" placement="top">
+                        <span>{{ getInspectionScriptLabel(row) }}</span>
+                      </el-tooltip>
                     </template>
                   </el-table-column>
                   <el-table-column label="脚本参数" min-width="150">
@@ -121,6 +123,7 @@
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { templateApi, jobApi } from '../../api'
+import { getInspectionScriptLabel } from '../../utils/scriptPresentation'
 import ScriptSelectorDialog from './ScriptSelectorDialog.vue'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import { normalizeAcmDeviceSelection } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'

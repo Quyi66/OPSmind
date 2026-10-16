@@ -98,7 +98,7 @@
               </RunLogStatusTag>
             </template>
           </el-table-column>
-          <el-table-column prop="executor_node" label="执行引擎节点" width="120" />
+          <el-table-column prop="executor_node" label="执行节点" width="120" />
           <el-table-column prop="target_hosts" label="目标节点" width="240">
             <template #default="{ row }">
               <div
