@@ -52,7 +52,7 @@
       'acm.common.header.tag_name': 'Tag Name',
       'acm.common.header.existing_tag': 'Existing Tag',
       'acm.common.header.IP': 'IP',
-      'acm.common.header.engine_node': 'Execution Engine Node',
+      'acm.common.header.engine_node': 'Execution Node',
       'acm.common.header.login_user': 'Login User',
       'acm.common.header.run_user': 'Execution User',
       'acm.common.header.login_password': 'Login password',
@@ -132,7 +132,7 @@
       'acm.common.text.auto_asset_comment':
         'Note:\nThe use of automatic equipment input must meet the requirements. The only model attribute of the asset model is and can only be managed IP\nIPs in text format are supported. Text format support: comma One or more of segmentation, space segmentation, and newline segmentation, and supports network segment entry. For example: 192.168.1.0/26',
       'acm.common.text.automation_comment':
-        'Note:\nAutomation configuration is to modify the default connection configuration of each automation asset. The usage scenarios are as follows:\nExecution user/password, login user/password, execution engine node configuration wait',
+        'Note:\nAutomation configuration is to modify the default connection configuration of each automation asset. The usage scenarios are as follows:\nExecution user/password, login user/password, execution node configuration wait',
       'acm.common.text.ansible_config_comment':
         'Note:\nAnsible connection configuration is modified for the default configuration of automation equipment types supported by KoreOPS. The usage scenarios are as follows:\nWhether to escalate rights, how to escalate rights, how to connect, etc.',
       'acm.common.text.model_import_comment':
@@ -3454,7 +3454,7 @@
       'jao.job.widget.show_output': 'Show Real-Time Output',
       'jao.job.widget.show_output_desc':
         'Execute the job After that, a pop-up window shows the real-time output of the job',
-      'jao.result.name': 'Job Run Result',
+      'jao.result.name': 'Execution Result',
       'jao.result.terminate_all': "{{'jao.common. terminate' | translate}}whole job",
       'jao.result.detail.duration': 'Runtime',
       'jao.result.detail.summary': 'Summary',
@@ -3589,7 +3589,7 @@
       'jao.approve.view_btn': 'View Application',
       'jao.approve.re_approve_btn': 'Apply Again',
       'jao.udp.run_logs': 'Job Run Logs',
-      'jao.udp.run_result': 'Job Run Result',
+      'jao.udp.run_result': 'Execution Result',
       'jao.page.action.create': 'New One-Click Job',
       'jao.page.action.move_job': 'Move One-Click Job',
       'jao.page.action.move_job_confirm':
@@ -3615,8 +3615,8 @@
       'jao.log.opslog.filter_day_desc':
         'Filter the data according to time, support the number of days',
       'jao.flow.detail.name': 'Process Template Name',
-      'jao.log.ata_node': 'Execution Engine Node',
-      'jao.log.exception.notfound': 'Exceptionally terminated, job information could not be found',
+      'jao.log.ata_node': 'Execution Node',
+      'jao.log.exception.notfound': 'Exceptionally terminated, tool information could not be found',
       'jao.job.run.ansible-playbook': 'ansible-playbook or script execution parameters',
       'jao.job.run.ansible-playbook-tag': 'ansible-playbook tag parameter',
       'jao.job.run.ansible.verbose.normal': '0 (normal)',
@@ -5373,7 +5373,7 @@
       'acm.common.filter.according_group': '按分组',
       'acm.common.filter.according_tag': '按标签',
       'acm.common.filter.according_input': '手动输入',
-      'acm.common.filter.according_recently': '最近作业设备',
+      'acm.common.filter.according_recently': '最近执行设备',
       'acm.common.filter.button_dialog': '按钮对话框',
       'acm.common.filter.drop-down_box': '下拉框',
       'acm.common.filter.blank_space': '空格',
@@ -5405,7 +5405,7 @@
       'acm.common.header.tag_name': '标签名称',
       'acm.common.header.existing_tag': '已有标签',
       'acm.common.header.IP': 'IP',
-      'acm.common.header.engine_node': '执行引擎节点',
+      'acm.common.header.engine_node': '执行节点',
       'acm.common.header.login_user': '登录用户',
       'acm.common.header.run_user': '执行用户',
       'acm.common.header.login_password': '登录密码',
@@ -5484,7 +5484,7 @@
       'acm.common.text.auto_asset_comment':
         '注意：\n使用自动化设备录入需满足， 该资产模型的唯一模型属性有且只能是纳管IP\n支持文本格式的IP，文本格式支持：逗号分割、空格分割、换行分割中的一种或多种，同时支持网段录入。例如：192.168.1.0/26',
       'acm.common.text.automation_comment':
-        '注意：\n自动化配置是针对每一个自动化资产的默认连接配置进行修改，使用场景如下：\n执行用户/密码、登录用户/密码、执行引擎节点配置等',
+        '注意：\n自动化配置是针对每一个自动化资产的默认连接配置进行修改，使用场景如下：\n执行用户/密码、登录用户/密码、执行节点配置等',
       'acm.common.text.ansible_config_comment':
         '注意：\nAnsible连接配置是针对KoreOPS支持的自动化设备类型默认配置进行修改，使用场景如下：\n是否提权、提权方式、连接方式等',
       'acm.common.text.model_import_comment':
@@ -8831,7 +8831,7 @@
       'jao.job.widget.start_run': '开始执行',
       'jao.job.widget.show_output': '显示实时输出',
       'jao.job.widget.show_output_desc': '执行作业后，弹出窗口显示作业的实时输出',
-      'jao.result.name': '作业运行结果',
+      'jao.result.name': '执行结果',
       'jao.result.terminate_all': "{{'jao.common.terminate' | translate}}整个作业",
       'jao.result.detail.duration': '运行时间',
       'jao.result.detail.summary': '概要',
@@ -8964,7 +8964,7 @@
       'jao.approve.view_btn': '查看申请',
       'jao.approve.re_approve_btn': '再次申请',
       'jao.udp.run_logs': '作业运行记录',
-      'jao.udp.run_result': '作业运行结果',
+      'jao.udp.run_result': '执行结果',
       'jao.page.action.create': '新建一键作业',
       'jao.page.action.move_job': '移动一键作业',
       'jao.page.action.move_job_confirm':
@@ -8989,8 +8989,8 @@
       'jao.log.opslog.filter_day': '时间范围',
       'jao.log.opslog.filter_day_desc': '按照时间筛选数据，支持天数',
       'jao.flow.detail.name': '流程模板名',
-      'jao.log.ata_node': '执行引擎节点',
-      'jao.log.exception.notfound': '异常结束，无法找到作业信息',
+      'jao.log.ata_node': '执行节点',
+      'jao.log.exception.notfound': '异常结束，无法找到运维工具信息',
       'jao.job.run.ansible-playbook': 'ansible-playbook或脚本执行参数',
       'jao.job.run.ansible-playbook-tag': 'ansible-playbook tag参数',
       'jao.job.run.ansible.verbose.normal': '0（普通）',
@@ -10797,7 +10797,7 @@
       'acm.common.filter.according_group': '按分組',
       'acm.common.filter.according_tag': '按標籤',
       'acm.common.filter.according_input': '手動輸入',
-      'acm.common.filter.according_recently': '最近作業裝置',
+      'acm.common.filter.according_recently': '最近執行裝置',
       'acm.common.filter.button_dialog': '按鈕對話方塊',
       'acm.common.filter.drop-down_box': '下拉框',
       'acm.common.filter.blank_space': '空格',
@@ -10829,7 +10829,7 @@
       'acm.common.header.tag_name': '標籤名稱',
       'acm.common.header.existing_tag': '已有標籤',
       'acm.common.header.IP': 'IP',
-      'acm.common.header.engine_node': '執行引擎節點',
+      'acm.common.header.engine_node': '執行節點',
       'acm.common.header.login_user': '登入使用者',
       'acm.common.header.run_user': '執行使用者',
       'acm.common.header.login_password': '登入密碼',
@@ -10908,7 +10908,7 @@
       'acm.common.text.auto_asset_comment':
         '注意：\n使用自動化裝置錄入需滿足， 該資產模型的唯一模型屬性有且只能是納管IP\n支援文字格式的IP，文字格式支援：逗號分割、空格分割、換行分割中的一種或多種，同時支援網段錄入。例如：192.168.1.0/26',
       'acm.common.text.automation_comment':
-        '注意：\n自動化配置是針對每一個自動化資產的預設連線配置進行修改，使用場景如下：\n執行使用者/密碼、登入使用者/密碼、執行引擎節點配置等',
+        '注意：\n自動化配置是針對每一個自動化資產的預設連線配置進行修改，使用場景如下：\n執行使用者/密碼、登入使用者/密碼、執行節點配置等',
       'acm.common.text.ansible_config_comment':
         '注意：\nAnsible連線配置是針對KoreOPS支援的自動化裝置型別預設配置進行修改，使用場景如下：\n是否提權、提權方式、連線方式等',
       'acm.common.text.model_import_comment':
@@ -13855,7 +13855,7 @@
       'gfs.settings.init_repo_success': '初始化外部Git庫成功',
       'gfs.settings.init_repo_error': '初始化外部Git庫失敗',
       'gfs.settings.init_repo_info':
-        '說明：用於指定腳本庫，oplus內建腳本庫無需該設定，如需指定外部Git庫（目前支援Github、Bitbucket、Gitlab、Gitee、Coding），按照以下指定方式配置KoreOPS同步外部Git庫，該設定會清空當前已存在腳本庫中所有內容，請詳細閱讀說明後再使用！！',
+        '說明：用於指定腳本庫，KoreOPS內建腳本庫無需該設定，如需指定外部Git庫（目前支援Github、Bitbucket、Gitlab、Gitee、Coding），按照以下指定方式配置KoreOPS同步外部Git庫，該設定會清空當前已存在腳本庫中所有內容，請詳細閱讀說明後再使用！！',
       'gfs.settings.init_repo_confirm': '外部Git庫同步確認',
       'gfs.settings.init_repo_confirm_info': '確認同步{{repoUrl}}到KoreOPS指令碼庫中？',
       'gfs.settings.reset_repo_success': '重置KoreOPS內建腳本庫成功',
@@ -14252,7 +14252,7 @@
       'jao.job.widget.start_run': '開始執行',
       'jao.job.widget.show_output': '顯示實時輸出',
       'jao.job.widget.show_output_desc': '執行作業後，彈出視窗顯示作業的實時輸出',
-      'jao.result.name': '作業執行結果',
+      'jao.result.name': '執行結果',
       'jao.result.terminate_all': "{{'jao.common.terminate' | translate}}整個作業",
       'jao.result.detail.duration': '執行時間',
       'jao.result.detail.summary': '概要',
@@ -14385,7 +14385,7 @@
       'jao.approve.view_btn': '檢視申請',
       'jao.approve.re_approve_btn': '再次申請',
       'jao.udp.run_logs': '作業執行記錄',
-      'jao.udp.run_result': '作業執行結果',
+      'jao.udp.run_result': '執行結果',
       'jao.page.action.create': '新建一鍵作業',
       'jao.page.action.move_job': '移動一鍵作業',
       'jao.page.action.move_job_confirm':
@@ -14410,8 +14410,8 @@
       'jao.log.opslog.filter_day': '時間範圍',
       'jao.log.opslog.filter_day_desc': '按照時間篩選資料，支援天數',
       'jao.flow.detail.name': '流程模板名',
-      'jao.log.ata_node': '執行引擎節點',
-      'jao.log.exception.notfound': '異常結束，無法找到作業資訊',
+      'jao.log.ata_node': '執行節點',
+      'jao.log.exception.notfound': '異常結束，無法找到運維工具資訊',
       'jao.job.run.ansible-playbook': 'ansible-playbook或指令碼執行引數',
       'jao.job.run.ansible-playbook-tag': 'ansible-playbook tag引數',
       'jao.job.run.ansible.verbose.normal': '0（普通）',
