@@ -40,6 +40,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { JOB_STATUS_LABELS, JOB_STATUS_CLASS_MAP } from '@/modules/automation/constants/jobStatus'
+import { translateText } from '@/utils/i18n'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -117,8 +118,8 @@ function initializeForm(detail) {
   const params = Array.isArray(detail?.params) ? detail.params : []
   formSchema.value = params.map(item => ({
     name: item.name,
-    label: item.label || item.name,
-    description: item.description || '',
+    label: translateText(item.label) || item.name,
+    description: translateText(item.description) || '',
     defaultValue: item.defaultValue ?? ''
   }))
   const defaults = {}

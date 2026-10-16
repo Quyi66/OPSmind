@@ -561,7 +561,7 @@ const confirmAction = async ({
   const actionMeta = ACTION_CONFIG[actionKey]
 
   try {
-    await ElMessageBox.confirm(confirmMessage || actionMeta.confirmMessage, '执行作业', {
+    await ElMessageBox.confirm(confirmMessage || actionMeta.confirmMessage, '执行运维工具', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'warning'

@@ -98,7 +98,7 @@ async function handleSubmit() {
   }
 
   try {
-    await ElMessageBox.confirm('确定将选中的主机设置为基准仓库主机吗？', '执行作业', {
+    await ElMessageBox.confirm('确定将选中的主机设置为基准仓库主机吗？', '执行运维工具', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'info'

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
   getAutomationToolTitle,
+  getAutomationToolDescription,
   getAutomationExecutionPresentation,
   getAutomationRunTitle
 } from '@/modules/automation/utils/resourcePresentation'
@@ -8,6 +9,17 @@ import {
 vi.mock('@/utils/i18n', () => ({ translateText: value => value || '' }))
 
 describe('资源名称只影响展示', () => {
+  it('重复内置名称的说明沿用身份匹配，自定义说明和原始值保留', () => {
+    const record = Object.freeze({ id: 'eGfsxb', description: '【ACM】设备纳管' })
+    expect(getAutomationToolDescription(record)).toBe('设备纳管')
+    expect(record.description).toBe('【ACM】设备纳管')
+    expect(getAutomationToolDescription({ ...record, id: 'custom' })).toBe(record.description)
+    expect(
+      getAutomationToolDescription({ ...record, description: '【ACM】设备纳管使用说明' })
+    ).toBe('【ACM】设备纳管使用说明')
+    expect(getAutomationToolDescription({ ...record, description: '' })).toBe('')
+    expect(getAutomationToolDescription({ ...record, description: null })).toBe('')
+  })
   it.each([
     ['3TRE7d', '【ACM】更新已纳管设备信息', '更新已纳管设备信息'],
     ['eGfsxb', '【ACM】设备纳管', '设备纳管'],

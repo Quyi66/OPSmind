@@ -38,6 +38,18 @@ export function getAutomationRunTitle(record, fallback = '未命名运行') {
   return scriptPath ? `脚本执行：${scriptPath[2]}` : title
 }
 
+export function getAutomationToolDescription(record) {
+  // A few built-in descriptions repeat the original tool name. Apply the same
+  // identity + exact-name rule; leave free-form descriptions and custom tools intact.
+  return getAutomationToolTitle(
+    {
+      id: record?.job_id ?? record?.jobId ?? record?.id,
+      title: record?.description
+    },
+    ''
+  )
+}
+
 export function getAutomationExecutionPresentation(payload, fallback = {}) {
   const jobId = payload?.jobId || fallback.id || ''
   const rawJobTitle = payload?.jobTitle || fallback.title || '运维工具执行'

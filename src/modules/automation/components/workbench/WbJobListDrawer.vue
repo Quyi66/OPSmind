@@ -1,8 +1,10 @@
 <script setup>
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { appTableList } from '@/modules/automation/api/jao'
-import { getAutomationToolTitle } from '../../utils/resourcePresentation'
-import { translateText } from '@/utils/i18n'
+import {
+  getAutomationToolDescription,
+  getAutomationToolTitle
+} from '../../utils/resourcePresentation'
 import { formatDateTime as formatDateTimeGlobal } from '../../utils/helpers'
 
 const props = defineProps({
@@ -68,7 +70,7 @@ function jobTitle(job) {
 }
 
 function jobDescription(job) {
-  return translateText(job.description) || ''
+  return getAutomationToolDescription(job)
 }
 
 function handleMoreCommand(job, command) {

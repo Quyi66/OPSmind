@@ -153,7 +153,7 @@ const selectedFunc = ref('')
 
 // 内置函数列表
 const builtinFunctions = [
-  { name: 'runJobWait', desc: '运行作业并等待结果' },
+  { name: 'runJobWait', desc: '执行运维工具并等待结果' },
   { name: 'execProcess', desc: '执行进程' },
   { name: 'currentUser', desc: '获取当前用户' },
   { name: 'toDate', desc: '转换为日期' },

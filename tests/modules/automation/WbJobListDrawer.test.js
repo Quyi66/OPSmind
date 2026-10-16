@@ -39,6 +39,25 @@ async function openDrawer() {
 }
 
 describe('工具列表取消旧所属应用概念', () => {
+  it('已确认内置名称作为说明时正文、提示和搜索一致，操作仍传原记录', async () => {
+    const job = Object.freeze({
+      id: 'eGfsxb',
+      title: '【ACM】设备纳管',
+      type: 'rest',
+      description: '【ACM】设备纳管'
+    })
+    vi.mocked(appTableList).mockResolvedValueOnce({ data: [job] })
+    const state = await openDrawer()
+    const description = wrapper.find('.wb-job-card__description')
+    expect(description.text()).toBe('设备纳管')
+    expect(description.attributes('title')).toBe('设备纳管')
+    state.filters.keyword = '设备纳管'
+    state.handleSearch()
+    expect(state.filteredJobs).toEqual([job])
+    state.handleMoreCommand(job, 'edit')
+    expect(wrapper.emitted('edit')[0]).toEqual([job])
+    expect(job.description).toBe('【ACM】设备纳管')
+  })
   it('说明正文、悬停提示和搜索都使用翻译后的值，原始记录保持不变', async () => {
     const job = Object.freeze({ id: 'flow-test', title: '流程', type: 'rest', description: '【FLOW】#{flow.index.list}' })
     vi.mocked(appTableList).mockResolvedValueOnce({ data: [job] })

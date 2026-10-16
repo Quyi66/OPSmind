@@ -136,7 +136,7 @@
         </el-table-column>
         <el-table-column prop="description" label="描述" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
-            {{ translateText(row.description) || '-' }}
+            {{ getAutomationToolDescription(row) || '-' }}
           </template>
         </el-table-column>
         <el-table-column label="类型" width="140">
@@ -229,8 +229,10 @@ import { storeToRefs } from 'pinia'
 import { useAutomationJobStore, JOB_TYPE_OPTIONS } from '@/modules/automation/stores/useJobStore'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Delete, Refresh, Search, ArrowDown, RefreshRight } from '@element-plus/icons-vue'
-import { translateText } from '@/utils/i18n'
-import { getAutomationToolTitle } from '@/modules/automation/utils/resourcePresentation'
+import {
+  getAutomationToolDescription,
+  getAutomationToolTitle
+} from '@/modules/automation/utils/resourcePresentation'
 import * as jaoApi from '@/modules/automation/api/jao'
 import ExecuteJobDialog from '../../components/job/JobListView/ExecuteJobDialog.vue'
 import ExecuteHistoryDialog from '../../components/job/JobListView/ExecuteHistoryDialog.vue'
@@ -290,7 +292,7 @@ function filterList() {
         job.title,
         getAutomationToolTitle(job),
         job.description,
-        translateText(job.description),
+        getAutomationToolDescription(job),
         job.updatedBy
       ]
       return searchableValues.some(value =>

@@ -96,7 +96,7 @@ async function handleSubmit() {
   try {
     await ElMessageBox.confirm(
       '导入仓库配置源信息可能需要几分钟不等，请点击确定开始导入',
-      '执行作业',
+      '执行运维工具',
       {
         confirmButtonText: '确认',
         cancelButtonText: '取消',
