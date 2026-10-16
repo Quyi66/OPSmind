@@ -241,7 +241,7 @@
           @selection-change="handleRecentlySelectionChange"
         >
           <el-table-column type="selection" width="45" />
-          <el-table-column prop="jobTitle" label="作业" min-width="180" show-overflow-tooltip>
+          <el-table-column prop="jobTitle" label="运维工具" min-width="180" show-overflow-tooltip>
             <template #default="{ row }">
               <a href="javascript:void(0)" class="text-primary">{{ row.jobTitle }}</a>
             </template>
@@ -327,7 +327,7 @@ const selectModes = [
   { key: 'group', title: '按分组', icon: 'fas fa-code' },
   { key: 'tag', title: '按标签', icon: 'fas fa-tags' },
   { key: 'input', title: '手动输入', icon: 'fas fa-pencil-alt' },
-  { key: 'recently', title: '最近作业设备', icon: 'fas fa-history' }
+  { key: 'recently', title: '最近执行设备', icon: 'fas fa-history' }
 ]
 
 // 状态
