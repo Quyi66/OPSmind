@@ -2652,7 +2652,7 @@ async function handleConfirmFix() {
 
     const { isSuccess, runId } = parseJobRunResult(response)
     if (!isSuccess) {
-      throw new Error('作业返回异常')
+      throw new Error('执行返回异常')
     }
 
     ElMessage.success('修复任务已提交成功')
