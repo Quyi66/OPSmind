@@ -1,10 +1,7 @@
 import { ElMessage, ElMessageBox } from 'element-plus'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { h } from 'vue'
-
-function taskName(row) {
-  return row.jobDesc || '未命名定时任务'
-}
+import { getCronTaskConfirmation as taskName } from '@/modules/automation/utils/cronTaskPresentation'
 
 /**
  * CRON 任务操作行为
@@ -125,7 +122,7 @@ export function useCronJobActions(refreshCallback) {
 
     try {
       await ElMessageBox.confirm(
-        `确定要切换选中 ${selectedRows.length} 个任务的启停状态吗？已启用的任务将停用，已停用的任务将启用。`,
+        `确定要切换选中 ${selectedRows.length} 个任务的启停状态吗？已启用的任务将停用，已停用的任务将启用。\n${selectedRows.map(taskName).join('\n')}`,
         '批量启停',
         {
           confirmButtonText: '确定',
@@ -175,7 +172,7 @@ export function useCronJobActions(refreshCallback) {
    */
   async function handleCopy(row) {
     try {
-      await ElMessageBox.confirm('确定要复制该定时任务吗？', '确认操作', {
+      await ElMessageBox.confirm(`确定要复制定时任务「${taskName(row)}」吗？`, '确认操作', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'info'

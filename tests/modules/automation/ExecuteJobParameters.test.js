@@ -9,6 +9,7 @@ vi.mock('element-plus', async importOriginal => ({
   ElMessage: { error: vi.fn(), success: vi.fn(), warning: vi.fn() }
 }))
 vi.mock('@/utils/i18n', () => ({
+  initTranslations: vi.fn().mockResolvedValue(),
   translateText: text => (text || '').replace('#{common.action.confirm}', '确认')
 }))
 

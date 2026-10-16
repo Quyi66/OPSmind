@@ -2,8 +2,10 @@ import { afterAll, afterEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, shallowMount } from '@vue/test-utils'
 import OperationLogsPage from '@/modules/patches/views/OperationLogsPage.vue'
 import OperationLogsDialog from '@/modules/patches/components/logs/OperationLogsDialog.vue'
+import SoftwareLogReportPage from '@/modules/software/views/LogReportPage.vue'
+import { softwareLogsApi } from '@/modules/software/api'
 import { patchLogsApi } from '@/modules/patches/api'
-import { formatPatchLogMessage } from '@/modules/patches/utils/operationLogMessages'
+import { formatOperationLogMessage } from '@/utils/operationLogMessages'
 import { initTranslations } from '@/utils/i18n'
 
 const translations = vi.hoisted(() => {
@@ -26,6 +28,7 @@ const translations = vi.hoisted(() => {
 })
 
 vi.mock('@/modules/patches/api', () => ({ patchLogsApi: { getLogs: vi.fn() } }))
+vi.mock('@/modules/software/api', () => ({ softwareLogsApi: { getOperationLogs: vi.fn() } }))
 vi.mock('@/core/api', () => ({ useApi: () => ({}) }))
 vi.mock('@/core/auth', () => ({ authService: {} }))
 vi.mock('@/composables/useActiveTaskListPolling', () => ({ useActiveTaskListPolling: vi.fn() }))
@@ -46,16 +49,26 @@ afterEach(() => {
 })
 afterAll(() => vi.unstubAllGlobals())
 
-describe('补丁日志真实翻译消费者', () => {
+describe('软件和补丁日志真实翻译消费者', () => {
   it('页面与弹窗并行查询并等待翻译就绪，原记录和查询契约保持不变', async () => {
-    const logs = Object.freeze([
-      Object.freeze({
-        message: '{"msg_id":"app_secops.log.patch_is_update"}',
-        run_id: 'original-run'
-      })
-    ])
+    // 软件页 2026-10-16 实际原消息的四种结构；不由显示键尾猜测。
+    const messages = [
+      '{"msg_id":"app_secops.log.patch_is_update"}',
+      '{"kbCount":1,"time":0,"msg_id":"app_secops.log.win_scan_success","machineCount":1}',
+      '{"msg_id":"app_secops.log.exec_rollback_task_fail","msg_info":"Windows补丁回滚失败：存在未成功卸载的补丁或结果解析异常，详见审计日志"}',
+      '{"msg_info":"原失败说明 #{custom.key} PLAY RECAP unreachable=1","msg_id":"app_secops.log.exec_script_fail"}'
+    ]
+    const logs = Object.freeze(
+      messages.map((message, index) =>
+        Object.freeze({
+          message,
+          run_id: `original-run-${index}`
+        })
+      )
+    )
     patchLogsApi.getLogs.mockResolvedValue({ records: logs, total: 1 })
-    wrappers = [OperationLogsPage, OperationLogsDialog].map(component =>
+    softwareLogsApi.getOperationLogs.mockResolvedValue({ records: logs, total: 4 })
+    wrappers = [OperationLogsPage, OperationLogsDialog, SoftwareLogReportPage].map(component =>
       shallowMount(component, {
         props: component === OperationLogsDialog ? { modelValue: true } : {},
         global: {
@@ -70,7 +83,11 @@ describe('补丁日志真实翻译消费者', () => {
               'el-tooltip',
               'el-empty',
               'el-scrollbar',
-              'el-tag'
+              'el-tag',
+              'el-form',
+              'el-form-item',
+              'el-input',
+              'el-button'
             ].map(name => [name, true])
           ),
           directives: { loading: () => {} }
@@ -79,6 +96,12 @@ describe('补丁日志真实翻译消费者', () => {
     )
     await flushPromises()
     expect(patchLogsApi.getLogs).toHaveBeenCalledTimes(2)
+    expect(softwareLogsApi.getOperationLogs).toHaveBeenCalledWith({
+      module: 'secops',
+      action: 'all',
+      status: 'all',
+      day: '1'
+    })
     for (const wrapper of wrappers) {
       expect(wrapper.vm.$.setupState.tableData).toEqual([])
       expect(wrapper.vm.$.setupState.loading).toBe(true)
@@ -96,6 +119,17 @@ describe('补丁日志真实翻译消费者', () => {
       expect(state[index === 0 ? 'translateMessage' : 'formatMessage'](logs[0].message)).toBe(
         '补丁库数据已为最新'
       )
+      for (const message of [
+        ...messages,
+        '结果：#{app_secops.log.patch_is_update}',
+        '普通原文',
+        '{invalid',
+        '{"msg_id":"custom.log.unknown"}'
+      ]) {
+        expect(state[index === 0 ? 'translateMessage' : 'formatMessage'](message)).toBe(
+          formatOperationLogMessage(message)
+        )
+      }
     }
     expect(logs[0].message).toBe('{"msg_id":"app_secops.log.patch_is_update"}')
     expect(wrappers[0].vm.$.setupState.translateMessage('')).toBe('')
@@ -109,13 +143,13 @@ describe('补丁日志真实翻译消费者', () => {
     ['install_success', '补丁安装执行完成']
   ])('只兼容实测完整键 app_secops.log.%s，同时保留旧键格式', (suffix, expected) => {
     const key = `app_secops.log.${suffix}`
-    expect(formatPatchLogMessage(JSON.stringify({ msg_id: key }))).toBe(expected)
-    expect(formatPatchLogMessage(key)).toBe(expected)
-    expect(formatPatchLogMessage(`结果：#{${key}}`)).toBe(`结果：${expected}`)
-    expect(formatPatchLogMessage(JSON.stringify({ msg_id: `app_vap.log.${suffix}` }))).toBe(
+    expect(formatOperationLogMessage(JSON.stringify({ msg_id: key }))).toBe(expected)
+    expect(formatOperationLogMessage(key)).toBe(expected)
+    expect(formatOperationLogMessage(`结果：#{${key}}`)).toBe(`结果：${expected}`)
+    expect(formatOperationLogMessage(JSON.stringify({ msg_id: `app_vap.log.${suffix}` }))).toBe(
       expected
     )
-    expect(formatPatchLogMessage(`#{app_vap.log.${suffix}}`)).toBe(expected)
+    expect(formatOperationLogMessage(`#{app_vap.log.${suffix}}`)).toBe(expected)
   })
 
   it('使用真实 Windows 扫描字段并保留零耗时', () => {
@@ -125,7 +159,7 @@ describe('补丁日志真实翻译消费者', () => {
       msg_id: 'app_secops.log.win_scan_success',
       machineCount: 1
     })
-    expect(formatPatchLogMessage(JSON.stringify(record))).toBe(
+    expect(formatOperationLogMessage(JSON.stringify(record))).toBe(
       'Windows补丁扫描执行成功，扫描机器数量为1，扫描存在漏洞数量为1，ETL处理耗时为0s'
     )
     expect(record.time).toBe(0)
@@ -133,7 +167,7 @@ describe('补丁日志真实翻译消费者', () => {
 
   it('保留旧模板参数插值，包括零值与缺失值', () => {
     expect(
-      formatPatchLogMessage(
+      formatOperationLogMessage(
         JSON.stringify({
           msg_id: 'app_vap.log.scan_success',
           scan_count: 0,
@@ -146,7 +180,7 @@ describe('补丁日志真实翻译消费者', () => {
       '补丁扫描执行成功，扫描机器数量为0，扫描软件包数量为5，扫描存在漏洞数量为2，ETL处理耗时为0s'
     )
     expect(
-      formatPatchLogMessage('{"msg_id":"app_vap.log.exec_install_fail","msg_info":null}')
+      formatOperationLogMessage('{"msg_id":"app_vap.log.exec_install_fail","msg_info":null}')
     ).toBe('执行补丁安装出现错误，原因是')
   })
 
@@ -160,13 +194,13 @@ describe('补丁日志真实翻译消费者', () => {
       scan_failed_count: 99,
       scan_failed_hosts: ['original-host']
     })
-    expect(formatPatchLogMessage(JSON.stringify(record))).toBe(
+    expect(formatOperationLogMessage(JSON.stringify(record))).toBe(
       '补丁扫描执行成功，扫描机器数量为1，扫描软件包数量为465，扫描存在漏洞数量为101，ETL处理耗时为6s'
     )
     expect(record.scan_failed_count).toBe(99)
     expect(record.scan_failed_hosts).toEqual(['original-host'])
     expect(
-      formatPatchLogMessage(
+      formatOperationLogMessage(
         JSON.stringify({ ...record, scan_packages: 1421, scan_patch: 91, scan_time: 0 })
       )
     ).toBe(
@@ -176,51 +210,62 @@ describe('补丁日志真实翻译消费者', () => {
 
   it('预检查消息只描述执行结果，不推断是否允许继续安装', () => {
     expect(
-      formatPatchLogMessage('{"msg_id":"app_secops.log.pre_check_success","msg_info":""}')
+      formatOperationLogMessage('{"msg_id":"app_secops.log.pre_check_success","msg_info":""}')
     ).toBe('预检查执行成功')
   })
 
   it('回滚任务失败展示原始说明，缺失说明时仍有结果名称', () => {
     const msg_info = 'Windows补丁回滚失败：存在未成功卸载的补丁或结果解析异常，详见审计日志'
     expect(
-      formatPatchLogMessage(
+      formatOperationLogMessage(
         JSON.stringify({ msg_id: 'app_secops.log.exec_rollback_task_fail', msg_info })
       )
     ).toBe(msg_info)
-    expect(formatPatchLogMessage('{"msg_id":"app_secops.log.exec_rollback_task_fail"}')).toBe(
+    expect(formatOperationLogMessage('{"msg_id":"app_secops.log.exec_rollback_task_fail"}')).toBe(
       '补丁回滚任务失败'
     )
   })
 
   it('先解析 JSON，不因说明包含表达式而直接显示整段 JSON', () => {
     expect(
-      formatPatchLogMessage(
+      formatOperationLogMessage(
         '{"msg_id":"app_vap.log.exec_install_fail","msg_info":"原始说明 #{custom.key}"}'
       )
     ).toBe('执行补丁安装出现错误，原因是原始说明 #{custom.key}')
+    const msg_info = '原失败说明 #{custom.key} PLAY RECAP unreachable=1'
+    expect(
+      formatOperationLogMessage(
+        JSON.stringify({
+          msg_id: 'app_secops.log.exec_script_fail',
+          msg_info
+        })
+      )
+    ).toBe(`执行脚本出错，未输出结果文件，请检查详细信息：${msg_info}`)
   })
 
   it('预检查不满足时保留原阻断结论，不将任务执行成功当作允许安装', () => {
     const msg_info =
       '预检查结论：不满足（存在阻断项，已阻断安装）。主机阻断项：主机连通性（SSH 不可达）。'
     const record = Object.freeze({ msg_id: 'app_secops.log.pre_check_not_satisfied', msg_info })
-    expect(formatPatchLogMessage(JSON.stringify(record))).toBe(msg_info)
+    expect(formatOperationLogMessage(JSON.stringify(record))).toBe(msg_info)
     expect(
-      formatPatchLogMessage('{"msg_id":"app_secops.log.pre_check_not_satisfied","msg_info":" "}')
+      formatOperationLogMessage(
+        '{"msg_id":"app_secops.log.pre_check_not_satisfied","msg_info":" "}'
+      )
     ).toBe('预检查不满足安装条件')
   })
 
   it('区分实测重启、回滚任务与既有回退成功消息', () => {
-    expect(formatPatchLogMessage('{"msg_id":"app_secops.log.restart_success","msg_info":""}')).toBe(
-      '重启执行成功'
-    )
     expect(
-      formatPatchLogMessage(
+      formatOperationLogMessage('{"msg_id":"app_secops.log.restart_success","msg_info":""}')
+    ).toBe('重启执行成功')
+    expect(
+      formatOperationLogMessage(
         '{"msg_id":"app_secops.log.rollback_task_success","msg_info":"Windows补丁回滚执行完成"}'
       )
     ).toBe('Windows补丁回滚执行完成')
     expect(
-      formatPatchLogMessage('{"msg_id":"app_secops.log.rollback_task_success","msg_info":null}')
+      formatOperationLogMessage('{"msg_id":"app_secops.log.rollback_task_success","msg_info":null}')
     ).toBe('补丁回滚执行完成')
   })
 
@@ -234,7 +279,7 @@ describe('补丁日志真实翻译消费者', () => {
       ]
     })
     expect(
-      formatPatchLogMessage(
+      formatOperationLogMessage(
         JSON.stringify({ msg_id: 'app_secops.log.exec_install_fail', msg_info })
       )
     ).toBe(`执行补丁安装出现错误，原因是${msg_info}`)
@@ -250,12 +295,12 @@ describe('补丁日志真实翻译消费者', () => {
       '42',
       'exec_script_fail'
     ]) {
-      expect(formatPatchLogMessage(text)).toBe(text)
+      expect(formatOperationLogMessage(text)).toBe(text)
     }
-    expect(formatPatchLogMessage('{"msg_id":"custom.log.exec_script_fail"}')).toBe(
+    expect(formatOperationLogMessage('{"msg_id":"custom.log.exec_script_fail"}')).toBe(
       'exec_script_fail'
     )
-    expect(formatPatchLogMessage('{"msg_id":"app_secops.log.unconfirmed_key"}')).toBe(
+    expect(formatOperationLogMessage('{"msg_id":"app_secops.log.unconfirmed_key"}')).toBe(
       'unconfirmed_key'
     )
   })

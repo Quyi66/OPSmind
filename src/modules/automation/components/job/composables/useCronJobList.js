@@ -1,6 +1,7 @@
 import { ref, computed, onMounted } from 'vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { ElMessage } from 'element-plus'
+import { matchesCronTaskKeyword } from '@/modules/automation/utils/cronTaskPresentation'
 
 /**
  * CRON 任务列表管理
@@ -19,14 +20,9 @@ export function useCronJobList() {
     if (!searchKeyword.value) return tableData.value
 
     const keyword = searchKeyword.value.toLowerCase()
-    return tableData.value.filter(row => {
-      return (
-        (row.jobDesc && row.jobDesc.toLowerCase().includes(keyword)) ||
-        (row.scheduleConf && row.scheduleConf.toLowerCase().includes(keyword)) ||
-        (row.jobType && row.jobType.toLowerCase().includes(keyword)) ||
-        (row.author && row.author.toLowerCase().includes(keyword))
-      )
-    })
+    return tableData.value.filter(row =>
+      matchesCronTaskKeyword(row, keyword, ['jobDesc', 'scheduleConf', 'jobType', 'author'])
+    )
   })
 
   /**

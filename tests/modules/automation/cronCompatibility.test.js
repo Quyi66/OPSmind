@@ -111,7 +111,7 @@ describe('定时任务去除应用展示后的接口兼容', () => {
   })
 })
 
-describe('操作文案去掉 ID 后仍使用真实标识调用接口', () => {
+describe('操作确认身份与真实标识调用接口', () => {
   it('批量启停保留后端要求的当前状态字典', async () => {
     const actions = useCronJobActions(vi.fn())
     await actions.handleBatchToggle([
@@ -119,7 +119,7 @@ describe('操作文案去掉 ID 后仍使用真实标识调用接口', () => {
       { id: 'task-b', triggerStatus: '0' }
     ])
     expect(api.batchToggleCronJobs).toHaveBeenCalledWith({ 'task-a': '1', 'task-b': '0' })
-    expect(ElMessageBox.confirm.mock.calls[0][0]).not.toContain('task-a')
+    expect(ElMessageBox.confirm.mock.calls[0][0]).toContain('task-a')
   })
 
   it('执行、复制和删除继续传任务 ID，确认提示使用名称', async () => {
@@ -132,6 +132,6 @@ describe('操作文案去掉 ID 后仍使用真实标识调用接口', () => {
       expect(method).toHaveBeenCalledWith('internal-id')
     }
     expect(ElMessageBox.confirm.mock.calls[0][0]).toContain('每日检查')
-    expect(ElMessageBox.confirm.mock.calls[0][0]).not.toContain('internal-id')
+    expect(ElMessageBox.confirm.mock.calls[0][0]).toContain('internal-id')
   })
 })

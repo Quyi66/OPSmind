@@ -9,7 +9,13 @@
     >
       <el-table-column type="selection" width="50" align="left" />
 
-      <el-table-column prop="jobDesc" label="任务名称" min-width="180" show-overflow-tooltip />
+      <el-table-column prop="jobDesc" label="任务名称" min-width="180" show-overflow-tooltip>
+        <template #default="{ row }">
+          <span :title="getCronTaskConfirmation(row)">
+            {{ getCronTaskDisplayName(row, identityData || data) }}
+          </span>
+        </template>
+      </el-table-column>
 
       <el-table-column prop="scheduleConf" label="CRON表达式" width="140" align="left">
         <template #default="{ row }">
@@ -89,8 +95,14 @@
 <script setup>
 import { Edit, Delete, CopyDocument, VideoPlay, Clock } from '@element-plus/icons-vue'
 import { computed, ref } from 'vue'
+import {
+  getCronTaskConfirmation,
+  getCronTaskDisplayName,
+  getCronTaskType
+} from '@/modules/automation/utils/cronTaskPresentation'
 
 const props = defineProps({
+  identityData: { type: Array, default: null },
   data: {
     type: Array,
     default: () => []
@@ -127,15 +139,7 @@ const pagedData = computed(() => {
  * 获取作业类型名称
  */
 function getJobTypeName(type) {
-  const typeMap = {
-    rest: 'REST接口',
-    script: '脚本任务',
-    audit: '巡检任务',
-    cac: '巡检任务',
-    cmd: '命令任务',
-    flows: '流程任务'
-  }
-  return typeMap[type] || type
+  return getCronTaskType(type)
 }
 
 /**

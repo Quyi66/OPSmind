@@ -35,7 +35,7 @@ function applyTemplateParams(template, params) {
   })
 }
 
-export function formatPatchLogMessage(message) {
+export function formatOperationLogMessage(message) {
   if (!message) return ''
 
   // 先解析 JSON，防止原始说明中的翻译表达式使整个 JSON 直接显示。
@@ -53,7 +53,16 @@ export function formatPatchLogMessage(message) {
     ) {
       return record.msg_info
     }
-    return applyTemplateParams(translateMessageKey(record.msg_id), record) || record.msg_id
+    const summary = applyTemplateParams(translateMessageKey(record.msg_id), record) || record.msg_id
+    // 该模板没有 msg_info 占位符，另行保留后端提供的失败说明/审计输出。
+    if (
+      record.msg_id === 'app_secops.log.exec_script_fail' &&
+      typeof record.msg_info === 'string' &&
+      record.msg_info.trim()
+    ) {
+      return `${summary}：${record.msg_info}`
+    }
+    return summary
   } catch {
     if (message.includes('#{')) {
       return message.replace(/#\{([^}]+)\}/g, (_, key) => translateMessageKey(key))

@@ -19,7 +19,7 @@
           <el-form-item label="关键词">
             <el-input
               v-model="filters.keyword"
-              placeholder="搜索任务名称或表达式"
+              placeholder="任务名称、表达式或 ID:编号"
               clearable
               style="width: 260px"
               @keyup.enter="handleSearch"
@@ -42,8 +42,8 @@
         >
           <div class="wb-cron-item__info">
             <div class="wb-cron-item__heading">
-              <strong class="wb-cron-item__name" :title="item.jobDesc">
-                {{ item.jobDesc || '未命名定时任务' }}
+              <strong class="wb-cron-item__name" :title="getCronTaskConfirmation(item)">
+                {{ getCronTaskDisplayName(item, jobs) }}
               </strong>
               <el-tag size="small" :type="String(item.triggerStatus) === '1' ? 'success' : 'info'">{{ String(item.triggerStatus) === '1' ? '启用' : '停用' }}</el-tag>
             </div>
@@ -103,6 +103,11 @@
 
 <script setup>
 import { computed, reactive, watch } from 'vue'
+import {
+  getCronTaskConfirmation,
+  getCronTaskDisplayName,
+  matchesCronTaskKeyword
+} from '@/modules/automation/utils/cronTaskPresentation'
 
 const props = defineProps({
   jobs: { type: Array, default: () => [] },
@@ -127,11 +132,7 @@ const filteredJobs = computed(() => {
   const jobs = props.jobs.filter(item => appliedFilters.status === 'all' || String(item.triggerStatus) === appliedFilters.status)
   if (!keyword) return jobs
 
-  return jobs.filter(
-    item =>
-      (item.jobDesc && item.jobDesc.toLowerCase().includes(keyword)) ||
-      (item.scheduleConf && item.scheduleConf.toLowerCase().includes(keyword))
-  )
+  return jobs.filter(item => matchesCronTaskKeyword(item, keyword, ['jobDesc', 'scheduleConf']))
 })
 
 const emptyText = computed(() =>

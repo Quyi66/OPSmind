@@ -17,7 +17,7 @@
           </el-form-item>
         </template>
       </el-form>
-      <div v-else class="execute-dialog__empty">当前运维工具暂无可配置参数</div>
+      <div v-else-if="!detailLoading" class="execute-dialog__empty">当前运维工具暂无可配置参数</div>
     </div>
     <template #footer>
       <div class="dialog-footer">
@@ -26,7 +26,12 @@
         </div>
         <div class="dialog-footer__actions">
           <el-button @click="handleClose">取消</el-button>
-          <el-button type="primary" :loading="submitLoading" @click="handleSubmit">
+          <el-button
+            type="primary"
+            :loading="submitLoading"
+            :disabled="detailLoading || lastLoadedJobId !== jobId"
+            @click="handleSubmit"
+          >
             执行运维工具
           </el-button>
         </div>
@@ -40,7 +45,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { JOB_STATUS_LABELS, JOB_STATUS_CLASS_MAP } from '@/modules/automation/constants/jobStatus'
-import { translateText } from '@/utils/i18n'
+import { initTranslations, translateText } from '@/utils/i18n'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -64,6 +69,7 @@ const jobDetail = ref({})
 const lastLoadedJobId = ref('')
 const executionStatus = ref('')
 const pollingTimer = ref()
+let detailRequestId = 0
 
 const executionStatusLabel = computed(() => {
   if (!executionStatus.value) return ''
@@ -78,6 +84,7 @@ const executionStatusClass = computed(() => {
 watch(
   () => [props.visible, props.jobId],
   ([visible, jobId]) => {
+    resetForm()
     if (visible && jobId) {
       fetchJobDetail(jobId)
     }
@@ -85,31 +92,22 @@ watch(
   { immediate: true }
 )
 
-watch(
-  () => props.visible,
-  visible => {
-    if (!visible) {
-      resetForm()
-    }
-  }
-)
-
 /** 获取作业详情 */
 async function fetchJobDetail(jobId) {
-  if (!jobId || lastLoadedJobId.value === jobId) {
-    return
-  }
+  const requestId = ++detailRequestId
+  const isCurrent = () => requestId === detailRequestId && props.visible && props.jobId === jobId
   detailLoading.value = true
   try {
-    const response = await jaoApi.getJobDetail(jobId)
+    const [response] = await Promise.all([jaoApi.getJobDetail(jobId), initTranslations()])
+    if (!isCurrent()) return
     const detail = response.data ?? {}
     jobDetail.value = detail
     lastLoadedJobId.value = jobId
     initializeForm(detail)
   } catch (error) {
-    ElMessage.error(error?.message || '获取运维工具详情失败')
+    if (isCurrent()) ElMessage.error(error?.message || '获取运维工具详情失败')
   } finally {
-    detailLoading.value = false
+    if (isCurrent()) detailLoading.value = false
   }
 }
 
@@ -131,6 +129,8 @@ function initializeForm(detail) {
 
 /** 重置表单 */
 function resetForm() {
+  detailRequestId++
+  detailLoading.value = false
   formSchema.value = []
   formValues.value = {}
   jobDetail.value = {}
@@ -141,7 +141,7 @@ function resetForm() {
 
 /** 关闭弹窗 */
 function handleClose() {
-  stopResultPolling()
+  resetForm()
   dialogVisible.value = false
 }
 
@@ -151,6 +151,7 @@ async function handleSubmit() {
     ElMessage.warning('缺少运维工具标识')
     return
   }
+  if (detailLoading.value || lastLoadedJobId.value !== props.jobId) return
   executionStatus.value = ''
   submitLoading.value = true
   try {
@@ -255,7 +256,7 @@ async function pollExecuteResult(runId) {
 }
 
 onBeforeUnmount(() => {
-  stopResultPolling()
+  resetForm()
 })
 </script>
 

@@ -4,7 +4,14 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="关键词">
-          <el-input v-model="searchKeyword" placeholder="搜索任务名称、表达式或作者" clearable style="width: 240px" @keyup.enter="handleSearch" @clear="handleSearch">
+          <el-input
+            v-model="searchKeyword"
+            placeholder="名称、表达式、作者或 ID:编号"
+            clearable
+            style="width: 240px"
+            @keyup.enter="handleSearch"
+            @clear="handleSearch"
+          >
             <template #prefix>
               <el-icon>
                 <Search />
@@ -61,6 +68,7 @@
     <div class="ops-table-wrapper">
       <CronJobTable
         :data="filteredTableData"
+        :identity-data="tableData"
         :loading="loading"
         :applet-map="appletMap"
         @selection-change="handleSelectionChange"

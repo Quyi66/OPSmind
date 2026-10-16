@@ -304,7 +304,7 @@ import { Refresh, Search, RefreshRight, Monitor } from '@element-plus/icons-vue'
 import { patchLogsApi } from '../api'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { initTranslations, translateText } from '@/utils/i18n'
-import { formatPatchLogMessage } from '../utils/operationLogMessages'
+import { formatOperationLogMessage } from '@/utils/operationLogMessages'
 import { useApi } from '@/core/api'
 import { authService } from '@/core/auth'
 import ScanReportDialog from '../components/logs/ScanReportDialog.vue'
@@ -445,7 +445,7 @@ function translateAction(action) {
 
 // 翻译消息（基于 i18n 模板）
 function translateMessage(messageStr) {
-  return formatPatchLogMessage(messageStr)
+  return formatOperationLogMessage(messageStr)
 }
 
 function parseHosts(hostsStr) {

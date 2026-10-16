@@ -706,6 +706,7 @@ import { authService } from '@/core/auth'
 import { canAccessMenuCode } from '@/core/auth/permission-policy'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { getAutomationToolTitle, getAutomationRunTitle, getAutomationExecutionPresentation } from '@/modules/automation/utils/resourcePresentation'
+import { getCronTaskConfirmation } from '@/modules/automation/utils/cronTaskPresentation'
 import { useAppletTranslation } from '@/modules/automation/components/job/composables/useAppletTranslation.js'
 import { useAutomationWorkbench } from '@/modules/automation/composables/useAutomationWorkbench.js'
 import { formatWorkbenchJobDate, getWorkbenchCardLayout, selectWorkbenchJobs } from '@/modules/automation/utils/workbenchPresentation'
@@ -1311,7 +1312,7 @@ async function handleDeleteCronFromDrawer(item) {
 
   try {
     await ElMessageBox.confirm(
-      `确定要删除定时任务「${item.jobDesc || '未命名定时任务'}」吗？`,
+      `确定要删除定时任务「${getCronTaskConfirmation(item)}」吗？`,
       '删除定时任务',
       {
         type: 'warning',

@@ -172,7 +172,7 @@ import { formatDateTime } from '@/utils/date'
 import { Refresh } from '@element-plus/icons-vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { initTranslations, translateText } from '@/utils/i18n'
-import { formatPatchLogMessage } from '../../utils/operationLogMessages'
+import { formatOperationLogMessage } from '@/utils/operationLogMessages'
 import { useApi } from '@/core/api'
 import { patchLogsApi } from '../../api'
 import { authService } from '@/core/auth'
@@ -324,7 +324,7 @@ function getStatusText(status) {
 
 // 格式化消息
 function formatMessage(message) {
-  return formatPatchLogMessage(message) || '-'
+  return formatOperationLogMessage(message) || '-'
 }
 
 // 计算耗时
