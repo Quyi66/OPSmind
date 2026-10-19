@@ -350,6 +350,7 @@
       :host-summary="currentHost"
       :initial-filters="hostDrawerInitialFilters"
       @task-submitted="handleTaskSubmitted"
+      @view-history="openHostHistory"
     />
 
     <WinPatchBatchInstallDrawer
@@ -532,6 +533,12 @@ function openHostDrawer(row, initialFilters = null) {
   currentHost.value = row
   hostDrawerInitialFilters.value = initialFilters ? { ...initialFilters } : null
   hostDrawerVisible.value = true
+}
+
+function openHostHistory(hostId) {
+  if (!hostId) return
+  hostDrawerVisible.value = false
+  router.push({ name: 'patches-windowsRollback', query: { hostId } })
 }
 
 function resolveSeverityCount(row, severity) {

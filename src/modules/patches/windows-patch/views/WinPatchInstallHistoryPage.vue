@@ -23,7 +23,7 @@
       <el-button
         type="warning"
         size="small"
-        :disabled="selectedRows.length === 0"
+        :disabled="loading || selectedRows.length === 0"
         @click="rollbackDialogVisible = true"
       >
         回滚选中记录
@@ -41,6 +41,10 @@
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
+
+    <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
+      <el-button link type="primary" @click="loadLogs()">重试</el-button>
+    </el-alert>
 
     <div class="ops-table-wrapper">
       <el-table
@@ -119,7 +123,8 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { onBeforeUnmount, reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { Refresh } from '@element-plus/icons-vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import WinPatchRollbackDialog from '../components/tasks/WinPatchRollbackDialog.vue'
@@ -129,7 +134,10 @@ import { winPatchApi } from '../api'
 import { WIN_PATCH_PAGE_SIZE_OPTIONS } from '../constants'
 import { formatDateTime, isRollbackSelectable, parsePageResponse, pickValue } from '../utils'
 
+const route = useRoute()
 const loading = ref(false)
+const loadError = ref('')
+let loadRequestId = 0
 const logList = ref([])
 const selectedRows = ref([])
 const rollbackDialogVisible = ref(false)
@@ -150,19 +158,29 @@ const pagination = reactive({
 })
 
 async function loadLogs() {
+  if (route.name !== 'patches-windowsRollback') return
+  const requestId = ++loadRequestId
   loading.value = true
+  loadError.value = ''
+  logList.value = []
+  pagination.total = 0
+  selectedRows.value = []
   try {
     const response = await winPatchApi.getInstallLogs({
       hostId: filters.hostId || undefined,
       page: pagination.page - 1,
       size: pagination.pageSize
     })
+    if (requestId !== loadRequestId) return
     const page = parsePageResponse(response)
     logList.value = page.content
     pagination.total = page.total
     selectedRows.value = []
+  } catch {
+    if (requestId !== loadRequestId) return
+    loadError.value = '加载安装历史失败，请重试'
   } finally {
-    loading.value = false
+    if (requestId === loadRequestId) loading.value = false
   }
 }
 
@@ -253,8 +271,30 @@ function normalizeKbNumber(value) {
   return /^\d+$/.test(normalized) ? `KB${normalized}` : normalized
 }
 
-onMounted(() => {
-  loadLogs()
+watch(
+  [() => route.name, () => route.query.hostId],
+  ([name, hostId]) => {
+    loadRequestId += 1
+    loading.value = false
+    loadError.value = ''
+    logList.value = []
+    pagination.total = 0
+    selectedRows.value = []
+    rollbackDialogVisible.value = false
+    runResultDialogVisible.value = false
+    kbDetailDialogVisible.value = false
+    if (name !== 'patches-windowsRollback') return
+
+    const value = Array.isArray(hostId) ? hostId[0] : hostId
+    filters.hostId = typeof value === 'string' ? value : ''
+    pagination.page = 1
+    loadLogs()
+  },
+  { immediate: true }
+)
+
+onBeforeUnmount(() => {
+  loadRequestId += 1
 })
 </script>
 
