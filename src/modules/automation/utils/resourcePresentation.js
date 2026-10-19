@@ -128,5 +128,5 @@ export function getAutomationToolDescription(record) {
 export function getAutomationExecutionPresentation(payload, fallback = {}) {
   const jobId = payload?.jobId || fallback.id || ''
   const rawJobTitle = payload?.jobTitle || fallback.title || '运维工具执行'
-  return { jobId, rawJobTitle, jobTitle: getAutomationRunTitle({ job_id: jobId, job_title: rawJobTitle }) }
+  return { jobId, jobTitle: getAutomationRunTitle({ job_id: jobId, job_title: rawJobTitle }) }
 }

@@ -47,23 +47,14 @@
                     </div>
                   </div>
                 </div>
-                <el-collapse class="result-technical-info">
-                  <el-collapse-item title="技术信息" name="technical">
-                    <el-descriptions :column="1" size="small" border>
-                      <el-descriptions-item label="运行标识">{{ summary.runId }}</el-descriptions-item>
-                      <el-descriptions-item v-if="summary.agentClientId" label="Agent 标识">{{ summary.agentClientId }}</el-descriptions-item>
-                      <el-descriptions-item v-if="summary.relayTraceId" label="中继追踪标识">{{ summary.relayTraceId }}</el-descriptions-item>
-                      <el-descriptions-item v-if="rawJobTitle || jobTitle" label="原始任务名称">{{ rawJobTitle || jobTitle }}</el-descriptions-item>
-                    </el-descriptions>
-                  </el-collapse-item>
-                </el-collapse>
-                <JobUpgradeOverview
-                  v-if="isAnsibleJob"
-                  :ansible-contents="ansibleContents"
-                />
+                <JobUpgradeOverview v-if="isAnsibleJob" :ansible-contents="ansibleContents" />
 
                 <div
-                  v-if="summary.errorTitle || summary.errorDetails || (summary.errorList && summary.errorList.length)"
+                  v-if="
+                    summary.errorTitle ||
+                    summary.errorDetails ||
+                    (summary.errorList && summary.errorList.length)
+                  "
                   class="result-error"
                 >
                   <div class="error-title-bar">
@@ -494,7 +485,6 @@ const props = defineProps({
   runId: { type: String, default: '' },
   jobTitle: { type: String, default: '' },
   jobId: { type: [String, Number], default: '' },
-  rawJobTitle: { type: String, default: '' },
   zIndex: { type: Number, default: undefined }
 })
 
@@ -1067,38 +1057,26 @@ function joinDisplayValues(value) {
 function getDirectExecutionChannelInfo(data) {
   const detail = data?.detail || {}
   return {
-    connectionType: normalizeConnectionType(firstDefined(
-      data?.executionChannel,
-      data?.execution_channel,
-      data?.connectionType,
-      data?.connection_type,
-      detail.executionChannel,
-      detail.execution_channel,
-      detail.connectionType,
-      detail.connection_type
-    )),
-    agentClientId: joinDisplayValues(firstDefined(
-      data?.agentClientId,
-      data?.agent_client_id,
-      detail.agentClientId,
-      detail.agent_client_id
-    )),
-    agentVersion: joinDisplayValues(firstDefined(
-      data?.agentVersion,
-      data?.agent_version,
-      detail.agentVersion,
-      detail.agent_version
-    )),
-    relayTraceId: joinDisplayValues(firstDefined(
-      data?.relayTraceId,
-      data?.relay_trace_id,
-      data?.traceId,
-      data?.trace_id,
-      detail.relayTraceId,
-      detail.relay_trace_id,
-      detail.traceId,
-      detail.trace_id
-    ))
+    connectionType: normalizeConnectionType(
+      firstDefined(
+        data?.executionChannel,
+        data?.execution_channel,
+        data?.connectionType,
+        data?.connection_type,
+        detail.executionChannel,
+        detail.execution_channel,
+        detail.connectionType,
+        detail.connection_type
+      )
+    ),
+    agentVersion: joinDisplayValues(
+      firstDefined(
+        data?.agentVersion,
+        data?.agent_version,
+        detail.agentVersion,
+        detail.agent_version
+      )
+    )
   }
 }
 
@@ -1164,9 +1142,6 @@ async function refreshExecutionChannelInfo(data) {
     executionChannelInfo.value = {
       ...directInfo,
       connectionType: channels.length > 1 ? 'mixed' : channels[0] || directInfo.connectionType,
-      agentClientId: joinDisplayValues(
-        infos.map(info => info?.agentClientId || info?.clientId).filter(Boolean)
-      ) || directInfo.agentClientId,
       agentVersion: joinDisplayValues(
         infos.map(info => info?.agentVersion).filter(Boolean)
       ) || directInfo.agentVersion
@@ -1193,7 +1168,6 @@ const summary = computed(() => {
     startTime: formatDateTime(start),
     endTime: formatDateTime(end),
     username: data.username || '-',
-    runId: data.runId || data.id || props.runId || '-',
     connectionType,
     isAgentConnection,
     connectionTypeLabel: connectionType === 'mixed'
@@ -1203,9 +1177,7 @@ const summary = computed(() => {
         : connectionType === 'ssh'
           ? 'SSH'
           : '未知',
-    agentClientId: executionChannelInfo.value.agentClientId || '',
     agentVersion: executionChannelInfo.value.agentVersion || '',
-    relayTraceId: executionChannelInfo.value.relayTraceId || '',
     errorTitle: parsedError.title,
     errorList: parsedError.list,
     errorDetails: parsedError.details
@@ -1810,13 +1782,6 @@ onBeforeUnmount(() => {
 
 .overview-scroll {
   height: 100%;
-}
-
-.result-technical-info {
-  margin: 0 0 16px;
-  :deep(.el-descriptions__content) {
-    overflow-wrap: anywhere;
-  }
 }
 
 .overview-header {

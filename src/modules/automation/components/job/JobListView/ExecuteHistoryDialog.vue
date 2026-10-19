@@ -168,7 +168,6 @@
         :run-id="resultMeta.runId"
         :job-title="resultMeta.jobTitle"
         :job-id="resultMeta.jobId"
-        :raw-job-title="resultMeta.rawJobTitle"
       />
     </div>
   </el-dialog>
@@ -397,7 +396,6 @@ function handleStatusClick(row) {
   resultMeta.value = {
     runId: row.id,
     jobId: row.jobId,
-    rawJobTitle: row.rawJobTitle || props.jobTitle || '',
     jobTitle: row.jobTitle || props.jobTitle || ''
   }
   resultDialogVisible.value = true
@@ -494,7 +492,6 @@ function mapRunLogRecord(record = {}) {
     id: record.id ? String(record.id) : '',
     runId: String(record.runId ?? record.run_id ?? record.id ?? ''),
     jobId,
-    rawJobTitle: record.job_title ?? record.jobTitle ?? '',
     jobTitle: getAutomationRunTitle({ ...record, job_id: jobId }),
     jobType: jobTypeRaw || '-',
     jobTypeKey,

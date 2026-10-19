@@ -568,7 +568,6 @@
       :run-id="resultMeta.runId"
       :job-title="resultMeta.jobTitle"
       :job-id="resultMeta.jobId"
-      :raw-job-title="resultMeta.rawJobTitle"
       @settled="handleExecuteResultSettled"
     />
 
@@ -1207,7 +1206,6 @@ function handleOpenRunResult(item) {
   resultMeta.value = {
     runId: item?.id || '',
     jobId: item?.job_id || item?.jobId || '',
-    rawJobTitle: item?.job_title || '',
     jobTitle: getAutomationRunTitle(item)
   }
   resultDialogVisible.value = true

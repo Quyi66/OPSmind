@@ -32,7 +32,7 @@ vi.mock('@/modules/automation/stores/useJobStore', () => ({ JOB_TYPE_OPTIONS: []
 vi.mock('@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue', () => ({
   default: {
     name: 'ExecuteResultDialog',
-    props: ['runId', 'jobId', 'jobTitle', 'rawJobTitle'],
+    props: ['runId', 'jobId', 'jobTitle'],
     template: '<div />'
   }
 }))
@@ -206,16 +206,14 @@ describe('单工具历史独立消费者', () => {
     expect(wrapper.findComponent({ name: 'ExecuteResultDialog' }).props()).toMatchObject({
       runId: 'run-camel',
       jobId: 'custom-tool',
-      jobTitle: original,
-      rawJobTitle: original
+      jobTitle: original
     })
     state.handleStatusClick(state.tableData[0])
     await flushPromises()
     expect(wrapper.findComponent({ name: 'ExecuteResultDialog' }).props()).toMatchObject({
       runId: 'run-parent',
       jobId,
-      jobTitle: alias,
-      rawJobTitle: original
+      jobTitle: alias
     })
     state.handleStatusClick(state.tableData[2])
     await flushPromises()

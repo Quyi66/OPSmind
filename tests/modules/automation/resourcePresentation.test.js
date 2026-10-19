@@ -30,10 +30,11 @@ describe('资源名称只影响展示', () => {
     expect(getAutomationToolTitle({ id, title: '【ACM】用户自定义名称' })).toBe('【ACM】用户自定义名称')
     expect(getAutomationToolTitle({ id: 'custom', title })).toBe(title)
   })
-  it('执行回调保留工具身份和原始名称，展示别名不覆盖真实参数', () => {
+  it('执行回调保留工具身份，展示别名不覆盖原始参数', () => {
     const payload = Object.freeze({ runId: 'run-1', jobId: 'M1x855', jobTitle: '【ACM】设备连通性检测' })
     expect(getAutomationExecutionPresentation(payload)).toEqual({
-      jobId: 'M1x855', rawJobTitle: payload.jobTitle, jobTitle: '设备连通性检测'
+      jobId: 'M1x855',
+      jobTitle: '设备连通性检测'
     })
     expect(getAutomationExecutionPresentation({ ...payload, jobId: 'custom' }).jobTitle).toBe(payload.jobTitle)
     expect(getAutomationExecutionPresentation({ ...payload, jobTitle: '自定义检测' }).jobTitle).toBe('自定义检测')

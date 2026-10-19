@@ -190,7 +190,6 @@
       v-model:visible="resultDialogVisible"
       :run-id="resultMeta.runId"
       :job-title="resultMeta.jobTitle"
-      :raw-job-title="resultMeta.rawJobTitle"
     />
   </div>
 </template>
@@ -502,7 +501,6 @@ function handleViewResult(row) {
   if (!row?.id) return
   resultMeta.value = {
     runId: row.id,
-    rawJobTitle: row.job_title || '',
     jobTitle: getAutomationRunTitle(row)
   }
   resultDialogVisible.value = true
