@@ -65,6 +65,9 @@
       </template>
       <el-empty v-else-if="!loading" description="暂无数据" />
     </div>
+    <template #footer>
+      <el-button :disabled="!assetId" @click="emit('view-history')">历史趋势</el-button>
+    </template>
   </el-drawer>
 </template>
 
@@ -85,7 +88,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'view-history'])
 
 const visible = computed({
   get: () => props.modelValue,

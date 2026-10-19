@@ -228,6 +228,14 @@
                   <i class="fa fa-cog" />
                   <span>编辑</span>
                 </button>
+                <button
+                  type="button"
+                  class="wb-workbench-job-card__action"
+                  @click.stop="handleOpenJobHistory(job)"
+                >
+                  <i class="fa fa-history" />
+                  <span>历史</span>
+                </button>
                 <el-dropdown
                   trigger="click"
                   placement="bottom-end"
@@ -246,10 +254,6 @@
                       <el-dropdown-item command="copy">
                         <i class="fa fa-copy wb-workbench-job-card__menu-icon" />
                         <span>复制</span>
-                      </el-dropdown-item>
-                      <el-dropdown-item command="history">
-                        <i class="fa fa-history wb-workbench-job-card__menu-icon" />
-                        <span>历史</span>
                       </el-dropdown-item>
                       <el-dropdown-item command="delete" divided>
                         <span class="wb-workbench-job-delete"><i class="fa fa-trash wb-workbench-job-card__menu-icon" />删除</span>
@@ -1180,10 +1184,6 @@ function handleWorkbenchJobCommand(job, command) {
   if (command === 'copy') {
     handleCopyJob(job)
     return
-  }
-
-  if (command === 'history') {
-    handleOpenJobHistory(job)
   }
 }
 
@@ -2512,7 +2512,7 @@ onBeforeUnmount(() => {
 
   &__actions {
     display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) 40px;
+    grid-template-columns: minmax(0, 1.15fr) repeat(2, minmax(0, 1fr)) 40px;
     border-top: 1px solid #cbd5e1;
     background: #f8fafc;
   }

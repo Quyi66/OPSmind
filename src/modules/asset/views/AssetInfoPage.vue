@@ -573,7 +573,11 @@
     </div>
 
     <!-- 所有弹窗和抽屉组件 -->
-    <AssetDetailDialog v-model="detailDialogVisible" :asset-id="currentAssetId" />
+    <AssetDetailDialog
+      v-model="detailDialogVisible"
+      :asset-id="currentAssetId"
+      @view-history="historyDialogVisible = true"
+    />
 
     <AssetEditDialog
       v-model="editDialogVisible"
@@ -1040,6 +1044,7 @@ const getProgressRate = rate => {
 // 行操作
 const handleView = row => {
   currentAssetId.value = row.id
+  currentAssetIp.value = row.IP || ''
   detailDialogVisible.value = true
 }
 
