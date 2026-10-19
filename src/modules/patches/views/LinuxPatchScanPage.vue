@@ -2,7 +2,6 @@
   <div class="ops-page-layout ops-page-layout--page-scroll linux-patch-scan-page">
     <!-- 内容区域 -->
     <div class="page-content">
-      <!-- 新版统计面板 -->
       <div class="stats-dashboard">
         <!-- 1. 补丁统计卡片 -->
         <div class="stat-card patch-card">
@@ -77,419 +76,48 @@
         </div>
       </div>
 
-      <!-- 导航标签 -->
-      <div class="nav-tabs">
-        <div
-          class="nav-tab"
-          :class="{ 'nav-tab--active': activeTab === 'host' }"
-          @click="activeTab = 'host'"
-        >
-          <i class="fa fa-laptop" />
-          主机列表
-        </div>
-        <div
-          class="nav-tab"
-          :class="{ 'nav-tab--active': activeTab === 'vulnerability' }"
-          @click="activeTab = 'vulnerability'"
-        >
-          <i class="fa fa-bug" />
-          漏洞列表
-        </div>
-      </div>
-
-      <!-- 主机列表视图 -->
-      <div v-if="activeTab === 'host'" class="tab-content ops-page-layout">
-        <!-- 筛选栏 -->
-        <div class="ops-filter-bar">
-          <el-form :model="hostFilters" inline size="small">
-            <el-form-item label="操作系统">
-              <el-select
-                v-model="hostFilters.os_distro"
-                placeholder="全部，可输入自定义值"
-                clearable
-                filterable
-                allow-create
-                default-first-option
-                style="width: 180px" @change="handleFilter">
-                <el-option v-for="item in osDistroList" :key="item" :label="item" :value="item" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="系统版本">
-              <el-select
-                v-model="hostVersionFilter"
-                placeholder="全部，可输入自定义值"
-                clearable
-                filterable
-                allow-create
-                default-first-option
-                style="width: 180px"
-                @change="handleHostVersionChange"
-              >
-                <el-option
-                  v-for="item in hostOsVersionOptions"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"
-                />
-              </el-select>
-            </el-form-item>
-<!-- [Agent 功能暂停]
-            <el-form-item label="接入方式">
-              <el-select
-                v-model="hostFilters.connectionType"
-                placeholder="全部接入方式"
-                clearable
-                style="width: 140px"
-                @change="handleFilter"
-              >
-                <el-option label="SSH" value="ssh" />
-                <el-option label="Agent" value="koreops_agent" />
-                <el-option label="未知" value="unknown" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="Agent 状态">
-              <el-select
-                v-model="hostFilters.agentStatus"
-                placeholder="全部状态"
-                clearable
-                style="width: 130px"
-                @change="handleFilter"
-              >
-                <el-option label="在线" value="online" />
-                <el-option label="离线" value="offline" />
-              </el-select>
-            </el-form-item>
--->
-            <el-form-item label="标签">
-              <el-select
-                v-model="hostFilters.tags"
-                placeholder="全部标签"
-                multiple
-                collapse-tags
-                collapse-tags-tooltip
-                clearable
-                filterable
-                :loading="hostTagLoading"
-                style="width: 180px" @change="handleFilter">
-                <el-option v-for="tag in hostTagOptions" :key="tag" :label="tag" :value="tag" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="关键词">
-              <el-input
-                v-model="hostFilters.keyword"
-                placeholder="主机名 / IP / 资产 ID"
-                style="width: 220px"
-                clearable @keyup.enter="handleFilter" @clear="handleFilter">
-                <template #prefix>
-                  <el-icon>
-                    <Search />
-                  </el-icon>
-                </template>
-              </el-input>
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" :loading="loading" @click="handleFilter">
-                <el-icon>
-                  <Search />
-                </el-icon>
-                搜索
-              </el-button>
-              <el-button @click="handleHostReset">
-                <el-icon>
-                  <RefreshRight />
-                </el-icon>
-                重置
-              </el-button>
-            </el-form-item>
-          </el-form>
-        </div>
-
-        <!-- 操作栏 -->
-        <div class="ops-action-bar">
-          <el-button type="primary" size="small" @click="handleRescan" plain>
-            <i class="fa fa-bug" />
-            扫描补丁
-          </el-button>
-          <!-- <el-button type="primary" size="small" @click="agentEnrollDialogVisible = true" plain>
-            <i class="fa fa-plus-circle" />
-            Agent 接入
-          </el-button> -->
+      <LinuxPatchInstallWorkbench
+        ref="installWorkbenchRef"
+        v-show="activeTab !== 'vulnerability'"
+        embedded
+        :initial-tab="initialInstallTab"
+        :scan-loading="rescanLoading"
+        source-label="主机概览"
+        source-route-name="patches-machineScan"
+        @installed="handleWorkbenchInstalled"
+        @scan-host="host => handleRescan([host])"
+      >
+        <template #secondary-actions>
           <el-button
-            type="primary"
+            class="vulnerability-entry"
+            type="warning"
+            plain
+            @click="activeTab = 'vulnerability'"
+          >
+            <el-icon><Warning /></el-icon>
+            <span>漏洞明细</span>
+            <el-icon><ArrowRight /></el-icon>
+          </el-button>
+        </template>
+        <template #scan-action="{ hosts, loading }">
+          <el-button
             size="small"
             plain
-            @click="handleNavigateToInstall"
+            :disabled="loading || rescanLoading"
+            @click="handleRescan(hosts)"
           >
-            <i class="fa fa-arrow-right" />
-            前往安装补丁
+            <el-icon><Search /></el-icon>
+            {{ hosts.length ? `扫描选中主机 (${hosts.length})` : '扫描补丁' }}
           </el-button>
-          <span style="flex: 1"></span>
-          <el-button
-            class="toolbar-icon-btn"
-            circle
-            size="small"
-            :loading="loading"
-            @click="refresh"
-            title="刷新"
-          >
-            <el-icon v-show="!loading">
-              <Refresh />
-            </el-icon>
-          </el-button>
+        </template>
+      </LinuxPatchInstallWorkbench>
+
+      <!-- 漏洞明细保留独立修复流程，不进入常规安装主路径。 -->
+      <div v-if="activeTab === 'vulnerability'" class="tab-content ops-page-layout">
+        <div class="vulnerability-heading">
+          <strong>漏洞明细</strong>
+          <el-button @click="activeTab = 'host'">返回补丁安装</el-button>
         </div>
-
-        <!-- 表格 -->
-        <div class="ops-table-wrapper">
-          <el-table
-            v-loading="loading"
-            :data="hostTableData"
-            class="natural-height-table"
-            style="width: 100%"
-          >
-            <el-table-column prop="host_key" label="主机" width="140">
-              <template #default="{ row }">
-                <el-link type="primary" underline="never" @click="handleHostClick(row)">
-                  {{ row.host_key }}
-                </el-link>
-              </template>
-            </el-table-column>
-            <!-- <el-table-column label="接入方式" width="120">
-              <template #default="{ row }">
-                <el-tag
-                  v-if="isAgentConnectionType(row.connectionType)"
-                  type="success"
-                  size="small"
-                  effect="plain"
-                >
-                  Agent<span v-if="row.agentMode === 'gateway'"> (跳板)</span>
-                </el-tag>
-                <el-tag
-                  v-else
-                  :type="row.connectionType === 'ssh' ? 'info' : 'warning'"
-                  size="small"
-                  effect="plain"
-                >
-                  {{ row.connectionType === 'ssh' ? 'SSH' : '未知' }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="Agent 状态" width="120">
-              <template #default="{ row }">
-                <template v-if="isAgentConnectionType(row.connectionType)">
-                  <el-tag
-                    :type="row.agentStatus === 'online' ? 'success' : row.agentStatus === 'offline' ? 'danger' : 'warning'"
-                    size="small"
-                    :title="row.agentStatus === 'offline' ? `最后在线: ${row.lastSeenAt || '未知'}` : ''"
-                  >
-                    {{ row.agentStatus === 'online' ? '在线' : row.agentStatus === 'offline' ? '离线' : '未知' }}
-                  </el-tag>
-                  <span v-if="row.agentVersion" style="font-size: 11px; color: #909399; margin-left: 4px">
-                    v{{ row.agentVersion }}
-                  </span>
-                </template>
-                <span v-else class="text-muted">-</span>
-              </template>
-            </el-table-column> -->
-
-            <el-table-column prop="need_reboot" label="是否需要重启" width="110">
-              <template #default="{ row }">
-                <el-tag
-                  :type="
-                    row.need_reboot === 1 ? 'danger' : row.need_reboot === 0 ? 'success' : 'warning'
-                  "
-                  size="small"
-                  round
-                >
-                  {{ row.need_reboot === 1 ? '是' : row.need_reboot === 0 ? '否' : '未知' }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="num_critical" width="80">
-              <template #header>
-                严重
-                <i class="fa fa-circle text-danger" />
-              </template>
-              <template #default="{ row }">
-                <button
-                  type="button"
-                  class="severity-count"
-                  :class="{ 'font-bold is-clickable': row.num_critical > 0 }"
-                  :disabled="row.num_critical <= 0"
-                  :title="row.num_critical > 0 ? '查看严重补丁' : ''"
-                  @click="handleSeverityCountClick(row, 'Critical')"
-                >
-                  {{ row.num_critical }}
-                </button>
-              </template>
-            </el-table-column>
-            <el-table-column prop="num_important" width="80">
-              <template #header>
-                重要
-                <i class="fa fa-circle text-warning" />
-              </template>
-              <template #default="{ row }">
-                <button
-                  type="button"
-                  class="severity-count"
-                  :class="{ 'font-bold is-clickable': row.num_important > 0 }"
-                  :disabled="row.num_important <= 0"
-                  :title="row.num_important > 0 ? '查看重要补丁' : ''"
-                  @click="handleSeverityCountClick(row, 'Important')"
-                >
-                  {{ row.num_important }}
-                </button>
-              </template>
-            </el-table-column>
-            <el-table-column prop="num_moderate" width="80">
-              <template #header>
-                中等
-                <i class="fa fa-circle text-dark" />
-              </template>
-              <template #default="{ row }">
-                <button
-                  type="button"
-                  class="severity-count"
-                  :class="{ 'font-bold is-clickable': row.num_moderate > 0 }"
-                  :disabled="row.num_moderate <= 0"
-                  :title="row.num_moderate > 0 ? '查看中等补丁' : ''"
-                  @click="handleSeverityCountClick(row, 'Moderate')"
-                >
-                  {{ row.num_moderate }}
-                </button>
-              </template>
-            </el-table-column>
-            <el-table-column prop="num_low" width="80">
-              <template #header>
-                低
-                <i class="fa fa-circle text-info" />
-              </template>
-              <template #default="{ row }">
-                <button
-                  type="button"
-                  class="severity-count"
-                  :class="{ 'font-bold is-clickable': row.num_low > 0 }"
-                  :disabled="row.num_low <= 0"
-                  :title="row.num_low > 0 ? '查看低危补丁' : ''"
-                  @click="handleSeverityCountClick(row, 'Low')"
-                >
-                  {{ row.num_low }}
-                </button>
-              </template>
-            </el-table-column>
-            <el-table-column prop="hostname" label="主机名" min-width="120" show-overflow-tooltip />
-            <el-table-column prop="tags" label="标签" min-width="140">
-              <template #default="{ row }">
-                <div v-if="Array.isArray(row.tags) && row.tags.length" class="host-list-tags">
-                  <el-tag
-                    v-for="(tag, index) in row.tags"
-                    :key="`${tag}-${index}`"
-                    size="small"
-                    effect="plain"
-                  >
-                    {{ tag }}
-                  </el-tag>
-                </div>
-                <span v-else class="text-muted">-</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="os_distro" label="操作系统" width="110" />
-            <el-table-column label="版本" width="150">
-              <template #default="{ row }">
-                {{ [row.os_version, row.os_sp_version].filter(Boolean).join(' ') || '-' }}
-              </template>
-            </el-table-column>
-            <el-table-column label="内存" width="170">
-              <template #default="{ row }">
-                <div v-if="row.memoryOverview" class="memory-overview">
-                  <div
-                    v-if="row.memoryOverview.usedPercent !== null"
-                    class="memory-usage"
-                    :class="`memory-usage--${row.memoryOverview.usageLevel}`"
-                  >
-                    <div
-                      class="memory-usage__track"
-                      :title="`已使用 ${row.memoryOverview.usedPercent}%`"
-                    >
-                      <div
-                        class="memory-usage__fill"
-                        :style="{ width: `${row.memoryOverview.usedPercent}%` }"
-                      />
-                    </div>
-                    <div class="memory-usage__desc">
-                      {{ row.memoryOverview.freeGb }} GB 可用, 共
-                      {{ row.memoryOverview.totalGb }} GB
-                    </div>
-                  </div>
-                  <div v-else class="memory-usage memory-usage--unknown">
-                    <div class="memory-usage__track" />
-                    <div class="memory-usage__desc">
-                      {{
-                        row.memoryOverview.freeGb !== null
-                          ? `${row.memoryOverview.freeGb} GB 可用`
-                          : '-'
-                      }}{{
-                        row.memoryOverview.totalGb !== null
-                          ? `, 共 ${row.memoryOverview.totalGb} GB`
-                          : ', 总量未知'
-                      }}
-                    </div>
-                  </div>
-                </div>
-                <span v-else class="text-muted">-</span>
-              </template>
-            </el-table-column>
-            <!-- <el-table-column prop="location" label="网络区域环境" width="140">
-              <template #default="{ row }">
-                <el-tag v-if="row.location" size="small" type="success" effect="plain">
-                  {{ row.location }}
-                </el-tag>
-                <span v-else class="text-muted">-</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="run_environment" label="运行环境" width="120">
-              <template #default="{ row }">
-                {{ row.run_environment || '-' }}
-              </template>
-            </el-table-column> -->
-            <el-table-column prop="scan_timestamp" label="最后扫描时间" width="200" sortable>
-              <template #default="{ row }">
-                {{ formatDateTime(row.scan_timestamp) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="70" fixed="right">
-              <template #default="{ row }">
-                <el-button
-                  text
-                  type="primary"
-                  size="small"
-                  :loading="rescanLoading && rescanningHostKey === getRescanTrackKey(row)"
-                  :disabled="rescanLoading"
-                  @click="handleSingleHostRescan(row)"
-                >
-                  扫描
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </div>
-
-        <!-- 分页 -->
-        <div class="ops-pagination-wrapper">
-          <el-pagination
-            v-model:current-page="pagination.page"
-            v-model:page-size="pagination.pageSize"
-            :page-sizes="[10, 20, 50, 100]"
-            :total="pagination.total"
-            layout="total, sizes, prev, pager, next, jumper"
-            background
-            @size-change="handleSizeChange"
-            @current-change="handlePageChange"
-          />
-        </div>
-      </div>
-
-      <!-- 漏洞列表视图 -->
-      <div v-else-if="activeTab === 'vulnerability'" class="tab-content ops-page-layout">
         <!-- 筛选栏 -->
         <div class="ops-filter-bar">
           <el-form :model="vulnFilters" inline size="small">
@@ -898,6 +526,7 @@
           <AcmDeviceSelector
             v-model="selectedHosts"
             ci-types="linux"
+            :disabled="rescanLoading"
             :options="{
               selectMode: 'host',
               selector: 'multiple',
@@ -954,14 +583,6 @@
       :patch-data="patchDetailData"
       :loading="patchDetailLoading"
       :os-distro="currentPatchOsDistro"
-    />
-
-    <HostSeverityPatchDialog
-      v-model:visible="severityPatchesDialogVisible"
-      :host="severityPatchesDialogHost"
-      :severity="severityPatchesDialogSeverity"
-      @patch-click="handleSeverityDialogPatchClick"
-      @install-success="handleSeverityPatchInstallSuccess"
     />
 
     <!-- 操作记录对话框 -->
@@ -1116,8 +737,7 @@ import { ref, reactive, onMounted, computed, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { usePatchScanCompletion } from '../composables/usePatchScanCompletion'
 import { ElMessage } from 'element-plus'
-import { formatDateTime } from '@/utils/date'
-import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
+import { Refresh, Search, RefreshRight, Warning, ArrowRight } from '@element-plus/icons-vue'
 import { patchScanApi, patchOverviewApi, rpmInfoApi, vulnerabilityApi } from '../api'
 import { getCveUrl, getSeverityClass, getSeverityLabel } from '../composables/useFormatters'
 import {
@@ -1129,13 +749,11 @@ import {
   getRebootStatusTooltip,
   hasAffectedPackageDetail
 } from '../utils/vulnerabilityPackages'
-import { buildMemoryOverview, parseOsVersionFilter } from '../utils/linuxPatchScan'
-import { agentApi, assetApi, dataManageApi } from '@/modules/asset/api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import ExecuteHistoryDialog from '@/modules/automation/components/job/JobListView/ExecuteHistoryDialog.vue'
 import OperationLogsDialog from '../components/logs/OperationLogsDialog.vue'
-import HostSeverityPatchDialog from '../components/host-detail/dialogs/HostSeverityPatchDialog.vue'
+import LinuxPatchInstallWorkbench from '../components/LinuxPatchInstallWorkbench.vue'
 import PatchDetailDialog from '../components/host-detail/dialogs/PatchDetailDialog.vue'
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
 import RpmPackageDetailDialog from '../components/rpm/RpmPackageDetailDialog.vue'
@@ -1166,6 +784,11 @@ const route = useRoute()
 
 // 当前标签页
 const activeTab = ref('host')
+const installWorkbenchRef = ref(null)
+const initialInstallTab = computed(() => {
+  const tab = Array.isArray(route.query.tab) ? route.query.tab[0] : route.query.tab
+  return tab === 'patch' ? 'patch' : 'host'
+})
 
 // KPI 数据统计
 const kpiStats = reactive({
@@ -1264,33 +887,6 @@ const chartOption = computed(() => {
   }
 })
 
-// 主机表格
-const loading = ref(false)
-const hostTableData = ref([])
-const hostTagLoading = ref(false)
-const hostTagOptions = ref([])
-// [Agent 功能暂停] // Agent 纳管弹窗状态
-// [Agent 功能暂停] const agentEnrollDialogVisible = ref(false)
-
-const hostFilters = reactive({
-  os_distro: '',
-  os_version: '',
-  os_sp_version: '',
-  // [Agent 功能暂停] connectionType: '',
-  // [Agent 功能暂停] agentStatus: '',
-  tags: [],
-  keyword: ''
-})
-
-const hostVersionFilter = ref('')
-const pagination = reactive({
-  page: 1,
-  pageSize: 20,
-  total: 0
-})
-
-
-
 // 漏洞表格
 const vulnLoading = ref(false)
 
@@ -1329,28 +925,6 @@ function syncStateFromRoute() {
 // 操作系统列表
 const osDistroList = ref([])
 const osVersionList = ref([])
-const hostOsVersionOptions = ref([])
-
-function mergeHostOsVersionOptions(records = []) {
-  const optionMap = new Map(hostOsVersionOptions.value.map(item => [item.value, item]))
-
-  records.forEach(item => {
-    const osVersion = item.os_major_version || item.os_version || ''
-    const osSpVersion = item.os_sp_version || ''
-    const label = [osVersion, osSpVersion].filter(Boolean).join(' ')
-    if (!label) return
-
-    optionMap.set(label, {
-      label,
-      value: label,
-      osVersion,
-      osSpVersion
-    })
-  })
-
-  hostOsVersionOptions.value = [...optionMap.values()]
-}
-
 // 漏洞表格选择
 const vulnTableRef = ref(null)
 const selectedVulns = ref([])
@@ -1368,7 +942,6 @@ const vulnSelectedCount = computed(() => {
 // 重新扫描对话框
 const rescanDialogVisible = ref(false)
 const rescanLoading = ref(false)
-const rescanningHostKey = ref('')
 const rescanFormRef = ref(null)
 const rescanForm = reactive({
   hostsInput: ''
@@ -1436,9 +1009,6 @@ const patchDetailVisible = ref(false)
 const patchDetailLoading = ref(false)
 const patchDetailData = ref({})
 const currentPatchOsDistro = ref('')
-const severityPatchesDialogVisible = ref(false)
-const severityPatchesDialogHost = ref(null)
-const severityPatchesDialogSeverity = ref('')
 const rpmDetailVisible = ref(false)
 const rpmDetailLoading = ref(false)
 const rpmDetailData = ref({})
@@ -1816,200 +1386,6 @@ async function loadKpiData() {
   }
 }
 
-// 加载主机表格数据
-async function loadHostData() {
-  loading.value = true
-  try {
-    // const usesLocalAgentFilter = Boolean(hostFilters.connectionType || hostFilters.agentStatus)
-    const usesLocalAgentFilter = false // [Agent 功能暂停]
-    const params = {
-      page: usesLocalAgentFilter ? 0 : pagination.page - 1,
-      size: usesLocalAgentFilter ? 10000 : pagination.pageSize,
-      os_distro: hostFilters.os_distro,
-      os_version: hostFilters.os_version,
-      os_sp_version: hostFilters.os_sp_version,
-      tags: hostFilters.tags,
-      keyword: hostFilters.keyword
-    }
-    const response = await patchScanApi.getScanResults(params)
-    const data = response?.data || response || {}
-    const records = Array.isArray(data.records)
-      ? data.records
-      : Array.isArray(data.content)
-        ? data.content
-        : []
-    mergeHostOsVersionOptions(records)
-
-    // 一次性获取所有主机的资产信息，回填主机列表固定列
-    try {
-      const assetParams = {
-        hostKeys: '@@',
-        assetType: 'linux',
-        permission: 'r',
-        status: 'all',
-        CONN_LATEST_STATUS: '',
-        system_name: ' ',
-        os_version: ' '
-      }
-      const assetRes = await assetApi.getAssetList(assetParams, { size: 1000 })
-      if (assetRes?.records) {
-        const assetInfoMap = {}
-        assetRes.records.forEach(item => {
-          if (item.IP) {
-            // 从标签筛选 LOCATION 区域
-            let location = null
-            const tags = item.tags || item.Tags || []
-            const locationNames = ['互联网', '外联网', '内网环境、孤岛环境']
-            const matchedTag = tags.find(t => locationNames.includes(t.name || t))
-            if (matchedTag) {
-              location = matchedTag.name || matchedTag
-            }
-
-            assetInfoMap[item.IP] = {
-              needReboot: item.needReboot,
-              run_environment: item.RUN_ENVIRONMENT || item.run_environment || '',
-              location,
-              memoryOverview: buildMemoryOverview(
-                item.memtotal_mb ?? item.MEMTOTAL_MB,
-                item.memfree_mb ?? item.MEMFREE_MB
-              )
-            }
-          }
-        })
-        records.forEach(record => {
-          if (record.host_key in assetInfoMap) {
-            const assetInfo = assetInfoMap[record.host_key]
-            record.need_reboot = assetInfo.needReboot
-            record.run_environment = assetInfo.run_environment
-            record.location = assetInfo.location
-            record.memoryOverview = assetInfo.memoryOverview
-          }
-        })
-      }
-    } catch (err) {
-      console.error('Failed to load reboot status:', err)
-    }
-
-    // 异步富化 Agent 信息
-    /* [Agent 功能暂停]
-    try {
-      const hostIds = records
-        .map(r => r.hosts_id || r.hostsId || r.host_id || r.hostId || r.id || r.host_key)
-        .filter(Boolean)
-      if (hostIds.length > 0) {
-        const agentInfos = []
-        for (let index = 0; index < hostIds.length; index += 100) {
-          const batch = await agentApi.getHostAgentInfo(hostIds.slice(index, index + 100))
-          if (!Array.isArray(batch)) throw new Error('主机 Agent 状态接口返回格式异常')
-          agentInfos.push(...batch)
-        }
-        if (Array.isArray(agentInfos)) {
-          const agentMap = new Map(agentInfos.map(info => [String(info.hostId), info]))
-          records.forEach(r => {
-            const key = String(r.hosts_id || r.hostsId || r.host_id || r.hostId || r.id || r.host_key)
-            const info = agentMap.get(key)
-            if (info) {
-              r.connectionType = info.connectionType || 'ssh'
-              r.agentStatus = info.agentStatus
-              r.agentClientId = info.agentClientId
-              r.agentVersion = info.agentVersion
-              r.capabilities = info.capabilities
-              r.agentMode = info.agentMode
-              r.targetIp = info.targetIp
-              r.lastSeenAt = info.lastSeenAt
-            } else {
-              r.connectionType = 'unknown'
-              r.agentStatus = 'unknown'
-              r.agentInfoUnavailable = true
-            }
-          })
-        }
-      }
-    } catch (err) {
-      console.error('Failed to load Agent info:', err)
-      records.forEach(record => {
-        record.connectionType = 'unknown'
-        record.agentStatus = 'unknown'
-        record.agentInfoUnavailable = true
-      })
-    }
-    */
-
-    // 本地 Filter: 接入方式 & 在线状态
-    /* [Agent 功能暂停]
-    let filteredRecords = records
-    if (hostFilters.connectionType) {
-      filteredRecords = filteredRecords.filter(r => {
-        if (hostFilters.connectionType === 'koreops_agent') {
-          return isAgentConnectionType(r.connectionType)
-        }
-        return (r.connectionType || 'unknown') === hostFilters.connectionType
-      })
-    }
-    if (hostFilters.agentStatus) {
-      filteredRecords = filteredRecords.filter(r => r.agentStatus === hostFilters.agentStatus)
-    }
-    */
-    let filteredRecords = records
-
-    if (usesLocalAgentFilter) {
-      pagination.total = filteredRecords.length
-      const start = (pagination.page - 1) * pagination.pageSize
-      hostTableData.value = filteredRecords.slice(start, start + pagination.pageSize)
-    } else {
-      hostTableData.value = filteredRecords
-      pagination.total = Number(data.total ?? data.totalElements) || 0
-    }
-
-  } catch (error) {
-    console.error('Failed to load host data:', error)
-    hostTableData.value = []
-    pagination.total = 0
-  } finally {
-    loading.value = false
-  }
-}
-
-function handleAgentEnrollSuccess(boundHostId) {
-  loadHostData()
-  if (boundHostId) {
-    router.push({
-      name: 'patches-hostDetail',
-      query: {
-        host_id: boundHostId,
-        fromLabel: '主机概览',
-        fromRouteName: 'patches-machineScan'
-      }
-    })
-  }
-}
-
-
-async function loadHostTagOptions() {
-  hostTagLoading.value = true
-  try {
-    const responses = await Promise.all([
-      dataManageApi.getAllTags('linux'),
-      dataManageApi.getAllTags('host')
-    ])
-    const records = responses.flatMap(response =>
-      Array.isArray(response?.records) ? response.records : []
-    )
-    hostTagOptions.value = [
-      ...new Set(
-        records
-          .map(item => (typeof item === 'string' ? item : item?.name || item?.tagName))
-          .filter(Boolean)
-      )
-    ].sort((a, b) => a.localeCompare(b, 'zh-CN'))
-  } catch (error) {
-    console.error('Failed to load host tag options:', error)
-    hostTagOptions.value = []
-  } finally {
-    hostTagLoading.value = false
-  }
-}
-
 // 加载漏洞表格数据
 async function loadVulnData() {
   vulnLoading.value = true
@@ -2046,39 +1422,10 @@ async function loadOsLists() {
       osVersionList.value = [
         ...new Set(records.map(item => item.os_major_version || item.os_version).filter(Boolean))
       ]
-      mergeHostOsVersionOptions(records)
     }
   } catch (error) {
     console.error('Failed to load OS lists:', error)
   }
-}
-
-// 事件处理
-function handleFilter() {
-  pagination.page = 1
-  loadHostData()
-}
-
-function handleHostVersionChange(value) {
-  const option = hostOsVersionOptions.value.find(item => item.value === value)
-  const parsedValue = parseOsVersionFilter(value)
-  hostFilters.os_version = option?.osVersion || parsedValue.osVersion
-  hostFilters.os_sp_version = option?.osSpVersion || parsedValue.osSpVersion
-  handleFilter()
-}
-
-function handleHostReset() {
-  hostFilters.os_distro = ''
-  hostFilters.os_version = ''
-  hostFilters.os_sp_version = ''
-  // [Agent 功能暂停] hostFilters.connectionType = ''
-  // [Agent 功能暂停] hostFilters.agentStatus = ''
-  hostFilters.tags = []
-  hostVersionFilter.value = ''
-  hostFilters.keyword = ''
-  pagination.page = 1
-  pagination.pageSize = 20
-  loadHostData()
 }
 
 function handleVulnReset() {
@@ -2118,17 +1465,6 @@ async function handleVulnExport() {
   }
 }
 
-function handlePageChange(page) {
-  pagination.page = page
-  loadHostData()
-}
-
-function handleSizeChange(size) {
-  pagination.pageSize = size
-  pagination.page = 1
-  loadHostData()
-}
-
 function handleVulnPageChange(page) {
   vulnPagination.page = page
   loadVulnData()
@@ -2155,37 +1491,8 @@ function handleHostClick(row) {
   })
 }
 
-function handleSeverityCountClick(row, severity) {
-  const severityFieldMap = {
-    Critical: 'num_critical',
-    Important: 'num_important',
-    Moderate: 'num_moderate',
-    Low: 'num_low'
-  }
-  const count = Number(row?.[severityFieldMap[severity]] || 0)
-
-  if (count <= 0) {
-    return
-  }
-
-  severityPatchesDialogHost.value = { ...row }
-  severityPatchesDialogSeverity.value = severity
-  severityPatchesDialogVisible.value = true
-}
-
-function handleSeverityDialogPatchClick(row) {
-  handlePatchClick({
-    ...row,
-    os_distro: row?.os_distro || severityPatchesDialogHost.value?.os_distro || ''
-  })
-}
-
-function handleSeverityPatchInstallSuccess() {
-  refreshPatchScanLists()
-}
-
 function refreshPatchScanLists() {
-  return Promise.all([loadKpiData(), loadHostData(), loadVulnData()])
+  return Promise.all([loadKpiData(), installWorkbenchRef.value?.refreshHosts(), loadVulnData()])
 }
 
 const { trackScan } = usePatchScanCompletion(refreshPatchScanLists)
@@ -2668,14 +1975,16 @@ async function handleConfirmFix() {
   }
 }
 
-function handleRescan() {
+function handleRescan(hosts = []) {
+  if (rescanLoading.value) return
   rescanForm.hostsInput = ''
-  selectedHosts.value = []
+  selectedHosts.value = (Array.isArray(hosts) ? hosts : []).map(host => ({
+    ...host,
+    key: host.host_id || host.hostId || host.id || host.key || '',
+    value: host.host_key || host.hostKey || host.value || host.hostname || '',
+    assetType: host.assetType || host.asset_type || 'linux'
+  }))
   rescanDialogVisible.value = true
-}
-
-function getRescanTrackKey(host) {
-  return String(host?.host_id || host?.hostId || host?.id || host?.host_key || host?.hostKey || '')
 }
 
 function normalizeRescanHost(host) {
@@ -2753,24 +2062,6 @@ async function submitRescan(hosts, { closeDialog = false } = {}) {
   }
 }
 
-async function handleSingleHostRescan(row) {
-  const trackKey = getRescanTrackKey(row)
-  const scanTarget = row?.host_key || row?.hostKey || row?.hostname || ''
-
-  if (!trackKey && !scanTarget) {
-    ElMessage.warning('当前主机缺少扫描标识，无法执行扫描')
-    return
-  }
-
-  rescanningHostKey.value = trackKey || scanTarget
-  try {
-    await submitRescan([row])
-  } finally {
-    rescanningHostKey.value = ''
-  }
-}
-
-// 更新主机输入框内容
 function updateHostsInput() {
   // 从选中的主机中提取主机名
   const hostList = selectedHosts.value
@@ -2806,9 +2097,14 @@ async function executeRescan() {
   await submitRescan(hosts, { closeDialog: true })
 }
 
+function handleWorkbenchInstalled() {
+  loadKpiData()
+  if (vulnTableData.value.length) loadVulnData()
+}
+
 function refresh() {
   loadKpiData()
-  loadHostData()
+  installWorkbenchRef.value?.refreshHosts()
   if (activeTab.value === 'vulnerability') {
     loadVulnData()
   }
@@ -2847,9 +2143,7 @@ watch(
 onMounted(() => {
   syncStateFromRoute()
   loadKpiData()
-  loadHostData()
   loadOsLists()
-  loadHostTagOptions()
   if (activeTab.value === 'vulnerability') {
     loadVulnData()
   }
@@ -2861,6 +2155,7 @@ watch(
     const previousTab = activeTab.value
     const previousSeverity = vulnFilters.severity
 
+    if (route.name !== 'patches-machineScan') return
     syncStateFromRoute()
 
     if (activeTab.value === 'vulnerability') {
@@ -2872,13 +2167,6 @@ watch(
   }
 )
 
-function handleNavigateToInstall() {
-  router.push({
-    name: 'patches-patchInstall',
-    query: { tab: 'host' }
-  })
-}
-
 // 暴露方法
 defineExpose({
   refresh
@@ -2886,6 +2174,19 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
+.vulnerability-entry {
+  gap: 8px;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.vulnerability-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
 .patch-scan {
   display: flex;
   flex-direction: column;

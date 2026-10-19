@@ -26,11 +26,9 @@ export const PATCHES_ROUTE_DEFS = [
     path: 'patchInstall',
     name: 'patches-patchInstall',
     title: '补丁安装',
-    navLabel: '补丁安装',
-    navGroup: 'installManage',
-    icon: 'fas fa-download',
     platform: 'linux',
-    component: () => import('./views/LinuxPatchInstallPage.vue')
+    // 保留旧书签/路由名，统一进入概览中的安装工作台。
+    redirect: to => ({ name: 'patches-machineScan', query: to.query, hash: to.hash })
   },
   {
     key: 'changeRollback',

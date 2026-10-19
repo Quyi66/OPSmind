@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, nextTick } from 'vue'
 import { flushPromises, shallowMount } from '@vue/test-utils'
-import LinuxPatchInstallPage from '@/modules/patches/views/LinuxPatchInstallPage.vue'
+import LinuxPatchInstallPage from '@/modules/patches/components/LinuxPatchInstallWorkbench.vue'
 import { patchInstallApi, patchScanApi } from '@/modules/patches/api'
 import { ElMessage, ElPagination } from 'element-plus'
 
@@ -24,7 +24,8 @@ vi.mock('@/modules/patches/api', () => ({
 }))
 vi.mock('@/modules/asset/api', () => ({
   dataManageApi: { getAllTags: vi.fn().mockResolvedValue({ records: [] }) },
-  agentApi: {}
+  agentApi: {},
+  assetApi: { getAssetList: vi.fn().mockResolvedValue({ records: [] }) }
 }))
 vi.mock('@/modules/patches/components/patch-task/wizard/PatchInstallWizard.vue', () => ({
   default: {
