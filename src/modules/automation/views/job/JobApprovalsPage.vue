@@ -65,7 +65,7 @@
         <el-table-column label="运维工具" min-width="150">
           <template #default="{ row }">
             <el-button type="primary" text @click="handleViewDetail(row)">
-              {{ getAutomationToolTitle(row) }}
+              {{ getAutomationToolTitle({ ...row, id: undefined }) }}
             </el-button>
           </template>
         </el-table-column>
@@ -209,7 +209,10 @@ const filteredData = computed(() => {
     const keyword = filters.keyword.toLowerCase()
     data = data.filter(
       item =>
-        item.jobName?.toLowerCase().includes(keyword) || getAutomationToolTitle(item).toLowerCase().includes(keyword) ||
+        item.jobName?.toLowerCase().includes(keyword) ||
+        getAutomationToolTitle({ ...item, id: undefined })
+          .toLowerCase()
+          .includes(keyword) ||
         item.jobId?.toLowerCase().includes(keyword) ||
         item.applicant?.toLowerCase().includes(keyword)
     )
@@ -338,9 +341,11 @@ function handleViewDetail(row) {
 
 async function handlePass(row) {
   try {
-    await ElMessageBox.confirm(`确定要通过运维工具 "${getAutomationToolTitle(row)}" 的审批申请吗？`, '通过审批', {
-      type: 'success'
-    })
+    await ElMessageBox.confirm(
+      `确定要通过运维工具 "${getAutomationToolTitle({ ...row, id: undefined })}" 的审批申请吗？`,
+      '通过审批',
+      { type: 'success' }
+    )
 
     loading.value = true
     await jaoApi.passApprove(row.id, null)

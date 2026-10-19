@@ -65,7 +65,7 @@
         <el-table-column label="运维工具" min-width="150">
           <template #default="{ row }">
             <el-button text type="primary" @click="handleViewDetail(row)">
-              {{ getAutomationToolTitle(row) }}
+              {{ getAutomationToolTitle({ ...row, id: undefined }) }}
             </el-button>
           </template>
         </el-table-column>
@@ -190,7 +190,10 @@ const filteredData = computed(() => {
     const keyword = filters.keyword.toLowerCase()
     data = data.filter(
       item =>
-        item.jobName?.toLowerCase().includes(keyword) || getAutomationToolTitle(item).toLowerCase().includes(keyword) ||
+        item.jobName?.toLowerCase().includes(keyword) ||
+        getAutomationToolTitle({ ...item, id: undefined })
+          .toLowerCase()
+          .includes(keyword) ||
         item.jobId?.toLowerCase().includes(keyword) ||
         item.approver?.toLowerCase().includes(keyword)
     )

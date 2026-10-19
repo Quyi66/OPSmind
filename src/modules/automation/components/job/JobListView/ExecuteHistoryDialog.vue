@@ -167,7 +167,7 @@
         v-model:visible="resultDialogVisible"
         :run-id="resultMeta.runId"
         :job-title="resultMeta.jobTitle"
-        :job-id="jobId"
+        :job-id="resultMeta.jobId"
         :raw-job-title="resultMeta.rawJobTitle"
       />
     </div>
@@ -396,6 +396,7 @@ function handleStatusClick(row) {
   if (!row?.id) return
   resultMeta.value = {
     runId: row.id,
+    jobId: row.jobId,
     rawJobTitle: row.rawJobTitle || props.jobTitle || '',
     jobTitle: row.jobTitle || props.jobTitle || ''
   }
@@ -482,6 +483,7 @@ async function fetchRunLogs() {
 }
 
 function mapRunLogRecord(record = {}) {
+  const jobId = record.job_id ?? record.jobId ?? props.jobId
   const startValue = record.start_time ?? record.startTime ?? record.start
   const endValue = record.end_time ?? record.endTime ?? record.end
   const jobTypeRaw = record.job_type ?? record.jobType ?? record.type ?? ''
@@ -491,8 +493,9 @@ function mapRunLogRecord(record = {}) {
   return {
     id: record.id ? String(record.id) : '',
     runId: String(record.runId ?? record.run_id ?? record.id ?? ''),
+    jobId,
     rawJobTitle: record.job_title ?? record.jobTitle ?? '',
-    jobTitle: getAutomationRunTitle({ ...record, job_id: record.job_id ?? props.jobId }),
+    jobTitle: getAutomationRunTitle({ ...record, job_id: jobId }),
     jobType: jobTypeRaw || '-',
     jobTypeKey,
     username: record.username ?? record.user_name ?? '-',
