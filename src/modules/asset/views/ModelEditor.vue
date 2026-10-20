@@ -11,7 +11,13 @@
       </div>
       <div class="header-right">
         <el-button @click="handleBack" size="small">取消</el-button>
-        <el-button type="primary" :loading="saving" size="small" @click="handleSave">
+        <el-button
+          type="primary"
+          :loading="saving"
+          :disabled="saveDisabled"
+          size="small"
+          @click="handleSave"
+        >
           保存
         </el-button>
       </div>
@@ -27,6 +33,7 @@
               ref="basicFormRef"
               :model="formData"
               :rules="formRules"
+              :disabled="saving || loading"
               label-width="120px"
               style="max-width: 600px"
             >
@@ -55,6 +62,8 @@
                   v-model="formData.templateId"
                   placeholder="不使用模板"
                   clearable
+                  :loading="templateLoading"
+                  :disabled="templateLoading || saving"
                   style="width: 200px"
                 >
                   <el-option
@@ -64,14 +73,31 @@
                     :value="tpl.id"
                   />
                 </el-select>
-                <div class="form-tip">选择一个已有模型作为模板</div>
+                <div v-if="templateError" class="form-tip" role="alert">
+                  {{ templateError }}
+                  <el-button
+                    link
+                    type="primary"
+                    :disabled="templateLoading"
+                    @click="loadTemplateList()"
+                  >
+                    重试
+                  </el-button>
+                </div>
+                <div v-else-if="!templateLoading" class="form-tip">
+                  {{
+                    formData.templateId
+                      ? '沿用所选模板的模型属性和视图，只需填写基本信息'
+                      : '未选择模板，可自行配置模型属性和视图'
+                  }}
+                </div>
               </el-form-item>
             </el-form>
           </div>
         </el-tab-pane>
 
         <!-- 属性配置 -->
-        <el-tab-pane label="模型属性" name="attrs">
+        <el-tab-pane v-if="showAdvancedConfig" label="模型属性" name="attrs">
           <div class="tab-content attrs-tab">
             <div class="attrs-layout">
               <!-- 左侧：属性列表 -->
@@ -456,7 +482,7 @@
         </el-tab-pane>
 
         <!-- 视图配置 -->
-        <el-tab-pane label="视图定义" name="views">
+        <el-tab-pane v-if="showAdvancedConfig" label="视图定义" name="views">
           <div class="tab-content views-tab">
             <!-- 视图类型按钮组 -->
             <div class="views-toolbar">
@@ -558,7 +584,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { apiService } from '@/core/api'
 import ViewColumnConfig from '../components/model/ViewColumnConfig.vue'
@@ -579,6 +605,7 @@ const saving = ref(false)
 const activeTab = ref('basic')
 const activeViews = ref(['selector', 'list'])
 const activeViewType = ref('list') // 当前选中的视图类型
+let modelLoadRequestId = 0
 
 // 打开视图配置（目前只是切换到对应视图）
 const openViewConfig = viewType => {
@@ -600,6 +627,19 @@ const formData = ref({
 
 // 模板列表（新建模式使用）
 const templateList = ref([])
+const templateLoading = ref(false)
+const templateError = ref('')
+const showAdvancedConfig = computed(
+  () =>
+    !isNewMode.value ||
+    (!templateLoading.value && !templateError.value && !formData.value.templateId)
+)
+const saveDisabled = computed(
+  () =>
+    saving.value ||
+    loading.value ||
+    (isNewMode.value && (templateLoading.value || Boolean(templateError.value)))
+)
 
 // 表单验证规则
 const formRules = {
@@ -866,21 +906,41 @@ const syncAttrToFormData = () => {
 const isNewMode = computed(() => !props.modelId || props.modelId === 'new')
 
 // 加载模板列表（获取所有模型作为模板选项）
-const loadTemplateList = async () => {
+const loadTemplateList = async (requestId = modelLoadRequestId) => {
+  if (requestId !== modelLoadRequestId || !isNewMode.value || templateLoading.value) return
+  templateLoading.value = true
+  templateError.value = ''
   try {
     const url = `/cmdb/api/cmdb/cit?cacheBuster=${Date.now()}`
     const response = await apiService.get(url)
     const list = response.data || response || []
+    if (requestId !== modelLoadRequestId || !isNewMode.value) return
+    if (!Array.isArray(list)) throw new Error('模板列表格式不正确')
     templateList.value = list
+    const linuxTemplate = list.find(
+      template => template.code === 'linux' && template.id != null && template.id !== ''
+    )
+    if (!formData.value.templateId && linuxTemplate) formData.value.templateId = linuxTemplate.id
   } catch (error) {
+    if (requestId !== modelLoadRequestId || !isNewMode.value) return
     console.error('加载模板列表失败:', error)
     templateList.value = []
+    templateError.value = '资产模板加载失败，请重试'
+  } finally {
+    if (requestId === modelLoadRequestId) templateLoading.value = false
   }
 }
 
 // 加载模型详情
 const loadModelDetail = async () => {
+  const requestId = ++modelLoadRequestId
+  activeTab.value = 'basic'
+  templateList.value = []
+  templateError.value = ''
+  templateLoading.value = false
+  loading.value = false
   if (isNewMode.value) {
+    originalData.value = null
     // 新增模式 - 初始化一个默认分组
     formData.value = {
       title: '',
@@ -911,7 +971,7 @@ const loadModelDetail = async () => {
       expandedGroups.value = groupedAttrs.value.map(g => g._id)
     }, 100)
     // 加载模板列表
-    loadTemplateList()
+    loadTemplateList(requestId)
     return
   }
 
@@ -919,6 +979,7 @@ const loadModelDetail = async () => {
   try {
     const url = `/cmdb/api/cmdb/cit/vo/citid/${props.modelId}?cacheBuster=${Date.now()}`
     const response = await apiService.get(url)
+    if (requestId !== modelLoadRequestId) return
     const res = response.data || response
     originalData.value = res
 
@@ -942,10 +1003,11 @@ const loadModelDetail = async () => {
       expandedGroups.value = groupedAttrs.value.map(g => g._id)
     }, 100)
   } catch (error) {
+    if (requestId !== modelLoadRequestId) return
     console.error('加载模型详情失败:', error)
     ElMessage.error('加载模型详情失败')
   } finally {
-    loading.value = false
+    if (requestId === modelLoadRequestId) loading.value = false
   }
 }
 
@@ -1082,6 +1144,7 @@ const handleDeleteAttrInGroup = (groupIndex, attrIndex) => {
 
 // 保存
 const handleSave = async () => {
+  if (saveDisabled.value) return
   saving.value = true
   try {
     // 构建保存数据 - 确保 attrs 结构完整
@@ -1141,6 +1204,10 @@ const handleBack = () => {
 }
 
 // 监听 modelId 变化重新加载
+watch(showAdvancedConfig, visible => {
+  if (!visible) activeTab.value = 'basic'
+})
+
 watch(
   () => props.modelId,
   () => {
@@ -1151,6 +1218,10 @@ watch(
 // 初始化
 onMounted(() => {
   loadModelDetail()
+})
+
+onBeforeUnmount(() => {
+  modelLoadRequestId += 1
 })
 </script>
 
