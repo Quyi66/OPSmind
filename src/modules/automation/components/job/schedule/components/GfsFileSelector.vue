@@ -125,6 +125,9 @@
               </el-breadcrumb-item>
             </el-breadcrumb>
           </div>
+          <el-alert v-if="loadError" :title="loadError" type="error" :closable="false">
+            <el-button size="small" @click="loadGfsFiles(currentPath)">重试</el-button>
+          </el-alert>
           <div v-loading="loading" class="gfs-file-list">
             <div
               v-for="item in filteredFiles"
@@ -139,7 +142,7 @@
               <span v-if="item.description" class="file-desc">{{ item.description }}</span>
             </div>
             <el-empty
-              v-if="!loading && !filteredFiles.length"
+              v-if="!loading && !loadError && !filteredFiles.length"
               description="暂无文件"
               :image-size="60"
             />
@@ -154,14 +157,16 @@
       </div>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleConfirmSelect">确定</el-button>
+        <el-button type="primary" :disabled="loading || !!loadError" @click="handleConfirmSelect">
+          确定
+        </el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as gfsApi from '@/modules/automation/api/gfs'
 
@@ -170,7 +175,8 @@ const props = defineProps({
   showConfig: { type: Boolean, default: true },
   showTag: { type: Boolean, default: true },
   disabled: { type: Boolean, default: false },
-  multipleSelect: { type: Boolean, default: true }
+  multipleSelect: { type: Boolean, default: true },
+  rememberDirectory: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -197,6 +203,9 @@ const searchKeyword = ref('')
 const currentPath = ref('')
 const selectedFiles = ref([])
 const loading = ref(false)
+const loadError = ref('')
+const lastSuccessfulPath = ref('')
+let directoryRequestId = 0
 
 // GFS 文件列表
 const gfsFiles = ref([])
@@ -221,10 +230,17 @@ function isFileSelected(filePath) {
 
 // 加载 GFS 文件列表
 async function loadGfsFiles(path = '') {
+  if (!dialogVisible.value || props.disabled) return
+  const requestId = ++directoryRequestId
+  const isCurrentRequest = () => requestId === directoryRequestId && dialogVisible.value
+  currentPath.value = path
   loading.value = true
+  loadError.value = ''
+  gfsFiles.value = []
   try {
     // 使用系统统一的 GFS API
     const files = await gfsApi.listFiles(null, path, 'git', { includeStage: true })
+    if (!isCurrentRequest()) return
 
     // 转换数据格式
     gfsFiles.value = files.map(file => ({
@@ -237,24 +253,28 @@ async function loadGfsFiles(path = '') {
       lastModified: file.lastModified,
       onlineStatus: file.onlineStatus
     }))
+    if (props.rememberDirectory && !props.multipleSelect) {
+      lastSuccessfulPath.value = path
+    }
   } catch (error) {
+    if (!isCurrentRequest()) return
     console.error('加载文件列表失败:', error)
-    ElMessage.error(`加载文件列表失败: ${error.message || '未知错误'}`)
+    loadError.value = `加载文件列表失败: ${error?.message || '未知错误'}`
+    ElMessage.error(loadError.value)
     gfsFiles.value = []
   } finally {
-    loading.value = false
+    if (isCurrentRequest()) loading.value = false
   }
 }
 
 function handleOpenSelector() {
   if (props.disabled) return
-  dialogVisible.value = true
-  // 清空之前的选择
-  selectedFiles.value = []
-  currentPath.value = ''
+  // 保留原单选预选，目录只来自本步骤本会话成功浏览的列表。
+  selectedFiles.value =
+    !props.multipleSelect && fileList.value[0]?.path ? [fileList.value[0].path] : []
   searchKeyword.value = ''
-  // 加载根目录文件
-  loadGfsFiles()
+  dialogVisible.value = true
+  loadGfsFiles(props.rememberDirectory && !props.multipleSelect ? lastSuccessfulPath.value : '')
 }
 
 function handleRemove(index) {
@@ -265,6 +285,7 @@ function handleRemove(index) {
 }
 
 function handleFileClick(item) {
+  if (!dialogVisible.value || props.disabled || loading.value || loadError.value) return
   if (item.directory) return // 文件夹不能选择
 
   if (props.multipleSelect) {
@@ -282,6 +303,7 @@ function handleFileClick(item) {
 }
 
 function handleFileDblClick(item) {
+  if (!dialogVisible.value || props.disabled || loading.value || loadError.value) return
   if (item.directory) {
     // 双击文件夹进入子目录
     currentPath.value = item.path
@@ -300,6 +322,7 @@ function navigateToPath(idx) {
 }
 
 function handleConfirmSelect() {
+  if (!dialogVisible.value || props.disabled || loading.value || loadError.value) return
   if (selectedFiles.value.length === 0) {
     ElMessage.warning('请至少选择一个文件')
     return
@@ -344,14 +367,30 @@ watch(
   { deep: true, immediate: true }
 )
 
-// 监听对话框打开，确保初始化文件列表为空
-watch(dialogVisible, visible => {
-  if (visible && !props.multipleSelect) {
-    // 单选模式下，如果已经有选中的文件，预选中
-    if (fileList.value.length > 0 && fileList.value[0].path) {
-      selectedFiles.value = [fileList.value[0].path]
-    }
-  }
+// 关闭即失效旧目录请求，不能覆盖下一次打开的列表或记忆目录。
+watch(
+  dialogVisible,
+  visible => {
+    if (visible) return
+    directoryRequestId += 1
+    loading.value = false
+    loadError.value = ''
+    gfsFiles.value = []
+    selectedFiles.value = []
+  },
+  { flush: 'sync' }
+)
+
+watch(
+  () => props.disabled,
+  disabled => {
+    if (disabled) dialogVisible.value = false
+  },
+  { flush: 'sync' }
+)
+
+onBeforeUnmount(() => {
+  directoryRequestId += 1
 })
 </script>
 

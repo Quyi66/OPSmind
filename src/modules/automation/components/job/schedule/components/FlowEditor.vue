@@ -16,6 +16,7 @@
         :is-instance="isInstance"
         :step-fold-list="stepFoldList"
         :is-fold-all-steps="isFoldAllSteps"
+        :script-selector-session="scriptSelectorSession"
         @toggle-fold-all="toggleFoldAll"
         @add-step="addStep"
         @remove-step="removeStep"
@@ -52,6 +53,7 @@
           :is-instance="isInstance"
           :step-fold-list="stepFoldList"
           :is-fold-all-steps="isFoldAllSteps"
+          :script-selector-session="scriptSelectorSession"
           @toggle-fold-all="toggleFoldAll"
           @add-step="addStep"
           @remove-step="removeStep"
@@ -100,6 +102,7 @@ const formRef = ref(null)
 const flow = reactive(createEmptyFlow())
 const stepFoldList = ref([false])
 const isFoldAllSteps = ref(false)
+const scriptSelectorSession = ref(0)
 let flowDetailRequestId = 0
 
 const headerTitle = computed(() => {
@@ -110,6 +113,7 @@ const headerTitle = computed(() => {
 watch(
   () => [visible.value, props.flowId, props.mode],
   ([isVisible]) => {
+    scriptSelectorSession.value += 1
     if (isVisible) {
       initialize()
     } else {
