@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout">
+  <div class="ops-page-layout resource-permission-page">
     <div class="content-view-area">
       <!-- 筛选区域 -->
       <div class="ops-filter-bar">
@@ -11,7 +11,8 @@
               clearable
               style="width: 240px"
               @keyup.enter="handleSearch"
-            @clear="handleSearch" />
+              @clear="handleSearch"
+            />
           </el-form-item>
           <el-form-item class="filter-actions">
             <el-button type="primary" @click="handleSearch">
@@ -30,24 +31,32 @@
       <div class="ops-action-bar">
         <div class="action-left">
           <el-tag
-            :type="hasPendingChanges ? 'warning' : 'success'"
+            :type="
+              loadError ? 'danger' : loading ? 'info' : hasPendingChanges ? 'warning' : 'success'
+            "
             size="small"
             class="sync-tag-indicator"
           >
             <i
               class="fa"
-              :class="hasPendingChanges ? 'fa-exclamation-circle' : 'fa-check-circle'"
+              :class="loadError || hasPendingChanges ? 'fa-exclamation-circle' : 'fa-check-circle'"
             ></i>
             <span style="margin-left: 4px">
               {{
-                hasPendingChanges ? `当前待保存 ${changedRowCount} 项变更` : '所有权限配置已同步'
+                loading
+                  ? '正在加载权限…'
+                  : loadError
+                    ? '权限加载失败'
+                    : hasPendingChanges
+                      ? `${changedRowCount} 项资源的权限待保存（含其他页及筛选外的修改）`
+                      : '当前权限已保存'
               }}
             </span>
           </el-tag>
           <el-button
             type="primary"
             size="small"
-            :disabled="!hasPendingChanges"
+            :disabled="!hasPendingChanges || editingDisabled"
             :loading="saving"
             @click="handleSave"
           >
@@ -56,7 +65,7 @@
           </el-button>
           <el-button
             size="small"
-            :disabled="!hasPendingChanges || saving"
+            :disabled="!hasPendingChanges || editingDisabled"
             @click="handleResetPending"
             plain
           >
@@ -70,12 +79,17 @@
           circle
           size="small"
           :loading="loading"
+          :disabled="saving || loading"
           @click="handleRefresh"
           title="刷新"
         >
           <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
       </div>
+
+      <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
+        <el-button link type="primary" @click="handleRefresh">重新加载</el-button>
+      </el-alert>
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper card-table">
@@ -88,7 +102,7 @@
           <!-- 1. 资源信息 -->
           <el-table-column
             prop="groupInfo"
-            label="资源信息与路径"
+            label="资源分组路径"
             min-width="260"
             show-overflow-tooltip
             sortable
@@ -111,7 +125,7 @@
           >
             <template #default="{ row }">
               <el-tag size="small" type="info" effect="plain" class="asset-type-badge">
-                {{ row.assets_type || '所有类型' }}
+                {{ getAssetTypeLabel(row.assets_type) }}
               </el-tag>
             </template>
           </el-table-column>
@@ -121,22 +135,44 @@
             v-for="teamName in teamNames"
             :key="teamName"
             :label="teamName"
-            width="185"
-            align="center"
+            min-width="300"
+            align="left"
           >
+            <template #header>
+              <div class="team-column-header">
+                <span>{{ teamName }}</span>
+                <span class="team-column-caption">团队权限 · 勾选要授予的权限</span>
+              </div>
+            </template>
             <template #default="{ row }">
-              <div class="permission-buttons-group">
-                <el-button
-                  v-for="perm in ['r', 'w', 'x']"
-                  :key="perm"
-                  :type="hasPermission(row, teamName, perm) ? 'primary' : 'default'"
-                  size="small"
-                  class="perm-toggle-btn"
-                  :class="{ 'is-active': hasPermission(row, teamName, perm) }"
-                  @click="togglePermission(row, teamName, perm)"
+              <div class="team-permission-cell">
+                <div
+                  class="permission-options"
+                  role="group"
+                  :aria-label="`${teamName} 对 ${row.groupInfo} 的权限`"
                 >
-                  {{ perm.toUpperCase() }}
-                </el-button>
+                  <el-checkbox
+                    v-for="permission in permissionOptions"
+                    :key="permission.value"
+                    :model-value="hasPermission(row, teamName, permission.value)"
+                    :disabled="editingDisabled"
+                    :aria-label="`${teamName} · ${row.groupInfo} · ${permission.label}`"
+                    @change="togglePermission(row, teamName, permission.value)"
+                  >
+                    {{ permission.label }}
+                  </el-checkbox>
+                </div>
+                <div class="permission-cell-status" aria-live="polite">
+                  <span>{{ getPermissionSummary(row, teamName) }}</span>
+                  <el-tag
+                    v-if="isTeamDirty(row.id, teamName)"
+                    size="small"
+                    type="warning"
+                    effect="plain"
+                  >
+                    未保存
+                  </el-tag>
+                </div>
               </div>
             </template>
           </el-table-column>
@@ -177,6 +213,37 @@ const searchKeyword = ref('')
 const appliedSearch = ref('')
 const teamNames = ref([])
 const changedRowIds = ref([])
+const loadError = ref('')
+const editingDisabled = computed(() => loading.value || saving.value || Boolean(loadError.value))
+const permissionOptions = [
+  { value: 'r', label: '查看' },
+  { value: 'w', label: '修改' },
+  { value: 'x', label: '执行' }
+]
+
+function getAssetTypeLabel(value) {
+  return { linux: 'Linux 服务器', windows: 'Windows 主机' }[value] || value || '所有类型'
+}
+
+function getPermissionSummary(row, teamName) {
+  const labels = permissionOptions
+    .filter(permission => hasPermission(row, teamName, permission.value))
+    .map(permission => permission.label)
+  const pending = isTeamDirty(row.id, teamName)
+  return labels.length
+    ? `${pending ? '待保存' : '已授权'}：${labels.join('、')}`
+    : `${pending ? '待保存：' : ''}未授予查看、修改或执行权限`
+}
+
+function isTeamDirty(rowId, teamName) {
+  const permissions = rows =>
+    rows.find(row => row.id === rowId)?.teamInfo?.find(team => team.teamName === teamName)
+      ?.permission || []
+  return (
+    JSON.stringify([...permissions(permissionData.value)].sort()) !==
+    JSON.stringify([...permissions(originalPermissionData.value)].sort())
+  )
+}
 
 // 分页
 const currentPage = ref(1)
@@ -250,6 +317,7 @@ function buildTableState(data) {
 function getPermissionSignature(teamInfo = []) {
   return JSON.stringify(
     [...teamInfo]
+      .filter(team => (team.permission || []).length > 0)
       .map(team => ({
         teamName: team.teamName,
         permission: [...(team.permission || [])].sort()
@@ -276,7 +344,9 @@ function updateRowDirtyState(rowId) {
 
 // 加载数据
 async function loadData() {
+  if (loading.value || saving.value) return
   loading.value = true
+  loadError.value = ''
   try {
     const response = await permissionApi.getTablePermission()
     const data = Array.isArray(response) ? response : response?.data || []
@@ -285,6 +355,7 @@ async function loadData() {
     changedRowIds.value = []
     buildTableState(permissionData.value)
   } catch (error) {
+    loadError.value = '未能加载最新权限，请重新加载后再编辑。已有未保存修改仍保留在本页。'
     console.error('加载权限数据失败:', error)
     ElMessage.error('加载权限数据失败')
   } finally {
@@ -300,6 +371,7 @@ function hasPermission(row, teamName, perm) {
 
 // 切换权限
 function togglePermission(row, teamName, perm) {
+  if (editingDisabled.value) return
   const rowData = permissionData.value.find(item => item.id === row.id)
   if (!rowData) return
 
@@ -353,12 +425,13 @@ function togglePermission(row, teamName, perm) {
 }
 
 async function handleSave() {
-  if (!hasPendingChanges.value) return
+  if (!hasPendingChanges.value || editingDisabled.value) return
 
+  const submittedData = _.cloneDeep(permissionData.value)
   saving.value = true
   try {
-    await permissionApi.saveTablePermission('ACM', permissionData.value)
-    originalPermissionData.value = _.cloneDeep(permissionData.value)
+    await permissionApi.saveTablePermission('ACM', submittedData)
+    originalPermissionData.value = _.cloneDeep(submittedData)
     changedRowIds.value = []
     ElMessage.success('权限变更已保存')
   } catch (error) {
@@ -370,7 +443,7 @@ async function handleSave() {
 }
 
 function handleResetPending() {
-  if (!hasPendingChanges.value) return
+  if (!hasPendingChanges.value || editingDisabled.value) return
 
   permissionData.value = _.cloneDeep(originalPermissionData.value)
   changedRowIds.value = []
@@ -378,6 +451,7 @@ function handleResetPending() {
 }
 
 async function handleRefresh() {
+  if (loading.value || saving.value) return
   if (!hasPendingChanges.value) {
     loadData()
     return
@@ -466,39 +540,39 @@ function handlePageSizeChange() {
   font-weight: 500;
 }
 
-.permission-buttons-group {
+.team-column-header,
+.team-permission-cell {
   display: flex;
-  gap: 6px;
-  justify-content: center;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
 
-  .perm-toggle-btn {
-    min-width: 32px;
-    height: 28px;
-    padding: 0 8px;
-    font-size: 12px;
-    font-weight: 600;
-    border-radius: 4px;
-    border-color: var(--el-border-color-light);
-    background: var(--el-bg-color-page);
-    color: var(--el-text-color-regular);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+.team-column-caption,
+.permission-cell-status {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--el-text-color-regular);
+}
 
-    &:hover {
-      background: var(--el-color-primary-light-9);
-      border-color: var(--el-color-primary-light-7);
-      color: var(--el-color-primary);
-    }
+.permission-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
 
-    &.is-active {
-      background: var(--el-color-primary);
-      border-color: var(--el-color-primary);
-      color: #ffffff;
-      box-shadow: 0 2px 6px rgba(64, 158, 255, 0.25);
-    }
+  :deep(.el-checkbox) {
+    margin-right: 0;
   }
 }
 
-/* Dirty row high-end warning tone */
+.permission-cell-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
 :deep(.el-table__row.is-dirty-row) {
   td.el-table__cell {
     background: var(--el-color-warning-light-9);

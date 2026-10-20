@@ -4,8 +4,11 @@
     title="添加分组"
     width="480px"
     :close-on-click-modal="false"
+    :close-on-press-escape="!saving"
+    :show-close="!saving"
     @closed="handleClosed"
   >
+    <p>将为 {{ ciIds.length }} 台设备添加分组</p>
     <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top">
       <el-form-item label="操作" prop="operate">
         <el-radio-group v-model="formData.operate">
@@ -56,6 +59,7 @@
     </el-form>
 
     <template #footer>
+      <el-button :disabled="saving" @click="visible = false">取消</el-button>
       <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
     </template>
   </el-dialog>
@@ -130,12 +134,14 @@ const loadExistingGroups = async () => {
 
 // 保存
 const handleSave = async () => {
+  if (saving.value) return
   try {
     await formRef.value?.validate()
   } catch {
     return
   }
 
+  if (saving.value) return
   if (props.ciIds.length === 0) {
     ElMessage.warning('请选择要添加分组的资产')
     return

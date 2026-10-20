@@ -169,23 +169,42 @@
               <span>
                 已选择 <strong>{{ selectedCount }}</strong> 台设备
                 <span v-if="allSelected" class="selection-scope">（全部筛选结果）</span>
+                <span v-else class="selection-scope">（跨页、跨筛选保留）</span>
               </span>
             </div>
             <div class="selection-action-bar-top__actions">
-              <el-button size="small" type="primary" plain @click="handleBatchLocation">
+              <el-button size="small" :disabled="selectionBusy" @click="handleReviewSelection">
+                查看已选
+              </el-button>
+              <el-button
+                size="small"
+                type="primary"
+                plain
+                :disabled="selectionBusy"
+                @click="handleBatchLocation"
+              >
                 <i class="fa fa-map-marker-alt" style="margin-right: 4px"></i>
                 标记区域
               </el-button>
-              <el-button size="small" @click="handleAddTag">
+              <el-button size="small" :disabled="selectionBusy" @click="handleAddTag">
                 <i class="fa fa-tag" style="margin-right: 4px"></i>
                 添加标签
               </el-button>
-              <el-button size="small" @click="handleAddGroup">
+              <el-button
+                size="small"
+                :disabled="selectionBusy"
+                :loading="selectAllLoading"
+                @click="handleAddGroup"
+              >
                 <i class="fa fa-folder" style="margin-right: 4px"></i>
                 添加分组
               </el-button>
-              <el-dropdown trigger="click" @command="handleBatchActionCommand">
-                <el-button size="small">
+              <el-dropdown
+                trigger="click"
+                :disabled="selectionBusy"
+                @command="handleBatchActionCommand"
+              >
+                <el-button size="small" :disabled="selectionBusy">
                   更多操作
                   <el-icon class="dropdown-arrow"><ArrowDown /></el-icon>
                 </el-button>
@@ -245,7 +264,12 @@
             @select-all="handleTableSelect"
             row-class-name="modern-table-row"
           >
-            <el-table-column type="selection" width="40" fixed="left" />
+            <el-table-column
+              type="selection"
+              width="40"
+              fixed="left"
+              :selectable="isRowSelectable"
+            />
 
             <!-- 1. 设备标识复合列 -->
             <el-table-column label="设备标识" min-width="220" fixed="left">
@@ -572,6 +596,41 @@
       </div>
     </div>
 
+    <el-drawer v-model="selectionReviewVisible" title="已选设备" size="520px">
+      <div v-loading="selectionReviewLoading">
+        <el-alert
+          v-if="selectionReviewError"
+          :title="selectionReviewError"
+          type="error"
+          :closable="false"
+        >
+          <el-button link type="primary" @click="handleReviewSelection">重试</el-button>
+        </el-alert>
+        <template v-else>
+          <p>已选择 {{ selectedCount }} 台设备</p>
+          <el-table :data="selectionReviewPage" row-key="id">
+            <el-table-column label="设备" min-width="180">
+              <template #default="{ row }">
+                <div>{{ getAssetDisplayName(row) }}</div>
+                <span class="selection-scope">{{ row.IP || 'IP 未采集' }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="80">
+              <template #default="{ row }">
+                <el-button link type="primary" @click="removeSelectedAsset(row)">移除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+          <el-pagination
+            v-model:current-page="selectionReviewPageNumber"
+            :page-size="10"
+            :total="selectionReviewRows.length"
+            layout="total, prev, pager, next"
+          />
+        </template>
+      </div>
+    </el-drawer>
+
     <!-- 所有弹窗和抽屉组件 -->
     <AssetDetailDialog
       v-model="detailDialogVisible"
@@ -622,8 +681,8 @@
 
     <AddGroupDialog
       v-model="addGroupDialogVisible"
-      :ci-ids="selectedRows.map(row => row.id)"
-      :asset-type="currentType"
+      :ci-ids="groupTargetIds"
+      :asset-type="groupTargetType"
       @saved="handleAddGroupSaved"
     />
 
@@ -647,7 +706,7 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, onMounted, watch } from 'vue'
+import { ref, computed, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 // [Agent 功能暂停] import AgentEnrollmentDialog from '../components/asset-info/AgentEnrollmentDialog.vue'
@@ -695,6 +754,8 @@ const deleteImportDialogVisible = ref(false)
 const batchEditDialogVisible = ref(false)
 const addTagDialogVisible = ref(false)
 const addGroupDialogVisible = ref(false)
+const groupTargetIds = ref([])
+const groupTargetType = ref('')
 const currentAssetId = ref('')
 const currentAssetIp = ref('')
 const currentTenantId = ref('')
@@ -784,6 +845,16 @@ const selectedRows = ref([])
 const allSelected = ref(false)
 const excludedRowIds = ref([])
 const selectAllLoading = ref(false)
+const selectionBusy = computed(() => loading.value || selectAllLoading.value)
+const selectionReviewVisible = ref(false)
+const selectionReviewLoading = ref(false)
+const selectionReviewError = ref('')
+const selectionReviewResolvedRows = ref([])
+const selectionReviewPageNumber = ref(1)
+let selectionRevision = 0
+let assetListRequestId = 0
+let selectionReviewRequestId = 0
+let activeListQuery = null
 
 // 分页
 const pageSize = ref(10)
@@ -800,6 +871,18 @@ const selectedCount = computed(() => {
   return Math.max(total.value - excludedRowIds.value.length, 0)
 })
 const hasSelection = computed(() => selectedCount.value > 0)
+
+const selectionReviewRows = computed(() => {
+  if (!allSelected.value) return selectedRows.value
+  const excludedIds = new Set(excludedRowIds.value)
+  return selectionReviewResolvedRows.value.filter(row => !excludedIds.has(getAssetRowId(row)))
+})
+const selectionReviewPage = computed(() => {
+  const start = (selectionReviewPageNumber.value - 1) * 10
+  return selectionReviewRows.value.slice(start, start + 10)
+})
+
+const isRowSelectable = row => !selectionBusy.value && Boolean(getAssetRowId(row))
 
 const getAssetRowId = row => row?.id || row?.host_id || row?.hostId || null
 const currentPageSelectedRows = computed(() => {
@@ -888,6 +971,11 @@ const buildAssetListParams = () => ({
 })
 
 const resetSelectionState = () => {
+  selectionRevision += 1
+  selectionReviewRequestId += 1
+  selectionReviewVisible.value = false
+  selectionReviewResolvedRows.value = []
+  selectionReviewLoading.value = false
   allSelected.value = false
   excludedRowIds.value = []
   selectedRows.value = []
@@ -917,8 +1005,10 @@ const restorePageSelection = () => {
   })
 }
 
-const fetchAllMatchedAssets = async () => {
-  const requestParams = buildAssetListParams()
+const createListQuery = () => ({ params: buildAssetListParams(), filter: searchText.value })
+
+const fetchAllMatchedAssets = async (query = activeListQuery || createListQuery()) => {
+  const requestParams = query.params
   const batchSize = Math.max(pageSize.value, 200)
   let page = 1
   // total.value 在 Agent 本地筛选时是筛选后的数量，不能用于原始资产列表分页。
@@ -929,7 +1019,7 @@ const fetchAllMatchedAssets = async () => {
     const response = await assetApi.getAssetList(requestParams, {
       size: batchSize,
       page,
-      filter: searchText.value
+      filter: query.filter
     })
     const pageRows = Array.isArray(response.records)
       ? response.records.map(normalizeAssetRecord)
@@ -954,8 +1044,20 @@ const fetchAllMatchedAssets = async () => {
 }
 
 const handleTableSelect = selection => {
+  if (selectionBusy.value) return
+  selectionRevision += 1
   if (!allSelected.value) {
-    selectedRows.value = selection
+    const pageIds = new Set(tableData.value.map(getAssetRowId))
+    const nextRows = new Map(
+      selectedRows.value
+        .filter(row => !pageIds.has(getAssetRowId(row)))
+        .map(row => [getAssetRowId(row), row])
+    )
+    selection.forEach(row => {
+      const id = getAssetRowId(row)
+      if (id) nextRows.set(id, row)
+    })
+    selectedRows.value = Array.from(nextRows.values())
     return
   }
 
@@ -982,6 +1084,7 @@ const handleTableSelect = selection => {
 }
 
 const handleToggleSelectAll = async () => {
+  if (selectionBusy.value) return
   if (allSelected.value) {
     resetSelectionState()
     return
@@ -992,6 +1095,7 @@ const handleToggleSelectAll = async () => {
   }
 
   allSelected.value = true
+  selectionRevision += 1
   excludedRowIds.value = []
   selectedRows.value = [...tableData.value]
   await nextTick()
@@ -999,6 +1103,7 @@ const handleToggleSelectAll = async () => {
 }
 
 const resolveSelectedRowsForAction = async warningMessage => {
+  if (selectionBusy.value) return null
   if (!allSelected.value && selectedRows.value.length === 0) {
     ElMessage.warning(warningMessage)
     return null
@@ -1009,13 +1114,16 @@ const resolveSelectedRowsForAction = async warningMessage => {
   }
 
   selectAllLoading.value = true
+  const revision = selectionRevision
   try {
     const excludedIdSet = new Set(excludedRowIds.value)
     const allRows = await fetchAllMatchedAssets()
+    if (revision !== selectionRevision) return null
     const finalRows = allRows.filter(row => !excludedIdSet.has(getAssetRowId(row)))
     selectedRows.value = finalRows
     return finalRows
   } catch (error) {
+    if (revision !== selectionRevision) return null
     console.error('加载全量设备选择失败:', error)
     ElMessage.error('加载全量设备失败，请稍后重试')
     return null
@@ -1023,6 +1131,67 @@ const resolveSelectedRowsForAction = async warningMessage => {
     selectAllLoading.value = false
   }
 }
+
+const handleReviewSelection = async () => {
+  if (selectionBusy.value || !hasSelection.value) return
+  selectionReviewVisible.value = true
+  selectionReviewPageNumber.value = 1
+  selectionReviewError.value = ''
+  if (!allSelected.value) return
+  const requestId = ++selectionReviewRequestId
+  const revision = selectionRevision
+  selectionReviewLoading.value = true
+  selectionReviewResolvedRows.value = []
+  try {
+    const rows = await fetchAllMatchedAssets()
+    if (
+      requestId !== selectionReviewRequestId ||
+      revision !== selectionRevision ||
+      !selectionReviewVisible.value
+    )
+      return
+    selectionReviewResolvedRows.value = rows
+  } catch (error) {
+    if (
+      requestId !== selectionReviewRequestId ||
+      revision !== selectionRevision ||
+      !selectionReviewVisible.value
+    )
+      return
+    console.error('加载已选设备失败:', error)
+    selectionReviewError.value = '加载已选设备失败，请重试'
+  } finally {
+    if (requestId === selectionReviewRequestId) selectionReviewLoading.value = false
+  }
+}
+
+const removeSelectedAsset = async row => {
+  if (selectionReviewLoading.value) return
+  const id = getAssetRowId(row)
+  selectionRevision += 1
+  selectedRows.value = selectedRows.value.filter(item => getAssetRowId(item) !== id)
+  if (allSelected.value && !excludedRowIds.value.includes(id)) excludedRowIds.value.push(id)
+  if (!selectedCount.value) resetSelectionState()
+  selectionReviewPageNumber.value = Math.min(
+    selectionReviewPageNumber.value,
+    Math.max(1, Math.ceil(selectionReviewRows.value.length / 10))
+  )
+  await nextTick()
+  restorePageSelection()
+}
+
+watch(selectionReviewVisible, visible => {
+  if (!visible) {
+    selectionReviewRequestId += 1
+    selectionReviewLoading.value = false
+  }
+})
+
+onBeforeUnmount(() => {
+  assetListRequestId += 1
+  selectionRevision += 1
+  selectionReviewRequestId += 1
+})
 
 // 获取连通率样式
 const _getConnRateClass = rate => {
@@ -1101,7 +1270,7 @@ const handleSelectGroup = (groupId, groupName = '全部设备') => {
     filters.value.hostKeys = groupId
   }
   currentPage.value = 1
-  loadAssetList()
+  loadAssetList({ preserveSelection: true })
 }
 
 // 选择标签 (侧边栏触发)
@@ -1110,7 +1279,7 @@ const handleSelectTag = tag => {
   selectedGroup.value = ''
   filters.value.hostKeys = `,#${tag.name}`
   currentPage.value = 1
-  loadAssetList()
+  loadAssetList({ preserveSelection: true })
 }
 
 // 加载设备类型列表
@@ -1146,39 +1315,85 @@ const loadOsVersionOptions = async () => {
 // 加载设备列表
 const loadAssetList = async ({ preserveSelection = false } = {}) => {
   if (!currentType.value) return
-  if (!preserveSelection) {
+  const query = createListQuery()
+  const scopeChanged = activeListQuery && JSON.stringify(activeListQuery) !== JSON.stringify(query)
+  const typeChanged = activeListQuery && activeListQuery.params.assetType !== query.params.assetType
+  const requestId = ++assetListRequestId
+  if (scopeChanged) {
+    selectionRevision += 1
+    selectionReviewVisible.value = false
+    selectionReviewRequestId += 1
+    selectionReviewLoading.value = false
+  }
+  if (typeChanged && hasSelection.value) {
+    ElMessage.info('资产类型已变更，已清空之前选择的设备')
+  }
+  if (!preserveSelection || typeChanged) {
     resetSelectionState()
   }
   loading.value = true
+  let resolvingPreviousSelection = false
   try {
+    if (preserveSelection && scopeChanged && !typeChanged && allSelected.value) {
+      // 原全选仅代表旧查询；切换筛选前先固定真实目标，不能把全选套到新结果。
+      resolvingPreviousSelection = true
+      const revision = selectionRevision
+      const excludedIds = new Set(excludedRowIds.value)
+      const previousRows = await fetchAllMatchedAssets(activeListQuery)
+      if (requestId !== assetListRequestId) return
+      if (revision === selectionRevision && allSelected.value) {
+        selectedRows.value = Array.from(
+          new Map(
+            previousRows
+              .filter(row => !excludedIds.has(getAssetRowId(row)))
+              .map(row => [getAssetRowId(row), row])
+          ).values()
+        )
+        allSelected.value = false
+        excludedRowIds.value = []
+      }
+      resolvingPreviousSelection = false
+    }
+    activeListQuery = query
     let normalizedRecords
+    let nextTotal
     if (hasAgentLocalFilter()) {
       // 原资产列表接口不认识 connectionType，必须先富化后在前端筛选，再自行分页。
-      const matchedRecords = await fetchAllMatchedAssets()
-      total.value = matchedRecords.length
+      const matchedRecords = await fetchAllMatchedAssets(query)
+      nextTotal = matchedRecords.length
       const start = (currentPage.value - 1) * pageSize.value
       normalizedRecords = matchedRecords.slice(start, start + pageSize.value)
     } else {
-      const params = buildAssetListParams()
-      const res = await assetApi.getAssetList(params, {
+      const res = await assetApi.getAssetList(query.params, {
         size: pageSize.value,
         page: currentPage.value,
-        filter: searchText.value
+        filter: query.filter
       })
       normalizedRecords = (res.records || []).map(normalizeAssetRecord)
-      total.value = res.total || 0
+      nextTotal = res.total || 0
     }
 
+    if (requestId !== assetListRequestId) return
+    total.value = nextTotal
     tableData.value = normalizedRecords
-    if (preserveSelection && allSelected.value) {
+    if (preserveSelection && !typeChanged) {
+      const currentRows = new Map(normalizedRecords.map(row => [getAssetRowId(row), row]))
+      selectedRows.value = selectedRows.value.map(row => currentRows.get(getAssetRowId(row)) || row)
       await nextTick()
-      restorePageSelection()
+      if (requestId === assetListRequestId) restorePageSelection()
     }
   } catch (error) {
+    if (requestId !== assetListRequestId) return
+    if (resolvingPreviousSelection) {
+      console.error('保留原筛选已选设备失败:', error)
+      ElMessage.error('保留原筛选的已选设备失败，尚未应用新筛选，请重试')
+      return
+    }
+    tableData.value = []
     console.error('加载设备列表失败:', error)
     ElMessage.error('加载设备列表失败')
   } finally {
-    loading.value = false
+    if (requestId === assetListRequestId) loading.value = false
   }
 }
 
@@ -1197,13 +1412,13 @@ watch(currentType, () => {
   loadOsVersionOptions()
   loadGroupTree()
   loadTagList()
-  loadAssetList()
+  loadAssetList({ preserveSelection: true })
 })
 
 // 搜索
 const handleSearch = () => {
   currentPage.value = 1
-  loadAssetList()
+  loadAssetList({ preserveSelection: true })
 }
 
 
@@ -1216,12 +1431,12 @@ const handleReset = () => {
   selectedGroupName.value = '全部设备'
   selectedTag.value = ''
   currentPage.value = 1
-  loadAssetList()
+  loadAssetList({ preserveSelection: true })
 }
 
 // 刷新
 const handleRefresh = () => {
-  loadAssetList()
+  loadAssetList({ preserveSelection: true })
 }
 
 // [Agent 功能暂停] const handleAgentEnrollmentSuccess = async boundHostId => {
@@ -1250,12 +1465,12 @@ const handleAssetDataSaved = () => {
 // 分页大小变化
 const handlePageSizeChange = () => {
   currentPage.value = 1
-  loadAssetList({ preserveSelection: allSelected.value })
+  loadAssetList({ preserveSelection: true })
 }
 
 const handlePageChange = page => {
   currentPage.value = page
-  loadAssetList({ preserveSelection: allSelected.value })
+  loadAssetList({ preserveSelection: true })
 }
 
 const handleEdit = async () => {
@@ -1282,6 +1497,8 @@ const handleAddTagSaved = () => {
 const handleAddGroup = async () => {
   const rows = await resolveSelectedRowsForAction('请先选择要添加分组的设备')
   if (!rows?.length) return
+  groupTargetIds.value = rows.map(row => row.id)
+  groupTargetType.value = currentType.value
   addGroupDialogVisible.value = true
 }
 
