@@ -6,7 +6,22 @@
     class="cron-job-form-dialog"
     destroy-on-close
   >
-    <el-form ref="formRef" :model="formData" :rules="formRules" label-width="140px">
+    <el-alert
+      v-if="initializationError"
+      :title="initializationError"
+      type="error"
+      :closable="false"
+    >
+      <el-button link type="primary" @click="initializeFromJob">重新加载工具</el-button>
+    </el-alert>
+    <el-form
+      ref="formRef"
+      v-loading="initializing"
+      :model="formData"
+      :rules="formRules"
+      :disabled="initializing || !!initializationError"
+      label-width="140px"
+    >
       <h4 class="form-section__title">执行内容</h4>
       <el-form-item label="任务名称" prop="jobDesc">
         <el-input v-model="formData.jobDesc" placeholder="例如：每日服务器巡检" maxlength="200" />
@@ -117,7 +132,7 @@
         <el-button
           type="primary"
           :loading="submitting"
-          :disabled="!isFormValid"
+          :disabled="!isFormValid || initializing || !!initializationError"
           @click="handleSubmit"
         >
           保存
@@ -158,6 +173,10 @@ const props = defineProps({
     type: [String, Number],
     default: null
   },
+  initialJob: {
+    type: Object,
+    default: null
+  },
   appletsList: {
     type: Array,
     default: () => []
@@ -192,6 +211,8 @@ const {
   formData,
   formRules,
   submitting,
+  initializing,
+  initializationError,
   jobList,
   multipleJobIds,
   isMultipleJobType,
@@ -200,7 +221,8 @@ const {
   handleJobTypeChange,
   handleJobChange,
   getJobLabel,
-  handleSubmit
+  handleSubmit,
+  initializeFromJob
 } = useCronJobForm(props, emit)
 
 const showParamsSection = computed(() => {

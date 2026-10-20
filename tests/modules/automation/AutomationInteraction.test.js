@@ -66,6 +66,12 @@ vi.mock('@/modules/automation/components/job/components/CronJobParamsSection.vue
 }))
 
 const Slot = { template: '<div><slot /><slot name="footer" /><slot name="append" /></div>' }
+const Form = defineComponent({
+  setup(_props, { slots, expose }) {
+    expose({ validate: vi.fn().mockResolvedValue(true), clearValidate: vi.fn() })
+    return () => h('div', slots.default?.())
+  }
+})
 const Button = {
   props: ['disabled', 'loading'],
   template: '<button :disabled="disabled || loading"><slot /></button>'
@@ -122,7 +128,7 @@ function mount(component, props = {}) {
       directives: { loading() {} },
       stubs: {
         'el-dialog': Slot,
-        'el-form': Slot,
+        'el-form': Form,
         'el-form-item': Slot,
         'el-input': Input,
         'el-button': Button,
@@ -136,14 +142,15 @@ function mount(component, props = {}) {
         'el-dropdown': Slot,
         'el-dropdown-menu': Slot,
         'el-dropdown-item': Slot,
-        'el-alert': true,
+        'el-alert': Slot,
         'el-collapse': Slot,
         'el-collapse-item': Slot,
         'el-empty': Empty,
         RunLogStatusTag: Slot,
         ExecuteJobDialog: false,
         ExecuteResultDialog: false,
-        NextExecutionTimeDialog: false
+        NextExecutionTimeDialog: false,
+        CronJobFormDialog: false
       }
     }
   })
@@ -330,6 +337,125 @@ describe('AUTO-1 列表执行与本次结果', () => {
       expect(api.executeJob).not.toHaveBeenCalled()
     }
   )
+})
+
+describe('AUTO-4 当前工具创建定时任务', () => {
+  it.each(['script', 'rest'])('%s工具原地带入真实ID和类型，仅手动保存原定时请求', async type => {
+    const source = { ...job, type, appletCode: 'do-not-copy', jobParam: { scope: 'old-execution' } }
+    api.appTableList.mockResolvedValue({ data: [source] })
+    api.fetchJobsByType.mockResolvedValue({ data: [source] })
+    api.fetchJobById.mockResolvedValue({
+      data: {
+        id: source.id,
+        type,
+        params: [
+          { name: 'scope', defaultValue: 'original-default' },
+          { name: 'empty', defaultValue: '' }
+        ]
+      }
+    })
+    const wrapper = mount(JobListPage)
+    await flushPromises()
+    await button(wrapper, '创建定时任务').trigger('click')
+    await flushPromises()
+    const form = wrapper.findComponent(CronJobFormDialog)
+    const state = stateOf(form)
+    expect(form.props('initialJob')).toEqual({ id: job.id, type })
+    expect(state.formData).toMatchObject({
+      jobId: job.id,
+      jobType: type,
+      jobDesc: '',
+      scheduleConf: '',
+      appCode: '',
+      triggerStatus: '1',
+      logOutput: '1',
+      isEncrypt: '1',
+      jobParam: {}
+    })
+    expect(state.jobParams.map(param => param.defaultValue)).toEqual(['original-default', ''])
+    expect(api.fetchJobsByType).toHaveBeenCalledExactlyOnceWith(type)
+    expect(api.fetchJobById).toHaveBeenCalledExactlyOnceWith(job.id)
+    expect(api.createCronJob).not.toHaveBeenCalled()
+    expect(api.executeJob).not.toHaveBeenCalled()
+    state.formData.jobDesc = '新计划'
+    state.formData.scheduleConf = cron
+    await flushPromises()
+    await button(form, '保存').trigger('click')
+    await flushPromises()
+    expect(api.createCronJob).toHaveBeenCalledExactlyOnceWith({
+      jobId: job.id,
+      jobType: type,
+      jobDesc: '新计划',
+      scheduleConf: cron,
+      appCode: '',
+      triggerStatus: '1',
+      logOutput: false,
+      isEncrypt: false,
+      jobParam: { scope: 'original-default', empty: '' }
+    })
+    expect(api.updateCronJob).not.toHaveBeenCalled()
+  })
+  it('取消不保存，列表上下文保持，再次打开不复用上次草稿', async () => {
+    const wrapper = mount(JobListPage)
+    await flushPromises()
+    await button(wrapper, '创建定时任务').trigger('click')
+    await flushPromises()
+    const list = stateOf(wrapper)
+    list.currentPage = 3
+    list.pageSize = 20
+    list.filters.keyword = '原筛选'
+    const form = wrapper.findComponent(CronJobFormDialog)
+    stateOf(form).formData.jobDesc = '取消的草稿'
+    await button(form, '取消').trigger('click')
+    await flushPromises()
+    expect(list.scheduleDialogVisible).toBe(false)
+    expect(list.currentPage).toBe(3)
+    expect(list.pageSize).toBe(20)
+    expect(list.filters.keyword).toBe('原筛选')
+    list.handleCreateSchedule(job)
+    await flushPromises()
+    expect(stateOf(wrapper.findComponent(CronJobFormDialog)).formData.jobDesc).toBe('')
+    expect(api.createCronJob).not.toHaveBeenCalled()
+  })
+  it('需审批/审批中禁快捷入口，命令及无真实ID不提供入口，不读取或执行', async () => {
+    api.appTableList.mockResolvedValue({
+      data: [
+        { ...job, needApprove: true },
+        { ...job, id: 'pending', isApproving: true },
+        { ...job, id: 'command-id', type: 'command' },
+        { ...job, id: '' }
+      ]
+    })
+    const wrapper = mount(JobListPage)
+    await flushPromises()
+    const entries = wrapper.findAll('button').filter(item => item.text() === '创建定时任务')
+    expect(entries).toHaveLength(2)
+    expect(entries.every(item => item.attributes('disabled') !== undefined)).toBe(true)
+    const state = stateOf(wrapper)
+    state.handleCreateSchedule({ ...job, needApprove: true })
+    state.handleCreateSchedule({ ...job, isApproving: true })
+    state.handleCreateSchedule({ ...job, type: 'command' })
+    state.handleCreateSchedule({ ...job, id: '' })
+    expect(state.scheduleDialogVisible).toBe(false)
+    expect(api.fetchJobsByType).not.toHaveBeenCalled()
+    expect(api.fetchJobById).not.toHaveBeenCalled()
+    expect(api.executeJob).not.toHaveBeenCalled()
+  })
+  it('初始工具读取失败禁保存，可重试原只读请求', async () => {
+    api.fetchJobsByType.mockRejectedValueOnce(new Error('read failed'))
+    const wrapper = mount(JobListPage)
+    await flushPromises()
+    await button(wrapper, '创建定时任务').trigger('click')
+    await flushPromises()
+    const form = wrapper.findComponent(CronJobFormDialog)
+    expect(stateOf(form).initializationError).toContain('读取')
+    expect(button(form, '保存').attributes('disabled')).toBeDefined()
+    await button(form, '重新加载工具').trigger('click')
+    await flushPromises()
+    expect(stateOf(form).initializationError).toBe('')
+    expect(stateOf(form).formData.jobId).toBe(job.id)
+    expect(api.createCronJob).not.toHaveBeenCalled()
+  })
 })
 
 describe('AUTO-2 单工具历史筛选', () => {

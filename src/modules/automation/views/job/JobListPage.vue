@@ -165,12 +165,27 @@
             {{ formatDate(row.lastRunTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" fixed="right" width="130">
+        <el-table-column label="操作" fixed="right" width="230">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="handleViewJob(row)">执行</el-button>
             <el-button text type="primary" size="small" @click="handleCopy(row)">复制</el-button>
             <el-button text type="primary" size="small" @click="handleViewHistory(row)">
               历史
+            </el-button>
+            <el-button
+              v-if="row.id && ['script', 'rest'].includes(row.type)"
+              text
+              type="primary"
+              size="small"
+              :disabled="!!(row.needApprove || row.isApproving)"
+              :title="
+                row.needApprove || row.isApproving
+                  ? '请先按原审批流程处理'
+                  : '使用当前工具创建定时任务'
+              "
+              @click="handleCreateSchedule(row)"
+            >
+              创建定时任务
             </el-button>
           </template>
         </el-table-column>
@@ -219,6 +234,11 @@
       :applets-list="appOptions"
       @success="handleCreateSuccess"
     />
+    <CronJobFormDialog
+      v-if="scheduleDialogVisible"
+      v-model="scheduleDialogVisible"
+      :initial-job="scheduleJob"
+    />
     <JobApproveDialog
       v-if="approveDialogVisible"
       v-model:visible="approveDialogVisible"
@@ -248,6 +268,7 @@ import ExecuteResultDialog from '../../components/job/JobListView/ExecuteResultD
 import ExecuteHistoryDialog from '../../components/job/JobListView/ExecuteHistoryDialog.vue'
 import CreateJobDialog from '../../components/job/JobListView/CreateJobDialog.vue'
 import JobApproveDialog from '../../components/job/JobListView/JobApproveDialog.vue'
+import CronJobFormDialog from '../../components/job/components/CronJobFormDialog.vue'
 
 const store = useAutomationJobStore()
 const { error, filteredJobs, jobs } = storeToRefs(store)
@@ -277,6 +298,8 @@ const resultDialogVisible = ref(false)
 const resultMeta = ref({ runId: '', jobId: '', jobTitle: '' })
 const historyDialogVisible = ref(false)
 const historyJobMeta = ref(null)
+const scheduleDialogVisible = ref(false)
+const scheduleJob = ref(null)
 const createDialogVisible = ref(false)
 const createJobType = ref('')
 const editJobId = ref('')
@@ -673,6 +696,16 @@ function handleViewHistory(row) {
     title: row.title || ''
   }
   historyDialogVisible.value = true
+}
+
+function handleCreateSchedule(row) {
+  if (!row?.id || !['script', 'rest'].includes(row.type)) return
+  if (row.needApprove || row.isApproving) {
+    ElMessage.info('需审批或审批中的工具请先按原审批流程处理')
+    return
+  }
+  scheduleJob.value = { id: row.id, type: row.type }
+  scheduleDialogVisible.value = true
 }
 
 function handleCreateJob(type) {
