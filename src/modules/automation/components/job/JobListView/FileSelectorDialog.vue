@@ -161,7 +161,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import * as gfsApi from '@/modules/automation/api/gfs'
@@ -203,6 +203,7 @@ const fileList = ref([])
 const selectedFiles = ref([])
 const selectedFile = ref('')
 const tableRef = ref(null)
+let fileListRequestId = 0
 
 // 文件预览相关
 const previewVisible = ref(false)
@@ -226,9 +227,12 @@ const breadcrumbs = computed(() => {
  * 加载文件列表
  */
 async function loadFiles() {
+  const requestId = ++fileListRequestId
+  const isCurrent = () => requestId === fileListRequestId && visible.value
   loading.value = true
   try {
     const files = await gfsApi.listFiles(null, currentDir.value, 'git', { includeStage: true })
+    if (!isCurrent()) return
 
     // 排序：目录在前，文件在后，按名称排序
     files.sort((a, b) => {
@@ -268,18 +272,19 @@ async function loadFiles() {
 
     // 恢复之前的选中状态
     await nextTick()
-    restoreSelection()
+    if (isCurrent()) restoreSelection(isCurrent)
   } catch (error) {
+    if (!isCurrent()) return
     ElMessage.error(`加载文件列表失败: ${error.message || '未知错误'}`)
   } finally {
-    loading.value = false
+    if (isCurrent()) loading.value = false
   }
 }
 
 /**
  * 恢复选中状态
  */
-function restoreSelection() {
+function restoreSelection(isCurrent) {
   if (!tableRef.value || !props.multipleSelect) return
 
   // 清除当前选中
@@ -287,6 +292,7 @@ function restoreSelection() {
 
   // 根据selectedFiles恢复选中状态
   nextTick(() => {
+    if (!isCurrent()) return
     selectedFiles.value.forEach(selectedFile => {
       const row = fileList.value.find(f => f.path === selectedFile.path)
       if (row && !row.directory && !row._excluded) {
@@ -434,6 +440,7 @@ function closeFilePreview() {
  * 确认选择
  */
 function handleConfirm() {
+  if (!visible.value || loading.value) return
   let result = []
   if (props.multipleSelect) {
     result = selectedFiles.value.map(f => ({
@@ -459,13 +466,24 @@ function handleConfirm() {
 }
 
 // 初始化
-watch(visible, newVal => {
-  if (newVal) {
-    currentDir.value = props.initDir || ''
-    selectedFiles.value = [...props.preSelected]
-    selectedFile.value = props.preSelected[0]?.path || ''
-    loadFiles()
-  }
+watch(
+  visible,
+  newVal => {
+    fileListRequestId += 1
+    if (newVal) {
+      currentDir.value = props.initDir || ''
+      selectedFiles.value = [...props.preSelected]
+      selectedFile.value = props.preSelected[0]?.path || ''
+      loadFiles()
+    } else {
+      loading.value = false
+    }
+  },
+  { flush: 'sync' }
+)
+
+onBeforeUnmount(() => {
+  fileListRequestId += 1
 })
 </script>
 
