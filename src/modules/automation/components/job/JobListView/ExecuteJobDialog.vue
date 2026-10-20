@@ -157,7 +157,10 @@ async function handleSubmit() {
   try {
     const payload = buildPayload()
     const response = await jaoApi.executeJob(payload)
-    const result = response?.data ?? response ?? {}
+    const responseData = response?.data ?? response ?? {}
+    // 脚本工具返回单条运行数组；多条时不擅自选取某一次运行。
+    const result =
+      Array.isArray(responseData) && responseData.length === 1 ? responseData[0] : responseData
     const status = extractExecutionStatus(result)
     const runId = extractRunId(result)
     handleStatusTransition(status, runId)

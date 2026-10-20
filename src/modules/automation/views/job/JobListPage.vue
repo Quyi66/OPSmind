@@ -195,6 +195,14 @@
       :job-id="executeJobMeta?.id || ''"
       :job-type="executeJobMeta?.type || ''"
       :fallback-config-json="executeJobMeta?.configJson || ''"
+      @success="executeJobMeta.onSuccess"
+    />
+    <ExecuteResultDialog
+      v-if="resultDialogVisible"
+      v-model:visible="resultDialogVisible"
+      :run-id="resultMeta.runId"
+      :job-id="resultMeta.jobId"
+      :job-title="resultMeta.jobTitle"
     />
     <ExecuteHistoryDialog
       v-if="historyDialogVisible"
@@ -230,11 +238,13 @@ import { useAutomationJobStore, JOB_TYPE_OPTIONS } from '@/modules/automation/st
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Delete, Refresh, Search, ArrowDown, RefreshRight } from '@element-plus/icons-vue'
 import {
+  getAutomationExecutionPresentation,
   getAutomationToolDescription,
   getAutomationToolTitle
 } from '@/modules/automation/utils/resourcePresentation'
 import * as jaoApi from '@/modules/automation/api/jao'
 import ExecuteJobDialog from '../../components/job/JobListView/ExecuteJobDialog.vue'
+import ExecuteResultDialog from '../../components/job/JobListView/ExecuteResultDialog.vue'
 import ExecuteHistoryDialog from '../../components/job/JobListView/ExecuteHistoryDialog.vue'
 import CreateJobDialog from '../../components/job/JobListView/CreateJobDialog.vue'
 import JobApproveDialog from '../../components/job/JobListView/JobApproveDialog.vue'
@@ -262,6 +272,9 @@ const filters = reactive({
 
 const executeDialogVisible = ref(false)
 const executeJobMeta = ref(null)
+let executeSession = 0
+const resultDialogVisible = ref(false)
+const resultMeta = ref({ runId: '', jobId: '', jobTitle: '' })
 const historyDialogVisible = ref(false)
 const historyJobMeta = ref(null)
 const createDialogVisible = ref(false)
@@ -399,16 +412,34 @@ async function handleViewJob(row) {
       ElMessage.info('该运维工具审批申请已提交，请等待审批')
     } else {
       // 不需要审批，直接执行
+      const session = ++executeSession
+      const job = { id: row.id, title: row.title || '' }
       executeJobMeta.value = {
         id: row.id,
         type: row.type ?? '',
-        configJson: row.configJson ?? ''
+        configJson: row.configJson ?? '',
+        onSuccess: payload => handleExecuteJobSuccess(payload, session, job)
       }
       executeDialogVisible.value = true
     }
   } catch (error) {
     ElMessage.error(error?.message || '检查审批状态失败')
   }
+}
+
+function handleExecuteJobSuccess(payload = {}, session, job) {
+  if (!executeDialogVisible.value || session !== executeSession) return
+  if (payload.jobId && payload.jobId !== job.id) return
+  executeDialogVisible.value = false
+  if (!payload.runId) {
+    ElMessage.info('本次提交未返回运行标识，请从该工具的历史查看运行结果')
+    return
+  }
+  resultMeta.value = {
+    runId: payload.runId,
+    ...getAutomationExecutionPresentation(payload, job)
+  }
+  resultDialogVisible.value = true
 }
 
 watch(executeDialogVisible, visible => {

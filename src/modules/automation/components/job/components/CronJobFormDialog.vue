@@ -60,7 +60,17 @@
               <el-button @click="cronGeneratorVisible = true" :icon="Calendar">生成器</el-button>
             </template>
           </el-input>
-          <div class="form-help">可使用生成器配置执行计划，并在任务列表中查看下次执行时间。</div>
+          <div class="form-help">
+            <el-button
+              link
+              type="primary"
+              :disabled="!formData.scheduleConf?.trim()"
+              @click="nextTimeVisible = true"
+            >
+              预览执行时间
+            </el-button>
+            <span>预览不会保存或更改执行计划。</span>
+          </div>
         </el-form-item>
       </div>
 
@@ -121,15 +131,22 @@
       :initial-value="formData.scheduleConf"
       @confirm="handleCronConfirm"
     />
+    <NextExecutionTimeDialog
+      v-if="nextTimeVisible"
+      v-model="nextTimeVisible"
+      :schedule-conf="formData.scheduleConf"
+      empty-description="当前表达式没有可预览的执行时间"
+    />
   </el-dialog>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Calendar } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import CronGeneratorDialog from '../CronGeneratorDialog.vue'
 import CronJobParamsSection from './CronJobParamsSection.vue'
+import NextExecutionTimeDialog from './NextExecutionTimeDialog.vue'
 import { useCronJobForm } from '../composables/useCronJobForm'
 
 const props = defineProps({
@@ -159,7 +176,15 @@ const title = computed(() => {
 })
 
 const cronGeneratorVisible = ref(false)
+const nextTimeVisible = ref(false)
 const expandedSections = ref([])
+
+watch(
+  () => [props.modelValue, props.editingId],
+  () => {
+    nextTimeVisible.value = false
+  }
+)
 
 // 使用表单管理 composable
 const {

@@ -6,14 +6,17 @@
           {{ time }}
         </h4>
       </div>
-      <el-empty v-else description="该任务没有执行计划，是否已禁用？" />
+      <div v-else-if="error" role="alert">
+        <p>{{ error }}</p>
+        <el-button @click="fetchNextExecutionTimes">重试</el-button>
+      </div>
+      <el-empty v-else-if="!loading" :description="emptyDescription" />
     </div>
   </el-dialog>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 
 const props = defineProps({
@@ -24,6 +27,10 @@ const props = defineProps({
   scheduleConf: {
     type: String,
     default: ''
+  },
+  emptyDescription: {
+    type: String,
+    default: '该任务没有执行计划，是否已禁用？'
   }
 })
 
@@ -36,42 +43,57 @@ const visible = computed({
 
 const loading = ref(false)
 const times = ref([])
+const error = ref('')
+let requestId = 0
 
 /**
  * 获取下次执行时间
  */
 async function fetchNextExecutionTimes() {
-  if (!props.scheduleConf) return
+  const currentRequestId = ++requestId
+  const scheduleConf = props.scheduleConf
+  const isCurrent = () =>
+    currentRequestId === requestId && props.modelValue && props.scheduleConf === scheduleConf
+  times.value = []
+  error.value = ''
+  loading.value = false
+  if (!props.modelValue || !scheduleConf?.trim()) return
 
   loading.value = true
   try {
-    const response = await jaoApi.queryNextExecutionTime(props.scheduleConf)
+    const response = await jaoApi.queryNextExecutionTime(scheduleConf)
+    if (!isCurrent()) return
     const data = response.data || response
-    if (data && data.length > 0 && data[0].next) {
+    if (data && data.length > 0 && Array.isArray(data[0].next)) {
       times.value = data[0].next
     } else {
       times.value = []
     }
-  } catch (error) {
-    ElMessage.error('查询执行时间失败')
-    times.value = []
+  } catch {
+    if (isCurrent()) error.value = '查询执行时间失败，请检查表达式后重试'
   } finally {
-    loading.value = false
+    if (isCurrent()) loading.value = false
   }
 }
 
-// 监听对话框打开时加载数据
-// 监听对话框打开时加载数据
 watch(
-  () => props.modelValue,
-  newVal => {
-    if (newVal) {
-      times.value = []
+  () => [props.modelValue, props.scheduleConf],
+  ([isVisible]) => {
+    if (isVisible) {
       fetchNextExecutionTimes()
+    } else {
+      requestId++
+      loading.value = false
+      times.value = []
+      error.value = ''
     }
   },
   { immediate: true }
 )
+
+onBeforeUnmount(() => {
+  requestId++
+})
 </script>
 
 <style scoped>
