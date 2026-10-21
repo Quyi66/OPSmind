@@ -45,17 +45,23 @@
         :data="tableData"
         style="width: 100%"
         size="small"
-        max-height="calc(100vh - 414px)"
+        height="100%"
       >
-        <el-table-column prop="host_key" label="主机" min-width="150">
+        <el-table-column prop="host_key" label="主机" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
-            <el-button type="primary" link @click="handleHostClick(row)">
+            <el-button
+              class="software-cell-link"
+              :title="row.host_key"
+              type="primary"
+              link
+              @click="handleHostClick(row)"
+            >
               {{ row.host_key }}
             </el-button>
           </template>
         </el-table-column>
-        <el-table-column prop="os_distro" label="OS" min-width="120" />
-        <el-table-column prop="os_version" label="OS版本" width="150" />
+        <el-table-column prop="os_distro" label="OS" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="os_version" label="OS版本" width="150" show-overflow-tooltip />
         <el-table-column prop="repo_count" label="已配置仓库" width="120" />
         <el-table-column prop="installed_pkgs_count" label="已安装软件包" width="140">
           <template #default="{ row }">
@@ -300,30 +306,9 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-/* 此组件使用全局的 ops-* 样式 */
+@use '../../styles/layout' as software-layout;
 
 .host-overview-table {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  gap: 8px;
-}
-
-.ops-action-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.action-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.action-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  @include software-layout.table-tab;
 }
 </style>

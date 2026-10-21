@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout" style="padding: 0; gap: 0">
+  <div class="ops-page-layout repo-management-page" style="padding: 0; gap: 0">
     <!-- 页面描述 -->
     <el-alert type="info" :closable="false" class="page-description">
       <template #title>
@@ -28,7 +28,7 @@
     </div>
 
     <!-- 内容区 -->
-    <div class="ops-page-layout">
+    <div class="ops-page-layout repo-content">
       <!-- 基准仓库 Tab 内容 -->
       <template v-if="activeTab === 'baseRepo'">
         <!-- 筛选区域 -->
@@ -81,20 +81,37 @@
             v-loading="baseRepoLoading"
             :data="baseRepoData"
             style="width: 100%"
-            max-height="calc(100vh - 334px)"
+            height="100%"
             @selection-change="handleBaseRepoSelectionChange"
           >
             <el-table-column type="selection" width="50" />
-            <el-table-column prop="repo_id" label="仓库ID" min-width="120">
+            <el-table-column prop="repo_id" label="仓库ID" min-width="120" show-overflow-tooltip>
               <template #default="{ row }">
-                <el-button type="primary" link size="small" @click="handleViewRepoDetail(row)">
+                <el-button
+                  class="software-cell-link"
+                  :title="row.repo_id"
+                  type="primary"
+                  link
+                  size="small"
+                  @click="handleViewRepoDetail(row)"
+                >
                   {{ row.repo_id }}
                 </el-button>
               </template>
             </el-table-column>
-            <el-table-column prop="scan_server" label="基准主机" min-width="150" />
-            <el-table-column prop="repo_name" label="名称" min-width="150" />
-            <el-table-column prop="repo_file" label="配置文件" min-width="150" />
+            <el-table-column
+              prop="scan_server"
+              label="基准主机"
+              min-width="150"
+              show-overflow-tooltip
+            />
+            <el-table-column prop="repo_name" label="名称" min-width="150" show-overflow-tooltip />
+            <el-table-column
+              prop="repo_file"
+              label="配置文件"
+              min-width="150"
+              show-overflow-tooltip
+            />
             <el-table-column prop="repo_pkgs" label="软件包数量" width="100">
               <template #default="{ row }">
                 {{ formatPkgCount(row.repo_pkgs) }}
@@ -111,7 +128,7 @@
                     size="small"
                     class="url-tag"
                   >
-                    {{ url }}
+                    <span :title="url">{{ url }}</span>
                   </el-tag>
                 </div>
               </template>
@@ -337,8 +354,21 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+@use '../styles/layout' as software-layout;
+
+.repo-management-page {
+  min-width: 0;
+}
+
+.repo-content {
+  @include software-layout.table-tab;
+
+  height: auto;
+}
+
 // 页面描述样式
 .page-description {
+  flex-shrink: 0;
   margin: 0;
   border-radius: 0;
   border-left: none;
@@ -355,6 +385,9 @@ onMounted(() => {
 
 // 标签页样式 - 与资产列表页保持一致
 .type-tabs-wrapper {
+  flex-shrink: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
   background: var(--el-bg-color);
   border-bottom: 1px solid var(--el-border-color-light);
   padding: 0 16px;
@@ -363,10 +396,14 @@ onMounted(() => {
 .type-tabs {
   display: flex;
   gap: 4px;
+  width: max-content;
+  min-width: 100%;
 }
 
 .type-tab {
   display: flex;
+  flex-shrink: 0;
+  white-space: nowrap;
   align-items: center;
   gap: 6px;
   padding: 10px 16px;
@@ -400,7 +437,17 @@ onMounted(() => {
 
 .url-tag {
   max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+
+  :deep(.el-tag__content) {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 </style>

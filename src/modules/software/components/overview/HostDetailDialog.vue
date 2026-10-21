@@ -2,7 +2,7 @@
   <el-dialog
     v-model="dialogVisible"
     title="扫描详情"
-    width="1200px"
+    width="min(1200px, calc(100vw - 32px))"
     destroy-on-close
     class="host-detail-dialog"
     @close="handleClose"
@@ -68,9 +68,14 @@
           </el-checkbox-group>
         </div>
         <el-table v-loading="reposLoading" :data="reposData" size="small" max-height="350px">
-          <el-table-column prop="repo_id" label="仓库" min-width="120" />
-          <el-table-column prop="repo_name" label="名称" min-width="150" />
-          <el-table-column prop="repo_file" label="配置文件" min-width="150" />
+          <el-table-column prop="repo_id" label="仓库" min-width="120" show-overflow-tooltip />
+          <el-table-column prop="repo_name" label="名称" min-width="150" show-overflow-tooltip />
+          <el-table-column
+            prop="repo_file"
+            label="配置文件"
+            min-width="150"
+            show-overflow-tooltip
+          />
           <el-table-column prop="repo_baseurl" label="地址" min-width="200" show-overflow-tooltip />
           <el-table-column prop="repo_status" label="状态" width="80">
             <template #default="{ row }">
@@ -81,29 +86,31 @@
           </el-table-column>
           <el-table-column label="操作" width="176" fixed="right">
             <template #default="{ row, $index }">
-              <el-button
-                v-if="row.repo_status === '未启用'"
-                text
-                type="success"
-                size="small"
-                :loading="isRepoActionLoading(row, $index)"
-                @click="handleEnableRepo(row, $index)"
-              >
-                启用
-              </el-button>
-              <el-button
-                v-if="row.repo_status === '启用'"
-                text
-                type="warning"
-                size="small"
-                :loading="isRepoActionLoading(row, $index)"
-                @click="handleDisableRepo(row, $index)"
-              >
-                禁用
-              </el-button>
-              <el-button text type="danger" size="small" @click="handleDeleteRepo(row)">
-                删除
-              </el-button>
+              <div class="software-row-actions">
+                <el-button
+                  v-if="row.repo_status === '未启用'"
+                  text
+                  type="success"
+                  size="small"
+                  :loading="isRepoActionLoading(row, $index)"
+                  @click="handleEnableRepo(row, $index)"
+                >
+                  启用
+                </el-button>
+                <el-button
+                  v-if="row.repo_status === '启用'"
+                  text
+                  type="warning"
+                  size="small"
+                  :loading="isRepoActionLoading(row, $index)"
+                  @click="handleDisableRepo(row, $index)"
+                >
+                  禁用
+                </el-button>
+                <el-button text type="danger" size="small" @click="handleDeleteRepo(row)">
+                  删除
+                </el-button>
+              </div>
             </template>
           </el-table-column>
         </el-table>
@@ -144,12 +151,12 @@
           @selection-change="handleAvailableSelectionChange"
         >
           <el-table-column type="selection" width="45" />
-          <el-table-column prop="pkg_name" label="名称" min-width="150" />
-          <el-table-column prop="repo_id" label="仓库" width="120" />
+          <el-table-column prop="pkg_name" label="名称" min-width="150" show-overflow-tooltip />
+          <el-table-column prop="repo_id" label="仓库" width="120" show-overflow-tooltip />
           <el-table-column prop="pkg_envra" label="软件包" min-width="200" show-overflow-tooltip />
           <el-table-column prop="pkg_arch" label="架构" width="80" />
-          <el-table-column prop="pkg_version" label="版本号" width="100" />
-          <el-table-column prop="pkg_release" label="发行号" width="100" />
+          <el-table-column prop="pkg_version" label="版本号" width="100" show-overflow-tooltip />
+          <el-table-column prop="pkg_release" label="发行号" width="100" show-overflow-tooltip />
         </el-table>
         <div class="ops-pagination-wrapper">
           <el-pagination
@@ -210,9 +217,14 @@
         >
           <el-table-column type="selection" width="45" />
           <el-table-column prop="pkg_id" label="软件包" min-width="200" show-overflow-tooltip />
-          <el-table-column prop="pkg_name" label="名称" min-width="120" />
-          <el-table-column prop="pkg_version" label="安装版本" width="100" />
-          <el-table-column prop="available_pkg_version" label="可升级版本" width="110">
+          <el-table-column prop="pkg_name" label="名称" min-width="120" show-overflow-tooltip />
+          <el-table-column prop="pkg_version" label="安装版本" width="100" show-overflow-tooltip />
+          <el-table-column
+            prop="available_pkg_version"
+            label="可升级版本"
+            width="110"
+            show-overflow-tooltip
+          >
             <template #default="{ row }">
               <span :class="{ 'text-success': row.available_pkg_version !== '无' }">
                 {{ row.available_pkg_version }}
@@ -227,25 +239,27 @@
           </el-table-column>
           <el-table-column label="操作" width="102" fixed="right">
             <template #default="{ row, $index }">
-              <el-button
-                v-if="row.available_pkg_version !== '无'"
-                text
-                type="primary"
-                size="small"
-                @click="handleUpgradePackage(row)"
-              >
-                升级
-              </el-button>
-              <el-button
-                v-if="row.available_pkg_version === '无'"
-                text
-                type="primary"
-                size="small"
-                :loading="isInstalledActionLoading(row, $index)"
-                @click="handleRollbackPackage(row, $index)"
-              >
-                回滚
-              </el-button>
+              <div class="software-row-actions">
+                <el-button
+                  v-if="row.available_pkg_version !== '无'"
+                  text
+                  type="primary"
+                  size="small"
+                  @click="handleUpgradePackage(row)"
+                >
+                  升级
+                </el-button>
+                <el-button
+                  v-if="row.available_pkg_version === '无'"
+                  text
+                  type="primary"
+                  size="small"
+                  :loading="isInstalledActionLoading(row, $index)"
+                  @click="handleRollbackPackage(row, $index)"
+                >
+                  回滚
+                </el-button>
+              </div>
             </template>
           </el-table-column>
         </el-table>
@@ -781,7 +795,11 @@ async function handleRollbackPackage(row, index) {
 </script>
 
 <style scoped lang="scss">
+@use '../../styles/layout' as software-layout;
+
 .host-detail-dialog {
+  @include software-layout.detail-dialog;
+
   :deep(.el-dialog__body) {
     padding-top: 0;
   }
@@ -794,6 +812,7 @@ async function handleRollbackPackage(row, index) {
   margin-bottom: 16px;
 
   .host-name {
+    overflow-wrap: anywhere;
     font-size: 20px;
     font-weight: 600;
     color: #303133;
@@ -821,8 +840,6 @@ async function handleRollbackPackage(row, index) {
 }
 
 .table-actions {
-  display: flex;
-  gap: 12px;
   margin-bottom: 12px;
 }
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout">
+  <div class="ops-page-layout software-home-page">
     <!-- KPI 卡片区域 -->
     <div class="kpi-section">
       <div
@@ -249,21 +249,25 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .ops-page-layout {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+  min-width: 0;
+  gap: 0;
 }
 
 .kpi-section {
   display: flex;
+  flex-shrink: 0;
   gap: 16px;
-  margin-bottom: 20px;
   flex-wrap: wrap;
+  margin-bottom: 16px;
+
+  &:empty {
+    display: none;
+  }
 }
 
 .kpi-card {
-  flex: 1;
-  min-width: 200px; /* Reduced from 240px */
+  flex: 1 1 200px;
+  min-width: 0;
   position: relative;
   padding: 12px 16px; /* Reduced from 20px 24px */
   background: var(--el-bg-color);
@@ -444,18 +448,22 @@ onMounted(() => {
 
 .nav-section {
   display: flex;
+  flex-shrink: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--el-border-color-light);
-  margin-bottom: 16px;
 
   .tab-nav {
     display: flex;
+    flex-shrink: 0;
     gap: 24px;
   }
 
   .tab-item {
     display: flex;
+    white-space: nowrap;
     align-items: center;
     gap: 8px;
     padding: 12px 0;
@@ -465,8 +473,6 @@ onMounted(() => {
     cursor: pointer;
     border-bottom: 2px solid transparent;
     transition: all 0.2s;
-    position: relative;
-    top: 1px;
 
     &:hover {
       color: #3b82f6;
@@ -486,11 +492,20 @@ onMounted(() => {
 }
 
 .content-section {
+  display: flex;
+  flex-direction: column;
   flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding-top: 16px;
   background: var(--el-bg-color);
 }
 
 .tab-content {
-  height: 100%;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
 }
 </style>

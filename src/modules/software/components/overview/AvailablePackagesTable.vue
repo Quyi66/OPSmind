@@ -41,19 +41,25 @@
         :data="tableData"
         style="width: 100%"
         size="small"
-        max-height="calc(100vh - 414px)"
+        height="100%"
       >
         <el-table-column prop="pkg_name" label="名称" min-width="180" show-overflow-tooltip>
           <template #default="{ row }">
-            <el-button type="primary" link @click="handlePackageClick(row)">
+            <el-button
+              class="software-cell-link"
+              :title="row.pkg_name"
+              type="primary"
+              link
+              @click="handlePackageClick(row)"
+            >
               {{ row.pkg_name }}
             </el-button>
           </template>
         </el-table-column>
         <el-table-column prop="pkg_envra" label="软件包" min-width="200" show-overflow-tooltip />
         <el-table-column prop="pkg_arch" label="架构" width="100" />
-        <el-table-column prop="pkg_release" label="发行号" width="120" />
-        <el-table-column prop="pkg_version" label="版本号" width="120" />
+        <el-table-column prop="pkg_release" label="发行号" width="120" show-overflow-tooltip />
+        <el-table-column prop="pkg_version" label="版本号" width="120" show-overflow-tooltip />
         <el-table-column prop="pkg_yumstate" label="软件状态" width="100">
           <template #default="{ row }">
             <el-tag
@@ -65,7 +71,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="repo_id" label="仓库ID" width="120" />
+        <el-table-column prop="repo_id" label="仓库ID" width="120" show-overflow-tooltip />
         <el-table-column prop="scan_date" label="扫描时间" width="180">
           <template #default="{ row }">
             {{ formatDate(row.scan_date) }}
@@ -180,31 +186,9 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-/* 此组件使用全局的 ops-* 样式 */
+@use '../../styles/layout' as software-layout;
 
 .available-packages-table {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 16px;
-  gap: 16px;
-}
-
-.ops-action-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.action-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.action-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  @include software-layout.table-tab;
 }
 </style>

@@ -2,7 +2,8 @@
   <el-dialog
     v-model="visible"
     :title="`仓库详情 - ${repoId}`"
-    width="900px"
+    width="min(900px, calc(100vw - 32px))"
+    class="repo-detail-shell"
     destroy-on-close
     @close="handleClose"
   >
@@ -32,15 +33,20 @@
           @selection-change="handleSelectionChange"
         >
           <el-table-column type="selection" width="50" />
-          <el-table-column prop="host_key" label="主机" min-width="200">
+          <el-table-column prop="host_key" label="主机" min-width="200" show-overflow-tooltip>
             <template #default="{ row }">
-              <el-link type="primary" @click="handleViewHost(row)">
+              <el-link
+                class="software-cell-link"
+                :title="row.host_key"
+                type="primary"
+                @click="handleViewHost(row)"
+              >
                 {{ row.host_key }}
               </el-link>
             </template>
           </el-table-column>
-          <el-table-column prop="os_distro" label="OS" width="120" />
-          <el-table-column prop="os_version" label="OS版本" width="120" />
+          <el-table-column prop="os_distro" label="OS" width="120" show-overflow-tooltip />
+          <el-table-column prop="os_version" label="OS版本" width="120" show-overflow-tooltip />
           <el-table-column prop="scan_date" label="最后扫描时间" width="180">
             <template #default="{ row }">
               {{ formatDate(row.scan_date) }}
@@ -187,3 +193,11 @@ function handleClose() {
   currentPage.value = 1
 }
 </script>
+
+<style scoped lang="scss">
+@use '../../styles/layout' as software-layout;
+
+.repo-detail-shell {
+  @include software-layout.detail-dialog;
+}
+</style>

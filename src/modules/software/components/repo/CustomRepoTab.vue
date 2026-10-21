@@ -26,19 +26,21 @@
       <el-table
         v-loading="loading"
         :data="tableData"
-        max-height="calc(100vh - 294px)"
+        height="100%"
         style="width: 100%"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="50" />
-        <el-table-column prop="repo_name" label="仓库名" min-width="150" />
-        <el-table-column prop="repo_file" label="仓库文件" min-width="150" />
+        <el-table-column prop="repo_name" label="仓库名" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="repo_file" label="仓库文件" min-width="150" show-overflow-tooltip />
         <el-table-column prop="repo_desc" label="描述" min-width="200" show-overflow-tooltip />
         <el-table-column prop="repo_url" label="地址" min-width="250" show-overflow-tooltip />
-        <el-table-column label="操作" width="88" fixed="right">
+        <el-table-column label="操作" width="128" fixed="right">
           <template #default="{ row }">
-            <el-button text type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
-            <el-button text type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+            <div class="software-row-actions">
+              <el-button text type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+              <el-button text type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -178,9 +180,9 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.custom-repo-tab {
-  height: 100%;
-}
+@use '../../styles/layout' as software-layout;
 
-/* 使用全局的 ops-action-bar 和 ops-pagination-wrapper 样式 */
+.custom-repo-tab {
+  @include software-layout.table-tab;
+}
 </style>
