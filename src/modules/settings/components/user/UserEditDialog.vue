@@ -4,8 +4,25 @@
     :title="dialogTitle"
     width="800px"
     destroy-on-close
+    :close-on-click-modal="!saving"
+    :close-on-press-escape="!saving"
+    :show-close="!saving"
     @close="handleClose"
   >
+    <el-alert v-if="saveIssue" :title="saveIssue" type="warning" :closable="false" show-icon />
+    <el-alert
+      v-if="loadFailed"
+      title="用户配置加载失败，请重试后保存"
+      type="error"
+      :closable="false"
+    >
+      <el-button
+        :disabled="saving || detailsLoading || rolesLoading || appletsLoading"
+        @click="retryLoad"
+      >
+        重试加载
+      </el-button>
+    </el-alert>
     <el-tabs v-model="activeTab">
       <!-- 基本信息 -->
       <el-tab-pane label="基本信息" name="basic">
@@ -14,7 +31,7 @@
           :model="form"
           :rules="formRules"
           label-width="100px"
-          :disabled="isViewMode"
+          :disabled="isViewMode || saving || !!createdUser || detailsLoading"
         >
           <el-form-item label="用户名" prop="login">
             <el-input v-model="form.login" :disabled="!!form.id" maxlength="50" />
@@ -32,7 +49,7 @@
             </el-form-item>
           </template>
 
-          <template v-if="showPasswordEdit || !form.id">
+          <template v-if="!createdUser && (showPasswordEdit || !form.id)">
             <el-form-item label="密码" prop="password">
               <el-input
                 v-model="form.password"
@@ -91,7 +108,11 @@
 
       <!-- 角色 -->
       <el-tab-pane label="角色" name="roles">
-        <el-checkbox-group v-model="selectedRoleIds" class="checkbox-grid" :disabled="isViewMode">
+        <el-checkbox-group
+          v-model="selectedRoleIds"
+          class="checkbox-grid"
+          :disabled="isViewMode || saving || !!createdUser || rolesLoading"
+        >
           <el-checkbox
             v-for="role in allRoles"
             :key="role.id"
@@ -110,7 +131,13 @@
             v-for="applet in allApplets"
             :key="applet.id"
             v-model="applet._user_applet"
-            :disabled="isViewMode"
+            :disabled="
+              isViewMode ||
+              saving ||
+              appletsLoading ||
+              loadFailed ||
+              (!!createdUser && !createdUser.tenantUserId)
+            "
           >
             {{ formatAppletTitle(applet) }}
           </el-checkbox>
@@ -171,11 +198,17 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose">
-          {{ isViewMode ? '关闭' : '取消' }}
+        <el-button :disabled="saving" @click="handleClose">
+          {{ isViewMode || createdUser ? '关闭' : '取消' }}
         </el-button>
-        <el-button v-if="!isViewMode" type="primary" :loading="saving" @click="handleSave">
-          保存
+        <el-button
+          v-if="!isViewMode"
+          type="primary"
+          :loading="saving"
+          :disabled="saveDisabled"
+          @click="handleSave"
+        >
+          {{ createdUser ? '仅重试应用保存' : '保存' }}
         </el-button>
       </div>
     </template>
@@ -183,7 +216,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as settingsApi from '@/modules/settings/api'
 import { authService } from '@/core/auth'
@@ -217,6 +250,27 @@ const activeTab = ref('basic')
 const showPasswordEdit = ref(false)
 const expandedInfo = ref([])
 const saving = ref(false)
+const detailsLoading = ref(false)
+const detailsError = ref(false)
+const rolesError = ref(false)
+const appletsError = ref(false)
+const loadFailed = computed(() => detailsError.value || rolesError.value || appletsError.value)
+const createdUser = ref(null)
+const saveIssue = ref('')
+let session = 0
+let contextTenantId = ''
+const currentTenantId = () => authService.getCurrentUser()?.tenantId || ''
+const isCurrent = token =>
+  token === session && props.modelValue && currentTenantId() === contextTenantId
+const saveDisabled = computed(
+  () =>
+    saving.value ||
+    detailsLoading.value ||
+    rolesLoading.value ||
+    appletsLoading.value ||
+    loadFailed.value ||
+    (!!createdUser.value && !createdUser.value.tenantUserId)
+)
 
 // 表单数据
 const form = ref({
@@ -303,16 +357,31 @@ const formRules = {
   email: [{ type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }]
 }
 
-watch(
-  () => props.modelValue,
-  async val => {
-    if (val) {
-      await initDialog()
-    }
+watch([() => props.modelValue, () => props.user, () => props.mode, currentTenantId], () => {
+  session++
+  saving.value = false
+  createdUser.value = null
+  saveIssue.value = ''
+  contextTenantId = currentTenantId()
+  if (props.modelValue) {
+    initDialog()
   }
-)
+})
+onBeforeUnmount(() => {
+  session++
+})
 
 async function initDialog() {
+  const token = ++session
+  detailsLoading.value = true
+  detailsError.value = false
+  rolesError.value = false
+  appletsError.value = false
+  allRoles.value = []
+  allApplets.value = []
+  selectedRoleIds.value = []
+  userPermissions.value = []
+  apiKeys.value = []
   activeTab.value = 'basic'
   showPasswordEdit.value = false
   expandedInfo.value = props.mode === 'view' ? ['other'] : []
@@ -322,6 +391,7 @@ async function initDialog() {
     if (props.user.tenantUserId) {
       try {
         const response = await settingsApi.getUserDetail(props.user.tenantUserId)
+        if (!isCurrent(token)) return
         const userData = response?.data || response
 
         form.value = {
@@ -353,6 +423,8 @@ async function initDialog() {
         })
         userPermissions.value = perms
       } catch (error) {
+        if (!isCurrent(token)) return
+        detailsError.value = true
         console.error('Failed to load user detail:', error)
         // 使用传入的基本数据
         form.value = { ...props.user, password: '', confirmPassword: '' }
@@ -380,47 +452,55 @@ async function initDialog() {
     }
     selectedRoleIds.value = []
   }
+  if (!isCurrent(token)) return
+  detailsLoading.value = false
 
   // 加载角色列表
-  loadRoles()
+  loadRoles(token)
 
   // 加载应用列表（新建和编辑模式都需要）
   if (!isViewMode.value) {
-    loadApplets()
+    loadApplets(token)
   }
 
   // 编辑/查看现有用户时加载额外数据
   if (props.user?.tenantUserId) {
     if (isViewMode.value) {
-      loadApplets()
+      loadApplets(token)
     }
     loadQRCode()
     if (props.mode === 'view') {
-      loadApiKeys()
+      loadApiKeys(token)
     }
   }
 }
 
-async function loadRoles() {
+async function loadRoles(token) {
   rolesLoading.value = true
+  rolesError.value = false
   try {
     const response = await settingsApi.getRoles(true)
+    if (!isCurrent(token)) return
     allRoles.value = response?.data || response || []
   } catch (error) {
+    if (!isCurrent(token)) return
+    rolesError.value = true
     console.error('Failed to load roles:', error)
     allRoles.value = []
   } finally {
-    rolesLoading.value = false
+    if (isCurrent(token)) rolesLoading.value = false
   }
 }
 
-async function loadApplets() {
+async function loadApplets(token) {
   appletsLoading.value = true
+  appletsError.value = false
   try {
     // 使用相同的 API，新用户传空的 login 和 tenantUserId
     const login = props.user?.login || ''
     const tenantUserId = props.user?.tenantUserId || ''
     const response = await settingsApi.getUserApplets(login, tenantUserId)
+    if (!isCurrent(token)) return
     const applets = response?.data || response || []
     // 对于新用户，初始化所有应用为未选中
     allApplets.value = applets.map(a => ({
@@ -428,20 +508,37 @@ async function loadApplets() {
       _user_applet: a._user_applet || false
     }))
   } catch (error) {
+    if (!isCurrent(token)) return
+    appletsError.value = true
     console.error('Failed to load applets:', error)
     allApplets.value = []
   } finally {
-    appletsLoading.value = false
+    if (isCurrent(token)) appletsLoading.value = false
   }
 }
 
-async function loadApiKeys() {
+async function retryLoad() {
+  if (saving.value || !isCurrent(session)) return
+  if (detailsError.value) {
+    await initDialog()
+    return
+  }
+  // 仅重读失败部分，保留已经填写的创建资料及成功加载的选择。
+  await Promise.all([
+    rolesError.value ? loadRoles(session) : undefined,
+    appletsError.value ? loadApplets(session) : undefined
+  ])
+}
+
+async function loadApiKeys(token) {
   if (!props.user?.tenantUserId) return
 
   try {
     const response = await settingsApi.getUserApiKeys(props.user.tenantUserId)
+    if (!isCurrent(token)) return
     apiKeys.value = response?.data || response || []
   } catch (error) {
+    if (!isCurrent(token)) return
     console.error('Failed to load API keys:', error)
     apiKeys.value = []
   }
@@ -502,24 +599,46 @@ async function generateQRCode() {
 }
 
 async function handleSave() {
-  if (!formRef.value) return
+  if (!props.modelValue || isViewMode.value || saveDisabled.value || !formRef.value) return
+  const token = session
+  const tenantId = contextTenantId
+  if (!isCurrent(token)) return
+  saving.value = true
+  const applets = JSON.parse(JSON.stringify(allApplets.value))
+  if (createdUser.value) {
+    try {
+      await settingsApi.saveUserApplets(createdUser.value.tenantUserId, applets)
+      if (!isCurrent(token)) return
+      ElMessage.success('用户和应用配置保存成功')
+      handleClose()
+    } catch {
+      if (!isCurrent(token)) return
+      saveIssue.value = '用户已创建，应用保存失败。请仅重试应用保存，或关闭后在用户列表编辑应用。'
+    } finally {
+      if (isCurrent(token)) saving.value = false
+    }
+    return
+  }
 
   try {
     await formRef.value.validate()
   } catch {
+    if (!isCurrent(token)) return
+    saving.value = false
     ElMessage.warning('请检查表单填写')
     return
   }
+  if (!isCurrent(token)) return
 
   // 密码确认
   if (showPasswordEdit.value || !form.value.id) {
     if (form.value.password && form.value.password !== form.value.confirmPassword) {
       ElMessage.warning('两次输入的密码不一致')
+      saving.value = false
       return
     }
   }
 
-  saving.value = true
   try {
     // 获取选中的角色
     const selectedRoles = allRoles.value.filter(r => selectedRoleIds.value.includes(r.id))
@@ -530,7 +649,7 @@ async function handleSave() {
       // 创建新用户 - POST /api/users
       const createData = {
         id: null,
-        tenantId: authService.getCurrentUser()?.tenantId || '',
+        tenantId,
         login: form.value.login,
         fullName: form.value.fullName,
         email: form.value.email || '',
@@ -551,7 +670,43 @@ async function handleSave() {
         tenantIds: []
       }
 
-      await settingsApi.createUser(createData)
+      const response = await settingsApi.createUser(createData)
+      if (!isCurrent(token)) return
+      const result = response?.data ?? response
+      const matches =
+        Array.isArray(result) && tenantId ? result.filter(item => item?.tenantId === tenantId) : []
+      const identity =
+        matches.length === 1 &&
+        typeof matches[0].tenantUserId === 'string' &&
+        matches[0].tenantUserId.trim()
+          ? matches[0].tenantUserId
+          : ''
+      // 创建已完成；后续失败不能再发创建请求或保留凭据用于重试。
+      createdUser.value = { tenantId, tenantUserId: identity }
+      form.value.password = ''
+      form.value.confirmPassword = ''
+      emit('saved')
+      if (!isCurrent(token)) return
+      if (applets.length) {
+        activeTab.value = 'applets'
+        if (!identity) {
+          saveIssue.value =
+            '用户已创建，但未取得当前租户的唯一用户身份，应用未保存。请关闭后在用户列表编辑应用。'
+          return
+        }
+        try {
+          await settingsApi.saveUserApplets(identity, applets)
+        } catch {
+          if (!isCurrent(token)) return
+          saveIssue.value =
+            '用户已创建，应用保存失败。请仅重试应用保存，或关闭后在用户列表编辑应用。'
+          return
+        }
+        if (!isCurrent(token)) return
+      }
+      ElMessage.success(applets.length ? '用户和应用配置保存成功' : '用户创建成功')
+      handleClose()
+      return
     } else {
       // 更新现有用户 - PUT /api/users
       const saveData = {
@@ -566,12 +721,15 @@ async function handleSave() {
       delete saveData.confirmPassword
 
       await settingsApi.updateUser(saveData)
+      if (!isCurrent(token)) return
 
       // 保存应用权限（仅编辑现有用户时）
       if (form.value.tenantUserId && allApplets.value.length > 0) {
         try {
-          await settingsApi.saveUserApplets(form.value.tenantUserId, allApplets.value)
+          await settingsApi.saveUserApplets(form.value.tenantUserId, applets)
+          if (!isCurrent(token)) return
         } catch (appletError) {
+          if (!isCurrent(token)) return
           console.error('Failed to save applets:', appletError)
         }
       }
@@ -581,14 +739,16 @@ async function handleSave() {
     emit('saved')
     handleClose()
   } catch (error) {
+    if (!isCurrent(token)) return
     console.error('Failed to save user:', error)
     ElMessage.error('保存失败')
   } finally {
-    saving.value = false
+    if (isCurrent(token)) saving.value = false
   }
 }
 
 function handleClose() {
+  session++
   visible.value = false
 }
 </script>
