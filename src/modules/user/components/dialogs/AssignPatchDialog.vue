@@ -1,1288 +1,989 @@
 <template>
-  <el-dialog
+  <el-drawer
     :model-value="visible"
-    @update:model-value="emit('update:visible', $event)"
     title="分配补丁给用户"
-    width="800px"
-    @open="loadAssignedPatches"
-    @closed="resetAssignForm"
+    size="min(1400px, 92vw)"
+    direction="rtl"
+    append-to-body
+    class="patch-assignment-drawer"
     :close-on-click-modal="false"
+    :close-on-press-escape="!assignLoading"
+    :show-close="!assignLoading"
+    @update:model-value="closeDialog"
   >
-    <el-form label-width="100px" :model="assignForm" v-loading="loadingAssigned">
-      <el-form-item label="目标用户">
-        <el-input :value="username" disabled />
-      </el-form-item>
-
-      <el-form-item label="选择补丁">
-        <div style="width: 100%">
-          <div v-if="selectedPatchesList.length" class="device-list-container">
-            <div class="device-header">
-              <div
-                class="device-summary btn btn-sm btn-default op-hover-trigger"
-                @click="openPatchLibrary"
-              >
-                <span
-                  class="op-hover-to-show clear-btn"
-                  title="清空全部"
-                  @click.stop="clearAllPatches"
-                >
-                  <i class="fa fa-times" />
-                </span>
-                <span>
-                  共
-                  <strong>{{ selectedPatchesList.length }}</strong>
-                  项
-                </span>
-              </div>
-            </div>
-
-            <ul class="device-chip-list">
-              <li
-                v-for="patch in selectedPatchesList"
-                :key="patch.patch_id"
-                class="device-chip-item"
-              >
-                <div class="patch-assignment-card">
-                  <div class="patch-assignment-head">
-                    <el-tag
-                      type="primary"
-                      closable
-                      @close="removeSelectedPatchFromMain(patch.patch_id)"
-                    >
-                      {{ patch.patch_id }}
-                    </el-tag>
-                    <el-tag
-                      :type="getSelectedHostCount(patch) ? 'success' : 'warning'"
-                      size="small"
-                    >
-                      {{
-                        getSelectedHostCount(patch)
-                          ? `已选 ${getSelectedHostCount(patch)} 台机器`
-                          : '未选择机器'
-                      }}
-                    </el-tag>
-                    <el-button link type="primary" @click="openPatchLibrary">
-                      在补丁列表中修改
-                    </el-button>
-                  </div>
-                  <div v-if="getSelectedHostCount(patch)" class="patch-host-preview">
-                    <el-tag
-                      v-for="host in getSelectedHostPreview(patch)"
-                      :key="`${patch.patch_id}-${host.host_id || host.host_key}`"
-                      size="small"
-                      type="info"
-                    >
-                      {{ host.host_key || host.host_id }}
-                    </el-tag>
-                    <span v-if="getSelectedHostCount(patch) > 3" class="host-preview-more">
-                      +{{ getSelectedHostCount(patch) - 3 }}
-                    </span>
-                  </div>
-                </div>
-              </li>
-            </ul>
-          </div>
-
-          <div v-else class="empty-state">
-            <el-button @click="openPatchLibrary">
-              <i class="fa fa-list" style="margin-right: 4px" />
-              打开扫描结果补丁列表进行选择
-            </el-button>
-          </div>
-        </div>
-      </el-form-item>
-
+    <el-alert v-if="assignedError" :title="assignedError" type="error" :closable="false">
+      <el-button :disabled="loadingAssigned" @click="loadAssignedPatches">
+        重试读取已有分配
+      </el-button>
+    </el-alert>
+    <el-form
+      class="assignment-metadata"
+      :model="assignForm"
+      inline
+      label-width="80px"
+      :disabled="locked"
+    >
+      <el-form-item label="目标用户"><el-input :model-value="username" disabled /></el-form-item>
       <el-form-item label="过期时间">
         <el-date-picker
           v-model="assignForm.expireTime"
           type="datetime"
           placeholder="不填表示永久有效"
           value-format="YYYY-MM-DD HH:mm:ss"
-          style="width: 100%"
         />
       </el-form-item>
       <el-form-item label="备注">
         <el-input v-model="assignForm.remark" placeholder="填写分配说明（选填）" />
       </el-form-item>
     </el-form>
-    <template #footer>
-      <el-button @click="closeDialog">取消</el-button>
-      <el-button type="primary" :loading="assignLoading" @click="submitAssign">确定分配</el-button>
-    </template>
-  </el-dialog>
-
-  <el-dialog
-    v-model="innerDialogVisible"
-    title="从扫描结果选择补丁"
-    width="1200px"
-    append-to-body
-    destroy-on-close
-    @opened="handleInnerDialogOpened"
-    :close-on-click-modal="false"
-  >
-    <div
-      style="
-        height: calc(100vh - 280px);
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        padding: 0;
-        gap: 16px;
-      "
-    >
-      <el-card
-        v-if="liveSelectedPatches.length > 0"
-        class="selected-patches-card"
-        shadow="never"
-        :body-style="{ padding: '12px' }"
-      >
-        <template #header>
-          <div
-            style="
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              font-size: 14px;
-              font-weight: bold;
-              color: var(--el-text-color-primary);
-            "
+    <div class="selected-patches" aria-label="已选补丁">
+      <span>已选 {{ selectedPatches.length }} 项，待配置机器 {{ pendingPatchCount }} 项</span>
+      <el-button text :disabled="locked || !selectedPatches.length" @click="clearSelectedPatches">
+        清空所选补丁
+      </el-button>
+      <span class="hint">移除或清空仅影响当前草稿，不撤销已有分配。</span>
+      <div class="selected-patch-list">
+        <div
+          v-for="patch in selectedPatches"
+          :key="patch.patch_id"
+          class="selected-patch"
+          :class="{ 'is-active': activePatchId === patch.patch_id, 'is-disabled': locked }"
+        >
+          <el-button
+            text
+            class="patch-switch-button"
+            :disabled="locked"
+            :aria-pressed="activePatchId === patch.patch_id"
+            @click="activatePatch(patch)"
           >
-            <span>
-              <i class="fa fa-shopping-cart text-muted me-2" />
-              已筛选准备分配的补丁
-            </span>
-            <el-tag size="small" type="success" effect="dark" round>
-              共 {{ liveSelectedPatches.length }} 项
-            </el-tag>
-          </div>
-        </template>
-        <div style="max-height: 100px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 8px">
-          <el-tag
-            v-for="patch in liveSelectedPatches"
-            :key="patch.patch_id"
-            closable
-            type="primary"
-            @close="handleRemovePatch(patch)"
-          >
-            {{ patch.patch_id }}
-          </el-tag>
-        </div>
-      </el-card>
-
-      <div class="assign-patch-picker">
-        <div class="ops-filter-bar">
-          <el-form :model="patchFilters" inline size="small">
-            <el-form-item label="补丁编号">
-              <el-input
-                v-model="patchFilters.keyword"
-                placeholder="搜索补丁编号"
-                clearable
-                style="width: 240px"
-              />
-            </el-form-item>
-            <!-- <el-form-item label="严重级别">
-              <el-select
-                v-model="patchFilters.severity"
-                multiple
-                collapse-tags
-                collapse-tags-tooltip
-                clearable
-                placeholder="严重级别"
-                style="width: 260px"
-              >
-                <el-option label="严重" value="Critical" />
-                <el-option label="重要" value="Important" />
-                <el-option label="中等" value="Moderate" />
-                <el-option label="低危" value="Low" />
-              </el-select>
-            </el-form-item> -->
-            <el-form-item>
-              <el-button
-                type="primary"
-                :loading="availablePatchesLoading"
-                @click="handlePatchSearch"
-              >
-                搜索
-              </el-button>
-              <el-button @click="handlePatchReset">重置</el-button>
-            </el-form-item>
-          </el-form>
-        </div>
-
-        <div class="ops-table-wrapper picker-table-wrapper">
-          <el-table
-            ref="patchTableRef"
-            v-loading="availablePatchesLoading"
-            :data="availablePatches"
-            row-key="patch_id"
-            height="100%"
-            @selection-change="onPatchSelectionChange"
-          >
-            <el-table-column type="selection" :reserve-selection="true" width="50" />
-            <el-table-column
-              prop="patch_id"
-              label="补丁编号"
-              min-width="180"
-              show-overflow-tooltip
-            />
-            <el-table-column
-              prop="patch_name"
-              label="补丁名称"
-              min-width="300"
-              show-overflow-tooltip
-            >
-              <template #default="{ row }">
-                {{ row.patch_name || '-' }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="severity" label="严重级别" width="120">
-              <template #default="{ row }">
-                <el-tag size="small" :type="getSeverityTagType(row.severity)">
-                  {{ getSeverityLabel(row.severity) }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="effect_host_count" label="影响机器数" width="120" />
-            <el-table-column label="已选机器" width="120">
-              <template #default="{ row }">
-                <el-tag :type="getSelectedHostCount(row) > 0 ? 'success' : 'info'" size="small">
-                  {{ getSelectedHostCount(row) }} 台
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="140" fixed="right">
-              <template #default="{ row }">
-                <el-button link type="primary" @click="openHostSelectorFromLibrary(row)">
-                  {{ getSelectedHostCount(row) > 0 ? '修改机器' : '选择机器' }}
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </div>
-
-        <div class="ops-pagination-wrapper picker-pagination-wrapper">
-          <el-pagination
-            v-model:current-page="patchPagination.page"
-            v-model:page-size="patchPagination.pageSize"
-            :page-sizes="[10, 20, 50, 100]"
-            :total="patchPagination.total"
-            layout="total, sizes, prev, pager, next"
-            background
-            @size-change="handlePatchPageSizeChange"
-            @current-change="handlePatchPageChange"
+            {{ patch.patch_id }} · {{ patch.selectedHosts.length }} 台
+          </el-button>
+          <el-button
+            text
+            circle
+            class="remove-patch-button"
+            :icon="Close"
+            :disabled="locked"
+            :aria-label="`移除补丁 ${patch.patch_id}`"
+            :title="`移除补丁 ${patch.patch_id}`"
+            @click="removePatch(patch.patch_id)"
           />
         </div>
       </div>
     </div>
-    <template #footer>
-      <el-button @click="innerDialogVisible = false">取消</el-button>
-      <el-button type="primary" @click="confirmPatchSelection">确认</el-button>
-    </template>
-  </el-dialog>
-
-  <el-dialog
-    v-model="hostDialogVisible"
-    :title="currentHostPatch ? `选择机器 - ${currentHostPatch.patch_id}` : '选择机器'"
-    width="900px"
-    top="6vh"
-    append-to-body
-    destroy-on-close
-    :close-on-click-modal="false"
-    @opened="syncHostTableSelection"
-  >
-    <div v-loading="hostLoading" class="host-dialog-body">
-      <div class="host-dialog-toolbar">
-        <span>仅可分配扫描结果中存在的机器</span>
-        <el-input
-          v-model="hostFilters.keyword"
-          clearable
-          placeholder="搜索 IP"
-          style="width: 180px"
-          @input="handleHostSearch"
-          @clear="handleHostSearch"
-          @keyup.enter="handleHostSearch"
+    <div class="assignment-workspace" v-loading="loadingAssigned">
+      <section class="patch-pane" aria-label="选择补丁">
+        <div class="pane-toolbar patch-filter-toolbar">
+          <el-input
+            v-model="patchFilters.keyword"
+            placeholder="搜索补丁编号"
+            clearable
+            :disabled="locked"
+            @keyup.enter="handlePatchSearch"
+            @clear="handlePatchSearch"
+          />
+          <el-button
+            :loading="availablePatchesLoading"
+            :disabled="locked"
+            @click="handlePatchSearch"
+          >
+            搜索
+          </el-button>
+          <el-button :disabled="locked" @click="handlePatchReset">重置</el-button>
+        </div>
+        <el-alert
+          v-if="patchListError"
+          title="可分配补丁读取失败，请重新搜索"
+          type="error"
+          :closable="false"
         />
-        <el-tag size="small" type="success">已选 {{ tempSelectedHostIds.length }} 台</el-tag>
-      </div>
-
-      <el-empty
-        v-if="!hostLoading && filteredAvailableHosts.length === 0"
-        :description="availableHosts.length ? '未找到匹配的机器' : '该补丁当前没有可分配的机器'"
-      />
-
-      <el-table
-        v-else
-        ref="hostTableRef"
-        :data="paginatedAvailableHosts"
-        row-key="host_id"
-        max-height="calc(100vh - 400px)"
-        @selection-change="handleHostSelectionChange"
-      >
-        <el-table-column type="selection" :reserve-selection="true" width="50" />
-        <el-table-column prop="host_key" label="主机/IP" min-width="180">
-          <template #default="{ row }">
-            {{ row.host_key || row.host_id || '-' }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="host_id" label="机器ID" min-width="220" show-overflow-tooltip />
-      </el-table>
-
-      <div v-if="filteredAvailableHosts.length > 0" class="host-dialog-pagination">
+        <el-table
+          ref="patchTableRef"
+          v-loading="availablePatchesLoading"
+          :data="availablePatches"
+          row-key="patch_id"
+          height="100%"
+          @selection-change="onPatchSelectionChange"
+        >
+          <el-table-column type="selection" :selectable="canSelectPatch" width="45" />
+          <el-table-column prop="patch_id" label="补丁编号" min-width="170" show-overflow-tooltip />
+          <el-table-column
+            prop="patch_name"
+            label="补丁名称"
+            min-width="180"
+            show-overflow-tooltip
+          />
+          <el-table-column label="严重级别" width="90">
+            <template #default="{ row }">
+              {{ severityLabels[row.severity] || row.severity || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="effect_host_count" label="影响机器" width="90" />
+          <el-table-column label="机器配置" width="120" fixed="right">
+            <template #default="{ row }">
+              <el-button link type="primary" :disabled="locked" @click="activatePatch(row)">
+                {{
+                  getHostCount(row.patch_id)
+                    ? `${getHostCount(row.patch_id)} 台 · 修改`
+                    : '选择机器'
+                }}
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
         <el-pagination
-          v-model:current-page="hostPagination.page"
-          v-model:page-size="hostPagination.pageSize"
+          v-model:current-page="patchPagination.page"
+          v-model:page-size="patchPagination.pageSize"
           :page-sizes="[10, 20, 50, 100]"
-          :total="filteredAvailableHosts.length"
+          :total="patchPagination.total"
+          :disabled="locked"
           layout="total, sizes, prev, pager, next"
-          background
-          @current-change="handleHostPageChange"
-          @size-change="handleHostPageSizeChange"
+          small
+          @current-change="loadAvailablePatches"
+          @size-change="handlePatchSizeChange"
         />
-      </div>
+      </section>
+      <section class="host-pane" aria-label="配置当前补丁机器">
+        <template v-if="activePatch">
+          <div class="pane-toolbar">
+            <strong>{{ activePatch.patch_id }}</strong>
+            <span>已选 {{ activePatch.selectedHosts.length }} 台</span>
+          </div>
+          <p class="hint">仅可新增该补丁扫描结果中的机器，勾选即时保留在当前草稿。</p>
+          <div class="selected-hosts">
+            <el-tag
+              v-for="(host, index) in activePatch.selectedHosts"
+              :key="host.host_id || `unresolved-${index}`"
+              :closable="!locked"
+              :type="host.host_id ? 'info' : 'warning'"
+              :title="hostLabel(host)"
+              @close="removeHost(index)"
+            >
+              {{ hostLabel(host) }}{{ host.host_id ? '' : '（需重新确认机器）' }}
+            </el-tag>
+          </div>
+          <div class="pane-toolbar">
+            <el-input
+              v-model="hostFilters.keyword"
+              placeholder="搜索主机 / IP"
+              clearable
+              :disabled="locked"
+              @input="handleHostSearch"
+              @clear="handleHostSearch"
+            />
+          </div>
+          <el-alert
+            v-if="activePatch.hostsStatus === 'error'"
+            title="机器候选读取失败，未改变已有选择"
+            type="error"
+            :closable="false"
+          >
+            <el-button :disabled="locked" @click="retryHosts">重试机器读取</el-button>
+          </el-alert>
+          <el-table
+            ref="hostTableRef"
+            v-loading="activePatch.hostsStatus === 'loading'"
+            :data="paginatedHosts"
+            row-key="host_id"
+            height="100%"
+            empty-text="当前没有匹配的可分配机器"
+            @select="onHostSelectionChange"
+            @select-all="onHostSelectionChange"
+          >
+            <el-table-column type="selection" :selectable="canSelectHost" width="45" />
+            <el-table-column label="主机/IP" min-width="180" show-overflow-tooltip>
+              <template #default="{ row }">{{ hostLabel(row) }}</template>
+            </el-table-column>
+          </el-table>
+          <el-pagination
+            v-model:current-page="hostPagination.page"
+            v-model:page-size="hostPagination.pageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            :total="filteredHosts.length"
+            :disabled="locked"
+            layout="total, sizes, prev, pager, next"
+            small
+            @current-change="syncHostSelection"
+            @size-change="handleHostSizeChange"
+          />
+        </template>
+        <el-empty v-else description="选择补丁后，在这里配置对应机器" />
+      </section>
     </div>
-
+    <section v-if="activePatch" class="reuse-panel" aria-label="复用机器选择">
+      <strong>复用 {{ activePatch.patch_id }} 的机器选择</strong>
+      <p class="hint">选择目标补丁后先预览。仅追加各补丁可用的机器，保留已有选择。</p>
+      <p v-if="!reuseTargets.length" class="hint">请先在补丁列表勾选其他目标补丁。</p>
+      <el-checkbox-group v-model="reuseTargetIds" :disabled="locked || previewLoading">
+        <el-checkbox v-for="patch in reuseTargets" :key="patch.patch_id" :value="patch.patch_id">
+          {{ patch.patch_id }}
+        </el-checkbox>
+      </el-checkbox-group>
+      <el-button :disabled="!canPreviewReuse" :loading="previewLoading" @click="previewReuse">
+        预览复用结果
+      </el-button>
+      <template v-if="reusePreview.length">
+        <el-table :data="reusePreview" max-height="240">
+          <el-table-column prop="patchId" label="目标补丁" min-width="170" />
+          <el-table-column label="匹配 / 新增 / 最终机器数" min-width="170">
+            <template #default="{ row }">
+              {{
+                row.error
+                  ? '-'
+                  : `${row.matched.length} / ${row.added.length} / ${row.finalHosts.length}`
+              }}
+            </template>
+          </el-table-column>
+          <el-table-column label="将新增的机器" min-width="200">
+            <template #default="{ row }">
+              {{ row.added.map(hostLabel).join('、') || '无' }}
+            </template>
+          </el-table-column>
+          <el-table-column label="不适用机器 / 读取问题" min-width="240">
+            <template #default="{ row }">
+              {{ row.error || row.unavailable.map(hostLabel).join('、') || '无' }}
+            </template>
+          </el-table-column>
+        </el-table>
+        <el-button type="primary" :disabled="!canApplyReuse" @click="applyReuse">
+          确认追加到所选补丁
+        </el-button>
+        <el-button :disabled="locked" @click="clearPreview">取消预览</el-button>
+      </template>
+    </section>
     <template #footer>
-      <el-button @click="hostDialogVisible = false">取消</el-button>
-      <el-button type="primary" @click="confirmHostSelection">确认</el-button>
+      <span class="hint">配置仅保留在草稿中，点击“确定分配”后提交。</span>
+      <el-button :disabled="assignLoading" @click="closeDialog">取消</el-button>
+      <el-button
+        type="primary"
+        :loading="assignLoading"
+        :disabled="saveDisabled"
+        @click="submitAssign"
+      >
+        确定分配
+      </el-button>
     </template>
-  </el-dialog>
+  </el-drawer>
 </template>
 
 <script setup>
-import { computed, nextTick, reactive, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Close } from '@element-plus/icons-vue'
 import { apiService } from '@/core/api'
+import { authService } from '@/core/auth'
 
-const props = defineProps({
-  visible: {
-    type: Boolean,
-    default: false
-  },
-  username: {
-    type: String,
-    default: ''
-  }
-})
-
+const props = defineProps({ visible: Boolean, username: { type: String, default: '' } })
 const emit = defineEmits(['update:visible', 'success'])
-
+const baseUrl = '/secops/api/secops/v2/patch/assignment'
+const severityLabels = { Critical: '严重', Important: '重要', Moderate: '中等', Low: '低危' }
 const assignLoading = ref(false)
 const loadingAssigned = ref(false)
-const innerDialogVisible = ref(false)
-const hostDialogVisible = ref(false)
+const assignedError = ref('')
+const availablePatchesLoading = ref(false)
+const patchListError = ref(false)
+const selectedPatches = ref([])
+const availablePatches = ref([])
+const activePatchId = ref('')
 const patchTableRef = ref(null)
 const hostTableRef = ref(null)
-const selectedPatchesList = ref([])
-const liveSelectedPatches = ref([])
-const currentHostPatch = ref(null)
-const availableHosts = ref([])
-const tempSelectedHostIds = ref([])
-const tempSelectedHosts = ref([])
-const hostLoading = ref(false)
-const availablePatchesLoading = ref(false)
-const availablePatches = ref([])
-const syncingPatchSelection = ref(false)
-const syncingHostSelection = ref(false)
-const patchFilters = reactive({
-  keyword: '',
-  severity: []
-})
-const patchPagination = reactive({
-  page: 1,
-  pageSize: 20,
-  total: 0
-})
-const hostFilters = reactive({
-  keyword: ''
-})
-const hostPagination = reactive({
-  page: 1,
-  pageSize: 20
-})
-
-const filteredAvailableHosts = computed(() => {
+const patchFilters = reactive({ keyword: '' })
+const patchPagination = reactive({ page: 1, pageSize: 20, total: 0 })
+const hostFilters = reactive({ keyword: '' })
+const hostPagination = reactive({ page: 1, pageSize: 20 })
+const assignForm = ref(defaultForm())
+const reuseTargetIds = ref([])
+const reusePreview = ref([])
+const previewLoading = ref(false)
+let previewSignature = ''
+let session = 0
+let listRequest = 0
+let reuseRequest = 0
+let syncingPatches = false
+let syncingHosts = false
+const pendingHosts = new WeakMap()
+let context = { username: '', tenantId: '' }
+const tenantId = () => authService.getCurrentUser()?.tenantId || ''
+const isCurrent = token =>
+  token === session &&
+  props.visible &&
+  props.username === context.username &&
+  tenantId() === context.tenantId
+const locked = computed(() => assignLoading.value || loadingAssigned.value || !!assignedError.value)
+const saveDisabled = computed(
+  () => locked.value || previewLoading.value || !!reusePreview.value.length
+)
+const activePatch = computed(() =>
+  selectedPatches.value.find(patch => patch.patch_id === activePatchId.value)
+)
+const pendingPatchCount = computed(
+  () =>
+    selectedPatches.value.filter(
+      patch => !patch.selectedHosts.length || patch.selectedHosts.some(host => !host.host_id)
+    ).length
+)
+const reuseTargets = computed(() =>
+  selectedPatches.value.filter(patch => patch.patch_id !== activePatchId.value)
+)
+const filteredHosts = computed(() => {
   const keyword = hostFilters.keyword.trim().toLowerCase()
-  if (!keyword) return availableHosts.value
-
-  return availableHosts.value.filter(host =>
-    String(host.host_key || host.host_id || '').toLowerCase().includes(keyword)
+  return (activePatch.value?.availableHosts || []).filter(
+    host => !keyword || hostLabel(host).toLowerCase().includes(keyword)
   )
 })
+const paginatedHosts = computed(() =>
+  filteredHosts.value.slice(
+    (hostPagination.page - 1) * hostPagination.pageSize,
+    hostPagination.page * hostPagination.pageSize
+  )
+)
+const reuseSignature = computed(() =>
+  JSON.stringify({
+    source: activePatchId.value,
+    targets: reuseTargetIds.value,
+    selections: selectedPatches.value.map(patch => [patch.patch_id, patch.selectedHosts])
+  })
+)
+const canPreviewReuse = computed(
+  () =>
+    !locked.value &&
+    !previewLoading.value &&
+    activePatch.value?.hostsStatus === 'ready' &&
+    activePatch.value.selectedHosts.length > 0 &&
+    activePatch.value.selectedHosts.every(
+      host =>
+        host.host_id &&
+        activePatch.value.availableHosts.some(candidate => candidate.host_id === host.host_id)
+    ) &&
+    reuseTargetIds.value.length > 0
+)
+const canApplyReuse = computed(
+  () =>
+    !locked.value &&
+    !previewLoading.value &&
+    reusePreview.value.length > 0 &&
+    previewSignature === reuseSignature.value &&
+    reusePreview.value.every(row => !row.error) &&
+    reusePreview.value.some(row => row.added.length > 0)
+)
 
-const paginatedAvailableHosts = computed(() => {
-  const start = (hostPagination.page - 1) * hostPagination.pageSize
-  return filteredAvailableHosts.value.slice(start, start + hostPagination.pageSize)
-})
-
-function padDateTimeUnit(value) {
-  return String(value).padStart(2, '0')
-}
-
-function formatDateTimeValue(date) {
-  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
-    return ''
-  }
-
-  return `${date.getFullYear()}-${padDateTimeUnit(date.getMonth() + 1)}-${padDateTimeUnit(date.getDate())} ${padDateTimeUnit(date.getHours())}:${padDateTimeUnit(date.getMinutes())}:${padDateTimeUnit(date.getSeconds())}`
-}
-
-function getDefaultExpireTime() {
+function defaultForm() {
   const date = new Date()
-  date.setMilliseconds(0)
   date.setDate(date.getDate() + 1)
-  return formatDateTimeValue(date)
-}
-
-function createDefaultAssignForm() {
+  const pad = value => String(value).padStart(2, '0')
   return {
-    expireTime: getDefaultExpireTime(),
+    expireTime: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`,
     remark: ''
   }
 }
-
-const assignForm = ref(createDefaultAssignForm())
-
-function normalizeId(value) {
-  return value === undefined || value === null ? '' : String(value)
+const id = value =>
+  (typeof value === 'string' && value.trim()) ||
+  (typeof value === 'number' && Number.isFinite(value))
+    ? String(value)
+    : ''
+function hostLabel(host) {
+  return host.host_key && host.host_key !== host.host_id ? host.host_key : '未提供主机/IP'
 }
-
-function normalizeHostItem(item) {
-  const hostId = normalizeId(item?.host_id || item?.hostId || item?.id || item?.value)
-  const hostKey = item?.host_key || item?.hostKey || item?.hostname || item?.ip || item?.name
-
+function normalizeHost(host, assigned = false) {
+  // 已有分配记录的id是记录ID，不能当作机器ID；显示地址不能替代真实身份。
+  const hostId = assigned
+    ? host?.host_id ||
+      host?.hostId ||
+      host?.machine_id ||
+      host?.machineId ||
+      host?.hosts_id ||
+      host?.hostsId
+    : host?.host_id || host?.hostId || host?.id || host?.value
   return {
-    host_id: hostId,
-    host_key: hostKey ? String(hostKey) : hostId
+    host_id: id(hostId),
+    host_key: String(
+      host?.host_key || host?.hostKey || host?.hostname || host?.ip || host?.name || hostId || ''
+    )
   }
 }
-
-function extractAssignedHostItem(item) {
-  const hostId = normalizeId(
-    item?.host_id ||
-      item?.hostId ||
-      item?.machine_id ||
-      item?.machineId ||
-      item?.hosts_id ||
-      item?.hostsId
+function uniqueHosts(hosts) {
+  const known = new Map()
+  const unresolved = []
+  hosts.forEach(host =>
+    host.host_id ? known.set(host.host_id, { ...host }) : unresolved.push({ ...host })
   )
-  const hostKey = item?.host_key || item?.hostKey || item?.hostname || item?.ip || item?.name
-
-  if (!hostId && !hostKey) {
-    return null
-  }
-
+  return [...known.values(), ...unresolved]
+}
+function normalizePatch(item) {
+  const hosts =
+    item?.availableHosts ??
+    item?.hosts ??
+    item?.hostList ??
+    item?.machines ??
+    item?.machineList ??
+    item?.affectedHosts
+  const normalizedHosts = Array.isArray(hosts) ? hosts.map(host => normalizeHost(host)) : []
   return {
-    host_id: hostId,
-    host_key: hostKey ? String(hostKey) : hostId
-  }
-}
-
-function buildSelectedHosts(hostIds = [], availableHostList = []) {
-  const hostMap = new Map(
-    (availableHostList || []).map(item => {
-      const normalized = normalizeHostItem(item)
-      return [normalized.host_id, normalized]
-    })
-  )
-
-  return hostIds.map(
-    hostId =>
-      hostMap.get(hostId) || {
-        host_id: hostId,
-        host_key: hostId
-      }
-  )
-}
-
-function matchHostBySelection(host, selectedHost) {
-  const normalizedHostId = normalizeId(host?.host_id)
-  const normalizedHostKey = normalizeId(host?.host_key)
-  const normalizedSelectedId = normalizeId(selectedHost?.host_id)
-  const normalizedSelectedKey = normalizeId(selectedHost?.host_key)
-
-  return Boolean(
-    (normalizedSelectedId && normalizedHostId && normalizedSelectedId === normalizedHostId) ||
-    (normalizedSelectedKey && normalizedHostKey && normalizedSelectedKey === normalizedHostKey) ||
-    (normalizedSelectedKey && normalizedHostId && normalizedSelectedKey === normalizedHostId) ||
-    (normalizedSelectedId && normalizedHostKey && normalizedSelectedId === normalizedHostKey)
-  )
-}
-
-function dedupeSelectedHosts(hostList = []) {
-  const hostMap = new Map()
-  ;(hostList || []).forEach(item => {
-    const normalized = normalizeHostItem(item)
-    const key = normalizeId(normalized.host_id) || normalizeId(normalized.host_key)
-    if (key) {
-      hostMap.set(key, normalized)
-    }
-  })
-  return Array.from(hostMap.values())
-}
-
-function hydratePatchHostSelection(patch) {
-  const availableHostList = Array.isArray(patch.availableHosts)
-    ? patch.availableHosts.map(normalizeHostItem).filter(item => item.host_id)
-    : []
-  const selectedHostList = Array.isArray(patch.selectedHosts)
-    ? patch.selectedHosts.map(normalizeHostItem).filter(item => item.host_id || item.host_key)
-    : []
-  const resolvedSelectedHosts = dedupeSelectedHosts(
-    selectedHostList.map(selectedHost => {
-      const matchedHost = availableHostList.find(host => matchHostBySelection(host, selectedHost))
-      return matchedHost || selectedHost
-    })
-  )
-  const resolvedHostIds = resolvedSelectedHosts
-    .map(item => normalizeId(item.host_id))
-    .filter(Boolean)
-  const fallbackHostIds = Array.isArray(patch.hostIds)
-    ? patch.hostIds.map(normalizeId).filter(Boolean)
-    : []
-
-  return {
-    ...patch,
-    availableHosts: availableHostList,
-    selectedHosts: resolvedSelectedHosts,
-    hostIds: Array.from(new Set(resolvedHostIds.length > 0 ? resolvedHostIds : fallbackHostIds))
-  }
-}
-
-function extractHostsFromPatch(item) {
-  const sourceHosts =
-    item?.availableHosts ||
-    item?.hosts ||
-    item?.hostList ||
-    item?.machines ||
-    item?.machineList ||
-    item?.affectedHosts ||
-    []
-  if (!Array.isArray(sourceHosts)) return []
-
-  return sourceHosts.map(normalizeHostItem).filter(host => host.host_id)
-}
-
-function normalizeAvailablePatchItem(item) {
-  const patchId = item?.patch_id || item?.patchId || item?.id || ''
-  const normalizedHosts = extractHostsFromPatch(item)
-  const effectHostCount = Number(
-    item?.hostCount ??
-      item?.effect_host_count ??
-      item?.effectHostCount ??
-      item?.affectedHostCount ??
-      item?.host_count ??
-      normalizedHosts.length
-  )
-  const patchName = item?.patchName || item?.patch_name || item?.title || item?.summary || ''
-
-  return {
-    patch_id: patchId,
-    patch_name: patchName,
-    title: patchName,
+    patch_id: id(item?.patch_id || item?.patchId || item?.id),
+    patch_name: item?.patchName || item?.patch_name || item?.title || item?.summary || '',
     severity: item?.severity || item?.level || item?.riskLevel || '',
-    related_vuls: item?.related_vuls || item?.relatedVuls || item?.cves || item?.cveList || '',
-    effect_host_count: Number.isFinite(effectHostCount) ? effectHostCount : normalizedHosts.length,
-    availableHosts: normalizedHosts,
-    hostsLoaded: normalizedHosts.length > 0
+    effect_host_count: Number(
+      item?.hostCount ??
+        item?.effect_host_count ??
+        item?.effectHostCount ??
+        item?.affectedHostCount ??
+        item?.host_count ??
+        hosts?.length ??
+        0
+    ),
+    availableHosts: uniqueHosts(normalizedHosts.filter(host => host.host_id)),
+    hostsStatus:
+      Array.isArray(hosts) && normalizedHosts.every(host => host.host_id) ? 'ready' : 'idle',
+    selectedHosts: []
   }
 }
-
-function normalizePatchItem(patch, existingPatch = null) {
-  const hasHostIds = patch && Object.prototype.hasOwnProperty.call(patch, 'hostIds')
-  const hasAvailableHosts = patch && Object.prototype.hasOwnProperty.call(patch, 'availableHosts')
-  const hasHostsLoaded = patch && Object.prototype.hasOwnProperty.call(patch, 'hostsLoaded')
-  const hasSelectedHosts = patch && Object.prototype.hasOwnProperty.call(patch, 'selectedHosts')
-
-  const normalizedHostIds = hasHostIds
-    ? Array.isArray(patch.hostIds)
-      ? patch.hostIds
-      : []
-    : Array.isArray(existingPatch?.hostIds)
-      ? existingPatch.hostIds
-      : []
-  const normalizedAvailableHosts = hasAvailableHosts
-    ? Array.isArray(patch.availableHosts)
-      ? patch.availableHosts
-      : []
-    : Array.isArray(existingPatch?.availableHosts)
-      ? existingPatch.availableHosts
-      : []
-  const normalizedHostsLoaded = hasHostsLoaded
-    ? Boolean(patch.hostsLoaded)
-    : Boolean(existingPatch?.hostsLoaded)
-  const normalizedSelectedHosts = hasSelectedHosts
-    ? Array.isArray(patch.selectedHosts)
-      ? patch.selectedHosts.map(normalizeHostItem)
-      : []
-    : Array.isArray(existingPatch?.selectedHosts)
-      ? existingPatch.selectedHosts.map(normalizeHostItem)
-      : []
-
-  return hydratePatchHostSelection({
-    ...existingPatch,
-    ...patch,
-    patch_id: patch.patch_id || patch.patchId,
-    hostIds: Array.from(new Set(normalizedHostIds.map(normalizeId).filter(Boolean))),
-    availableHosts: normalizedAvailableHosts,
-    hostsLoaded: normalizedHostsLoaded,
-    selectedHosts: normalizedSelectedHosts
-  })
-}
-
-function mergeSelectedPatches(patches) {
-  const existingMap = new Map(selectedPatchesList.value.map(item => [item.patch_id, item]))
+function responsePatches(response) {
+  const data = response?.data?.content ?? response?.data?.records ?? response?.data
+  if (!Array.isArray(data)) throw new Error('补丁列表格式不正确')
+  const patches = data.map(normalizePatch).filter(patch => patch.patch_id)
+  if (new Set(patches.map(patch => patch.patch_id)).size !== patches.length)
+    throw new Error('补丁编号不唯一')
   return patches
-    .map(item => normalizePatchItem(item, existingMap.get(item.patch_id || item.patchId)))
-    .filter(item => item.patch_id)
 }
 
-async function loadAvailablePatches() {
-  availablePatchesLoading.value = true
-  try {
-    const params = {
-      page: patchPagination.page - 1,
-      size: patchPagination.pageSize
-    }
-
-    if (patchFilters.keyword.trim()) {
-      params.patchId = patchFilters.keyword.trim()
-    }
-    if (patchFilters.severity.length > 0) {
-      params.severity = patchFilters.severity.join(',')
-    }
-
-    const res = await apiService.get('/secops/api/secops/v2/patch/assignment/available-patches', {
-      params
-    })
-    const rawList = res?.data?.content || res?.data?.records || res?.data || []
-    const normalized = (Array.isArray(rawList) ? rawList : [])
-      .map(normalizeAvailablePatchItem)
-      .filter(item => item.patch_id)
-
-    availablePatches.value = normalized
-    patchPagination.total = res?.data?.totalElements || res?.data?.total || normalized.length
-    await nextTick()
-    syncPatchTableSelection()
-  } catch (e) {
-    console.error('Failed to load available patches', e)
-    ElMessage.error('加载可分配补丁列表失败')
+watch(
+  [() => props.visible, () => props.username, tenantId],
+  () => {
+    session++
+    listRequest++
+    clearPreview()
+    assignLoading.value = false
+    loadingAssigned.value = false
+    assignedError.value = ''
+    selectedPatches.value = []
     availablePatches.value = []
-    patchPagination.total = 0
-  } finally {
-    availablePatchesLoading.value = false
-  }
-}
-
-async function fetchAvailablePatchById(patchId) {
-  if (!patchId) {
-    return null
-  }
-
-  const res = await apiService.get('/secops/api/secops/v2/patch/assignment/available-patches', {
-    params: {
-      page: 0,
-      size: 100,
-      patchId
+    activePatchId.value = ''
+    reuseTargetIds.value = []
+    patchFilters.keyword = ''
+    Object.assign(patchPagination, { page: 1, pageSize: 20, total: 0 })
+    assignForm.value = defaultForm()
+    context = { username: props.username, tenantId: tenantId() }
+    if (props.visible && props.username) {
+      loadAssignedPatches()
+      loadAvailablePatches()
     }
-  })
-  const rawList = res?.data?.content || res?.data?.records || res?.data || []
-  const normalized = (Array.isArray(rawList) ? rawList : [])
-    .map(normalizeAvailablePatchItem)
-    .filter(item => item.patch_id)
-
-  return normalized.find(item => item.patch_id === patchId) || normalized[0] || null
-}
-
-async function hydratePatchHostIdsIfNeeded(patch) {
-  if (
-    !patch?.patch_id ||
-    patch?.hostIds?.length > 0 ||
-    !Array.isArray(patch.selectedHosts) ||
-    patch.selectedHosts.length === 0
-  ) {
-    return patch
-  }
-
-  const pagePatch = availablePatches.value.find(item => item.patch_id === patch.patch_id)
-  if (pagePatch) {
-    Object.assign(patch, normalizePatchItem(pagePatch, patch))
-  }
-
-  if (patch?.hostIds?.length > 0) {
-    return patch
-  }
-
-  try {
-    const remotePatch = await fetchAvailablePatchById(patch.patch_id)
-    if (remotePatch) {
-      Object.assign(patch, normalizePatchItem(remotePatch, patch))
-    }
-  } catch (e) {
-    console.error(`Failed to hydrate host ids for patch ${patch.patch_id}`, e)
-  }
-
-  return patch
-}
+  },
+  { immediate: true }
+)
+watch(reuseSignature, clearPreview, { flush: 'sync' })
+onBeforeUnmount(() => {
+  session++
+  listRequest++
+  reuseRequest++
+})
 
 async function loadAssignedPatches() {
-  if (!props.username) return
+  if (!isCurrent(session) || loadingAssigned.value || assignLoading.value) return
+  const token = session
   loadingAssigned.value = true
+  assignedError.value = ''
   try {
-    const res = await apiService.get('/secops/api/secops/v2/patch/assignment/list', {
-      params: { userLogin: props.username, page: 0, size: 1000 }
+    const response = await apiService.get(`${baseUrl}/list`, {
+      params: { userLogin: context.username, page: 0, size: 1000 }
     })
-    if (res?.data?.content) {
-      const grouped = res.data.content.reduce((map, item) => {
-        const patchId = item.patchId
-        if (!patchId) return map
-        const current = map.get(patchId) || {
-          patch_id: patchId,
-          hostIds: [],
-          availableHosts: [],
-          hostsLoaded: false,
-          selectedHosts: []
-        }
-        const assignedHost = extractAssignedHostItem(item)
-        if (assignedHost) {
-          current.selectedHosts.push(assignedHost)
-          if (assignedHost.host_id) {
-            current.hostIds.push(assignedHost.host_id)
-          }
-        }
-        map.set(patchId, current)
-        return map
-      }, new Map())
-
-      selectedPatchesList.value = Array.from(grouped.values()).map(item => normalizePatchItem(item))
-    } else {
-      selectedPatchesList.value = []
-    }
-  } catch (e) {
-    console.error('Failed to load initially assigned patches', e)
+    if (!isCurrent(token)) return
+    const rows = response?.data?.content
+    if (!Array.isArray(rows) || (response.data.totalElements || 0) > rows.length)
+      throw new Error('已有分配未完整读取')
+    const groups = new Map()
+    rows.forEach(row => {
+      const patchId = id(row.patchId)
+      if (!patchId) throw new Error('已有分配缺少补丁编号')
+      const patch = groups.get(patchId) || normalizePatch({ patchId })
+      const host = normalizeHost(row, true)
+      if (!host.host_id && !host.host_key) throw new Error('已有分配缺少机器身份')
+      patch.selectedHosts.push(host)
+      groups.set(patchId, patch)
+    })
+    selectedPatches.value = Array.from(groups.values()).map(patch => ({
+      ...patch,
+      selectedHosts: uniqueHosts(patch.selectedHosts)
+    }))
+    await syncPatchSelection()
+  } catch {
+    if (isCurrent(token))
+      assignedError.value = '已有分配读取失败或不完整，请重试后配置，避免遗漏原机器。'
   } finally {
-    loadingAssigned.value = false
+    if (isCurrent(token)) loadingAssigned.value = false
   }
 }
-
-async function openPatchLibrary() {
-  liveSelectedPatches.value = mergeSelectedPatches(selectedPatchesList.value)
-  innerDialogVisible.value = true
-  await loadAvailablePatches()
-}
-
-function handleInnerDialogOpened() {
-  syncPatchTableSelection()
-}
-
-function clearAllPatches() {
-  selectedPatchesList.value = []
-}
-
-function removeSelectedPatchFromMain(patchId) {
-  selectedPatchesList.value = selectedPatchesList.value.filter(item => item.patch_id !== patchId)
-}
-
-function handleRemovePatch(patch) {
-  liveSelectedPatches.value = liveSelectedPatches.value.filter(
-    item => item.patch_id !== patch.patch_id
-  )
-  syncPatchTableSelection()
-}
-
-function getSelectedHostCount(patch) {
-  const patchId = patch?.patch_id || patch?.patchId
-  if (!patchId) return 0
-
-  const targetPatch =
-    liveSelectedPatches.value.find(item => item.patch_id === patchId) ||
-    selectedPatchesList.value.find(item => item.patch_id === patchId)
-
-  return targetPatch?.hostIds?.length || targetPatch?.selectedHosts?.length || 0
-}
-
-function ensureLibraryPatchSelected(patch) {
-  const patchId = patch?.patch_id || patch?.patchId
-  if (!patchId) return null
-
-  let targetPatch = liveSelectedPatches.value.find(item => item.patch_id === patchId)
-  const existingPatch = selectedPatchesList.value.find(item => item.patch_id === patchId)
-  const mergedPatch = normalizePatchItem(patch, targetPatch || existingPatch)
-
-  if (targetPatch) {
-    Object.assign(targetPatch, mergedPatch)
+async function loadAvailablePatches() {
+  const token = session
+  const request = ++listRequest
+  if (!isCurrent(token)) return
+  availablePatchesLoading.value = true
+  patchListError.value = false
+  try {
+    const response = await apiService.get(`${baseUrl}/available-patches`, {
+      params: {
+        page: patchPagination.page - 1,
+        size: patchPagination.pageSize,
+        ...(patchFilters.keyword.trim() ? { patchId: patchFilters.keyword.trim() } : {})
+      }
+    })
+    if (!isCurrent(token) || request !== listRequest) return
+    availablePatches.value = responsePatches(response)
+    patchPagination.total =
+      response?.data?.totalElements ?? response?.data?.total ?? availablePatches.value.length
+    await syncPatchSelection()
+  } catch {
+    if (!isCurrent(token) || request !== listRequest) return
+    availablePatches.value = []
+    patchPagination.total = 0
+    patchListError.value = true
+  } finally {
+    if (isCurrent(token) && request === listRequest) availablePatchesLoading.value = false
   }
-
-  if (!targetPatch) {
-    liveSelectedPatches.value = mergeSelectedPatches([...liveSelectedPatches.value, mergedPatch])
-    targetPatch = liveSelectedPatches.value.find(item => item.patch_id === patchId) || mergedPatch
-  }
-
-  return targetPatch
 }
-
-async function openHostSelectorFromLibrary(patch) {
-  const targetPatch = ensureLibraryPatchSelected(patch)
-  if (!targetPatch) {
-    ElMessage.warning('当前补丁信息不完整，无法选择机器')
-    return
-  }
-
-  await nextTick()
-  syncPatchTableSelection()
-  await openHostSelector(targetPatch)
-}
-
-function syncPatchTableSelection() {
-  if (!patchTableRef.value) return
-
-  const selectedPatchIds = new Set(liveSelectedPatches.value.map(item => item.patch_id))
-  syncingPatchSelection.value = true
-  patchTableRef.value.clearSelection()
-  availablePatches.value.forEach(row => {
-    if (selectedPatchIds.has(row.patch_id)) {
-      patchTableRef.value.toggleRowSelection(row, true)
-    }
-  })
-  nextTick(() => {
-    syncingPatchSelection.value = false
-  })
-}
-
-function onPatchSelectionChange(selection) {
-  if (syncingPatchSelection.value) {
-    return
-  }
-
-  const previousSelectionMap = new Map(liveSelectedPatches.value.map(item => [item.patch_id, item]))
-  const pagePatchIds = new Set(availablePatches.value.map(item => item.patch_id))
-  const nextSelectionMap = new Map(
-    liveSelectedPatches.value
-      .filter(item => !pagePatchIds.has(item.patch_id))
-      .map(item => [item.patch_id, item])
-  )
-
-  selection.forEach(item => {
-    nextSelectionMap.set(
-      item.patch_id,
-      normalizePatchItem(
-        item,
-        previousSelectionMap.get(item.patch_id) ||
-          selectedPatchesList.value.find(row => row.patch_id === item.patch_id)
-      )
-    )
-  })
-
-  liveSelectedPatches.value = Array.from(nextSelectionMap.values())
-}
-
 function handlePatchSearch() {
   patchPagination.page = 1
   loadAvailablePatches()
 }
-
 function handlePatchReset() {
   patchFilters.keyword = ''
-  patchFilters.severity = []
-  patchPagination.page = 1
   patchPagination.pageSize = 20
-  loadAvailablePatches()
+  handlePatchSearch()
 }
-
-function handlePatchPageChange(page) {
-  patchPagination.page = page
-  loadAvailablePatches()
+function handlePatchSizeChange() {
+  handlePatchSearch()
 }
-
-function handlePatchPageSizeChange(size) {
-  patchPagination.pageSize = size
-  patchPagination.page = 1
-  loadAvailablePatches()
-}
-
-function ensureAvailableHosts(patch) {
-  if (!patch?.patch_id) return []
-
-  if (
-    (!Array.isArray(patch.availableHosts) || patch.availableHosts.length === 0) &&
-    availablePatches.value.length > 0
-  ) {
-    const pagePatch = availablePatches.value.find(item => item.patch_id === patch.patch_id)
-    if (pagePatch) {
-      Object.assign(patch, normalizePatchItem(pagePatch, patch))
-    }
-  }
-
-  const normalizedHosts = Array.isArray(patch.availableHosts)
-    ? patch.availableHosts.map(normalizeHostItem).filter(item => item.host_id)
-    : []
-
-  patch.availableHosts = normalizedHosts
-  patch.hostsLoaded = normalizedHosts.length > 0
-
-  if (normalizedHosts.length === 0) {
-    ElMessage.warning(`补丁 ${patch.patch_id} 未返回可分配机器信息`)
-  }
-
-  return normalizedHosts
-}
-
-function getSelectedHostPreview(patch) {
-  const previewHosts =
-    Array.isArray(patch.selectedHosts) && patch.selectedHosts.length > 0
-      ? patch.selectedHosts
-      : buildSelectedHosts(patch.hostIds || [], patch.availableHosts || [])
-
-  return previewHosts.slice(0, 3)
-}
-
-async function openHostSelector(patch) {
-  currentHostPatch.value = patch
-  tempSelectedHostIds.value = (patch.hostIds || []).map(normalizeId).filter(Boolean)
-  tempSelectedHosts.value = Array.isArray(patch.selectedHosts)
-    ? patch.selectedHosts.map(normalizeHostItem)
-    : []
-  hostFilters.keyword = ''
-  hostPagination.page = 1
-  hostPagination.pageSize = 20
-  hostDialogVisible.value = true
-  availableHosts.value = ensureAvailableHosts(patch)
-
-  if (tempSelectedHosts.value.length === 0 && tempSelectedHostIds.value.length > 0) {
-    tempSelectedHosts.value = buildSelectedHosts(tempSelectedHostIds.value, availableHosts.value)
-  }
-
+const canSelectPatch = () => isCurrent(session) && !locked.value && !availablePatchesLoading.value
+const canSelectHost = () =>
+  isCurrent(session) && !locked.value && activePatch.value?.hostsStatus === 'ready'
+const getHostCount = patchId =>
+  selectedPatches.value.find(patch => patch.patch_id === patchId)?.selectedHosts.length || 0
+async function syncPatchSelection() {
+  syncingPatches = true
   await nextTick()
-  syncHostTableSelection()
-}
-
-function syncHostTableSelection() {
-  if (!hostTableRef.value) return
-
-  syncingHostSelection.value = true
-  hostTableRef.value.clearSelection()
-  paginatedAvailableHosts.value.forEach(row => {
-    if (tempSelectedHostIds.value.includes(normalizeId(row.host_id))) {
-      hostTableRef.value.toggleRowSelection(row, true)
-    }
+  patchTableRef.value?.clearSelection()
+  availablePatches.value.forEach(row => {
+    if (selectedPatches.value.some(patch => patch.patch_id === row.patch_id))
+      patchTableRef.value?.toggleRowSelection(row, true)
   })
-  nextTick(() => {
-    syncingHostSelection.value = false
-  })
+  await nextTick()
+  syncingPatches = false
 }
-
-function handleHostSelectionChange(selection) {
-  if (syncingHostSelection.value) {
-    return
+function onPatchSelectionChange(selection) {
+  if (syncingPatches || !canSelectPatch()) return
+  const pageIds = new Set(availablePatches.value.map(patch => patch.patch_id))
+  const previous = new Map(selectedPatches.value.map(patch => [patch.patch_id, patch]))
+  selectedPatches.value = [
+    ...selectedPatches.value.filter(patch => !pageIds.has(patch.patch_id)),
+    ...selection
+      .filter(patch => pageIds.has(patch.patch_id))
+      .map(patch => previous.get(patch.patch_id) || { ...patch, selectedHosts: [] })
+  ]
+  if (!activePatch.value) {
+    activePatchId.value = ''
+    const first = selectedPatches.value[0]
+    if (first) activatePatch(first)
   }
-
-  const pageHostIds = new Set(
-    paginatedAvailableHosts.value.map(item => normalizeId(item.host_id)).filter(Boolean)
-  )
-  const selectedHostsById = new Map(
-    tempSelectedHosts.value
-      .map(normalizeHostItem)
-      .filter(item => item.host_id && !pageHostIds.has(normalizeId(item.host_id)))
-      .map(item => [normalizeId(item.host_id), item])
-  )
-
-  selection.map(normalizeHostItem).forEach(item => {
-    if (item.host_id) {
-      selectedHostsById.set(normalizeId(item.host_id), item)
-    }
-  })
-
-  tempSelectedHosts.value = Array.from(selectedHostsById.values())
-  tempSelectedHostIds.value = Array.from(selectedHostsById.keys())
 }
-
+async function activatePatch(row) {
+  if (!isCurrent(session) || locked.value) return
+  let patch = selectedPatches.value.find(item => item.patch_id === row.patch_id)
+  if (!patch) {
+    selectedPatches.value.push({ ...row, selectedHosts: [] })
+    patch = selectedPatches.value.find(item => item.patch_id === row.patch_id)
+  }
+  activePatchId.value = patch.patch_id
+  reuseTargetIds.value = []
+  hostFilters.keyword = ''
+  Object.assign(hostPagination, { page: 1, pageSize: 20 })
+  syncPatchSelection()
+  await ensureHosts(patch)
+  if (activePatch.value === patch) await syncHostSelection()
+}
+function removePatch(patchId) {
+  if (locked.value) return
+  selectedPatches.value = selectedPatches.value.filter(patch => patch.patch_id !== patchId)
+  reuseTargetIds.value = reuseTargetIds.value.filter(target => target !== patchId)
+  if (activePatchId.value === patchId) activePatchId.value = ''
+  syncPatchSelection()
+}
+function clearSelectedPatches() {
+  if (locked.value) return
+  selectedPatches.value = []
+  activePatchId.value = ''
+  reuseTargetIds.value = []
+  syncPatchSelection()
+}
+async function ensureHosts(patch) {
+  if (!isCurrent(session) || !selectedPatches.value.includes(patch)) return false
+  if (patch.hostsStatus === 'ready') return true
+  if (pendingHosts.has(patch)) return pendingHosts.get(patch)
+  const request = readHosts(patch)
+  pendingHosts.set(patch, request)
+  try {
+    return await request
+  } finally {
+    pendingHosts.delete(patch)
+  }
+}
+async function readHosts(patch) {
+  const token = session
+  patch.hostsStatus = 'loading'
+  try {
+    const pagePatch = availablePatches.value.find(
+      item => item.patch_id === patch.patch_id && item.hostsStatus === 'ready'
+    )
+    const matches = pagePatch
+      ? [pagePatch]
+      : responsePatches(
+          await apiService.get(`${baseUrl}/available-patches`, {
+            params: { page: 0, size: 100, patchId: patch.patch_id }
+          })
+        ).filter(item => item.patch_id === patch.patch_id)
+    if (!isCurrent(token) || !selectedPatches.value.includes(patch)) return false
+    if (matches.length !== 1 || matches[0].hostsStatus !== 'ready')
+      throw new Error('缺少唯一补丁的机器候选')
+    patch.availableHosts = matches[0].availableHosts
+    patch.hostsStatus = 'ready'
+    return true
+  } catch {
+    if (isCurrent(token) && selectedPatches.value.includes(patch)) patch.hostsStatus = 'error'
+    return false
+  }
+}
+async function retryHosts() {
+  const patch = activePatch.value
+  if (!patch || locked.value) return
+  await ensureHosts(patch)
+  if (activePatch.value === patch) await syncHostSelection()
+}
+async function syncHostSelection() {
+  syncingHosts = true
+  await nextTick()
+  hostTableRef.value?.clearSelection()
+  paginatedHosts.value.forEach(row => {
+    if (activePatch.value?.selectedHosts.some(host => host.host_id === row.host_id))
+      hostTableRef.value?.toggleRowSelection(row, true)
+  })
+  await nextTick()
+  syncingHosts = false
+}
+function onHostSelectionChange(selection) {
+  // 只接收用户勾选；换补丁/换页和回显会触发 selection-change，不能用它清空草稿。
+  if (syncingHosts || !canSelectHost()) return
+  const patch = activePatch.value
+  const pageIds = new Set(paginatedHosts.value.map(host => host.host_id))
+  patch.selectedHosts = uniqueHosts([
+    ...patch.selectedHosts.filter(host => !pageIds.has(host.host_id)),
+    ...selection.filter(host => pageIds.has(host.host_id)).map(host => normalizeHost(host))
+  ])
+}
+function removeHost(index) {
+  if (!activePatch.value || locked.value) return
+  activePatch.value.selectedHosts.splice(index, 1)
+  syncHostSelection()
+}
 function handleHostSearch() {
   hostPagination.page = 1
-  nextTick(syncHostTableSelection)
+  syncHostSelection()
 }
-
-function handleHostPageChange(page) {
-  hostPagination.page = page
-  nextTick(syncHostTableSelection)
+function handleHostSizeChange() {
+  handleHostSearch()
 }
-
-function handleHostPageSizeChange(size) {
-  hostPagination.pageSize = size
-  hostPagination.page = 1
-  nextTick(syncHostTableSelection)
+function clearPreview() {
+  reuseRequest++
+  reusePreview.value = []
+  previewLoading.value = false
+  previewSignature = ''
 }
-
-function confirmHostSelection() {
-  if (!currentHostPatch.value) {
-    hostDialogVisible.value = false
-    return
-  }
-
-  currentHostPatch.value.hostIds = Array.from(
-    new Set(tempSelectedHostIds.value.map(normalizeId).filter(Boolean))
+async function previewReuse() {
+  if (!canPreviewReuse.value) return
+  clearPreview()
+  const token = session
+  const request = reuseRequest
+  const signature = reuseSignature.value
+  const source = activePatch.value.selectedHosts.map(host => ({ ...host }))
+  const targets = reuseTargetIds.value.map(patchId =>
+    selectedPatches.value.find(patch => patch.patch_id === patchId)
   )
-  currentHostPatch.value.selectedHosts = tempSelectedHosts.value.map(normalizeHostItem)
-  hostDialogVisible.value = false
-
-  if (innerDialogVisible.value) {
-    nextTick(() => {
-      syncPatchTableSelection()
+  previewLoading.value = true
+  const rows = []
+  for (const patch of targets) {
+    const loaded = patch && (await ensureHosts(patch))
+    if (!isCurrent(token) || request !== reuseRequest || signature !== reuseSignature.value) return
+    if (!patch) {
+      clearPreview()
+      return
+    }
+    const error = !loaded
+      ? '机器候选读取失败或缺少唯一补丁，未追加'
+      : patch.selectedHosts.some(host => !host.host_id)
+        ? '已有机器信息不完整，请先重新选择'
+        : ''
+    const candidates = new Map(patch.availableHosts.map(host => [host.host_id, host]))
+    const matched = source
+      .filter(host => candidates.has(host.host_id))
+      .map(host => candidates.get(host.host_id))
+    const added = matched.filter(
+      host => !patch.selectedHosts.some(selected => selected.host_id === host.host_id)
+    )
+    rows.push({
+      patchId: patch.patch_id,
+      matched,
+      added,
+      unavailable: source.filter(host => !candidates.has(host.host_id)),
+      finalHosts: uniqueHosts([...patch.selectedHosts, ...matched]),
+      error
     })
   }
+  previewSignature = signature
+  reusePreview.value = rows
+  previewLoading.value = false
 }
-
-function resetAssignForm() {
-  assignForm.value = createDefaultAssignForm()
-  selectedPatchesList.value = []
-  liveSelectedPatches.value = []
-  currentHostPatch.value = null
-  availableHosts.value = []
-  tempSelectedHostIds.value = []
-  tempSelectedHosts.value = []
-  hostFilters.keyword = ''
-  hostPagination.page = 1
-  hostPagination.pageSize = 20
-  patchFilters.keyword = ''
-  patchFilters.severity = []
-  patchPagination.page = 1
-  patchPagination.pageSize = 20
-  patchPagination.total = 0
+function applyReuse() {
+  if (!isCurrent(session) || !canApplyReuse.value) return
+  // 捕获整个预览再更新；同步watch会在首次变更时使预览失效。
+  const rows = reusePreview.value
+  rows.forEach(row => {
+    selectedPatches.value.find(patch => patch.patch_id === row.patchId).selectedHosts =
+      row.finalHosts.map(host => ({ ...host }))
+  })
+  clearPreview()
+  ElMessage.success('已追加到补丁草稿，尚未提交分配')
 }
-
-function confirmPatchSelection() {
-  if (liveSelectedPatches.value.length === 0 && selectedPatchesList.value.length === 0) {
-    ElMessage.warning('请在表格中至少勾选一个需要分配的补丁！')
-    return
-  }
-
-  selectedPatchesList.value = mergeSelectedPatches(liveSelectedPatches.value)
-  innerDialogVisible.value = false
-}
-
 function closeDialog() {
+  if (assignLoading.value) return
+  session++
+  clearPreview()
   emit('update:visible', false)
 }
-
 async function submitAssign() {
-  if (selectedPatchesList.value.length === 0) {
-    ElMessage.warning('请先点击按钮挑选需要分配的补丁！')
+  if (!isCurrent(session) || saveDisabled.value) return
+  if (!selectedPatches.value.length) {
+    ElMessage.warning('请至少选择一个补丁')
     return
   }
-
-  await Promise.all(selectedPatchesList.value.map(hydratePatchHostIdsIfNeeded))
-
-  const invalidPatch = selectedPatchesList.value.find(
-    item => !item.hostIds || item.hostIds.length === 0
+  const invalid = selectedPatches.value.find(
+    patch => !patch.selectedHosts.length || patch.selectedHosts.some(host => !host.host_id)
   )
-  if (invalidPatch) {
-    const hasExistingSelection =
-      Array.isArray(invalidPatch.selectedHosts) && invalidPatch.selectedHosts.length > 0
-    ElMessage.warning(
-      hasExistingSelection
-        ? `补丁 ${invalidPatch.patch_id} 的已分配机器未能自动解析，请在补丁列表中重新确认机器`
-        : `请先为补丁 ${invalidPatch.patch_id} 选择至少一台机器`
-    )
+  if (invalid) {
+    ElMessage.warning(`请为补丁 ${invalid.patch_id} 重新确认机器选择，至少选择一台机器`)
+    await activatePatch(invalid)
     return
   }
-
-  const items = selectedPatchesList.value.map(item => ({
-    patchId: item.patch_id,
-    hostIds: Array.from(new Set(item.hostIds || []))
-  }))
-
+  const token = session
+  const payload = {
+    userLogin: context.username,
+    items: selectedPatches.value.map(patch => ({
+      patchId: patch.patch_id,
+      hostIds: Array.from(new Set(patch.selectedHosts.map(host => host.host_id)))
+    })),
+    expireTime: assignForm.value.expireTime || undefined,
+    remark: assignForm.value.remark || undefined
+  }
   assignLoading.value = true
   try {
-    const res = await apiService.post('/secops/api/secops/v2/patch/assignment', {
-      userLogin: props.username,
-      items,
-      expireTime: assignForm.value.expireTime || undefined,
-      remark: assignForm.value.remark || undefined
-    })
-    ElMessage.success(`分配成功，共处理 ${res?.data?.count || items.length} 条记录`)
+    const response = await apiService.post(baseUrl, payload)
+    if (!isCurrent(token)) return
+    ElMessage.success(`分配成功，共处理 ${response?.data?.count || payload.items.length} 条记录`)
     emit('success')
-    closeDialog()
-  } catch (e) {
-    ElMessage.error(e?.response?.data?.error || '分配失败')
-  } finally {
     assignLoading.value = false
+    closeDialog()
+  } catch (error) {
+    if (isCurrent(token)) ElMessage.error(error?.response?.data?.error || '分配失败')
+  } finally {
+    if (isCurrent(token)) assignLoading.value = false
   }
-}
-
-function getSeverityLabel(severity) {
-  const labelMap = {
-    Critical: '严重',
-    Important: '重要',
-    Moderate: '中等',
-    Low: '低危'
-  }
-  return labelMap[severity] || severity || '-'
-}
-
-function getSeverityTagType(severity) {
-  const typeMap = {
-    Critical: 'danger',
-    Important: 'warning',
-    Moderate: 'primary',
-    Low: 'info'
-  }
-  return typeMap[severity] || 'info'
 }
 </script>
 
 <style scoped>
-.device-list-container {
-  display: block;
-  width: 100%;
+:global(.patch-assignment-drawer .el-drawer__header) {
+  flex-shrink: 0;
+  margin-bottom: 0;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
-
-.device-header {
+:global(.patch-assignment-drawer .el-drawer__body) {
   display: flex;
-  flex-wrap: nowrap;
+  flex-direction: column;
+  min-height: 0;
+  padding: 16px 24px;
+  overflow-y: auto;
+}
+:global(.patch-assignment-drawer .el-drawer__footer) {
+  flex-shrink: 0;
+  padding: 12px 24px;
+  border-top: 1px solid var(--el-border-color-lighter);
+}
+.assignment-metadata,
+.selected-patches,
+.reuse-panel {
+  flex-shrink: 0;
+}
+.assignment-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(320px, 28vw, 400px);
+  gap: 16px;
+  /* 复用区按内容占高，其余可用空间全部交给两张列表。 */
+  flex: 1;
+  min-height: 280px;
+}
+.patch-pane,
+.host-pane {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.patch-pane > .el-table,
+.host-pane > .el-table {
+  flex: 1;
+  min-height: 0;
+}
+.pane-toolbar {
+  display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+}
+.pane-toolbar .el-input {
+  flex: 1;
+  min-width: 140px;
+}
+.patch-filter-toolbar {
   gap: 12px;
-  margin-bottom: 8px;
 }
-
-.device-summary {
-  display: inline-flex;
-  align-items: center;
-  position: relative;
-  min-width: 80px;
-  height: 32px;
-  padding: 0 24px 0 12px;
-  font-size: 13px;
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 4px;
-  background: var(--el-bg-color);
-  cursor: pointer;
-  transition: border-color 0.15s;
+.patch-filter-toolbar > .el-button + .el-button {
+  margin-left: 0;
 }
-
-.device-summary:hover {
-  border-color: #409eff;
+.pane-toolbar strong {
+  overflow-wrap: anywhere;
 }
-
-.op-hover-trigger .op-hover-to-show {
-  opacity: 0;
-  transition: opacity 0.15s;
+.selected-patches {
+  margin-bottom: 12px;
 }
-
-.op-hover-trigger:hover .op-hover-to-show {
-  opacity: 1;
-}
-
-.clear-btn {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #909399;
-  cursor: pointer;
-}
-
-.clear-btn:hover {
-  color: #f56c6c;
-}
-
-.device-chip-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.selected-patch-list,
+.selected-hosts {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  max-height: calc(100vh - 500px);
+  max-height: 110px;
   overflow-y: auto;
+  padding: 8px 0;
 }
-
-.device-chip-item {
-  display: inline-block;
-  width: 100%;
-}
-
-.empty-state {
-  display: block;
-}
-
-.assign-patch-picker {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-height: 0;
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.picker-table-wrapper {
-  flex: 1;
-  min-height: 0;
-}
-
-.picker-pagination-wrapper {
-  margin-top: 0;
-  padding: 12px 16px;
-  border-top: 1px solid var(--el-border-color-lighter);
-  background: var(--el-bg-color);
-}
-
-.ops-filter-bar {
-  display: flex;
+.selected-patch {
+  display: inline-flex;
   align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  gap: 2px;
+  padding-right: 4px;
+  border: 1px solid var(--el-border-color);
+  border-radius: 6px;
+  background: var(--el-bg-color);
+  color: var(--el-text-color-regular);
+  transition:
+    border-color 0.15s,
+    background-color 0.15s;
 }
-
-.patch-assignment-card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
+.selected-patch:not(.is-disabled):hover {
+  border-color: var(--el-color-primary-light-5);
+}
+.selected-patch.is-active {
+  border-color: var(--el-color-primary-light-5);
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
+}
+.selected-patch.is-disabled {
+  opacity: 0.6;
+}
+.selected-patch-list {
+  column-gap: 12px;
+}
+.selected-patch > .patch-switch-button {
+  height: 30px;
+  margin: 0;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: inherit;
+  font-size: 13px;
+  font-weight: 500;
+}
+.selected-patch > .patch-switch-button:not(:disabled):hover {
+  background: transparent;
+  color: var(--el-color-primary);
+}
+.selected-patch > .remove-patch-button {
+  margin-left: 0;
+  width: 24px;
+  height: 24px;
+  padding: 5px;
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: var(--el-text-color-secondary);
+}
+.selected-patch > .remove-patch-button:hover:not(:disabled) {
+  background: var(--el-color-danger-light-9);
+  color: var(--el-color-danger);
+}
+.selected-patch > .el-button:focus-visible {
+  outline: 2px solid var(--el-color-primary);
+  outline-offset: -2px;
+}
+.selected-hosts {
+  padding: 0 12px;
+  flex-shrink: 0;
+}
+.selected-hosts > .el-tag {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+.selected-hosts :deep(.el-tag__content) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hint {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  margin: 8px 12px;
+}
+.reuse-panel {
+  margin-top: 12px;
   padding: 10px 12px;
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 6px;
-  background: var(--el-fill-color-blank);
 }
-
-.patch-assignment-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+.reuse-panel .hint {
+  margin: 4px 0 8px;
 }
-
-.patch-host-preview {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+.reuse-panel .el-checkbox-group {
+  max-height: 100px;
+  overflow-y: auto;
+  margin-bottom: 4px;
 }
-
-.host-preview-more {
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-  line-height: 24px;
+.reuse-panel .el-table {
+  margin: 8px 0;
 }
-
-.host-dialog-body {
-  min-height: 160px;
+.el-pagination {
+  padding: 12px;
+  overflow-x: auto;
+  flex-shrink: 0;
 }
-
-.host-dialog-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-  color: var(--el-text-color-secondary);
-  font-size: 13px;
-}
-
-.host-dialog-toolbar :deep(.el-input) {
-  margin-left: auto;
-}
-
-.host-dialog-pagination {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: 12px;
+@media (max-width: 1000px) {
+  .assignment-workspace {
+    grid-template-columns: minmax(0, 1fr);
+    flex: none;
+    height: auto;
+  }
+  .patch-pane,
+  .host-pane {
+    height: 400px;
+  }
 }
 </style>
