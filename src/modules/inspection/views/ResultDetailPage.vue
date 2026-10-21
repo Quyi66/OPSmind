@@ -341,6 +341,12 @@
           黑名单列表
         </el-button>
       </div>
+      <div v-if="inspectionRefreshFailed" role="alert">
+        检查项刷新失败，当前列表可能不是最新数据。
+        <el-button link type="primary" :disabled="inspectionDetailLoading" @click="retryInspection">
+          重试刷新
+        </el-button>
+      </div>
       <el-table
         v-loading="inspectionDetailLoading"
         :data="pagedInspectionData"
@@ -369,11 +375,18 @@
               v-if="!isInWhitelist(row)"
               type="primary"
               link
+              :disabled="inspectionDetailLoading || inspectionRefreshFailed"
               @click="handleAddToWhitelist(row)"
             >
               添加黑名单
             </el-button>
-            <el-button v-else type="danger" link @click="handleRemoveFromWhitelist(row)">
+            <el-button
+              v-else
+              type="danger"
+              link
+              :disabled="inspectionDetailLoading || inspectionRefreshFailed"
+              @click="handleRemoveFromWhitelist(row)"
+            >
               移出黑名单
             </el-button>
           </template>
@@ -468,7 +481,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { authService } from '@/core/auth'
@@ -529,7 +542,14 @@ const assetModelConfigVisible = ref(false)
 // 巡检项详情状态
 const selectedHost = ref(null)
 const inspectionDetailVisible = ref(false)
-const inspectionDetailLoading = ref(false)
+const inspectionReadLoading = ref(false)
+const inspectionMutationLoading = ref(false)
+const inspectionDetailLoading = computed(
+  () => inspectionReadLoading.value || inspectionMutationLoading.value
+)
+const inspectionRefreshFailed = ref(false)
+let inspectionSession = 0
+let inspectionRequest = 0
 const inspectionDetailData = ref([])
 const showWhitelistButton = ref(true)
 const inspectionSearchText = ref('')
@@ -593,30 +613,99 @@ function handleSelectionChange(selection) {
   selectedHostIds.value = selection.map(row => row.host_id)
 }
 
+function invalidateInspection() {
+  inspectionSession++
+  inspectionRequest++
+  inspectionReadLoading.value = false
+  inspectionMutationLoading.value = false
+  inspectionRefreshFailed.value = false
+}
+
+function inspectionContext() {
+  return {
+    session: inspectionSession,
+    jobId: jobId.value,
+    templateId: jobInfo.value.templateId,
+    routePath: route.fullPath,
+    hostKey: selectedHost.value?.host_key
+  }
+}
+
+function isCurrentInspection(context) {
+  return (
+    inspectionDetailVisible.value &&
+    context.session === inspectionSession &&
+    context.jobId === jobId.value &&
+    context.templateId === jobInfo.value.templateId &&
+    context.routePath === route.fullPath &&
+    context.hostKey === selectedHost.value?.host_key
+  )
+}
+
+watch(
+  () => [jobId.value, jobInfo.value.templateId, route.fullPath],
+  () => {
+    inspectionDetailVisible.value = false
+    invalidateInspection()
+  },
+  { flush: 'sync' }
+)
+watch(
+  inspectionDetailVisible,
+  visible => {
+    if (!visible) invalidateInspection()
+  },
+  { flush: 'sync' }
+)
+onBeforeUnmount(invalidateInspection)
+
 /**
  * 点击主机行，加载巡检项详情
  */
 async function handleHostClick(row) {
+  invalidateInspection()
   selectedHost.value = row
   inspectionDetailVisible.value = true
-  inspectionDetailLoading.value = true
   inspectionDetailData.value = []
   inspectionPage.value = 1 // 重置分页
   inspectionSearchText.value = ''
   inspectionResultFilter.value = ''
 
+  await refreshInspection(inspectionContext())
+}
+
+async function refreshInspection(context, afterMutation = false) {
+  if (!isCurrentInspection(context)) return
+  const request = ++inspectionRequest
+  const isCurrent = () => isCurrentInspection(context) && request === inspectionRequest
+  inspectionReadLoading.value = true
+  inspectionRefreshFailed.value = false
   try {
-    const response = await jobApi.getHostCheckItems(jobId.value, jobInfo.value.templateId)
+    const response = await jobApi.getHostCheckItems(context.jobId, context.templateId)
+    if (!isCurrent()) return
     const data = response?.data || response
     const allData = Array.isArray(data) ? data : []
     // 前端根据点击的主机名进行筛选
-    inspectionDetailData.value = allData.filter(item => item.hostKey === row.host_key)
+    inspectionDetailData.value = allData.filter(item => item.hostKey === context.hostKey)
+    const lastPage = Math.max(
+      1,
+      Math.ceil(filteredInspectionData.value.length / inspectionPageSize.value)
+    )
+    inspectionPage.value = Math.min(inspectionPage.value, lastPage)
   } catch (error) {
+    if (!isCurrent()) return
+    inspectionRefreshFailed.value = true
     console.error('加载巡检项详情失败:', error)
-    ElMessage.error('加载巡检项详情失败')
+    ElMessage.error(
+      afterMutation ? '黑名单操作已成功，但检查项刷新失败，请重试刷新' : '加载巡检项详情失败'
+    )
   } finally {
-    inspectionDetailLoading.value = false
+    if (isCurrent()) inspectionReadLoading.value = false
   }
+}
+
+function retryInspection() {
+  return refreshInspection(inspectionContext())
 }
 
 /**
@@ -628,59 +717,68 @@ const isInWhitelist = item => {
 }
 
 async function handleAddToWhitelist(item) {
-  if (!item) return
+  if (!item || inspectionDetailLoading.value || inspectionRefreshFailed.value) return
+  const context = inspectionContext()
+  if (!isCurrentInspection(context)) return
+  const payload = {
+    templateId: jobInfo.value.templateId,
+    templateName: jobInfo.value.templateName,
+    scriptPath: getScriptPath(),
+    hostId: item.hostId,
+    hostKey: item.hostKey,
+    checkName: item.name
+  }
+  inspectionMutationLoading.value = true
 
   try {
     await ElMessageBox.confirm('确定要将此检查项添加到黑名单吗？', '确认')
-    inspectionDetailLoading.value = true
+    if (!isCurrentInspection(context)) return
 
-    await whitelistApi.saveWhitelist({
-      templateId: jobInfo.value.templateId,
-      templateName: jobInfo.value.templateName,
-      scriptPath: getScriptPath(),
-      hostId: item.hostId,
-      hostKey: item.hostKey,
-      checkName: item.name
-    })
+    await whitelistApi.saveWhitelist(payload)
+    if (!isCurrentInspection(context)) return
 
     ElMessage.success('添加黑名单成功')
-    handleWhitelistChanged()
+    loadStatistics(() => isCurrentInspection(context))
+    await refreshInspection(context, true)
   } catch (e) {
-    if (e !== 'cancel') {
+    if (isCurrentInspection(context) && e !== 'cancel' && e !== 'close') {
       console.error('添加黑名单失败:', e)
       ElMessage.error('添加黑名单失败')
     }
   } finally {
-    inspectionDetailLoading.value = false
+    if (isCurrentInspection(context)) inspectionMutationLoading.value = false
   }
 }
 
 async function handleRemoveFromWhitelist(item) {
-  if (!item) return
+  if (!item || inspectionDetailLoading.value || inspectionRefreshFailed.value) return
+  const context = inspectionContext()
+  if (!isCurrentInspection(context)) return
+  const whitelistId = item.whetherWhiteList?.startsWith('y,')
+    ? item.whetherWhiteList.split(',')[1]
+    : ''
+  inspectionMutationLoading.value = true
 
   try {
     await ElMessageBox.confirm('确定要将此检查项从黑名单移除吗？', '确认')
-    inspectionDetailLoading.value = true
-
-    let whitelistId = ''
-    if (item.whetherWhiteList && item.whetherWhiteList.startsWith('y,')) {
-      whitelistId = item.whetherWhiteList.split(',')[1]
-    }
+    if (!isCurrentInspection(context)) return
 
     if (whitelistId) {
       await whitelistApi.deleteWhitelist(whitelistId)
+      if (!isCurrentInspection(context)) return
       ElMessage.success('移除黑名单成功')
-      handleWhitelistChanged()
+      loadStatistics(() => isCurrentInspection(context))
+      await refreshInspection(context, true)
     } else {
       ElMessage.error('无法获取黑名单ID')
     }
   } catch (e) {
-    if (e !== 'cancel') {
+    if (isCurrentInspection(context) && e !== 'cancel' && e !== 'close') {
       console.error('移除黑名单失败:', e)
       ElMessage.error('移除黑名单失败')
     }
   } finally {
-    inspectionDetailLoading.value = false
+    if (isCurrentInspection(context)) inspectionMutationLoading.value = false
   }
 }
 

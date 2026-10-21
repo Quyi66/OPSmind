@@ -272,6 +272,7 @@ function openHostSelector() {
  * 脚本选择确认
  */
 function handleScriptConfirm(scripts) {
+  if (!props.visible || !scriptSelectorVisible.value) return
   formData.value.scripts = scripts.map(s => ({
     scriptPath: s.scriptPath || s.path,
     scriptName: s.scriptName || s.name || s.path,
@@ -408,6 +409,7 @@ async function handleSave() {
  * 弹窗显示状态变化
  */
 function handleVisibleChange(val) {
+  if (!val) scriptSelectorVisible.value = false
   emit('update:visible', val)
 }
 
@@ -423,6 +425,7 @@ function handleClose() {
  * 重置表单
  */
 function resetForm() {
+  scriptSelectorVisible.value = false
   formData.value = {
     templateName: '',
     description: '',
@@ -435,6 +438,15 @@ function resetForm() {
   iconSearch.value = ''
   hostFilter.value = ''
 }
+
+// 主表单关闭或切换模板后，不再接收旧选择器的确认。
+watch(
+  () => [props.visible, props.templateId],
+  () => {
+    scriptSelectorVisible.value = false
+  },
+  { flush: 'sync' }
+)
 
 // 监听 visible 变化
 watch(

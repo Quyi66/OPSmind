@@ -1,7 +1,7 @@
 /**
  * 结果详情页面数据加载 Composable
  */
-import { ref } from 'vue'
+import { ref, watch, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import { jobApi, dtsApi, whitelistApi } from '../api'
 import { parseAuditParams } from '../utils/helpers'
@@ -16,6 +16,13 @@ export function useResultDetailData() {
   // 任务信息
   const jobId = ref('')
   const jobInfo = ref({})
+  let statisticsRequest = 0
+  const invalidateStatistics = () => {
+    statisticsRequest++
+    statsLoading.value = false
+  }
+  watch(jobId, invalidateStatistics, { flush: 'sync' })
+  onBeforeUnmount(invalidateStatistics)
   const hostList = ref([])
   const scriptList = ref([])
 
@@ -67,10 +74,15 @@ export function useResultDetailData() {
   /**
    * 加载统计数据
    */
-  async function loadStatistics() {
+  async function loadStatistics(isContextCurrent = () => true) {
+    const request = ++statisticsRequest
+    const currentJobId = jobId.value
+    const isCurrent = () =>
+      request === statisticsRequest && currentJobId === jobId.value && isContextCurrent()
     statsLoading.value = true
     try {
-      const res = await dtsApi.getStatistics(jobId.value)
+      const res = await dtsApi.getStatistics(currentJobId)
+      if (!isCurrent()) return
       const data = res?.data || res || {}
       const records = data.records || []
 
@@ -92,9 +104,9 @@ export function useResultDetailData() {
 
       statistics.value = newStats
     } catch (error) {
-      console.error('加载统计数据失败:', error)
+      if (isCurrent()) console.error('加载统计数据失败:', error)
     } finally {
-      statsLoading.value = false
+      if (request === statisticsRequest) statsLoading.value = false
     }
   }
 

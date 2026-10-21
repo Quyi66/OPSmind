@@ -31,6 +31,11 @@
         />
       </div>
 
+      <div v-if="loadFailed" role="alert">
+        文件列表加载失败，请重试后确认。
+        <el-button link type="primary" @click="loadFiles">重试</el-button>
+      </div>
+
       <!-- 文件列表表格 -->
       <div class="file-table-wrapper">
         <table class="file-table" v-loading="loading">
@@ -109,7 +114,11 @@
 
     <template #footer>
       <el-button @click="dialogVisible = false">取消</el-button>
-      <el-button type="primary" :disabled="selectedFiles.length === 0" @click="handleConfirm">
+      <el-button
+        type="primary"
+        :disabled="loading || loadFailed || selectedFiles.length === 0"
+        @click="handleConfirm"
+      >
         确定
       </el-button>
     </template>
@@ -117,7 +126,8 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
+import { ElMessage } from 'element-plus'
 import { apiService } from '@/core/api'
 import { Search } from '@element-plus/icons-vue'
 
@@ -140,6 +150,10 @@ const dialogVisible = computed({
 })
 
 const loading = ref(false)
+const loadFailed = ref(false)
+let requestId = 0
+let active = true
+let originalSelection = []
 const searchKeyword = ref('')
 const currentPath = ref('')
 const files = ref([])
@@ -235,18 +249,25 @@ function isSelected(file) {
  * 切换选择
  */
 function toggleSelect(file) {
-  if (file.isDirectory) return
+  if (!active || !props.visible || loading.value || loadFailed.value || file.isDirectory) return
 
   const index = selectedFiles.value.findIndex(f => f.path === file.path)
   if (index > -1) {
     selectedFiles.value.splice(index, 1)
   } else {
+    const originals = originalSelection.filter(s => (s.scriptPath || s.path) === file.path)
+    if (originals.length > 1) {
+      ElMessage.warning('该脚本存在多份原配置，请取消选择并在原表单中确认要保留的配置')
+      return
+    }
     // 单选模式
     selectedFiles.value = [
       {
         ...file,
+        ...originals[0],
+        path: file.path,
         scriptPath: file.path,
-        scriptName: file.name
+        scriptName: originals[0]?.scriptName || file.name
       }
     ]
   }
@@ -257,15 +278,20 @@ function toggleSelect(file) {
  * API: /gfs/api/gfs/v2/git/r/$tnt/dir/{path}
  */
 async function loadFiles() {
+  const request = ++requestId
+  const path = currentPath.value
+  const isCurrent = () => active && props.visible && request === requestId
   loading.value = true
+  loadFailed.value = false
   try {
     // 调用 GFS 文件列表 API - 使用 v2 版本，git 类型
-    const dirPath = currentPath.value ? `/${currentPath.value}` : '/'
+    const dirPath = path ? `/${path}` : '/'
     const response = await apiService.get(`/gfs/api/gfs/v2/git/r/$tnt/dir${dirPath}`, {
       params: {
         useStage: true
       }
     })
+    if (!isCurrent()) return
     const data = response?.data || response || []
 
     // 处理文件列表
@@ -295,7 +321,7 @@ async function loadFiles() {
 
       return {
         name: f.name || f.fileName,
-        path: f.path || `${currentPath.value}/${f.name}`.replace(/^\/+/, ''),
+        path: f.path || `${path}/${f.name}`.replace(/^\/+/, ''),
         isDirectory: isDir,
         size: f.size || 0,
         lastModified: f.lastModified,
@@ -305,10 +331,12 @@ async function loadFiles() {
     })
     currentPage.value = 1
   } catch (error) {
+    if (!isCurrent()) return
     console.error('Failed to load files:', error)
     files.value = []
+    loadFailed.value = true
   } finally {
-    loading.value = false
+    if (isCurrent()) loading.value = false
   }
 }
 
@@ -358,6 +386,15 @@ function navigateTo(index) {
  * 确认选择
  */
 function handleConfirm() {
+  if (
+    !active ||
+    !props.visible ||
+    loading.value ||
+    loadFailed.value ||
+    !selectedFiles.value.length
+  ) {
+    return
+  }
   emit('confirm', selectedFiles.value)
   dialogVisible.value = false
 }
@@ -367,8 +404,10 @@ watch(
   () => props.visible,
   val => {
     if (val) {
+      originalSelection = props.selected.map(s => ({ ...s }))
       // 初始化已选文件
       selectedFiles.value = props.selected.map(s => ({
+        ...s,
         name: s.scriptName || s.scriptPath?.split('/').pop() || '',
         path: s.scriptPath || s.path,
         scriptPath: s.scriptPath || s.path,
@@ -377,10 +416,21 @@ watch(
       currentPath.value = ''
       searchKeyword.value = ''
       currentPage.value = 1
+      files.value = []
       loadFiles()
+    } else {
+      requestId++
+      loading.value = false
+      loadFailed.value = false
+      originalSelection = []
+      selectedFiles.value = []
     }
   }
 )
+onBeforeUnmount(() => {
+  active = false
+  requestId++
+})
 </script>
 
 <style scoped lang="scss">
