@@ -21,8 +21,30 @@
         show-icon
       />
       <template v-else-if="result">
-        <section v-for="group in groups" :key="group.key" class="failed-host-group">
-          <h3>{{ group.label }}（{{ group.rows.length }}）</h3>
+        <div class="failed-host-filters" role="search" aria-label="筛选当前任务主机清单">
+          <el-input
+            v-model="keyword"
+            class="failed-host-search"
+            size="small"
+            placeholder="搜索主机/IP或原因"
+            aria-label="搜索主机/IP或原因"
+            clearable
+          />
+          <el-select
+            v-model="selectedGroup"
+            class="failed-host-category"
+            size="small"
+            aria-label="主机分类"
+          >
+            <el-option label="全部分类" value="all" />
+            <el-option label="预检失败" value="preCheckFailed" />
+            <el-option label="安装失败" value="installFailed" />
+            <el-option label="未下发（无可更新包）" value="skipped" />
+          </el-select>
+          <el-button size="small" :disabled="!hasFilters" @click="clearFilters">清除筛选</el-button>
+        </div>
+        <section v-for="group in filteredGroups" :key="group.key" class="failed-host-group">
+          <h3>{{ group.label }}（显示 {{ group.rows.length }} / 共 {{ group.total }}）</h3>
           <p v-if="group.key === 'skipped'" class="skipped-host-hint">
             未下发主机不计入失败，不参与重新建任务。
           </p>
@@ -30,7 +52,13 @@
             :data="group.rows"
             max-height="260"
             size="small"
-            :empty-text="group.key === 'skipped' ? '暂无未下发主机' : '暂无失败主机'"
+            :empty-text="
+              group.total > 0
+                ? '未匹配到主机或原因，请调整或清除筛选'
+                : group.key === 'skipped'
+                  ? '暂无未下发主机'
+                  : '暂无失败主机'
+            "
           >
             <el-table-column prop="hostKey" label="主机" min-width="160">
               <template #default="{ row }">{{ row.hostKey || '-' }}</template>
@@ -66,6 +94,8 @@ const emit = defineEmits(['update:modelValue'])
 const loading = ref(false)
 const result = ref(null)
 const errorMessage = ref('')
+const keyword = ref('')
+const selectedGroup = ref('all')
 let requestId = 0
 
 const failureGroups = computed(() => [
@@ -76,6 +106,23 @@ const groups = computed(() => [
   ...failureGroups.value,
   { key: 'skipped', label: '未下发（无可更新包）', rows: result.value?.skipped || [] }
 ])
+const searchTerm = computed(() => keyword.value.trim().toLowerCase())
+const hasFilters = computed(() => Boolean(searchTerm.value) || selectedGroup.value !== 'all')
+const filteredGroups = computed(() =>
+  groups.value
+    .filter(group => selectedGroup.value === 'all' || group.key === selectedGroup.value)
+    .map(group => ({
+      ...group,
+      total: group.rows.length,
+      rows: group.rows.filter(row =>
+        [row.hostKey, row.reason].some(value =>
+          String(value ?? '')
+            .toLowerCase()
+            .includes(searchTerm.value)
+        )
+      )
+    }))
+)
 const failedHostCount = computed(() => {
   const ids = result.value?.failedHostIds
   if (Array.isArray(ids)) return new Set(ids).size
@@ -83,6 +130,11 @@ const failedHostCount = computed(() => {
     failureGroups.value.flatMap(group => group.rows.map(row => row.hostId)).filter(Boolean)
   ).size
 })
+
+function clearFilters() {
+  keyword.value = ''
+  selectedGroup.value = 'all'
+}
 
 async function load() {
   const id = ++requestId
@@ -114,6 +166,7 @@ watch(
     loading.value = false
     result.value = null
     errorMessage.value = ''
+    clearFilters()
     if (visible) load()
   },
   { immediate: true }
@@ -126,6 +179,20 @@ onBeforeUnmount(() => {
 <style scoped>
 .action-spacer {
   flex: 1;
+}
+.failed-host-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.failed-host-search {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+.failed-host-category {
+  width: 200px;
+  max-width: 100%;
 }
 .failed-host-group {
   margin-top: 16px;
