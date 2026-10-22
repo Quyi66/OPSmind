@@ -121,7 +121,7 @@ function handleSelectionChange(selection) {
 function handleDownloadTemplate() {
   // 下载模板文件（位于 public/templates/vap/ 目录）
   const link = document.createElement('a')
-  link.href = '/templates/vap/vap_repo_template.xlsx'
+  link.href = `${import.meta.env.BASE_URL}templates/vap/vap_repo_template.xlsx`
   link.download = 'vap_repo_template.xlsx'
   document.body.appendChild(link)
   link.click()

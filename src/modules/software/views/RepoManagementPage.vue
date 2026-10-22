@@ -58,10 +58,18 @@
             <i class="fa fa-cogs" style="margin-right: 4px"></i>
             配置到主机
           </el-button>
-          <el-button size="small" :disabled="!repoDefaultHosts" @click="handleRescanRepoInfo">
-            <i class="fa fa-undo-alt" style="margin-right: 4px"></i>
-            重新扫描仓库信息
-          </el-button>
+          <el-tooltip
+            content="当前页面暂不支持重新扫描仓库信息"
+            placement="top"
+            :trigger="['hover', 'focus']"
+          >
+            <span class="unavailable-action" tabindex="0" aria-label="重新扫描仓库信息暂不可用">
+              <el-button size="small" disabled @click="handleRescanRepoInfo">
+                <i class="fa fa-undo-alt" style="margin-right: 4px"></i>
+                重新扫描仓库信息
+              </el-button>
+            </span>
+          </el-tooltip>
           <span style="flex: 1"></span>
           <el-button
             class="toolbar-icon-btn"
@@ -204,7 +212,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import { repoApi } from '../api'
 import BaseHostTab from '../components/repo/BaseHostTab.vue'
@@ -337,14 +345,8 @@ function handleConfigSuccess() {
 }
 
 function handleRescanRepoInfo() {
-  ElMessageBox.confirm('确定要重新扫描仓库信息吗？', '确认', {
-    type: 'warning'
-  })
-    .then(() => {
-      // TODO: 调用重新扫描 API
-      ElMessage.success('已提交扫描任务')
-    })
-    .catch(() => {})
+  // 独立仓库扫描的作业与参数尚未核实，不能仅凭旧封装下发任务。
+  ElMessage.warning('当前页面暂不支持重新扫描仓库信息，未提交扫描任务')
 }
 
 onMounted(() => {
@@ -358,6 +360,10 @@ onMounted(() => {
 
 .repo-management-page {
   min-width: 0;
+}
+
+.unavailable-action {
+  display: inline-flex;
 }
 
 .repo-content {

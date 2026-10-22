@@ -102,22 +102,30 @@
   @include row-actions;
 }
 
-@mixin detail-dialog {
+// Element's teleported dialog shell does not inherit the caller's scope attribute.
+// Include only under the unique software dialog class in an unscoped style block.
+@mixin detail-shell {
   display: flex;
   flex-direction: column;
   max-height: calc(100vh - 32px);
   margin: 16px auto;
 
-  :deep(.el-dialog__header),
-  :deep(.el-dialog__footer) {
+  .el-dialog__header,
+  .el-dialog__footer {
     flex-shrink: 0;
   }
 
-  :deep(.el-dialog__body) {
+  .el-dialog__body {
     min-height: 0;
     overflow-y: auto;
   }
 
+  .el-dialog__title {
+    overflow-wrap: anywhere;
+  }
+}
+
+@mixin detail-dialog {
   @include toolbar;
   @include pagination;
   @include cell-links;

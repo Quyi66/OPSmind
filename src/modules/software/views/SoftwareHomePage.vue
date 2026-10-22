@@ -266,7 +266,7 @@ onMounted(() => {
 }
 
 .kpi-card {
-  flex: 1 1 200px;
+  flex: 1 1 240px;
   min-width: 0;
   position: relative;
   padding: 12px 16px; /* Reduced from 20px 24px */
@@ -328,6 +328,7 @@ onMounted(() => {
   }
 
   .kpi-value {
+    overflow-wrap: anywhere;
     font-size: 24px; /* Reduced from 36px */
     font-weight: 700;
     line-height: 1.2;

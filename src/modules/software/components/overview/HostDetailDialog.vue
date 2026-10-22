@@ -281,7 +281,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, watch, onBeforeUnmount } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { hostOverviewApi } from '../../api'
 import { useJobPolling } from '@/composables/useJobPolling'
@@ -306,7 +306,35 @@ const emit = defineEmits(['update:modelValue', 'refresh'])
 const dialogVisible = ref(false)
 const activeTab = ref('repos')
 const repoActionLoading = ref({})
-const { startPolling } = useJobPolling()
+const { startPolling, stopPolling } = useJobPolling()
+let contextVersion = 0
+let mounted = true
+const requestVersions = {}
+
+function captureContext() {
+  return { version: contextVersion, hostId: props.hostId }
+}
+
+function isContextCurrent(context) {
+  return (
+    mounted &&
+    props.modelValue &&
+    dialogVisible.value &&
+    !!context.hostId &&
+    context.version === contextVersion &&
+    context.hostId === props.hostId
+  )
+}
+
+function beginRead(kind) {
+  const context = captureContext()
+  const version = (requestVersions[kind] || 0) + 1
+  requestVersions[kind] = version
+  return {
+    hostId: context.hostId,
+    isCurrent: () => isContextCurrent(context) && requestVersions[kind] === version
+  }
+}
 
 // 主机信息
 const machineInfo = ref({
@@ -393,6 +421,65 @@ function isInstalledActionLoading(row, index) {
   return !!installedActionLoading.value[loadingKey]
 }
 
+// Keep delayed polling callbacks and messages attached to the original opening/host.
+function startHostPolling(context, runId, options) {
+  if (!isContextCurrent(context)) return
+  startPolling(runId, {
+    ...options,
+    showMessage: false,
+    onSuccess: result => {
+      if (!isContextCurrent(context)) return
+      ElMessage.success(options.successMessage)
+      options.onSuccess?.(result)
+    },
+    onError: result => {
+      if (!isContextCurrent(context)) return
+      ElMessage.error(
+        result instanceof Error ? '获取任务状态失败' : result?.error || options.errorMessage
+      )
+    },
+    onComplete: result => {
+      if (isContextCurrent(context)) options.onComplete?.(result)
+    }
+  })
+}
+
+function invalidateContext() {
+  contextVersion += 1
+  stopPolling()
+}
+
+function resetHostState() {
+  machineInfo.value = {
+    os_distro: '',
+    os_version: '',
+    yum_count: 0,
+    installed_count: 0,
+    scan_date: null
+  }
+  reposData.value = []
+  availableData.value = []
+  installedData.value = []
+  selectedAvailablePackages.value = []
+  selectedInstalledPackages.value = []
+  for (const pagination of [reposPagination, availablePagination, installedPagination]) {
+    pagination.page = 1
+    pagination.total = 0
+  }
+  reposLoading.value = availableLoading.value = installedLoading.value = false
+  uninstallSelectedLoading.value =
+    upgradeSelectedLoading.value =
+    rollbackSelectedLoading.value =
+      false
+  repoActionLoading.value = {}
+  installedActionLoading.value = {}
+}
+
+onBeforeUnmount(() => {
+  mounted = false
+  invalidateContext()
+})
+
 // 格式化日期
 function formatDate(timestamp) {
   if (!timestamp) return '-'
@@ -408,82 +495,94 @@ function formatDate(timestamp) {
 
 // 加载主机信息
 async function loadMachineInfo() {
-  if (!props.hostId) return
+  const request = beginRead('info')
+  if (!request.isCurrent()) return
   try {
-    const response = await hostOverviewApi.getMachineInfo(props.hostId)
+    const response = await hostOverviewApi.getMachineInfo(request.hostId)
+    if (!request.isCurrent()) return
     const data = response?.data || response
     if (data?.records?.[0]) {
       machineInfo.value = data.records[0]
     }
   } catch (error) {
+    if (!request.isCurrent()) return
     console.error('Failed to load machine info:', error)
   }
 }
 
 // 加载仓库列表
 async function loadRepos() {
-  if (!props.hostId) return
+  const request = beginRead('repos')
+  if (!request.isCurrent()) return
   reposLoading.value = true
   try {
     const response = await hostOverviewApi.getMachineRepos({
-      hostId: props.hostId,
+      hostId: request.hostId,
       repoStatus: repoStatus.value.join(','),
       page: reposPagination.page,
       size: reposPagination.size
     })
+    if (!request.isCurrent()) return
     const data = response?.data || response
     reposData.value = data?.records || []
     reposPagination.total = data?.total || 0
   } catch (error) {
+    if (!request.isCurrent()) return
     console.error('Failed to load repos:', error)
     reposData.value = []
     reposPagination.total = 0
   } finally {
-    reposLoading.value = false
+    if (request.isCurrent()) reposLoading.value = false
   }
 }
 
 // 加载可用软件包
 async function loadAvailablePackages() {
-  if (!props.hostId) return
+  const request = beginRead('available')
+  if (!request.isCurrent()) return
   availableLoading.value = true
   try {
     const response = await hostOverviewApi.getMachineAvailablePackages({
-      hostId: props.hostId,
+      hostId: request.hostId,
       page: availablePagination.page,
       size: availablePagination.size
     })
+    if (!request.isCurrent()) return
     const data = response?.data || response
     availableData.value = data?.records || []
     availablePagination.total = data?.total || 0
   } catch (error) {
+    if (!request.isCurrent()) return
     console.error('Failed to load available packages:', error)
     availableData.value = []
     availablePagination.total = 0
   } finally {
-    availableLoading.value = false
+    if (request.isCurrent()) availableLoading.value = false
   }
 }
 
 // 加载已安装软件包
 async function loadInstalledPackages() {
-  if (!props.hostId) return
+  const request = beginRead('installed')
+  if (!request.isCurrent()) return
   installedLoading.value = true
   try {
     const response = await hostOverviewApi.getMachineInstalledPackages({
-      hostId: props.hostId,
+      hostId: request.hostId,
       page: installedPagination.page,
       size: installedPagination.size
     })
+    if (!request.isCurrent()) return
     const data = response?.data || response
     installedData.value = data?.records || []
     installedPagination.total = data?.total || 0
   } catch (error) {
+    if (!request.isCurrent()) return
     console.error('Failed to load installed packages:', error)
     installedData.value = []
     installedPagination.total = 0
   } finally {
-    installedLoading.value = false
+    if (request.isCurrent()) installedLoading.value = false
   }
 }
 
@@ -501,24 +600,29 @@ function handleTabChange(tabName) {
 // 启用仓库
 async function handleEnableRepo(row, index) {
   const { repoId, loadingKey } = resolveRepoKeys(row, index)
+  const context = captureContext()
+  if (!isContextCurrent(context)) return
+  const payload = {
+    repoName: repoId,
+    repoStatus: 'yes',
+    hostId: context.hostId,
+    repoUrl: row.repo_baseurl,
+    repoDesc: row.repo_name,
+    repoFile: row.repo_file
+  }
   try {
     await ElMessageBox.confirm('确认启用该镜像源？', '确认', { type: 'info' })
+    if (!isContextCurrent(context)) return
     setRepoActionLoading(loadingKey, true)
 
-    const response = await hostOverviewApi.toggleRepoStatus({
-      repoName: repoId,
-      repoStatus: 'yes',
-      hostId: props.hostId,
-      repoUrl: row.repo_baseurl,
-      repoDesc: row.repo_name,
-      repoFile: row.repo_file
-    })
+    const response = await hostOverviewApi.toggleRepoStatus(payload)
+    if (!isContextCurrent(context)) return
 
     const data = response?.data ?? response
     const runResult = Array.isArray(data) ? data[0] : data
 
     if (runResult?.runId) {
-      startPolling(runResult.runId, {
+      startHostPolling(context, runResult.runId, {
         interval: 1000,
         successMessage: '启用成功',
         errorMessage: '启用失败',
@@ -535,8 +639,9 @@ async function handleEnableRepo(row, index) {
       setRepoActionLoading(loadingKey, false)
     }
   } catch (error) {
+    if (!isContextCurrent(context)) return
     setRepoActionLoading(loadingKey, false)
-    if (error !== 'cancel') {
+    if (error !== 'cancel' && error !== 'close') {
       ElMessage.error('启用失败')
     }
   }
@@ -545,24 +650,29 @@ async function handleEnableRepo(row, index) {
 // 禁用仓库
 async function handleDisableRepo(row, index) {
   const { repoId, loadingKey } = resolveRepoKeys(row, index)
+  const context = captureContext()
+  if (!isContextCurrent(context)) return
+  const payload = {
+    repoName: repoId,
+    repoStatus: 'no',
+    hostId: context.hostId,
+    repoUrl: row.repo_baseurl,
+    repoDesc: row.repo_name,
+    repoFile: row.repo_file
+  }
   try {
     await ElMessageBox.confirm('确认禁用该镜像源？', '确认', { type: 'warning' })
+    if (!isContextCurrent(context)) return
     setRepoActionLoading(loadingKey, true)
 
-    const response = await hostOverviewApi.toggleRepoStatus({
-      repoName: repoId,
-      repoStatus: 'no',
-      hostId: props.hostId,
-      repoUrl: row.repo_baseurl,
-      repoDesc: row.repo_name,
-      repoFile: row.repo_file
-    })
+    const response = await hostOverviewApi.toggleRepoStatus(payload)
+    if (!isContextCurrent(context)) return
 
     const data = response?.data ?? response
     const runResult = Array.isArray(data) ? data[0] : data
 
     if (runResult?.runId) {
-      startPolling(runResult.runId, {
+      startHostPolling(context, runResult.runId, {
         interval: 1000,
         successMessage: '禁用成功',
         errorMessage: '禁用失败',
@@ -579,8 +689,9 @@ async function handleDisableRepo(row, index) {
       setRepoActionLoading(loadingKey, false)
     }
   } catch (error) {
+    if (!isContextCurrent(context)) return
     setRepoActionLoading(loadingKey, false)
-    if (error !== 'cancel') {
+    if (error !== 'cancel' && error !== 'close') {
       ElMessage.error('禁用失败')
     }
   }
@@ -588,17 +699,23 @@ async function handleDisableRepo(row, index) {
 
 // 删除仓库
 async function handleDeleteRepo(row) {
+  const context = captureContext()
+  if (!isContextCurrent(context)) return
+  const payload = {
+    repoName: row.refid,
+    hostId: context.hostId,
+    repoFile: row.repo_file
+  }
   try {
     await ElMessageBox.confirm('确认删除该仓库？', '确认删除', { type: 'warning' })
-    await hostOverviewApi.deleteHostRepo({
-      repoName: row.refid,
-      hostId: props.hostId,
-      repoFile: row.repo_file
-    })
+    if (!isContextCurrent(context)) return
+    await hostOverviewApi.deleteHostRepo(payload)
+    if (!isContextCurrent(context)) return
     ElMessage.success('删除成功')
     loadRepos()
   } catch (error) {
-    if (error !== 'cancel') {
+    if (!isContextCurrent(context)) return
+    if (error !== 'cancel' && error !== 'close') {
       ElMessage.error('删除失败')
     }
   }
@@ -606,25 +723,36 @@ async function handleDeleteRepo(row) {
 
 // 关闭弹窗
 function handleClose() {
-  emit('update:modelValue', false)
+  dialogVisible.value = false
 }
 
 // 监听显示状态
 watch(
-  () => props.modelValue,
-  val => {
+  () => [props.modelValue, props.hostId],
+  ([val]) => {
+    invalidateContext()
+    resetHostState()
     dialogVisible.value = val
     if (val && props.hostId) {
       activeTab.value = 'repos'
       loadMachineInfo()
       loadRepos()
     }
-  }
+  },
+  { immediate: true, flush: 'sync' }
 )
 
-watch(dialogVisible, val => {
-  emit('update:modelValue', val)
-})
+watch(
+  dialogVisible,
+  val => {
+    if (!val) {
+      invalidateContext()
+      resetHostState()
+    }
+    if (val !== props.modelValue) emit('update:modelValue', val)
+  },
+  { flush: 'sync' }
+)
 
 // 可用软件包选择变更
 function handleAvailableSelectionChange(selection) {
@@ -639,16 +767,22 @@ function handleInstalledSelectionChange(selection) {
 // 安装选中的软件包
 async function handleInstallSelected() {
   const pkgNames = selectedAvailablePackages.value.map(pkg => pkg.pkg_name).join(',')
+  const context = captureContext()
+  if (!isContextCurrent(context)) return
+  const payload = {
+    installPkgs: pkgNames,
+    hostId: context.hostId
+  }
   try {
     await ElMessageBox.confirm('确认安装选中的软件包？', '确认', { type: 'info' })
-    await hostOverviewApi.installPackages({
-      installPkgs: pkgNames,
-      hostId: props.hostId
-    })
+    if (!isContextCurrent(context)) return
+    await hostOverviewApi.installPackages(payload)
+    if (!isContextCurrent(context)) return
     ElMessage.success('安装任务已提交')
     loadAvailablePackages()
   } catch (error) {
-    if (error !== 'cancel') {
+    if (!isContextCurrent(context)) return
+    if (error !== 'cancel' && error !== 'close') {
       ElMessage.error('安装失败')
     }
   }
@@ -657,20 +791,25 @@ async function handleInstallSelected() {
 // 卸载选中的软件包
 async function handleUninstallSelected() {
   const pkgNames = selectedInstalledPackages.value.map(pkg => pkg.pkg_name).join(',')
+  const context = captureContext()
+  if (!isContextCurrent(context)) return
+  const payload = {
+    pkgList: pkgNames,
+    hostId: context.hostId
+  }
   try {
     await ElMessageBox.confirm('确认卸载选中的软件包？', '确认', { type: 'warning' })
+    if (!isContextCurrent(context)) return
     uninstallSelectedLoading.value = true
 
-    const response = await hostOverviewApi.uninstallPackages({
-      pkgList: pkgNames,
-      hostId: props.hostId
-    })
+    const response = await hostOverviewApi.uninstallPackages(payload)
+    if (!isContextCurrent(context)) return
 
     const data = response?.data ?? response
     const runResult = Array.isArray(data) ? data[0] : data
 
     if (runResult?.runId) {
-      startPolling(runResult.runId, {
+      startHostPolling(context, runResult.runId, {
         interval: 2000,
         successMessage: '卸载成功',
         errorMessage: '卸载失败',
@@ -687,8 +826,9 @@ async function handleUninstallSelected() {
       uninstallSelectedLoading.value = false
     }
   } catch (error) {
+    if (!isContextCurrent(context)) return
     uninstallSelectedLoading.value = false
-    if (error !== 'cancel') {
+    if (error !== 'cancel' && error !== 'close') {
       ElMessage.error('卸载失败')
     }
   }
@@ -697,20 +837,25 @@ async function handleUninstallSelected() {
 // 升级选中的软件包
 async function handleUpgradeSelected() {
   const pkgNames = selectedInstalledPackages.value.map(pkg => pkg.pkg_name).join(',')
+  const context = captureContext()
+  if (!isContextCurrent(context)) return
+  const payload = {
+    updatePkgs: pkgNames,
+    hostId: context.hostId
+  }
   try {
     await ElMessageBox.confirm('确认升级选中的软件包？', '确认', { type: 'info' })
+    if (!isContextCurrent(context)) return
     upgradeSelectedLoading.value = true
 
-    const response = await hostOverviewApi.upgradePackages({
-      updatePkgs: pkgNames,
-      hostId: props.hostId
-    })
+    const response = await hostOverviewApi.upgradePackages(payload)
+    if (!isContextCurrent(context)) return
 
     const data = response?.data ?? response
     const runResult = Array.isArray(data) ? data[0] : data
 
     if (runResult?.runId) {
-      startPolling(runResult.runId, {
+      startHostPolling(context, runResult.runId, {
         interval: 2000,
         successMessage: '升级成功',
         errorMessage: '升级失败',
@@ -727,8 +872,9 @@ async function handleUpgradeSelected() {
       upgradeSelectedLoading.value = false
     }
   } catch (error) {
+    if (!isContextCurrent(context)) return
     upgradeSelectedLoading.value = false
-    if (error !== 'cancel') {
+    if (error !== 'cancel' && error !== 'close') {
       ElMessage.error('升级失败')
     }
   }
@@ -737,36 +883,50 @@ async function handleUpgradeSelected() {
 // 回滚选中的软件包
 async function handleRollbackSelected() {
   const pkgNames = selectedInstalledPackages.value.map(pkg => pkg.pkg_name).join(',')
+  const context = captureContext()
+  if (!isContextCurrent(context)) return
+  const payload = {
+    updatePkgs: pkgNames,
+    hostId: context.hostId
+  }
   try {
     await ElMessageBox.confirm('确认回滚选中的软件包？', '确认', { type: 'warning' })
+    if (!isContextCurrent(context)) return
     rollbackSelectedLoading.value = true
-    await hostOverviewApi.rollbackPackages({
-      updatePkgs: pkgNames,
-      hostId: props.hostId
-    })
+    await hostOverviewApi.rollbackPackages(payload)
+    if (!isContextCurrent(context)) return
     ElMessage.success('回滚任务已提交')
     loadInstalledPackages()
   } catch (error) {
-    if (error !== 'cancel') {
+    if (!isContextCurrent(context)) return
+    if (error !== 'cancel' && error !== 'close') {
       ElMessage.error('回滚失败')
     }
   } finally {
-    rollbackSelectedLoading.value = false
+    if (isContextCurrent(context)) {
+      rollbackSelectedLoading.value = false
+    }
   }
 }
 
 // 升级单个软件包
 async function handleUpgradePackage(row) {
+  const context = captureContext()
+  if (!isContextCurrent(context)) return
+  const payload = {
+    updatePkgs: row.pkg_name,
+    hostId: context.hostId
+  }
   try {
     await ElMessageBox.confirm('确认升级该软件包？', '确认', { type: 'info' })
-    await hostOverviewApi.upgradePackages({
-      updatePkgs: row.pkg_name,
-      hostId: props.hostId
-    })
+    if (!isContextCurrent(context)) return
+    await hostOverviewApi.upgradePackages(payload)
+    if (!isContextCurrent(context)) return
     ElMessage.success('升级任务已提交')
     loadInstalledPackages()
   } catch (error) {
-    if (error !== 'cancel') {
+    if (!isContextCurrent(context)) return
+    if (error !== 'cancel' && error !== 'close') {
       ElMessage.error('升级失败')
     }
   }
@@ -775,34 +935,50 @@ async function handleUpgradePackage(row) {
 // 回滚单个软件包
 async function handleRollbackPackage(row, index) {
   const { loadingKey } = resolveInstalledKeys(row, index)
+  const context = captureContext()
+  if (!isContextCurrent(context)) return
+  const payload = {
+    updatePkgs: row.pkg_name,
+    hostId: context.hostId
+  }
   try {
     await ElMessageBox.confirm('确认回滚该软件包？', '确认', { type: 'warning' })
+    if (!isContextCurrent(context)) return
     setInstalledActionLoading(loadingKey, true)
-    await hostOverviewApi.rollbackPackages({
-      updatePkgs: row.pkg_name,
-      hostId: props.hostId
-    })
+    await hostOverviewApi.rollbackPackages(payload)
+    if (!isContextCurrent(context)) return
     ElMessage.success('回滚任务已提交')
     loadInstalledPackages()
   } catch (error) {
-    if (error !== 'cancel') {
+    if (!isContextCurrent(context)) return
+    if (error !== 'cancel' && error !== 'close') {
       ElMessage.error('回滚失败')
     }
   } finally {
-    setInstalledActionLoading(loadingKey, false)
+    if (isContextCurrent(context)) {
+      setInstalledActionLoading(loadingKey, false)
+    }
   }
 }
 </script>
+
+<style lang="scss">
+@use '../../styles/layout' as software-layout;
+
+.host-detail-dialog.el-dialog {
+  @include software-layout.detail-shell;
+
+  .el-dialog__body {
+    padding-top: 0;
+  }
+}
+</style>
 
 <style scoped lang="scss">
 @use '../../styles/layout' as software-layout;
 
 .host-detail-dialog {
   @include software-layout.detail-dialog;
-
-  :deep(.el-dialog__body) {
-    padding-top: 0;
-  }
 }
 
 .host-info-header {
