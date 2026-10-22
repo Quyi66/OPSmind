@@ -110,7 +110,7 @@
               </span>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="200" align="left" fixed="right">
+          <el-table-column label="操作" width="170" align="left" fixed="right">
             <template #default="{ row }">
               <div class="overview-row-actions">
                 <el-button
