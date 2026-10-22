@@ -5,7 +5,9 @@
       <div class="navbar-left">
         <el-breadcrumb separator=">">
           <el-breadcrumb-item>
-            <a @click="goBack">执行记录</a>
+            <a :href="router.resolve(reportReturn.location).href" @click.prevent="goBack">
+              {{ reportReturn.label }}
+            </a>
           </el-breadcrumb-item>
           <el-breadcrumb-item>{{ jobInfo.templateName || '结果详情' }}</el-breadcrumb-item>
         </el-breadcrumb>
@@ -486,7 +488,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { authService } from '@/core/auth'
 import { jobApi, whitelistApi } from '../api'
-import { pickResultListRouteQuery } from '../utils/result-list-route-state'
+import { getReportReturnTarget } from '../utils/report-navigation'
 
 // 导入拆分的模块
 import { formatDateTime } from '../utils/helpers'
@@ -991,11 +993,10 @@ function getBasePath() {
 }
 
 function goBack() {
-  router.push({
-    path: `${getBasePath()}/results`,
-    query: pickResultListRouteQuery(route.query)
-  })
+  router.push(reportReturn.value.location)
 }
+
+const reportReturn = computed(() => getReportReturnTarget(route.query, getBasePath()))
 
 function extractJobId() {
   // 优先从 URL 路径解析
