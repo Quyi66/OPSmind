@@ -52,7 +52,7 @@
           <el-button
             type="primary"
             size="small"
-            :disabled="selectedBaseRepos.length === 0"
+            :disabled="selectedBaseRepos.length === 0 || !canUseBaseRepos"
             @click="handleConfigRepoToHost"
           >
             <i class="fa fa-cogs" style="margin-right: 4px"></i>
@@ -76,23 +76,39 @@
             circle
             size="small"
             :loading="baseRepoLoading"
-            @click="loadBaseRepos"
-            title="刷新"
+            :disabled="!!baseRepoError && !canRetryBaseRepos"
+            @click="refreshBaseRepos"
+            :title="baseRepoError ? '重试读取' : '刷新'"
+            :aria-label="baseRepoError ? '重试读取基准仓库' : '刷新基准仓库'"
           >
             <el-icon v-show="!baseRepoLoading"><Refresh /></el-icon>
           </el-button>
         </div>
+
+        <el-alert
+          v-if="baseRepoError"
+          type="warning"
+          :closable="false"
+          show-icon
+          style="flex-shrink: 0"
+        >
+          <template #title>
+            {{ baseRepoErrorMessage }}
+            <span v-if="hasBaseRepoResult">刷新成功前，旧仓库数据仅供查看，暂不可配置到主机。</span>
+          </template>
+        </el-alert>
 
         <!-- 数据表格 -->
         <div class="ops-table-wrapper">
           <el-table
             v-loading="baseRepoLoading"
             :data="baseRepoData"
+            :empty-text="baseRepoEmptyText"
             style="width: 100%"
             height="100%"
             @selection-change="handleBaseRepoSelectionChange"
           >
-            <el-table-column type="selection" width="50" />
+            <el-table-column type="selection" width="50" :selectable="() => canUseBaseRepos" />
             <el-table-column prop="repo_id" label="仓库ID" min-width="120" show-overflow-tooltip>
               <template #default="{ row }">
                 <el-button
@@ -162,7 +178,7 @@
         </div>
 
         <!-- 分页 -->
-        <div class="ops-pagination-wrapper">
+        <div v-if="hasBaseRepoResult" class="ops-pagination-wrapper">
           <el-pagination
             v-model:current-page="baseRepoPage"
             v-model:page-size="baseRepoPageSize"
@@ -211,7 +227,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import { repoApi } from '../api'
@@ -220,6 +236,7 @@ import CustomRepoTab from '../components/repo/CustomRepoTab.vue'
 import ConfiguredRepoTab from '../components/repo/ConfiguredRepoTab.vue'
 import RepoDetailDialog from '../components/repo/RepoDetailDialog.vue'
 import ConfigRepoToHostDialog from '../components/repo/ConfigRepoToHostDialog.vue'
+import { useSoftwareListRead } from '../composables/useSoftwareListRead'
 
 const tabs = [
   { key: 'baseRepo', label: '基准仓库', icon: 'fa fa-home' },
@@ -231,14 +248,29 @@ const tabs = [
 const activeTab = ref('baseRepo')
 
 // 基准仓库
-const baseRepoLoading = ref(false)
-const baseRepoData = ref([])
 const baseRepoPage = ref(1)
 const baseRepoPageSize = ref(10)
-const baseRepoTotal = ref(0)
 const baseRepoStatus = ref(['enabled'])
 const selectedBaseRepos = ref([])
 const repoDefaultHosts = ref('')
+const {
+  rows: baseRepoData,
+  total: baseRepoTotal,
+  loading: baseRepoLoading,
+  hasResult: hasBaseRepoResult,
+  error: baseRepoError,
+  errorMessage: baseRepoErrorMessage,
+  emptyText: baseRepoEmptyText,
+  canUseRows: canUseBaseRepos,
+  canRetry: canRetryBaseRepos,
+  load: readBaseRepos,
+  retry: retryBaseRepos
+} = useSoftwareListRead(params => repoApi.getRepoList(params), {
+  active: computed(() => activeTab.value === 'baseRepo'),
+  onDiscard: () => {
+    selectedBaseRepos.value = []
+  }
+})
 
 // 仓库详情弹窗
 const repoDetailVisible = ref(false)
@@ -287,24 +319,16 @@ function handleTabChange(tabKey) {
 }
 
 // ========== 基准仓库 ==========
-async function loadBaseRepos() {
-  baseRepoLoading.value = true
-  try {
-    const response = await repoApi.getRepoList({
-      page: baseRepoPage.value,
-      size: baseRepoPageSize.value,
-      repoStatus: baseRepoStatus.value.join(',')
-    })
-    const data = response?.data || response
-    baseRepoData.value = data?.records || []
-    baseRepoTotal.value = data?.total || 0
-  } catch (error) {
-    console.error('Failed to load base repos:', error)
-    baseRepoData.value = []
-    baseRepoTotal.value = 0
-  } finally {
-    baseRepoLoading.value = false
-  }
+function loadBaseRepos() {
+  return readBaseRepos({
+    page: baseRepoPage.value,
+    size: baseRepoPageSize.value,
+    repoStatus: baseRepoStatus.value.join(',')
+  })
+}
+
+function refreshBaseRepos() {
+  return baseRepoError.value ? retryBaseRepos() : loadBaseRepos()
 }
 
 // 加载基准主机ID列表
@@ -330,6 +354,10 @@ function handleViewRepoDetail(row) {
 }
 
 function handleConfigRepoToHost() {
+  if (!canUseBaseRepos.value) {
+    ElMessage.warning('请先成功刷新仓库列表，再配置到主机')
+    return
+  }
   if (selectedBaseRepos.value.length === 0) {
     ElMessage.warning('请先选择要配置的仓库')
     return

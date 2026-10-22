@@ -30,19 +30,31 @@
           class="toolbar-icon-btn"
           circle
           :loading="loading"
-          @click="loadData"
-          title="刷新"
+          :disabled="!!readError && !canRetry"
+          @click="refresh"
+          :title="readError ? '重试读取' : '刷新'"
+          :aria-label="readError ? '重试读取主机概览' : '刷新主机概览'"
         >
           <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
       </div>
     </div>
 
+    <el-alert
+      v-if="readError"
+      :title="readErrorMessage"
+      type="warning"
+      :closable="false"
+      show-icon
+      style="flex-shrink: 0"
+    />
+
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
       <el-table
         v-loading="loading"
         :data="tableData"
+        :empty-text="emptyText"
         style="width: 100%"
         size="small"
         height="100%"
@@ -80,7 +92,7 @@
     </div>
 
     <!-- 分页器区域 -->
-    <div class="ops-pagination-wrapper">
+    <div v-if="hasResult" class="ops-pagination-wrapper">
       <el-pagination
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.pageSize"
@@ -137,19 +149,30 @@ import { hostOverviewApi, softwareScanApi } from '../../api'
 import HostDetailDialog from './HostDetailDialog.vue'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import { useJobPolling } from '@/composables/useJobPolling'
+import { useSoftwareListRead } from '../../composables/useSoftwareListRead'
 
 // 使用作业轮询 composable
 const { isPolling, startPolling } = useJobPolling()
 
 const emit = defineEmits(['rescan', 'view-host', 'view-installed'])
 
-const loading = ref(false)
-const tableData = ref([])
+const {
+  rows: tableData,
+  total,
+  loading,
+  hasResult,
+  error: readError,
+  errorMessage: readErrorMessage,
+  emptyText,
+  canRetry,
+  load,
+  retry
+} = useSoftwareListRead(params => hostOverviewApi.getList(params))
 const localSearchText = ref('')
 const pagination = reactive({
   page: 1,
   pageSize: 10,
-  total: 0
+  total
 })
 
 // 详情弹窗
@@ -163,34 +186,19 @@ const selectedScanHosts = ref([])
 const scanLoading = ref(false)
 
 // 加载数据
-async function loadData() {
-  loading.value = true
-  try {
-    const params = {
-      page: pagination.page,
-      size: pagination.pageSize,
-      orderBy: 'scan_date desc'
-    }
-    if (localSearchText.value) {
-      params.filter = localSearchText.value
-    }
-
-    const response = await hostOverviewApi.getList(params)
-    const data = response?.data || response
-    tableData.value = data?.records || []
-    pagination.total = data?.total || 0
-  } catch (error) {
-    console.error('Failed to load host overview:', error)
-    tableData.value = []
-    pagination.total = 0
-  } finally {
-    loading.value = false
+function loadData() {
+  const params = {
+    page: pagination.page,
+    size: pagination.pageSize,
+    orderBy: 'scan_date desc'
   }
+  if (localSearchText.value) params.filter = localSearchText.value
+  return load(params)
 }
 
 // 暴露刷新方法
 function refresh() {
-  loadData()
+  return readError.value ? retry() : loadData()
 }
 
 defineExpose({ refresh })
