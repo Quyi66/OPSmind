@@ -1,156 +1,232 @@
 <template>
-  <div class="ops-page-layout" style="flex-direction: row; padding: 0; gap: 0">
-    <!-- 左侧模板列表 -->
-    <aside class="ops-sidebar-nav">
-      <div class="ops-sidebar-header">
-        <el-input v-model="templateSearchText" placeholder="搜索模板" clearable style="width: 100%" @keyup.enter="handleSearch" @clear="handleSearch">
-          <template #prefix>
-            <i class="fa fa-search"></i>
-          </template>
-        </el-input>
-      </div>
-      <el-scrollbar class="ops-sidebar-content">
-        <button
-          class="ops-sidebar-item"
-          :class="{ 'is-active': selectedTemplateId === '' }"
-          @click="selectTemplate('')"
-        >
-          <i class="fa fa-list-alt"></i>
-          <span>全部</span>
-        </button>
-        <button
-          v-for="item in filteredTemplates"
-          :key="item.id"
-          class="ops-sidebar-item"
-          :class="{ 'is-active': selectedTemplateId === item.id }"
-          @click="selectTemplate(item.id)"
-        >
-          <span>{{ item.templateName }}</span>
-        </button>
-        <div v-if="templateLoading" class="loading-placeholder">
-          <i class="fa fa-cog fa-spin"></i>
-          正在加载...
-        </div>
-      </el-scrollbar>
-    </aside>
-
-    <!-- 右侧检查结果列表 -->
-    <section class="result-list-content ops-page-layout">
-      <!-- 筛选区 -->
-      <div class="ops-filter-bar">
-        <el-form :model="filters" inline size="small">
-          <el-form-item label="模版名称">
-            <el-input v-model="filters.keyword" placeholder="搜索" clearable style="width: 200px" @keyup.enter="handleSearch" @clear="handleSearch">
-              <template #prefix>
-                <el-icon><Search /></el-icon>
-              </template>
-            </el-input>
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" :loading="loading" @click="handleSearch">
+  <div class="ops-page-layout result-list-page">
+    <!-- 筛选区 -->
+    <div class="ops-filter-bar">
+      <el-form :model="filters" inline size="small" @submit.prevent>
+        <el-form-item label="巡检模板">
+          <el-select
+            :key="templateSelectVersion"
+            v-model="selectedTemplateId"
+            filterable
+            clearable
+            :loading="templateLoading"
+            placeholder="全部模板"
+            aria-label="筛选巡检模板"
+            class="result-template-select"
+            no-match-text="没有匹配的模板"
+            @change="selectTemplate"
+          >
+            <el-option label="全部模板" value="" />
+            <el-option
+              v-if="missingSelectedTemplate"
+              :label="`当前模板（ID：${selectedTemplateId}）`"
+              :value="selectedTemplateId"
+            />
+            <el-option
+              v-for="item in sortedTemplates"
+              :key="item.id"
+              :label="item.templateName"
+              :value="String(item.id)"
+            />
+          </el-select>
+          <span v-if="templateError" class="template-load-error" role="status">
+            模板列表读取失败
+            <el-button
+              link
+              type="primary"
+              size="small"
+              :loading="templateLoading"
+              @click="loadTemplates"
+            >
+              重试
+            </el-button>
+          </span>
+        </el-form-item>
+        <el-form-item label="关键词">
+          <el-input
+            v-model="filters.keyword"
+            placeholder="搜索执行记录"
+            clearable
+            style="width: 200px"
+            @keyup.enter="handleSearch"
+            @clear="handleSearch"
+          >
+            <template #prefix>
               <el-icon><Search /></el-icon>
-              搜索
-            </el-button>
-            <el-button @click="handleReset">
-              <el-icon><RefreshRight /></el-icon>
-              重置
-            </el-button>
-          </el-form-item>
-        </el-form>
-      </div>
+            </template>
+          </el-input>
+          <span v-if="filters.keyword !== appliedKeyword" class="pending-keyword" role="status">
+            关键词尚未应用
+          </span>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="loading" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button title="清除模板和关键词，恢复默认分页" @click="handleReset">
+            <el-icon><RefreshRight /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </div>
 
-      <!-- 操作栏 -->
-      <div class="ops-action-bar">
-        <span style="flex: 1"></span>
-        <el-button
-          class="toolbar-icon-btn"
-          circle
-          size="small"
-          :loading="loading"
-          @click="loadResults"
-          title="刷新"
-        >
-          <el-icon v-show="!loading"><Refresh /></el-icon>
-        </el-button>
-      </div>
+    <!-- 操作栏 -->
+    <div class="ops-action-bar">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        :disabled="readError === 'auth'"
+        @click="loadResults"
+        title="刷新"
+      >
+        <el-icon v-show="!loading"><Refresh /></el-icon>
+      </el-button>
+    </div>
 
-      <!-- 表格区域 -->
-      <div class="ops-table-wrapper">
-        <el-table
-          v-loading="loading"
-          :data="tableData"
-          max-height="calc(100vh - 264px)"
-          row-key="id"
-          :default-sort="{ prop: 'createdAt', order: 'descending' }"
-          @sort-change="handleSortChange"
+    <el-alert v-if="readError" :title="readMessage" type="warning" :closable="false" show-icon>
+      <el-button
+        v-if="readError !== 'auth'"
+        text
+        type="primary"
+        size="small"
+        :disabled="loading"
+        @click="retryRead"
+      >
+        重试读取
+      </el-button>
+    </el-alert>
+
+    <!-- 表格区域 -->
+    <div class="ops-table-wrapper">
+      <el-table
+        ref="resultTable"
+        v-loading="loading"
+        :data="tableData"
+        height="100%"
+        row-key="id"
+        :default-sort="{ prop: sortState.prop, order: sortState.order }"
+        @sort-change="handleSortChange"
+      >
+        <el-table-column
+          prop="templateName"
+          label="模板"
+          min-width="200"
+          show-overflow-tooltip
+          sortable="custom"
+        />
+        <el-table-column label="配置主机数" min-width="110" align="right" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span class="configuration-count" :title="configurationCounts.get(row).summary">
+              {{ configurationCounts.get(row).hostCount ?? '—' }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column label="脚本数" min-width="90" align="right" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span class="configuration-count" :title="configurationCounts.get(row).summary">
+              {{ configurationCounts.get(row).scriptCount ?? '—' }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="createdAt"
+          label="开始时间"
+          min-width="190"
+          sortable="custom"
+          show-overflow-tooltip
         >
-          <el-table-column prop="templateName" label="模板" show-overflow-tooltip sortable="custom" />
-          <el-table-column label="检查项">
-            <template #default="{ row }">
-              <div v-html="formatAuditParams(row.auditParams)"></div>
-            </template>
-          </el-table-column>
-          <el-table-column prop="createdAt" label="开始时间" width="200" sortable="custom">
-            <template #default="{ row }">
-              {{ formatDateTime(row.createdAt) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="endedAt" label="结束时间" width="200" sortable="custom">
-            <template #default="{ row }">
-              {{ formatDateTime(row.endedAt) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="createdBy" label="执行人" width="100" />
-          <el-table-column label="执行状态" width="100" align="left">
-            <template #default="{ row }">
-              <RunLogStatusTag
-                :type="getStatusType(row.jobStatus)"
-                size="small"
-                @click="showJobLog(row)"
-              >
-                {{ getStatusText(row.jobStatus) }}
-              </RunLogStatusTag>
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="90" align="left" fixed="right">
-            <template #default="{ row }">
+          <template #default="{ row }">
+            {{ formatDateTime(row.createdAt) }}
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="endedAt"
+          label="结束时间"
+          min-width="190"
+          sortable="custom"
+          show-overflow-tooltip
+        >
+          <template #default="{ row }">
+            {{ formatDateTime(row.endedAt) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="createdBy" label="执行人" min-width="110" show-overflow-tooltip />
+        <el-table-column label="执行状态" min-width="110" align="left">
+          <template #default="{ row }">
+            <RunLogStatusTag
+              :type="getStatusType(row.jobStatus)"
+              size="small"
+              @click="showJobLog(row)"
+            >
+              {{ getStatusText(row.jobStatus) }}
+            </RunLogStatusTag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="140" align="left" fixed="right">
+          <template #default="{ row }">
+            <div
+              class="result-row-actions"
+              :title="reportActionReason(row)"
+              :aria-label="reportActionReason(row) || undefined"
+              :tabindex="!canViewReport(row) ? 0 : undefined"
+            >
               <el-button
                 text
                 type="primary"
                 size="small"
-                :disabled="row.jobStatus !== 'OK' && row.jobStatus !== 'ERROR'"
+                :disabled="!canViewReport(row)"
                 @click="viewStructuralDiagram(row)"
               >
-                架构
+                架构图
               </el-button>
               <el-button
                 text
                 type="primary"
                 size="small"
-                :disabled="row.jobStatus !== 'OK' && row.jobStatus !== 'ERROR'"
+                :disabled="!canViewReport(row)"
                 @click="viewResult(row)"
               >
-                结果
+                检查结果
               </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
+            </div>
+          </template>
+        </el-table-column>
+        <template #empty>
+          <span v-if="loading">正在读取执行记录…</span>
+          <span v-else-if="readError">{{ readMessage }}</span>
+          <span v-else-if="hasResult">
+            {{ selectedTemplateId || appliedKeyword ? '没有匹配的执行记录' : '暂无执行记录' }}
+          </span>
+          <span v-else>尚未读取执行记录</span>
+        </template>
+      </el-table>
+    </div>
 
-      <!-- 分页 -->
-      <div class="ops-pagination-wrapper">
-        <el-pagination
-          v-model:current-page="pagination.page"
-          v-model:page-size="pagination.size"
-          :page-sizes="[10, 20, 50, 100]"
-          :total="pagination.total"
-          layout="total, sizes, prev, pager, next, jumper"
-          background
-          @size-change="handlePageSizeChange"
-          @current-change="handlePageChange"
-        />
-      </div>
-    </section>
+    <!-- 分页 -->
+    <div class="ops-pagination-wrapper">
+      <span class="result-list-note">
+        数量为配置条目，悬浮查看各配置组；不代表报告覆盖或检查结果。
+      </span>
+      <span v-if="hasResult && pagination.total === null" class="result-list-note">
+        总数暂不可核实
+      </span>
+      <el-pagination
+        v-if="hasResult && pagination.total !== null"
+        v-model:current-page="pagination.page"
+        v-model:page-size="pagination.size"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="pagination.total"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="handlePageSizeChange"
+        @current-change="handlePageChange"
+      />
+    </div>
 
     <!-- 执行状态弹窗 -->
     <ExecuteResultDialog
@@ -162,7 +238,17 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import {
+  ref,
+  reactive,
+  computed,
+  nextTick,
+  onActivated,
+  onBeforeUnmount,
+  onDeactivated,
+  onMounted,
+  watch
+} from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { formatDateTime as formatDateTimeGlobal } from '@/utils/date'
@@ -173,8 +259,10 @@ import { authService } from '@/core/auth'
 import { templateApi, jobApi } from '../api'
 import {
   buildResultListRouteQuery,
-  parseResultListRouteState
+  parseResultListRouteState,
+  parseResultListSort
 } from '../utils/result-list-route-state'
+import { summarizeResultConfiguration } from '../utils/result-record-presentation'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
 import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
@@ -184,9 +272,20 @@ const route = useRoute()
 
 // 状态
 const loading = ref(false)
+const resultTable = ref(null)
+const pageActive = ref(true)
+const hasResult = ref(false)
+const readError = ref('')
+const appliedKeyword = ref('')
+let successfulQuery = null
+let attemptedQuery = null
+let failedQuery = null
+let logRequest = 0
+let lastRouteState = ''
 const templateLoading = ref(false)
+const templateSelectVersion = ref(0)
+const templateError = ref(false)
 const tableData = ref([])
-const allResults = ref([])
 const templateList = ref([])
 const selectedTemplateId = ref('')
 const templateSearchText = ref('')
@@ -194,6 +293,37 @@ const filters = reactive({
   keyword: ''
 })
 const structuralSwitch = ref('no')
+let resultRequest = 0
+let disposed = false
+onBeforeUnmount(() => {
+  disposed = true
+  pageActive.value = false
+  logRequest++
+  resultRequest++
+})
+onDeactivated(() => {
+  pageActive.value = false
+  logRequest++
+  resultRequest++
+  if (loading.value) readError.value = 'interrupted'
+  loading.value = false
+})
+onActivated(() => {
+  pageActive.value = true
+  syncFromRoute()
+})
+const available = () => !disposed && pageActive.value && isResultsRoute()
+const readMessage = computed(() => {
+  if (readError.value === 'auth') return '登录已失效或无权读取执行记录，请重新登录或联系管理员。'
+  if (!readError.value) return ''
+  const reason = readError.value === 'interrupted' ? '读取已中断' : '读取失败'
+  return hasResult.value
+    ? `${reason}，当前显示上次成功结果，可能已过期。请重试。`
+    : `${reason}，请重试读取执行记录。`
+})
+const configurationCounts = computed(
+  () => new Map(tableData.value.map(row => [row, summarizeResultConfiguration(row.auditParams)]))
+)
 
 // 排序与 DataTables 状态
 const drawCounter = ref(1)
@@ -224,19 +354,14 @@ const currentJobTitle = ref('')
 
 useActiveTaskListPolling({
   records: tableData,
+  enabled: computed(() => available() && hasResult.value && !readError.value),
   refresh: loadResults,
   getStatus: row => row?.jobStatus
 })
 
-// 过滤后的模板列表（按名称排序）
-const filteredTemplates = computed(() => {
-  let list = [...templateList.value]
-
-  // 搜索过滤
-  if (templateSearchText.value) {
-    const keyword = templateSearchText.value.toLowerCase()
-    list = list.filter(t => t.templateName?.toLowerCase()?.includes(keyword))
-  }
+// The select searches its labels locally. Keep templateSearchText only for old URL compatibility.
+const sortedTemplates = computed(() => {
+  const list = [...templateList.value]
 
   // 按名称升序排序
   list.sort((a, b) => {
@@ -247,32 +372,18 @@ const filteredTemplates = computed(() => {
 
   return list
 })
+const missingSelectedTemplate = computed(
+  () =>
+    selectedTemplateId.value !== '' &&
+    !templateList.value.some(item => String(item.id) === selectedTemplateId.value)
+)
 
 /**
  * 格式化日期时间
  */
 function formatDateTime(dateStr) {
-  if (!dateStr) return ''
+  if (dateStr == null || dateStr === '' || !Number.isFinite(new Date(dateStr).getTime())) return '—'
   return formatDateTimeGlobal(dateStr)
-}
-
-/**
- * 格式化检查参数
- */
-function formatAuditParams(auditParamsStr) {
-  if (!auditParamsStr) return '-'
-  try {
-    const auditParams = JSON.parse(auditParamsStr)
-    let html = ''
-    for (const param of auditParams) {
-      const scriptsCount = param.scripts?.length || 0
-      const hostsCount = param.hosts?.length || 0
-      html += `脚本: <strong>${scriptsCount}</strong>, 主机: <strong>${hostsCount}</strong><br>`
-    }
-    return html || '-'
-  } catch (e) {
-    return '-'
-  }
 }
 
 /**
@@ -322,8 +433,12 @@ async function loadTemplates() {
   templateLoading.value = true
   try {
     const response = await templateApi.getTemplates()
-    templateList.value = response?.data || response || []
+    const templates = response?.data || response || []
+    if (!Array.isArray(templates)) throw new Error('Invalid inspection template list')
+    templateList.value = templates
+    templateError.value = false
   } catch (error) {
+    templateError.value = true
     console.error('加载模板列表失败:', error)
   } finally {
     templateLoading.value = false
@@ -333,11 +448,42 @@ async function loadTemplates() {
 /**
  * 加载检查结果
  */
-async function loadResults() {
+function currentReadQuery() {
+  return {
+    templateId: selectedTemplateId.value,
+    keyword: appliedKeyword.value,
+    page: pagination.value.page,
+    size: pagination.value.size,
+    sortProp: sortState.prop,
+    sortOrder: sortState.order
+  }
+}
+function loadResults() {
+  return readResults(currentReadQuery())
+}
+function retryRead() {
+  if (!loading.value && readError.value !== 'auth')
+    return readResults(failedQuery || currentReadQuery())
+}
+
+async function readResults(query) {
+  if (!available() || readError.value === 'auth') return
+  const snapshot = { ...query }
+  const key = JSON.stringify(snapshot)
+  if (key !== attemptedQuery) readError.value = ''
+  attemptedQuery = key
+  failedQuery = snapshot
+  if (key !== successfulQuery) {
+    tableData.value = []
+    pagination.value.total = 0
+    hasResult.value = false
+  }
+  const request = ++resultRequest
+  const isCurrent = () => available() && request === resultRequest
   loading.value = true
   try {
     // 使用正确的API: POST /audit/api/audit/v2/jobs/page/{templateId}
-    const templateId = selectedTemplateId.value || 'all'
+    const templateId = snapshot.templateId === '' ? 'all' : snapshot.templateId
 
     // DataTables 格式的请求参数（与源系统完全一致）
     const params = new URLSearchParams()
@@ -360,37 +506,60 @@ async function loadResults() {
       params.append(`columns[${i}][searchable]`, col.searchable)
     })
 
-    const colIndex = COLUMN_INDEX_MAP[sortState.prop] ?? 2
-    const dir = sortState.order === 'ascending' ? 'asc' : 'desc'
+    const colIndex = COLUMN_INDEX_MAP[snapshot.sortProp] ?? 2
+    const dir = snapshot.sortOrder === 'ascending' ? 'asc' : 'desc'
 
     params.append('draw', String(drawCounter.value++))
-    params.append('length', String(pagination.value.size))
+    params.append('length', String(snapshot.size))
     params.append('order[0][column]', String(colIndex))
     params.append('order[0][dir]', dir)
     params.append('search[regex]', 'false')
-    params.append('search[value]', filters.keyword)
-    params.append('start', String((pagination.value.page - 1) * pagination.value.size))
+    params.append('search[value]', snapshot.keyword)
+    params.append('start', String((snapshot.page - 1) * snapshot.size))
 
     // 使用 axios 直接发送，确保作为 Form Data 发送
     const baseURL = import.meta.env.VITE_API_BASE_URL || '/sjxy-console'
     const authHeaders = authService.getAuthHeaders()
-    const response = await axios.post(`${baseURL}/audit/api/audit/v2/jobs/page/${templateId}`, params, {
-      headers: {
-        ...authHeaders,
-        'Content-Type': 'application/x-www-form-urlencoded'
+    const response = await axios.post(
+      `${baseURL}/audit/api/audit/v2/jobs/page/${templateId}`,
+      params,
+      {
+        headers: {
+          ...authHeaders,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
       }
-    })
+    )
 
+    if (!isCurrent()) return
     const data = response?.data || response || {}
-    tableData.value = data.data || []
-    pagination.value.total = data.recordsFiltered || data.recordsTotal || 0
-    allResults.value = tableData.value
+    if (!Array.isArray(data.data)) throw new Error('Invalid inspection result list')
+    const rawTotal = data.recordsFiltered ?? data.recordsTotal
+    const total = rawTotal == null || rawTotal === '' ? NaN : Number(rawTotal)
+    tableData.value = data.data
+    pagination.value.total = Number.isSafeInteger(total) && total >= 0 ? total : null
+    hasResult.value = true
+    successfulQuery = key
+    readError.value = ''
+    failedQuery = null
   } catch (error) {
+    if (!isCurrent()) return
     console.error('加载检查结果失败:', error)
-    ElMessage.error('加载检查结果失败')
-    tableData.value = []
+    const status = error?.response?.status
+    const unauthorized =
+      status === 401 ||
+      status === 403 ||
+      ['Authentication expired', 'Access denied'].includes(error?.message)
+    if (unauthorized) {
+      tableData.value = []
+      pagination.value.total = 0
+      hasResult.value = false
+      successfulQuery = null
+    }
+    failedQuery = snapshot
+    readError.value = unauthorized ? 'auth' : 'read'
   } finally {
-    loading.value = false
+    if (isCurrent()) loading.value = false
   }
 }
 
@@ -399,17 +568,27 @@ function applyRouteState(query = {}) {
   selectedTemplateId.value = state.templateId
   templateSearchText.value = state.templateSearchText
   filters.keyword = state.keyword
+  appliedKeyword.value = state.keyword
   pagination.value.page = state.page
   pagination.value.size = state.size
+  sortState.prop = state.sortProp
+  sortState.order = state.sortOrder
+  const { prop, order } = sortState
+  nextTick(() => {
+    if (available() && sortState.prop === prop && sortState.order === order)
+      resultTable.value?.sort?.(prop, order)
+  })
 }
 
 function getCurrentRouteStateQuery() {
   return buildResultListRouteQuery({
     templateId: selectedTemplateId.value,
     templateSearchText: templateSearchText.value,
-    keyword: filters.keyword,
+    keyword: appliedKeyword.value,
     page: pagination.value.page,
-    size: pagination.value.size
+    size: pagination.value.size,
+    sortProp: sortState.prop,
+    sortOrder: sortState.order
   })
 }
 
@@ -417,7 +596,7 @@ function getCurrentRouteStateQuery() {
  * 选择模板
  */
 function selectTemplate(templateId) {
-  selectedTemplateId.value = templateId
+  selectedTemplateId.value = templateId == null ? '' : String(templateId)
   pagination.value.page = 1
   loadResults()
 }
@@ -426,8 +605,10 @@ function selectTemplate(templateId) {
  * 处理表格排序变更
  */
 function handleSortChange({ prop, order }) {
-  sortState.prop = prop || 'createdAt'
-  sortState.order = order || 'descending'
+  const sort = parseResultListSort({ sortProp: prop, sortOrder: order })
+  if (sortState.prop === sort.sortProp && sortState.order === sort.sortOrder) return
+  sortState.prop = sort.sortProp
+  sortState.order = sort.sortOrder
   pagination.value.page = 1
   loadResults()
 }
@@ -436,6 +617,7 @@ function handleSortChange({ prop, order }) {
  * 搜索
  */
 function handleSearch() {
+  appliedKeyword.value = filters.keyword
   pagination.value.page = 1
   loadResults()
 }
@@ -444,7 +626,32 @@ function handleSearch() {
  * 重置
  */
 function handleReset() {
+  // Reset Element's local search input as well as the selected value.
+  templateSelectVersion.value++
+  const query = { ...route.query }
+  const filterKeys = [
+    'templateId',
+    'templateSearch',
+    'keyword',
+    'page',
+    'size',
+    'sortProp',
+    'sortOrder'
+  ]
+  filterKeys.forEach(key => delete query[key])
+  Object.assign(
+    query,
+    buildResultListRouteQuery({ sortProp: sortState.prop, sortOrder: sortState.order })
+  )
+  const target = { path: route.path, query, hash: route.hash }
+  if (router.resolve(target).fullPath !== route.fullPath) {
+    // The existing route watcher applies defaults and issues one read.
+    return router.replace(target)
+  }
+  selectedTemplateId.value = ''
+  templateSearchText.value = ''
   filters.keyword = ''
+  appliedKeyword.value = ''
   pagination.value.page = 1
   pagination.value.size = 10
   loadResults()
@@ -467,24 +674,30 @@ function handlePageChange(page) {
 }
 
 /**
- * 刷新表格
- */
-function refreshTable() {
-  loadResults()
-}
-
-/**
  * 显示任务执行状态
  */
 async function showJobLog(row) {
+  if (!available() || !tableData.value.includes(row)) return
+  const request = ++logRequest
+  const read = resultRequest
+  const id = row.id
+  const title = row.templateName || ''
+  const isCurrent = () =>
+    available() &&
+    request === logRequest &&
+    read === resultRequest &&
+    tableData.value.includes(row) &&
+    row.id === id
   // 首先获取 job 详情，获取 taskId 作为 runId
   try {
-    const res = await jobApi.getJob(row.id)
+    const res = await jobApi.getJob(id)
+    if (!isCurrent()) return
     const jobData = res?.data || res
-    currentRunId.value = jobData?.taskId || row.id
-    currentJobTitle.value = row.templateName || ''
+    currentRunId.value = jobData?.taskId == null || jobData.taskId === '' ? id : jobData.taskId
+    currentJobTitle.value = title
     executeResultVisible.value = true
   } catch (error) {
+    if (!isCurrent()) return
     console.error('获取任务详情失败:', error)
     ElMessage.error('获取任务详情失败')
   }
@@ -503,6 +716,7 @@ function getBasePath() {
  * 查看架构图
  */
 function viewStructuralDiagram(row) {
+  if (!canViewReport(row)) return
   router.push({
     path: `${getBasePath()}/structural-diagram/${row.id}`,
     query: getCurrentRouteStateQuery()
@@ -513,53 +727,98 @@ function viewStructuralDiagram(row) {
  * 查看结果详情
  */
 function viewResult(row) {
+  if (!canViewReport(row)) return
   router.push({
     path: `${getBasePath()}/results/${row.id}`,
     query: getCurrentRouteStateQuery()
   })
 }
 
-onMounted(() => {
+function canViewReport(row) {
+  return available() && tableData.value.includes(row) && ['OK', 'ERROR'].includes(row.jobStatus)
+}
+function reportActionReason(row) {
+  if (!['OK', 'ERROR'].includes(row.jobStatus)) return '任务结束后可查看架构图和检查结果'
+  return readError.value ? '当前显示上次成功结果，可能已过期' : ''
+}
+function isResultsRoute() {
+  return route.path === `${getBasePath()}/results`
+}
+function routeStateKey() {
+  return JSON.stringify(
+    ['templateId', 'templateSearch', 'keyword', 'page', 'size', 'sortProp', 'sortOrder'].map(
+      key => route.query[key] ?? null
+    )
+  )
+}
+function syncFromRoute() {
+  if (!available()) return
+  const key = routeStateKey()
+  if (key === lastRouteState) return
+  lastRouteState = key
   applyRouteState(route.query)
+  loadResults()
+}
+applyRouteState(route.query)
+lastRouteState = routeStateKey()
+onMounted(() => {
   loadParams()
   loadTemplates()
   loadResults()
 })
 
 // 监听路由 query 参数变化，支持从二级页回退后恢复列表状态
-watch(
-  () => [
-    route.query.templateId,
-    route.query.templateSearch,
-    route.query.keyword,
-    route.query.page,
-    route.query.size
-  ],
-  () => {
-    applyRouteState(route.query)
-    loadResults()
-  }
-)
+watch(() => (isResultsRoute() ? routeStateKey() : null), syncFromRoute)
 </script>
 
 <style scoped lang="scss">
 .result-list-page {
-  display: flex;
-  height: 100%;
-  background: var(--el-bg-color);
-}
-
-// 右侧主内容区
-.result-list-content {
-  flex: 1;
   min-width: 0;
-  overflow: hidden;
+  gap: 12px;
+  > .el-alert,
+  > .ops-filter-bar,
+  > .ops-action-bar {
+    flex-shrink: 0;
+  }
 }
-
-// 加载占位
-.loading-placeholder {
-  padding: 20px;
-  text-align: center;
+.result-template-select {
+  width: 240px;
+  max-width: 100%;
+}
+.template-load-error {
+  margin-left: 8px;
+  color: var(--el-color-warning-dark-2);
+  font-size: 12px;
+}
+.pending-keyword {
+  margin-left: 8px;
   color: var(--el-text-color-secondary);
+  font-size: 12px;
+}
+.configuration-count {
+  font-variant-numeric: tabular-nums;
+}
+.result-row-actions {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  gap: 8px;
+  :deep(.el-button.is-text) {
+    margin-left: 0;
+    flex-shrink: 0;
+  }
+}
+.ops-pagination-wrapper {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+.result-list-note {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  margin-right: auto;
+}
+.ops-table-wrapper {
+  overflow: hidden;
 }
 </style>
