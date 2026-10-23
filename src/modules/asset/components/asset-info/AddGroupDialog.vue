@@ -70,6 +70,7 @@ import { ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { assetApi } from '../../api'
 import { apiService } from '@/core/api'
+import { throwIfWorkflowFailed } from '@/utils/workflowResult'
 
 const props = defineProps({
   modelValue: {
@@ -169,7 +170,11 @@ const handleSave = async () => {
       params.parentId = formData.value.parentId || ''
     }
 
-    await apiService.post(`/workflow/api/workflow/jobs/a17VXM/run?cacheBuster=${Date.now()}`, { params })
+    const response = await apiService.post(
+      `/workflow/api/workflow/jobs/a17VXM/run?cacheBuster=${Date.now()}`,
+      { params }
+    )
+    throwIfWorkflowFailed(response)
 
     ElMessage.success('添加分组成功')
     visible.value = false

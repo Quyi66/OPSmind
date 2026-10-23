@@ -57,6 +57,7 @@ import { ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { dataManageApi, assetApi } from '../../api'
 import { apiService } from '@/core/api'
+import { throwIfWorkflowFailed } from '@/utils/workflowResult'
 
 const props = defineProps({
   modelValue: {
@@ -135,16 +136,20 @@ const handleSave = async () => {
   saving.value = true
   try {
     // Job: a17VXM - 添加分组
-    await apiService.post(`/workflow/api/workflow/jobs/a17VXM/run?cacheBuster=${Date.now()}`, {
-      params: {
-        operate: 'new',
-        ciIds: null,
-        id: null,
-        name: formData.value.name,
-        parentId: formData.value.parentId,
-        ciType: formData.value.ciType
+    const response = await apiService.post(
+      `/workflow/api/workflow/jobs/a17VXM/run?cacheBuster=${Date.now()}`,
+      {
+        params: {
+          operate: 'new',
+          ciIds: null,
+          id: null,
+          name: formData.value.name,
+          parentId: formData.value.parentId,
+          ciType: formData.value.ciType
+        }
       }
-    })
+    )
+    throwIfWorkflowFailed(response)
     ElMessage.success('添加成功')
     visible.value = false
     emit('saved')

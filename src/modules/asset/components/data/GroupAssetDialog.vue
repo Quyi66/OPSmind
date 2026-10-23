@@ -117,6 +117,7 @@
 import { ref, watch, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { apiService } from '@/core/api'
+import { throwIfWorkflowFailed } from '@/utils/workflowResult'
 
 const props = defineProps({
   modelValue: {
@@ -189,12 +190,16 @@ const handleRemoveAsset = () => {
     .then(async () => {
       try {
         const ciIds = selectedRows.value.map(row => row.id).join(',')
-        await apiService.post(`/workflow/api/workflow/jobs/oJXQFK/run?cacheBuster=${Date.now()}`, {
-          params: {
-            groupId: props.groupData.id,
-            ciId: ciIds
+        const response = await apiService.post(
+          `/workflow/api/workflow/jobs/oJXQFK/run?cacheBuster=${Date.now()}`,
+          {
+            params: {
+              groupId: props.groupData.id,
+              ciId: ciIds
+            }
           }
-        })
+        )
+        throwIfWorkflowFailed(response)
         ElMessage.success('移除成功')
         loadAssetList()
       } catch (error) {
