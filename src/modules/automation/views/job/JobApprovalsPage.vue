@@ -344,7 +344,7 @@ async function handlePass(row) {
     await ElMessageBox.confirm(
       `确定要通过运维工具 "${getAutomationToolTitle({ ...row, id: undefined })}" 的审批申请吗？`,
       '通过审批',
-      { type: 'success' }
+      { closeOnClickModal: false, closeOnPressEscape: false, type: 'success' }
     )
 
     loading.value = true
@@ -363,6 +363,8 @@ async function handlePass(row) {
 async function handleRefuse(row) {
   try {
     const { value: reason } = await ElMessageBox.prompt('请输入拒绝理由', '拒绝审批', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       inputType: 'textarea',
@@ -388,6 +390,8 @@ async function handleDiscard(row) {
       '确定要作废该审批吗？可选填写作废原因',
       '作废审批',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         inputType: 'textarea',

@@ -102,7 +102,13 @@
     </div>
 
     <!-- 批量修改对话框 -->
-    <el-dialog v-model="batchVisible" title="批量修改纳管设备" width="520px">
+    <el-dialog
+      v-model="batchVisible"
+      title="批量修改纳管设备"
+      width="520px"
+      :close-on-press-escape="false"
+      :close-on-click-modal="false"
+    >
       <div class="batch-tip">
         请选择 Excel 模版文件（.xlsx / .xls），上传后将按模版批量更新纳管设备的登录/执行密码。
       </div>
@@ -132,7 +138,12 @@
     </el-dialog>
 
     <!-- 批量结果对话框 -->
-    <el-dialog v-model="batchResultVisible" title="批量处理结果" width="680px">
+    <el-dialog
+      v-model="batchResultVisible"
+      title="批量处理结果"
+      width="680px"
+      :close-on-click-modal="true"
+    >
       <div class="result-summary">
         <el-tag type="info">总计: {{ batchResult?.total || 0 }}</el-tag>
         <el-tag type="success" style="margin-left:8px">成功: {{ batchResult?.successCount || 0 }}</el-tag>

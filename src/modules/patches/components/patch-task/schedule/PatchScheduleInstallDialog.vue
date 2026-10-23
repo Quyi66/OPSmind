@@ -5,7 +5,7 @@
     width="1000px"
     top="5vh"
     :close-on-click-modal="false"
-    :close-on-press-escape="!submitting"
+    :close-on-press-escape="false"
     :show-close="!submitting"
     class="schedule-install-dialog"
     @closed="handleClosed"
@@ -644,6 +644,8 @@ async function handleSubmit() {
       `确定对已选中的 ${targets.length} 项目标资产提交定时安装吗？计划时间：${payload.scheduledTime}。${isAdmin.value ? '届时自动执行' : '需管理员提前审批通过'}，自动预检查、分批安装且默认不重启。`,
       '确认提交定时安装',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         confirmButtonText: '确认提交',
         cancelButtonText: '取消',
         type: 'info'

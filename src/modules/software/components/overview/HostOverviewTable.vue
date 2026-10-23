@@ -113,7 +113,14 @@
     />
 
     <!-- 扫描目标主机对话框 -->
-    <el-dialog v-model="scanDialogVisible" title="选择目标主机" width="600px" destroy-on-close>
+    <el-dialog
+      v-model="scanDialogVisible"
+      title="选择目标主机"
+      width="600px"
+      destroy-on-close
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+    >
       <div class="scan-dialog-content">
         <!-- 使用 AcmDeviceSelector 组件 -->
         <AcmDeviceSelector

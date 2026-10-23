@@ -6,6 +6,7 @@
     destroy-on-close
     :close-on-click-modal="false"
     class="file-selector-dialog"
+    :close-on-press-escape="false"
   >
     <!-- 面包屑导航 -->
     <div class="file-breadcrumb">
@@ -142,7 +143,7 @@
     :title="previewFile?.path || '文件预览'"
     width="900px"
     destroy-on-close
-    :close-on-click-modal="false"
+    :close-on-click-modal="true"
     class="file-preview-dialog"
     append-to-body
   >

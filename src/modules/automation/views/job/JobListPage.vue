@@ -387,6 +387,8 @@ function handleSortChange({ prop, order }) {
 function handleDeleteJobs() {
   const jobIds = selectedIds.value
   ElMessageBox.confirm(`确定要删除选中的 ${jobIds.length} 个运维工具吗？`, '删除确认', {
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
     type: 'warning',
     confirmButtonText: '删除',
     cancelButtonText: '取消'
@@ -642,6 +644,8 @@ async function handleMoveJobs() {
       `确定将选中的 ${selectedIds.value.length} 个运维工具移动到「${targetLabel}」吗？`,
       '移动运维工具',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         type: 'warning',
         confirmButtonText: '确认',
         cancelButtonText: '取消'
@@ -670,6 +674,8 @@ async function handleCopy(row) {
 
   try {
     await ElMessageBox.confirm(`确定要复制运维工具「${row.title}」吗？`, '复制确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'info'

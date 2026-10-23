@@ -235,6 +235,8 @@ function handleCreate() {
 
 function handleBatchDelete() {
   ElMessageBox.confirm('确定要删除选中的流程吗？', '提示', {
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
     type: 'warning'
   })
     .then(async () => {
@@ -373,6 +375,8 @@ async function handleCloneConfirm(data) {
 
 function handleDelete(row) {
   ElMessageBox.confirm(`确定要删除流程"${row.processName}"吗？`, '提示', {
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
     type: 'warning'
   })
     .then(async () => {

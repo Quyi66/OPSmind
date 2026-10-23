@@ -177,6 +177,8 @@ async function handleDelete(row) {
   const id = row.id
   try {
     await ElMessageBox.confirm('确认删除选中镜像源？', '确认删除', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning'
     })
 

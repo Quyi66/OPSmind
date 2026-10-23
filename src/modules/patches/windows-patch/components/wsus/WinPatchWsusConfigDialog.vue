@@ -5,6 +5,7 @@
     width="560px"
     destroy-on-close
     :close-on-click-modal="false"
+    :close-on-press-escape="false"
   >
     <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
       <el-form-item label="WSUS 地址" prop="wsusUrl">

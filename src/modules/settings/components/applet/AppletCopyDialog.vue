@@ -1,5 +1,13 @@
 <template>
-  <el-dialog v-model="visible" title="复制应用" width="500px" destroy-on-close @close="handleClose">
+  <el-dialog
+    v-model="visible"
+    title="复制应用"
+    width="500px"
+    destroy-on-close
+    @close="handleClose"
+    :close-on-click-modal="false"
+    :close-on-press-escape="false"
+  >
     <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
       <el-form-item label="新名称" prop="title">
         <el-input v-model="form.title" placeholder="请输入新的应用名称" />

@@ -5,6 +5,7 @@
     width="700px"
     destroy-on-close
     @close="$emit('close')"
+    :close-on-click-modal="true"
   >
     <div v-loading="loading" class="check-item-detail-dialog">
       <div class="result-item">
@@ -97,7 +98,10 @@ async function handleAddToWhitelist() {
   if (!props.item) return
 
   try {
-    await ElMessageBox.confirm('确定要将此检查项添加到黑名单吗？', '确认')
+    await ElMessageBox.confirm('确定要将此检查项添加到黑名单吗？', '确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false
+    })
     whitelistLoading.value = true
 
     await whitelistApi.saveWhitelist({
@@ -129,7 +133,10 @@ async function handleRemoveFromWhitelist() {
   if (!props.item) return
 
   try {
-    await ElMessageBox.confirm('确定要将此检查项从黑名单移除吗？', '确认')
+    await ElMessageBox.confirm('确定要将此检查项从黑名单移除吗？', '确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false
+    })
     whitelistLoading.value = true
 
     // 从 whetherWhiteList 字段解析黑名单ID（格式: "y,{whitelistId}"）

@@ -5,6 +5,7 @@
     size="900px"
     destroy-on-close
     class="wb-workbench-drawer"
+    :close-on-click-modal="true"
   >
     <div class="wb-drawer-body">
       <div class="wb-filter-panel">

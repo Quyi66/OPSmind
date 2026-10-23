@@ -162,6 +162,7 @@ onBeforeUnmount(() => { loadRequestId += 1 })
     size="76%"
     destroy-on-close
     class="wb-workbench-drawer"
+    :close-on-click-modal="true"
   >
     <template #footer>
       <div class="wb-drawer-footer">

@@ -5,6 +5,8 @@
     width="640px"
     destroy-on-close
     @close="handleClose"
+    :close-on-press-escape="false"
+    :close-on-click-modal="false"
   >
     <div v-loading="loading">
       <!-- 选中的主机提示 -->

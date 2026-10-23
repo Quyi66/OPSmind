@@ -5,6 +5,7 @@
     width="500px"
     :close-on-click-modal="false"
     destroy-on-close
+    :close-on-press-escape="false"
   >
     <div class="change-status-dialog">
       <el-form label-position="top">

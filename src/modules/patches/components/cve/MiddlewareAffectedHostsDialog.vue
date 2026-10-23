@@ -4,7 +4,7 @@
     :title="`${cveId || '中间件 CVE'} · 受影响主机`"
     width="1200px"
     destroy-on-close
-    :close-on-click-modal="false"
+    :close-on-click-modal="true"
     @update:model-value="emit('update:modelValue', $event)"
   >
     <div v-loading="loading">

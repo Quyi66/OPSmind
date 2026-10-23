@@ -4,7 +4,7 @@
     title="安装任务失败主机"
     width="1000px"
     destroy-on-close
-    :close-on-click-modal="false"
+    :close-on-click-modal="true"
     @update:model-value="emit('update:modelValue', $event)"
   >
     <div v-loading="loading">

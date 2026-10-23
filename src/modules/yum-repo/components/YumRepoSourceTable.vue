@@ -159,6 +159,8 @@
       v-model="dialogVisible"
       :title="editingConfig ? '编辑YUM源配置' : 'YUM源配置录入'"
       width="800px"
+      :close-on-press-escape="false"
+      :close-on-click-modal="false"
     >
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
         <el-form-item label="YUM源名称" prop="name">
@@ -575,6 +577,8 @@ async function handleDeleteConfig(row) {
       `确定要删除“${getYumConfigLabel(row)}”吗？此操作不可恢复。`,
       '删除确认',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         type: 'warning'
       }
     )

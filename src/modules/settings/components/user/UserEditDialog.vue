@@ -4,8 +4,8 @@
     :title="dialogTitle"
     width="800px"
     destroy-on-close
-    :close-on-click-modal="!saving"
-    :close-on-press-escape="!saving"
+    :close-on-click-modal="false"
+    :close-on-press-escape="false"
     :show-close="!saving"
     @close="handleClose"
   >

@@ -7,6 +7,7 @@
     :close-on-click-modal="false"
     class="agent-enroll-dialog"
     @close="handleClose"
+    :close-on-press-escape="false"
   >
     <!-- 自定义步骤条 (与 AgentEnrollDialog 100% 对齐) -->
     <div class="ops-stepper">

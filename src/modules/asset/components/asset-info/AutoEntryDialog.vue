@@ -5,6 +5,7 @@
     width="800px"
     :close-on-click-modal="false"
     @close="handleClose"
+    :close-on-press-escape="false"
   >
     <div v-loading="loading" class="auto-entry">
       <!-- 提示信息 -->

@@ -1103,6 +1103,8 @@ const handleAddAttrToGroup = groupIndex => {
 const handleDeleteGroup = groupIndex => {
   const group = groupedAttrs.value[groupIndex]
   ElMessageBox.confirm(`确定要删除分组"${group.title}"及其所有属性吗？`, '删除确认', {
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
     type: 'warning'
   })
     .then(() => {
@@ -1123,6 +1125,8 @@ const handleDeleteGroup = groupIndex => {
 const handleDeleteAttrInGroup = (groupIndex, attrIndex) => {
   const attr = groupedAttrs.value[groupIndex].children[attrIndex]
   ElMessageBox.confirm(`确定要删除属性"${attr.title || '未命名'}"吗？`, '删除确认', {
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
     type: 'warning'
   })
     .then(() => {

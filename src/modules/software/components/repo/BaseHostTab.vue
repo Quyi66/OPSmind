@@ -117,6 +117,8 @@ async function handleBatchDelete() {
   const ids = selectedRows.value.map(item => item.id)
   try {
     await ElMessageBox.confirm('确定要批量删除选中的基准主机吗？', '确认删除', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning'
     })
 
@@ -135,6 +137,8 @@ async function handleBatchDelete() {
 async function handleDelete(row) {
   try {
     await ElMessageBox.confirm(`确定要删除基准主机 ${row.host_key} 吗？`, '确认删除', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning'
     })
 

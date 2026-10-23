@@ -4,7 +4,7 @@
     title="选择修改密码"
     width="650px"
     :close-on-click-modal="false"
-    :close-on-press-escape="!submitting"
+    :close-on-press-escape="false"
     :show-close="!submitting"
     @close="handleClose"
   >
@@ -201,6 +201,8 @@ async function handleSubmit() {
       `确定要修改选中的 ${selectedCount.value} 台服务器的密码吗？`,
       '确认修改密码',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         type: 'warning',
         confirmButtonText: '确认',
         cancelButtonText: '取消'

@@ -6,9 +6,10 @@
     direction="rtl"
     destroy-on-close
     @close="handleClose"
-    :close-on-click-modal="false"
+    :close-on-click-modal="viewMode"
     class="create-job-drawer"
     append-to-body
+    :close-on-press-escape="viewMode"
   >
     <div class="create-job-drawer__layout">
       <div class="create-job-drawer__masthead">

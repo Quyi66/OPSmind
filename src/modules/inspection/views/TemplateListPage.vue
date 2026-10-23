@@ -281,6 +281,8 @@ async function deleteTemplate(template) {
   deleting.value = true
   try {
     await ElMessageBox.confirm(`确定要删除模板「${name}」吗？`, '删除确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       confirmButtonText: '删除',
       cancelButtonText: '取消',
       type: 'warning'

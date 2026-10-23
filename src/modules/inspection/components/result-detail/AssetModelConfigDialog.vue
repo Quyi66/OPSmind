@@ -5,6 +5,8 @@
     width="960px"
     destroy-on-close
     @close="$emit('close')"
+    :close-on-press-escape="false"
+    :close-on-click-modal="false"
   >
     <div class="asset-model-config-dialog">
       <el-alert type="success" :closable="false" show-icon class="info-alert">

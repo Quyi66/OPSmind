@@ -435,6 +435,8 @@ async function loadAapInfo() {
 async function handleEngineChange() {
   try {
     await ElMessageBox.confirm('确定要切换执行引擎吗？此操作将保存更改。', '变更操作', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
@@ -489,6 +491,8 @@ function deleteClusterServer(index) {
 async function saveAnsibleConfig() {
   try {
     await ElMessageBox.confirm('确定要保存 Ansible 配置吗？', '变更操作', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
@@ -527,6 +531,8 @@ async function saveAnsibleConfig() {
 async function saveAapConfig() {
   try {
     await ElMessageBox.confirm('确定要保存 AAP 配置吗？', '变更操作', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'

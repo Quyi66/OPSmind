@@ -194,6 +194,8 @@
       :title="getDialogTitle('sys')"
       width="700px"
       destroy-on-close
+      :close-on-press-escape="dialogMode === 'view'"
+      :close-on-click-modal="dialogMode === 'view'"
     >
       <el-form
         v-if="dialogMode !== 'view'"
@@ -277,6 +279,8 @@
       :title="getDialogTitle('app')"
       width="700px"
       destroy-on-close
+      :close-on-press-escape="dialogMode === 'view'"
+      :close-on-click-modal="dialogMode === 'view'"
     >
       <el-form
         v-if="dialogMode !== 'view'"
@@ -550,6 +554,8 @@ async function handleSaveSysParam() {
 async function handleDeleteSysParam(row) {
   try {
     await ElMessageBox.confirm(`确定要删除参数"${row.name}"吗？`, '删除确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning',
       confirmButtonText: '删除',
       cancelButtonText: '取消'
@@ -619,6 +625,8 @@ async function handleSaveAppParam() {
 async function handleDeleteAppParam(row) {
   try {
     await ElMessageBox.confirm(`确定要删除参数"${row.name}"吗？`, '删除确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning',
       confirmButtonText: '删除',
       cancelButtonText: '取消'

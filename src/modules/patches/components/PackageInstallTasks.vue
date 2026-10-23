@@ -121,7 +121,13 @@ async function approve(task, approved) {
     const { value } = await ElMessageBox.prompt(
       `申请人：${task.createdBy || '-'}；计划执行时间：${formatDateTime(task.scheduledTime)}。请填写审批意见（可选）。`,
       approved ? '通过安装申请' : '驳回安装申请',
-      { confirmButtonText: approved ? '确认通过' : '确认驳回', cancelButtonText: '取消', inputType: 'textarea' }
+      {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
+        confirmButtonText: approved ? '确认通过' : '确认驳回',
+        cancelButtonText: '取消',
+        inputType: 'textarea'
+      }
     )
     await patchInstallApi.approveTask(task.id, { approved, comment: value || '' })
     ElMessage.success(approved ? '已批准，等待计划时间自动执行' : '已驳回安装申请')

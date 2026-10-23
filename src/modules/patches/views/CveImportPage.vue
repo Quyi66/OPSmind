@@ -444,6 +444,8 @@
       title="导入威胁排查文件"
       width="520px"
       destroy-on-close
+      :close-on-press-escape="false"
+      :close-on-click-modal="false"
     >
       <div class="upload-area">
         <el-upload
@@ -487,6 +489,7 @@
       :title="`漏洞详情 - ${selectedCveId}`"
       width="90%"
       destroy-on-close
+      :close-on-click-modal="true"
     >
       <div
         style="
@@ -513,6 +516,7 @@
       :title="`漏洞影响主机清单 - ${selectedCveIdForHosts}`"
       width="680px"
       destroy-on-close
+      :close-on-click-modal="true"
     >
       <div
         style="
@@ -555,6 +559,7 @@
       :title="`主机漏洞清单 - ${selectedHostKeyForCves}`"
       width="780px"
       destroy-on-close
+      :close-on-click-modal="true"
     >
       <div
         style="
@@ -979,6 +984,8 @@ function handleDelete(row) {
     `确定要彻底删除导入批次 [${row.batchNo}] (${row.originalName}) 吗？此操作将同时清除其所有比对分析明细且不可恢复。`,
     '提示',
     {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       confirmButtonText: '确定删除',
       cancelButtonText: '取消',
       type: 'warning'

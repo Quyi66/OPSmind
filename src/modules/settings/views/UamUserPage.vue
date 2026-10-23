@@ -342,7 +342,11 @@ async function handleToggleActivation(row) {
     await ElMessageBox.confirm(
       `确定要${action}用户 "${row.fullName || row.login}" 吗？`,
       '确认操作',
-      { type: 'warning' }
+      {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
+        type: 'warning'
+      }
     )
 
     togglingUserId.value = row.tenantUserId
@@ -397,6 +401,8 @@ async function handleDelete(row) {
 
   try {
     await ElMessageBox.confirm(`确定要删除用户 "${row.fullName || row.login}" 吗？`, '确认删除', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning'
     })
 

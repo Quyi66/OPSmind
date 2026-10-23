@@ -517,7 +517,7 @@ async function handleRerun(row) {
     await ElMessageBox.confirm(
       `确定要重新启动运维工具 "${getAutomationRunTitle(row)}" 吗？`,
       '重新启动运维工具',
-      { type: 'warning' }
+      { closeOnClickModal: false, closeOnPressEscape: false, type: 'warning' }
     )
 
     loading.value = true

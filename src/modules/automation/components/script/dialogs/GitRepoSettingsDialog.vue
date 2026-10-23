@@ -5,6 +5,7 @@
     width="600px"
     :close-on-click-modal="false"
     @closed="handleClosed"
+    :close-on-press-escape="false"
   >
     <!-- 说明信息 -->
     <el-alert type="success" :closable="false" class="mb-4">
@@ -252,7 +253,11 @@ async function handleSave() {
     await ElMessageBox.confirm(
       `确认同步 ${form.value.repoUrl} 到KoreOPS脚本库中？`,
       '外部Git库同步确认',
-      { type: 'warning' }
+      {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
+        type: 'warning'
+      }
     )
   } catch {
     return

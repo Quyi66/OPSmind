@@ -504,7 +504,7 @@
       v-model="patchDetailVisible"
       title="补丁详情"
       width="800px"
-      :close-on-click-modal="false"
+      :close-on-click-modal="true"
       class="patch-detail-dialog"
     >
       <PatchDetailContent
@@ -533,7 +533,7 @@
       v-model="affectedHostsVisible"
       title="受影响主机"
       width="900px"
-      :close-on-click-modal="false"
+      :close-on-click-modal="true"
     >
       <p>{{ affectedPatch?.patch_id }}</p>
       <div v-if="affectedHostsError" role="alert">

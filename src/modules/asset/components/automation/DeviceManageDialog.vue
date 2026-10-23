@@ -6,6 +6,7 @@
     destroy-on-close
     :close-on-click-modal="false"
     @close="handleClose"
+    :close-on-press-escape="false"
   >
     <!-- Tab 导航 -->
     <el-tabs v-model="activeTab" class="device-manage-tabs">

@@ -362,9 +362,10 @@
       title="配置设备自动化凭据"
       size="560px"
       direction="rtl"
-      :close-on-click-modal="true"
+      :close-on-click-modal="false"
       destroy-on-close
       class="automation-drawer"
+      :close-on-press-escape="false"
     >
       <div v-loading="automationFormLoading" class="drawer-body">
         <el-alert
@@ -506,9 +507,10 @@
       :title="ansibleForm.id ? '编辑通用连接模板' : '新增通用连接模板'"
       size="580px"
       direction="rtl"
-      :close-on-click-modal="true"
+      :close-on-click-modal="false"
       destroy-on-close
       class="ansible-drawer"
+      :close-on-press-escape="false"
     >
       <div v-loading="ansibleFormLoading" class="drawer-body">
         <el-alert
@@ -1173,6 +1175,8 @@ async function handleEditAnsible(row) {
 async function handleDeleteAnsible(row) {
   try {
     await ElMessageBox.confirm('该ansible配置可能被多个主机引用，是否确定删除？', '确认删除', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning'
     })
 

@@ -7,6 +7,7 @@
     :close-on-click-modal="false"
     class="batch-install-patch-drawer"
     @close="handleClose"
+    :close-on-press-escape="false"
   >
     <!-- 主机和补丁汇总信息 -->
     <div class="batch-install-summary mb-3 p-3">
@@ -175,6 +176,7 @@
     width="800px"
     append-to-body
     destroy-on-close
+    :close-on-click-modal="true"
   >
     <el-alert
       v-if="patchDetailError"

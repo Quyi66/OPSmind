@@ -7,6 +7,7 @@
     :z-index="5000"
     append-to-body
     class="acm-device-selector-dialog"
+    :close-on-press-escape="false"
   >
     <div class="selector-container">
       <!-- CI类型选择 -->

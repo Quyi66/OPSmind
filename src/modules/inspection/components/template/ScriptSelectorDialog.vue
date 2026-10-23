@@ -5,6 +5,7 @@
     width="800px"
     :close-on-click-modal="false"
     append-to-body
+    :close-on-press-escape="false"
   >
     <div class="script-selector-content">
       <!-- 顶部工具栏：面包屑导航 + 搜索框 -->

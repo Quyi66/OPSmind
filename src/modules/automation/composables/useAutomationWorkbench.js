@@ -256,7 +256,13 @@ export function useAutomationWorkbench({ canViewJobs = true, canViewCommands = t
       await ElMessageBox.confirm(
         `确定${isEnabled ? '停用' : '启用'}定时任务「${getCronTaskConfirmation(item)}」吗？`,
         '确认操作',
-        { type: 'warning', confirmButtonText: '确定', cancelButtonText: '取消' }
+        {
+          closeOnClickModal: false,
+          closeOnPressEscape: false,
+          type: 'warning',
+          confirmButtonText: '确定',
+          cancelButtonText: '取消'
+        }
       )
       if (isEnabled) {
         await jaoApi.stopCronJob(item.id)
@@ -276,7 +282,13 @@ export function useAutomationWorkbench({ canViewJobs = true, canViewCommands = t
       await ElMessageBox.confirm(
         `确定立即执行定时任务「${getCronTaskConfirmation(item)}」吗？`,
         '确认操作',
-        { type: 'warning', confirmButtonText: '确定', cancelButtonText: '取消' }
+        {
+          closeOnClickModal: false,
+          closeOnPressEscape: false,
+          type: 'warning',
+          confirmButtonText: '确定',
+          cancelButtonText: '取消'
+        }
       )
       const response = await jaoApi.executeCronJob(item.id)
       ElMessage.success(`已触发执行：${getCronTaskConfirmation(item)}`)

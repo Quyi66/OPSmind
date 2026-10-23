@@ -596,7 +596,12 @@
       </div>
     </div>
 
-    <el-drawer v-model="selectionReviewVisible" title="已选设备" size="520px">
+    <el-drawer
+      v-model="selectionReviewVisible"
+      title="已选设备"
+      size="520px"
+      :close-on-click-modal="true"
+    >
       <div v-loading="selectionReviewLoading">
         <el-alert
           v-if="selectionReviewError"
@@ -1511,6 +1516,8 @@ const handleOnline = async () => {
   const rows = await resolveSelectedRowsForAction('请先选择要上线的设备')
   if (!rows?.length) return
   ElMessageBox.confirm('是否将选中的设备设置为在线状态？', '上线确认', {
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
     type: 'warning'
   })
     .then(async () => {
@@ -1543,6 +1550,8 @@ const handleCheckSingleConn = async row => {
   const ip = row.IP || row.ip
   try {
     await ElMessageBox.confirm(`是否重新检查主机${ip}的连通性？`, '提示', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
@@ -1609,6 +1618,8 @@ const handleOffline = async () => {
   const rows = await resolveSelectedRowsForAction('请先选择要下线的设备')
   if (!rows?.length) return
   ElMessageBox.confirm('是否将选中的设备设置为下线状态？', '下线确认', {
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
     type: 'warning'
   })
     .then(async () => {
@@ -1634,6 +1645,8 @@ const handleDelete = async () => {
   const rows = await resolveSelectedRowsForAction('请先选择要删除的设备')
   if (!rows?.length) return
   ElMessageBox.confirm('是否确认删除选中的设备？此操作不可恢复！', '删除确认', {
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
     type: 'warning'
   })
     .then(async () => {

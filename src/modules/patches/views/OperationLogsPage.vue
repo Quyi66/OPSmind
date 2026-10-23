@@ -230,6 +230,7 @@
       width="680px"
       destroy-on-close
       class="hosts-dialog"
+      :close-on-click-modal="true"
     >
       <template #header>
         <div class="hosts-dialog-header">

@@ -5,6 +5,8 @@
     width="760px"
     class="cron-job-form-dialog"
     destroy-on-close
+    :close-on-press-escape="false"
+    :close-on-click-modal="false"
   >
     <el-alert
       v-if="initializationError"

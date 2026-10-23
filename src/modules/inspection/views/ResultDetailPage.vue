@@ -310,6 +310,7 @@
       class="inspection-detail-dialog"
       append-to-body
       destroy-on-close
+      :close-on-click-modal="true"
     >
       <div style="display: flex; justify-content: space-between; margin-bottom: 16px">
         <div style="display: flex; gap: 12px">
@@ -733,7 +734,10 @@ async function handleAddToWhitelist(item) {
   inspectionMutationLoading.value = true
 
   try {
-    await ElMessageBox.confirm('确定要将此检查项添加到黑名单吗？', '确认')
+    await ElMessageBox.confirm('确定要将此检查项添加到黑名单吗？', '确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false
+    })
     if (!isCurrentInspection(context)) return
 
     await whitelistApi.saveWhitelist(payload)
@@ -762,7 +766,10 @@ async function handleRemoveFromWhitelist(item) {
   inspectionMutationLoading.value = true
 
   try {
-    await ElMessageBox.confirm('确定要将此检查项从黑名单移除吗？', '确认')
+    await ElMessageBox.confirm('确定要将此检查项从黑名单移除吗？', '确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false
+    })
     if (!isCurrentInspection(context)) return
 
     if (whitelistId) {
@@ -891,7 +898,8 @@ async function addToWhitelist() {
   try {
     await ElMessageBox.confirm(
       `确定要将选中的 ${selectedHostIds.value.length} 台主机添加到黑名单吗？`,
-      '确认'
+      '确认',
+      { closeOnClickModal: false, closeOnPressEscape: false }
     )
 
     const response = await jobApi.addHostToWhitelist(selectedHostIds.value)
@@ -924,7 +932,8 @@ async function removeFromWhitelist() {
   try {
     await ElMessageBox.confirm(
       `确定要将选中的 ${selectedHostIds.value.length} 台主机从黑名单移除吗？`,
-      '确认'
+      '确认',
+      { closeOnClickModal: false, closeOnPressEscape: false }
     )
 
     const response = await jobApi.removeHostFromWhitelist(selectedHostIds.value)

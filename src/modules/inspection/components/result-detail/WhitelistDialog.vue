@@ -5,6 +5,8 @@
     width="700px"
     destroy-on-close
     @close="$emit('close')"
+    :close-on-press-escape="selectedIds.length === 0"
+    :close-on-click-modal="selectedIds.length === 0"
   >
     <el-alert type="info" :closable="false" show-icon class="mb-3">
       黑名单中的主机将在巡检时跳过检查

@@ -83,6 +83,8 @@ export function useCronJobActions(refreshCallback) {
       }
 
       await ElMessageBox.confirm(h('div', content), '确认操作', {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
@@ -125,6 +127,8 @@ export function useCronJobActions(refreshCallback) {
         `确定要切换选中 ${selectedRows.length} 个任务的启停状态吗？已启用的任务将停用，已停用的任务将启用。\n${selectedRows.map(taskName).join('\n')}`,
         '批量启停',
         {
+          closeOnClickModal: false,
+          closeOnPressEscape: false,
           confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: 'warning'
@@ -153,6 +157,8 @@ export function useCronJobActions(refreshCallback) {
   async function handleExecuteOnce(row) {
     try {
       await ElMessageBox.confirm(`确定立即执行定时任务「${taskName(row)}」吗？`, '确认操作', {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
@@ -173,6 +179,8 @@ export function useCronJobActions(refreshCallback) {
   async function handleCopy(row) {
     try {
       await ElMessageBox.confirm(`确定要复制定时任务「${taskName(row)}」吗？`, '确认操作', {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'info'
@@ -194,6 +202,8 @@ export function useCronJobActions(refreshCallback) {
   async function handleDelete(row) {
     try {
       await ElMessageBox.confirm(`确定要删除定时任务「${taskName(row)}」吗？`, '确认删除', {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'

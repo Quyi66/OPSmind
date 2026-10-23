@@ -6,6 +6,7 @@
     :close-on-click-modal="false"
     @update:model-value="handleVisibleChange"
     @close="handleClose"
+    :close-on-press-escape="false"
   >
     <el-form ref="formRef" :model="formData" :rules="rules" label-position="top">
       <!-- 名称 -->

@@ -17,6 +17,7 @@
       :close-on-click-modal="false"
       class="data-editor-dialog"
       append-to-body
+      :close-on-press-escape="false"
     >
       <div class="editor-content">
         <!-- 类型切换标签页 -->

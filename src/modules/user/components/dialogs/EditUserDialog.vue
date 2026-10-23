@@ -5,6 +5,7 @@
     width="600px"
     :close-on-click-modal="false"
     :before-close="handleClose"
+    :close-on-press-escape="false"
   >
     <div class="edit-user-dialog">
       <!-- 用户信息显示 -->

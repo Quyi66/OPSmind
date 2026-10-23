@@ -5,6 +5,7 @@
     width="700px"
     :close-on-click-modal="false"
     :before-close="handleClose"
+    :close-on-press-escape="false"
   >
     <el-form
       ref="formRef"

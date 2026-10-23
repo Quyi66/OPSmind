@@ -3,7 +3,7 @@
     v-model="dialogVisible"
     title="审批详情"
     width="600px"
-    :close-on-click-modal="false"
+    :close-on-click-modal="true"
     @close="handleClose"
   >
     <el-form label-width="120px" size="default">

@@ -5,8 +5,9 @@
     width="1100px"
     destroy-on-close
     append-to-body
-    :close-on-click-modal="false"
+    :close-on-click-modal="!showStepActions && !stepSubmitting"
     @close="handleClose"
+    :close-on-press-escape="!showStepActions && !stepSubmitting"
   >
     <div class="win-patch-task-detail">
       <div class="ops-action-bar win-patch-task-detail__actions">
@@ -583,6 +584,8 @@ async function handleSkipStep() {
       `确定跳过“${getTaskStepLabel(taskDetail.value)}”步骤吗？`,
       '跳过步骤',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         type: 'warning'
       }
     )

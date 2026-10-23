@@ -70,6 +70,7 @@
       title="选择目标主机"
       width="500px"
       :close-on-click-modal="false"
+      :close-on-press-escape="false"
     >
       <div class="select-host-dialog-content">
         <AcmDeviceSelector
@@ -99,7 +100,7 @@
       v-model="hostDetailDialogVisible"
       :title="`${currentHostDetail?.$data_owner || ''} - YUM源详情`"
       width="1400px"
-      :close-on-click-modal="false"
+      :close-on-click-modal="true"
     >
       <div class="host-detail-dialog-content">
         <div class="ops-filter-bar">
@@ -442,7 +443,11 @@ function formatDate(timestamp) {
 
 async function handleEnableRepo(row) {
   try {
-    await ElMessageBox.confirm(`确定要启用 "${row['repo-name']}" 吗？`, '确认', { type: 'info' })
+    await ElMessageBox.confirm(`确定要启用 "${row['repo-name']}" 吗？`, '确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      type: 'info'
+    })
 
     const hosts = [
       {
@@ -479,7 +484,11 @@ async function handleEnableRepo(row) {
 
 async function handleDisableRepo(row) {
   try {
-    await ElMessageBox.confirm(`确定要禁用 "${row['repo-name']}" 吗？`, '确认', { type: 'warning' })
+    await ElMessageBox.confirm(`确定要禁用 "${row['repo-name']}" 吗？`, '确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      type: 'warning'
+    })
 
     const hosts = [
       {
@@ -517,6 +526,8 @@ async function handleDisableRepo(row) {
 async function handleDeleteRepo(row) {
   try {
     await ElMessageBox.confirm(`确定要删除 "${row['repo-name']}" 吗？此操作不可恢复。`, '警告', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning'
     })
 

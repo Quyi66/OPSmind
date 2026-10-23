@@ -5,6 +5,7 @@
     width="90%"
     destroy-on-close
     class="operation-logs-dialog"
+    :close-on-click-modal="true"
   >
     <div class="dialog-content">
       <!-- 筛选栏 -->

@@ -3,8 +3,9 @@
     v-model="dialogVisible"
     title="运维工具申请"
     width="600px"
-    :close-on-click-modal="false"
+    :close-on-click-modal="!canEdit"
     @close="handleClose"
+    :close-on-press-escape="!canEdit"
   >
     <el-form ref="formRef" :model="formData" label-width="120px" size="default">
       <el-form-item label="运维工具名称">

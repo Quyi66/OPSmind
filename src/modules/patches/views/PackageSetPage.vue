@@ -241,6 +241,7 @@
       :title="editForm.id ? '编辑软件包集' : '新建软件包集'"
       width="600px"
       :close-on-click-modal="false"
+      :close-on-press-escape="false"
     >
       <el-form ref="editFormRef" :model="editForm" :rules="editRules" label-width="100px" size="small">
         <el-form-item label="包集名称" prop="name">
@@ -397,6 +398,8 @@ function handleEditPackageSet(row) {
 async function handleDeletePackageSet(row) {
   try {
     await ElMessageBox.confirm(`确定删除软件包集 "${row.name}" 吗？`, '删除确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       confirmButtonText: '确认删除',
       cancelButtonText: '取消',
       type: 'warning'
@@ -544,6 +547,8 @@ async function handleStartOneClickInstall() {
       `确定对已选中的 ${targets.length} 项目标资产提交定时安装吗？计划时间：${payload.scheduledTime}。${isAdmin.value ? '届时自动执行' : '需管理员提前审批通过'}，自动预检查、分批安装且默认不重启。`,
       '确认提交定时安装',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         confirmButtonText: '确认提交',
         cancelButtonText: '取消',
         type: 'info'

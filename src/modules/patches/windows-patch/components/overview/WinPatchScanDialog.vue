@@ -5,6 +5,7 @@
     width="760px"
     destroy-on-close
     :close-on-click-modal="false"
+    :close-on-press-escape="false"
   >
     <div class="win-patch-dialog-body">
       <el-alert

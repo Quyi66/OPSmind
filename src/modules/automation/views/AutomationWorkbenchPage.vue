@@ -1047,6 +1047,8 @@ async function handleToggleCommand(item) {
       `确定要${actionLabel}命令「${item.name || item.id}」吗？`,
       `${actionLabel}命令`,
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         type: 'warning',
         confirmButtonText: actionLabel,
         cancelButtonText: '取消'
@@ -1067,6 +1069,8 @@ async function handleDeleteCommand(item) {
 
   try {
     await ElMessageBox.confirm(`确定要删除命令「${item.name || item.id}」吗？`, '删除命令', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning',
       confirmButtonText: '删除',
       cancelButtonText: '取消',
@@ -1271,6 +1275,8 @@ async function handleDeleteJob(job) {
       `确定要删除运维工具「${getAutomationToolTitle(job)}」吗？`,
       '删除运维工具',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         type: 'warning',
         confirmButtonText: '删除',
         cancelButtonText: '取消',
@@ -1313,6 +1319,8 @@ async function handleDeleteCronFromDrawer(item) {
       `确定要删除定时任务「${getCronTaskConfirmation(item)}」吗？`,
       '删除定时任务',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         type: 'warning',
         confirmButtonText: '删除',
         cancelButtonText: '取消',
@@ -1344,6 +1352,8 @@ async function handleDeleteFlow(flow) {
       `确定要删除流程「${flow.name || flow.id}」吗？此操作不可恢复。`,
       '删除确认',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         type: 'warning',
         confirmButtonText: '删除',
         cancelButtonText: '取消',
@@ -1402,6 +1412,8 @@ async function _refreshApprovalsInPlace() {
 async function handleApproveItem(item) {
   try {
     await ElMessageBox.confirm(`确定通过「${item.name}」的审批？`, '审批确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'success',
       confirmButtonText: '确定通过',
       cancelButtonText: '取消'
@@ -1421,6 +1433,8 @@ async function handleRejectItem(item) {
       `请输入拒绝「${item.name}」的原因`,
       '拒绝审批',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         type: 'warning',
         confirmButtonText: '确定拒绝',
         cancelButtonText: '取消',
@@ -1635,6 +1649,8 @@ async function _refreshCmdReviewInPlace() {
 async function handleCmdApproveItem(item) {
   try {
     await ElMessageBox.confirm(`确定通过【${item.name}】的审核？`, '审核确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'success',
       confirmButtonText: '确定通过',
       cancelButtonText: '取消'
@@ -1654,6 +1670,8 @@ async function handleCmdRejectItem(item) {
       `请输入拒绝【${item.name}】的原因`,
       '拒绝审核',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         type: 'warning',
         confirmButtonText: '确定拒绝',
         cancelButtonText: '取消',

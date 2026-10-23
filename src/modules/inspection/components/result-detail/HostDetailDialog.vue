@@ -5,6 +5,7 @@
     width="900px"
     destroy-on-close
     @close="$emit('close')"
+    :close-on-click-modal="true"
   >
     <div v-if="host" class="host-detail-dialog">
       <div class="host-info">

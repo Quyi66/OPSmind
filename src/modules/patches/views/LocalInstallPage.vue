@@ -159,6 +159,8 @@ async function handleStartInstall() {
       `确定将 ${selectedFiles.value.length} 个软件包安装到 ${selectedHosts.value.length} 台主机吗？`,
       '确认安装',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         confirmButtonText: '确认',
         cancelButtonText: '取消',
         type: 'info'

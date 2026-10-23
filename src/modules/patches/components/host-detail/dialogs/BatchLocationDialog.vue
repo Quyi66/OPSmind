@@ -4,8 +4,8 @@
     title="批量配置主机区域环境"
     width="500px"
     destroy-on-close
-    :close-on-click-modal="!saving && !recomputing"
-    :close-on-press-escape="!saving && !recomputing"
+    :close-on-click-modal="false"
+    :close-on-press-escape="false"
     :show-close="!saving && !recomputing"
     @close="handleClose"
   >

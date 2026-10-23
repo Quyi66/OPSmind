@@ -5,8 +5,9 @@
     :title="dialogTitle"
     width="1350px"
     destroy-on-close
-    :close-on-click-modal="false"
+    :close-on-click-modal="!patchesTabRef?.hasPendingSelection"
     class="host-severity-patch-dialog"
+    :close-on-press-escape="!patchesTabRef?.hasPendingSelection"
   >
     <template v-if="hasHostReference">
       <PatchesTab

@@ -6,6 +6,12 @@
     destroy-on-close
     class="host-detail-dialog"
     @close="handleClose"
+    :close-on-click-modal="
+      selectedAvailablePackages.length === 0 && selectedInstalledPackages.length === 0
+    "
+    :close-on-press-escape="
+      selectedAvailablePackages.length === 0 && selectedInstalledPackages.length === 0
+    "
   >
     <!-- 主机信息头部 -->
     <div class="host-info-header">
@@ -611,7 +617,11 @@ async function handleEnableRepo(row, index) {
     repoFile: row.repo_file
   }
   try {
-    await ElMessageBox.confirm('确认启用该镜像源？', '确认', { type: 'info' })
+    await ElMessageBox.confirm('确认启用该镜像源？', '确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      type: 'info'
+    })
     if (!isContextCurrent(context)) return
     setRepoActionLoading(loadingKey, true)
 
@@ -661,7 +671,11 @@ async function handleDisableRepo(row, index) {
     repoFile: row.repo_file
   }
   try {
-    await ElMessageBox.confirm('确认禁用该镜像源？', '确认', { type: 'warning' })
+    await ElMessageBox.confirm('确认禁用该镜像源？', '确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      type: 'warning'
+    })
     if (!isContextCurrent(context)) return
     setRepoActionLoading(loadingKey, true)
 
@@ -707,7 +721,11 @@ async function handleDeleteRepo(row) {
     repoFile: row.repo_file
   }
   try {
-    await ElMessageBox.confirm('确认删除该仓库？', '确认删除', { type: 'warning' })
+    await ElMessageBox.confirm('确认删除该仓库？', '确认删除', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      type: 'warning'
+    })
     if (!isContextCurrent(context)) return
     await hostOverviewApi.deleteHostRepo(payload)
     if (!isContextCurrent(context)) return
@@ -774,7 +792,11 @@ async function handleInstallSelected() {
     hostId: context.hostId
   }
   try {
-    await ElMessageBox.confirm('确认安装选中的软件包？', '确认', { type: 'info' })
+    await ElMessageBox.confirm('确认安装选中的软件包？', '确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      type: 'info'
+    })
     if (!isContextCurrent(context)) return
     await hostOverviewApi.installPackages(payload)
     if (!isContextCurrent(context)) return
@@ -798,7 +820,11 @@ async function handleUninstallSelected() {
     hostId: context.hostId
   }
   try {
-    await ElMessageBox.confirm('确认卸载选中的软件包？', '确认', { type: 'warning' })
+    await ElMessageBox.confirm('确认卸载选中的软件包？', '确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      type: 'warning'
+    })
     if (!isContextCurrent(context)) return
     uninstallSelectedLoading.value = true
 
@@ -844,7 +870,11 @@ async function handleUpgradeSelected() {
     hostId: context.hostId
   }
   try {
-    await ElMessageBox.confirm('确认升级选中的软件包？', '确认', { type: 'info' })
+    await ElMessageBox.confirm('确认升级选中的软件包？', '确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      type: 'info'
+    })
     if (!isContextCurrent(context)) return
     upgradeSelectedLoading.value = true
 
@@ -890,7 +920,11 @@ async function handleRollbackSelected() {
     hostId: context.hostId
   }
   try {
-    await ElMessageBox.confirm('确认回滚选中的软件包？', '确认', { type: 'warning' })
+    await ElMessageBox.confirm('确认回滚选中的软件包？', '确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      type: 'warning'
+    })
     if (!isContextCurrent(context)) return
     rollbackSelectedLoading.value = true
     await hostOverviewApi.rollbackPackages(payload)
@@ -918,7 +952,11 @@ async function handleUpgradePackage(row) {
     hostId: context.hostId
   }
   try {
-    await ElMessageBox.confirm('确认升级该软件包？', '确认', { type: 'info' })
+    await ElMessageBox.confirm('确认升级该软件包？', '确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      type: 'info'
+    })
     if (!isContextCurrent(context)) return
     await hostOverviewApi.upgradePackages(payload)
     if (!isContextCurrent(context)) return
@@ -942,7 +980,11 @@ async function handleRollbackPackage(row, index) {
     hostId: context.hostId
   }
   try {
-    await ElMessageBox.confirm('确认回滚该软件包？', '确认', { type: 'warning' })
+    await ElMessageBox.confirm('确认回滚该软件包？', '确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      type: 'warning'
+    })
     if (!isContextCurrent(context)) return
     setInstalledActionLoading(loadingKey, true)
     await hostOverviewApi.rollbackPackages(payload)

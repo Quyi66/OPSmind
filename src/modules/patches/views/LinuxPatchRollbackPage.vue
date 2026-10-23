@@ -620,6 +620,8 @@ function handleDelete(row) {
       : '确定要删除这条更新记录吗？'
 
   ElMessageBox.confirm(message, '确认删除', {
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
     type: 'warning'
   })
     .then(async () => {
@@ -648,6 +650,8 @@ function handleBatchDelete() {
       : `确定要删除选中的 ${groupCount} 条合并记录吗？这将删除其包含的 ${recordCount} 条原始记录。`
 
   ElMessageBox.confirm(message, '确认删除', {
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
     type: 'warning'
   })
     .then(async () => {

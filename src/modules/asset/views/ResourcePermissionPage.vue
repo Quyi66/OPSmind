@@ -462,6 +462,8 @@ async function handleRefresh() {
       '当前有未保存的权限变更，刷新后将丢失这些修改。是否继续？',
       '确认刷新',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         type: 'warning'
       }
     )

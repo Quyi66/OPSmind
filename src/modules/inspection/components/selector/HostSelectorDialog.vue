@@ -7,6 +7,7 @@
     class="host-selector-dialog"
     append-to-body
     @close="handleClose"
+    :close-on-press-escape="false"
   >
     <div class="selector-container">
       <!-- 已选主机卡片 -->

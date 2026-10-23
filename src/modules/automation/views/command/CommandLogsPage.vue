@@ -176,6 +176,7 @@
       :title="currentLog?.job_title || '运行结果'"
       width="900px"
       class="result-dialog"
+      :close-on-click-modal="true"
     >
       <div v-if="currentLog" class="log-detail">
         <div class="log-info">
@@ -328,7 +329,11 @@ async function handleViewResult(row) {
 // 重新运行
 async function handleRerun(row) {
   try {
-    await ElMessageBox.confirm('确定要重新运行此运维工具吗？', '重新运行', { type: 'warning' })
+    await ElMessageBox.confirm('确定要重新运行此运维工具吗？', '重新运行', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      type: 'warning'
+    })
     await api.post('/workflow/api/workflow/job/rerun', {
       runId: row.id
     })

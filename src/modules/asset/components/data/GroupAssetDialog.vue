@@ -1,5 +1,11 @@
 <template>
-  <el-dialog v-model="visible" title="分组内设备信息" width="1280px" :close-on-click-modal="false">
+  <el-dialog
+    v-model="visible"
+    title="分组内设备信息"
+    width="1280px"
+    :close-on-click-modal="selectedRows.length === 0"
+    :close-on-press-escape="selectedRows.length === 0"
+  >
     <div class="group-asset-content">
       <!-- 操作按钮和工具栏 -->
       <div class="toolbar">
@@ -175,7 +181,11 @@ const handleRemoveAsset = () => {
     return
   }
 
-  ElMessageBox.confirm('确定要从当前分组中移除选中的资产吗？', '移除确认', { type: 'warning' })
+  ElMessageBox.confirm('确定要从当前分组中移除选中的资产吗？', '移除确认', {
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
+    type: 'warning'
+  })
     .then(async () => {
       try {
         const ciIds = selectedRows.value.map(row => row.id).join(',')

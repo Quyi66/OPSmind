@@ -5,6 +5,7 @@
     width="600px"
     :close-on-click-modal="false"
     @closed="handleClosed"
+    :close-on-press-escape="false"
   >
     <div class="delete-import-content">
       <!-- 第一步：下载模板 -->
@@ -138,6 +139,7 @@ async function showDeleteResult(result) {
     </div>`,
     '删除结果',
     {
+      closeOnClickModal: true,
       dangerouslyUseHTMLString: true,
       confirmButtonText: '确定'
     }

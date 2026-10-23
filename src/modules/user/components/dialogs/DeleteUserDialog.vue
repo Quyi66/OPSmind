@@ -5,6 +5,7 @@
     width="520px"
     :close-on-click-modal="false"
     :before-close="handleClose"
+    :close-on-press-escape="false"
   >
     <div class="delete-user-dialog">
       <div class="user-info">

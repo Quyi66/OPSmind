@@ -5,6 +5,7 @@
     width="700px"
     :close-on-click-modal="false"
     @close="handleClose"
+    :close-on-press-escape="false"
   >
     <el-form label-width="100px" size="small">
       <el-form-item label="导入模式">

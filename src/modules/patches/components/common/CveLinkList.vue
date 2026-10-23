@@ -30,6 +30,7 @@
       :style="{ minWidth: '680px', maxWidth: 'calc(100vw - 32px)' }"
       append-to-body
       destroy-on-close
+      :close-on-click-modal="true"
     >
       <div class="cve-link-list cve-link-list--dialog">
         <template v-for="cve in cveItems" :key="cve.text">

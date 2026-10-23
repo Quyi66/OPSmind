@@ -45,6 +45,7 @@
     append-to-body
     :close-on-click-modal="false"
     class="flow-editor-drawer"
+    :close-on-press-escape="false"
   >
     <div class="flow-editor-drawer__body">
       <el-form ref="formRef" :model="flow" label-width="120px" class="flow-form flow-form--drawer">

@@ -3,8 +3,8 @@
     v-model="dialogVisible"
     title="定时安装任务详情"
     width="900px"
-    :close-on-click-modal="false"
-    :close-on-press-escape="!actionLoading"
+    :close-on-click-modal="!canHandlePreCheckFailure && !actionLoading"
+    :close-on-press-escape="!canHandlePreCheckFailure && !actionLoading"
   >
     <div v-loading="loading" class="task-detail-body">
       <div v-if="loadError" class="task-load-error">
@@ -406,6 +406,8 @@ async function handleRetryPreCheck() {
 async function handleSkipPreCheck() {
   try {
     await ElMessageBox.confirm('跳过阻断项并强行安装可能导致部署失败，是否继续？', '强制安装确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       confirmButtonText: '确定跳过并安装',
       cancelButtonText: '取消',
       type: 'warning'

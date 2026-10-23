@@ -343,7 +343,11 @@ function handleEditScene() {
 }
 
 function handleDeleteScene() {
-  ElMessageBox.confirm('确定要删除该场景吗？', '提示', { type: 'warning' })
+  ElMessageBox.confirm('确定要删除该场景吗？', '提示', {
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
+    type: 'warning'
+  })
     .then(() => {
       ElMessage.info('删除场景功能待实现')
     })

@@ -4,7 +4,7 @@
     title="导入修改密码模板"
     width="550px"
     :close-on-click-modal="false"
-    :close-on-press-escape="!uploading"
+    :close-on-press-escape="false"
     :show-close="!uploading"
     @close="handleClose"
   >

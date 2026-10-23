@@ -5,6 +5,7 @@
     width="1200px"
     destroy-on-close
     @close="handleClose"
+    :close-on-click-modal="true"
   >
     <el-tabs v-model="activeTab" @tab-change="handleTabChange">
       <!-- 基本信息 -->

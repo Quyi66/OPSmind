@@ -311,6 +311,8 @@ function handleDetailSuccess() {
 async function handleCancel(row) {
   try {
     await ElMessageBox.confirm('确定要取消此审批吗？', '取消审批', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning'
     })
 

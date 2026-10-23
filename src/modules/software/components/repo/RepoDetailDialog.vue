@@ -6,6 +6,7 @@
     class="repo-detail-shell"
     destroy-on-close
     @close="handleClose"
+    :close-on-click-modal="true"
   >
     <div class="repo-detail-dialog">
       <!-- 操作按钮在表格上方 -->

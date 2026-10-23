@@ -5,6 +5,7 @@
     width="600px"
     :close-on-click-modal="false"
     @close="handleClose"
+    :close-on-press-escape="false"
   >
     <el-form ref="formRef" :model="formData" label-width="120px" size="default">
       <el-form-item label="运维工具名称">

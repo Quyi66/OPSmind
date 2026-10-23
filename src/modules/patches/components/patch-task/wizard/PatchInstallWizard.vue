@@ -7,7 +7,7 @@
       width="1000px"
       top="5vh"
       :close-on-click-modal="false"
-      :close-on-press-escape="!dialogBusy"
+      :close-on-press-escape="false"
       :show-close="!dialogBusy"
       :before-close="handleBeforeClose"
       class="install-dialog"
@@ -963,6 +963,8 @@ function handleSkipPreCheck() {
     '前置环境检查未通过，跳过检查强行安装可能导致安装失败。是否确认跳过检查并继续？',
     '提示',
     {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       confirmButtonText: '确认跳过',
       cancelButtonText: '取消',
       type: 'warning'

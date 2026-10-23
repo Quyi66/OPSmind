@@ -245,7 +245,12 @@
     <!-- ══════════ 抽屉面板 ══════════ -->
 
     <!-- 设备清单抽屉 -->
-    <el-drawer v-model="assetListDrawer.visible" size="75%" class="aw-drawer aw-drawer--asset-list">
+    <el-drawer
+      v-model="assetListDrawer.visible"
+      size="75%"
+      class="aw-drawer aw-drawer--asset-list"
+      :close-on-click-modal="true"
+    >
       <template #header>
         <div class="aw-drawer-header">
           <span class="aw-drawer-header__title">{{ assetListDrawerTitle }}</span>
@@ -347,7 +352,12 @@
       </div>
     </el-drawer>
 
-    <el-drawer v-model="exceptionDrawer.visible" size="50%" class="aw-drawer">
+    <el-drawer
+      v-model="exceptionDrawer.visible"
+      size="50%"
+      class="aw-drawer"
+      :close-on-click-modal="true"
+    >
       <template #header>
         <div class="aw-drawer-header">
           <span class="aw-drawer-header__title">连通巡检</span>
@@ -429,7 +439,12 @@
       </div>
     </el-drawer>
 
-    <el-drawer v-model="failedLogDrawer.visible" size="520px" class="aw-drawer">
+    <el-drawer
+      v-model="failedLogDrawer.visible"
+      size="520px"
+      class="aw-drawer"
+      :close-on-click-modal="true"
+    >
       <template #header>
         <div class="aw-drawer-header">
           <span class="aw-drawer-header__title">失败日志</span>
@@ -456,7 +471,12 @@
       </div>
     </el-drawer>
 
-    <el-drawer v-model="recentLogsDrawer.visible" size="50%" class="aw-drawer">
+    <el-drawer
+      v-model="recentLogsDrawer.visible"
+      size="50%"
+      class="aw-drawer"
+      :close-on-click-modal="true"
+    >
       <template #header>
         <div class="aw-drawer-header">
           <span class="aw-drawer-header__title">近7天操作记录</span>
@@ -510,7 +530,12 @@
       </div>
     </el-drawer>
 
-    <el-drawer v-model="governanceDrawer.visible" size="520px" class="aw-drawer">
+    <el-drawer
+      v-model="governanceDrawer.visible"
+      size="520px"
+      class="aw-drawer"
+      :close-on-click-modal="true"
+    >
       <template #header>
         <div class="aw-drawer-header">
           <span class="aw-drawer-header__title">分组与标签概览</span>
@@ -936,6 +961,8 @@ async function handleAssetCheckConn(item) {
   const ip = item.IP || item.ip
   try {
     await ElMessageBox.confirm(`是否重新检查主机${ip}的连通性？`, '提示', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
@@ -1050,6 +1077,8 @@ async function handleExceptionCollectInfo(item) {
       `信息采集将花费几分钟到半小时不等的时间，是否对主机 ${ip} 进行采集？`,
       '采集信息',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
@@ -1083,6 +1112,8 @@ async function handleExceptionCheckConn(item) {
   const ip = item.IP || item.ip
   try {
     await ElMessageBox.confirm(`是否重新检查主机 ${ip} 的连通性？`, '提示', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
@@ -1124,6 +1155,8 @@ async function runExceptionBulkAction(jobId, actionName) {
       `将对全部 ${total} 台连通异常设备${actionName}，此操作可能需要一段时间。`,
       '确认操作',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'

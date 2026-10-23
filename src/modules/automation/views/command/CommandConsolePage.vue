@@ -67,7 +67,12 @@
     </div>
 
     <!-- 运行记录对话框 -->
-    <el-dialog v-model="historyDialogVisible" title="运行记录" width="1200px">
+    <el-dialog
+      v-model="historyDialogVisible"
+      title="运行记录"
+      width="1200px"
+      :close-on-click-modal="true"
+    >
       <div class="history-toolbar">
         <el-input
           v-model="historySearchKeyword"
@@ -128,7 +133,7 @@
       title="执行过程"
       width="900px"
       class="log-viewer-dialog"
-      :close-on-click-modal="false"
+      :close-on-click-modal="true"
       @close="closeLogViewer"
     >
       <div class="log-viewer-header">

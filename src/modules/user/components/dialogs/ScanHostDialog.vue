@@ -5,6 +5,7 @@
     width="900px"
     :close-on-click-modal="false"
     :before-close="handleClose"
+    :close-on-press-escape="false"
   >
     <div class="scan-host-dialog">
       <!-- 设备选择器 -->

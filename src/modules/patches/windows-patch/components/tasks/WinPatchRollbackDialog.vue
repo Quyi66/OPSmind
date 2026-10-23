@@ -8,7 +8,7 @@
     class="install-dialog win-patch-rollback-wizard"
     :close-on-click-modal="false"
     :show-close="!dialogBusy"
-    :close-on-press-escape="!dialogBusy"
+    :close-on-press-escape="false"
     :before-close="handleBeforeClose"
     @closed="resetState"
   >

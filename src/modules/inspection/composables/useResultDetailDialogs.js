@@ -201,7 +201,10 @@ export function useResultDetailDialogs(jobId, jobInfo) {
     }
 
     try {
-      await ElMessageBox.confirm('确定要将选中的主机从黑名单移除吗？', '确认')
+      await ElMessageBox.confirm('确定要将选中的主机从黑名单移除吗？', '确认', {
+        closeOnClickModal: false,
+        closeOnPressEscape: false
+      })
       await whitelistApi.removeBlackHost(selectedWhitelistIds.value)
       ElMessage.success('移除成功')
       showWhitelistDialog()
@@ -238,7 +241,10 @@ export function useResultDetailDialogs(jobId, jobInfo) {
 
   async function deleteItemWhitelist(item) {
     try {
-      await ElMessageBox.confirm('确定要删除此黑名单项吗？', '确认')
+      await ElMessageBox.confirm('确定要删除此黑名单项吗？', '确认', {
+        closeOnClickModal: false,
+        closeOnPressEscape: false
+      })
       await whitelistApi.deleteWhitelist(item.id)
       ElMessage.success('删除成功')
       showItemWhitelist()

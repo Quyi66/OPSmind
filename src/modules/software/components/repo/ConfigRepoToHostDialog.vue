@@ -6,6 +6,7 @@
     :close-on-click-modal="false"
     destroy-on-close
     @close="handleClose"
+    :close-on-press-escape="false"
   >
     <div class="config-repo-dialog">
       <!-- 已选仓库信息 -->
@@ -124,6 +125,8 @@ async function handleSubmit() {
       `确定将 ${props.selectedRepos.length} 个仓库配置到 ${selectedHosts.value.length} 台主机吗？`,
       '执行配置',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         confirmButtonText: '确认',
         cancelButtonText: '取消',
         type: 'info'

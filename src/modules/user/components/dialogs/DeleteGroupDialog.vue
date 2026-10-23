@@ -5,6 +5,7 @@
     width="600px"
     :close-on-click-modal="false"
     :before-close="handleClose"
+    :close-on-press-escape="false"
   >
     <div class="delete-group-dialog">
       <el-alert type="warning" :closable="false" show-icon class="mb-4">

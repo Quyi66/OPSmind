@@ -5,6 +5,7 @@
     width="900px"
     destroy-on-close
     @close="$emit('close')"
+    :close-on-click-modal="true"
   >
     <div class="check-item-hosts-dialog">
       <!-- 标题区域 -->

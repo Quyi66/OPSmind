@@ -3,9 +3,10 @@
     v-model="dialogVisible"
     :title="dialogTitle"
     width="1000px"
-    :close-on-click-modal="false"
+    :close-on-click-modal="isViewMode"
     destroy-on-close
     @close="handleClose"
+    :close-on-press-escape="isViewMode"
   >
     <el-form
       ref="formRef"

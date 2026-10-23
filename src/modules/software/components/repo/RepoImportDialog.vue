@@ -5,6 +5,7 @@
     width="450px"
     :close-on-click-modal="false"
     @close="handleClose"
+    :close-on-press-escape="false"
   >
     <div class="repo-import-content">
       <el-form ref="formRef" :model="formData" label-position="top">
@@ -98,6 +99,8 @@ async function handleSubmit() {
       '导入仓库配置源信息可能需要几分钟不等，请点击确定开始导入',
       '执行运维工具',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         confirmButtonText: '确认',
         cancelButtonText: '取消',
         type: 'info'

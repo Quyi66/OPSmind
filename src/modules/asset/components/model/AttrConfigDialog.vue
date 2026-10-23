@@ -5,6 +5,7 @@
     width="600px"
     :close-on-click-modal="false"
     @closed="handleClosed"
+    :close-on-press-escape="false"
   >
     <el-form ref="formRef" :model="formData" label-width="100px">
       <el-form-item label="属性名称">

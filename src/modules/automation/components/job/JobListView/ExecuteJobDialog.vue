@@ -5,6 +5,8 @@
     width="1000px"
     destroy-on-close
     @close="handleClose"
+    :close-on-press-escape="false"
+    :close-on-click-modal="false"
   >
     <div class="execute-dialog" v-loading="detailLoading">
       <el-form v-if="formSchema.length" :model="formValues" label-width="0" label-position="top">

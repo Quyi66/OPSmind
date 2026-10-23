@@ -8,6 +8,7 @@
     destroy-on-close
     class="execute-result-dialog-wrapper"
     @close="handleClose"
+    :close-on-click-modal="true"
   >
     <div class="result-dialog" v-loading="loading">
       <el-tabs v-model="activeTab">

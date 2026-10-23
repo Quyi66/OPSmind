@@ -7,7 +7,8 @@
     destroy-on-close
     append-to-body
     class="win-patch-host-drawer"
-    :close-on-click-modal="false"
+    :close-on-click-modal="selectedRows.length === 0"
+    :close-on-press-escape="selectedRows.length === 0"
   >
     <div class="win-patch-host-dialog">
       <el-descriptions

@@ -589,7 +589,13 @@
     </el-tabs>
 
     <!-- 全量重算对话框 -->
-    <el-dialog v-model="recomputeDialogVisible" title="全量重算漏洞紧急程度" width="460px">
+    <el-dialog
+      v-model="recomputeDialogVisible"
+      title="全量重算漏洞紧急程度"
+      width="460px"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+    >
       <div class="recompute-warning mb-3">
         <el-alert
           title="重算影响提示"
@@ -614,6 +620,8 @@
       width="560px"
       destroy-on-close
       @closed="resetRuleImport"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
     >
       <el-alert
         title="导入将全量覆盖当前租户的已有规则"
@@ -659,7 +667,14 @@
     </el-dialog>
 
     <!-- 规则编辑对话框 -->
-    <el-dialog v-model="editDialogVisible" title="编辑评估规则" width="480px" destroy-on-close>
+    <el-dialog
+      v-model="editDialogVisible"
+      title="编辑评估规则"
+      width="480px"
+      destroy-on-close
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+    >
       <el-form :model="editForm" label-width="120px">
         <el-form-item label="资产网络区域">
           <el-tag type="info" effect="plain" style="filter: grayscale(100%);">{{ editForm.location }}</el-tag>
@@ -695,7 +710,13 @@
     </el-dialog>
 
     <!-- CVE 详情弹窗 -->
-    <el-dialog v-model="cveDetailVisible" title="漏洞详情" width="90%" destroy-on-close>
+    <el-dialog
+      v-model="cveDetailVisible"
+      title="漏洞详情"
+      width="90%"
+      destroy-on-close
+      :close-on-click-modal="true"
+    >
       <div
         style="
           max-height: calc(100vh - 200px);
@@ -1117,6 +1138,8 @@ async function submitRuleImport() {
       `导入后将覆盖当前租户已有的 ${rules.value.length} 条规则，是否继续？`,
       '确认全量覆盖',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         confirmButtonText: '确认导入',
         cancelButtonText: '取消',
         type: 'warning'

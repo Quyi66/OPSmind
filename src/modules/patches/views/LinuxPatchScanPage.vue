@@ -520,7 +520,13 @@
     </div>
 
     <!-- 重新扫描对话框 -->
-    <el-dialog v-model="rescanDialogVisible" title="重新扫描补丁" width="600px">
+    <el-dialog
+      v-model="rescanDialogVisible"
+      title="重新扫描补丁"
+      width="600px"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+    >
       <el-form ref="rescanFormRef" :model="rescanForm" label-width="100px">
         <el-form-item label="选择主机">
           <AcmDeviceSelector
@@ -608,7 +614,14 @@
     />
 
     <!-- 修复漏洞确认对话框 -->
-    <el-dialog v-model="fixDialogVisible" title="修复选定的漏洞" width="960px" destroy-on-close>
+    <el-dialog
+      v-model="fixDialogVisible"
+      title="修复选定的漏洞"
+      width="960px"
+      destroy-on-close
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+    >
       <div v-loading="fixDialogLoading" class="fix-dialog-content">
         <div class="fix-summary-card">
           <div class="fix-summary-item">

@@ -5,6 +5,7 @@
     width="1360px"
     destroy-on-close
     @close="handleClose"
+    :close-on-click-modal="true"
   >
     <div class="history-dialog">
       <!-- 筛选栏 -->
@@ -433,6 +434,8 @@ async function handleRerun(row) {
     }
 
     await ElMessageBox.confirm(`确定要重新执行运维工具 "${row.jobTitle}" 吗？`, '重新执行', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning',
       confirmButtonText: '执行',
       cancelButtonText: '取消'

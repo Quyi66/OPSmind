@@ -164,6 +164,7 @@
       :close-on-click-modal="false"
       append-to-body
       class="file-edit-dialog"
+      :close-on-press-escape="false"
     >
       <el-tabs v-model="editActiveTab">
         <!-- 基本信息标签页 -->

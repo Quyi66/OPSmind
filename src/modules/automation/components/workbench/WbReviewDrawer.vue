@@ -5,6 +5,7 @@
     size="540px"
     destroy-on-close
     class="wb-workbench-drawer"
+    :close-on-click-modal="true"
   >
     <div v-loading="loading" class="wb-drawer-body">
       <div v-if="records.length" class="wb-drawer-run-list">

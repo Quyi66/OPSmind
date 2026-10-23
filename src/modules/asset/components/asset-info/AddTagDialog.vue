@@ -5,6 +5,7 @@
     width="480px"
     :close-on-click-modal="false"
     @closed="handleClosed"
+    :close-on-press-escape="false"
   >
     <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top">
       <el-form-item label="操作" prop="operate">

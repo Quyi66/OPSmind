@@ -275,6 +275,8 @@ function resolvePatchUserLogin(row) {
 async function handleCleanExpired() {
   try {
     await ElMessageBox.confirm('确认要清理系统中所有已经过期的补丁分配记录吗？', '清理警告', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning'
     })
 

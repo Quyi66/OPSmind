@@ -7,7 +7,7 @@
     append-to-body
     class="patch-assignment-drawer"
     :close-on-click-modal="false"
-    :close-on-press-escape="!assignLoading"
+    :close-on-press-escape="false"
     :show-close="!assignLoading"
     @update:model-value="closeDialog"
   >

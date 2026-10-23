@@ -4,7 +4,7 @@
     title="添加分组"
     width="480px"
     :close-on-click-modal="false"
-    :close-on-press-escape="!saving"
+    :close-on-press-escape="false"
     :show-close="!saving"
     @closed="handleClosed"
   >

@@ -100,6 +100,7 @@
       width="800px"
       :close-on-click-modal="false"
       append-to-body
+      :close-on-press-escape="false"
     >
       <div class="gfs-browser">
         <div class="gfs-browser-header">

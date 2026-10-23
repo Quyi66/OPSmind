@@ -5,6 +5,8 @@
     width="500px"
     destroy-on-close
     @close="handleClose"
+    :close-on-press-escape="false"
+    :close-on-click-modal="false"
   >
     <div class="repo-add-dialog">
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">

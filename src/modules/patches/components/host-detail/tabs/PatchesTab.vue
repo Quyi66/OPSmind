@@ -173,7 +173,7 @@
 </template>
 
 <script setup>
-import { ref, toRef, onMounted, watch } from 'vue'
+import { computed, ref, toRef, onMounted, watch } from 'vue'
 import {
   formatDate,
   formatPackages,
@@ -344,7 +344,8 @@ function handleFixPatches() {
 // 暴露加载方法和变量给父组件
 defineExpose({
   loadPatchList,
-  patchKeyword
+  patchKeyword,
+  hasPendingSelection: computed(() => allSelected.value || selectedPatches.value.length > 0)
 })
 </script>
 

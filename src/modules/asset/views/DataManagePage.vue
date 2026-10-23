@@ -537,6 +537,8 @@ const handleEditGroup = row => {
 // 删除分组
 const handleDeleteGroup = row => {
   ElMessageBox.confirm('确定要删除该分组吗？删除分组会将分组内的资产移动到根分组。', '删除确认', {
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
     type: 'warning'
   })
     .then(async () => {
@@ -567,6 +569,8 @@ const handleEditTag = row => {
 // 删除标签
 const handleDeleteTag = row => {
   ElMessageBox.confirm('确定要删除该标签吗？', '删除确认', {
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
     type: 'warning'
   })
     .then(async () => {

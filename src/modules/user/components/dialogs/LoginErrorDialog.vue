@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="visible" title="登录错误信息" width="1000px" :close-on-click-modal="false">
+  <el-dialog v-model="visible" title="登录错误信息" width="1000px" :close-on-click-modal="true">
     <div class="login-error-dialog" v-loading="loading">
       <div v-if="readError" class="read-feedback" role="status">
         <el-alert :title="readError" type="warning" :closable="false" show-icon />
