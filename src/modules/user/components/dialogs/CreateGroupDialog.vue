@@ -1,16 +1,24 @@
 <template>
   <el-dialog
-    v-model="visible"
+    :model-value="visible"
     title="创建用户组"
     width="700px"
     :close-on-click-modal="false"
-    @close="handleClose"
+    :before-close="handleClose"
   >
-    <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
+    <el-form
+      ref="formRef"
+      :model="formData"
+      :rules="formRules"
+      :disabled="attempted || validating"
+      label-width="100px"
+      @submit.prevent
+    >
       <!-- 选择主机 -->
       <el-form-item label="选择主机" required>
         <AcmDeviceSelector
           v-model="selectedHosts"
+          :disabled="attempted || validating"
           ci-types="linux"
           :options="{
             selectMode: 'host,group,tag,input,recently',
@@ -26,10 +34,25 @@
       </el-form-item>
     </el-form>
 
+    <el-alert
+      v-if="taskMessage"
+      :title="taskMessage"
+      :description="taskDescription"
+      :type="taskType"
+      :closable="false"
+      show-icon
+    />
+    <p v-if="attempted">关闭窗口不会取消已提交的后台任务；结果未知时请先核实，勿重复操作。</p>
+
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose">取消</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleSubmit">
+        <el-button @click="handleClose">{{ attempted ? '关闭窗口' : '取消' }}</el-button>
+        <el-button
+          type="primary"
+          :loading="busy || validating"
+          :disabled="attempted || validating || !selectedHosts.length"
+          @click="handleSubmit"
+        >
           {{ buttonText }}
         </el-button>
       </div>
@@ -38,173 +61,70 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { apiService } from '@/core/api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import { normalizeAcmDeviceJobHosts } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
-import { useJobPolling } from '@/composables/useJobPolling'
-
-// 使用作业轮询 composable
-const { startPolling, stopPolling } = useJobPolling()
-
-const props = defineProps({
-  visible: { type: Boolean, default: false }
-})
-
+import { useUserDialogTask } from '@/modules/user/composables/useUserDialogTask'
+const props = defineProps({ visible: { type: Boolean, default: false } })
 const emit = defineEmits(['update:visible', 'success'])
-
-const visible = computed({
-  get: () => props.visible,
-  set: val => emit('update:visible', val)
-})
-
+const visible = computed({ get: () => props.visible, set: val => emit('update:visible', val) })
 const formRef = ref(null)
-const showDeviceSelector = ref(false)
 const selectedHosts = ref([])
-const submitting = ref(false)
-const currentStatus = ref('')
-
-// 状态中文映射
-const STATUS_MAP = {
-  WAITING: '等待中',
-  RUNNING: '创建中',
-  COMPLETED: '已完成',
-  SUCCESS: '已完成',
-  FAILED: '失败',
-  ERROR: '错误'
-}
-
-// 按钮文字
-const buttonText = computed(() => {
-  if (submitting.value && currentStatus.value) {
-    return STATUS_MAP[currentStatus.value] || currentStatus.value
-  }
-  if (submitting.value) {
-    return '提交中...'
-  }
-  return '确认'
+const validating = ref(false)
+const formData = reactive({ group_name: '' })
+const formRules = { group_name: [{ required: true, message: '请输入组名', trigger: 'blur' }] }
+const task = useUserDialogTask({
+  visible: () => props.visible,
+  emit,
+  onSuccess: handleClose,
+  successMessage: '用户组创建成功'
 })
-
-const formData = reactive({
-  group_name: ''
-})
-
-const formRules = {
-  group_name: [{ required: true, message: '请输入组名', trigger: 'blur' }]
-}
-
-function handleDeviceConfirm(hosts) {
-  selectedHosts.value = hosts || []
-  showDeviceSelector.value = false
-}
-
-function removeHost(index) {
-  selectedHosts.value.splice(index, 1)
-}
-
+const { attempted, busy, taskType, taskMessage, taskDescription } = task
+const buttonText = computed(() =>
+  busy.value ? '正在处理…' : attempted.value ? '请先核实结果' : '确认创建用户组'
+)
+watch(
+  () => props.visible,
+  () => {
+    validating.value = false
+    selectedHosts.value = []
+    formData.group_name = ''
+  },
+  { flush: 'sync' }
+)
 async function handleSubmit() {
+  if (attempted.value || validating.value) return
   if (!selectedHosts.value.length) {
     ElMessage.warning('请先选择主机')
     return
   }
-
+  const ready = task.captureReady()
+  if (!ready()) return
+  validating.value = true
   try {
     await formRef.value?.validate()
   } catch {
     return
+  } finally {
+    if (ready()) validating.value = false
   }
-
-  submitting.value = true
-  currentStatus.value = ''
-
-  try {
-    // 构造主机参数（对象数组格式）
-    const hosts = normalizeAcmDeviceJobHosts(selectedHosts.value, 'linux')
-
-    // 调用作业执行接口
-    const cacheBuster = Date.now()
-    const { data } = await apiService.post(
-      `/workflow/api/workflow/jobs/zrYK7K/run?cacheBuster=${cacheBuster}`,
-      {
-        params: {
-          hosts,
-          group_name: formData.group_name
-        }
-      }
-    )
-
-    const result = Array.isArray(data) ? data[0] : data
-    currentStatus.value = result?.status || ''
-
-    // 提交成功，提示用户可以关闭
-    ElMessage.success('任务已提交，后台正在执行，可关闭此窗口')
-
-    if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
-      // 使用 composable 开始轮询
-      startPolling(result.runId, {
-        interval: 5000,
-        maxAttempts: 60,
-        showMessage: false,
-        onProgress: res => {
-          const batchInfo = res?.detail?.batches?.[0]
-          currentStatus.value = batchInfo?.status || res.status || currentStatus.value
-        },
-        onSuccess: () => {
-          submitting.value = false
-          currentStatus.value = ''
-          ElMessage.success('用户组创建成功')
-          emit('success')
-          handleClose()
-        },
-        onError: res => {
-          submitting.value = false
-          currentStatus.value = ''
-          ElMessage.error(res?.error || '创建失败')
-          emit('success')
-          handleClose()
-        },
-        onTimeout: () => {
-          submitting.value = false
-          currentStatus.value = ''
-          ElMessage.warning('创建超时，请稍后查看结果')
-          emit('success')
-          handleClose()
-        }
-      })
-    } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
-      submitting.value = false
-      currentStatus.value = ''
-      ElMessage.success('用户组创建成功')
-      emit('success')
-      handleClose()
-    } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
-      submitting.value = false
-      currentStatus.value = ''
-      ElMessage.error(result?.error || '创建失败')
-      emit('success')
-      handleClose()
-    } else {
-      submitting.value = false
-      currentStatus.value = ''
-      ElMessage.success('用户组创建任务已提交')
-    }
-  } catch (error) {
-    submitting.value = false
-    currentStatus.value = ''
-    console.error('创建用户组失败:', error)
-    ElMessage.error(`创建失败: ${error?.message || '未知错误'}`)
+  if (!ready()) return
+  const hosts = normalizeAcmDeviceJobHosts(selectedHosts.value, 'linux')
+  if (!hosts.length || !formData.group_name) {
+    ElMessage.warning('请选择主机并输入组名')
+    return
   }
+  return task.run('zrYK7K', { hosts, group_name: formData.group_name })
 }
-
-function handleClose() {
-  stopPolling()
+function handleClose(done) {
+  task.reset()
   visible.value = false
-  submitting.value = false
-  currentStatus.value = ''
+  validating.value = false
   formRef.value?.resetFields()
   selectedHosts.value = []
   formData.group_name = ''
+  if (typeof done === 'function') done()
 }
 </script>
 
