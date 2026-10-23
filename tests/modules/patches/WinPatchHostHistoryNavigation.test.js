@@ -141,9 +141,10 @@ afterEach(() => wrapper?.unmount())
 
 describe('Windows 主机详情到已有安装历史', () => {
   it('真实按钮经原路由携带主机 ID，目标自动查同一主机，保持同一权限码且不打开回滚', async () => {
-    await open({ name: 'patches-windowsVulnerability' })
     const host = Object.freeze({ hostId: 'host/a b', hostKey: '192.0.2.1' })
-    state(Overview).openHostDrawer(host)
+    api.getHosts.mockResolvedValueOnce(response([host]))
+    await open({ name: 'patches-windowsVulnerability' })
+    state(Overview).openHostDrawer(state(Overview).hostList[0])
     await flushPromises()
     expect(api.getInstallLogs).not.toHaveBeenCalled()
     await button(wrapper.findComponent(HostDrawer), '安装历史').trigger('click')

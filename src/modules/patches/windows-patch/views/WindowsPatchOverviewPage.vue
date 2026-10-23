@@ -1,7 +1,7 @@
 <template>
   <div class="ops-page-layout win-patch-page">
     <div class="ops-filter-bar">
-      <el-form :model="filters" :inline="true" size="small">
+      <el-form :model="filters" :inline="true" size="small" @submit.prevent>
         <el-form-item label="主机">
           <el-input
             v-model="filters.hostKeyword"
@@ -9,7 +9,8 @@
             clearable
             style="width: 190px"
             @keyup.enter="handleSearch"
-          @clear="handleSearch" />
+            @clear="handleSearch"
+          />
         </el-form-item>
         <el-form-item label="操作系统">
           <el-select
@@ -18,7 +19,9 @@
             clearable
             filterable
             allow-create
-            style="width: 290px" @change="handleSearch">
+            style="width: 290px"
+            @change="handleFilterChange"
+          >
             <el-option
               v-for="item in hostFilterOptions.osDistros"
               :key="item"
@@ -34,7 +37,9 @@
             clearable
             filterable
             allow-create
-            style="width: 180px" @change="handleSearch">
+            style="width: 180px"
+            @change="handleFilterChange"
+          >
             <el-option
               v-for="item in hostFilterOptions.osVersions"
               :key="item"
@@ -53,7 +58,9 @@
             clearable
             filterable
             :loading="tagLoading"
-            style="width: 180px" @change="handleSearch">
+            style="width: 180px"
+            @change="handleFilterChange"
+          >
             <el-option v-for="tag in tagOptions" :key="tag" :label="tag" :value="tag" />
           </el-select>
         </el-form-item>
@@ -74,7 +81,7 @@
       <el-button type="primary" size="small" @click="openScanDialog()">创建扫描任务</el-button>
       <el-button
         size="small"
-        :disabled="selectedHostRows.length === 0"
+        :disabled="!canUseHostRows || selectedHostRows.length === 0"
         @click="openScanDialog(selectedHostRows)"
       >
         扫描选中主机
@@ -82,7 +89,7 @@
       <el-button
         type="success"
         size="small"
-        :disabled="selectedHostRows.length === 0"
+        :disabled="!canUseHostRows || selectedHostRows.length === 0"
         @click="openBatchInstallDrawer(selectedHostRows)"
       >
         安装补丁
@@ -95,23 +102,36 @@
         circle
         size="small"
         :loading="loading"
+        aria-label="刷新主机列表"
         @click="loadPageData()"
       >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
 
+    <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
+      <el-button link type="primary" @click="loadPageData()">重试</el-button>
+    </el-alert>
+
     <div class="ops-table-wrapper">
       <el-table
         v-loading="loading"
         :data="hostList"
+        :empty-text="
+          loading ? '正在加载主机列表…' : loadError ? '主机列表未加载' : '暂无符合条件的主机'
+        "
         max-height="calc(100vh - 354px)"
-        @selection-change="selection => (selectedHostRows = selection)"
+        @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="48" />
-        <el-table-column label="主机" width="130">
+        <el-table-column type="selection" width="48" :selectable="isCurrentHostRow" />
+        <el-table-column label="主机" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
-            <el-link type="primary" underline="never" @click="openHostDrawer(row)">
+            <el-link
+              type="primary"
+              underline="never"
+              :disabled="!canUseHostRows"
+              @click="openHostDrawer(row)"
+            >
               {{ resolveHostKey(row) }}
             </el-link>
           </template>
@@ -324,16 +344,16 @@
       </el-table>
     </div>
 
-    <div class="ops-pagination-wrapper">
+    <div v-if="!loading && !loadError" class="ops-pagination-wrapper">
       <el-pagination
-        v-model:current-page="pagination.page"
-        v-model:page-size="pagination.pageSize"
+        :current-page="pagination.page"
+        :page-size="pagination.pageSize"
         :page-sizes="WIN_PATCH_PAGE_SIZE_OPTIONS"
         :total="pagination.total"
         layout="total, sizes, prev, pager, next, jumper"
         background
-        @size-change="handleSizeChange"
-        @current-change="handlePageChange"
+        @update:page-size="handleSizeChange"
+        @update:current-page="handlePageChange"
       />
     </div>
 
@@ -368,7 +388,16 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import {
+  computed,
+  onActivated,
+  onBeforeUnmount,
+  onDeactivated,
+  onMounted,
+  reactive,
+  ref,
+  watch
+} from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Refresh, RefreshRight, Search } from '@element-plus/icons-vue'
 import WinPatchHostPatchesDrawer from '../components/overview/WinPatchHostPatchesDrawer.vue'
@@ -380,17 +409,27 @@ import { winPatchApi } from '../api'
 import { WIN_PATCH_PAGE_SIZE_OPTIONS } from '../constants'
 import { dataManageApi } from '@/modules/asset/api'
 import { buildMemoryOverview } from '@/modules/patches/utils/linuxPatchScan'
-import { formatDateTime, parsePageResponse, pickValue, resolveHostKey } from '../utils'
+import {
+  formatDateTime,
+  parsePageResponse,
+  pickValue,
+  resolveHostKey,
+  unwrapResponse
+} from '../utils'
 
 const route = useRoute()
 const router = useRouter()
 const WIN_PATCH_TAG_CI_TYPES = ['host', 'windows']
 
 const loading = ref(false)
+const loadError = ref('')
+const pageActive = ref(true)
+let loadRequestId = 0
 const tagLoading = ref(false)
 const hostList = ref([])
 const tagOptions = ref([])
 const selectedHostRows = ref([])
+const canUseHostRows = computed(() => pageActive.value && !loading.value && !loadError.value)
 const currentHost = ref(null)
 const hostDrawerInitialFilters = ref(null)
 const currentTaskId = ref('')
@@ -445,27 +484,69 @@ const hostFilterOptions = computed(() => ({
   osVersions: createHostFieldOptions(['osVersion', 'os_version'])
 }))
 
+function getExplicitHostTotal(response) {
+  const data = unwrapResponse(response)
+  const value = data?.totalElements ?? data?.total
+  if (!['number', 'string'].includes(typeof value) || String(value).trim() === '') return null
+  const total = Number(value)
+  return Number.isSafeInteger(total) && total >= 0 ? total : null
+}
+
 async function loadPageData() {
+  if (!pageActive.value) return
+  const requestId = ++loadRequestId
+  let query = {
+    page: pagination.page - 1,
+    size: pagination.pageSize,
+    keyword: appliedFilters.hostKeyword,
+    os: appliedFilters.osDistro,
+    osVersion: appliedFilters.osVersion,
+    tags: [...appliedFilters.tags]
+  }
+  const isCurrentRequest = () => pageActive.value && requestId === loadRequestId
   loading.value = true
+  loadError.value = ''
+  hostList.value = []
+  pagination.total = 0
+  selectedHostRows.value = []
   try {
-    const hostResponse = await winPatchApi.getHosts({
-      page: pagination.page - 1,
-      size: pagination.pageSize,
-      keyword: appliedFilters.hostKeyword,
-      os: appliedFilters.osDistro,
-      osVersion: appliedFilters.osVersion,
-      tags: appliedFilters.tags
-    })
+    let hostResponse = await winPatchApi.getHosts(query)
+    if (!isCurrentRequest()) return
+
+    // 仅明确的服务端总数用于校正失效页；最多补查一次，避免数据持续变化时循环。
+    const total = getExplicitHostTotal(hostResponse)
+    if (total !== null) {
+      const lastPage = Math.max(0, Math.ceil(total / query.size) - 1)
+      if (query.page > lastPage) {
+        query = { ...query, page: lastPage }
+        pagination.page = lastPage + 1
+        hostResponse = await winPatchApi.getHosts(query)
+        if (!isCurrentRequest()) return
+        const correctedTotal = getExplicitHostTotal(hostResponse)
+        if (
+          correctedTotal !== null &&
+          query.page > Math.max(0, Math.ceil(correctedTotal / query.size) - 1)
+        ) {
+          throw new Error('主机列表分页已变化，请重试')
+        }
+      }
+    }
 
     const hostPage = parsePageResponse(hostResponse)
+    if (!Number.isSafeInteger(hostPage.total) || hostPage.total < 0) {
+      throw new Error('主机列表总数无效')
+    }
     hostList.value = hostPage.content.map(row => ({
       ...row,
       memoryOverview: buildHostMemoryOverview(row)
     }))
     pagination.total = hostPage.total
     selectedHostRows.value = []
+  } catch {
+    if (!isCurrentRequest()) return
+    loadError.value = '加载主机列表失败，请重试'
   } finally {
-    loading.value = false
+    if (isCurrentRequest()) loading.value = false
   }
 }
 
@@ -492,22 +573,31 @@ async function loadTagOptions() {
 }
 
 function openScanDialog(rows = []) {
-  scanDialogHosts.value = rows
+  if (rows.length && !rows.every(isCurrentHostRow)) return
+  scanDialogHosts.value = [...rows]
   scanDialogVisible.value = true
 }
 
 function openReportDialog(rows = []) {
-  reportDialogHosts.value = rows
+  if (rows.length && !rows.every(isCurrentHostRow)) return
+  reportDialogHosts.value = [...rows]
   reportDialogVisible.value = true
 }
 
 function openBatchInstallDrawer(rows = []) {
-  batchInstallHosts.value = rows
+  if (!rows.length || !rows.every(isCurrentHostRow)) return
+  batchInstallHosts.value = [...rows]
   batchInstallDrawerVisible.value = true
 }
 
 function handleSearch() {
   applyFilters()
+  pagination.page = 1
+  loadPageData()
+}
+
+function handleFilterChange() {
+  applyFilters(false)
   pagination.page = 1
   loadPageData()
 }
@@ -519,20 +609,30 @@ function handleReset() {
   filters.tags = []
   applyFilters()
   pagination.page = 1
+  pagination.pageSize = 20
   loadPageData()
 }
 
-function applyFilters() {
-  appliedFilters.hostKeyword = filters.hostKeyword
+function applyFilters(includeKeyword = true) {
+  if (includeKeyword) appliedFilters.hostKeyword = filters.hostKeyword.trim()
   appliedFilters.osDistro = filters.osDistro
   appliedFilters.osVersion = filters.osVersion
   appliedFilters.tags = [...filters.tags]
 }
 
 function openHostDrawer(row, initialFilters = null) {
+  if (!isCurrentHostRow(row)) return
   currentHost.value = row
   hostDrawerInitialFilters.value = initialFilters ? { ...initialFilters } : null
   hostDrawerVisible.value = true
+}
+
+function isCurrentHostRow(row) {
+  return canUseHostRows.value && hostList.value.includes(row)
+}
+
+function handleSelectionChange(rows) {
+  selectedHostRows.value = Array.isArray(rows) ? rows.filter(isCurrentHostRow) : []
 }
 
 function openHostHistory(hostId) {
@@ -619,11 +719,13 @@ function handleTaskDrawerClose(payload) {
 }
 
 function handlePageChange(page) {
+  if (page === pagination.page) return
   pagination.page = page
   loadPageData()
 }
 
 function handleSizeChange(size) {
+  if (size === pagination.pageSize) return
   pagination.pageSize = size
   pagination.page = 1
   loadPageData()
@@ -670,6 +772,21 @@ onMounted(() => {
   loadPageData()
   loadTagOptions()
 })
+
+onActivated(() => {
+  pageActive.value = true
+})
+
+function invalidateHostRequest() {
+  pageActive.value = false
+  loadRequestId += 1
+  selectedHostRows.value = []
+  if (loading.value) loadError.value = '主机列表加载已中断，请重试'
+  loading.value = false
+}
+
+onDeactivated(invalidateHostRequest)
+onBeforeUnmount(invalidateHostRequest)
 </script>
 
 <style scoped lang="scss">
