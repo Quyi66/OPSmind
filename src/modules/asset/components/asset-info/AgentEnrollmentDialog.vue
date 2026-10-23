@@ -104,7 +104,7 @@
           <el-icon class="is-loading polling-icon"><Loading /></el-icon>
           <div>
             <div class="status-title">正在等待 Agent 机器注册报到...</div>
-            <div class="status-sub">系统正在实时获取平台在线候选 Agent 报到管道</div>
+            <div class="status-sub">每 5 秒查询一次待绑定 Agent 列表</div>
           </div>
         </div>
         <el-button size="small" :icon="Refresh" :loading="loadingPending" @click="fetchPendingList">
@@ -174,7 +174,7 @@
           <el-table-column label="接入打卡状态" width="130" align="center">
             <template #default>
               <el-tag size="small" type="success" effect="light" round>
-                <i class="fa fa-dot-circle me-1"></i>在线就绪
+                <i class="fa fa-dot-circle me-1"></i>待绑定
               </el-tag>
             </template>
           </el-table-column>
@@ -183,7 +183,7 @@
         <div v-if="pendingAgents.length === 0 && !loadingPending" class="empty-pending-box">
           <i class="fa fa-inbox empty-icon" />
           <p class="empty-text">尚未收到候选 Agent 报到请求</p>
-          <p class="empty-sub">请检查目标机器是否成功执行了安装命令并正常联网。</p>
+          <p class="empty-sub">请检查目标机器是否成功执行安装命令，并能连接平台服务。</p>
         </div>
       </div>
     </div>

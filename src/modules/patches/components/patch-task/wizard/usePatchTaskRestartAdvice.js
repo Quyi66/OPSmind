@@ -94,12 +94,12 @@ export function usePatchTaskRestartAdvice({
   })
   const smartRestartGuess = computed(() => {
     if (smartRestartType.value === 'system') {
-      return '检测到内核相关补丁或关键系统组件更新，建议执行系统重启。'
+      return '根据补丁信息与软件包名称，建议执行系统重启。'
     }
     if (smartRestartType.value === 'service') {
-      return '检测到服务级补丁或基础库更新，建议执行服务重启。'
+      return '根据补丁信息与软件包名称，建议执行服务重启。'
     }
-    return '当前补丁预计无需重启，可直接继续后续流程。'
+    return '未识别出明确的重启建议，请结合实际环境确认重启策略。'
   })
   const restartAdviceDescription = computed(() => {
     if (packageBasedRestartAdvice.value) {

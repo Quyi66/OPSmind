@@ -464,7 +464,7 @@ const stepActionHint = computed(() => {
   }
 
   if (isTaskRunning(taskDetail.value)) {
-    return '当前步骤执行中，等待回调完成后会自动刷新。'
+    return '当前步骤执行中；开启自动轮询后可持续查询状态，也可手动刷新。'
   }
 
   if (isExecutePhase.value) {

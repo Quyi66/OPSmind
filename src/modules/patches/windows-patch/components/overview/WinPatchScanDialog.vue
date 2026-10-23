@@ -12,7 +12,7 @@
         type="info"
         :closable="false"
         show-icon
-        title="目标机本地采集已装 KB 与系统 build（不依赖 WSUS / 联网），完成后由回调落库并自动刷新主机列表。"
+        title="选择 Windows 主机并提交补丁扫描任务，扫描结果可在主机列表中查看。"
       />
       <el-form label-width="110px">
         <el-form-item label="选择主机" required>
@@ -94,7 +94,7 @@ function finishScan(scanResult, { message, type = 'success' } = {}) {
     ElMessage[type](message)
   }
   visibleModel.value = false
-  // 扫描为异步本地采集，结果经 runId 轮询确认后，触发主机列表刷新（无任务 id，不打开任务详情）
+  // 通知父页面刷新主机列表；刷新请求由父页面处理，不在此确认其结果。
   emit('submitted', { ...(scanResult || {}), refreshOverview: true })
 }
 
@@ -112,7 +112,7 @@ async function handleSubmit() {
 
     if (!runId) {
       // 没有 runId 时退回到「已提交」语义，直接刷新列表
-      finishScan(scanResult, { message: '扫描任务已提交，完成后将自动刷新主机列表' })
+      finishScan(scanResult, { message: '扫描任务已提交，请稍后刷新主机列表查看结果' })
       return
     }
 
@@ -123,14 +123,17 @@ async function handleSubmit() {
       interval: 5000,
       maxAttempts: 120,
       showMessage: false,
-      onSuccess: () => finishScan(scanResult, { message: '扫描完成，主机列表已刷新' }),
+      onSuccess: () => finishScan(scanResult, { message: '扫描作业已完成，正在刷新主机列表' }),
       onError: res =>
         finishScan(scanResult, {
           message: res?.error || '扫描执行失败，请稍后查看结果',
           type: 'error'
         }),
       onTimeout: () =>
-        finishScan(scanResult, { message: '扫描超时，请稍后查看结果', type: 'warning' })
+        finishScan(scanResult, {
+          message: '扫描结果查询超时，请稍后刷新主机列表查看结果',
+          type: 'warning'
+        })
     })
   } catch (error) {
     submitting.value = false

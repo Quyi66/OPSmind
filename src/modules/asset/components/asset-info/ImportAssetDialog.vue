@@ -41,8 +41,8 @@
           </el-button>
           <template #tip>
             <div class="el-upload__tip">
-              只能上传 xlsx/xls 文件。“端口”列（ANSIBLE_PORT）填写后，后端会自动匹配并绑定对应的
-              Ansible 连接模板。
+              只能上传 xlsx/xls 文件。“端口”列（ANSIBLE_PORT）命中对应的 Ansible
+              连接模板时会自动绑定； 未命中时保留原绑定。
             </div>
           </template>
         </el-upload>

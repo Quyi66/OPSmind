@@ -248,7 +248,7 @@
               :controls="false"
             />
             <el-tooltip
-              content="目标主机会按照该数值拆分成多个批次，依次下发执行（前一批执行完成后自动接续下一批），以降低大规模并发更新时的网络及系统负载。"
+              content="目标主机会按照该数值拆分成多个批次，前一批执行完成后接续下一批。"
               placement="top"
             >
               <i class="fa fa-info-circle" style="color: var(--el-text-color-secondary); cursor: pointer;" />

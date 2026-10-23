@@ -66,7 +66,7 @@
             autocomplete="new-password"
             :disabled="submitting"
           />
-          <div class="hint-text">密码长度8-16位，由数字、大小写字母、~!@$%&_组成</div>
+          <div class="hint-text">密码长度需为8～16位</div>
         </el-form-item>
 
         <!-- 密码有效期 -->

@@ -781,28 +781,28 @@ const statCards = [
     label: '特急漏洞',
     type: 'danger',
     icon: 'fas fa-radiation text-danger',
-    desc: '互联网高危漏洞，需立即阻断响应'
+    desc: '紧急程度标记为「特急」的漏洞'
   },
   {
     key: '紧急',
     label: '紧急漏洞',
     type: 'warning',
     icon: 'fas fa-exclamation-triangle text-warning',
-    desc: '外联网/内网漏洞，需在24小时内封堵'
+    desc: '紧急程度标记为「紧急」的漏洞'
   },
   {
     key: '普通',
     label: '普通漏洞',
     type: 'primary',
     icon: 'fas fa-shield-alt text-primary',
-    desc: '可检测尚不可利用漏洞，列入计划整改'
+    desc: '紧急程度标记为「普通」的漏洞'
   },
   {
     key: '一般',
     label: '一般漏洞',
     type: 'info',
     icon: 'fas fa-info-circle text-info',
-    desc: '低风险或安全隔离环境，定期清理即可'
+    desc: '紧急程度标记为「一般」的漏洞'
   }
 ]
 

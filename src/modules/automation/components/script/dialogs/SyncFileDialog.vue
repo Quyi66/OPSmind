@@ -9,18 +9,13 @@
   >
     <div class="sync-form">
       <p class="help-info">
-        <strong>
-          说明：用于快速部署同步文件，无需上传审批，在下方填写需要同步文件服务器文件地址即可。
-        </strong>
+        <strong>说明：填写待同步文件的服务器路径，选择同步方式后提交。</strong>
       </p>
 
       <div class="form-group">
         <label class="control-label">
           同步脚本文件路径
-          <el-tooltip
-            content="填写对应服务器上文件的绝对路径，支持文件夹同步以及压缩文件同步自动解压"
-            placement="top"
-          >
+          <el-tooltip content="填写待同步路径在服务器上的绝对路径" placement="top">
             <i class="fa fa-info-circle text-muted" />
           </el-tooltip>
         </label>

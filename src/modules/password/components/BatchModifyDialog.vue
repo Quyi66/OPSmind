@@ -58,7 +58,7 @@
             name="batch_modify_password"
             :disabled="submitting"
           />
-          <div class="hint-text">密码默认长度为8～16位，由数字、大小写字母、~!@$%&_组成</div>
+          <div class="hint-text">手动输入的密码长度需为8～16位</div>
         </el-form-item>
 
         <!-- 密码过期时间 -->
@@ -71,9 +71,7 @@
             style="width: 200px"
             :disabled="submitting"
           />
-          <div class="hint-text">
-            密码修改成功后的有效时间，单位为小时。超过此时间密码将被重置。如果永久有效，填写0
-          </div>
+          <div class="hint-text">密码修改成功后的有效时间，单位为小时；永久有效填写0。</div>
         </el-form-item>
       </el-form>
     </div>

@@ -665,9 +665,9 @@
       'app_pms.common.text.not_support': 'Not Supported',
       'app_pms.common.text.inner_group': 'Inner Group',
       'app_pms.common.text.password_comment':
-        'The default length of the password is 8 to 16 characters, consisting of numbers, upper and lower case letters, ~!@$%&_',
+        'Manually entered passwords must be 8 to 16 characters long.',
       'app_pms.common.text.password_expiration_time_comment':
-        'The valid time after the password is successfully modified, in hours. After this time the password will be reset. If it is valid permanently, fill in 0',
+        'Validity after the password is changed, in hours. Enter 0 for no expiry.',
       'app_pms.common.text.commit_comment': 'Commit?',
       'app_pms.common.text.delete_applicant_comment': 'Delete the application form?',
       'app_pms.common.text.check_password_status_comment':
@@ -1388,9 +1388,9 @@
       'app_vap.log.win_rollback_fail':
         'Execute Windows rolling errors, because the reason is {{msg_info}}',
       'app_vap.common.header.reboot_machine_hint_update':
-        'Windows vulnerabilities need to be updated and restart to take effect. Before updating the vulnerability, choose whether to restart automatically. The default is not restarting the host',
+        'Choose the restart policy after installation according to patch requirements and the target host status.',
       'app_vap.common.header.reboot_machine_hint_rollback':
-        'Windows vulnerabilities need to be restarted after rolling to take effect. You need to automatically restart before rolling the vulnerability. The default is not restarting the host.',
+        'Choose the restart policy after rollback according to patch requirements and the target host status.',
       'app_vap.common.header.vul_area': 'Vulnerability',
       'app_vap.common.header.history_vul': 'Historical Vulnerability',
       'app_vap.common.header.latest_vul': 'Latest Loopholes',
@@ -2947,7 +2947,7 @@
       'gfs.basic.select_file': 'Select File',
       'gfs.basic.file_max_size': 'File size cannot exceed',
       'gfs.basic.sync_help_info':
-        'Description: It is used to quickly deploy synchronized files, without uploading approval, just fill in the address of the server that needs to be synchronized below. ',
+        'Enter the server path of the file, choose a synchronization mode, then submit.',
       'gfs.basic.file_same_waring':
         'Files with the same name will be overwritten, but the file information will remain',
       'gfs.basic.compressed_file_options': 'Compressed File Options',
@@ -2985,8 +2985,7 @@
       'gfs.modal.add_script': 'New Script',
       'gfs.modal.sync_script': 'Sync Script File',
       'gfs.modal.sync_script_path': 'Sync script file path',
-      'gfs.modal.sync_script_path_info':
-        'Fill in the absolute path of the file on the corresponding server, support folder synchronization and automatic decompression of compressed file synchronization',
+      'gfs.modal.sync_script_path_info': 'Enter the absolute path to synchronize on the server.',
       'gfs.modal.script_name': 'Script Name',
       'gfs.modal.param_config': 'Parameter Configuration',
       'gfs.modal.param_config_info':
@@ -3046,10 +3045,9 @@
       'gfs.settings.current_repo': 'Current Repo',
       'gfs.settings.repo_auth_type': 'Git repository authentication method',
       'gfs.settings.repo_auth_type_info':
-        'HTTPS: Secure authentication based on username and password<br/>SSH: Based on RSA asymmetric encryption, upload the custom generated public key to the Git library, and upload the private key to the KoreOPS platform',
+        'HTTPS: Enter the Git repository username and password.<br/>SSH: Upload the private key used for Git repository authentication.',
       'gfs.settings.repo_url': 'Git Repository Address',
-      'gfs.settings.repo_url_desc':
-        'Used to configure the external Git repository address, currently supports Github, Bitbucket, Gitlab, Gitee, Coding',
+      'gfs.settings.repo_url_desc': 'Enter the external Git repository URL to synchronize.',
       'gfs.settings.repo_user_name': 'Git Repository Account',
       'gfs.settings.repo_user_name_desc': 'Username for external Git repository authentication',
       'gfs.settings.repo_user_pass': 'Git Repository Password',
@@ -3060,7 +3058,7 @@
       'gfs.settings.init_repo_success': 'Initialize external Git repository successfully',
       'gfs.settings.init_repo_error': 'Failed to initialize external Git repository',
       'gfs.settings.init_repo_info':
-        'Description: It is used to specify the script library. The built-in script library of KoreOPS does not need this setting. If you need to specify an external Git library (currently supports Github, Bitbucket, Gitlab, Gitee, Coding), configure KoreOPS in the following way Synchronize the external Git library. This setting will clear all the content in the existing script library. Please read the instructions carefully before using it! ! ',
+        'Configure an external Git script repository. Back up the existing script repository and verify the external Git repository URL before synchronizing.',
       'gfs.settings.init_repo_confirm': 'External Git repository sync confirmation',
       'gfs.settings.init_repo_confirm_info':
         'Confirm the synchronization {{repourt}} to the KoreOPS script library?',
@@ -3074,7 +3072,7 @@
       'gfs.list.refresh_title': 'Refresh the current page',
       'gfs.basic.repo_name': 'Warehouse Name',
       'gfs.basic.repo_name_desc':
-        'The git warehouse name specifies the generated by the user will automatically generate the warehouse name without specification',
+        'Enter a name for this script repository. This field may be left blank.',
       'gfs.git.repo_name': 'Warehouse Name',
       'gfs.git.repo_url': 'Warehouse Address',
       'gfs.git.add': 'New Git Warehouse',
@@ -6005,10 +6003,9 @@
       'app_pms.common.text.support': '支持',
       'app_pms.common.text.not_support': '不支持',
       'app_pms.common.text.inner_group': '内置分组',
-      'app_pms.common.text.password_comment':
-        '密码默认长度为8～16位，由数字、大小写字母、~!@$%&_组成',
+      'app_pms.common.text.password_comment': '手动输入的密码长度需为8～16位',
       'app_pms.common.text.password_expiration_time_comment':
-        '密码修改成功后的有效时间，单位为小时。超过此时间密码将被重置。如果永久有效，填写0',
+        '密码修改成功后的有效时间，单位为小时；永久有效填写0。',
       'app_pms.common.text.commit_comment': '是否提交?',
       'app_pms.common.text.delete_applicant_comment': '是否删除申请单?',
       'app_pms.common.text.check_password_status_comment':
@@ -6754,9 +6751,9 @@
       'app_vap.menu.vulnerability_rollback.title': 'Windows回滚',
       'app_vap.log.win_rollback_fail': '执行Windows回滚出现错误，原因是{{msg_info}}',
       'app_vap.common.header.reboot_machine_hint_update':
-        'Windows漏洞需要更新后重启才能生效，在更新漏洞前选择是否需要自动重启，默认为不重启主机',
+        '请按补丁要求和目标主机状态选择安装后的重启策略。',
       'app_vap.common.header.reboot_machine_hint_rollback':
-        'Windows漏洞回滚后需要重启才能生效，在回滚漏洞前选择是否需要自动重启，默认为不重启主机',
+        '请按补丁要求和目标主机状态选择回滚后的重启策略。',
       'app_vap.common.header.vul_area': '漏洞范围',
       'app_vap.common.header.history_vul': '历史漏洞',
       'app_vap.common.header.latest_vul': '最新漏洞',
@@ -8320,13 +8317,11 @@
       'gfs.basic.interval_unit': '分钟',
       'gfs.basic.git_repo_sync': 'Git库同步',
       'gfs.basic.auto_rsync_interval': '同步策略',
-      'gfs.basic.auto_rsync_interval_desc':
-        '设定自动从远程Git服务器拉取最新更新间隔时间(范围10~60)',
+      'gfs.basic.auto_rsync_interval_desc': '填写同步间隔，单位为分钟',
       'gfs.basic.file_path': '文件路径',
       'gfs.basic.select_file': '选择文件',
       'gfs.basic.file_max_size': '文件大小不能超过',
-      'gfs.basic.sync_help_info':
-        '说明：用于快速部署同步文件，无需上传审批，在下方填写需要同步文件服务器文件地址即可。',
+      'gfs.basic.sync_help_info': '说明：填写待同步文件的服务器路径，选择同步方式后提交。',
       'gfs.basic.file_same_waring': '同名的文件会被覆盖，但文件信息将保留',
       'gfs.basic.compressed_file_options': '压缩文件选项',
       'gfs.basic.unzip_subdirectory_extract_to_dir': '解压到子目录',
@@ -8362,8 +8357,7 @@
       'gfs.modal.add_script': '新建脚本',
       'gfs.modal.sync_script': '同步脚本文件',
       'gfs.modal.sync_script_path': '同步脚本文件路径',
-      'gfs.modal.sync_script_path_info':
-        '填写对应服务器上文件的绝对路径，支持文件夹同步以及压缩文件同步自动解压',
+      'gfs.modal.sync_script_path_info': '填写待同步路径在服务器上的绝对路径',
       'gfs.modal.script_name': '脚本名称',
       'gfs.modal.param_config': '参数配置',
       'gfs.modal.param_config_info': '如果文件支持配置（例如命令行执行参数），可以在这里填写',
@@ -8421,10 +8415,9 @@
       'gfs.settings.current_repo': '当前脚本库',
       'gfs.settings.repo_auth_type': 'Git库认证方式',
       'gfs.settings.repo_auth_type_info':
-        'HTTPS：基于用户名密码安全认证<br/>SSH：基于RSA非对称加密，将自定义生成公钥上传Git库中，将私钥上传KoreOPS平台',
+        'HTTPS：填写 Git 库账户和密码<br/>SSH：上传用于 Git 库认证的私钥文件',
       'gfs.settings.repo_url': 'Git库地址',
-      'gfs.settings.repo_url_desc':
-        '用于配置外部Git库地址，目前支持Github、Bitbucket、Gitlab、Gitee、Coding',
+      'gfs.settings.repo_url_desc': '填写需要同步的外部 Git 库地址',
       'gfs.settings.repo_user_name': 'Git库账户',
       'gfs.settings.repo_user_name_desc': '用于外部Git库认证的用户名',
       'gfs.settings.repo_user_pass': 'Git库密码',
@@ -8434,7 +8427,7 @@
       'gfs.settings.init_repo_success': '初始化外部Git库成功',
       'gfs.settings.init_repo_error': '初始化外部Git库失败',
       'gfs.settings.init_repo_info':
-        '说明：用于指定脚本库，系统内置脚本库无需该设定，如需指定外部Git库（目前支持Github、Bitbucket、Gitlab、Gitee、Coding），按照以下指定方式配置KoreOPS同步外部Git库，该设定会清空当前已存在脚本库中所有内容，请详细阅读说明后再使用！！',
+        '用于配置外部 Git 脚本库。同步前请先备份现有脚本库内容，并确认外部 Git 库地址。',
       'gfs.settings.init_repo_confirm': '外部Git库同步确认',
       'gfs.settings.init_repo_confirm_info': '确认同步{{repoUrl}}到KoreOPS脚本库中？',
       'gfs.settings.reset_repo_success': '重置KoreOPS内置脚本库成功',
@@ -8446,7 +8439,7 @@
       'gfs.list.refresh': '刷新',
       'gfs.list.refresh_title': '刷新当前页面',
       'gfs.basic.repo_name': '仓库名',
-      'gfs.basic.repo_name_desc': '用户指定生成的Git仓库名，未指定则会自动生成仓库名',
+      'gfs.basic.repo_name_desc': '填写此脚本库的仓库名，可留空',
       'gfs.git.repo_name': '仓库名',
       'gfs.git.repo_url': '仓库地址',
       'gfs.git.add': '新增Git仓库',
@@ -11427,10 +11420,9 @@
       'app_pms.common.text.support': '支援',
       'app_pms.common.text.not_support': '不支援',
       'app_pms.common.text.inner_group': '內建分組',
-      'app_pms.common.text.password_comment':
-        '密碼預設長度為8～16位，由數字、大小寫字母、~!@$%&_組成',
+      'app_pms.common.text.password_comment': '手動輸入的密碼長度需為8～16位',
       'app_pms.common.text.password_expiration_time_comment':
-        '密碼修改成功後的有效時間，單位為小時。超過此時間密碼將被重置。如果永久有效，填寫0',
+        '密碼修改成功後的有效時間，單位為小時；永久有效填寫0。',
       'app_pms.common.text.commit_comment': '是否提交?',
       'app_pms.common.text.delete_applicant_comment': '是否刪除申請單?',
       'app_pms.common.text.check_password_status_comment':
@@ -12176,9 +12168,9 @@
       'app_vap.menu.vulnerability_rollback.title': 'Windows回滾',
       'app_vap.log.win_rollback_fail': '執行Windows回滾出現錯誤，原因是{{msg_info}}',
       'app_vap.common.header.reboot_machine_hint_update':
-        'Windows漏洞需要更新後重啟才能生效，在更新漏洞前選擇是否需要自動重啟，預設為不重啟主機',
+        '請按補丁要求和目標主機狀態選擇安裝後的重啟策略。',
       'app_vap.common.header.reboot_machine_hint_rollback':
-        'Windows漏洞回滾後需要重啟才能生效，在回滾漏洞前選擇是否需要自動重啟，預設為不重啟主機',
+        '請按補丁要求和目標主機狀態選擇回滾後的重啟策略。',
       'app_vap.common.header.vul_area': '漏洞範圍',
       'app_vap.common.header.history_vul': '歷史漏洞',
       'app_vap.common.header.latest_vul': '最新漏洞',
@@ -13741,13 +13733,11 @@
       'gfs.basic.interval_unit': '分鐘',
       'gfs.basic.git_repo_sync': 'Git庫同步',
       'gfs.basic.auto_rsync_interval': '同步策略',
-      'gfs.basic.auto_rsync_interval_desc':
-        '設定自動從遠端Git伺服器拉取最新更新間隔時間(範圍10~60)',
+      'gfs.basic.auto_rsync_interval_desc': '填寫同步間隔，單位為分鐘',
       'gfs.basic.file_path': '檔案路徑',
       'gfs.basic.select_file': '選擇檔案',
       'gfs.basic.file_max_size': '檔案大小不能超過',
-      'gfs.basic.sync_help_info':
-        '說明：用於快速部署同步檔案，無需上傳審批，在下方填寫需要同步檔案伺服器檔案地址即可。',
+      'gfs.basic.sync_help_info': '說明：填寫待同步檔案的伺服器路徑，選擇同步方式後提交。',
       'gfs.basic.file_same_waring': '同名的檔案會被覆蓋，但檔案資訊將保留',
       'gfs.basic.compressed_file_options': '壓縮檔案選項',
       'gfs.basic.unzip_subdirectory_extract_to_dir': '解壓到子目錄',
@@ -13783,8 +13773,7 @@
       'gfs.modal.add_script': '新建腳本',
       'gfs.modal.sync_script': '同步腳本檔案',
       'gfs.modal.sync_script_path': '同步腳本檔案路徑',
-      'gfs.modal.sync_script_path_info':
-        '填寫對應伺服器上檔案的絕對路徑，支援資料夾同步以及壓縮檔案同步自動解壓',
+      'gfs.modal.sync_script_path_info': '填寫待同步路徑在伺服器上的絕對路徑',
       'gfs.modal.script_name': '腳本名稱',
       'gfs.modal.param_config': '參數配置',
       'gfs.modal.param_config_info': '如果檔案支援配置（例如命令列執行參數），可以在這裡填寫',
@@ -13842,10 +13831,9 @@
       'gfs.settings.current_repo': '當前腳本庫',
       'gfs.settings.repo_auth_type': 'Git庫認證方式',
       'gfs.settings.repo_auth_type_info':
-        'HTTPS：基於使用者名稱密碼安全認證<br/>SSH：基於RSA非對稱加密，將自定義生成公鑰上傳Git庫中，將私鑰上傳KoreOPS平臺',
+        'HTTPS：填寫 Git 庫帳戶和密碼<br/>SSH：上傳用於 Git 庫認證的私鑰檔案',
       'gfs.settings.repo_url': 'Git庫地址',
-      'gfs.settings.repo_url_desc':
-        '用於配置外部Git庫地址，目前支援Github、Bitbucket、Gitlab、Gitee、Coding',
+      'gfs.settings.repo_url_desc': '填寫需要同步的外部 Git 庫地址',
       'gfs.settings.repo_user_name': 'Git庫賬戶',
       'gfs.settings.repo_user_name_desc': '用於外部Git庫認證的使用者名稱',
       'gfs.settings.repo_user_pass': 'Git庫密碼',
@@ -13855,7 +13843,7 @@
       'gfs.settings.init_repo_success': '初始化外部Git庫成功',
       'gfs.settings.init_repo_error': '初始化外部Git庫失敗',
       'gfs.settings.init_repo_info':
-        '說明：用於指定腳本庫，KoreOPS內建腳本庫無需該設定，如需指定外部Git庫（目前支援Github、Bitbucket、Gitlab、Gitee、Coding），按照以下指定方式配置KoreOPS同步外部Git庫，該設定會清空當前已存在腳本庫中所有內容，請詳細閱讀說明後再使用！！',
+        '用於配置外部 Git 腳本庫。同步前請先備份現有腳本庫內容，並確認外部 Git 庫地址。',
       'gfs.settings.init_repo_confirm': '外部Git庫同步確認',
       'gfs.settings.init_repo_confirm_info': '確認同步{{repoUrl}}到KoreOPS指令碼庫中？',
       'gfs.settings.reset_repo_success': '重置KoreOPS內建腳本庫成功',
@@ -13867,7 +13855,7 @@
       'gfs.list.refresh': '重新整理',
       'gfs.list.refresh_title': '重新整理當前頁面',
       'gfs.basic.repo_name': '倉庫名',
-      'gfs.basic.repo_name_desc': '使用者指定生成的Git倉庫名，未指定則會自動生成倉庫名',
+      'gfs.basic.repo_name_desc': '填寫此腳本庫的倉庫名，可留空',
       'gfs.git.repo_name': '倉庫名',
       'gfs.git.repo_url': '倉庫地址',
       'gfs.git.add': '新增Git倉庫',
