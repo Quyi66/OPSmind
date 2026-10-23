@@ -20,7 +20,7 @@
       </el-form-item>
 
       <el-form-item label="标签名称" prop="name">
-        <el-input v-model="formData.name" placeholder="请输入标签名称" />
+        <el-input v-model="formData.name" placeholder="仅支持中英文、数字、下划线和空格" />
       </el-form-item>
     </el-form>
 
@@ -36,6 +36,8 @@ import { ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { dataManageApi } from '../../api'
 import { apiService } from '@/core/api'
+import { throwIfTagJobFailed } from '../../utils/tagJobResult'
+import { createTagNameRules } from '../../utils/tagNameRules'
 
 const props = defineProps({
   modelValue: {
@@ -59,7 +61,7 @@ const formData = ref({
 
 const formRules = {
   ciType: [{ required: true, message: '请选择资产类型', trigger: 'change' }],
-  name: [{ required: true, message: '请输入标签名称', trigger: 'blur' }]
+  name: createTagNameRules()
 }
 
 const resourceTypes = ref([])
@@ -89,13 +91,17 @@ const handleSave = async () => {
   saving.value = true
   try {
     // Job: chq5Pe - 添加标签（与编辑标签使用同一个job，通过id是否为null区分）
-    await apiService.post(`/workflow/api/workflow/jobs/chq5Pe/run?cacheBuster=${Date.now()}`, {
-      params: {
-        id: null,
-        name: formData.value.name,
-        ciType: formData.value.ciType
+    const response = await apiService.post(
+      `/workflow/api/workflow/jobs/chq5Pe/run?cacheBuster=${Date.now()}`,
+      {
+        params: {
+          id: null,
+          name: formData.value.name,
+          ciType: formData.value.ciType
+        }
       }
-    })
+    )
+    throwIfTagJobFailed(response)
     ElMessage.success('添加成功')
     visible.value = false
     emit('saved')

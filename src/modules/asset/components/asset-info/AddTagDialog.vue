@@ -17,7 +17,11 @@
 
       <!-- 新建标签 -->
       <el-form-item v-if="formData.operate === 'new'" label="标签名称" prop="name">
-        <el-input v-model="formData.name" placeholder="请输入标签名称" style="width: 100%" />
+        <el-input
+          v-model="formData.name"
+          placeholder="仅支持中英文、数字、下划线和空格"
+          style="width: 100%"
+        />
       </el-form-item>
 
       <!-- 选择已有标签 -->
@@ -49,6 +53,8 @@ import { ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { assetApi } from '../../api'
 import { apiService } from '@/core/api'
+import { throwIfTagJobFailed } from '../../utils/tagJobResult'
+import { createTagNameRules } from '../../utils/tagNameRules'
 
 const props = defineProps({
   modelValue: {
@@ -82,10 +88,7 @@ const formData = ref({
 // 动态验证规则
 const formRules = computed(() => ({
   operate: [{ required: true, message: '请选择操作', trigger: 'change' }],
-  name:
-    formData.value.operate === 'new'
-      ? [{ required: true, message: '请输入标签名称', trigger: 'blur' }]
-      : [],
+  name: formData.value.operate === 'new' ? createTagNameRules() : [],
   parentId:
     formData.value.operate === 'select'
       ? [{ required: true, message: '请选择已有标签', trigger: 'change' }]
@@ -126,14 +129,18 @@ const handleSave = async () => {
   saving.value = true
   try {
     // 调用 job chq5Pe 添加标签
-    await apiService.post(`/workflow/api/workflow/jobs/chq5Pe/run?cacheBuster=${Date.now()}`, {
-      params: {
-        parentId: formData.value.parentId || '',
-        name: formData.value.name || '',
-        ciIds: props.ciIds.join(','),
-        ciType: props.assetType || ''
+    const response = await apiService.post(
+      `/workflow/api/workflow/jobs/chq5Pe/run?cacheBuster=${Date.now()}`,
+      {
+        params: {
+          parentId: formData.value.parentId || '',
+          name: formData.value.name || '',
+          ciIds: props.ciIds.join(','),
+          ciType: props.assetType || ''
+        }
       }
-    })
+    )
+    throwIfTagJobFailed(response)
 
     ElMessage.success('添加标签成功')
     visible.value = false
