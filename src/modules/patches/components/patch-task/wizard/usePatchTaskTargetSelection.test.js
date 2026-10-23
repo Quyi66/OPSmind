@@ -21,7 +21,7 @@ vi.mock('../../../api', () => ({
 }))
 
 vi.mock('@/modules/asset/api', () => ({
-  dataManageApi: { getAllGroups: vi.fn() }
+  dataManageApi: { getAllGroups: vi.fn(), getAllTags: vi.fn().mockResolvedValue({ records: [] }) }
 }))
 
 vi.mock('../../../utils/agentCapability', () => ({
@@ -106,7 +106,8 @@ describe('usePatchTaskTargetSelection', () => {
     expect(patchInstallApi.getMachinesByPatch).toHaveBeenLastCalledWith({
       patch_ids: ['patch-1'],
       hostId: '@@(linux)',
-      groupIds: ['group-1', 'group-2']
+      groupIds: ['group-1', 'group-2'],
+      tagNames: []
     })
     expect(targetSelection.selectedHosts.value).toEqual([])
     wrapper.unmount()

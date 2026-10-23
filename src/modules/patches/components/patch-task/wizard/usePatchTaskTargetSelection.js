@@ -37,6 +37,8 @@ export function usePatchTaskTargetSelection({
   const {
     selectedGroupIds,
     groupOptions,
+    selectedTagNames,
+    tagOptions,
     groupLoading,
     loadGroupOptions,
     resetGroupFilter
@@ -160,7 +162,8 @@ export function usePatchTaskTargetSelection({
         const hostResponse = await patchInstallApi.getMachinesByPatch({
           patch_ids: patchIds,
           hostId: '@@(linux)',
-          groupIds: [...selectedGroupIds.value]
+          groupIds: [...selectedGroupIds.value],
+          tagNames: [...selectedTagNames.value]
         })
         // 关闭或重新打开向导后，旧请求不能覆盖当前会话的主机列表。
         if (sessionId !== targetSelectionSessionId) return
@@ -419,6 +422,8 @@ export function usePatchTaskTargetSelection({
     resetHostAllSelected,
     selectedHosts,
     selectedGroupIds,
+    selectedTagNames,
+    tagOptions,
     syncAffectedPackagesForHosts,
     validateSelectedHostCapabilities
   }

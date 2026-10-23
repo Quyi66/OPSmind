@@ -172,9 +172,19 @@
 .host-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 16px;
   padding: 8px 12px;
   border-bottom: 1px solid var(--el-border-color-lighter);
+}
+.host-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.host-filter__label {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--el-text-color-regular);
 }
 .host-pagination {
   display: flex;

@@ -2,7 +2,7 @@
   <el-dialog
     v-model="dialogVisible"
     title="定时安装补丁"
-    width="1000px"
+    width="1080px"
     top="5vh"
     :close-on-click-modal="false"
     :close-on-press-escape="false"
@@ -87,6 +87,8 @@
           </div>
           <div class="card-body">
             <div class="host-toolbar">
+              <div class="host-filter">
+              <span class="host-filter__label">分组</span>
               <el-select
                 v-model="selectedGroupIds"
                 multiple
@@ -98,7 +100,7 @@
                 placeholder="全部分组"
                 aria-label="按分组筛选主机"
                 size="small"
-                style="width: 220px"
+                style="width: 180px"
                 @change="loadStep0Data"
               >
                 <el-option
@@ -108,6 +110,31 @@
                   :value="group.id"
                 />
               </el-select>
+              </div>
+              <div class="host-filter">
+              <span class="host-filter__label">标签</span>
+              <el-select
+                v-model="selectedTagNames"
+                multiple
+                filterable
+                clearable
+                collapse-tags
+                collapse-tags-tooltip
+                :loading="groupLoading"
+                placeholder="全部标签"
+                aria-label="按标签筛选主机"
+                size="small"
+                style="width: 180px"
+                @change="loadStep0Data"
+              >
+                <el-option
+                  v-for="tag in tagOptions"
+                  :key="tag.name"
+                  :label="tag.label"
+                  :value="tag.name"
+                />
+              </el-select>
+              </div>
               <el-input
                 v-model="hostSearchText"
                 placeholder="搜索主机名/IP/OS"
@@ -353,6 +380,8 @@ const hostSearchText = ref('')
 const {
   selectedGroupIds,
   groupOptions,
+  selectedTagNames,
+  tagOptions,
   groupLoading,
   loadGroupOptions,
   resetGroupFilter
@@ -539,7 +568,8 @@ async function loadStep0Data() {
     const res = await patchInstallApi.getMachinesByPatch({
       patch_ids: patchIds,
       hostId: '@@(linux)',
-      groupIds: [...selectedGroupIds.value]
+      groupIds: [...selectedGroupIds.value],
+      tagNames: [...selectedTagNames.value]
     })
     if (requestId !== hostRequestId) return
     if (res?.data?.records) {
@@ -804,8 +834,20 @@ watch(
 .host-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 16px;
   margin-bottom: 10px;
+}
+
+.host-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.host-filter__label {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--el-text-color-regular);
 }
 
 .host-name-cell {

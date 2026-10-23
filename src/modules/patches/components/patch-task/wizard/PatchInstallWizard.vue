@@ -4,7 +4,7 @@
     <el-dialog
       v-model="isVisible"
       :title="wizardDialogTitle"
-      width="1000px"
+      width="1080px"
       top="5vh"
       :close-on-click-modal="false"
       :close-on-press-escape="false"
@@ -60,6 +60,8 @@
           </div>
           <div v-else class="card-body">
             <div class="host-toolbar">
+              <div class="host-filter">
+              <span class="host-filter__label">分组</span>
               <el-select
                 v-model="selectedGroupIds"
                 multiple
@@ -71,7 +73,7 @@
                 placeholder="全部分组"
                 aria-label="按分组筛选主机"
                 size="small"
-                style="width: 220px"
+                style="width: 180px"
                 @change="handleHostGroupChange"
               >
                 <el-option
@@ -81,6 +83,31 @@
                   :value="group.id"
                 />
               </el-select>
+              </div>
+              <div class="host-filter">
+              <span class="host-filter__label">标签</span>
+              <el-select
+                v-model="selectedTagNames"
+                multiple
+                filterable
+                clearable
+                collapse-tags
+                collapse-tags-tooltip
+                :loading="groupLoading"
+                placeholder="全部标签"
+                aria-label="按标签筛选主机"
+                size="small"
+                style="width: 180px"
+                @change="handleHostGroupChange"
+              >
+                <el-option
+                  v-for="tag in tagOptions"
+                  :key="tag.name"
+                  :label="tag.label"
+                  :value="tag.name"
+                />
+              </el-select>
+              </div>
               <el-input
                 v-model="hostSearchText"
                 placeholder="搜索"
@@ -506,6 +533,8 @@ const {
   resetHostAllSelected,
   selectedHosts,
   selectedGroupIds,
+  selectedTagNames,
+  tagOptions,
   syncAffectedPackagesForHosts,
   validateSelectedHostCapabilities
 } = usePatchTaskTargetSelection({

@@ -783,6 +783,7 @@ export const patchInstallApi = {
   * @param {Array<string>} params.patch_ids - 补丁ID列表
   * @param {string} params.hostId - 主机筛选条件
   * @param {Array<string>} [params.groupIds] - 分组ID列表
+  * @param {Array<string>} [params.tagNames] - 标签名称列表
   * @returns {Promise}
   */
   getMachinesByPatch(params) {
@@ -790,7 +791,8 @@ export const patchInstallApi = {
       .post(`${VAP_DASHBOARD_BASE}/machine-by-patch`, {
         patchIds: params.patch_ids,
         hostId: params.hostId || '@@(linux)',
-        ...(params.groupIds?.length ? { groupIds: params.groupIds } : {})
+        ...(params.groupIds?.length ? { groupIds: params.groupIds } : {}),
+        ...(params.tagNames?.length ? { tagNames: params.tagNames } : {})
       })
       .then(wrapRecordsResponse)
       .then(res => {
