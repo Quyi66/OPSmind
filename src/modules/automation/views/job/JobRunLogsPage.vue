@@ -212,6 +212,7 @@ import {
 } from '@/modules/automation/constants/runLogStatus'
 import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
 import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
+import { throwIfWorkflowFailed } from '@/utils/workflowResult'
 
 const loading = ref(false)
 const tableData = ref([])
@@ -522,7 +523,8 @@ async function handleRerun(row) {
 
     loading.value = true
     try {
-      await jaoApi.rerunJob(row.job_id, effectiveRunId)
+      const response = await jaoApi.rerunJob(row.job_id, effectiveRunId)
+      throwIfWorkflowFailed(response, '重新启动运维工具失败')
       ElMessage.success('运维工具已重新启动')
       fetchData()
     } catch (error) {

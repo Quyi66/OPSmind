@@ -190,6 +190,7 @@ import {
 } from '@/modules/automation/constants/jobStatus'
 import { isActiveRunStatus, isSuccessfulRunStatus, normalizeRunStatus } from '@/utils/taskStatus'
 import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
+import { throwIfWorkflowFailed } from '@/utils/workflowResult'
 
 const timeRangeOptions = [
   { label: '全部', value: 'all' },
@@ -441,10 +442,11 @@ async function handleRerun(row) {
       cancelButtonText: '取消'
     })
 
-    await jaoApi.executeJob({
+    const response = await jaoApi.executeJob({
       jobId: 'OKPacN',
       params: { runId: effectiveRunId }
     })
+    throwIfWorkflowFailed(response, '执行失败')
     ElMessage.success('运维工具已提交执行')
     handleRefresh()
   } catch (error) {

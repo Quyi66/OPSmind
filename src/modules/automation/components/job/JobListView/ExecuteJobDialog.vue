@@ -48,6 +48,7 @@ import { ElMessage } from 'element-plus'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { JOB_STATUS_LABELS, JOB_STATUS_CLASS_MAP } from '@/modules/automation/constants/jobStatus'
 import { initTranslations, translateText } from '@/utils/i18n'
+import { throwIfWorkflowFailed } from '@/utils/workflowResult'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -159,6 +160,7 @@ async function handleSubmit() {
   try {
     const payload = buildPayload()
     const response = await jaoApi.executeJob(payload)
+    throwIfWorkflowFailed(response, '执行运维工具失败')
     const responseData = response?.data ?? response ?? {}
     // 脚本工具返回单条运行数组；多条时不擅自选取某一次运行。
     const result =
