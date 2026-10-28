@@ -264,6 +264,7 @@ import {
 const props = defineProps({
   modelValue: Boolean,
   initialAsset: { type: Object, default: null },
+  defaultTargetOs: { type: String, default: 'linux' },
   mode: { type: String, default: 'enroll' }
 })
 const emit = defineEmits(['update:modelValue', 'success'])
@@ -547,8 +548,9 @@ watch(
     Object.assign(newHost, { hostname: '', ip: '', ciType: '' })
     Object.assign(tokenForm, {
       targetOs:
-        String(props.initialAsset?.ciType || props.initialAsset?.assetType || '').toLowerCase() ===
-        'windows'
+        String(
+          props.initialAsset?.ciType || props.initialAsset?.assetType || props.defaultTargetOs
+        ).toLowerCase() === 'windows'
           ? 'windows'
           : 'linux',
       ttlMinutes: 1440,

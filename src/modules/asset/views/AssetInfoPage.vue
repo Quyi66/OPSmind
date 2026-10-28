@@ -529,6 +529,7 @@
     <AgentEnrollmentDialog
       v-model="agentEnrollmentVisible"
       :initial-asset="agentEnrollmentInitialAsset"
+      :default-target-os="currentType"
       :mode="agentEnrollmentMode"
       @success="handleAgentEnrollmentSuccess"
     />
