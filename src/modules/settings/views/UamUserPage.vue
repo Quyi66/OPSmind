@@ -156,9 +156,6 @@
 
     <!-- 分配角色对话框 -->
     <AllocateRoleDialog v-model="allocateRoleVisible" @saved="loadData" />
-
-    <!-- 关联用户对话框 -->
-    <LinkTenantUserDialog v-model="linkUserVisible" @saved="loadData" />
   </div>
 </template>
 
@@ -170,7 +167,6 @@ import * as settingsApi from '@/modules/settings/api'
 import { authService } from '@/core/auth'
 import UserEditDialog from '../components/user/UserEditDialog.vue'
 import AllocateRoleDialog from '../components/user/AllocateRoleDialog.vue'
-import LinkTenantUserDialog from '../components/user/LinkTenantUserDialog.vue'
 
 const loading = ref(false)
 const tableData = ref([])
@@ -226,7 +222,6 @@ const dialogVisible = ref(false)
 const selectedUser = ref(null)
 const dialogMode = ref('edit') // 'view' | 'edit' | 'create'
 const allocateRoleVisible = ref(false)
-const linkUserVisible = ref(false)
 
 // 当前登录用户
 const currentUserLogin = computed(() => {
@@ -347,7 +342,11 @@ async function handleToggleActivation(row) {
     await ElMessageBox.confirm(
       `确定要${action}用户 "${row.fullName || row.login}" 吗？`,
       '确认操作',
-      { type: 'warning' }
+      {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
+        type: 'warning'
+      }
     )
 
     togglingUserId.value = row.tenantUserId
@@ -369,7 +368,9 @@ function handleAllocateRole() {
 }
 
 function handleCreateUser() {
-  linkUserVisible.value = true
+  selectedUser.value = null
+  dialogMode.value = 'create'
+  dialogVisible.value = true
 }
 
 function handleView(row) {
@@ -400,6 +401,8 @@ async function handleDelete(row) {
 
   try {
     await ElMessageBox.confirm(`确定要删除用户 "${row.fullName || row.login}" 吗？`, '确认删除', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning'
     })
 

@@ -3,7 +3,7 @@
     v-model="visible"
     :title="modelData?.title || '模型详情'"
     width="800px"
-    :close-on-click-modal="false"
+    :close-on-click-modal="true"
   >
     <div v-if="modelData" class="model-detail">
       <!-- 基本信息 -->

@@ -5,6 +5,7 @@
     size="880px"
     destroy-on-close
     class="rpm-package-detail-drawer"
+    :close-on-click-modal="true"
   >
     <div v-loading="loading" class="rpm-package-detail">
       <template v-if="loading || hasDetail">

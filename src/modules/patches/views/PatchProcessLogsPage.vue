@@ -107,9 +107,18 @@
             {{ formatJsonArray(row.patchPkgs) || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="90" fixed="right">
+        <el-table-column label="操作" width="170" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="openDetail(row)">详情</el-button>
+            <el-button
+              v-if="row.taskType !== 'rollback'"
+              text
+              type="primary"
+              size="small"
+              @click="openFailedHosts(row)"
+            >
+              失败主机
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -129,6 +138,7 @@
     </div>
 
     <PatchProcessLogDetailDialog v-model="detailVisible" :task="selectedTask" />
+    <PatchTaskFailedHostsDialog v-model="failedHostsVisible" :task-id="failedHostsTaskId" />
   </div>
 </template>
 
@@ -138,6 +148,7 @@ import { ElMessage } from 'element-plus'
 import { Refresh, RefreshRight, Search } from '@element-plus/icons-vue'
 import { patchLogsApi } from '../api'
 import PatchProcessLogDetailDialog from '../components/logs/PatchProcessLogDetailDialog.vue'
+import PatchTaskFailedHostsDialog from '../components/patch-task/dialogs/PatchTaskFailedHostsDialog.vue'
 import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
 import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
 import {
@@ -159,6 +170,13 @@ const loading = ref(false)
 const tableData = ref([])
 const detailVisible = ref(false)
 const selectedTask = ref(null)
+const failedHostsVisible = ref(false)
+const failedHostsTaskId = ref('')
+
+function openFailedHosts(task) {
+  failedHostsTaskId.value = String(task.id || task.taskId || '')
+  failedHostsVisible.value = true
+}
 
 useActiveTaskListPolling({
   records: tableData,

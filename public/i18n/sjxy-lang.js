@@ -52,7 +52,7 @@
       'acm.common.header.tag_name': 'Tag Name',
       'acm.common.header.existing_tag': 'Existing Tag',
       'acm.common.header.IP': 'IP',
-      'acm.common.header.engine_node': 'Execution Engine Node',
+      'acm.common.header.engine_node': 'Execution Node',
       'acm.common.header.login_user': 'Login User',
       'acm.common.header.run_user': 'Execution User',
       'acm.common.header.login_password': 'Login password',
@@ -132,9 +132,9 @@
       'acm.common.text.auto_asset_comment':
         'Note:\nThe use of automatic equipment input must meet the requirements. The only model attribute of the asset model is and can only be managed IP\nIPs in text format are supported. Text format support: comma One or more of segmentation, space segmentation, and newline segmentation, and supports network segment entry. For example: 192.168.1.0/26',
       'acm.common.text.automation_comment':
-        'Note:\nAutomation configuration is to modify the default connection configuration of each automation asset. The usage scenarios are as follows:\nExecution user/password, login user/password, execution engine node configuration wait',
+        'Note:\nAutomation configuration is to modify the default connection configuration of each automation asset. The usage scenarios are as follows:\nExecution user/password, login user/password, execution node configuration wait',
       'acm.common.text.ansible_config_comment':
-        'Note:\nAnsible connection configuration is modified for the default configuration of automation equipment types supported by Oplus. The usage scenarios are as follows:\nWhether to escalate rights, how to escalate rights, how to connect, etc.',
+        'Note:\nAnsible connection configuration is modified for the default configuration of automation equipment types supported by KoreOPS. The usage scenarios are as follows:\nWhether to escalate rights, how to escalate rights, how to connect, etc.',
       'acm.common.text.model_import_comment':
         'Note:\nPlease download the asset model attribute first and import the Excel template. The Sheet name in the Excel template is the asset model code. The template can only be filled in. The attribute code, whether it is unique, or whether it is required .\nIf you need to set other information about model properties, please edit the asset model after importing.',
       'acm.common.text.add_ansible_config_comment':
@@ -186,7 +186,7 @@
         'Note:\nThis Ansible configuration acts on a specific machine, which is different from group Ansible configurations and asset type Ansible configurations. This Ansible configuration has the highest priority.',
       'acm.common.ansible.ssh_key_connect_host.tips':
         'Note:\nThe machine must fill in the Ansible execution node column (ie: INSTANCE_GROUP attribute) when importing\nIf you need to modify the node configuration, please go to the automatic configuration management->device storage Manage -> Manage user name and password and perform node configuration separately\nOtherwise, the task will be sent to the default node for execution',
-      'acm.common.ansible.ssh_key_connect_host.tips.conn_user': 'Oplus managed target user',
+      'acm.common.ansible.ssh_key_connect_host.tips.conn_user': 'KoreOPS managed target user',
       'acm.common.ansible.ssh_key_connect_host.tips.can_ssh_user':
         'The current user who can SSH to the target machine',
       'acm.common.ansible.ssh_key_connect_host.tips.can_ssh_passwd':
@@ -665,9 +665,9 @@
       'app_pms.common.text.not_support': 'Not Supported',
       'app_pms.common.text.inner_group': 'Inner Group',
       'app_pms.common.text.password_comment':
-        'The default length of the password is 8 to 16 characters, consisting of numbers, upper and lower case letters, ~!@$%&_',
+        'Manually entered passwords must be 8 to 16 characters long.',
       'app_pms.common.text.password_expiration_time_comment':
-        'The valid time after the password is successfully modified, in hours. After this time the password will be reset. If it is valid permanently, fill in 0',
+        'Validity after the password is changed, in hours. Enter 0 for no expiry.',
       'app_pms.common.text.commit_comment': 'Commit?',
       'app_pms.common.text.delete_applicant_comment': 'Delete the application form?',
       'app_pms.common.text.check_password_status_comment':
@@ -1316,7 +1316,7 @@
       'app_vap.menu.log_report.available_patches_title': 'Patches Available',
       'app_vap.log.machine_count': 'Number of machines: {{machine_count}}',
       'app_vap.log.exec_script_fail':
-        'An error occurred while executing the script job, the result file was not output, please check the details',
+        'An error occurred while executing the script, the result file was not output, please check the details',
       'app_vap.log.scan_success':
         'The patch scan is successfully executed, the number of scanned machines is {{scan_count}}, the number of scanned software packages is {{scan_packages}}, the number of scanned vulnerabilities is {{scan_patch}}, and the ETL processing time is {{scan_time}}s',
       'app_vap.log.scan_fail': 'Patch scan failed due to {{msg_info}}',
@@ -1346,7 +1346,7 @@
       'app_vap.log.import_path_fail': 'Import patch library failed: {{msg_info}}',
       'app_vap.log.download_path_by_remote': 'Downloading patches from remote server {{server}}',
       'app_vap.log.deal_file_fail':
-        'File processing failed, please check Oplus update server {{server}}',
+        'File processing failed, please check KoreOPS update server {{server}}',
       'app_vap.log.win_scan_fail': 'Windows patch scan failed due to {{msg_info}}',
       'app_vap.log.win_scan_success':
         'The Windows patch scan was executed successfully, the number of scanned machines is {{machineCount}}, the number of scanned vulnerabilities is {{kbCount}}, and the ETL processing time is {{time}}s',
@@ -1388,9 +1388,9 @@
       'app_vap.log.win_rollback_fail':
         'Execute Windows rolling errors, because the reason is {{msg_info}}',
       'app_vap.common.header.reboot_machine_hint_update':
-        'Windows vulnerabilities need to be updated and restart to take effect. Before updating the vulnerability, choose whether to restart automatically. The default is not restarting the host',
+        'Choose the restart policy after installation according to patch requirements and the target host status.',
       'app_vap.common.header.reboot_machine_hint_rollback':
-        'Windows vulnerabilities need to be restarted after rolling to take effect. You need to automatically restart before rolling the vulnerability. The default is not restarting the host.',
+        'Choose the restart policy after rollback according to patch requirements and the target host status.',
       'app_vap.common.header.vul_area': 'Vulnerability',
       'app_vap.common.header.history_vul': 'Historical Vulnerability',
       'app_vap.common.header.latest_vul': 'Latest Loopholes',
@@ -2947,7 +2947,7 @@
       'gfs.basic.select_file': 'Select File',
       'gfs.basic.file_max_size': 'File size cannot exceed',
       'gfs.basic.sync_help_info':
-        'Description: It is used to quickly deploy synchronized files, without uploading approval, just fill in the address of the server that needs to be synchronized below. ',
+        'Enter the server path of the file, choose a synchronization mode, then submit.',
       'gfs.basic.file_same_waring':
         'Files with the same name will be overwritten, but the file information will remain',
       'gfs.basic.compressed_file_options': 'Compressed File Options',
@@ -2985,8 +2985,7 @@
       'gfs.modal.add_script': 'New Script',
       'gfs.modal.sync_script': 'Sync Script File',
       'gfs.modal.sync_script_path': 'Sync script file path',
-      'gfs.modal.sync_script_path_info':
-        'Fill in the absolute path of the file on the corresponding server, support folder synchronization and automatic decompression of compressed file synchronization',
+      'gfs.modal.sync_script_path_info': 'Enter the absolute path to synchronize on the server.',
       'gfs.modal.script_name': 'Script Name',
       'gfs.modal.param_config': 'Parameter Configuration',
       'gfs.modal.param_config_info':
@@ -3046,10 +3045,9 @@
       'gfs.settings.current_repo': 'Current Repo',
       'gfs.settings.repo_auth_type': 'Git repository authentication method',
       'gfs.settings.repo_auth_type_info':
-        'HTTPS: Secure authentication based on username and password<br/>SSH: Based on RSA asymmetric encryption, upload the custom generated public key to the Git library, and upload the private key to the Oplus platform',
+        'HTTPS: Enter the Git repository username and password.<br/>SSH: Upload the private key used for Git repository authentication.',
       'gfs.settings.repo_url': 'Git Repository Address',
-      'gfs.settings.repo_url_desc':
-        'Used to configure the external Git repository address, currently supports Github, Bitbucket, Gitlab, Gitee, Coding',
+      'gfs.settings.repo_url_desc': 'Enter the external Git repository URL to synchronize.',
       'gfs.settings.repo_user_name': 'Git Repository Account',
       'gfs.settings.repo_user_name_desc': 'Username for external Git repository authentication',
       'gfs.settings.repo_user_pass': 'Git Repository Password',
@@ -3060,21 +3058,21 @@
       'gfs.settings.init_repo_success': 'Initialize external Git repository successfully',
       'gfs.settings.init_repo_error': 'Failed to initialize external Git repository',
       'gfs.settings.init_repo_info':
-        'Description: It is used to specify the script library. The built-in script library of oplus does not need this setting. If you need to specify an external Git library (currently supports Github, Bitbucket, Gitlab, Gitee, Coding), configure Oplus in the following way Synchronize the external Git library. This setting will clear all the content in the existing script library. Please read the instructions carefully before using it! ! ',
+        'Configure an external Git script repository. Back up the existing script repository and verify the external Git repository URL before synchronizing.',
       'gfs.settings.init_repo_confirm': 'External Git repository sync confirmation',
       'gfs.settings.init_repo_confirm_info':
-        'Confirm the synchronization {{repourt}} to the Oplus script library?',
-      'gfs.settings.reset_repo_success': 'Reset Oplus built-in script library successful',
-      'gfs.settings.reset_repo_error': 'Failed to reset Oplus built-in script library',
+        'Confirm the synchronization {{repourt}} to the KoreOPS script library?',
+      'gfs.settings.reset_repo_success': 'Reset KoreOPS built-in script library successful',
+      'gfs.settings.reset_repo_error': 'Failed to reset KoreOPS built-in script library',
       'gfs.settings.reset_repo_confirm': 'Reset Git repository confirm',
       'gfs.settings.reset_repo_confirm_info':
-        'Confirm to reset the current script library to Oplus built-in script library, this operation will clear all the contents of the current script library? ',
+        'Confirm to reset the current script library to KoreOPS built-in script library, this operation will clear all the contents of the current script library? ',
       'gfs.selector.refresh': 'Show Refresh Button',
       'gfs.list.refresh': 'Refresh',
       'gfs.list.refresh_title': 'Refresh the current page',
       'gfs.basic.repo_name': 'Warehouse Name',
       'gfs.basic.repo_name_desc':
-        'The git warehouse name specifies the generated by the user will automatically generate the warehouse name without specification',
+        'Enter a name for this script repository. This field may be left blank.',
       'gfs.git.repo_name': 'Warehouse Name',
       'gfs.git.repo_url': 'Warehouse Address',
       'gfs.git.add': 'New Git Warehouse',
@@ -3363,7 +3361,7 @@
       'jao.job.process.run_settings': 'Execution Settings',
       'jao.job.process.callback': 'Callback API',
       'jao.job.process.callback_info':
-        'After the job is executed, the data will be passed to the caller through this API. This API needs to be accessible by the Oplus server. ',
+        'After the job is executed, the data will be passed to the caller through this API. This API needs to be accessible by the KoreOPS server. ',
       'jao.job.process.timeout': 'Task Timeout',
       'jao.job.process.timeout_info':
         'Set the maximum time (seconds) for a single host to execute a single task: <ul><li>0 or empty: use System default timeout </li><li> greater than 0: exceeding the set value will terminate the task of the host</li><li> less than 0: disable timeout </li></ul> ',
@@ -3454,7 +3452,7 @@
       'jao.job.widget.show_output': 'Show Real-Time Output',
       'jao.job.widget.show_output_desc':
         'Execute the job After that, a pop-up window shows the real-time output of the job',
-      'jao.result.name': 'Job Run Result',
+      'jao.result.name': 'Execution Result',
       'jao.result.terminate_all': "{{'jao.common. terminate' | translate}}whole job",
       'jao.result.detail.duration': 'Runtime',
       'jao.result.detail.summary': 'Summary',
@@ -3589,7 +3587,7 @@
       'jao.approve.view_btn': 'View Application',
       'jao.approve.re_approve_btn': 'Apply Again',
       'jao.udp.run_logs': 'Job Run Logs',
-      'jao.udp.run_result': 'Job Run Result',
+      'jao.udp.run_result': 'Execution Result',
       'jao.page.action.create': 'New One-Click Job',
       'jao.page.action.move_job': 'Move One-Click Job',
       'jao.page.action.move_job_confirm':
@@ -3615,8 +3613,8 @@
       'jao.log.opslog.filter_day_desc':
         'Filter the data according to time, support the number of days',
       'jao.flow.detail.name': 'Process Template Name',
-      'jao.log.ata_node': 'Execution Engine Node',
-      'jao.log.exception.notfound': 'Exceptionally terminated, job information could not be found',
+      'jao.log.ata_node': 'Execution Node',
+      'jao.log.exception.notfound': 'Exceptionally terminated, tool information could not be found',
       'jao.job.run.ansible-playbook': 'ansible-playbook or script execution parameters',
       'jao.job.run.ansible-playbook-tag': 'ansible-playbook tag parameter',
       'jao.job.run.ansible.verbose.normal': '0 (normal)',
@@ -5373,7 +5371,7 @@
       'acm.common.filter.according_group': '按分组',
       'acm.common.filter.according_tag': '按标签',
       'acm.common.filter.according_input': '手动输入',
-      'acm.common.filter.according_recently': '最近作业设备',
+      'acm.common.filter.according_recently': '最近执行设备',
       'acm.common.filter.button_dialog': '按钮对话框',
       'acm.common.filter.drop-down_box': '下拉框',
       'acm.common.filter.blank_space': '空格',
@@ -5405,7 +5403,7 @@
       'acm.common.header.tag_name': '标签名称',
       'acm.common.header.existing_tag': '已有标签',
       'acm.common.header.IP': 'IP',
-      'acm.common.header.engine_node': '执行引擎节点',
+      'acm.common.header.engine_node': '执行节点',
       'acm.common.header.login_user': '登录用户',
       'acm.common.header.run_user': '执行用户',
       'acm.common.header.login_password': '登录密码',
@@ -5484,9 +5482,9 @@
       'acm.common.text.auto_asset_comment':
         '注意：\n使用自动化设备录入需满足， 该资产模型的唯一模型属性有且只能是纳管IP\n支持文本格式的IP，文本格式支持：逗号分割、空格分割、换行分割中的一种或多种，同时支持网段录入。例如：192.168.1.0/26',
       'acm.common.text.automation_comment':
-        '注意：\n自动化配置是针对每一个自动化资产的默认连接配置进行修改，使用场景如下：\n执行用户/密码、登录用户/密码、执行引擎节点配置等',
+        '注意：\n自动化配置是针对每一个自动化资产的默认连接配置进行修改，使用场景如下：\n执行用户/密码、登录用户/密码、执行节点配置等',
       'acm.common.text.ansible_config_comment':
-        '注意：\nAnsible连接配置是针对Oplus支持的自动化设备类型默认配置进行修改，使用场景如下：\n是否提权、提权方式、连接方式等',
+        '注意：\nAnsible连接配置是针对KoreOPS支持的自动化设备类型默认配置进行修改，使用场景如下：\n是否提权、提权方式、连接方式等',
       'acm.common.text.model_import_comment':
         '注意：\n请先下载资产模型属性导入Excel模板，Excel模板中Sheet名字即为资产模型代码，模板只能填写，属性代码、是否唯一、是否必填。\n如若需要设置模型属性的其他信息，请导入后编辑该资产模型。',
       'acm.common.text.add_ansible_config_comment':
@@ -5535,7 +5533,7 @@
         '注意：\n此Ansible配置作用于具体的机器上，区别于组Ansible配置和资产类型Ansible配置。该Ansible配置具有最高优先级。',
       'acm.common.ansible.ssh_key_connect_host.tips':
         '注意：\n机器必须在导入时填写Ansible执行节点列（即：INSTANCE_GROUP属性）\n若需修改节点配置，请前往自动化配置管理 -> 设备纳管 -> 用户名密码纳管中单独进行节点配置\n否则，任务将下发至default节点执行',
-      'acm.common.ansible.ssh_key_connect_host.tips.conn_user': 'Oplus纳管目标用户',
+      'acm.common.ansible.ssh_key_connect_host.tips.conn_user': 'KoreOPS纳管目标用户',
       'acm.common.ansible.ssh_key_connect_host.tips.can_ssh_user':
         '当前可以SSH连接到目标机器的用户',
       'acm.common.ansible.ssh_key_connect_host.tips.can_ssh_passwd':
@@ -6005,10 +6003,9 @@
       'app_pms.common.text.support': '支持',
       'app_pms.common.text.not_support': '不支持',
       'app_pms.common.text.inner_group': '内置分组',
-      'app_pms.common.text.password_comment':
-        '密码默认长度为8～16位，由数字、大小写字母、~!@$%&_组成',
+      'app_pms.common.text.password_comment': '手动输入的密码长度需为8～16位',
       'app_pms.common.text.password_expiration_time_comment':
-        '密码修改成功后的有效时间，单位为小时。超过此时间密码将被重置。如果永久有效，填写0',
+        '密码修改成功后的有效时间，单位为小时；永久有效填写0。',
       'app_pms.common.text.commit_comment': '是否提交?',
       'app_pms.common.text.delete_applicant_comment': '是否删除申请单?',
       'app_pms.common.text.check_password_status_comment':
@@ -6694,7 +6691,7 @@
       'app_vap.menu.log_report.patch_report': '补丁报表',
       'app_vap.menu.log_report.available_patches_title': '可用的补丁',
       'app_vap.log.machine_count': '机器数量：{{machine_count}}',
-      'app_vap.log.exec_script_fail': '执行脚本作业出错，未输出结果文件，请检查详细信息',
+      'app_vap.log.exec_script_fail': '执行脚本出错，未输出结果文件，请检查详细信息',
       'app_vap.log.scan_success':
         '补丁扫描执行成功，扫描机器数量为{{scan_count}}，扫描软件包数量为{{scan_packages}}，扫描存在漏洞数量为{{scan_patch}}，ETL处理耗时为{{scan_time}}s',
       'app_vap.log.scan_fail': '补丁扫描执行失败，原因是{{msg_info}}',
@@ -6715,7 +6712,7 @@
       'app_vap.log.patch_is_update': '补丁库数据已为最新',
       'app_vap.log.import_path_fail': '导入补丁库失败：{{msg_info}}',
       'app_vap.log.download_path_by_remote': '正在从远程服务器{{server}}上下载补丁',
-      'app_vap.log.deal_file_fail': '文件处理失败，请检查Oplus更新服务器{{server}}',
+      'app_vap.log.deal_file_fail': '文件处理失败，请检查KoreOPS更新服务器{{server}}',
       'app_vap.log.win_scan_fail': 'Windows补丁扫描执行失败，原因是{{msg_info}}',
       'app_vap.log.win_scan_success':
         'Windows补丁扫描执行成功，扫描机器数量为{{machineCount}}，扫描存在漏洞数量为{{kbCount}}，ETL处理耗时为{{time}}s',
@@ -6754,9 +6751,9 @@
       'app_vap.menu.vulnerability_rollback.title': 'Windows回滚',
       'app_vap.log.win_rollback_fail': '执行Windows回滚出现错误，原因是{{msg_info}}',
       'app_vap.common.header.reboot_machine_hint_update':
-        'Windows漏洞需要更新后重启才能生效，在更新漏洞前选择是否需要自动重启，默认为不重启主机',
+        '请按补丁要求和目标主机状态选择安装后的重启策略。',
       'app_vap.common.header.reboot_machine_hint_rollback':
-        'Windows漏洞回滚后需要重启才能生效，在回滚漏洞前选择是否需要自动重启，默认为不重启主机',
+        '请按补丁要求和目标主机状态选择回滚后的重启策略。',
       'app_vap.common.header.vul_area': '漏洞范围',
       'app_vap.common.header.history_vul': '历史漏洞',
       'app_vap.common.header.latest_vul': '最新漏洞',
@@ -8320,13 +8317,11 @@
       'gfs.basic.interval_unit': '分钟',
       'gfs.basic.git_repo_sync': 'Git库同步',
       'gfs.basic.auto_rsync_interval': '同步策略',
-      'gfs.basic.auto_rsync_interval_desc':
-        '设定自动从远程Git服务器拉取最新更新间隔时间(范围10~60)',
+      'gfs.basic.auto_rsync_interval_desc': '填写同步间隔，单位为分钟',
       'gfs.basic.file_path': '文件路径',
       'gfs.basic.select_file': '选择文件',
       'gfs.basic.file_max_size': '文件大小不能超过',
-      'gfs.basic.sync_help_info':
-        '说明：用于快速部署同步文件，无需上传审批，在下方填写需要同步文件服务器文件地址即可。',
+      'gfs.basic.sync_help_info': '说明：填写待同步文件的服务器路径，选择同步方式后提交。',
       'gfs.basic.file_same_waring': '同名的文件会被覆盖，但文件信息将保留',
       'gfs.basic.compressed_file_options': '压缩文件选项',
       'gfs.basic.unzip_subdirectory_extract_to_dir': '解压到子目录',
@@ -8362,8 +8357,7 @@
       'gfs.modal.add_script': '新建脚本',
       'gfs.modal.sync_script': '同步脚本文件',
       'gfs.modal.sync_script_path': '同步脚本文件路径',
-      'gfs.modal.sync_script_path_info':
-        '填写对应服务器上文件的绝对路径，支持文件夹同步以及压缩文件同步自动解压',
+      'gfs.modal.sync_script_path_info': '填写待同步路径在服务器上的绝对路径',
       'gfs.modal.script_name': '脚本名称',
       'gfs.modal.param_config': '参数配置',
       'gfs.modal.param_config_info': '如果文件支持配置（例如命令行执行参数），可以在这里填写',
@@ -8421,10 +8415,9 @@
       'gfs.settings.current_repo': '当前脚本库',
       'gfs.settings.repo_auth_type': 'Git库认证方式',
       'gfs.settings.repo_auth_type_info':
-        'HTTPS：基于用户名密码安全认证<br/>SSH：基于RSA非对称加密，将自定义生成公钥上传Git库中，将私钥上传Oplus平台',
+        'HTTPS：填写 Git 库账户和密码<br/>SSH：上传用于 Git 库认证的私钥文件',
       'gfs.settings.repo_url': 'Git库地址',
-      'gfs.settings.repo_url_desc':
-        '用于配置外部Git库地址，目前支持Github、Bitbucket、Gitlab、Gitee、Coding',
+      'gfs.settings.repo_url_desc': '填写需要同步的外部 Git 库地址',
       'gfs.settings.repo_user_name': 'Git库账户',
       'gfs.settings.repo_user_name_desc': '用于外部Git库认证的用户名',
       'gfs.settings.repo_user_pass': 'Git库密码',
@@ -8434,19 +8427,19 @@
       'gfs.settings.init_repo_success': '初始化外部Git库成功',
       'gfs.settings.init_repo_error': '初始化外部Git库失败',
       'gfs.settings.init_repo_info':
-        '说明：用于指定脚本库，oplus内置脚本库无需该设定，如需指定外部Git库（目前支持Github、Bitbucket、Gitlab、Gitee、Coding），按照以下指定方式配置Oplus同步外部Git库，该设定会清空当前已存在脚本库中所有内容，请详细阅读说明后再使用！！',
+        '用于配置外部 Git 脚本库。同步前请先备份现有脚本库内容，并确认外部 Git 库地址。',
       'gfs.settings.init_repo_confirm': '外部Git库同步确认',
-      'gfs.settings.init_repo_confirm_info': '确认同步{{repoUrl}}到Oplus脚本库中？',
-      'gfs.settings.reset_repo_success': '重置Oplus内置脚本库成功',
-      'gfs.settings.reset_repo_error': '重置Oplus内置脚本库失败',
+      'gfs.settings.init_repo_confirm_info': '确认同步{{repoUrl}}到KoreOPS脚本库中？',
+      'gfs.settings.reset_repo_success': '重置KoreOPS内置脚本库成功',
+      'gfs.settings.reset_repo_error': '重置KoreOPS内置脚本库失败',
       'gfs.settings.reset_repo_confirm': '重置Git库确认',
       'gfs.settings.reset_repo_confirm_info':
-        '确认重置当前脚本库为Oplus内置脚本库，该操作会清空当前脚本库中所有内容？',
+        '确认重置当前脚本库为KoreOPS内置脚本库，该操作会清空当前脚本库中所有内容？',
       'gfs.selector.refresh': '显示刷新按钮',
       'gfs.list.refresh': '刷新',
       'gfs.list.refresh_title': '刷新当前页面',
       'gfs.basic.repo_name': '仓库名',
-      'gfs.basic.repo_name_desc': '用户指定生成的Git仓库名，未指定则会自动生成仓库名',
+      'gfs.basic.repo_name_desc': '填写此脚本库的仓库名，可留空',
       'gfs.git.repo_name': '仓库名',
       'gfs.git.repo_url': '仓库地址',
       'gfs.git.add': '新增Git仓库',
@@ -8743,7 +8736,7 @@
       'jao.job.process.run_settings': '执行设置',
       'jao.job.process.callback': '回调API',
       'jao.job.process.callback_info':
-        '作业执行完成后，数据将通过这个API传给调用方。这个API要能够被Oplus服务器访问。',
+        '作业执行完成后，数据将通过这个API传给调用方。这个API要能够被KoreOPS服务器访问。',
       'jao.job.process.timeout': '任务超时',
       'jao.job.process.timeout_info':
         '设置单台主机执行单个任务的最长时间（秒）：<ul><li>0或空：使用系统默认的超时</li><li>大于0：超过设定值将终止该主机的任务</li><li>小于0：禁用超时</li></ul>',
@@ -8831,7 +8824,7 @@
       'jao.job.widget.start_run': '开始执行',
       'jao.job.widget.show_output': '显示实时输出',
       'jao.job.widget.show_output_desc': '执行作业后，弹出窗口显示作业的实时输出',
-      'jao.result.name': '作业运行结果',
+      'jao.result.name': '执行结果',
       'jao.result.terminate_all': "{{'jao.common.terminate' | translate}}整个作业",
       'jao.result.detail.duration': '运行时间',
       'jao.result.detail.summary': '概要',
@@ -8964,7 +8957,7 @@
       'jao.approve.view_btn': '查看申请',
       'jao.approve.re_approve_btn': '再次申请',
       'jao.udp.run_logs': '作业运行记录',
-      'jao.udp.run_result': '作业运行结果',
+      'jao.udp.run_result': '执行结果',
       'jao.page.action.create': '新建一键作业',
       'jao.page.action.move_job': '移动一键作业',
       'jao.page.action.move_job_confirm':
@@ -8989,8 +8982,8 @@
       'jao.log.opslog.filter_day': '时间范围',
       'jao.log.opslog.filter_day_desc': '按照时间筛选数据，支持天数',
       'jao.flow.detail.name': '流程模板名',
-      'jao.log.ata_node': '执行引擎节点',
-      'jao.log.exception.notfound': '异常结束，无法找到作业信息',
+      'jao.log.ata_node': '执行节点',
+      'jao.log.exception.notfound': '异常结束，无法找到运维工具信息',
       'jao.job.run.ansible-playbook': 'ansible-playbook或脚本执行参数',
       'jao.job.run.ansible-playbook-tag': 'ansible-playbook tag参数',
       'jao.job.run.ansible.verbose.normal': '0（普通）',
@@ -10797,7 +10790,7 @@
       'acm.common.filter.according_group': '按分組',
       'acm.common.filter.according_tag': '按標籤',
       'acm.common.filter.according_input': '手動輸入',
-      'acm.common.filter.according_recently': '最近作業裝置',
+      'acm.common.filter.according_recently': '最近執行裝置',
       'acm.common.filter.button_dialog': '按鈕對話方塊',
       'acm.common.filter.drop-down_box': '下拉框',
       'acm.common.filter.blank_space': '空格',
@@ -10829,7 +10822,7 @@
       'acm.common.header.tag_name': '標籤名稱',
       'acm.common.header.existing_tag': '已有標籤',
       'acm.common.header.IP': 'IP',
-      'acm.common.header.engine_node': '執行引擎節點',
+      'acm.common.header.engine_node': '執行節點',
       'acm.common.header.login_user': '登入使用者',
       'acm.common.header.run_user': '執行使用者',
       'acm.common.header.login_password': '登入密碼',
@@ -10908,9 +10901,9 @@
       'acm.common.text.auto_asset_comment':
         '注意：\n使用自動化裝置錄入需滿足， 該資產模型的唯一模型屬性有且只能是納管IP\n支援文字格式的IP，文字格式支援：逗號分割、空格分割、換行分割中的一種或多種，同時支援網段錄入。例如：192.168.1.0/26',
       'acm.common.text.automation_comment':
-        '注意：\n自動化配置是針對每一個自動化資產的預設連線配置進行修改，使用場景如下：\n執行使用者/密碼、登入使用者/密碼、執行引擎節點配置等',
+        '注意：\n自動化配置是針對每一個自動化資產的預設連線配置進行修改，使用場景如下：\n執行使用者/密碼、登入使用者/密碼、執行節點配置等',
       'acm.common.text.ansible_config_comment':
-        '注意：\nAnsible連線配置是針對Oplus支援的自動化裝置型別預設配置進行修改，使用場景如下：\n是否提權、提權方式、連線方式等',
+        '注意：\nAnsible連線配置是針對KoreOPS支援的自動化裝置型別預設配置進行修改，使用場景如下：\n是否提權、提權方式、連線方式等',
       'acm.common.text.model_import_comment':
         '注意：\n請先下載資產模型屬性匯入Excel模板，Excel模板中Sheet名字即為資產模型程式碼，模板只能填寫，屬性程式碼、是否唯一、是否必填。\n如若需要設定模型屬性的其他資訊，請匯入後編輯該資產模型。',
       'acm.common.text.add_ansible_config_comment':
@@ -10959,7 +10952,7 @@
         '注意：\n此Ansible配置作用於具體的機器上，區別於組Ansible配置和資產型別Ansible配置。該Ansible配置具有最高優先順序。',
       'acm.common.ansible.ssh_key_connect_host.tips':
         '注意：\n機器必須在匯入時填寫Ansible執行節點列（即：INSTANCE_GROUP屬性）\n若需修改節點配置，請前往自動化配置管理 -> 裝置納管 -> 使用者名稱密碼納管中單獨進行節點配置\n否則，任務將下發至default節點執行',
-      'acm.common.ansible.ssh_key_connect_host.tips.conn_user': 'Oplus納管目標使用者',
+      'acm.common.ansible.ssh_key_connect_host.tips.conn_user': 'KoreOPS納管目標使用者',
       'acm.common.ansible.ssh_key_connect_host.tips.can_ssh_user':
         '當前可以SSH連線到目標機器的使用者',
       'acm.common.ansible.ssh_key_connect_host.tips.can_ssh_passwd':
@@ -11427,10 +11420,9 @@
       'app_pms.common.text.support': '支援',
       'app_pms.common.text.not_support': '不支援',
       'app_pms.common.text.inner_group': '內建分組',
-      'app_pms.common.text.password_comment':
-        '密碼預設長度為8～16位，由數字、大小寫字母、~!@$%&_組成',
+      'app_pms.common.text.password_comment': '手動輸入的密碼長度需為8～16位',
       'app_pms.common.text.password_expiration_time_comment':
-        '密碼修改成功後的有效時間，單位為小時。超過此時間密碼將被重置。如果永久有效，填寫0',
+        '密碼修改成功後的有效時間，單位為小時；永久有效填寫0。',
       'app_pms.common.text.commit_comment': '是否提交?',
       'app_pms.common.text.delete_applicant_comment': '是否刪除申請單?',
       'app_pms.common.text.check_password_status_comment':
@@ -12116,7 +12108,7 @@
       'app_vap.menu.log_report.patch_report': '補丁報表',
       'app_vap.menu.log_report.available_patches_title': '可用的補丁',
       'app_vap.log.machine_count': '機器數量：{{machine_count}}',
-      'app_vap.log.exec_script_fail': '執行腳本作業出錯，未輸出結果檔案，請檢查詳細資訊',
+      'app_vap.log.exec_script_fail': '執行腳本出錯，未輸出結果檔案，請檢查詳細資訊',
       'app_vap.log.scan_success':
         '補丁掃描執行成功，掃描機器數量為{{scan_count}}，掃描軟體包數量為{{scan_packages}}，掃描存在漏洞數量為{{scan_patch}}，ETL處理耗時為{{scan_time}}s',
       'app_vap.log.scan_fail': '補丁掃描執行失敗，原因是{{msg_info}}',
@@ -12137,7 +12129,7 @@
       'app_vap.log.patch_is_update': '補丁庫資料已為最新',
       'app_vap.log.import_path_fail': '匯入補丁庫失敗：{{msg_info}}',
       'app_vap.log.download_path_by_remote': '正在從遠端伺服器{{server}}上下載補丁',
-      'app_vap.log.deal_file_fail': '檔案處理失敗，請檢查Oplus更新伺服器{{server}}',
+      'app_vap.log.deal_file_fail': '檔案處理失敗，請檢查KoreOPS更新伺服器{{server}}',
       'app_vap.log.win_scan_fail': 'Windows補丁掃描執行失敗，原因是{{msg_info}}',
       'app_vap.log.win_scan_success':
         'Windows補丁掃描執行成功，掃描機器數量為{{machineCount}}，掃描存在漏洞數量為{{kbCount}}，ETL處理耗時為{{time}}s',
@@ -12176,9 +12168,9 @@
       'app_vap.menu.vulnerability_rollback.title': 'Windows回滾',
       'app_vap.log.win_rollback_fail': '執行Windows回滾出現錯誤，原因是{{msg_info}}',
       'app_vap.common.header.reboot_machine_hint_update':
-        'Windows漏洞需要更新後重啟才能生效，在更新漏洞前選擇是否需要自動重啟，預設為不重啟主機',
+        '請按補丁要求和目標主機狀態選擇安裝後的重啟策略。',
       'app_vap.common.header.reboot_machine_hint_rollback':
-        'Windows漏洞回滾後需要重啟才能生效，在回滾漏洞前選擇是否需要自動重啟，預設為不重啟主機',
+        '請按補丁要求和目標主機狀態選擇回滾後的重啟策略。',
       'app_vap.common.header.vul_area': '漏洞範圍',
       'app_vap.common.header.history_vul': '歷史漏洞',
       'app_vap.common.header.latest_vul': '最新漏洞',
@@ -13741,13 +13733,11 @@
       'gfs.basic.interval_unit': '分鐘',
       'gfs.basic.git_repo_sync': 'Git庫同步',
       'gfs.basic.auto_rsync_interval': '同步策略',
-      'gfs.basic.auto_rsync_interval_desc':
-        '設定自動從遠端Git伺服器拉取最新更新間隔時間(範圍10~60)',
+      'gfs.basic.auto_rsync_interval_desc': '填寫同步間隔，單位為分鐘',
       'gfs.basic.file_path': '檔案路徑',
       'gfs.basic.select_file': '選擇檔案',
       'gfs.basic.file_max_size': '檔案大小不能超過',
-      'gfs.basic.sync_help_info':
-        '說明：用於快速部署同步檔案，無需上傳審批，在下方填寫需要同步檔案伺服器檔案地址即可。',
+      'gfs.basic.sync_help_info': '說明：填寫待同步檔案的伺服器路徑，選擇同步方式後提交。',
       'gfs.basic.file_same_waring': '同名的檔案會被覆蓋，但檔案資訊將保留',
       'gfs.basic.compressed_file_options': '壓縮檔案選項',
       'gfs.basic.unzip_subdirectory_extract_to_dir': '解壓到子目錄',
@@ -13783,8 +13773,7 @@
       'gfs.modal.add_script': '新建腳本',
       'gfs.modal.sync_script': '同步腳本檔案',
       'gfs.modal.sync_script_path': '同步腳本檔案路徑',
-      'gfs.modal.sync_script_path_info':
-        '填寫對應伺服器上檔案的絕對路徑，支援資料夾同步以及壓縮檔案同步自動解壓',
+      'gfs.modal.sync_script_path_info': '填寫待同步路徑在伺服器上的絕對路徑',
       'gfs.modal.script_name': '腳本名稱',
       'gfs.modal.param_config': '參數配置',
       'gfs.modal.param_config_info': '如果檔案支援配置（例如命令列執行參數），可以在這裡填寫',
@@ -13842,10 +13831,9 @@
       'gfs.settings.current_repo': '當前腳本庫',
       'gfs.settings.repo_auth_type': 'Git庫認證方式',
       'gfs.settings.repo_auth_type_info':
-        'HTTPS：基於使用者名稱密碼安全認證<br/>SSH：基於RSA非對稱加密，將自定義生成公鑰上傳Git庫中，將私鑰上傳Oplus平臺',
+        'HTTPS：填寫 Git 庫帳戶和密碼<br/>SSH：上傳用於 Git 庫認證的私鑰檔案',
       'gfs.settings.repo_url': 'Git庫地址',
-      'gfs.settings.repo_url_desc':
-        '用於配置外部Git庫地址，目前支援Github、Bitbucket、Gitlab、Gitee、Coding',
+      'gfs.settings.repo_url_desc': '填寫需要同步的外部 Git 庫地址',
       'gfs.settings.repo_user_name': 'Git庫賬戶',
       'gfs.settings.repo_user_name_desc': '用於外部Git庫認證的使用者名稱',
       'gfs.settings.repo_user_pass': 'Git庫密碼',
@@ -13855,19 +13843,19 @@
       'gfs.settings.init_repo_success': '初始化外部Git庫成功',
       'gfs.settings.init_repo_error': '初始化外部Git庫失敗',
       'gfs.settings.init_repo_info':
-        '說明：用於指定腳本庫，oplus內建腳本庫無需該設定，如需指定外部Git庫（目前支援Github、Bitbucket、Gitlab、Gitee、Coding），按照以下指定方式配置Oplus同步外部Git庫，該設定會清空當前已存在腳本庫中所有內容，請詳細閱讀說明後再使用！！',
+        '用於配置外部 Git 腳本庫。同步前請先備份現有腳本庫內容，並確認外部 Git 庫地址。',
       'gfs.settings.init_repo_confirm': '外部Git庫同步確認',
-      'gfs.settings.init_repo_confirm_info': '確認同步{{repoUrl}}到Oplus指令碼庫中？',
-      'gfs.settings.reset_repo_success': '重置Oplus內建腳本庫成功',
-      'gfs.settings.reset_repo_error': '重置Oplus內建腳本庫失敗',
+      'gfs.settings.init_repo_confirm_info': '確認同步{{repoUrl}}到KoreOPS指令碼庫中？',
+      'gfs.settings.reset_repo_success': '重置KoreOPS內建腳本庫成功',
+      'gfs.settings.reset_repo_error': '重置KoreOPS內建腳本庫失敗',
       'gfs.settings.reset_repo_confirm': '重置Git庫確認',
       'gfs.settings.reset_repo_confirm_info':
-        '確認重置當前腳本庫為Oplus內建腳本庫，該操作會清空當前腳本庫中所有內容？',
+        '確認重置當前腳本庫為KoreOPS內建腳本庫，該操作會清空當前腳本庫中所有內容？',
       'gfs.selector.refresh': '顯示重新整理按鈕',
       'gfs.list.refresh': '重新整理',
       'gfs.list.refresh_title': '重新整理當前頁面',
       'gfs.basic.repo_name': '倉庫名',
-      'gfs.basic.repo_name_desc': '使用者指定生成的Git倉庫名，未指定則會自動生成倉庫名',
+      'gfs.basic.repo_name_desc': '填寫此腳本庫的倉庫名，可留空',
       'gfs.git.repo_name': '倉庫名',
       'gfs.git.repo_url': '倉庫地址',
       'gfs.git.add': '新增Git倉庫',
@@ -14164,7 +14152,7 @@
       'jao.job.process.run_settings': '執行設定',
       'jao.job.process.callback': '回撥API',
       'jao.job.process.callback_info':
-        '作業執行完成後，資料將透過這個API傳給呼叫方。這個API要能夠被Oplus伺服器訪問。',
+        '作業執行完成後，資料將透過這個API傳給呼叫方。這個API要能夠被KoreOPS伺服器訪問。',
       'jao.job.process.timeout': '任務超時',
       'jao.job.process.timeout_info':
         '設定單臺主機執行單個任務的最長時間（秒）：<ul><li>0或空：使用系統預設的超時</li><li>大於0：超過設定值將終止該主機的任務</li><li>小於0：禁用超時</li></ul>',
@@ -14252,7 +14240,7 @@
       'jao.job.widget.start_run': '開始執行',
       'jao.job.widget.show_output': '顯示實時輸出',
       'jao.job.widget.show_output_desc': '執行作業後，彈出視窗顯示作業的實時輸出',
-      'jao.result.name': '作業執行結果',
+      'jao.result.name': '執行結果',
       'jao.result.terminate_all': "{{'jao.common.terminate' | translate}}整個作業",
       'jao.result.detail.duration': '執行時間',
       'jao.result.detail.summary': '概要',
@@ -14385,7 +14373,7 @@
       'jao.approve.view_btn': '檢視申請',
       'jao.approve.re_approve_btn': '再次申請',
       'jao.udp.run_logs': '作業執行記錄',
-      'jao.udp.run_result': '作業執行結果',
+      'jao.udp.run_result': '執行結果',
       'jao.page.action.create': '新建一鍵作業',
       'jao.page.action.move_job': '移動一鍵作業',
       'jao.page.action.move_job_confirm':
@@ -14410,8 +14398,8 @@
       'jao.log.opslog.filter_day': '時間範圍',
       'jao.log.opslog.filter_day_desc': '按照時間篩選資料，支援天數',
       'jao.flow.detail.name': '流程模板名',
-      'jao.log.ata_node': '執行引擎節點',
-      'jao.log.exception.notfound': '異常結束，無法找到作業資訊',
+      'jao.log.ata_node': '執行節點',
+      'jao.log.exception.notfound': '異常結束，無法找到運維工具資訊',
       'jao.job.run.ansible-playbook': 'ansible-playbook或指令碼執行引數',
       'jao.job.run.ansible-playbook-tag': 'ansible-playbook tag引數',
       'jao.job.run.ansible.verbose.normal': '0（普通）',

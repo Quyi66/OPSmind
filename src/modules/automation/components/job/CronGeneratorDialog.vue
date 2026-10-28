@@ -5,6 +5,7 @@
     width="800px"
     :close-on-click-modal="false"
     @close="handleClose"
+    :close-on-press-escape="false"
   >
     <div class="cron-generator-container">
       <!-- CRON 表达式输入框 -->
@@ -125,6 +126,7 @@
     title="下次执行时间"
     width="500px"
     :append-to-body="true"
+    :close-on-click-modal="true"
   >
     <div v-loading="previewLoading" class="preview-content">
       <div v-if="nextExecutionTimes.length > 0" class="next-times-list">

@@ -1,5 +1,12 @@
 <template>
-  <el-dialog v-model="visible" :title="title" width="800px" destroy-on-close @closed="handleClosed">
+  <el-dialog
+    v-model="visible"
+    :title="title"
+    width="800px"
+    destroy-on-close
+    @closed="handleClosed"
+    :close-on-click-modal="true"
+  >
     <div v-loading="loading" class="version-chart-container">
       <div v-if="!loading && (!data || data.length === 0)" class="empty-state">
         <el-empty description="暂无版本分布数据" />

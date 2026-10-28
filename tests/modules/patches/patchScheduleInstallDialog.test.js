@@ -45,6 +45,25 @@ describe('PatchScheduleInstallDialog payload generation & validation', () => {
     })
   })
 
+  it('passes selected group IDs to the affected host endpoint', async () => {
+    api.post.mockResolvedValue({ data: [] })
+    await patchInstallApi.getMachinesByPatch({
+      patch_ids: ['patch-1'],
+      groupIds: ['group-1', 'group-2']
+    })
+    expect(api.post).toHaveBeenCalledWith('/secops/api/secops/dashboard/machine-by-patch', {
+      patchIds: ['patch-1'],
+      hostId: '@@(linux)',
+      groupIds: ['group-1', 'group-2']
+    })
+
+    await patchInstallApi.getMachinesByPatch({ patch_ids: ['patch-1'], groupIds: [] })
+    expect(api.post).toHaveBeenLastCalledWith('/secops/api/secops/dashboard/machine-by-patch', {
+      patchIds: ['patch-1'],
+      hostId: '@@(linux)'
+    })
+  })
+
   it('correctly extracts and normalizes packages from affected packages list', () => {
     const affectedPackagesRaw = [
       { file_name: 'kernel-4.19.90-89.45.v2401.ky10.aarch64', pkg_name: 'kernel' },

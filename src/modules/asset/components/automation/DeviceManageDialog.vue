@@ -6,6 +6,7 @@
     destroy-on-close
     :close-on-click-modal="false"
     @close="handleClose"
+    :close-on-press-escape="false"
   >
     <!-- Tab 导航 -->
     <el-tabs v-model="activeTab" class="device-manage-tabs">
@@ -48,7 +49,7 @@
         </el-form-item>
 
         <!-- 执行引擎节点 (非 AAP) -->
-        <el-form-item v-if="scriptEngine !== 'aap'" label="执行引擎节点">
+        <el-form-item v-if="scriptEngine !== 'aap'" label="执行节点">
           <el-select
             v-model="passwordForm.instanceGroup"
             placeholder="请选择"
@@ -325,7 +326,11 @@ async function handlePasswordSubmit() {
   submitting.value = true
   try {
     // 构建hostKeys参数
-    const hostKeys = passwordForm.value.hosts.map(h => h.key || h)
+    const hostKeys = passwordForm.value.hosts.map(({ key, value, assetType }) => ({
+      key,
+      value,
+      assetType
+    }))
 
     const params = {
       hostKeys,

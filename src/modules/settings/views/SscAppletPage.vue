@@ -414,7 +414,7 @@ async function handleDelete(row) {
     await ElMessageBox.confirm(
       `确定要删除应用 "${translateText(row.title)}" 吗？删除后将移至回收站。`,
       '确认删除',
-      { type: 'warning' }
+      { closeOnClickModal: false, closeOnPressEscape: false, type: 'warning' }
     )
 
     deletingId.value = row.id
@@ -436,7 +436,11 @@ async function handleDeleteRecycle(row) {
     await ElMessageBox.confirm(
       `确定要永久删除应用 "${row.title}" 吗？此操作不可恢复。`,
       '确认删除',
-      { type: 'warning' }
+      {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
+        type: 'warning'
+      }
     )
 
     deletingRecycleId.value = row.appletCode
@@ -455,7 +459,11 @@ async function handleDeleteRecycle(row) {
 
 async function handleRecoverRecycle(row) {
   try {
-    await ElMessageBox.confirm(`确定要恢复应用 "${row.title}" 吗？`, '确认恢复', { type: 'info' })
+    await ElMessageBox.confirm(`确定要恢复应用 "${row.title}" 吗？`, '确认恢复', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      type: 'info'
+    })
 
     await appletApi.recoverRecycledApplet([row.appletCode])
     ElMessage.success('恢复成功')
@@ -476,7 +484,7 @@ async function handleDeleteSelectedRecycle() {
     await ElMessageBox.confirm(
       `确定要永久删除选中的 ${selectedRecycled.value.length} 个应用吗？此操作不可恢复。`,
       '确认删除',
-      { type: 'warning' }
+      { closeOnClickModal: false, closeOnPressEscape: false, type: 'warning' }
     )
 
     await appletApi.deleteRecycledApplets(selectedRecycled.value)
@@ -497,7 +505,11 @@ async function handleRecoverSelectedRecycle() {
     await ElMessageBox.confirm(
       `确定要恢复选中的 ${selectedRecycled.value.length} 个应用吗？`,
       '确认恢复',
-      { type: 'info' }
+      {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
+        type: 'info'
+      }
     )
 
     await appletApi.recoverRecycledApplet(selectedRecycled.value)
@@ -517,7 +529,7 @@ async function handleClearRecycle() {
     await ElMessageBox.confirm(
       '确定要清空回收站吗？此操作将永久删除所有回收站中的应用，不可恢复。',
       '确认清空',
-      { type: 'warning' }
+      { closeOnClickModal: false, closeOnPressEscape: false, type: 'warning' }
     )
 
     clearingRecycle.value = true

@@ -9,6 +9,7 @@
     :close-on-click-modal="false"
     :show-close="!dialogBusy"
     @closed="resetState"
+    :close-on-press-escape="false"
   >
     <WinPatchInstallWizardStepper
       :active-index="activeStep"

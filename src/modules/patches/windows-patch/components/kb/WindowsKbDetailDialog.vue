@@ -6,7 +6,7 @@
     append-to-body
     destroy-on-close
     class="win-kb-detail-dialog"
-    :close-on-click-modal="false"
+    :close-on-click-modal="true"
   >
     <div class="win-kb-detail-dialog__body">
       <WindowsKbDetail

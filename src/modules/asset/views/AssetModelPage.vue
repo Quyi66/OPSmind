@@ -251,7 +251,11 @@ const handleEditorSaved = () => {
 
 // 删除模型
 const handleDeleteModel = row => {
-  ElMessageBox.confirm('确定要删除该模型定义吗？删除后不可恢复。', '删除确认', { type: 'warning' })
+  ElMessageBox.confirm('确定要删除该模型定义吗？删除后不可恢复。', '删除确认', {
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
+    type: 'warning'
+  })
     .then(async () => {
       try {
         await apiService.post(`/workflow/api/workflow/jobs/8PJcRc/run?cacheBuster=${Date.now()}`, {

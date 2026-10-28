@@ -8,6 +8,7 @@
     append-to-body
     class="win-patch-batch-install-drawer"
     :close-on-click-modal="false"
+    :close-on-press-escape="false"
   >
     <div class="win-patch-batch-install-dialog">
       <div class="win-patch-batch-hosts-summary">

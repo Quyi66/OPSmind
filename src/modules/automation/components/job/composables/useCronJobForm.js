@@ -1,6 +1,7 @@
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { ElMessage } from 'element-plus'
+import { getAutomationToolTitle } from '@/modules/automation/utils/resourcePresentation'
 
 function normalizeHostSelection(value) {
   if (Array.isArray(value)) {
@@ -85,6 +86,9 @@ function isAuditJobType(jobType) {
 export function useCronJobForm(props, emit) {
   const formRef = ref(null)
   const submitting = ref(false)
+  const initializing = ref(false)
+  const initializationError = ref('')
+  let initializationId = 0
   const jobList = ref([])
   const multipleJobIds = ref([])
   const isMultipleJobType = ref(false)
@@ -97,7 +101,7 @@ export function useCronJobForm(props, emit) {
     jobId: '',
     jobParam: {},
     jobType: '',
-    appCode: '',
+    appCode: '', // Hidden compatibility field: keep defaults and edit round trips unchanged.
     logOutput: '1',
     isEncrypt: '1'
   })
@@ -249,7 +253,7 @@ export function useCronJobForm(props, emit) {
   /**
    * 处理运维工具类型变更
    */
-  async function handleJobTypeChange(jobType) {
+  async function handleJobTypeChange(jobType, isCurrent = () => true) {
     const normalizedJobType = normalizeCronJobType(jobType)
 
     formData.value.jobType = normalizedJobType
@@ -289,39 +293,47 @@ export function useCronJobForm(props, emit) {
 
     if (!normalizedJobType) return
 
+    let loaded = true
     try {
       let response
       switch (normalizedJobType) {
         case 'script':
         case 'rest':
           response = await jaoApi.fetchJobsByType(normalizedJobType)
+          if (!isCurrent()) return false
           jobList.value = response.data || response || []
           break
         case 'audit':
           response = await jaoApi.fetchCacJobs()
+          if (!isCurrent()) return false
           jobList.value = response.data || response || []
           break
         case 'cmd':
           response = await jaoApi.fetchCmdJobs()
+          if (!isCurrent()) return false
           jobList.value = response.data || response || []
           break
         case 'flows':
           response = await jaoApi.fetchFlowJobs()
+          if (!isCurrent()) return false
           jobList.value = response.data || response || []
           break
       }
     } catch {
-      ElMessage.error('获取运维工具列表失败')
+      if (isCurrent()) ElMessage.error('获取运维工具列表失败')
+      loaded = false
     }
 
     await nextTick()
+    if (!isCurrent()) return false
     formRef.value?.clearValidate?.('jobId')
+    return loaded
   }
 
   /**
    * 处理运维工具变更
    */
-  async function handleJobChange(jobId) {
+  async function handleJobChange(jobId, isCurrent = () => true) {
     if (!jobId) return
 
     const multipleTypes = ['audit', 'cmd', 'flows']
@@ -331,6 +343,7 @@ export function useCronJobForm(props, emit) {
 
     try {
       const response = await jaoApi.fetchJobById(jobId)
+      if (!isCurrent()) return null
       const job = response.data || response
 
       if (job && job.params) {
@@ -339,8 +352,69 @@ export function useCronJobForm(props, emit) {
           defaultValue: normalizeParamDefaultValue(param, param.defaultValue)
         }))
       }
+      return job
     } catch (error) {
-      console.warn('获取运维工具参数失败:', error)
+      if (isCurrent()) console.warn('获取运维工具参数失败:', error)
+      return null
+    }
+  }
+
+  async function initializeFromJob() {
+    const source = props.initialJob && { id: props.initialJob.id, type: props.initialJob.type }
+    if (!props.modelValue || props.editingId || !source) return
+    const requestId = ++initializationId
+    const isCurrent = () =>
+      requestId === initializationId &&
+      props.modelValue &&
+      !props.editingId &&
+      props.initialJob?.id === source.id &&
+      props.initialJob?.type === source.type
+    initializing.value = true
+    initializationError.value = ''
+    try {
+      if (!source.id || !['script', 'rest'].includes(source.type)) {
+        throw new Error('当前工具不支持快捷创建定时任务')
+      }
+      const loaded = await handleJobTypeChange(source.type, isCurrent)
+      if (!isCurrent()) return
+      if (!loaded || !Array.isArray(jobList.value)) {
+        throw new Error('读取可选工具失败，请重新加载')
+      }
+      const selected = jobList.value.find(job => job.id === source.id)
+      if (!selected || (selected.type && selected.type !== source.type)) {
+        throw new Error('当前工具不在可选列表中，请取消后重新选择工具')
+      }
+      if (selected.needApprove || selected.isApproving) {
+        throw new Error('当前工具需要审批，请取消后按原审批流程处理')
+      }
+      const detail = await handleJobChange(selected.id, isCurrent)
+      if (!isCurrent()) return
+      if (
+        !detail ||
+        typeof detail !== 'object' ||
+        Array.isArray(detail) ||
+        (!detail.id && !detail.type && !Array.isArray(detail.params))
+      ) {
+        throw new Error('读取工具参数失败，请重新加载')
+      }
+      if (
+        (detail.id && detail.id !== selected.id) ||
+        (detail.type && detail.type !== source.type)
+      ) {
+        throw new Error('工具信息已变化，请取消后重新选择工具')
+      }
+      if (detail.needApprove || detail.isApproving) {
+        throw new Error('当前工具需要审批，请取消后按原审批流程处理')
+      }
+      formData.value.jobId = selected.id
+    } catch (error) {
+      if (isCurrent()) {
+        formData.value.jobId = ''
+        jobParams.value = []
+        initializationError.value = error.message || '读取工具失败，请重新加载'
+      }
+    } finally {
+      if (isCurrent()) initializing.value = false
     }
   }
 
@@ -351,24 +425,22 @@ export function useCronJobForm(props, emit) {
     if (!job) return ''
 
     if (isAuditJobType(formData.value.jobType)) {
-      return job.templateName || job.id
+      return getAutomationToolTitle({ title: job.templateName }, '未命名巡检任务')
     }
     if (formData.value.jobType === 'cmd') {
-      return job.name || job.id
+      return getAutomationToolTitle({ name: job.name }, '未命名命令任务')
     }
     if (formData.value.jobType === 'flows') {
-      return job.name || job.id
+      return getAutomationToolTitle({ name: job.name }, '未命名流程任务')
     }
-    if (job.id && job.id.length > 20) {
-      return job.templateName || job.title || job.id
-    }
-    return job.title || job.id
+    return getAutomationToolTitle(job)
   }
 
   /**
    * 提交表单
    */
   async function handleSubmit() {
+    if (initializing.value || initializationError.value) return
     if (!formRef.value) return
 
     // 验证运维工具选择
@@ -483,21 +555,33 @@ export function useCronJobForm(props, emit) {
     { immediate: true }
   )
 
-  // 监听对话框打开，如果是新增则重置表单
+  // 新建可选地带入当前工具；普通新建和编辑仍沿用原默认值与读取流程。
   watch(
-    () => props.modelValue,
-    newVal => {
-      if (newVal && !props.editingId) {
+    () => [props.modelValue, props.editingId, props.initialJob?.id, props.initialJob?.type],
+    ([visible]) => {
+      initializationId++
+      initializing.value = false
+      initializationError.value = ''
+      if (visible && !props.editingId) {
         resetForm()
+        if (props.initialJob) void initializeFromJob()
       }
-    }
+    },
+    { immediate: true }
   )
+
+  onBeforeUnmount(() => {
+    initializationId++
+  })
 
   return {
     formRef,
     formData,
     formRules,
     submitting,
+    initializing,
+    initializationError,
+    initializeFromJob,
     jobList,
     multipleJobIds,
     isMultipleJobType,

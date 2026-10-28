@@ -113,6 +113,8 @@ async function handleDelete(row) {
 
   try {
     await ElMessageBox.confirm('确定删除该 WSUS 配置吗？', '删除确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning'
     })
     await winPatchApi.deleteWsusConfig(id)

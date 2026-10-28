@@ -26,7 +26,7 @@
       </div>
       <el-alert
         v-else
-        title="当前策略为无需重启，可直接进入下一步。"
+        title="当前策略为不执行重启，可进入下一步。"
         type="success"
         :closable="false"
         show-icon

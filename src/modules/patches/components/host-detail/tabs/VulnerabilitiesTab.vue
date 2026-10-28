@@ -592,6 +592,8 @@ async function handleFixVulnerabilities() {
 // 回滚补丁
 function handleRollback(row) {
   ElMessageBox.confirm(`确认要回滚补丁 ${row.patch_id} 吗？`, '确认回滚', {
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'

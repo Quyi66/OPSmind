@@ -22,6 +22,7 @@
       width="90%"
       destroy-on-close
       append-to-body
+      :close-on-click-modal="true"
     >
       <div ref="fullscreenChartRef" class="fullscreen-chart"></div>
     </el-dialog>

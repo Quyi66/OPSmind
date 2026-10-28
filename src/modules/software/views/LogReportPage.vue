@@ -111,7 +111,7 @@
             </RunLogStatusTag>
           </template>
         </el-table-column>
-        <el-table-column prop="executor_node" label="执行引擎节点" min-width="130" sortable />
+        <el-table-column prop="executor_node" label="执行节点" min-width="130" sortable />
         <el-table-column prop="message" label="结果" min-width="200" sortable show-overflow-tooltip>
           <template #default="{ row }">
             {{ formatMessage(row.message) }}
@@ -160,7 +160,8 @@ import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { formatDateTime as formatDateTimeGlobal } from '@/utils/date'
 import { softwareLogsApi } from '../api'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
-import { translateText } from '@/utils/i18n'
+import { initTranslations } from '@/utils/i18n'
+import { formatOperationLogMessage } from '@/utils/operationLogMessages'
 import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
 import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
 
@@ -280,35 +281,8 @@ function getStatusText(status) {
 /**
  * 格式化消息
  */
-function applyTemplateParams(template, params = {}) {
-  if (!template) return ''
-  return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-    if (Object.prototype.hasOwnProperty.call(params, key)) {
-      const value = params[key]
-      return value === null || value === undefined ? '' : String(value)
-    }
-    return ''
-  })
-}
-
 function formatMessage(message) {
-  if (!message) return ''
-
-  if (message.includes('#{')) {
-    return translateText(message)
-  }
-
-  try {
-    const obj = JSON.parse(message)
-    const msgId = obj.msg_id
-    if (!msgId) return message
-
-    const template = translateText(`#{${msgId}}`)
-    return applyTemplateParams(template, obj) || msgId
-  } catch {
-    const translated = translateText(`#{${message}}`)
-    return translated || message
-  }
+  return formatOperationLogMessage(message)
 }
 
 /**
@@ -381,7 +355,10 @@ async function loadLogs() {
       status: statusFilter.value || 'all',
       day: filterDay.value
     }
-    const response = await softwareLogsApi.getOperationLogs(params)
+    const [response] = await Promise.all([
+      softwareLogsApi.getOperationLogs(params),
+      initTranslations()
+    ])
     const records = response?.records || []
     allData.value = Array.isArray(records) ? records : []
 

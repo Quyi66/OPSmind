@@ -736,6 +736,8 @@ function handleEditFlow(flow) {
 
 function handleDeleteFlow(flow) {
   ElMessageBox.confirm(`确定要删除流程「${flow.name}」吗？此操作不可恢复。`, '删除确认', {
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
     confirmButtonText: '删除',
     cancelButtonText: '取消',
     type: 'warning',

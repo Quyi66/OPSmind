@@ -4,10 +4,10 @@
     <el-dialog
       v-model="isVisible"
       :title="wizardDialogTitle"
-      width="1000px"
+      width="1080px"
       top="5vh"
       :close-on-click-modal="false"
-      :close-on-press-escape="!dialogBusy"
+      :close-on-press-escape="false"
       :show-close="!dialogBusy"
       :before-close="handleBeforeClose"
       class="install-dialog"
@@ -60,12 +60,54 @@
           </div>
           <div v-else class="card-body">
             <div class="host-toolbar">
-              <el-select v-model="hostFilter" size="small" style="width: 140px">
-                <el-option label="@@(linux)" value="@@(linux)">
-                  <i class="fa fa-server" />
-                  @@(linux)
-                </el-option>
+              <div class="host-filter">
+              <span class="host-filter__label">分组</span>
+              <el-select
+                v-model="selectedGroupIds"
+                multiple
+                filterable
+                clearable
+                collapse-tags
+                collapse-tags-tooltip
+                :loading="groupLoading"
+                placeholder="全部分组"
+                aria-label="按分组筛选主机"
+                size="small"
+                style="width: 180px"
+                @change="handleHostGroupChange"
+              >
+                <el-option
+                  v-for="group in groupOptions"
+                  :key="group.id"
+                  :label="group.label"
+                  :value="group.id"
+                />
               </el-select>
+              </div>
+              <div class="host-filter">
+              <span class="host-filter__label">标签</span>
+              <el-select
+                v-model="selectedTagNames"
+                multiple
+                filterable
+                clearable
+                collapse-tags
+                collapse-tags-tooltip
+                :loading="groupLoading"
+                placeholder="全部标签"
+                aria-label="按标签筛选主机"
+                size="small"
+                style="width: 180px"
+                @change="handleHostGroupChange"
+              >
+                <el-option
+                  v-for="tag in tagOptions"
+                  :key="tag.name"
+                  :label="tag.label"
+                  :value="tag.name"
+                />
+              </el-select>
+              </div>
               <el-input
                 v-model="hostSearchText"
                 placeholder="搜索"
@@ -286,6 +328,15 @@
             上一步
           </el-button>
 
+          <el-button
+            v-if="currentStepKey === 'execute' && createdTaskId && !isRollbackTask"
+            type="primary"
+            plain
+            @click="failedHostsVisible = true"
+          >
+            查看失败主机
+          </el-button>
+
           <!-- 正在执行按钮 -->
           <el-button
             v-if="
@@ -372,6 +423,8 @@
       </template>
     </el-dialog>
 
+    <PatchTaskFailedHostsDialog v-model="failedHostsVisible" :task-id="createdTaskId" />
+
     <ExecuteResultDialog
       v-model:visible="executeResultVisible"
       :run-id="currentExecuteRunId"
@@ -406,6 +459,7 @@ import PatchTaskStepper from '../PatchTaskStepper.vue'
 import PatchTaskSummaryRow from '../PatchTaskSummaryRow.vue'
 import PatchTaskRestartStep from './PatchTaskRestartStep.vue'
 import PatchTaskScriptConfigStep from './PatchTaskScriptConfigStep.vue'
+import PatchTaskFailedHostsDialog from '../dialogs/PatchTaskFailedHostsDialog.vue'
 import { usePatchTaskTargetSelection } from './usePatchTaskTargetSelection'
 
 const props = defineProps({
@@ -462,12 +516,14 @@ const {
   closeTargetSelection,
   confirmedHosts,
   filteredHosts,
+  groupLoading,
+  groupOptions,
+  handleHostGroupChange,
   handleHostPageChange,
   handleHostSizeChange,
   handleHostTableSelect,
   handleToggleHostSelectAll,
   hostAllSelected,
-  hostFilter,
   hostPagination,
   hostSearchText,
   hostTableRef,
@@ -476,6 +532,9 @@ const {
   packageEmptyText,
   resetHostAllSelected,
   selectedHosts,
+  selectedGroupIds,
+  selectedTagNames,
+  tagOptions,
   syncAffectedPackagesForHosts,
   validateSelectedHostCapabilities
 } = usePatchTaskTargetSelection({
@@ -558,10 +617,12 @@ const currentStepSkippable = computed(() =>
   ['pre', 'validate', 'restart'].includes(currentStepKey.value)
 )
 const createdTaskId = ref('')
+const failedHostsVisible = ref(false)
 const restartConfirmText = ref('')
 const pipelineStatus = ref('idle')
 const dialogBusy = computed(
-  () => executionSubmitting.value || stepTransitionLoading.value || pipelineStatus.value === 'running'
+  () =>
+    executionSubmitting.value || stepTransitionLoading.value || pipelineStatus.value === 'running'
 )
 const configurationLocked = computed(() => dialogBusy.value || pipelineStatus.value === 'paused')
 
@@ -723,6 +784,7 @@ watch(
       return
     }
 
+    failedHostsVisible.value = false
     closeTargetSelection()
     resetInstallState()
   }
@@ -865,7 +927,14 @@ async function scrollToPreCheckTaskStatus() {
   })
 }
 
-watch(createdTaskId, resetPreCheckResultSnapshot, { flush: 'sync' })
+watch(
+  createdTaskId,
+  () => {
+    failedHostsVisible.value = false
+    resetPreCheckResultSnapshot()
+  },
+  { flush: 'sync' }
+)
 
 watch(
   pipelineStatus,
@@ -923,6 +992,8 @@ function handleSkipPreCheck() {
     '前置环境检查未通过，跳过检查强行安装可能导致安装失败。是否确认跳过检查并继续？',
     '提示',
     {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       confirmButtonText: '确认跳过',
       cancelButtonText: '取消',
       type: 'warning'

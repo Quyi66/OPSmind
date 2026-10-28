@@ -7,6 +7,7 @@
     append-to-body
     :close-on-click-modal="false"
     class="gfs-directory-picker-dialog"
+    :close-on-press-escape="false"
   >
     <div class="gfs-directory-picker">
       <div class="gfs-directory-picker__toolbar">

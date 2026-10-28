@@ -582,7 +582,7 @@ function getOverviewHint(row) {
   if (status === 'PENDING' || status === 'RUNNING') {
     return '采集中，采集成功后会自动继续比对'
   }
-  return '采集已完成，正在自动生成比对结果；如长时间未出现可手动重试'
+  return '暂无比对结果，可查看采集状态或手动执行比对'
 }
 
 watch(

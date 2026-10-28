@@ -5,6 +5,7 @@
     width="800px"
     destroy-on-close
     class="patch-detail-dialog"
+    :close-on-click-modal="true"
   >
     <PatchDetailContent
       :patch="patchData"

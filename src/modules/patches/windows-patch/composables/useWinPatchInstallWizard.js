@@ -520,7 +520,7 @@ export function useWinPatchInstallWizard({
   const availableRunItems = computed(() => {
     const candidates = [
       {
-        label: '主任务作业',
+        label: '主任务执行',
         runId: String(pickValue(taskDetail.value, ['runId', 'run_id'], '')).trim()
       },
       {

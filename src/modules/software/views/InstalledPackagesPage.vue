@@ -131,6 +131,7 @@
       width="800px"
       destroy-on-close
       append-to-body
+      :close-on-click-modal="true"
     >
       <div class="ops-table-wrapper" style="height: 400px; margin: 0" v-loading="detailLoading">
         <el-table :data="detailData" style="width: 100%" height="100%" size="small">
@@ -299,6 +300,8 @@ function openDetail(row) {
 function handleUpgrade() {
   const count = selectedRows.value.length
   ElMessageBox.confirm(`确定要升级选中的 ${count} 个软件包吗？`, '批量升级', {
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
@@ -314,6 +317,8 @@ function handleUpgrade() {
 function handleRollback() {
   const count = selectedRows.value.length
   ElMessageBox.confirm(`确定要回滚选中的 ${count} 个软件包吗？`, '批量回滚', {
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
@@ -326,6 +331,8 @@ function handleRollback() {
 function handleUninstall() {
   const count = selectedRows.value.length
   ElMessageBox.confirm(`确定要卸载选中的 ${count} 个软件包吗？`, '批量卸载', {
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'

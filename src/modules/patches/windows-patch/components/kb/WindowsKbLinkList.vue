@@ -31,6 +31,7 @@
       width="560px"
       append-to-body
       destroy-on-close
+      :close-on-click-modal="true"
     >
       <div class="win-kb-link-list win-kb-link-list--dialog">
         <template v-for="kbNumber in kbList" :key="kbNumber">

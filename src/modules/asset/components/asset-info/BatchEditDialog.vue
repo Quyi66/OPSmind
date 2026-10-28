@@ -5,6 +5,7 @@
     width="680px"
     :close-on-click-modal="false"
     @close="handleClose"
+    :close-on-press-escape="false"
   >
     <div class="dialog-body">
       <el-alert

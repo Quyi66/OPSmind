@@ -3,7 +3,7 @@
     v-model="visible"
     title="流程操作详情"
     width="1000px"
-    :close-on-click-modal="false"
+    :close-on-click-modal="true"
     destroy-on-close
     class="process-log-dialog"
     @open="load"

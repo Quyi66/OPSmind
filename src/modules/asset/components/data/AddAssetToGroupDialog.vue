@@ -6,6 +6,7 @@
     :close-on-click-modal="false"
     append-to-body
     @closed="handleClosed"
+    :close-on-press-escape="false"
   >
     <div class="add-asset-content">
       <!-- 搜索过滤 -->

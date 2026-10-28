@@ -48,6 +48,7 @@
       :title="primaryDialogTitle"
       width="800px"
       destroy-on-close
+      :close-on-click-modal="true"
     >
       <div class="primary-detail-content">
         <div class="filter-bar" style="margin-bottom: 12px">
@@ -90,6 +91,7 @@
       :title="secondaryDialogTitle"
       width="900px"
       destroy-on-close
+      :close-on-click-modal="true"
     >
       <el-tabs v-model="secondaryActiveTab">
         <el-tab-pane label="按检查项" name="item">
@@ -164,14 +166,26 @@
     </el-dialog>
 
     <!-- 列表详情弹窗 -->
-    <el-dialog v-model="listDialogVisible" :title="listDialogTitle" width="500px" destroy-on-close>
+    <el-dialog
+      v-model="listDialogVisible"
+      :title="listDialogTitle"
+      width="500px"
+      destroy-on-close
+      :close-on-click-modal="true"
+    >
       <el-table :data="listData" max-height="400">
         <el-table-column prop="name" :label="listDialogTitle" />
       </el-table>
     </el-dialog>
 
     <!-- KPI 详情弹窗 -->
-    <el-dialog v-model="kpiDialogVisible" :title="kpiDialogTitle" width="800px" destroy-on-close>
+    <el-dialog
+      v-model="kpiDialogVisible"
+      :title="kpiDialogTitle"
+      width="800px"
+      destroy-on-close
+      :close-on-click-modal="true"
+    >
       <div class="kpi-detail-content">
         <!-- 搜索筛选 -->
         <div class="kpi-filter-bar" style="margin-bottom: 12px">
@@ -262,7 +276,13 @@
     </el-dialog>
 
     <!-- 巡检结果详情弹窗 -->
-    <el-dialog v-model="checkItemDetailVisible" title="巡检结果" width="700px" destroy-on-close>
+    <el-dialog
+      v-model="checkItemDetailVisible"
+      title="巡检结果"
+      width="700px"
+      destroy-on-close
+      :close-on-click-modal="true"
+    >
       <div v-loading="checkItemDetailLoading" class="check-item-detail-dialog">
         <div class="result-item">
           <span class="result-label">结果：</span>
@@ -499,7 +519,7 @@ function getStatusLabel(status) {
     OK: '检查通过',
     FAILED: '检查失败',
     CHECK: '人工检查',
-    SKIPPING: '黑名单',
+    SKIPPING: '已跳过',
     UNREACHABLE: '无数据'
   }
   return labelMap[status] || status || '-'

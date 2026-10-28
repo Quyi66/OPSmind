@@ -5,6 +5,7 @@
     width="600px"
     :close-on-click-modal="false"
     @close="handleClose"
+    :close-on-press-escape="false"
   >
     <div class="batch-import-content">
       <!-- 说明提示 -->

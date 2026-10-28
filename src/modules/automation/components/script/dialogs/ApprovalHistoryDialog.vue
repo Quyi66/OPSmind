@@ -6,6 +6,7 @@
     @update:model-value="emit('update:modelValue', $event)"
     @open="loadHistory"
     @closed="handleClosed"
+    :close-on-click-modal="true"
   >
     <div v-loading="loading" class="history-container">
       <!-- 单个文件的审批历史 (singleFile) -->

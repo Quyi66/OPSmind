@@ -7,6 +7,7 @@
     :close-on-click-modal="false"
     class="batch-install-patch-drawer"
     @close="handleClose"
+    :close-on-press-escape="false"
   >
     <!-- 主机和补丁汇总信息 -->
     <div class="batch-install-summary mb-3 p-3">
@@ -103,7 +104,15 @@
         <el-table-column type="selection" width="55" reserve-selection />
         <el-table-column prop="patch_id" label="补丁编号" width="180">
           <template #default="{ row }">
-            <span class="patch-id-text">{{ row.patch_id }}</span>
+            <el-button
+              link
+              type="primary"
+              class="patch-id-text"
+              :disabled="loading"
+              @click.stop="openPatchDetail(row)"
+            >
+              {{ row.patch_id }}
+            </el-button>
           </template>
         </el-table-column>
         <el-table-column prop="title" label="摘要" min-width="250" show-overflow-tooltip />
@@ -160,6 +169,32 @@
     </template>
   </el-drawer>
 
+  <!-- 查看详情不离开当前主机和补丁选择 -->
+  <el-dialog
+    v-model="patchDetailVisible"
+    title="补丁详情"
+    width="800px"
+    append-to-body
+    destroy-on-close
+    :close-on-click-modal="true"
+  >
+    <el-alert
+      v-if="patchDetailError"
+      :title="patchDetailError"
+      type="error"
+      :closable="false"
+      show-icon
+    >
+      <el-button link type="primary" @click="loadPatchDetail">重试</el-button>
+    </el-alert>
+    <PatchDetailContent
+      v-else
+      :patch="patchDetailData"
+      :loading="patchDetailLoading"
+      show-publish-date
+    />
+  </el-dialog>
+
   <!-- 安装补丁向导 -->
   <PatchInstallWizard
     v-model:visible="installWizardVisible"
@@ -173,7 +208,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search, Refresh } from '@element-plus/icons-vue'
 import { patchScanApi } from '../../../api'
@@ -184,6 +219,7 @@ import {
   getSeverityLabel
 } from '../../../composables/useFormatters'
 import PatchInstallWizard from '../../patch-task/wizard/PatchInstallWizard.vue'
+import PatchDetailContent from '../../common/PatchDetailContent.vue'
 
 const props = defineProps({
   visible: {
@@ -212,6 +248,68 @@ const pageSize = ref(20) // 默认调大到20
 
 // 向导弹窗
 const installWizardVisible = ref(false)
+const patchDetailVisible = ref(false)
+const patchDetailLoading = ref(false)
+const patchDetailData = ref({})
+const patchDetailError = ref('')
+const detailPatchId = ref('')
+let detailRequestId = 0
+
+function closePatchDetail() {
+  detailRequestId += 1
+  patchDetailVisible.value = false
+  patchDetailLoading.value = false
+  patchDetailData.value = {}
+  patchDetailError.value = ''
+  detailPatchId.value = ''
+}
+
+function openPatchDetail(row) {
+  if (!props.visible || !row?.patch_id) return
+  detailPatchId.value = row.patch_id
+  patchDetailVisible.value = true
+  loadPatchDetail()
+}
+
+async function loadPatchDetail() {
+  if (!props.visible || !patchDetailVisible.value || !detailPatchId.value) return
+  const requestId = ++detailRequestId
+  const patchId = detailPatchId.value
+  const hosts = props.hosts
+  const isCurrentRequest = () =>
+    requestId === detailRequestId &&
+    props.visible &&
+    patchDetailVisible.value &&
+    props.hosts === hosts
+
+  patchDetailLoading.value = true
+  patchDetailData.value = {}
+  patchDetailError.value = ''
+  try {
+    const response = await patchScanApi.getPatchDetail({ patch_id: patchId })
+    if (!isCurrentRequest()) return
+    const records = response?.data?.records || response?.records || []
+    if (records.length) {
+      patchDetailData.value = records[0]
+    } else {
+      patchDetailError.value = '未找到该补丁详情'
+    }
+  } catch {
+    if (!isCurrentRequest()) return
+    patchDetailError.value = '加载补丁详情失败，请重试'
+  } finally {
+    if (isCurrentRequest()) patchDetailLoading.value = false
+  }
+}
+
+watch(patchDetailVisible, visible => {
+  if (!visible) closePatchDetail()
+})
+
+watch([() => props.visible, () => props.hosts], closePatchDetail)
+onBeforeUnmount(() => {
+  detailRequestId += 1
+})
 
 // 关闭抽屉
 function handleClose() {
@@ -452,7 +550,7 @@ watch(
 .patch-id-text {
   font-family: monospace;
   font-weight: 500;
-  color: var(--el-text-color-primary);
+  color: var(--el-color-primary);
 }
 
 .severity-tag {

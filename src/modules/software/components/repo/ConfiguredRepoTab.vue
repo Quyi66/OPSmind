@@ -12,19 +12,25 @@
       </el-checkbox-group>
     </div>
 
-    <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 274px)">
-      <el-table-column prop="refid" label="仓库ID" min-width="150" show-overflow-tooltip>
-        <template #default="{ row }">
-          <el-link type="primary" @click="handleViewDetail(row)">
-            {{ row.refid }}
-          </el-link>
-        </template>
-      </el-table-column>
-      <el-table-column prop="repo_id" label="仓库" min-width="120" show-overflow-tooltip />
-      <el-table-column prop="repo_name" label="名称" min-width="150" show-overflow-tooltip />
-      <el-table-column prop="repo_file" label="配置文件" min-width="150" show-overflow-tooltip />
-      <el-table-column prop="repo_baseurl" label="地址" min-width="250" show-overflow-tooltip>
-        <!-- <template #default="{ row }">
+    <div class="ops-table-wrapper">
+      <el-table v-loading="loading" :data="tableData" height="100%">
+        <el-table-column prop="refid" label="仓库ID" min-width="150" show-overflow-tooltip>
+          <template #default="{ row }">
+            <el-link
+              class="software-cell-link"
+              :title="row.refid"
+              type="primary"
+              @click="handleViewDetail(row)"
+            >
+              {{ row.refid }}
+            </el-link>
+          </template>
+        </el-table-column>
+        <el-table-column prop="repo_id" label="仓库" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="repo_name" label="名称" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="repo_file" label="配置文件" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="repo_baseurl" label="地址" min-width="250" show-overflow-tooltip>
+          <!-- <template #default="{ row }">
           <div class="baseurl-tags">
             <div
               v-for="(url, index) in parseBaseUrl(row.repo_baseurl)"
@@ -37,31 +43,32 @@
             </div>
           </div>
         </template> -->
-      </el-table-column>
-      <el-table-column prop="repo_pkgs" label="软件包数量" width="100">
-        <template #default="{ row }">
-          {{ formatPkgCount(row.repo_pkgs) }}
-        </template>
-      </el-table-column>
-      <el-table-column prop="repo_size" label="大小" width="100" />
-      <el-table-column prop="repo_status" label="状态" width="80">
-        <template #default="{ row }">
-          <el-tag :type="row.repo_status === '启用' ? 'success' : 'warning'" size="small">
-            {{ row.repo_status }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="repo_updated" label="仓库更新时间" width="180">
-        <template #default="{ row }">
-          {{ formatDate(row.repo_updated) }}
-        </template>
-      </el-table-column>
-      <el-table-column prop="scan_date" label="信息更新时间" width="180">
-        <template #default="{ row }">
-          {{ formatDate(row.scan_date) }}
-        </template>
-      </el-table-column>
-    </el-table>
+        </el-table-column>
+        <el-table-column prop="repo_pkgs" label="软件包数量" width="100">
+          <template #default="{ row }">
+            {{ formatPkgCount(row.repo_pkgs) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="repo_size" label="大小" width="100" />
+        <el-table-column prop="repo_status" label="状态" width="80">
+          <template #default="{ row }">
+            <el-tag :type="row.repo_status === '启用' ? 'success' : 'warning'" size="small">
+              {{ row.repo_status }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="repo_updated" label="仓库更新时间" width="180">
+          <template #default="{ row }">
+            {{ formatDate(row.repo_updated) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="scan_date" label="信息更新时间" width="180">
+          <template #default="{ row }">
+            {{ formatDate(row.scan_date) }}
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
 
     <div class="ops-pagination-wrapper">
       <el-pagination
@@ -148,3 +155,11 @@ onMounted(() => {
   loadData()
 })
 </script>
+
+<style scoped lang="scss">
+@use '../../styles/layout' as software-layout;
+
+.configured-repo-tab {
+  @include software-layout.table-tab;
+}
+</style>

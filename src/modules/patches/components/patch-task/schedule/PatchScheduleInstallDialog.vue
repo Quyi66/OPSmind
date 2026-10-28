@@ -2,10 +2,10 @@
   <el-dialog
     v-model="dialogVisible"
     title="定时安装补丁"
-    width="1000px"
+    width="1080px"
     top="5vh"
     :close-on-click-modal="false"
-    :close-on-press-escape="!submitting"
+    :close-on-press-escape="false"
     :show-close="!submitting"
     class="schedule-install-dialog"
     @closed="handleClosed"
@@ -87,12 +87,54 @@
           </div>
           <div class="card-body">
             <div class="host-toolbar">
-              <el-select v-model="hostFilter" size="small" style="width: 140px">
-                <el-option label="@@(linux)" value="@@(linux)">
-                  <i class="fa fa-server" />
-                  @@(linux)
-                </el-option>
+              <div class="host-filter">
+              <span class="host-filter__label">分组</span>
+              <el-select
+                v-model="selectedGroupIds"
+                multiple
+                filterable
+                clearable
+                collapse-tags
+                collapse-tags-tooltip
+                :loading="groupLoading"
+                placeholder="全部分组"
+                aria-label="按分组筛选主机"
+                size="small"
+                style="width: 180px"
+                @change="loadStep0Data"
+              >
+                <el-option
+                  v-for="group in groupOptions"
+                  :key="group.id"
+                  :label="group.label"
+                  :value="group.id"
+                />
               </el-select>
+              </div>
+              <div class="host-filter">
+              <span class="host-filter__label">标签</span>
+              <el-select
+                v-model="selectedTagNames"
+                multiple
+                filterable
+                clearable
+                collapse-tags
+                collapse-tags-tooltip
+                :loading="groupLoading"
+                placeholder="全部标签"
+                aria-label="按标签筛选主机"
+                size="small"
+                style="width: 180px"
+                @change="loadStep0Data"
+              >
+                <el-option
+                  v-for="tag in tagOptions"
+                  :key="tag.name"
+                  :label="tag.label"
+                  :value="tag.name"
+                />
+              </el-select>
+              </div>
               <el-input
                 v-model="hostSearchText"
                 placeholder="搜索主机名/IP/OS"
@@ -233,7 +275,7 @@
               :controls="false"
             />
             <el-tooltip
-              content="目标主机会按照该数值拆分成多个批次，依次下发执行（前一批执行完成后自动接续下一批），以降低大规模并发更新时的网络及系统负载。"
+              content="目标主机会按照该数值拆分成多个批次，前一批执行完成后接续下一批。"
               placement="top"
             >
               <i class="fa fa-info-circle" style="color: var(--el-text-color-secondary); cursor: pointer;" />
@@ -281,7 +323,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, nextTick } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDateTime } from '@/utils/date'
@@ -291,6 +333,7 @@ import { useTableSelectAll } from '../../../composables/useTableSelectAll'
 import { normalizeAcmDeviceSelection } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
 import { isFutureSchedule } from '../../../utils/patchInstallSchedule'
 import { normalizeAffectedPackages } from '../../../utils/packageParser'
+import { usePatchHostGroupFilter } from '../usePatchHostGroupFilter'
 import PatchTaskStepper from '../PatchTaskStepper.vue'
 import PatchTaskPackageList from '../PatchTaskPackageList.vue'
 
@@ -333,8 +376,16 @@ const installDataLoading = ref(false)
 const affectedHosts = ref([])
 const selectedHosts = ref([])
 const hostTableRef = ref(null)
-const hostFilter = ref('@@(linux)')
 const hostSearchText = ref('')
+const {
+  selectedGroupIds,
+  groupOptions,
+  selectedTagNames,
+  tagOptions,
+  groupLoading,
+  loadGroupOptions,
+  resetGroupFilter
+} = usePatchHostGroupFilter()
 const hostPagination = reactive({
   page: 1,
   pageSize: 10
@@ -405,6 +456,7 @@ const packageSearchText = ref('')
 const packageDisplayLimit = ref(20)
 let packageRefreshTimer = null
 let packageRequestId = 0
+let hostRequestId = 0
 
 function formatAffectedPackageDisplay(pkg = {}) {
   const targetPackage = String(pkg.file_name || pkg.target_pkg || pkg.pkg_name || '').trim()
@@ -492,10 +544,18 @@ function scheduleAffectedPackageRefresh() {
 
 // 步骤一加载数据
 async function loadStep0Data() {
+  const requestId = ++hostRequestId
+  if (packageRefreshTimer) {
+    clearTimeout(packageRefreshTimer)
+    packageRefreshTimer = null
+  }
+  packageRequestId += 1
+  affectedPackagesLoading.value = false
   installDataLoading.value = true
   affectedHosts.value = []
   selectedHosts.value = []
   affectedPackagesRaw.value = []
+  hostPagination.page = 1
   resetHostAllSelected()
 
   const patchIds = props.selectedPatches.map(p => p.patch_id).filter(Boolean)
@@ -507,16 +567,20 @@ async function loadStep0Data() {
   try {
     const res = await patchInstallApi.getMachinesByPatch({
       patch_ids: patchIds,
-      hostId: '@@(linux)'
+      hostId: '@@(linux)',
+      groupIds: [...selectedGroupIds.value],
+      tagNames: [...selectedTagNames.value]
     })
+    if (requestId !== hostRequestId) return
     if (res?.data?.records) {
       affectedHosts.value = res.data.records
     }
   } catch (err) {
+    if (requestId !== hostRequestId) return
     console.error('Failed to load affected machines:', err)
     ElMessage.error('获取受影响主机失败，请稍后重试')
   } finally {
-    installDataLoading.value = false
+    if (requestId === hostRequestId) installDataLoading.value = false
   }
 }
 
@@ -610,6 +674,8 @@ async function handleSubmit() {
       `确定对已选中的 ${targets.length} 项目标资产提交定时安装吗？计划时间：${payload.scheduledTime}。${isAdmin.value ? '届时自动执行' : '需管理员提前审批通过'}，自动预检查、分批安装且默认不重启。`,
       '确认提交定时安装',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         confirmButtonText: '确认提交',
         cancelButtonText: '取消',
         type: 'info'
@@ -644,11 +710,15 @@ async function handleSubmit() {
 }
 
 function handleClosed() {
+  hostRequestId += 1
+  installDataLoading.value = false
+  resetGroupFilter()
   if (packageRefreshTimer) {
     clearTimeout(packageRefreshTimer)
     packageRefreshTimer = null
   }
   packageRequestId += 1
+  affectedPackagesLoading.value = false
   currentStep.value = 0
   scheduleDate.value = ''
   scheduleHour.value = ''
@@ -666,6 +736,8 @@ watch(
   visible => {
     if (visible) {
       currentStep.value = 0
+      resetGroupFilter()
+      loadGroupOptions()
       loadStep0Data()
     }
   }
@@ -762,8 +834,20 @@ watch(
 .host-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 16px;
   margin-bottom: 10px;
+}
+
+.host-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.host-filter__label {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--el-text-color-regular);
 }
 
 .host-name-cell {
@@ -852,5 +936,13 @@ watch(
     background-color: #409eff;
     border-color: #409eff;
   }
+}
+
+:deep(.patch-task-package-list__item) {
+  color: #666;
+}
+
+:global(html.dark) :deep(.patch-task-package-list__item) {
+  color: var(--el-text-color-secondary);
 }
 </style>

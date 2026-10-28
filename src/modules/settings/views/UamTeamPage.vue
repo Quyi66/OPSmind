@@ -222,7 +222,11 @@ async function handleDelete(row) {
   if (deletingTeamId.value) return
 
   try {
-    await ElMessageBox.confirm(`确定要删除团队 "${row.name}" 吗？`, '确认删除', { type: 'warning' })
+    await ElMessageBox.confirm(`确定要删除团队 "${row.name}" 吗？`, '确认删除', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      type: 'warning'
+    })
 
     deletingTeamId.value = row.id
     await teamApi.deleteTeam(row.id)

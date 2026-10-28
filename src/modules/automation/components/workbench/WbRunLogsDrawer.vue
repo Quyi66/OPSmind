@@ -2,15 +2,16 @@
   <el-drawer
     v-model="visible"
     :title="title"
-    size="75%"
+    size="88%"
     destroy-on-close
-    class="wb-workbench-drawer"
+    class="wb-workbench-drawer wb-run-drawer"
+    :close-on-click-modal="true"
   >
-    <div v-loading="mergedLoading" class="wb-drawer-body">
+    <div class="wb-run-drawer__content">
       <div class="wb-filter-panel">
-        <el-form :model="filters" inline size="small" class="wb-filter-panel__form" @submit.prevent>
+        <el-form :model="filters" inline size="small" class="wb-run-filters" @submit.prevent>
           <el-form-item label="时间范围">
-            <el-select v-model="filters.day" style="width: 140px">
+            <el-select v-model="filters.day" style="width: 130px" @change="handleSearch">
               <el-option
                 v-for="option in dayOptions"
                 :key="option.value"
@@ -20,7 +21,7 @@
             </el-select>
           </el-form-item>
           <el-form-item label="状态">
-            <el-select v-model="filters.status" style="width: 140px">
+            <el-select v-model="filters.status" style="width: 130px" @change="handleSearch">
               <el-option
                 v-for="option in statusOptions"
                 :key="option.value"
@@ -29,74 +30,134 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="类型">
-            <el-select v-model="filters.type" style="width: 140px">
+          <el-form-item label="工具类型">
+            <el-select
+              v-model="filters.type"
+              placeholder="全部类型"
+              style="width: 160px"
+              @change="handleSearch"
+            >
               <el-option
-                v-for="option in jobTypeOptions"
+                v-for="option in JOB_TYPE_OPTIONS"
                 :key="option.value || 'all'"
                 :label="option.label"
                 :value="option.value"
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="关键词">
-            <el-input
-              v-model="filters.search"
-              placeholder="搜索任务标题或节点"
-              clearable
-              style="width: 240px"
-              @keyup.enter="handleSearch"
-            />
+          <el-form-item label="关键词" class="wb-run-filters__keyword">
+            <el-input v-model="pageKeyword" placeholder="筛选本页：标题、用户、节点" clearable />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="handleSearch">搜索</el-button>
             <el-button @click="handleReset">重置</el-button>
           </el-form-item>
         </el-form>
       </div>
-
-      <div v-if="filteredRecords.length" class="wb-drawer-run-list">
-        <button
-          v-for="item in filteredRecords"
-          :key="item.id"
-          type="button"
-          class="wb-drawer-run-item"
-          @click="$emit('open-result', item)"
+      <el-alert v-if="loadError" :title="loadError" type="error" show-icon :closable="false">
+        <el-button link type="primary" @click="loadRecords">重试</el-button>
+      </el-alert>
+      <el-table
+        v-loading="drawerLoading"
+        :data="displayRecords"
+        height="100%"
+        class="wb-run-drawer__table"
+        :empty-text="loadError ? '记录未加载成功' : '暂无符合条件的运行记录'"
+        @row-dblclick="$emit('open-result', $event)"
+      >
+        <el-table-column label="运维工具" min-width="230" show-overflow-tooltip>
+          <template #default="{ row }">
+            <el-button link type="primary" class="wb-run-title" @click="$emit('open-result', row)">
+              {{ getAutomationRunTitle(row) }}
+            </el-button>
+          </template>
+        </el-table-column>
+        <el-table-column label="工具类型" width="136">
+          <template #default="{ row }">
+            <el-tag size="small" :type="getWorkbenchJobType(row).tag" effect="light">
+              {{ getWorkbenchJobType(row).label }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="执行用户" width="110" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span>{{ row.username || '—' }}</span>
+            <div v-if="row.review_user" class="wb-run-secondary">审核：{{ row.review_user }}</div>
+          </template>
+        </el-table-column>
+        <el-table-column label="开始时间" width="172" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ formatDateTime(row.start_time) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="结束时间" width="172" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ formatDateTime(row.end_time) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="耗时" width="100">
+          <template #default="{ row }">{{ formatRunDuration(row) }}</template>
+        </el-table-column>
+        <el-table-column label="执行节点" min-width="145" show-overflow-tooltip>
+          <template #default="{ row }">{{ getRunNodes(row).join(', ') || '未提供' }}</template>
+        </el-table-column>
+        <el-table-column label="主机执行统计" min-width="220">
+          <template #default="{ row }">
+            <div v-if="getRunHostStats(row.stats_json).length" class="wb-run-stats">
+              <span
+                v-for="stat in getRunHostStats(row.stats_json)"
+                :key="stat.key"
+                :class="`wb-run-stats--${stat.tone}`"
+              >
+                {{ stat.label }}
+                <b>{{ stat.count }}</b>
+              </span>
+            </div>
+            <span v-else class="wb-run-secondary">未提供主机统计</span>
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="状态"
+          width="100"
+          fixed="right"
+          align="center"
+          header-align="center"
         >
-          <strong class="wb-drawer-run-item__name">
-            {{ translateText(item.job_title) || '-' }}
-          </strong>
-          <span class="wb-drawer-run-item__user">{{ item.username || '-' }}</span>
-          <span class="wb-drawer-run-item__time">{{ formatDateTime(item.start_time) }}</span>
-          <span class="wb-drawer-run-item__node">{{ formatAnsibleNode(item.ata_url) }}</span>
-          <span class="wb-drawer-run-item__detail">{{ formatStats(item.stats_json) }}</span>
-          <el-tag
-            class="wb-drawer-run-item__status"
-            size="small"
-            :type="statusType(item.status)"
-            effect="plain"
-          >
-            {{ statusLabel(item.status) }}
-          </el-tag>
-        </button>
-      </div>
-      <el-empty v-else :description="resolvedEmptyText" :image-size="60" />
+          <template #default="{ row }">
+            <el-tag size="small" :type="getRunLogStatusType(row.status)">
+              {{ getRunLogStatusLabel(row.status) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+      </el-table>
     </div>
     <template #footer>
       <div class="wb-drawer-footer">
-        <span class="wb-drawer-footer__total">
-          当前 {{ filteredRecords.length }} 条 / 共 {{ drawerTotal || total }} 条
-        </span>
-        <el-button size="small" @click="$emit('navigate', link)">{{ linkLabel }}</el-button>
+        <div class="wb-run-secondary">
+          <span>点击运维工具名称查看执行结果</span>
+          <span v-if="pageKeyword">
+            · 本页匹配 {{ displayRecords.length }} / {{ drawerRecords.length }} 条
+          </span>
+        </div>
+        <el-pagination
+          v-model:current-page="pagination.page"
+          v-model:page-size="pagination.size"
+          :total="drawerTotal"
+          :page-sizes="[20, 50, 100]"
+          layout="total, sizes, prev, pager, next"
+          small
+          @current-change="loadRecords"
+          @size-change="handlePageSizeChange"
+        />
+        <el-button size="small" @click="$emit('navigate', resolvedLink)">{{ linkLabel }}</el-button>
       </div>
     </template>
   </el-drawer>
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import * as jaoApi from '@/modules/automation/api/jao'
-import { translateText } from '@/utils/i18n'
+import { getAutomationRunTitle } from '../../utils/resourcePresentation'
 import { formatDateTime as formatDateTimeGlobal } from '../../utils/helpers'
 import {
   getRunLogStatusLabel,
@@ -104,23 +165,23 @@ import {
 } from '@/modules/automation/constants/runLogStatus'
 import { JOB_TYPE_OPTIONS } from '@/modules/automation/stores/useJobStore'
 import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
+import {
+  getWorkbenchJobType,
+  getRunNodes,
+  getRunHostStats,
+  formatRunDuration
+} from '../../utils/workbenchPresentation'
 
 const props = defineProps({
   title: { type: String, default: '运行记录' },
-  records: { type: Array, default: () => [] },
-  loading: Boolean,
-  total: { type: Number, default: 0 },
-  link: { type: String, default: '' },
+  reloadVersion: { type: Number, default: 0 },
+  initialType: { type: String, default: '' },
+  link: { type: String, default: '/run-records/logs' },
   linkLabel: { type: String, default: '查看完整记录' },
-  emptyText: { type: String, default: '暂无记录' },
   failedOnly: Boolean
 })
-
 defineEmits(['open-result', 'navigate'])
-
 const visible = defineModel('visible', { default: false })
-const DRAWER_PAGE_SIZE = 50
-const VALID_TAG_TYPES = new Set(['primary', 'success', 'warning', 'info', 'danger'])
 const dayOptions = [
   { label: '全部', value: '3650' },
   { label: '今天', value: '0' },
@@ -138,272 +199,180 @@ const statusOptions = [
   { label: '完成', value: 'COMPLETED' },
   { label: '运行终止', value: 'INTERRUPTED' }
 ]
-const jobTypeOptions = JOB_TYPE_OPTIONS
 const drawerLoading = ref(false)
+const loadError = ref('')
 const drawerRecords = ref([])
 const drawerTotal = ref(0)
-const filters = reactive(createDefaultFilters())
+const pageKeyword = ref('')
+const pagination = reactive({ page: 1, size: 20 })
+const filters = reactive(defaultFilters())
+const appliedFilters = reactive(defaultFilters())
+let requestId = 0
 
-useActiveTaskListPolling({
-  records: drawerRecords,
-  refresh: loadRecords,
-  enabled: () => visible.value
-})
-
-const mergedLoading = computed(() => props.loading || drawerLoading.value)
-const hasActiveFilters = computed(
-  () =>
-    filters.day !== '0' ||
-    normalizeStatus(filters.status) !== createDefaultFilters().status ||
-    Boolean(filters.type) ||
-    Boolean(filters.search.trim())
-)
-
-const filteredRecords = computed(() => {
-  const keyword = filters.search.trim().toLowerCase()
+function defaultFilters() {
+  return { day: '0', status: props.failedOnly ? 'FAILED' : 'all', type: props.initialType }
+}
+const displayRecords = computed(() => {
+  const keyword = pageKeyword.value.trim().toLowerCase()
   if (!keyword) return drawerRecords.value
-
-  return drawerRecords.value.filter(item =>
+  return drawerRecords.value.filter(row =>
     [
-      translateText(item.job_title),
-      item.job_title,
-      item.username,
-      item.review_user,
-      item.ata_url,
-      formatStats(item.stats_json),
-      item.start_time
+      getAutomationRunTitle(row),
+      row.job_title,
+      row.username,
+      row.review_user,
+      ...getRunNodes(row),
+      getWorkbenchJobType(row).label
     ]
       .filter(Boolean)
       .some(value => String(value).toLowerCase().includes(keyword))
   )
 })
-
-const resolvedEmptyText = computed(() =>
-  hasActiveFilters.value ? '没有符合筛选条件的记录' : props.emptyText
-)
-
-function createDefaultFilters() {
-  return {
-    day: '0',
-    status: props.failedOnly ? 'FAILED' : 'all',
-    type: '',
-    search: ''
-  }
-}
-
-function ensureTagType(type) {
-  return VALID_TAG_TYPES.has(type) ? type : 'info'
-}
-
-function statusType(status) {
-  if (props.failedOnly && !status) return ensureTagType(getRunLogStatusType('FAILED'))
-  return ensureTagType(getRunLogStatusType(status))
-}
-
-function statusLabel(status) {
-  if (props.failedOnly && !status) return getRunLogStatusLabel('FAILED')
-  return getRunLogStatusLabel(status)
-}
-
-function formatAnsibleNode(ataUrl) {
-  if (!ataUrl) return '-'
-  const nodes = String(ataUrl)
-    .split(',')
-    .map(ip => ip.trim())
-    .filter(Boolean)
-  return nodes.join(', ') || '-'
-}
-
-function formatStats(statsJson) {
-  if (!statsJson) return '-'
-  try {
-    const stats = typeof statsJson === 'string' ? JSON.parse(statsJson) : statsJson
-    const parts = []
-    if (stats?.totalHosts) parts.push(`总数:${stats.totalHosts}`)
-    if (stats?.okHosts) parts.push(`成功:${stats.okHosts}`)
-    if (stats?.failedHosts) parts.push(`失败:${stats.failedHosts}`)
-    if (stats?.unreachableHosts) parts.push(`不可达:${stats.unreachableHosts}`)
-    return parts.join(' | ') || '-'
-  } catch {
-    return '-'
-  }
-}
+const resolvedLink = computed(() => {
+  const query = new URLSearchParams({ day: appliedFilters.day, status: appliedFilters.status })
+  if (appliedFilters.type) query.set('type', appliedFilters.type)
+  return `${props.link.split('?')[0]}?${query}`
+})
+useActiveTaskListPolling({
+  records: drawerRecords,
+  refresh: () => loadRecords(true),
+  enabled: () => visible.value && !loadError.value && !drawerLoading.value
+})
 
 function formatDateTime(value) {
-  return formatDateTimeGlobal(value, 'MM-DD HH:mm')
+  return value ? formatDateTimeGlobal(value, 'YYYY-MM-DD HH:mm:ss') : '—'
 }
-
-function normalizeStatus(status) {
-  if (props.failedOnly && !status) return 'FAILED'
-  return (
-    String(status || '')
-      .trim()
-      .toUpperCase() || 'all'
-  )
-}
-
-function createPayload() {
-  return {
-    params: {
-      day: filters.day,
-      job_id: '',
-      type: filters.type,
-      run_ids: '',
-      status: normalizeStatus(filters.status)
-    },
-    size: DRAWER_PAGE_SIZE,
-    page: 1,
-    orderBy: 'start_time desc'
-  }
-}
-
-async function loadRecords() {
-  drawerLoading.value = true
+async function loadRecords(background = false) {
+  const currentId = ++requestId
+  if (background !== true) drawerLoading.value = true
+  loadError.value = ''
   try {
-    const response = await jaoApi.fetchJobRunLogs(createPayload())
+    const response = await jaoApi.fetchJobRunLogs({
+      params: { ...appliedFilters, job_id: '', run_ids: '' },
+      page: pagination.page,
+      size: pagination.size,
+      orderBy: 'start_time desc'
+    })
+    if (currentId !== requestId || !visible.value) return
     const data = response?.data || response || {}
     drawerRecords.value = Array.isArray(data.records) ? data.records : []
-    drawerTotal.value = Number(data.total ?? data.count ?? drawerRecords.value.length ?? 0) || 0
+    drawerTotal.value = Number(data.total ?? data.count ?? drawerRecords.value.length) || 0
   } catch {
-    drawerRecords.value = Array.isArray(props.records) ? props.records : []
-    drawerTotal.value = Number(props.total ?? drawerRecords.value.length ?? 0) || 0
+    if (currentId !== requestId) return
+    drawerRecords.value = []
+    loadError.value = '运行记录加载失败，请重试。'
   } finally {
-    drawerLoading.value = false
+    if (currentId === requestId) drawerLoading.value = false
   }
 }
-
-async function handleSearch() {
-  await loadRecords()
+function handleSearch() {
+  Object.assign(appliedFilters, filters)
+  pagination.page = 1
+  drawerRecords.value = []
+  drawerTotal.value = 0
+  void loadRecords()
 }
-
-async function handleReset() {
-  Object.assign(filters, createDefaultFilters())
-  drawerRecords.value = Array.isArray(props.records) ? props.records : []
-  drawerTotal.value = Number(props.total ?? drawerRecords.value.length ?? 0) || 0
-  await loadRecords()
+function handleReset() {
+  Object.assign(filters, defaultFilters())
+  pageKeyword.value = ''
+  handleSearch()
 }
-
+function handlePageSizeChange() {
+  pagination.page = 1
+  void loadRecords()
+}
 watch(
   () => visible.value,
-  async isVisible => {
-    if (!isVisible) return
-    drawerRecords.value = Array.isArray(props.records) ? props.records : []
-    drawerTotal.value = Number(props.total ?? drawerRecords.value.length ?? 0) || 0
-    await handleReset()
+  isVisible => {
+    requestId += 1
+    if (!isVisible) {
+      drawerLoading.value = false
+      return
+    }
+    handleReset()
   }
 )
+watch(
+  () => props.reloadVersion,
+  () => {
+    if (visible.value) void loadRecords(true)
+  }
+)
+onBeforeUnmount(() => {
+  requestId += 1
+})
 </script>
 
 <style scoped lang="scss">
-:deep(.el-drawer__header) {
-  margin-bottom: 4px !important;
-  padding: 16px 16px 0 !important;
-}
-
-:deep(.el-drawer__footer) {
-  padding-top: 8px;
-}
-
-.wb-drawer-body {
-  padding: 8px 12px 12px;
-  min-height: 60px;
-}
-
-.wb-filter-panel {
-  margin-bottom: 10px;
-  padding: 12px 14px 8px;
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 12px;
-  background: var(--el-fill-color-extra-light);
-
-  &__form {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2px 0;
-  }
-}
-
-.wb-drawer-run-list {
+.wb-run-drawer__content {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 12px;
+  height: 100%;
+  min-height: 0;
 }
-
-.wb-drawer-run-item {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 90px 112px 170px 200px 84px;
-  align-items: center;
-  column-gap: 10px;
-  padding: 10px 12px;
-  border-radius: 6px;
-  background: transparent;
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: all 0.15s;
-  text-align: left;
-  width: 100%;
-
-  &:hover {
-    background: #f8fafc;
-    border-color: #e2e8f0;
-  }
-
-  &__name {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--wb-text-primary);
-    min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  &__user,
-  &__time,
-  &__node,
-  &__detail {
-    font-size: 13px;
-    color: var(--wb-text-muted);
-    min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  &__status {
-    justify-self: start;
-  }
+.wb-filter-panel {
+  padding: 12px 14px;
+  flex-shrink: 0;
+  overflow-x: auto;
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 10px;
+  background: var(--el-fill-color-extra-light);
 }
-
-@media (max-width: 1280px) {
-  .wb-drawer-run-item {
-    grid-template-columns: minmax(0, 1fr) 76px 100px 130px 160px 72px;
-  }
-}
-
-@media (max-width: 900px) {
-  .wb-drawer-run-item {
-    grid-template-columns: minmax(0, 1fr);
-    row-gap: 4px;
-  }
-}
-
-.wb-drawer-footer {
+.wb-filter-panel .wb-run-filters.el-form--inline {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
-
-  &__total {
-    font-size: 12px;
-    color: var(--wb-text-muted);
-  }
+  flex-wrap: nowrap;
+  gap: 0 16px;
 }
-</style>
-
-<style lang="scss">
-html.dark .wb-drawer-run-item:hover {
-  background: #273549;
-  border-color: #334155;
+.wb-filter-panel :deep(.wb-run-filters.el-form--inline .el-form-item) {
+  flex-shrink: 0;
+  margin: 0;
+}
+.wb-filter-panel :deep(.wb-run-filters.el-form--inline .wb-run-filters__keyword) {
+  flex: 1 0 260px;
+}
+.wb-filter-panel
+  :deep(.wb-run-filters.el-form--inline .wb-run-filters__keyword .el-form-item__content) {
+  min-width: 0;
+}
+.wb-run-drawer__table {
+  flex: 1;
+  min-height: 0;
+}
+.wb-run-title {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wb-run-secondary {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--el-text-color-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wb-run-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 10px;
+  font-size: 12px;
+  &--info {
+    color: var(--el-text-color-regular);
+  }
+  &--success {
+    color: var(--el-color-success);
+  }
+  &--danger {
+    color: var(--el-color-danger);
+  }
+  &--warning {
+    color: var(--el-color-warning);
+  }
 }
 </style>

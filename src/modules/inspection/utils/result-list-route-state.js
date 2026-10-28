@@ -3,7 +3,18 @@ const DEFAULT_RESULT_LIST_STATE = {
   templateSearchText: '',
   keyword: '',
   page: 1,
-  size: 10
+  size: 10,
+  sortProp: 'createdAt',
+  sortOrder: 'descending'
+}
+
+const SORT_COLUMNS = new Set(['templateName', 'createdAt', 'endedAt'])
+export function parseResultListSort(state = {}) {
+  const prop = state.sortProp ?? DEFAULT_RESULT_LIST_STATE.sortProp
+  const order = state.sortOrder ?? DEFAULT_RESULT_LIST_STATE.sortOrder
+  return SORT_COLUMNS.has(prop) && ['ascending', 'descending'].includes(order)
+    ? { sortProp: prop, sortOrder: order }
+    : { sortProp: 'createdAt', sortOrder: 'descending' }
 }
 
 function normalizeQueryValue(value) {
@@ -24,7 +35,8 @@ export function parseResultListRouteState(query = {}) {
     templateSearchText: normalizeQueryValue(query.templateSearch),
     keyword: normalizeQueryValue(query.keyword),
     page: normalizePositiveInteger(query.page, DEFAULT_RESULT_LIST_STATE.page),
-    size: normalizePositiveInteger(query.size, DEFAULT_RESULT_LIST_STATE.size)
+    size: normalizePositiveInteger(query.size, DEFAULT_RESULT_LIST_STATE.size),
+    ...parseResultListSort(query)
   }
 }
 
@@ -49,6 +61,11 @@ export function buildResultListRouteQuery(state = {}) {
   }
   if (nextState.size !== DEFAULT_RESULT_LIST_STATE.size) {
     query.size = String(nextState.size)
+  }
+  const sort = parseResultListSort(nextState)
+  if (sort.sortProp !== 'createdAt' || sort.sortOrder !== 'descending') {
+    query.sortProp = sort.sortProp
+    query.sortOrder = sort.sortOrder
   }
 
   return query

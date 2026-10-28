@@ -3,7 +3,7 @@
     :model-value="visible"
     title="检查结果列表"
     width="1200px"
-    :close-on-click-modal="false"
+    :close-on-click-modal="true"
     destroy-on-close
     @update:model-value="handleVisibleChange"
     @close="handleClose"
@@ -96,7 +96,7 @@
       v-model="structuralDialogVisible"
       :title="`架构图 - ${currentStructuralJobTitle}`"
       width="90%"
-      :close-on-click-modal="false"
+      :close-on-click-modal="true"
       destroy-on-close
       class="structural-dialog"
     >

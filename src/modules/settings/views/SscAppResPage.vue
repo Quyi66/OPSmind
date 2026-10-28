@@ -348,7 +348,14 @@
     </el-tabs>
 
     <!-- 移动对话框 -->
-    <el-dialog v-model="moveDialogVisible" :title="moveDialogTitle" width="400px" destroy-on-close>
+    <el-dialog
+      v-model="moveDialogVisible"
+      :title="moveDialogTitle"
+      width="400px"
+      destroy-on-close
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+    >
       <div class="move-dialog-content">
         <p>请选择目标应用：</p>
         <el-select v-model="targetAppletCode" placeholder="选择应用" style="width: 100%">
@@ -670,7 +677,13 @@ async function handleMove() {
     await ElMessageBox.confirm(
       `确定将选定的 ${ids.length} 个${resourceName}移动到应用 "${targetAppletTitle.value}"？`,
       `移动${resourceName}`,
-      { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
+      {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
     )
   } catch {
     return

@@ -5,7 +5,9 @@
       <div class="navbar-left">
         <el-breadcrumb separator=">">
           <el-breadcrumb-item>
-            <a @click="goBack">执行记录</a>
+            <a :href="router.resolve(reportReturn.location).href" @click.prevent="goBack">
+              {{ reportReturn.label }}
+            </a>
           </el-breadcrumb-item>
           <el-breadcrumb-item>{{ jobInfo.templateName || '结果详情' }}</el-breadcrumb-item>
         </el-breadcrumb>
@@ -51,10 +53,23 @@
         <span class="info-label">脚本</span>
         <span class="info-value">
           <template v-for="(script, index) in scriptList" :key="index">
-            <el-tag type="info" class="script-tag">{{ script.scriptPath }}</el-tag>
+            <el-tag type="info" class="script-tag">{{ getInspectionScriptLabel(script) }}</el-tag>
           </template>
         </span>
       </div>
+      <el-collapse v-if="scriptList.length">
+        <el-collapse-item title="脚本技术信息" name="scripts">
+          <el-descriptions :column="1" border size="small">
+            <el-descriptions-item
+              v-for="(script, index) in scriptList"
+              :key="index"
+              :label="getInspectionScriptLabel(script)"
+            >
+              <span style="overflow-wrap: anywhere">{{ script.scriptPath || '未提供路径' }}</span>
+            </el-descriptions-item>
+          </el-descriptions>
+        </el-collapse-item>
+      </el-collapse>
     </div>
 
     <!-- 统计卡片 -->
@@ -197,11 +212,11 @@
               </el-button>
             </template>
           </el-table-column>
-          <el-table-column label="黑名单" width="100" align="left">
+          <el-table-column label="已跳过" width="100" align="left">
             <template #header>
               <span>
                 <!-- <i class="fa fa-adjust"></i> -->
-                黑名单
+                已跳过
               </span>
             </template>
             <template #default="{ row }">
@@ -295,6 +310,7 @@
       class="inspection-detail-dialog"
       append-to-body
       destroy-on-close
+      :close-on-click-modal="true"
     >
       <div style="display: flex; justify-content: space-between; margin-bottom: 16px">
         <div style="display: flex; gap: 12px">
@@ -308,7 +324,7 @@
             <el-option label="通过" value="OK" />
             <el-option label="失败" value="FAILED" />
             <el-option label="人工检查" value="CHECK" />
-            <el-option label="黑名单" value="SKIPPING" />
+            <el-option label="已跳过" value="SKIPPING" />
             <el-option label="无数据" value="UNREACHABLE" />
           </el-select>
           <el-input
@@ -328,6 +344,12 @@
           黑名单列表
         </el-button>
       </div>
+      <div v-if="inspectionRefreshFailed" role="alert">
+        检查项刷新失败，当前列表可能不是最新数据。
+        <el-button link type="primary" :disabled="inspectionDetailLoading" @click="retryInspection">
+          重试刷新
+        </el-button>
+      </div>
       <el-table
         v-loading="inspectionDetailLoading"
         :data="pagedInspectionData"
@@ -341,7 +363,7 @@
             <el-tag v-if="row.status === 'OK'" type="success" size="small">通过</el-tag>
             <el-tag v-else-if="row.status === 'FAILED'" type="danger" size="small">失败</el-tag>
             <el-tag v-else-if="row.status === 'CHECK'" type="warning" size="small">人工检查</el-tag>
-            <el-tag v-else-if="row.status === 'SKIPPING'" type="info" size="small">黑名单</el-tag>
+            <el-tag v-else-if="row.status === 'SKIPPING'" type="info" size="small">已跳过</el-tag>
             <el-tag v-else type="info" size="small">无数据</el-tag>
           </template>
         </el-table-column>
@@ -356,11 +378,18 @@
               v-if="!isInWhitelist(row)"
               type="primary"
               link
+              :disabled="inspectionDetailLoading || inspectionRefreshFailed"
               @click="handleAddToWhitelist(row)"
             >
               添加黑名单
             </el-button>
-            <el-button v-else type="danger" link @click="handleRemoveFromWhitelist(row)">
+            <el-button
+              v-else
+              type="danger"
+              link
+              :disabled="inspectionDetailLoading || inspectionRefreshFailed"
+              @click="handleRemoveFromWhitelist(row)"
+            >
               移出黑名单
             </el-button>
           </template>
@@ -455,15 +484,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { authService } from '@/core/auth'
 import { jobApi, whitelistApi } from '../api'
-import { pickResultListRouteQuery } from '../utils/result-list-route-state'
+import { getReportReturnTarget } from '../utils/report-navigation'
 
 // 导入拆分的模块
 import { formatDateTime } from '../utils/helpers'
+import { getInspectionScriptLabel } from '../utils/scriptPresentation'
 import { getJobStatusType, getJobStatusText } from '../constants/status'
 import { useResultDetailData } from '../composables/useResultDetailData'
 import { useResultDetailDialogs } from '../composables/useResultDetailDialogs'
@@ -515,7 +545,14 @@ const assetModelConfigVisible = ref(false)
 // 巡检项详情状态
 const selectedHost = ref(null)
 const inspectionDetailVisible = ref(false)
-const inspectionDetailLoading = ref(false)
+const inspectionReadLoading = ref(false)
+const inspectionMutationLoading = ref(false)
+const inspectionDetailLoading = computed(
+  () => inspectionReadLoading.value || inspectionMutationLoading.value
+)
+const inspectionRefreshFailed = ref(false)
+let inspectionSession = 0
+let inspectionRequest = 0
 const inspectionDetailData = ref([])
 const showWhitelistButton = ref(true)
 const inspectionSearchText = ref('')
@@ -579,30 +616,99 @@ function handleSelectionChange(selection) {
   selectedHostIds.value = selection.map(row => row.host_id)
 }
 
+function invalidateInspection() {
+  inspectionSession++
+  inspectionRequest++
+  inspectionReadLoading.value = false
+  inspectionMutationLoading.value = false
+  inspectionRefreshFailed.value = false
+}
+
+function inspectionContext() {
+  return {
+    session: inspectionSession,
+    jobId: jobId.value,
+    templateId: jobInfo.value.templateId,
+    routePath: route.fullPath,
+    hostKey: selectedHost.value?.host_key
+  }
+}
+
+function isCurrentInspection(context) {
+  return (
+    inspectionDetailVisible.value &&
+    context.session === inspectionSession &&
+    context.jobId === jobId.value &&
+    context.templateId === jobInfo.value.templateId &&
+    context.routePath === route.fullPath &&
+    context.hostKey === selectedHost.value?.host_key
+  )
+}
+
+watch(
+  () => [jobId.value, jobInfo.value.templateId, route.fullPath],
+  () => {
+    inspectionDetailVisible.value = false
+    invalidateInspection()
+  },
+  { flush: 'sync' }
+)
+watch(
+  inspectionDetailVisible,
+  visible => {
+    if (!visible) invalidateInspection()
+  },
+  { flush: 'sync' }
+)
+onBeforeUnmount(invalidateInspection)
+
 /**
  * 点击主机行，加载巡检项详情
  */
 async function handleHostClick(row) {
+  invalidateInspection()
   selectedHost.value = row
   inspectionDetailVisible.value = true
-  inspectionDetailLoading.value = true
   inspectionDetailData.value = []
   inspectionPage.value = 1 // 重置分页
   inspectionSearchText.value = ''
   inspectionResultFilter.value = ''
 
+  await refreshInspection(inspectionContext())
+}
+
+async function refreshInspection(context, afterMutation = false) {
+  if (!isCurrentInspection(context)) return
+  const request = ++inspectionRequest
+  const isCurrent = () => isCurrentInspection(context) && request === inspectionRequest
+  inspectionReadLoading.value = true
+  inspectionRefreshFailed.value = false
   try {
-    const response = await jobApi.getHostCheckItems(jobId.value, jobInfo.value.templateId)
+    const response = await jobApi.getHostCheckItems(context.jobId, context.templateId)
+    if (!isCurrent()) return
     const data = response?.data || response
     const allData = Array.isArray(data) ? data : []
     // 前端根据点击的主机名进行筛选
-    inspectionDetailData.value = allData.filter(item => item.hostKey === row.host_key)
+    inspectionDetailData.value = allData.filter(item => item.hostKey === context.hostKey)
+    const lastPage = Math.max(
+      1,
+      Math.ceil(filteredInspectionData.value.length / inspectionPageSize.value)
+    )
+    inspectionPage.value = Math.min(inspectionPage.value, lastPage)
   } catch (error) {
+    if (!isCurrent()) return
+    inspectionRefreshFailed.value = true
     console.error('加载巡检项详情失败:', error)
-    ElMessage.error('加载巡检项详情失败')
+    ElMessage.error(
+      afterMutation ? '黑名单操作已成功，但检查项刷新失败，请重试刷新' : '加载巡检项详情失败'
+    )
   } finally {
-    inspectionDetailLoading.value = false
+    if (isCurrent()) inspectionReadLoading.value = false
   }
+}
+
+function retryInspection() {
+  return refreshInspection(inspectionContext())
 }
 
 /**
@@ -614,59 +720,74 @@ const isInWhitelist = item => {
 }
 
 async function handleAddToWhitelist(item) {
-  if (!item) return
+  if (!item || inspectionDetailLoading.value || inspectionRefreshFailed.value) return
+  const context = inspectionContext()
+  if (!isCurrentInspection(context)) return
+  const payload = {
+    templateId: jobInfo.value.templateId,
+    templateName: jobInfo.value.templateName,
+    scriptPath: getScriptPath(),
+    hostId: item.hostId,
+    hostKey: item.hostKey,
+    checkName: item.name
+  }
+  inspectionMutationLoading.value = true
 
   try {
-    await ElMessageBox.confirm('确定要将此检查项添加到黑名单吗？', '确认')
-    inspectionDetailLoading.value = true
-
-    await whitelistApi.saveWhitelist({
-      templateId: jobInfo.value.templateId,
-      templateName: jobInfo.value.templateName,
-      scriptPath: getScriptPath(),
-      hostId: item.hostId,
-      hostKey: item.hostKey,
-      checkName: item.name
+    await ElMessageBox.confirm('确定要将此检查项添加到黑名单吗？', '确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false
     })
+    if (!isCurrentInspection(context)) return
+
+    await whitelistApi.saveWhitelist(payload)
+    if (!isCurrentInspection(context)) return
 
     ElMessage.success('添加黑名单成功')
-    handleWhitelistChanged()
+    loadStatistics(() => isCurrentInspection(context))
+    await refreshInspection(context, true)
   } catch (e) {
-    if (e !== 'cancel') {
+    if (isCurrentInspection(context) && e !== 'cancel' && e !== 'close') {
       console.error('添加黑名单失败:', e)
       ElMessage.error('添加黑名单失败')
     }
   } finally {
-    inspectionDetailLoading.value = false
+    if (isCurrentInspection(context)) inspectionMutationLoading.value = false
   }
 }
 
 async function handleRemoveFromWhitelist(item) {
-  if (!item) return
+  if (!item || inspectionDetailLoading.value || inspectionRefreshFailed.value) return
+  const context = inspectionContext()
+  if (!isCurrentInspection(context)) return
+  const whitelistId = item.whetherWhiteList?.startsWith('y,')
+    ? item.whetherWhiteList.split(',')[1]
+    : ''
+  inspectionMutationLoading.value = true
 
   try {
-    await ElMessageBox.confirm('确定要将此检查项从黑名单移除吗？', '确认')
-    inspectionDetailLoading.value = true
-
-    let whitelistId = ''
-    if (item.whetherWhiteList && item.whetherWhiteList.startsWith('y,')) {
-      whitelistId = item.whetherWhiteList.split(',')[1]
-    }
+    await ElMessageBox.confirm('确定要将此检查项从黑名单移除吗？', '确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false
+    })
+    if (!isCurrentInspection(context)) return
 
     if (whitelistId) {
       await whitelistApi.deleteWhitelist(whitelistId)
+      if (!isCurrentInspection(context)) return
       ElMessage.success('移除黑名单成功')
-      handleWhitelistChanged()
+      loadStatistics(() => isCurrentInspection(context))
+      await refreshInspection(context, true)
     } else {
       ElMessage.error('无法获取黑名单ID')
     }
   } catch (e) {
-    if (e !== 'cancel') {
+    if (isCurrentInspection(context) && e !== 'cancel' && e !== 'close') {
       console.error('移除黑名单失败:', e)
       ElMessage.error('移除黑名单失败')
     }
   } finally {
-    inspectionDetailLoading.value = false
+    if (isCurrentInspection(context)) inspectionMutationLoading.value = false
   }
 }
 
@@ -777,7 +898,8 @@ async function addToWhitelist() {
   try {
     await ElMessageBox.confirm(
       `确定要将选中的 ${selectedHostIds.value.length} 台主机添加到黑名单吗？`,
-      '确认'
+      '确认',
+      { closeOnClickModal: false, closeOnPressEscape: false }
     )
 
     const response = await jobApi.addHostToWhitelist(selectedHostIds.value)
@@ -810,7 +932,8 @@ async function removeFromWhitelist() {
   try {
     await ElMessageBox.confirm(
       `确定要将选中的 ${selectedHostIds.value.length} 台主机从黑名单移除吗？`,
-      '确认'
+      '确认',
+      { closeOnClickModal: false, closeOnPressEscape: false }
     )
 
     const response = await jobApi.removeHostFromWhitelist(selectedHostIds.value)
@@ -879,11 +1002,10 @@ function getBasePath() {
 }
 
 function goBack() {
-  router.push({
-    path: `${getBasePath()}/results`,
-    query: pickResultListRouteQuery(route.query)
-  })
+  router.push(reportReturn.value.location)
 }
+
+const reportReturn = computed(() => getReportReturnTarget(route.query, getBasePath()))
 
 function extractJobId() {
   // 优先从 URL 路径解析

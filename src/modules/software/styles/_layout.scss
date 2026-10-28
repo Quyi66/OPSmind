@@ -1,0 +1,133 @@
+// Only include inside software-module component scopes.
+@mixin toolbar {
+  .ops-action-bar,
+  .action-left,
+  .action-right,
+  .table-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .action-right {
+    margin-left: auto;
+  }
+
+  .ops-action-bar,
+  .table-actions {
+    :deep(.el-button + .el-button) {
+      margin-left: 0;
+    }
+
+    :deep(.el-button > span) {
+      gap: 4px;
+    }
+  }
+}
+
+@mixin pagination {
+  .ops-pagination-wrapper {
+    flex-shrink: 0;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    justify-content: flex-start;
+
+    :deep(.el-pagination) {
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+  }
+}
+
+@mixin cell-links {
+  .software-cell-link {
+    max-width: 100%;
+    min-width: 0;
+    vertical-align: middle;
+
+    :deep(span) {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+}
+
+@mixin row-actions {
+  .software-row-actions {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    vertical-align: middle;
+
+    :deep(.el-button) {
+      flex-shrink: 0;
+      margin-left: 0;
+    }
+  }
+}
+
+@mixin table-tab {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  gap: 8px;
+
+  > .ops-action-bar,
+  > .filter-bar,
+  > .ops-filter-bar {
+    flex-shrink: 0;
+  }
+
+  > .ops-action-bar {
+    margin-bottom: 0;
+  }
+
+  > .ops-table-wrapper {
+    overflow: hidden;
+  }
+
+  @include toolbar;
+  @include pagination;
+  @include cell-links;
+  @include row-actions;
+}
+
+// Element's teleported dialog shell does not inherit the caller's scope attribute.
+// Include only under the unique software dialog class in an unscoped style block.
+@mixin detail-shell {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 32px);
+  margin: 16px auto;
+
+  .el-dialog__header,
+  .el-dialog__footer {
+    flex-shrink: 0;
+  }
+
+  .el-dialog__body {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .el-dialog__title {
+    overflow-wrap: anywhere;
+  }
+}
+
+@mixin detail-dialog {
+  @include toolbar;
+  @include pagination;
+  @include cell-links;
+  @include row-actions;
+}

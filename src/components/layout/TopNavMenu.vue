@@ -272,6 +272,7 @@
       width="800px"
       append-to-body
       class="about-dialog"
+      :close-on-click-modal="true"
     >
       <el-tabs v-model="aboutActiveTab" class="about-tabs">
         <el-tab-pane label="版本信息" name="versions">

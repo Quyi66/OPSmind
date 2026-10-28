@@ -898,7 +898,11 @@ async function handlePaste() {
 async function handleDelete() {
   if (!hasSelection.value) return
   try {
-    await ElMessageBox.confirm('确定删除选中的文件吗？', '删除确认', { type: 'warning' })
+    await ElMessageBox.confirm('确定删除选中的文件吗？', '删除确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      type: 'warning'
+    })
     const paths = selectedFiles.value.map(f => f.path)
     await gfsApi.deleteFiles(props.repoType, currentRepo.value, paths)
     ElMessage.success('删除成功')
@@ -914,7 +918,11 @@ async function handleDelete() {
 // 删除单个
 async function handleDeleteSingle(file) {
   try {
-    await ElMessageBox.confirm(`确定删除 "${file.name}" 吗？`, '删除确认', { type: 'warning' })
+    await ElMessageBox.confirm(`确定删除 "${file.name}" 吗？`, '删除确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      type: 'warning'
+    })
     await gfsApi.deleteFiles(props.repoType, currentRepo.value, [file.path])
     ElMessage.success('删除成功')
     loadFiles()

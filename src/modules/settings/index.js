@@ -1,4 +1,5 @@
 import { SSC_ROUTE_DEFS, UAM_ROUTE_DEFS } from './routes.js'
+import { SSC_DEFAULT_ROUTE } from './navigation.js'
 
 export const sscModule = {
   code: 'ssc',
@@ -7,7 +8,7 @@ export const sscModule = {
   icon: 'fas fa-cogs',
   description: '系统配置与平台管理',
   permissions: ['applet:uim'],
-  defaultRoute: '/ssc/applet',
+  defaultRoute: SSC_DEFAULT_ROUTE,
   routes: SSC_ROUTE_DEFS
 }
 

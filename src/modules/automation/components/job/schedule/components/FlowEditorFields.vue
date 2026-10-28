@@ -91,9 +91,11 @@
               <el-col :span="24">
                 <el-form-item label="脚本">
                   <GfsFileSelector
+                    :key="scriptSelectorSession"
                     v-model="step.config.tasks[0].scripts"
                     :disabled="isInstance"
                     :multiple-select="false"
+                    remember-directory
                   />
                 </el-form-item>
               </el-col>
@@ -226,6 +228,7 @@ defineProps({
   flow: { type: Object, required: true },
   isInstance: { type: Boolean, default: false },
   stepFoldList: { type: Array, default: () => [] },
+  scriptSelectorSession: { type: Number, default: 0 },
   isFoldAllSteps: { type: Boolean, default: false }
 })
 

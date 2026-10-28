@@ -30,32 +30,50 @@
           class="toolbar-icon-btn"
           circle
           :loading="loading"
-          @click="loadData"
-          title="刷新"
+          :disabled="!!readError && !canRetry"
+          @click="refresh"
+          :title="readError ? '重试读取' : '刷新'"
+          :aria-label="readError ? '重试读取主机概览' : '刷新主机概览'"
         >
           <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
       </div>
     </div>
 
+    <el-alert
+      v-if="readError"
+      :title="readErrorMessage"
+      type="warning"
+      :closable="false"
+      show-icon
+      style="flex-shrink: 0"
+    />
+
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
       <el-table
         v-loading="loading"
         :data="tableData"
+        :empty-text="emptyText"
         style="width: 100%"
         size="small"
-        max-height="calc(100vh - 414px)"
+        height="100%"
       >
-        <el-table-column prop="host_key" label="主机" min-width="150">
+        <el-table-column prop="host_key" label="主机" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
-            <el-button type="primary" link @click="handleHostClick(row)">
+            <el-button
+              class="software-cell-link"
+              :title="row.host_key"
+              type="primary"
+              link
+              @click="handleHostClick(row)"
+            >
               {{ row.host_key }}
             </el-button>
           </template>
         </el-table-column>
-        <el-table-column prop="os_distro" label="OS" min-width="120" />
-        <el-table-column prop="os_version" label="OS版本" width="150" />
+        <el-table-column prop="os_distro" label="OS" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="os_version" label="OS版本" width="150" show-overflow-tooltip />
         <el-table-column prop="repo_count" label="已配置仓库" width="120" />
         <el-table-column prop="installed_pkgs_count" label="已安装软件包" width="140">
           <template #default="{ row }">
@@ -74,7 +92,7 @@
     </div>
 
     <!-- 分页器区域 -->
-    <div class="ops-pagination-wrapper">
+    <div v-if="hasResult" class="ops-pagination-wrapper">
       <el-pagination
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.pageSize"
@@ -95,7 +113,14 @@
     />
 
     <!-- 扫描目标主机对话框 -->
-    <el-dialog v-model="scanDialogVisible" title="选择目标主机" width="600px" destroy-on-close>
+    <el-dialog
+      v-model="scanDialogVisible"
+      title="选择目标主机"
+      width="600px"
+      destroy-on-close
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+    >
       <div class="scan-dialog-content">
         <!-- 使用 AcmDeviceSelector 组件 -->
         <AcmDeviceSelector
@@ -131,19 +156,30 @@ import { hostOverviewApi, softwareScanApi } from '../../api'
 import HostDetailDialog from './HostDetailDialog.vue'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import { useJobPolling } from '@/composables/useJobPolling'
+import { useSoftwareListRead } from '../../composables/useSoftwareListRead'
 
 // 使用作业轮询 composable
 const { isPolling, startPolling } = useJobPolling()
 
 const emit = defineEmits(['rescan', 'view-host', 'view-installed'])
 
-const loading = ref(false)
-const tableData = ref([])
+const {
+  rows: tableData,
+  total,
+  loading,
+  hasResult,
+  error: readError,
+  errorMessage: readErrorMessage,
+  emptyText,
+  canRetry,
+  load,
+  retry
+} = useSoftwareListRead(params => hostOverviewApi.getList(params))
 const localSearchText = ref('')
 const pagination = reactive({
   page: 1,
   pageSize: 10,
-  total: 0
+  total
 })
 
 // 详情弹窗
@@ -157,34 +193,19 @@ const selectedScanHosts = ref([])
 const scanLoading = ref(false)
 
 // 加载数据
-async function loadData() {
-  loading.value = true
-  try {
-    const params = {
-      page: pagination.page,
-      size: pagination.pageSize,
-      orderBy: 'scan_date desc'
-    }
-    if (localSearchText.value) {
-      params.filter = localSearchText.value
-    }
-
-    const response = await hostOverviewApi.getList(params)
-    const data = response?.data || response
-    tableData.value = data?.records || []
-    pagination.total = data?.total || 0
-  } catch (error) {
-    console.error('Failed to load host overview:', error)
-    tableData.value = []
-    pagination.total = 0
-  } finally {
-    loading.value = false
+function loadData() {
+  const params = {
+    page: pagination.page,
+    size: pagination.pageSize,
+    orderBy: 'scan_date desc'
   }
+  if (localSearchText.value) params.filter = localSearchText.value
+  return load(params)
 }
 
 // 暴露刷新方法
 function refresh() {
-  loadData()
+  return readError.value ? retry() : loadData()
 }
 
 defineExpose({ refresh })
@@ -300,30 +321,9 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-/* 此组件使用全局的 ops-* 样式 */
+@use '../../styles/layout' as software-layout;
 
 .host-overview-table {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  gap: 8px;
-}
-
-.ops-action-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.action-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.action-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  @include software-layout.table-tab;
 }
 </style>

@@ -194,6 +194,8 @@
       :title="getDialogTitle('sys')"
       width="700px"
       destroy-on-close
+      :close-on-press-escape="dialogMode === 'view'"
+      :close-on-click-modal="dialogMode === 'view'"
     >
       <el-form
         v-if="dialogMode !== 'view'"
@@ -214,11 +216,11 @@
         <el-form-item label="域" prop="domain">
           <el-input
             v-model="sysForm.domain"
-            placeholder="请输入域，如: jao, acm, oplus"
+            placeholder="请输入参数所属域，与服务端配置保持一致"
             :disabled="sysForm.editValueOnly"
             maxlength="30"
           />
-          <div class="help-text">域用于区分不同模块，如 jao（作业自动化）、acm（资产管理）等</div>
+          <div class="help-text">域用于区分参数所属模块；已有域名需与服务端配置保持一致，请勿随意修改</div>
         </el-form-item>
         <el-form-item label="参数名称" prop="name">
           <el-input
@@ -277,6 +279,8 @@
       :title="getDialogTitle('app')"
       width="700px"
       destroy-on-close
+      :close-on-press-escape="dialogMode === 'view'"
+      :close-on-click-modal="dialogMode === 'view'"
     >
       <el-form
         v-if="dialogMode !== 'view'"
@@ -550,6 +554,8 @@ async function handleSaveSysParam() {
 async function handleDeleteSysParam(row) {
   try {
     await ElMessageBox.confirm(`确定要删除参数"${row.name}"吗？`, '删除确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning',
       confirmButtonText: '删除',
       cancelButtonText: '取消'
@@ -619,6 +625,8 @@ async function handleSaveAppParam() {
 async function handleDeleteAppParam(row) {
   try {
     await ElMessageBox.confirm(`确定要删除参数"${row.name}"吗？`, '删除确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning',
       confirmButtonText: '删除',
       cancelButtonText: '取消'

@@ -3,7 +3,7 @@
     v-model="visible"
     title="资产属性趋势图"
     width="800px"
-    :close-on-click-modal="false"
+    :close-on-click-modal="true"
     @close="handleClose"
   >
     <div v-loading="loading" class="asset-history">

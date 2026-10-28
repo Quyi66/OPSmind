@@ -5,7 +5,8 @@
     :title="`${username} 的补丁分配记录`"
     width="1200px"
     @open="handleOpen"
-    :close-on-click-modal="false"
+    :close-on-click-modal="selectedRecords.length === 0"
+    :close-on-press-escape="selectedRecords.length === 0"
   >
     <div style="margin-bottom: 12px; display: flex">
       <el-button type="danger" size="small" @click="handleRevokeAll">
@@ -124,7 +125,7 @@ async function handleRevokeSingle(row) {
     await ElMessageBox.confirm(
       `确定撤销补丁 [${row.patchId}] 在主机 [${row.hostKey || '-'}] 上的分配记录吗？`,
       '提示',
-      { type: 'warning' }
+      { closeOnClickModal: false, closeOnPressEscape: false, type: 'warning' }
     )
     await apiService.delete(`/secops/api/secops/v2/patch/assignment/${row.id}`)
     ElMessage.success('撤销成功')
@@ -140,7 +141,7 @@ async function handleRevokeSelected() {
     await ElMessageBox.confirm(
       `确定批量撤销选中的 ${selectedRecords.value.length} 条补丁分配记录吗？`,
       '提示',
-      { type: 'warning' }
+      { closeOnClickModal: false, closeOnPressEscape: false, type: 'warning' }
     )
 
     await Promise.all(
@@ -163,7 +164,11 @@ async function handleRevokeAll() {
     await ElMessageBox.confirm(
       `危险操作：确定要撤销用户 ${props.username} 的【所有】补丁分配吗？`,
       '警告',
-      { type: 'danger' }
+      {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
+        type: 'danger'
+      }
     )
     await apiService.delete(`/secops/api/secops/v2/patch/assignment/user/${props.username}`)
     ElMessage.success('已撤销所有分配')

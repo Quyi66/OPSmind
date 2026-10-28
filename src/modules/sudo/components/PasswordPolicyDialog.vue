@@ -4,7 +4,7 @@
     title="密码策略设置"
     width="500px"
     :close-on-click-modal="false"
-    :close-on-press-escape="!saving"
+    :close-on-press-escape="false"
     :show-close="!saving"
     @close="handleClose"
   >

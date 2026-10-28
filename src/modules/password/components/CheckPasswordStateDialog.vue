@@ -4,7 +4,7 @@
     title="检查密码状态"
     width="500px"
     :close-on-click-modal="false"
-    :close-on-press-escape="!submitting"
+    :close-on-press-escape="false"
     :show-close="!submitting"
     @close="handleClose"
   >

@@ -44,6 +44,7 @@
       width="800px"
       destroy-on-close
       :close-on-click-modal="false"
+      :close-on-press-escape="false"
     >
       <div class="selector-dialog-content">
         <!-- 资产类型选择 -->

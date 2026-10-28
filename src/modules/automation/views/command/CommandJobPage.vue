@@ -111,7 +111,7 @@
       v-model="detailDialogVisible"
       width="780px"
       title="运维工具详情"
-      :close-on-click-modal="false"
+      :close-on-click-modal="true"
     >
       <div v-if="detailJob" class="detail-dialog-body">
         <el-descriptions :column="2" border size="small">
@@ -183,6 +183,7 @@
       :title="editDialogTitle"
       :close-on-click-modal="false"
       destroy-on-close
+      :close-on-press-escape="false"
     >
       <el-form ref="formRef" :model="jobForm" :rules="formRules" label-width="100px">
         <el-form-item label="运维工具标题" prop="title">
@@ -564,6 +565,8 @@ async function handleRunJob(job) {
       `确定立即执行运维工具 "${detail.title}" 吗？该运维工具将向 ${cfg.hosts.length} 台主机执行 ${cfg.commands.length} 条命令。`,
       '执行确认',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         type: 'warning',
         confirmButtonText: '立即执行',
         cancelButtonText: '取消'
@@ -624,6 +627,8 @@ function handleApproveSuccess() {
 async function handleDeleteJob(job) {
   try {
     await ElMessageBox.confirm(`确定要删除运维工具 "${job.title}" 吗？`, '确认删除', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'error',
       confirmButtonClass: 'el-button--danger'
     })

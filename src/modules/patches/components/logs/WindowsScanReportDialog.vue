@@ -5,6 +5,7 @@
     width="90%"
     destroy-on-close
     class="windows-scan-report-dialog"
+    :close-on-click-modal="true"
   >
     <div class="dialog-content">
       <div class="summary-card" v-loading="summaryLoading">

@@ -90,6 +90,7 @@
       title="编辑参数"
       width="600px"
       :close-on-click-modal="false"
+      :close-on-press-escape="false"
     >
       <el-form :model="editForm" label-width="100px" v-if="editForm">
         <el-form-item label="类型">

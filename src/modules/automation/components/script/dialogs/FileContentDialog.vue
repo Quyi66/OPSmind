@@ -3,7 +3,7 @@
     v-model="visible"
     :title="file?.path || file?.name || '文件内容'"
     width="80%"
-    :close-on-click-modal="false"
+    :close-on-click-modal="true"
     destroy-on-close
     class="file-content-dialog"
   >

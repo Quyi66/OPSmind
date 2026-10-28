@@ -99,6 +99,8 @@
       :title="dialogMode === 'create' ? '新建标签' : '编辑标签'"
       width="500px"
       destroy-on-close
+      :close-on-press-escape="false"
+      :close-on-click-modal="false"
     >
       <el-form ref="formRef" :model="form" :rules="formRules" label-width="100px">
         <el-form-item label="标签名称" prop="name">
@@ -117,6 +119,8 @@
       :title="`标签详情: ${currentTag?.name || ''}`"
       width="900px"
       destroy-on-close
+      :close-on-press-escape="selectedAppletIds.length === 0"
+      :close-on-click-modal="selectedAppletIds.length === 0"
     >
       <div v-loading="loadingDetail">
         <div class="detail-toolbar" v-if="tagApplets?.length">
@@ -295,6 +299,8 @@ async function handleRemoveApplets() {
 
   try {
     await ElMessageBox.confirm('确定要从该标签移除选中的应用吗？', '移除确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning',
       confirmButtonText: '移除',
       cancelButtonText: '取消'
@@ -378,6 +384,8 @@ async function handleSave() {
 async function handleDelete(row) {
   try {
     await ElMessageBox.confirm(`确定要删除标签"${row.name}"吗？`, '删除确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning',
       confirmButtonText: '删除',
       cancelButtonText: '取消'

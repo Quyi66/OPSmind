@@ -5,6 +5,7 @@
     width="700px"
     :close-on-click-modal="false"
     @closed="handleClosed"
+    :close-on-press-escape="false"
   >
     <el-form label-width="100px">
       <el-form-item label="JGit信息">
@@ -100,6 +101,8 @@ async function loadJgitInfo() {
 async function handleReset() {
   try {
     await ElMessageBox.confirm('确定重置JGit存储区吗？该操作将清除本地JGit缓存数据。', '重置确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning'
     })
   } catch {

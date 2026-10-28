@@ -5,6 +5,7 @@
     width="800px"
     :close-on-click-modal="false"
     @close="handleClose"
+    :close-on-press-escape="false"
   >
     <div v-loading="loading" class="auto-entry">
       <!-- 提示信息 -->
@@ -65,10 +66,10 @@
           <el-input v-model="formData.value" type="textarea" :rows="3" placeholder="请输入属性值" />
         </el-form-item>
 
-        <el-form-item label="执行引擎节点 (Instance Group)">
+        <el-form-item label="执行节点 (Instance Group)">
           <el-select
             v-model="formData.instanceGroup"
-            placeholder="请选择执行引擎节点"
+            placeholder="请选择执行节点"
             style="width: 100%"
             clearable
           >

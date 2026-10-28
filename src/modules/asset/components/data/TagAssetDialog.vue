@@ -1,5 +1,11 @@
 <template>
-  <el-dialog v-model="visible" title="标签内设备信息" width="1280px" :close-on-click-modal="false">
+  <el-dialog
+    v-model="visible"
+    title="标签内设备信息"
+    width="1280px"
+    :close-on-click-modal="selectedRows.length === 0"
+    :close-on-press-escape="selectedRows.length === 0"
+  >
     <div class="tag-asset-content">
       <!-- 操作按钮和工具栏 -->
       <div class="toolbar">
@@ -116,6 +122,7 @@
 import { ref, watch, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { apiService } from '@/core/api'
+import { throwIfWorkflowFailed } from '@/utils/workflowResult'
 
 const props = defineProps({
   modelValue: {
@@ -181,17 +188,25 @@ const handleRemoveAsset = () => {
     return
   }
 
-  ElMessageBox.confirm('确定要从当前标签中移除选中的资产吗？', '移除确认', { type: 'warning' })
+  ElMessageBox.confirm('确定要从当前标签中移除选中的资产吗？', '移除确认', {
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
+    type: 'warning'
+  })
     .then(async () => {
       try {
         const ciIds = selectedRows.value.map(row => row.id).join(',')
         // Job: dosxGT - 从标签移除资产
-        await apiService.post(`/workflow/api/workflow/jobs/dosxGT/run?cacheBuster=${Date.now()}`, {
-          params: {
-            tagId: props.tagData.id,
-            ciId: ciIds
+        const response = await apiService.post(
+          `/workflow/api/workflow/jobs/dosxGT/run?cacheBuster=${Date.now()}`,
+          {
+            params: {
+              tagId: props.tagData.id,
+              ciId: ciIds
+            }
           }
-        })
+        )
+        throwIfWorkflowFailed(response)
         ElMessage.success('移除成功')
         loadAssetList()
       } catch (error) {

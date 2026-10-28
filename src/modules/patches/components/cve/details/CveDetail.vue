@@ -942,6 +942,8 @@ async function handleHostReboot(host) {
     : `确认对主机 ${hostLabel} 执行${getRebootButtonLabel(host)}？`
 
   await ElMessageBox.confirm(message, '确认重启', {
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
     type: 'warning',
     confirmButtonText: '确认重启',
     cancelButtonText: '取消'

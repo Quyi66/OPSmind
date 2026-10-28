@@ -201,7 +201,11 @@ async function handleChangeVersion(row) {
     await ElMessageBox.confirm(
       '确定要切换到此版本吗？切换后当前运行的流程将使用此版本的配置。',
       '切换版本',
-      { type: 'warning' }
+      {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
+        type: 'warning'
+      }
     )
 
     // 调用切换版本 API

@@ -7,7 +7,8 @@
     destroy-on-close
     append-to-body
     class="win-patch-host-drawer"
-    :close-on-click-modal="false"
+    :close-on-click-modal="selectedRows.length === 0"
+    :close-on-press-escape="selectedRows.length === 0"
   >
     <div class="win-patch-host-dialog">
       <el-descriptions
@@ -41,7 +42,13 @@
       <div class="ops-filter-bar">
         <el-form :inline="true" size="small">
           <el-form-item label="严重级别">
-            <el-select v-model="filters.severity" clearable placeholder="全部" style="width: 140px">
+            <el-select
+              v-model="filters.severity"
+              clearable
+              placeholder="全部"
+              style="width: 140px"
+              @change="handleSearch"
+            >
               <el-option
                 v-for="item in WIN_PATCH_SEVERITY_OPTIONS"
                 :key="item.value"
@@ -53,6 +60,7 @@
           <el-form-item label="补丁状态">
             <el-select
               v-model="filters.patchStatus"
+              @change="handleSearch"
               clearable
               placeholder="全部"
               style="width: 140px"
@@ -72,6 +80,7 @@
               clearable
               style="width: 220px"
               @keyup.enter="handleSearch"
+              @clear="handleSearch"
             />
           </el-form-item>
           <el-form-item>
@@ -83,9 +92,16 @@
 
       <div class="ops-action-bar">
         <el-button
+          size="small"
+          :disabled="!resolveHostId(hostSummary)"
+          @click="emit('view-history', resolveHostId(hostSummary))"
+        >
+          安装历史
+        </el-button>
+        <el-button
           type="primary"
           size="small"
-          :disabled="installableSelection.length === 0"
+          :disabled="loading || installableSelection.length === 0"
           @click="installWizardVisible = true"
         >
           安装选中补丁
@@ -104,6 +120,10 @@
           <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
       </div>
+
+      <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
+        <el-button link type="primary" @click="loadPatches()">重试</el-button>
+      </el-alert>
 
       <div class="ops-table-wrapper win-patch-host-table">
         <el-table
@@ -221,7 +241,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import WinPatchInstallWizard from '../install-wizard/WinPatchInstallWizard.vue'
@@ -263,7 +283,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'task-submitted'])
+const emit = defineEmits(['update:modelValue', 'task-submitted', 'view-history'])
 
 const visibleModel = computed({
   get: () => props.modelValue,
@@ -271,6 +291,8 @@ const visibleModel = computed({
 })
 
 const loading = ref(false)
+const loadError = ref('')
+let loadRequestId = 0
 const patchList = ref([])
 const selectedRows = ref([])
 const installWizardVisible = ref(false)
@@ -371,10 +393,20 @@ function applyInitialFilters() {
 }
 
 async function loadPatches(options = {}) {
+  const requestId = ++loadRequestId
   const hostId = resolveHostId(props.hostSummary)
-  if (!hostId) return
+  if (!props.modelValue || !hostId) return
+
+  const isCurrentRequest = () =>
+    requestId === loadRequestId && props.modelValue && hostId === resolveHostId(props.hostSummary)
 
   loading.value = !options.silent
+  loadError.value = ''
+  selectedRows.value = []
+  if (!options.silent) {
+    patchList.value = []
+    pagination.total = 0
+  }
   try {
     const response = await winPatchApi.getHostPatches(hostId, {
       page: pagination.page - 1,
@@ -383,15 +415,18 @@ async function loadPatches(options = {}) {
       patchStatus: filters.patchStatus || undefined,
       keyword: filters.keyword || undefined
     })
+    if (!isCurrentRequest()) return
     const page = parsePageResponse(response)
     patchList.value = page.content
     pagination.total = page.total
     selectedRows.value = []
   } catch (error) {
+    if (!isCurrentRequest()) return
+    loadError.value = '加载主机补丁详情失败，请重试'
     console.error('加载主机补丁详情失败:', error)
     ElMessage.error('加载主机补丁详情失败')
   } finally {
-    loading.value = false
+    if (isCurrentRequest()) loading.value = false
   }
 }
 
@@ -440,7 +475,15 @@ function openKbDetail(kbNumber) {
 watch(
   [() => props.modelValue, () => props.hostSummary, () => props.initialFilters],
   ([open, host]) => {
-    if (!open || !host) return
+    if (!open || !resolveHostId(host)) {
+      loadRequestId += 1
+      loading.value = false
+      loadError.value = ''
+      patchList.value = []
+      selectedRows.value = []
+      pagination.total = 0
+      return
+    }
 
     pagination.page = 1
     pagination.pageSize = 50
@@ -449,6 +492,10 @@ watch(
   },
   { immediate: true }
 )
+
+onBeforeUnmount(() => {
+  loadRequestId += 1
+})
 </script>
 
 <style scoped lang="scss">

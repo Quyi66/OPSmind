@@ -58,6 +58,8 @@
       :title="dialogMode === 'create' ? '新建标签' : '编辑标签'"
       width="500px"
       destroy-on-close
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
     >
       <el-form ref="formRef" :model="form" :rules="formRules" label-width="100px">
         <el-form-item label="标签名称" prop="name">
@@ -71,7 +73,13 @@
     </el-dialog>
 
     <!-- 查看详情对话框 -->
-    <el-dialog v-model="detailDialogVisible" title="标签详情" width="700px" destroy-on-close>
+    <el-dialog
+      v-model="detailDialogVisible"
+      title="标签详情"
+      width="700px"
+      destroy-on-close
+      :close-on-click-modal="true"
+    >
       <div v-loading="loadingDetail">
         <el-descriptions :column="1" border>
           <el-descriptions-item label="标签名称">{{ currentTag?.name }}</el-descriptions-item>
@@ -223,6 +231,8 @@ async function handleSave() {
 async function handleDelete(row) {
   try {
     await ElMessageBox.confirm(`确定要删除标签"${row.name}"吗？`, '删除确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning',
       confirmButtonText: '删除',
       cancelButtonText: '取消'

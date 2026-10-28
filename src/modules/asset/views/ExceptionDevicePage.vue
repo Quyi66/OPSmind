@@ -253,6 +253,7 @@
       :close-on-click-modal="false"
       @closed="resetActionDialog"
       class="premium-action-dialog"
+      :close-on-press-escape="false"
     >
       <div class="dialog-content">
         <AcmDeviceSelector
@@ -561,7 +562,9 @@ const confirmAction = async ({
   const actionMeta = ACTION_CONFIG[actionKey]
 
   try {
-    await ElMessageBox.confirm(confirmMessage || actionMeta.confirmMessage, '执行作业', {
+    await ElMessageBox.confirm(confirmMessage || actionMeta.confirmMessage, '执行运维工具', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'warning'
@@ -678,6 +681,8 @@ const handleCheckSingleConn = async row => {
   const ip = row.IP || row.ip
   try {
     await ElMessageBox.confirm(`是否重新检查主机 ${ip} 的连通性？`, '提示', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'

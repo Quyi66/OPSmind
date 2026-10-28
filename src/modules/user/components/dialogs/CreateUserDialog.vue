@@ -1,10 +1,11 @@
 <template>
   <el-dialog
-    v-model="visible"
+    :model-value="visible"
     title="创建用户"
     width="800px"
     :close-on-click-modal="false"
-    @close="handleClose"
+    :before-close="handleClose"
+    :close-on-press-escape="false"
   >
     <el-form
       ref="formRef"
@@ -12,11 +13,13 @@
       :rules="formRules"
       label-width="120px"
       class="create-user-form"
+      :disabled="attempted || validating"
     >
       <!-- 选择主机 -->
       <el-form-item label="选择主机">
         <AcmDeviceSelector
           v-model="selectedHosts"
+          :disabled="attempted || validating"
           ci-types="linux"
           :options="{
             selectMode: 'host,group,tag,input,recently',
@@ -90,30 +93,52 @@
           v-model="formData.templateId"
           placeholder="选填，设置用户sudo权限"
           style="width: 100%"
-          @change="handleTemplateChange"
+          :loading="templatesLoading"
         >
           <el-option label="N/A" value="N/A" />
           <el-option v-for="tpl in sudoTemplates" :key="tpl.id" :label="tpl.name" :value="tpl.id" />
         </el-select>
       </el-form-item>
 
+      <el-form-item v-if="templatesError" label="sudo模板">
+        <el-alert :title="templatesError" type="warning" :closable="false" />
+        <el-button @click="loadSudoTemplates">重试模板读取</el-button>
+      </el-form-item>
+      <el-form-item v-if="formData.templateId !== 'N/A'" label="sudo读取">
+        <span v-if="commandsLoading">正在读取模板命令…</span>
+        <template v-else-if="commandsError">
+          <el-alert :title="commandsError" type="warning" :closable="false" />
+          <el-button @click="loadSudoCommands">重试命令读取</el-button>
+        </template>
+        <span v-else-if="!canSubmitSudo">模板尚未确认完整，请先完成模板读取。</span>
+        <span v-else>将提交本模板的全部 {{ sudoCommands.length }} 条命令。</span>
+      </el-form-item>
       <!-- sudo命令列表 -->
       <el-form-item v-if="sudoCommands.length" label="sudo命令">
         <el-table :data="sudoCommands" size="small" max-height="200">
-          <el-table-column type="selection" width="50" />
           <el-table-column prop="command" label="命令" min-width="200" show-overflow-tooltip />
           <el-table-column prop="description" label="描述" width="150" show-overflow-tooltip />
         </el-table>
       </el-form-item>
     </el-form>
 
+    <el-alert
+      v-if="taskMessage"
+      :title="taskMessage"
+      :description="taskDescription"
+      :type="taskType"
+      :closable="false"
+      show-icon
+    />
+    <p v-if="attempted">关闭窗口不会取消已提交的后台任务；结果未知时请先核实，勿重复操作。</p>
+
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose">取消</el-button>
+        <el-button @click="handleClose">{{ attempted ? '关闭窗口' : '取消' }}</el-button>
         <el-button
           type="primary"
-          :loading="submitting"
-          :disabled="!selectedHosts.length"
+          :loading="busy || validating"
+          :disabled="attempted || validating || !selectedHosts.length || !canSubmitSudo"
           @click="handleSubmit"
         >
           {{ buttonText }}
@@ -124,39 +149,19 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { apiService } from '@/core/api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import { normalizeAcmDeviceJobHosts } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
-import * as userApi from '@/modules/user/api'
-import { useJobPolling } from '@/composables/useJobPolling'
-
-// 使用作业轮询 composable
-const { startPolling, stopPolling } = useJobPolling()
-
-const props = defineProps({
-  visible: {
-    type: Boolean,
-    default: false
-  }
-})
-
+import { useUserSudoRead } from '@/modules/user/composables/useUserSudoRead'
+import { useUserDialogTask } from '@/modules/user/composables/useUserDialogTask'
+const props = defineProps({ visible: { type: Boolean, default: false } })
 const emit = defineEmits(['update:visible', 'success'])
-
-const visible = computed({
-  get: () => props.visible,
-  set: val => emit('update:visible', val)
-})
-
+const visible = computed({ get: () => props.visible, set: val => emit('update:visible', val) })
 const formRef = ref(null)
 const selectedHosts = ref([])
-const submitting = ref(false)
-const currentStatus = ref('')
-const sudoTemplates = ref([])
-const sudoCommands = ref([])
-
-const formData = reactive({
+const validating = ref(false)
+const defaults = () => ({
   username: '',
   password: '',
   group: '',
@@ -167,189 +172,93 @@ const formData = reactive({
   expiredDate: '',
   templateId: 'N/A'
 })
-
+const formData = reactive(defaults())
 const formRules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
 }
-
-// 状态中文映射
-const STATUS_MAP = {
-  WAITING: '等待中',
-  RUNNING: '执行中',
-  COMPLETED: '已完成',
-  SUCCESS: '已完成',
-  FAILED: '失败',
-  ERROR: '错误'
-}
-
-// 按钮文字
-const buttonText = computed(() => {
-  if (submitting.value && currentStatus.value) {
-    return STATUS_MAP[currentStatus.value] || currentStatus.value
-  }
-  if (submitting.value) {
-    return '提交中...'
-  }
-  return '确认'
+const task = useUserDialogTask({
+  visible: () => props.visible,
+  emit,
+  onSuccess: handleClose,
+  successMessage: '用户创建成功',
+  maxAttempts: 120
 })
-
-// 加载sudo模板列表
-async function loadSudoTemplates() {
-  try {
-    const response = await userApi.getSudoTemplates()
-    sudoTemplates.value = response?.records || response?.data?.records || []
-  } catch (error) {
-    console.error('Failed to load sudo templates:', error)
-  }
-}
-
-// 处理模板选择变化
-async function handleTemplateChange(templateId) {
-  if (!templateId || templateId === 'N/A') {
-    sudoCommands.value = []
-    return
-  }
-  try {
-    const response = await userApi.getSudoCommandsByTemplate(templateId)
-    sudoCommands.value = response?.records || response?.data?.records || []
-  } catch (error) {
-    console.error('Failed to load sudo commands:', error)
-    sudoCommands.value = []
-  }
-}
-
-// 提交表单
+const { attempted, busy, taskType, taskMessage, taskDescription } = task
+const sudoRead = useUserSudoRead({
+  visible: () => props.visible,
+  templateId: () => formData.templateId
+})
+const {
+  sudoTemplates,
+  sudoCommands,
+  templatesLoading,
+  commandsLoading,
+  templatesError,
+  commandsError,
+  canSubmitSudo,
+  loadSudoTemplates,
+  loadSudoCommands
+} = sudoRead
+const buttonText = computed(() =>
+  busy.value ? '正在处理…' : attempted.value ? '请先核实结果' : '确认创建'
+)
+watch(
+  () => props.visible,
+  () => {
+    validating.value = false
+    selectedHosts.value = []
+    Object.assign(formData, defaults())
+  },
+  { flush: 'sync' }
+)
 async function handleSubmit() {
+  if (validating.value || attempted.value || !canSubmitSudo.value) return
   if (!selectedHosts.value.length) {
     ElMessage.warning('请先选择主机')
     return
   }
-
+  const ready = task.captureReady()
+  if (!ready()) return
+  validating.value = true
   try {
     await formRef.value?.validate()
   } catch {
     return
+  } finally {
+    if (ready()) validating.value = false
   }
-
-  submitting.value = true
-  currentStatus.value = ''
-
-  try {
-    // 构造主机参数（JSON 字符串格式）
-    const hosts = normalizeAcmDeviceJobHosts(selectedHosts.value, 'linux')
-    const hostsJson = JSON.stringify(hosts)
-
-    const sudoCommandStr = sudoCommands.value.map(c => c.command).join(',')
-
-    // 调用作业执行接口
-    const cacheBuster = Date.now()
-    const { data } = await apiService.post(
-      `/workflow/api/workflow/jobs/6snZO9/run?cacheBuster=${cacheBuster}`,
-      {
-        params: {
-          user_name: formData.username,
-          user_password: formData.password,
-          user_group: formData.group || '',
-          groups: formData.groups || '',
-          user_home: formData.home || '',
-          user_shell: formData.shell || '',
-          user_expires: formData.expiredDate || '',
-          user_sudo_command: sudoCommandStr,
-          user_comment: formData.comment || '',
-          hosts: hostsJson
-        }
-      }
-    )
-
-    const result = Array.isArray(data) ? data[0] : data
-    currentStatus.value = result?.status || ''
-
-    // 提交成功，提示用户可以关闭
-    ElMessage.success('任务已提交，后台正在执行，可关闭此窗口')
-
-    if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
-      // 使用 composable 开始轮询，状态显示在按钮上
-      startPolling(result.runId, {
-        interval: 5000,
-        maxAttempts: 120,
-        showMessage: false,
-        onProgress: res => {
-          const batchInfo = res?.detail?.batches?.[0]
-          currentStatus.value = batchInfo?.status || res.status || currentStatus.value
-        },
-        onSuccess: () => {
-          submitting.value = false
-          currentStatus.value = ''
-          ElMessage.success('用户创建成功')
-          emit('success')
-          handleClose()
-        },
-        onError: res => {
-          submitting.value = false
-          currentStatus.value = ''
-          ElMessage.error(res?.error || '创建失败')
-          emit('success')
-          handleClose()
-        },
-        onTimeout: () => {
-          submitting.value = false
-          currentStatus.value = ''
-          ElMessage.warning('执行超时，请稍后查看结果')
-          emit('success')
-          handleClose()
-        }
-      })
-    } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
-      submitting.value = false
-      currentStatus.value = ''
-      ElMessage.success('用户创建成功')
-      emit('success')
-      handleClose()
-    } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
-      submitting.value = false
-      currentStatus.value = ''
-      ElMessage.error(result?.error || '创建失败')
-      emit('success')
-      handleClose()
-    } else {
-      // 其他情况，停止加载状态
-      submitting.value = false
-      currentStatus.value = ''
-    }
-  } catch (error) {
-    submitting.value = false
-    currentStatus.value = ''
-    console.error('创建用户失败:', error)
-    ElMessage.error(`提交失败: ${error?.message || '未知错误'}`)
+  if (!ready() || !canSubmitSudo.value) return
+  const hosts = normalizeAcmDeviceJobHosts(selectedHosts.value, 'linux')
+  if (!hosts.length) {
+    ElMessage.warning('请先选择主机')
+    return
   }
+  const request = task.run('6snZO9', {
+    user_name: formData.username,
+    user_password: formData.password,
+    user_group: formData.group || '',
+    groups: formData.groups || '',
+    user_home: formData.home || '',
+    user_shell: formData.shell || '',
+    user_expires: formData.expiredDate || '',
+    user_sudo_command: sudoCommands.value.map(c => c.command).join(','),
+    user_comment: formData.comment || '',
+    hosts: JSON.stringify(hosts)
+  })
+  if (attempted.value) formData.password = ''
+  return request
 }
-
-// 关闭对话框
-function handleClose() {
-  stopPolling()
+function handleClose(done) {
+  task.reset()
+  sudoRead.clear()
+  validating.value = false
   visible.value = false
-  submitting.value = false
-  currentStatus.value = ''
   formRef.value?.resetFields()
   selectedHosts.value = []
-  sudoCommands.value = []
-  Object.assign(formData, {
-    username: '',
-    password: '',
-    group: '',
-    groups: '',
-    home: '',
-    shell: '',
-    comment: '',
-    expiredDate: '',
-    templateId: 'N/A'
-  })
+  Object.assign(formData, defaults())
+  if (typeof done === 'function') done()
 }
-
-onMounted(() => {
-  loadSudoTemplates()
-})
 </script>
 
 <style scoped lang="scss">

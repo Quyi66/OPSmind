@@ -115,9 +115,10 @@
               <span class="text-muted">{{ formatDate(row.publicDate) }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="80" fixed="right">
+          <el-table-column label="操作" width="170" fixed="right">
             <template #default="{ row }">
               <el-button link type="primary" @click="viewDetail(row)">详情</el-button>
+              <el-button link type="primary" @click="viewAffectedHosts(row)">受影响主机</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -136,6 +137,11 @@
         />
       </div>
     </template>
+    <MiddlewareAffectedHostsDialog
+      v-model="affectedHostsVisible"
+      :cve-id="affectedHostsCveId"
+      :middleware-type="affectedHostsMiddlewareType"
+    />
   </div>
 </template>
 
@@ -146,12 +152,22 @@ import { Search, RefreshRight } from '@element-plus/icons-vue'
 import { middlewareCveApi } from '../api'
 import { ElMessage } from 'element-plus'
 import MiddlewareCveDetail from '../components/cve/details/MiddlewareCveDetail.vue'
+import MiddlewareAffectedHostsDialog from '../components/cve/MiddlewareAffectedHostsDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
 
 const currentView = ref('list')
 const selectedCveId = ref(null)
+const affectedHostsVisible = ref(false)
+const affectedHostsCveId = ref('')
+const affectedHostsMiddlewareType = ref('')
+
+function viewAffectedHosts(cve) {
+  affectedHostsCveId.value = cve.cveId
+  affectedHostsMiddlewareType.value = cve.middlewareType || searchParams.middlewareType || ''
+  affectedHostsVisible.value = true
+}
 
 const cveList = ref([])
 const middlewareTypes = ref([])

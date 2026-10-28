@@ -1,17 +1,18 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    :title="`运维工具运行记录${jobTitle ? ` · ${jobTitle}` : ''}`"
+    :title="`运维工具运行记录${jobTitle ? ` · ${getAutomationToolTitle({ id: jobId, title: jobTitle })}` : ''}`"
     width="1360px"
     destroy-on-close
     @close="handleClose"
+    :close-on-click-modal="true"
   >
     <div class="history-dialog">
       <!-- 筛选栏 -->
       <div class="ops-filter-bar">
         <el-form inline size="small">
           <el-form-item label="时间范围">
-            <el-select v-model="timeRange" style="width: 120px">
+            <el-select v-model="timeRange" style="width: 120px" @change="handleFilterChange">
               <el-option
                 v-for="option in timeRangeOptions"
                 :key="option.value"
@@ -21,7 +22,7 @@
             </el-select>
           </el-form-item>
           <el-form-item label="状态">
-            <el-select v-model="statusValue" style="width: 120px">
+            <el-select v-model="statusValue" style="width: 120px" @change="handleFilterChange">
               <el-option
                 v-for="option in statusOptions"
                 :key="option.value"
@@ -36,6 +37,7 @@
               placeholder="输入运维工具名称搜索"
               clearable
               style="width: 200px"
+              @keyup.enter="handleSearch"
             >
               <template #prefix>
                 <el-icon>
@@ -101,7 +103,7 @@
             sortable="custom"
             column-key="end_time"
           />
-          <el-table-column label="Ansible Node" min-width="120">
+          <el-table-column label="执行节点" min-width="120">
             <template #default="{ row }">
               <div v-if="row.executor_url" class="node-badges">
                 <el-tag
@@ -167,12 +169,14 @@
         v-model:visible="resultDialogVisible"
         :run-id="resultMeta.runId"
         :job-title="resultMeta.jobTitle"
+        :job-id="resultMeta.jobId"
       />
     </div>
   </el-dialog>
 </template>
 
 <script setup>
+import { getAutomationRunTitle, getAutomationToolTitle } from '@/modules/automation/utils/resourcePresentation'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDateTime } from '@/modules/automation/utils/helpers'
@@ -186,6 +190,7 @@ import {
 } from '@/modules/automation/constants/jobStatus'
 import { isActiveRunStatus, isSuccessfulRunStatus, normalizeRunStatus } from '@/utils/taskStatus'
 import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
+import { throwIfWorkflowFailed } from '@/utils/workflowResult'
 
 const timeRangeOptions = [
   { label: '全部', value: 'all' },
@@ -225,6 +230,7 @@ const dialogVisible = computed({
 const timeRange = ref('today')
 const statusValue = ref('all')
 const keyword = ref('')
+const appliedKeyword = ref('')
 const tableLoading = ref(false)
 const tableData = ref([])
 const total = ref(0)
@@ -234,6 +240,7 @@ const sortState = ref({ ...DEFAULT_SORT })
 const resultDialogVisible = ref(false)
 const resultMeta = ref({ runId: '', jobTitle: '' })
 let pollingTimer = null
+let runLogRequestId = 0
 
 watch(resultDialogVisible, visible => {
   if (!visible) {
@@ -244,6 +251,9 @@ watch(resultDialogVisible, visible => {
 watch(
   () => [props.visible, props.jobId],
   ([visible, jobId]) => {
+    runLogRequestId++
+    stopPolling()
+    tableLoading.value = false
     if (visible && jobId) {
       currentPage.value = 1
       sortState.value = { ...DEFAULT_SORT }
@@ -253,7 +263,7 @@ watch(
   { immediate: true }
 )
 
-// 不自动搜索，需要点击搜索按钮
+// 关键词保留草稿，搜索后才应用；下拉条件立即查询已应用的关键词。
 
 watch(
   () => props.visible,
@@ -266,6 +276,7 @@ watch(
 )
 
 function handleClose() {
+  runLogRequestId++
   stopPolling()
   const closeRun = resolveCloseRun()
   const status = normalizeRunStatus(closeRun?.status)
@@ -279,6 +290,7 @@ function handleClose() {
 }
 
 onBeforeUnmount(() => {
+  runLogRequestId++
   stopPolling()
 })
 
@@ -286,6 +298,7 @@ function resetState() {
   timeRange.value = 'today'
   statusValue.value = 'all'
   keyword.value = ''
+  appliedKeyword.value = ''
   currentPage.value = 1
   pageSize.value = 10
   total.value = 0
@@ -295,6 +308,12 @@ function resetState() {
 
 function handleSearch() {
   if (!props.visible || !props.jobId) return
+  appliedKeyword.value = keyword.value.trim()
+  handleFilterChange()
+}
+
+function handleFilterChange() {
+  if (!props.visible || !props.jobId) return
   currentPage.value = 1
   fetchRunLogs()
 }
@@ -303,6 +322,7 @@ function handleReset() {
   timeRange.value = 'today'
   statusValue.value = 'all'
   keyword.value = ''
+  appliedKeyword.value = ''
   currentPage.value = 1
   fetchRunLogs()
 }
@@ -393,6 +413,7 @@ function handleStatusClick(row) {
   if (!row?.id) return
   resultMeta.value = {
     runId: row.id,
+    jobId: row.jobId,
     jobTitle: row.jobTitle || props.jobTitle || ''
   }
   resultDialogVisible.value = true
@@ -414,15 +435,18 @@ async function handleRerun(row) {
     }
 
     await ElMessageBox.confirm(`确定要重新执行运维工具 "${row.jobTitle}" 吗？`, '重新执行', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning',
       confirmButtonText: '执行',
       cancelButtonText: '取消'
     })
 
-    await jaoApi.executeJob({
+    const response = await jaoApi.executeJob({
       jobId: 'OKPacN',
       params: { runId: effectiveRunId }
     })
+    throwIfWorkflowFailed(response, '执行失败')
     ElMessage.success('运维工具已提交执行')
     handleRefresh()
   } catch (error) {
@@ -434,17 +458,20 @@ async function handleRerun(row) {
 
 async function fetchRunLogs() {
   stopPolling()
-  if (!props.jobId) {
+  const requestId = ++runLogRequestId
+  const jobId = props.jobId
+  const isCurrent = () => requestId === runLogRequestId && props.visible && props.jobId === jobId
+  if (!props.visible || !jobId) {
     tableData.value = []
     total.value = 0
     return
   }
   tableLoading.value = true
   try {
-    const filterKeyword = keyword.value?.trim()
+    const filterKeyword = appliedKeyword.value
     const payload = {
       params: {
-        job_id: props.jobId,
+        job_id: jobId,
         day: String(timeRangeMap[timeRange.value] ?? 0),
         type: '',
         run_ids: '',
@@ -456,6 +483,7 @@ async function fetchRunLogs() {
       filter: filterKeyword ? `job_title:*${filterKeyword}*` : ''
     }
     const response = await jaoApi.fetchJobRunLogs(payload)
+    if (!isCurrent()) return
     const data = response?.data ?? response ?? {}
     const records = Array.isArray(data.records)
       ? data.records
@@ -470,14 +498,17 @@ async function fetchRunLogs() {
     tableData.value = normalizedRecords
     total.value = Number(data.total ?? data.count ?? normalizedRecords.length) || 0
   } catch (error) {
-    ElMessage.error(error?.message || '获取运行记录失败')
+    if (isCurrent()) ElMessage.error(error?.message || '获取运行记录失败')
   } finally {
-    tableLoading.value = false
-    schedulePolling()
+    if (isCurrent()) {
+      tableLoading.value = false
+      schedulePolling()
+    }
   }
 }
 
 function mapRunLogRecord(record = {}) {
+  const jobId = record.job_id ?? record.jobId ?? props.jobId
   const startValue = record.start_time ?? record.startTime ?? record.start
   const endValue = record.end_time ?? record.endTime ?? record.end
   const jobTypeRaw = record.job_type ?? record.jobType ?? record.type ?? ''
@@ -487,7 +518,8 @@ function mapRunLogRecord(record = {}) {
   return {
     id: record.id ? String(record.id) : '',
     runId: String(record.runId ?? record.run_id ?? record.id ?? ''),
-    jobTitle: record.job_title ?? record.jobTitle ?? '-',
+    jobId,
+    jobTitle: getAutomationRunTitle({ ...record, job_id: jobId }),
     jobType: jobTypeRaw || '-',
     jobTypeKey,
     username: record.username ?? record.user_name ?? '-',

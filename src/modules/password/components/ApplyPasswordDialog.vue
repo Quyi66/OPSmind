@@ -4,7 +4,7 @@
     :title="isEdit ? '编辑临时密码申请' : '申请临时密码'"
     width="650px"
     :close-on-click-modal="false"
-    :close-on-press-escape="!submitting"
+    :close-on-press-escape="false"
     :show-close="!submitting"
     @close="handleClose"
   >

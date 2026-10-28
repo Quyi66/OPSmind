@@ -84,7 +84,7 @@
 
               <el-table-column label="任务" show-overflow-tooltip min-width="200">
                 <template #default="{ row }">
-                  {{ translateText(row.job_title) }}
+                  {{ getAutomationRunTitle(row) }}
                 </template>
               </el-table-column>
 
@@ -118,7 +118,7 @@
                 </template>
               </el-table-column>
 
-              <el-table-column label="Ansible Node" width="150">
+              <el-table-column label="执行节点" width="150">
                 <template #default="{ row }">
                   <div class="node-list">
                     <el-tag
@@ -203,7 +203,7 @@ import * as jaoApi from '@/modules/automation/api/jao'
 import { JOB_TYPE_OPTIONS } from '@/modules/automation/stores/useJobStore'
 import ExecuteResultDialog from '../../components/job/JobListView/ExecuteResultDialog.vue'
 import JobStatisticsPage from './JobStatisticsPage.vue'
-import { translateText } from '@/utils/i18n.js'
+import { getAutomationRunTitle } from '../../utils/resourcePresentation'
 import { formatDateTime } from '../../utils/helpers'
 import {
   RUN_LOG_STATUS_MAP,
@@ -212,6 +212,7 @@ import {
 } from '@/modules/automation/constants/runLogStatus'
 import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
 import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
+import { throwIfWorkflowFailed } from '@/utils/workflowResult'
 
 const loading = ref(false)
 const tableData = ref([])
@@ -501,7 +502,7 @@ function handleViewResult(row) {
   if (!row?.id) return
   resultMeta.value = {
     runId: row.id,
-    jobTitle: row.job_title
+    jobTitle: getAutomationRunTitle(row)
   }
   resultDialogVisible.value = true
 }
@@ -515,14 +516,15 @@ async function handleRerun(row) {
     }
 
     await ElMessageBox.confirm(
-      `确定要重新启动运维工具 "${row.job_title}" 吗？`,
+      `确定要重新启动运维工具 "${getAutomationRunTitle(row)}" 吗？`,
       '重新启动运维工具',
-      { type: 'warning' }
+      { closeOnClickModal: false, closeOnPressEscape: false, type: 'warning' }
     )
 
     loading.value = true
     try {
-      await jaoApi.rerunJob(row.job_id, effectiveRunId)
+      const response = await jaoApi.rerunJob(row.job_id, effectiveRunId)
+      throwIfWorkflowFailed(response, '重新启动运维工具失败')
       ElMessage.success('运维工具已重新启动')
       fetchData()
     } catch (error) {

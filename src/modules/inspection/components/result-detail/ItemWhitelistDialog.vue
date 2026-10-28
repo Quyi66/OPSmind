@@ -5,6 +5,7 @@
     width="900px"
     destroy-on-close
     @close="$emit('close')"
+    :close-on-click-modal="true"
   >
     <!-- 搜索栏 -->
     <div class="search-bar">

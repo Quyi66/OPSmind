@@ -130,6 +130,7 @@ watch(
     size="680px"
     destroy-on-close
     class="wb-workbench-drawer"
+    :close-on-click-modal="true"
   >
     <template #footer>
       <div class="wb-drawer-footer">

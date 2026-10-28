@@ -47,6 +47,7 @@ export function useJobPolling() {
   const isPolling = ref(false)
   let pollTimer = null
   let currentRunId = null
+  let pollVersion = 0
 
   /**
    * 开始轮询作业状态
@@ -79,17 +80,21 @@ export function useJobPolling() {
       showMessage = true
     } = options
 
+    const version = ++pollVersion
     currentRunId = runId
     isPolling.value = true
     let attempts = 0
 
+    const isCurrent = () => isPolling.value && currentRunId === runId && pollVersion === version
+
     async function poll() {
-      if (!isPolling.value || currentRunId !== runId) return
+      if (!isCurrent()) return
 
       attempts++
 
       try {
         const response = await getJobRunResult(runId)
+        if (!isCurrent()) return
         const result = response?.data || response
         const status = result?.status
 
@@ -136,6 +141,7 @@ export function useJobPolling() {
           onComplete?.(result)
         }
       } catch (error) {
+        if (!isCurrent()) return
         console.error('Failed to poll job status:', error)
         isPolling.value = false
         currentRunId = null
@@ -155,6 +161,7 @@ export function useJobPolling() {
    * 停止轮询
    */
   function stopPolling() {
+    pollVersion += 1
     isPolling.value = false
     currentRunId = null
     if (pollTimer) {

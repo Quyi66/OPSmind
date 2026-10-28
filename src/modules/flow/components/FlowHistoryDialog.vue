@@ -1,5 +1,11 @@
 <template>
-  <el-dialog v-model="visible" title="历史版本" width="700px" @close="handleClose">
+  <el-dialog
+    v-model="visible"
+    title="历史版本"
+    width="700px"
+    @close="handleClose"
+    :close-on-click-modal="true"
+  >
     <el-table :data="historyList" v-loading="loading" border style="width: 100%">
       <el-table-column prop="version" label="版本号" width="80" />
       <el-table-column prop="versionRemarks" label="版本说明" min-width="150" />

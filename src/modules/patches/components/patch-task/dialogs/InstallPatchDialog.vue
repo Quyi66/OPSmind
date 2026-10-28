@@ -1,5 +1,12 @@
 <template>
-  <el-dialog :model-value="visible" title="安装补丁" width="600px" @close="handleClose">
+  <el-dialog
+    :model-value="visible"
+    title="安装补丁"
+    width="600px"
+    @close="handleClose"
+    :close-on-click-modal="false"
+    :close-on-press-escape="false"
+  >
     <div class="install-dialog">
       <el-alert
         v-if="patches.length > 0"

@@ -5,6 +5,7 @@
     width="500px"
     :close-on-click-modal="false"
     @closed="handleClosed"
+    :close-on-press-escape="false"
   >
     <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top">
       <el-form-item label="分组名称" prop="name">
@@ -42,6 +43,7 @@ import { ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { assetApi } from '../../api'
 import { apiService } from '@/core/api'
+import { throwIfWorkflowFailed } from '@/utils/workflowResult'
 
 const props = defineProps({
   modelValue: {
@@ -121,17 +123,21 @@ const handleSave = async () => {
   saving.value = true
   try {
     // Job: BAzNVq - 编辑分组
-    await apiService.post(`/workflow/api/workflow/jobs/BAzNVq/run?cacheBuster=${Date.now()}`, {
-      params: {
-        id: props.groupData.id,
-        name: formData.value.name,
-        operate: 'modify',
-        parentId: formData.value.parentId,
-        ciType: props.groupData.ci_type,
-        ciIds: null,
-        path: ''
+    const response = await apiService.post(
+      `/workflow/api/workflow/jobs/BAzNVq/run?cacheBuster=${Date.now()}`,
+      {
+        params: {
+          id: props.groupData.id,
+          name: formData.value.name,
+          operate: 'modify',
+          parentId: formData.value.parentId,
+          ciType: props.groupData.ci_type,
+          ciIds: null,
+          path: ''
+        }
       }
-    })
+    )
+    throwIfWorkflowFailed(response)
     ElMessage.success('保存成功')
     visible.value = false
     emit('saved')

@@ -2,8 +2,8 @@
   <div class="critical-cve-alert">
     <div class="section-header">
       <h3 class="section-title">
-        <img :src="cveHeaderIcon" alt="严重漏洞概览" class="section-icon" />
-        严重漏洞概览
+        <img :src="cveHeaderIcon" alt="" class="section-icon" />
+        漏洞情报
       </h3>
       <div class="header-actions">
         <button class="more-btn" @click="navigateToCveList" title="查看全部">
@@ -13,10 +13,15 @@
       </div>
     </div>
 
-    <div v-loading="loading" class="cve-content" element-loading-text="正在加载严重漏洞数据...">
-      <div v-if="!loading && !cveList.length" class="empty-state">
+    <p class="section-scope">近期查询结果（最多 20 条），按受影响主机数排序。</p>
+    <div v-loading="loading" class="cve-content" element-loading-text="正在加载漏洞情报...">
+      <div v-if="loadError" class="empty-state" role="status">
+        <p class="empty-text">漏洞情报暂不可用，不能据此判断当前风险。</p>
+        <el-button size="small" @click="loadCveData">重新加载</el-button>
+      </div>
+      <div v-else-if="!loading && !cveList.length" class="empty-state">
         <i class="fas fa-shield-alt empty-icon"></i>
-        <p class="empty-text">暂无严重级别漏洞数据</p>
+        <p class="empty-text">暂无漏洞情报数据</p>
       </div>
 
       <template v-else>
@@ -62,16 +67,16 @@
                 </div>
                 <!-- 受影响机器数量 -->
                 <div class="cve-affected-hosts">
-                  <span class="affected-count">{{ cve.affectedHostCount ?? 0 }}</span>
+                  <span class="affected-count">{{ formatKnownCount(cve.affectedHostCount) }}</span>
                   <span class="affected-unit">台</span>
                 </div>
                 <!-- 受影响软件包数量 -->
                 <div class="cve-packages">
-                  <span class="pkg-count">{{ cve.affectedCount ?? cve.affected_count ?? 0 }}</span>
+                  <span class="pkg-count">{{ formatKnownCount(cve.affectedCount ?? cve.affected_count) }}</span>
                   <span class="pkg-unit">个</span>
                 </div>
                 <div class="cve-score-badge" :style="getScoreStyle(cve.cvss3Score)">
-                  <span class="score-value">{{ cve.cvss3Score ? cve.cvss3Score.toFixed(1) : '9.0' }}</span>
+                  <span class="score-value">{{ formatCvssScore(cve.cvss3Score) }}</span>
                 </div>
               </div>
             </div>
@@ -82,7 +87,7 @@
               <span class="popover-cve-id">{{ cve.cveId }}</span>
               <span class="popover-score" :style="getScoreStyle(cve.cvss3Score)">
                 <span class="score-label">CVSS </span>
-                <span class="score-value">{{ cve.cvss3Score ? cve.cvss3Score.toFixed(1) : '9.0' }}</span>
+                <span class="score-value">{{ formatCvssScore(cve.cvss3Score) }}</span>
               </span>
             </div>
             <div class="popover-sources">
@@ -102,32 +107,32 @@
             <div class="popover-packages">
               <div class="popover-label">
                 <span>软件包状态统计</span>
-                <span class="pkg-total">共 {{ cve.totalPackageCount ?? 0 }} 个</span>
+                <span class="pkg-total">共 {{ formatKnownCount(cve.totalPackageCount) }} 个</span>
               </div>
               <div class="packages-summary-grid">
                 <div class="pkg-stat-item is-affected" title="受影响">
                   <span class="pkg-label">受影响</span>
-                  <span class="pkg-count">{{ cve.affectedCount ?? 0 }}</span>
+                  <span class="pkg-count">{{ formatKnownCount(cve.affectedCount) }}</span>
                 </div>
                 <div class="pkg-stat-item is-fixed" title="已修复">
                   <span class="pkg-label">已修复</span>
-                  <span class="pkg-count">{{ cve.fixedCount ?? 0 }}</span>
+                  <span class="pkg-count">{{ formatKnownCount(cve.fixedCount) }}</span>
                 </div>
                 <div class="pkg-stat-item is-not-affected" title="不受影响">
                   <span class="pkg-label">无影响</span>
-                  <span class="pkg-count">{{ cve.notAffectedCount ?? 0 }}</span>
+                  <span class="pkg-count">{{ formatKnownCount(cve.notAffectedCount) }}</span>
                 </div>
                 <div class="pkg-stat-item is-will-not-fix" title="不予修复">
                   <span class="pkg-label">不修复</span>
-                  <span class="pkg-count">{{ cve.willNotFixCount ?? 0 }}</span>
+                  <span class="pkg-count">{{ formatKnownCount(cve.willNotFixCount) }}</span>
                 </div>
                 <div class="pkg-stat-item is-fix-deferred" title="延迟修复">
                   <span class="pkg-label">延期</span>
-                  <span class="pkg-count">{{ cve.fixDeferredCount ?? 0 }}</span>
+                  <span class="pkg-count">{{ formatKnownCount(cve.fixDeferredCount) }}</span>
                 </div>
                 <div class="pkg-stat-item is-out-of-support" title="超出支持范围">
                   <span class="pkg-label">超期</span>
-                  <span class="pkg-count">{{ cve.outOfSupportCount ?? 0 }}</span>
+                  <span class="pkg-count">{{ formatKnownCount(cve.outOfSupportCount) }}</span>
                 </div>
               </div>
             </div>
@@ -148,6 +153,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { cveApi } from '@/modules/patches/api'
 import { getCveSourceLabel } from '@/modules/patches/composables/useFormatters'
+import { formatCvssScore, formatKnownCount, toKnownNumber } from '@/utils/workspacePresentation'
 
 // 标题图标
 const cveHeaderIcon = new URL('@/assets/icons/dashboard/icon-patchview@2x.png', import.meta.url).href
@@ -155,9 +161,12 @@ const cveHeaderIcon = new URL('@/assets/icons/dashboard/icon-patchview@2x.png', 
 const router = useRouter()
 const cveList = ref([])
 const loading = ref(false)
+const loadError = ref(false)
 
 const loadCveData = async () => {
+  if (loading.value) return
   loading.value = true
+  loadError.value = false
   try {
     const res = await cveApi.getCveList({
       severity: 'critical',
@@ -170,16 +179,17 @@ const loadCveData = async () => {
     const rawList = result?.content || []
     // 智能排序优化：优先按受影响机器台数降序排列，受影响台数相同时按 CVSS 评分降序
     cveList.value = [...rawList].sort((a, b) => {
-      const countA = Number(a.affectedHostCount) || 0
-      const countB = Number(b.affectedHostCount) || 0
+      const countA = toKnownNumber(a.affectedHostCount, { integer: true }) ?? -1
+      const countB = toKnownNumber(b.affectedHostCount, { integer: true }) ?? -1
       if (countB !== countA) {
         return countB - countA
       }
-      const scoreA = Number(a.cvss3Score) || 0
-      const scoreB = Number(b.cvss3Score) || 0
+      const scoreA = toKnownNumber(a.cvss3Score, { max: 10 }) ?? -1
+      const scoreB = toKnownNumber(b.cvss3Score, { max: 10 }) ?? -1
       return scoreB - scoreA
     })
   } catch (error) {
+    loadError.value = true
     console.error('Failed to fetch critical CVEs:', error)
   } finally {
     loading.value = false
@@ -212,18 +222,12 @@ const getSourceClass = (src) => {
 }
 
 const getScoreStyle = (score) => {
-  const val = Number(score) || 9.0
-  if (val >= 9.5) {
-    return {
-      background: 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)',
-      color: '#dc2626',
-      border: '1px solid #fca5a5'
-    }
-  }
+  const val = toKnownNumber(score, { max: 10 })
+  const tone = val === null || val === 0 ? 'info' : val >= 9 ? 'danger' : val >= 7 ? 'warning' : val >= 4 ? 'warning' : 'primary'
   return {
-    background: 'linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%)',
-    color: '#ea580c',
-    border: '1px solid #fdba74'
+    background: `var(--el-color-${tone}-light-9)`,
+    color: `var(--el-color-${tone})`,
+    border: `1px solid var(--el-color-${tone}-light-5)`
   }
 }
 
@@ -325,6 +329,14 @@ onMounted(() => {
   position: relative;
   display: flex;
   flex-direction: column;
+}
+
+.section-scope {
+  margin: 0;
+  padding: 6px 16px;
+  flex-shrink: 0;
+  color: var(--el-text-color-secondary);
+  font-size: 11px;
 }
 
 .empty-state {

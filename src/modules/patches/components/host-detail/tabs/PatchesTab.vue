@@ -131,6 +131,11 @@
           {{ formatPackages(row.affected_pkgs) }}
         </template>
       </el-table-column>
+      <el-table-column label="仓库可安装" width="220">
+        <template #default="{ row }">
+          <RepoCheckStatus :check="row.repo_check" />
+        </template>
+      </el-table-column>
       <el-table-column prop="related_vuls" label="关联漏洞" min-width="180">
         <template #default="{ row }">
           <CveLinkList
@@ -168,7 +173,7 @@
 </template>
 
 <script setup>
-import { ref, toRef, onMounted, watch } from 'vue'
+import { computed, ref, toRef, onMounted, watch } from 'vue'
 import {
   formatDate,
   formatPackages,
@@ -180,6 +185,7 @@ import { usePatchList } from '../../../composables/usePatchList'
 import { useTableSelectAll } from '../../../composables/useTableSelectAll'
 import { Refresh, Search } from '@element-plus/icons-vue'
 import CveLinkList from '../../common/CveLinkList.vue'
+import RepoCheckStatus from '../RepoCheckStatus.vue'
 
 const props = defineProps({
   hostId: {
@@ -338,7 +344,8 @@ function handleFixPatches() {
 // 暴露加载方法和变量给父组件
 defineExpose({
   loadPatchList,
-  patchKeyword
+  patchKeyword,
+  hasPendingSelection: computed(() => allSelected.value || selectedPatches.value.length > 0)
 })
 </script>
 

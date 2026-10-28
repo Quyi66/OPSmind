@@ -3,6 +3,8 @@
  * Single source of truth for router + side nav.
  */
 
+import { RETIRED_SETTINGS_PAGES, SSC_DEFAULT_ROUTE } from './navigation.js'
+
 const systemSettingsModuleView = () => import('./views/SystemSettingsModule.vue')
 
 function createSettingsPageRoute(name, component) {
@@ -50,22 +52,6 @@ export const UAM_ROUTE_DEFS = [
 
 export const SSC_ROUTE_DEFS = [
   {
-    key: 'applet',
-    path: 'applet',
-    title: '应用管理',
-    navLabel: '应用管理',
-    icon: 'fas fa-archive',
-    ...createSettingsPageRoute('ssc-applet', () => import('./views/SscAppletPage.vue'))
-  },
-  {
-    key: 'tag',
-    path: 'tag',
-    title: '应用标签',
-    navLabel: '应用标签',
-    icon: 'fas fa-tags',
-    ...createSettingsPageRoute('ssc-tag', () => import('./views/SscTagPage.vue'))
-  },
-  {
     key: 'param',
     path: 'param',
     title: '参数配置',
@@ -84,14 +70,6 @@ export const SSC_ROUTE_DEFS = [
       requiresPermission: 'admin'
     },
     ...createSettingsPageRoute('ssc-sql-import', () => import('./views/SscSqlImportPage.vue'))
-  },
-  {
-    key: 'appres',
-    path: 'appres',
-    title: '应用资源',
-    navLabel: '应用资源',
-    icon: 'fas fa-boxes',
-    ...createSettingsPageRoute('ssc-appres', () => import('./views/SscAppResPage.vue'))
   },
   {
     key: 'email',
@@ -117,5 +95,10 @@ export const SSC_ROUTE_DEFS = [
     navLabel: '计划任务',
     icon: 'fas fa-clock',
     ...createSettingsPageRoute('ssc-scheduler', () => import('./views/SscTaskSchedulerPage.vue'))
-  }
+  },
+  // Redirect-only records intentionally have no navLabel or page component.
+  ...RETIRED_SETTINGS_PAGES.map(page => ({
+    ...page,
+    redirect: SSC_DEFAULT_ROUTE
+  }))
 ]

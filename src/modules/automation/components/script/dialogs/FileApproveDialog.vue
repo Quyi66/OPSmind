@@ -5,6 +5,8 @@
     width="600px"
     @update:model-value="emit('update:modelValue', $event)"
     @closed="handleClosed"
+    :close-on-press-escape="false"
+    :close-on-click-modal="false"
   >
     <div v-if="selectedFiles.length === 0" class="empty-notice">
       <el-alert type="warning" :closable="false" show-icon>请先选择要审核的文件</el-alert>

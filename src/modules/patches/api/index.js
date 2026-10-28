@@ -313,7 +313,7 @@ export const patchScanApi = {
 
   /**
   * 获取单个主机的可用补丁列表
-  * GET /secops/api/secops/v2/patch/host-patches
+  * GET /secops/api/secops/dashboard/patch-of-one-machine
   * @param {Object} params - 查询参数
   * @param {string} params.host_id - 主机ID
   * @param {string} params.severity - 严重程度筛选（逗号分隔：Critical,Important,Moderate,Low）
@@ -454,6 +454,14 @@ export const patchInstallApi = {
   */
   getTask(id) {
     return apiService.get(`${PATCH_TASK_API_PREFIX}/${id}`).then(normalizePatchTaskResponse)
+  },
+
+  /**
+   * 查询安装任务的预检失败、安装失败及未下发（无可更新包）主机
+   * GET /secops/api/secops/v2/patch/task/{id}/failed-hosts
+   */
+  getFailedHosts(id) {
+    return apiService.get(`${PATCH_TASK_API_PREFIX}/${encodeURIComponent(id)}/failed-hosts`)
   },
 
   /**
@@ -774,13 +782,17 @@ export const patchInstallApi = {
   * @param {Object} params - 查询参数
   * @param {Array<string>} params.patch_ids - 补丁ID列表
   * @param {string} params.hostId - 主机筛选条件
+  * @param {Array<string>} [params.groupIds] - 分组ID列表
+  * @param {Array<string>} [params.tagNames] - 标签名称列表
   * @returns {Promise}
   */
   getMachinesByPatch(params) {
     return apiService
       .post(`${VAP_DASHBOARD_BASE}/machine-by-patch`, {
         patchIds: params.patch_ids,
-        hostId: params.hostId || '@@(linux)'
+        hostId: params.hostId || '@@(linux)',
+        ...(params.groupIds?.length ? { groupIds: params.groupIds } : {}),
+        ...(params.tagNames?.length ? { tagNames: params.tagNames } : {})
       })
       .then(wrapRecordsResponse)
       .then(res => {
@@ -1887,7 +1899,7 @@ export const cveApi = {
   },
 
   /**
-  * 获取 CVE 统计
+  * CVE 严重等级统计
   * GET /secops/api/secops/v2/cve/statistics
   */
   getStatistics() {
@@ -2092,6 +2104,16 @@ export const middlewareCveApi = {
   */
   getDetail(cveId) {
     return apiService.get(`${VAP_API_PREFIX}/v2/middleware-cve/detail/${encodeURIComponent(cveId)}`)
+  },
+
+  /**
+   * 查询中间件 CVE 受影响主机，middlewareType 可选
+   * GET /secops/api/secops/v2/middleware-cve/affected-hosts
+   */
+  getAffectedHosts(cveId, middlewareType) {
+    const params = { cveId }
+    if (middlewareType && middlewareType !== 'all') params.middlewareType = middlewareType
+    return apiService.get(`${VAP_API_PREFIX}/v2/middleware-cve/affected-hosts`, { params })
   },
 
   /**
