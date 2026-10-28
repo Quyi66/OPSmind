@@ -26,34 +26,52 @@
           class="toolbar-icon-btn"
           circle
           :loading="loading"
-          @click="loadData"
-          title="刷新"
+          :disabled="!!readError && !canRetry"
+          @click="refresh"
+          :title="readError ? '重试读取' : '刷新'"
+          :aria-label="readError ? '重试读取可用软件包' : '刷新可用软件包'"
         >
           <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
       </div>
     </div>
 
+    <el-alert
+      v-if="readError"
+      :title="readErrorMessage"
+      type="warning"
+      :closable="false"
+      show-icon
+      style="flex-shrink: 0"
+    />
+
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
       <el-table
         v-loading="loading"
         :data="tableData"
+        :empty-text="emptyText"
         style="width: 100%"
         size="small"
-        max-height="calc(100vh - 414px)"
+        height="100%"
       >
         <el-table-column prop="pkg_name" label="名称" min-width="180" show-overflow-tooltip>
           <template #default="{ row }">
-            <el-button type="primary" link @click="handlePackageClick(row)">
+            <el-button
+              class="software-cell-link"
+              :title="row.pkg_name"
+              type="primary"
+              link
+              @click="handlePackageClick(row)"
+            >
               {{ row.pkg_name }}
             </el-button>
           </template>
         </el-table-column>
         <el-table-column prop="pkg_envra" label="软件包" min-width="200" show-overflow-tooltip />
         <el-table-column prop="pkg_arch" label="架构" width="100" />
-        <el-table-column prop="pkg_release" label="发行号" width="120" />
-        <el-table-column prop="pkg_version" label="版本号" width="120" />
+        <el-table-column prop="pkg_release" label="发行号" width="120" show-overflow-tooltip />
+        <el-table-column prop="pkg_version" label="版本号" width="120" show-overflow-tooltip />
         <el-table-column prop="pkg_yumstate" label="软件状态" width="100">
           <template #default="{ row }">
             <el-tag
@@ -65,7 +83,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="repo_id" label="仓库ID" width="120" />
+        <el-table-column prop="repo_id" label="仓库ID" width="120" show-overflow-tooltip />
         <el-table-column prop="scan_date" label="扫描时间" width="180">
           <template #default="{ row }">
             {{ formatDate(row.scan_date) }}
@@ -75,7 +93,7 @@
     </div>
 
     <!-- 分页器区域 -->
-    <div class="ops-pagination-wrapper">
+    <div v-if="hasResult" class="ops-pagination-wrapper">
       <el-pagination
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.pageSize"
@@ -95,35 +113,34 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search, Refresh } from '@element-plus/icons-vue'
 import { packageApi } from '../../api'
+import { useSoftwareListRead } from '../../composables/useSoftwareListRead'
 
-const loading = ref(false)
+const {
+  rows: tableData,
+  total,
+  loading,
+  hasResult,
+  error: readError,
+  errorMessage: readErrorMessage,
+  emptyText,
+  canRetry,
+  load,
+  retry
+} = useSoftwareListRead(params => packageApi.getAvailableList(params))
 const filterText = ref('')
-const tableData = ref([])
 const pagination = reactive({
   page: 1,
   pageSize: 10,
-  total: 0
+  total
 })
 
 // 加载数据
-async function loadData() {
-  loading.value = true
-  try {
-    const response = await packageApi.getAvailableList({
-      page: pagination.page,
-      size: pagination.pageSize,
-      filter: filterText.value || ''
-    })
-    const data = response?.data || response
-    tableData.value = data?.records || []
-    pagination.total = data?.total || 0
-  } catch (error) {
-    console.error('Failed to load packages:', error)
-    tableData.value = []
-    pagination.total = 0
-  } finally {
-    loading.value = false
-  }
+function loadData() {
+  return load({
+    page: pagination.page,
+    size: pagination.pageSize,
+    filter: filterText.value || ''
+  })
 }
 
 // 格式化日期
@@ -169,7 +186,7 @@ function handleSizeChange(size) {
 
 // 暴露刷新方法
 function refresh() {
-  loadData()
+  return readError.value ? retry() : loadData()
 }
 
 defineExpose({ refresh })
@@ -180,31 +197,9 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-/* 此组件使用全局的 ops-* 样式 */
+@use '../../styles/layout' as software-layout;
 
 .available-packages-table {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 16px;
-  gap: 16px;
-}
-
-.ops-action-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.action-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.action-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  @include software-layout.table-tab;
 }
 </style>

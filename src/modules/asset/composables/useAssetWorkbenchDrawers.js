@@ -121,7 +121,7 @@ export function useAssetWorkbenchDrawers({
           permission: 'r',
           status: 'all',
           CONN_LATEST_STATUS: '',
-          hostKeys: '/'
+          hostKeys: '@@'
         },
         {
           page: assetListDrawer.page,

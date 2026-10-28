@@ -5,6 +5,7 @@
     width="500px"
     :close-on-click-modal="false"
     @closed="handleClosed"
+    :close-on-press-escape="false"
   >
     <div class="folder-form">
       <div class="form-group">

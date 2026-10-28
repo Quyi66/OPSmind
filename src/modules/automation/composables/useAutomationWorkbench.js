@@ -1,5 +1,6 @@
 import { computed, onActivated, onDeactivated, onScopeDispose, ref } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { getCronTaskConfirmation } from '@/modules/automation/utils/cronTaskPresentation'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { findAllUnapprovedCommand, findCommandByTenantId } from '@/modules/automation/api/command'
 import { listFiles as gfsListFiles } from '@/modules/automation/api/gfs'
@@ -127,8 +128,8 @@ export function useAutomationWorkbench({ canViewJobs = true, canViewCommands = t
 
     try {
       const [todayRunsResult, failedRunsResult, activeTotals] = await Promise.all([
-        fetchTodayRuns(20),
-        fetchFailedRuns(20),
+        fetchTodayRuns(1),
+        fetchFailedRuns(1),
         fetchActiveRunTotals()
       ])
 
@@ -252,26 +253,48 @@ export function useAutomationWorkbench({ canViewJobs = true, canViewCommands = t
   async function toggleCronJob(item) {
     const isEnabled = item.triggerStatus === '1'
     try {
+      await ElMessageBox.confirm(
+        `确定${isEnabled ? '停用' : '启用'}定时任务「${getCronTaskConfirmation(item)}」吗？`,
+        '确认操作',
+        {
+          closeOnClickModal: false,
+          closeOnPressEscape: false,
+          type: 'warning',
+          confirmButtonText: '确定',
+          cancelButtonText: '取消'
+        }
+      )
       if (isEnabled) {
         await jaoApi.stopCronJob(item.id)
-        ElMessage.success(`已停用：${item.jobDesc || item.id}`)
+        ElMessage.success(`已停用：${getCronTaskConfirmation(item)}`)
       } else {
         await jaoApi.startCronJob(item.id)
-        ElMessage.success(`已启用：${item.jobDesc || item.id}`)
+        ElMessage.success(`已启用：${getCronTaskConfirmation(item)}`)
       }
       await loadCronData()
-    } catch {
-      ElMessage.error('操作失败，请重试')
+    } catch (error) {
+      if (error !== 'cancel' && error !== 'close') ElMessage.error('操作失败，请重试')
     }
   }
 
   async function executeCronJobNow(item) {
     try {
+      await ElMessageBox.confirm(
+        `确定立即执行定时任务「${getCronTaskConfirmation(item)}」吗？`,
+        '确认操作',
+        {
+          closeOnClickModal: false,
+          closeOnPressEscape: false,
+          type: 'warning',
+          confirmButtonText: '确定',
+          cancelButtonText: '取消'
+        }
+      )
       const response = await jaoApi.executeCronJob(item.id)
-      ElMessage.success(`已触发执行：${item.jobDesc || item.id}`)
+      ElMessage.success(`已触发执行：${getCronTaskConfirmation(item)}`)
       return unwrapResponseData(response)
-    } catch {
-      ElMessage.error('执行失败，请重试')
+    } catch (error) {
+      if (error !== 'cancel' && error !== 'close') ElMessage.error('执行失败，请重试')
       return null
     }
   }

@@ -3,7 +3,7 @@
     v-model="dialogVisible"
     title="修改记录"
     width="900px"
-    :close-on-click-modal="false"
+    :close-on-click-modal="true"
     @closed="handleClosed"
     class="file-revision-dialog"
   >
@@ -252,6 +252,8 @@ function parseDiff(rev) {
 async function handleRollback(rev) {
   try {
     await ElMessageBox.confirm(`确定要回退到此版本吗？此操作将覆盖当前文件内容。`, '回退确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning'
     })
 

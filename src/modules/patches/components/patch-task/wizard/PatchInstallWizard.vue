@@ -4,9 +4,12 @@
     <el-dialog
       v-model="isVisible"
       :title="wizardDialogTitle"
-      width="1000px"
+      width="1080px"
       top="5vh"
       :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      :show-close="!dialogBusy"
+      :before-close="handleBeforeClose"
       class="install-dialog"
       @closed="resetInstallState"
     >
@@ -57,12 +60,54 @@
           </div>
           <div v-else class="card-body">
             <div class="host-toolbar">
-              <el-select v-model="hostFilter" size="small" style="width: 140px">
-                <el-option label="@@(linux)" value="@@(linux)">
-                  <i class="fa fa-server" />
-                  @@(linux)
-                </el-option>
+              <div class="host-filter">
+              <span class="host-filter__label">分组</span>
+              <el-select
+                v-model="selectedGroupIds"
+                multiple
+                filterable
+                clearable
+                collapse-tags
+                collapse-tags-tooltip
+                :loading="groupLoading"
+                placeholder="全部分组"
+                aria-label="按分组筛选主机"
+                size="small"
+                style="width: 180px"
+                @change="handleHostGroupChange"
+              >
+                <el-option
+                  v-for="group in groupOptions"
+                  :key="group.id"
+                  :label="group.label"
+                  :value="group.id"
+                />
               </el-select>
+              </div>
+              <div class="host-filter">
+              <span class="host-filter__label">标签</span>
+              <el-select
+                v-model="selectedTagNames"
+                multiple
+                filterable
+                clearable
+                collapse-tags
+                collapse-tags-tooltip
+                :loading="groupLoading"
+                placeholder="全部标签"
+                aria-label="按标签筛选主机"
+                size="small"
+                style="width: 180px"
+                @change="handleHostGroupChange"
+              >
+                <el-option
+                  v-for="tag in tagOptions"
+                  :key="tag.name"
+                  :label="tag.label"
+                  :value="tag.name"
+                />
+              </el-select>
+              </div>
               <el-input
                 v-model="hostSearchText"
                 placeholder="搜索"
@@ -248,12 +293,21 @@
             :type="pipelineStatus === 'success' ? 'success' : 'error'"
             :closable="false"
             show-icon
-            :title="pipelineStatus === 'success' ? '所有任务已全部完成' : '执行任务中断'"
+            :title="
+              pipelineStatus === 'success'
+                ? '所有任务已全部完成'
+                : pipelineStatus === 'paused'
+                  ? '暂时无法查询任务状态'
+                  : '执行任务中断'
+            "
             class="task-step-alert mt-3"
           >
             <template #default>
               <div v-if="pipelineStatus === 'success'" style="font-size: 13px">
                 {{ pipelineSuccessDescription }}
+              </div>
+              <div v-else-if="pipelineStatus === 'paused'" style="font-size: 13px">
+                {{ taskErrorMessage }}。任务可能仍在执行，请点击“继续查询”查看进度。
               </div>
               <div v-else style="font-size: 13px">
                 由于部分环节出现异常（{{ taskErrorMessage }}），任务已停止。请检查原因并重试。
@@ -269,12 +323,18 @@
           <el-button v-if="currentStepKey === 'select'" @click="isVisible = false">取消</el-button>
 
           <!-- 上一步：仅在非执行中时允许回退 -->
-          <el-button
-            v-if="installStep > 0 && stepStates[installStep] !== 'running'"
-            @click="goBack"
-          >
+          <el-button v-if="installStep > 0 && !configurationLocked" @click="goBack">
             <i class="fa fa-chevron-left" style="margin-right: 4px" />
             上一步
+          </el-button>
+
+          <el-button
+            v-if="currentStepKey === 'execute' && createdTaskId && !isRollbackTask"
+            type="primary"
+            plain
+            @click="failedHostsVisible = true"
+          >
+            查看失败主机
           </el-button>
 
           <!-- 正在执行按钮 -->
@@ -292,7 +352,7 @@
           <!-- 跳过按钮：针对 RPM 预检、预执行、校验脚本和重启配置 -->
           <el-button
             v-if="currentStepSkippable"
-            :disabled="stepTransitionLoading"
+            :disabled="configurationLocked"
             @click="handleSkipStep"
           >
             跳过此步
@@ -304,7 +364,7 @@
             type="primary"
             :loading="stepTransitionLoading"
             :disabled="
-              stepTransitionLoading ||
+              configurationLocked ||
               (currentStepKey === 'select' && selectedHosts.length === 0) ||
               (currentStepKey === 'restart' &&
                 requiresRestartConfirm &&
@@ -351,11 +411,19 @@
               :class="pipelineStatus === 'success' ? 'fa fa-check' : 'fa fa-play'"
               style="margin-right: 4px"
             />
-            {{ pipelineStatus === 'success' ? '完成' : '开始执行任务' }}
+            {{
+              pipelineStatus === 'success'
+                ? '完成'
+                : pipelineStatus === 'paused'
+                  ? '继续查询'
+                  : '开始执行任务'
+            }}
           </el-button>
         </div>
       </template>
     </el-dialog>
+
+    <PatchTaskFailedHostsDialog v-model="failedHostsVisible" :task-id="createdTaskId" />
 
     <ExecuteResultDialog
       v-model:visible="executeResultVisible"
@@ -391,6 +459,7 @@ import PatchTaskStepper from '../PatchTaskStepper.vue'
 import PatchTaskSummaryRow from '../PatchTaskSummaryRow.vue'
 import PatchTaskRestartStep from './PatchTaskRestartStep.vue'
 import PatchTaskScriptConfigStep from './PatchTaskScriptConfigStep.vue'
+import PatchTaskFailedHostsDialog from '../dialogs/PatchTaskFailedHostsDialog.vue'
 import { usePatchTaskTargetSelection } from './usePatchTaskTargetSelection'
 
 const props = defineProps({
@@ -409,7 +478,10 @@ const emit = defineEmits(['update:visible', 'success'])
 
 const isVisible = computed({
   get: () => props.visible,
-  set: val => emit('update:visible', val)
+  set: val => {
+    if (!val && dialogBusy.value) return
+    emit('update:visible', val)
+  }
 })
 
 const isRollbackTask = computed(() => props.taskMode === 'rollback')
@@ -444,12 +516,14 @@ const {
   closeTargetSelection,
   confirmedHosts,
   filteredHosts,
+  groupLoading,
+  groupOptions,
+  handleHostGroupChange,
   handleHostPageChange,
   handleHostSizeChange,
   handleHostTableSelect,
   handleToggleHostSelectAll,
   hostAllSelected,
-  hostFilter,
   hostPagination,
   hostSearchText,
   hostTableRef,
@@ -458,6 +532,9 @@ const {
   packageEmptyText,
   resetHostAllSelected,
   selectedHosts,
+  selectedGroupIds,
+  selectedTagNames,
+  tagOptions,
   syncAffectedPackagesForHosts,
   validateSelectedHostCapabilities
 } = usePatchTaskTargetSelection({
@@ -540,8 +617,18 @@ const currentStepSkippable = computed(() =>
   ['pre', 'validate', 'restart'].includes(currentStepKey.value)
 )
 const createdTaskId = ref('')
+const failedHostsVisible = ref(false)
 const restartConfirmText = ref('')
 const pipelineStatus = ref('idle')
+const dialogBusy = computed(
+  () =>
+    executionSubmitting.value || stepTransitionLoading.value || pipelineStatus.value === 'running'
+)
+const configurationLocked = computed(() => dialogBusy.value || pipelineStatus.value === 'paused')
+
+function handleBeforeClose(done) {
+  if (!dialogBusy.value) done()
+}
 
 // 每步的执行状态: 'idle' | 'running' | 'success' | 'failed'
 const stepStates = reactive(['idle', 'idle', 'idle', 'idle', 'idle'])
@@ -697,6 +784,7 @@ watch(
       return
     }
 
+    failedHostsVisible.value = false
     closeTargetSelection()
     resetInstallState()
   }
@@ -839,7 +927,14 @@ async function scrollToPreCheckTaskStatus() {
   })
 }
 
-watch(createdTaskId, resetPreCheckResultSnapshot, { flush: 'sync' })
+watch(
+  createdTaskId,
+  () => {
+    failedHostsVisible.value = false
+    resetPreCheckResultSnapshot()
+  },
+  { flush: 'sync' }
+)
 
 watch(
   pipelineStatus,
@@ -897,6 +992,8 @@ function handleSkipPreCheck() {
     '前置环境检查未通过，跳过检查强行安装可能导致安装失败。是否确认跳过检查并继续？',
     '提示',
     {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       confirmButtonText: '确认跳过',
       cancelButtonText: '取消',
       type: 'warning'

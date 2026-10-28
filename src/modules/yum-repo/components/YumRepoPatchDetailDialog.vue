@@ -1,5 +1,12 @@
 <template>
-  <el-dialog v-model="visibleModel" title="补丁详情" width="1080px" destroy-on-close append-to-body>
+  <el-dialog
+    v-model="visibleModel"
+    title="补丁详情"
+    width="1080px"
+    destroy-on-close
+    append-to-body
+    :close-on-click-modal="true"
+  >
     <div class="win-patch-yum-detail-dialog">
       <el-descriptions :column="3" border>
         <el-descriptions-item label="补丁 ID">

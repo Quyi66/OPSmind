@@ -5,6 +5,7 @@
     width="1060px"
     :close-on-click-modal="false"
     @close="handleClose"
+    :close-on-press-escape="false"
   >
     <div v-loading="loading" class="asset-edit">
       <template v-if="!loading && visibleAttrs.length > 0">

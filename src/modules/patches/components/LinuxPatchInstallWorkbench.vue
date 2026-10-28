@@ -1,23 +1,29 @@
 <template>
-  <div class="ops-page-layout ops-page-layout--page-scroll linux-patch-install-page">
+  <div
+    class="ops-page-layout linux-patch-install-page"
+    :class="embedded ? 'linux-patch-install-page--embedded' : 'ops-page-layout--page-scroll'"
+  >
     <!-- 顶部 Tab 导航 -->
     <div class="nav-tabs">
-      <div
+      <button
+        type="button"
         class="nav-tab"
         :class="{ 'nav-tab--active': activeTab === 'host' }"
         @click="handleTabChange('host')"
       >
         <i class="fa fa-laptop" style="margin-right: 6px" />
         按主机安装
-      </div>
-      <div
+      </button>
+      <button
+        type="button"
         class="nav-tab"
         :class="{ 'nav-tab--active': activeTab === 'patch' }"
         @click="handleTabChange('patch')"
       >
         <i class="fa fa-download" style="margin-right: 6px" />
         按补丁安装
-      </div>
+      </button>
+      <div class="secondary-actions"><slot name="secondary-actions" /></div>
     </div>
 
     <!-- 按主机安装 Tab 内容 -->
@@ -33,7 +39,9 @@
               filterable
               allow-create
               default-first-option
-              style="width: 180px" @change="handleHostFilter">
+              style="width: 180px"
+              @change="handleHostFilter"
+            >
               <el-option v-for="item in osDistroList" :key="item" :label="item" :value="item" />
             </el-select>
           </el-form-item>
@@ -56,6 +64,31 @@
               />
             </el-select>
           </el-form-item>
+            <el-form-item label="接入方式">
+              <el-select
+                v-model="hostFilters.connectionType"
+                placeholder="全部接入方式"
+                clearable
+                style="width: 140px"
+                @change="handleHostFilter"
+              >
+                <el-option label="SSH" value="ssh" />
+                <el-option label="Agent" value="koreops_agent" />
+                <el-option label="未知" value="unknown" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="Agent 状态">
+              <el-select
+                v-model="hostFilters.agentStatus"
+                placeholder="全部状态"
+                clearable
+                style="width: 130px"
+                @change="handleHostFilter"
+              >
+                <el-option label="在线" value="online" />
+                <el-option label="离线" value="offline" />
+              </el-select>
+            </el-form-item>
           <el-form-item label="标签">
             <el-select
               v-model="hostFilters.tags"
@@ -66,7 +99,9 @@
               clearable
               filterable
               :loading="hostTagLoading"
-              style="width: 180px" @change="handleHostFilter">
+              style="width: 180px"
+              @change="handleHostFilter"
+            >
               <el-option v-for="tag in hostTagOptions" :key="tag" :label="tag" :value="tag" />
             </el-select>
           </el-form-item>
@@ -75,7 +110,10 @@
               v-model="hostFilters.keyword"
               placeholder="主机名 / IP / 资产 ID"
               style="width: 220px"
-              clearable @keyup.enter="handleHostFilter" @clear="handleHostFilter">
+              clearable
+              @keyup.enter="handleHostFilter"
+              @clear="handleHostFilter"
+            >
               <template #prefix>
                 <el-icon><Search /></el-icon>
               </template>
@@ -98,27 +136,27 @@
       <div class="ops-action-bar">
         <el-button
           type="primary"
-          plain
           size="small"
-          :disabled="batchSelectedHosts.length === 0 || batchInstallCapabilityIssues.length > 0"
+          :disabled="hostLoading || batchSelectedHosts.length === 0 || batchInstallCapabilityIssues.length > 0"
           :title="batchInstallCapabilitySummary"
           @click="handleOpenBatchInstallDrawer"
         >
           <i class="fa fa-chevron-circle-right" />
           安装选中主机补丁 ({{ batchSelectedHosts.length }})
         </el-button>
-        <el-button
-          type="primary"
-          plain
-          size="small"
-          :disabled="batchSelectedHosts.length === 0 || batchScanCapabilityIssues.length > 0"
-          :title="batchScanCapabilitySummary"
-          :loading="rescanLoading"
-          @click="handleRescan"
-        >
-          <i class="fa fa-bug" />
-          重新扫描补丁 ({{ batchSelectedHosts.length }})
-        </el-button>
+        <slot name="scan-action" :hosts="batchSelectedHosts" :loading="hostLoading">
+          <el-button
+            plain
+            size="small"
+            :disabled="hostLoading || batchSelectedHosts.length === 0 || batchScanCapabilityIssues.length > 0"
+            :title="batchScanCapabilitySummary"
+            :loading="rescanLoading"
+            @click="handleRescan"
+          >
+            <i class="fa fa-bug" />
+            重新扫描补丁 ({{ batchSelectedHosts.length }})
+          </el-button>
+        </slot>
         <el-button
           size="small"
           :type="hostAllSelected ? 'default' : 'primary'"
@@ -127,6 +165,16 @@
         >
           <i :class="`fa fa-${hostAllSelected ? 'times' : 'check-double'} me-1`" />
           {{ hostAllSelected ? '一键取消' : '一键全选' }}
+        </el-button>
+        <el-button
+          v-if="batchSelectedHosts.length > 0"
+          size="small"
+          type="info"
+          text
+          @click="handleClearHostSelection"
+        >
+          <i class="fa fa-times me-1" />
+          清空选择
         </el-button>
         <span style="flex: 1"></span>
         <el-button
@@ -168,13 +216,59 @@
               </el-link>
             </template>
           </el-table-column>
+            <el-table-column label="接入方式" width="120">
+              <template #default="{ row }">
+                <el-tag
+                  v-if="row.connectionType === 'koreops_agent'"
+                  type="success"
+                  size="small"
+                  effect="plain"
+                >
+                  Agent<span v-if="row.agentMode === 'gateway'"> (跳板)</span>
+                </el-tag>
+                <el-tag
+                  v-else
+                  :type="row.connectionType === 'ssh' ? 'info' : 'warning'"
+                  size="small"
+                  effect="plain"
+                >
+                  {{ row.connectionType === 'ssh' ? 'SSH' : '未知' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="Agent 状态" width="120">
+              <template #default="{ row }">
+                <template v-if="row.connectionType === 'koreops_agent'">
+                  <el-tag
+                    :type="row.agentStatus === 'online' ? 'success' : row.agentStatus === 'offline' ? 'danger' : 'warning'"
+                    size="small"
+                    :title="row.agentStatus === 'offline' ? `最后在线: ${row.lastSeenAt || '未知'}` : ''"
+                  >
+                    {{ row.agentStatus === 'online' ? '在线' : row.agentStatus === 'offline' ? '离线' : '未知' }}
+                  </el-tag>
+                  <span v-if="row.agentVersion" style="font-size: 11px; color: #909399; margin-left: 4px">
+                    v{{ row.agentVersion }}
+                  </span>
+                </template>
+                <span v-else class="text-muted">-</span>
+              </template>
+            </el-table-column>
+
           <el-table-column prop="num_critical" width="80">
             <template #header>
               严重
               <i class="fa fa-circle text-danger" />
             </template>
             <template #default="{ row }">
-              <span class="severity-count">{{ row.num_critical }}</span>
+              <button
+                type="button"
+                class="severity-count"
+                :disabled="!(row.num_critical > 0)"
+                title="查看严重补丁"
+                @click="handleSeverityCountClick(row, 'Critical')"
+              >
+                {{ row.num_critical }}
+              </button>
             </template>
           </el-table-column>
           <el-table-column prop="num_important" width="80">
@@ -183,7 +277,15 @@
               <i class="fa fa-circle text-warning" />
             </template>
             <template #default="{ row }">
-              <span class="severity-count">{{ row.num_important }}</span>
+              <button
+                type="button"
+                class="severity-count"
+                :disabled="!(row.num_important > 0)"
+                title="查看重要补丁"
+                @click="handleSeverityCountClick(row, 'Important')"
+              >
+                {{ row.num_important }}
+              </button>
             </template>
           </el-table-column>
           <el-table-column prop="num_moderate" width="80">
@@ -192,7 +294,15 @@
               <i class="fa fa-circle text-dark" />
             </template>
             <template #default="{ row }">
-              <span class="severity-count">{{ row.num_moderate }}</span>
+              <button
+                type="button"
+                class="severity-count"
+                :disabled="!(row.num_moderate > 0)"
+                title="查看中等补丁"
+                @click="handleSeverityCountClick(row, 'Moderate')"
+              >
+                {{ row.num_moderate }}
+              </button>
             </template>
           </el-table-column>
           <el-table-column prop="num_low" width="80">
@@ -201,7 +311,20 @@
               <i class="fa fa-circle text-info" />
             </template>
             <template #default="{ row }">
-              <span class="severity-count">{{ row.num_low }}</span>
+              <button
+                type="button"
+                class="severity-count"
+                :disabled="!(row.num_low > 0)"
+                title="查看低危补丁"
+                @click="handleSeverityCountClick(row, 'Low')"
+              >
+                {{ row.num_low }}
+              </button>
+            </template>
+          </el-table-column>
+          <el-table-column label="重启要求" width="100">
+            <template #default="{ row }">
+              {{ row.need_reboot === 1 ? '是' : row.need_reboot === 0 ? '否' : '未知' }}
             </template>
           </el-table-column>
           <el-table-column prop="hostname" label="主机名" min-width="120" show-overflow-tooltip />
@@ -222,12 +345,73 @@
           </el-table-column>
           <el-table-column label="系统版本" min-width="200">
             <template #default="{ row }">
-              {{ row.os_distro }} {{ [row.os_version, row.os_sp_version].filter(Boolean).join(' ') || '-' }}
+              {{ row.os_distro }}
+              {{ [row.os_version, row.os_sp_version].filter(Boolean).join(' ') || '-' }}
             </template>
           </el-table-column>
+            <el-table-column label="内存" width="170">
+              <template #default="{ row }">
+                <div v-if="row.memoryOverview" class="memory-overview">
+                  <div
+                    v-if="row.memoryOverview.usedPercent !== null"
+                    class="memory-usage"
+                    :class="`memory-usage--${row.memoryOverview.usageLevel}`"
+                  >
+                    <div
+                      class="memory-usage__track"
+                      :title="`已使用 ${row.memoryOverview.usedPercent}%`"
+                    >
+                      <div
+                        class="memory-usage__fill"
+                        :style="{ width: `${row.memoryOverview.usedPercent}%` }"
+                      />
+                    </div>
+                    <div class="memory-usage__desc">
+                      {{ row.memoryOverview.freeGb }} GB 可用, 共
+                      {{ row.memoryOverview.totalGb }} GB
+                    </div>
+                  </div>
+                  <div v-else class="memory-usage memory-usage--unknown">
+                    <div class="memory-usage__track" />
+                    <div class="memory-usage__desc">
+                      {{
+                        row.memoryOverview.freeGb !== null
+                          ? `${row.memoryOverview.freeGb} GB 可用`
+                          : '-'
+                      }}{{
+                        row.memoryOverview.totalGb !== null
+                          ? `, 共 ${row.memoryOverview.totalGb} GB`
+                          : ', 总量未知'
+                      }}
+                    </div>
+                  </div>
+                </div>
+                <span v-else class="text-muted">-</span>
+              </template>
+            </el-table-column>
           <el-table-column prop="scan_timestamp" label="最后扫描时间" width="200" sortable>
             <template #default="{ row }">
               {{ formatDateTime(row.scan_timestamp) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="130" fixed="right">
+            <template #default="{ row }">
+              <el-button
+                text
+                type="primary"
+                :disabled="hostLoading"
+                @click="handleInstallHost(row)"
+              >
+                安装补丁
+              </el-button>
+              <el-button
+                text
+                type="primary"
+                :disabled="hostLoading || rescanLoading || scanLoading"
+                @click="handleScanHost(row)"
+              >
+                扫描
+              </el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -307,6 +491,16 @@
           安装选中的补丁 ({{ selectedPatchIds.length }})
         </el-button>
         <el-button
+          type="primary"
+          size="small"
+          plain
+          :disabled="selectedPatchIds.length === 0"
+          @click="handleScheduleInstallSelected"
+        >
+          <i class="fa fa-clock-o me-1" />
+          定时安装 ({{ selectedPatchIds.length }})
+        </el-button>
+        <el-button
           size="small"
           :type="allSelected ? 'default' : 'primary'"
           @click="handleToggleSelectAll"
@@ -314,6 +508,16 @@
         >
           <i :class="`fa fa-${allSelected ? 'times' : 'check-double'} me-1`" />
           {{ allSelected ? '一键取消' : '一键全选' }}
+        </el-button>
+        <el-button
+          v-if="selectedPatchIds.length > 0"
+          size="small"
+          type="info"
+          text
+          @click="handleClearPatchSelection"
+        >
+          <i class="fa fa-times me-1" />
+          清空选择
         </el-button>
         <span style="flex: 1"></span>
         <el-button
@@ -334,6 +538,7 @@
           ref="tableRef"
           v-loading="loading"
           :data="paginatedData"
+          row-key="patch_id"
           class="natural-height-table"
           @select="handleTableSelect"
           @select-all="handleTableSelect"
@@ -412,7 +617,7 @@
       v-model="patchDetailVisible"
       title="补丁详情"
       width="800px"
-      :close-on-click-modal="false"
+      :close-on-click-modal="true"
       class="patch-detail-dialog"
     >
       <PatchDetailContent
@@ -425,9 +630,48 @@
     <!-- 批量安装补丁抽屉 -->
     <BatchInstallPatchDrawer
       v-model:visible="batchInstallDrawerVisible"
-      :hosts="batchSelectedHosts"
+      :hosts="installTargetHosts"
       @success="handleBatchInstallSuccess"
     />
+
+    <HostSeverityPatchDialog
+      v-model:visible="severityPatchesVisible"
+      :host="severityHost"
+      :severity="hostSeverity"
+      @patch-click="handleViewPatchDetail"
+      @install-success="handleBatchInstallSuccess"
+    />
+
+    <el-dialog
+      v-model="affectedHostsVisible"
+      title="受影响主机"
+      width="900px"
+      :close-on-click-modal="true"
+    >
+      <p>{{ affectedPatch?.patch_id }}</p>
+      <div v-if="affectedHostsError" role="alert">
+        {{ affectedHostsError }}
+        <el-button @click="loadAffectedHosts">重试</el-button>
+      </div>
+      <el-table v-else v-loading="affectedHostsLoading" :data="affectedHosts" max-height="420">
+        <el-table-column prop="hostKey" label="主机" min-width="160" />
+        <el-table-column prop="os_distro" label="操作系统" min-width="120" />
+        <el-table-column prop="os_version" label="系统版本" min-width="100" />
+        <el-table-column prop="scan_timestamp" label="最后扫描时间" min-width="180">
+          <template #default="{ row }">{{ formatDateTime(row.scan_timestamp) }}</template>
+        </el-table-column>
+      </el-table>
+      <template #footer>
+        <el-button @click="affectedHostsVisible = false">关闭</el-button>
+        <el-button
+          type="primary"
+          :disabled="affectedHostsLoading || !!affectedHostsError || affectedHosts.length === 0"
+          @click="handleInstallAffectedPatch"
+        >
+          安装此补丁
+        </el-button>
+      </template>
+    </el-dialog>
 
     <!-- 统一补丁向导组件 -->
     <PatchInstallWizard
@@ -435,24 +679,34 @@
       :patches-to-install="patchesToInstall"
       @success="handleInstallSuccess"
     />
+
+    <!-- 补丁定时安装对话框 -->
+    <PatchScheduleInstallDialog
+      v-model:visible="scheduleInstallDialogVisible"
+      :selected-patches="scheduleSelectedPatches"
+      @success="handleScheduleInstallSuccess"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { getCveUrl } from '../composables/useFormatters'
 import { patchInstallApi, patchScanApi, vulnerabilityApi } from '../api'
-import { dataManageApi, agentApi } from '@/modules/asset/api'
-import { parseOsVersionFilter } from '../utils/linuxPatchScan'
+import { agentApi, assetApi, dataManageApi } from '@/modules/asset/api'
+import { buildMemoryOverview, parseOsVersionFilter } from '../utils/linuxPatchScan'
 import { formatDateTime } from '@/utils/date'
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
+import PatchScheduleInstallDialog from '../components/patch-task/schedule/PatchScheduleInstallDialog.vue'
 import BatchInstallPatchDrawer from '../components/host-detail/dialogs/BatchInstallPatchDrawer.vue'
+import HostSeverityPatchDialog from '../components/host-detail/dialogs/HostSeverityPatchDialog.vue'
 import PatchDetailContent from '../components/common/PatchDetailContent.vue'
 import CveLinkList from '../components/common/CveLinkList.vue'
 import { useTableSelectAll } from '../composables/useTableSelectAll'
+import { usePatchScanCompletion } from '../composables/usePatchScanCompletion'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import OperationLogsDialog from '../components/logs/OperationLogsDialog.vue'
 import {
@@ -461,6 +715,15 @@ import {
   formatAgentCapabilitySummary,
   resolveAgentCapabilityHosts
 } from '../utils/agentCapability'
+
+const props = defineProps({
+  embedded: { type: Boolean, default: false },
+  initialTab: { type: String, default: 'host' },
+  scanLoading: { type: Boolean, default: false },
+  sourceLabel: { type: String, default: '主机概览' },
+  sourceRouteName: { type: String, default: 'patches-machineScan' }
+})
+const emit = defineEmits(['installed', 'scan-host'])
 
 // Router & Route
 const route = useRoute()
@@ -491,6 +754,8 @@ const hostFilters = reactive({
   os_distro: '',
   os_version: '',
   os_sp_version: '',
+  connectionType: '',
+  agentStatus: '',
   tags: [],
   keyword: ''
 })
@@ -502,10 +767,20 @@ const hostPagination = reactive({
 })
 
 const batchSelectedHosts = ref([])
+const installTargetHosts = ref([])
 const batchInstallDrawerVisible = ref(false)
+const severityPatchesVisible = ref(false)
+const severityHost = ref(null)
+const hostSeverity = ref('')
+let hostLoadRequestId = 0
+
+const getHostSelectionKey = host => host.host_id || host.id || host.host_key || ''
 
 const hostFilteredData = computed(() => {
-  return allHostData.value
+  return allHostData.value.filter(host =>
+    (!hostFilters.connectionType || host.connectionType === hostFilters.connectionType) &&
+    (!hostFilters.agentStatus || host.agentStatus === hostFilters.agentStatus)
+  )
 })
 
 const hostTableData = computed(() => {
@@ -537,14 +812,15 @@ const {
   allSelected: hostAllSelected,
   handleToggleAllSelection: handleToggleHostSelectAll,
   handleTableSelect: handleHostTableSelect,
+  clearSelection: handleClearHostSelection,
   resetAllSelected: resetHostAllSelected,
   restorePageSelection: restoreHostPageSelection
 } = useTableSelectAll(hostTableRef, {
   tableData: hostTableData,
   filteredData: hostFilteredData,
   selectedItems: batchSelectedHosts,
-  matchFn: (a, b) =>
-    (a.host_id || a.id || a.host_key || '') === (b.host_id || b.id || b.host_key || '')
+  matchFn: (a, b) => getHostSelectionKey(a) === getHostSelectionKey(b),
+  preserveExistingSelection: true
 })
 
 // 重新扫描相关状态
@@ -555,6 +831,7 @@ const operationLogsVisible = ref(false)
 const lastSubmittedRunId = ref('')
 
 async function loadHostData() {
+  const requestId = ++hostLoadRequestId
   hostLoading.value = true
   try {
     const params = {
@@ -567,33 +844,79 @@ async function loadHostData() {
       keyword: hostFilters.keyword
     }
     const response = await patchScanApi.getScanResults(params)
+    if (requestId !== hostLoadRequestId) return
     const data = response?.data || response || {}
     const records = Array.isArray(data.records)
       ? data.records
       : Array.isArray(data.content)
         ? data.content
         : []
+    await enrichRebootStatus(records)
+    if (requestId !== hostLoadRequestId) return
     try {
       await enrichHostAgentInfo(records)
     } catch (error) {
       // Agent 信息富化失败不能阻断原有 SSH 主机列表；提交时仍会执行能力校验。
       console.warn('获取主机 Agent 信息失败:', error)
+      records.forEach(record => {
+        record.connectionType = 'unknown'
+        record.agentStatus = 'unknown'
+        record.agentInfoUnavailable = true
+      })
     }
+    if (requestId !== hostLoadRequestId) return
     mergeHostOsVersionOptions(records)
 
     allHostData.value = records
-    hostPagination.total = records.length
+    // 更新再次出现的已选记录；未匹配当前筛选的记录仍保留在选择中。
+    const hostsById = new Map(records.map(host => [getHostSelectionKey(host), host]))
+    batchSelectedHosts.value = batchSelectedHosts.value.map(
+      host => hostsById.get(getHostSelectionKey(host)) || host
+    )
+    hostPagination.total = hostFilteredData.value.length
 
     nextTick(() => {
       restoreHostPageSelection()
     })
   } catch (error) {
+    if (requestId !== hostLoadRequestId) return
     console.error('Failed to load host data:', error)
     allHostData.value = []
     hostPagination.total = 0
   } finally {
-    hostLoading.value = false
-    hostDataLoaded.value = true
+    if (requestId === hostLoadRequestId) {
+      hostLoading.value = false
+      hostDataLoaded.value = true
+    }
+  }
+}
+
+// 沿用原概览的资产查询补充重启要求；资产信息不可用时不猜测状态。
+async function enrichRebootStatus(records) {
+  try {
+    const assetParams = {
+      hostKeys: '@@',
+      assetType: 'linux',
+      permission: 'r',
+      status: 'all',
+      CONN_LATEST_STATUS: '',
+      system_name: ' ',
+      os_version: ' '
+    }
+    const response = await assetApi.getAssetList(assetParams, { size: 1000 })
+    const byIp = new Map((response?.records || []).map(asset => [asset.IP, asset]))
+    records.forEach(host => {
+      const asset = byIp.get(host.host_key)
+      if (asset) {
+        host.need_reboot = asset.needReboot
+        host.memoryOverview = buildMemoryOverview(
+          asset.memtotal_mb ?? asset.MEMTOTAL_MB,
+          asset.memfree_mb ?? asset.MEMFREE_MB
+        )
+      }
+    })
+  } catch (error) {
+    console.warn('Failed to load reboot status:', error)
   }
 }
 
@@ -606,20 +929,27 @@ async function enrichHostAgentInfo(records) {
   const infoByHostId = new Map()
   for (let index = 0; index < hostIds.length; index += 100) {
     const result = await agentApi.getHostAgentInfo(hostIds.slice(index, index + 100))
-    if (Array.isArray(result)) {
-      result.forEach(info => {
-        if (info?.hostId) infoByHostId.set(String(info.hostId), info)
-      })
-    }
+    if (!Array.isArray(result)) throw new Error('主机 Agent 状态接口返回格式异常')
+    result.forEach(info => {
+      if (info?.hostId) infoByHostId.set(String(info.hostId), info)
+    })
   }
 
   records.forEach(row => {
     const hostId = String(row.host_id || row.hostId || row.id || row.hosts_id || row.hostsId || '')
     const info = infoByHostId.get(hostId)
-    if (!info) return
+    if (!info) {
+      row.connectionType = 'unknown'
+      row.agentStatus = 'unknown'
+      row.agentInfoUnavailable = true
+      return
+    }
     row.connectionType = info.connectionType || row.connectionType
     row.agentStatus = info.agentStatus ?? row.agentStatus
     row.capabilities = info.capabilities ?? row.capabilities
+    row.agentVersion = info.agentVersion ?? row.agentVersion
+    row.agentMode = info.agentMode ?? row.agentMode
+    row.lastSeenAt = info.lastSeenAt ?? row.lastSeenAt
   })
 }
 
@@ -687,7 +1017,6 @@ async function loadOsLists() {
 
 function handleHostFilter() {
   resetHostAllSelected()
-  batchSelectedHosts.value = []
   hostPagination.page = 1
   loadHostData()
 }
@@ -702,10 +1031,11 @@ function handleHostVersionChange(value) {
 
 function handleHostReset() {
   resetHostAllSelected()
-  batchSelectedHosts.value = []
   hostFilters.os_distro = ''
   hostFilters.os_version = ''
   hostFilters.os_sp_version = ''
+  hostFilters.connectionType = ''
+  hostFilters.agentStatus = ''
   hostFilters.tags = []
   hostVersionFilter.value = ''
   hostFilters.keyword = ''
@@ -732,8 +1062,8 @@ function handleHostClick(row) {
       os_distro: row.os_distro,
       os_version: row.os_version,
       hostname: row.hostname,
-      fromLabel: '补丁安装',
-      fromRouteName: 'patches-patchInstall'
+      fromLabel: props.sourceLabel,
+      fromRouteName: props.sourceRouteName
     }
   })
 }
@@ -742,6 +1072,7 @@ function handleBatchInstallSuccess() {
   resetHostAllSelected()
   batchSelectedHosts.value = []
   loadHostData()
+  emit('installed')
 }
 
 function handleRunResultClose(payload) {
@@ -750,7 +1081,15 @@ function handleRunResultClose(payload) {
   }
 }
 
+const { trackScan } = usePatchScanCompletion(() => loadHostData())
+
 // 重新扫描逻辑
+function handleScanHost(host) {
+  if (hostLoading.value || rescanLoading.value || props.scanLoading) return
+  if (props.embedded) emit('scan-host', host)
+  else submitRescan([host])
+}
+
 async function handleRescan() {
   if (batchSelectedHosts.value.length === 0) {
     ElMessage.warning('请先在列表中勾选要重新扫描的主机')
@@ -762,7 +1101,8 @@ async function handleRescan() {
 function normalizeRescanHost(host) {
   if (typeof host === 'object' && host !== null) {
     return {
-      key: host.host_id || host.hostId || host.id || host.key || host.host_key || host.hostKey || '',
+      key:
+        host.host_id || host.hostId || host.id || host.key || host.host_key || host.hostKey || '',
       value: host.host_key || host.hostKey || host.hostname || host.value || host.name || '',
       assetType: host.assetType || host.asset_type || 'linux'
     }
@@ -788,9 +1128,7 @@ async function submitRescan(hosts) {
     return false
   }
 
-  const normalizedHosts = resolvedHosts
-    .map(normalizeRescanHost)
-    .filter(item => item.value)
+  const normalizedHosts = resolvedHosts.map(normalizeRescanHost).filter(item => item.value)
 
   if (normalizedHosts.length === 0) {
     ElMessage.warning('请选择至少一个有效的待扫描主机')
@@ -812,14 +1150,11 @@ async function submitRescan(hosts) {
     }
 
     ElMessage.success('扫描任务已提交')
+    trackScan(runId)
 
     lastSubmittedRunId.value = runId
     runResultRunId.value = runId
     runResultDialogVisible.value = true
-
-    setTimeout(() => {
-      loadHostData()
-    }, 2000)
 
     return true
   } catch (error) {
@@ -830,7 +1165,6 @@ async function submitRescan(hosts) {
     rescanLoading.value = false
   }
 }
-
 
 // ============================================================
 // 补丁维度数据加载与操作 (按补丁安装)
@@ -843,6 +1177,7 @@ const filters = reactive({
 const tableRef = ref(null)
 const allData = ref([])
 const selectedRows = ref([])
+let patchLoadRequestId = 0
 
 const selectedPatchIds = computed(() => selectedRows.value.map(r => r.patch_id))
 
@@ -880,12 +1215,83 @@ const patchDetailLoading = ref(false)
 const installDialogVisible = ref(false)
 const patchesToInstall = ref([])
 
+const affectedHostsVisible = ref(false)
+const affectedHostsLoading = ref(false)
+const affectedHostsError = ref('')
+const affectedHosts = ref([])
+const affectedPatch = ref(null)
+let affectedHostsRequestId = 0
+
 function handleViewAffectedHosts(row) {
-  patchesToInstall.value = [row]
+  affectedPatch.value = row
+  affectedHostsVisible.value = true
+  loadAffectedHosts()
+}
+
+async function loadAffectedHosts() {
+  if (!affectedHostsVisible.value || !affectedPatch.value?.patch_id) return
+  const requestId = ++affectedHostsRequestId
+  const patchId = affectedPatch.value.patch_id
+  affectedHostsLoading.value = true
+  affectedHostsError.value = ''
+  affectedHosts.value = []
+  try {
+    const response = await patchInstallApi.getMachinesByPatch({
+      patch_ids: [patchId],
+      hostId: '@@(linux)',
+      groupIds: []
+    })
+    if (requestId !== affectedHostsRequestId) return
+    affectedHosts.value = response?.data?.records || []
+  } catch {
+    if (requestId !== affectedHostsRequestId) return
+    affectedHostsError.value = '加载受影响主机失败，请重试'
+  } finally {
+    if (requestId === affectedHostsRequestId) affectedHostsLoading.value = false
+  }
+}
+
+watch(
+  affectedHostsVisible,
+  visible => {
+    if (!visible) {
+      affectedHostsRequestId += 1
+      affectedHostsLoading.value = false
+      affectedHosts.value = []
+      affectedHostsError.value = ''
+      affectedPatch.value = null
+    }
+  },
+  { flush: 'sync' }
+)
+
+onBeforeUnmount(() => {
+  affectedHostsRequestId += 1
+  hostLoadRequestId += 1
+  patchLoadRequestId += 1
+})
+
+function handleInstallAffectedPatch() {
+  if (affectedHostsLoading.value || affectedHostsError.value || !affectedHosts.value.length) return
+  patchesToInstall.value = [affectedPatch.value]
+  affectedHostsVisible.value = false
   installDialogVisible.value = true
 }
 
+function handleInstallHost(host) {
+  if (hostLoading.value) return
+  installTargetHosts.value = [host]
+  batchInstallDrawerVisible.value = true
+}
+
+function handleSeverityCountClick(host, severity) {
+  severityHost.value = host
+  hostSeverity.value = severity
+  severityPatchesVisible.value = true
+}
+
 async function handleOpenBatchInstallDrawer() {
+  if (hostLoading.value || !batchSelectedHosts.value.length) return
   let resolvedHosts
   try {
     resolvedHosts = await resolveAgentCapabilityHosts(batchSelectedHosts.value)
@@ -899,6 +1305,7 @@ async function handleOpenBatchInstallDrawer() {
     return
   }
   batchSelectedHosts.value = resolvedHosts
+  installTargetHosts.value = [...resolvedHosts]
   batchInstallDrawerVisible.value = true
 }
 
@@ -913,6 +1320,23 @@ function handleInstallSelected() {
 }
 
 function handleInstallSuccess() {
+  loadData()
+  emit('installed')
+}
+
+const scheduleInstallDialogVisible = ref(false)
+const scheduleSelectedPatches = ref([])
+
+function handleScheduleInstallSelected() {
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请先选择要安装的补丁')
+    return
+  }
+  scheduleSelectedPatches.value = [...selectedRows.value]
+  scheduleInstallDialogVisible.value = true
+}
+
+function handleScheduleInstallSuccess() {
   resetAllSelected()
   loadData()
 }
@@ -948,52 +1372,70 @@ function resolvePatchDistro(patch) {
   return 'redhat'
 }
 
-async function loadData() {
+async function loadData({ preserveSelection = false } = {}) {
+  const requestId = ++patchLoadRequestId
   loading.value = true
+  // 搜索保留累计选择；刷新和安装成功后仍清空选择。
+  resetAllSelected()
+  if (!preserveSelection) selectedRows.value = []
+  tableRef.value?.clearSelection()
   try {
     const params = {}
     if (filters.severity.length > 0) {
       params.severity = filters.severity.join(',')
     }
     const response = await patchInstallApi.getAvailablePatches(params)
+    if (requestId !== patchLoadRequestId) return
     if (response?.data) {
       allData.value = response.data.records || response.data || []
+      if (preserveSelection) {
+        const patchesById = new Map(allData.value.map(patch => [patch.patch_id, patch]))
+        selectedRows.value = selectedRows.value.map(
+          patch => patchesById.get(patch.patch_id) || patch
+        )
+      }
     }
-    resetAllSelected()
+    // 即使返回同一份数据，也恢复本次加载前清除的表格勾选。
+    nextTick(restorePatchPageSelection)
   } catch (error) {
+    if (requestId !== patchLoadRequestId) return
     console.error('Failed to load patches:', error)
     ElMessage.error('加载可安装补丁失败，请稍后重试')
     allData.value = []
   } finally {
-    loading.value = false
-    patchDataLoaded.value = true
+    if (requestId === patchLoadRequestId) {
+      loading.value = false
+      patchDataLoaded.value = true
+    }
   }
 }
 
 function handleSearch() {
-  resetAllSelected()
   pagination.page = 1
-  loadData()
+  loadData({ preserveSelection: true })
 }
 
 function handleReset() {
-  resetAllSelected()
   filters.severity = ['Critical', 'Important', 'Moderate', 'Low']
   filters.keyword = ''
   pagination.page = 1
   pagination.pageSize = 10
-  loadData()
+  loadData({ preserveSelection: true })
 }
 
 const {
   allSelected,
   handleToggleAllSelection: handleToggleSelectAll,
   handleTableSelect,
-  resetAllSelected
+  clearSelection: handleClearPatchSelection,
+  resetAllSelected,
+  restorePageSelection: restorePatchPageSelection
 } = useTableSelectAll(tableRef, {
   tableData: paginatedData,
   filteredData,
-  selectedItems: selectedRows
+  selectedItems: selectedRows,
+  matchFn: (a, b) => a.patch_id === b.patch_id,
+  preserveExistingSelection: true
 })
 
 function handlePageChange(page) {
@@ -1033,21 +1475,26 @@ async function loadPatchDetail(patchId) {
 function handleTabChange(tab) {
   activeTab.value = tab
   // 切换路由查询参数，维持状态在刷新后不丢失
-  router.replace({
-    query: {
-      ...route.query,
-      tab
-    }
-  })
+  if (!props.embedded)
+    router.replace({
+      query: {
+        ...route.query,
+        tab
+      }
+    })
   if (tab === 'host') {
     if (!hostDataLoaded.value) {
       loadOsLists()
       loadHostTagOptions()
       loadHostData()
+    } else {
+      nextTick(restoreHostPageSelection)
     }
   } else {
     if (!patchDataLoaded.value) {
       loadData()
+    } else {
+      nextTick(restorePatchPageSelection)
     }
   }
 }
@@ -1062,7 +1509,7 @@ function refresh() {
 
 // 挂载周期与路由参数自动响应
 onMounted(async () => {
-  const queryTab = route.query.tab
+  const queryTab = props.embedded ? props.initialTab : route.query.tab
   if (queryTab === 'host' || !queryTab) {
     activeTab.value = 'host'
     loadOsLists()
@@ -1074,11 +1521,30 @@ onMounted(async () => {
   }
 })
 
+watch(
+  () => props.initialTab,
+  tab => {
+    if (props.embedded && route.name === 'patches-machineScan') handleTabChange(tab)
+  }
+)
+
 // 暴露刷新接口
-defineExpose({ refresh })
+defineExpose({ refresh, refreshHosts: loadHostData })
 </script>
 
 <style scoped lang="scss">
+.linux-patch-install-page--embedded {
+  padding: 0;
+  height: auto;
+  overflow: visible;
+}
+
+.secondary-actions {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
 // 导航标签 - 保留原配色与风格的微调增强
 .nav-tabs {
   display: flex;
@@ -1090,6 +1556,8 @@ defineExpose({ refresh })
 }
 
 .nav-tab {
+  font-family: inherit;
+  border: 0;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1139,14 +1607,21 @@ defineExpose({ refresh })
   padding: 4px 0;
 }
 
-
-
 .severity-count {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-width: 24px;
   font-weight: 500;
+  border: 0;
+  background: transparent;
+  color: var(--el-color-primary);
+  cursor: pointer;
+
+  &:disabled {
+    color: var(--el-text-color-regular);
+    cursor: default;
+  }
 }
 
 .text-danger {
@@ -1190,4 +1665,65 @@ defineExpose({ refresh })
     color: #fff;
   }
 }
+.memory-overview {
+  width: 100%;
+  padding: 5px 0;
+}
+
+.memory-usage {
+  --memory-color: var(--el-color-success);
+  --memory-color-soft: var(--el-color-success-light-9);
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &--warning {
+    --memory-color: var(--el-color-warning);
+    --memory-color-soft: var(--el-color-warning-light-9);
+  }
+
+  &--danger {
+    --memory-color: var(--el-color-danger);
+    --memory-color-soft: var(--el-color-danger-light-9);
+  }
+
+  &--unknown {
+    --memory-color: var(--el-border-color);
+    --memory-color-soft: var(--el-fill-color-light);
+  }
+}
+
+.memory-usage__desc {
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--el-text-color-regular);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.memory-usage__track {
+  height: 8px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--memory-color) 22%, transparent);
+  border-radius: 5px;
+  background: var(--memory-color-soft);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.memory-usage__fill {
+  height: 100%;
+  min-width: 2px;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--memory-color) 78%, white),
+    var(--memory-color)
+  );
+  box-shadow: 1px 0 4px color-mix(in srgb, var(--memory-color) 45%, transparent);
+  transition:
+    width 0.35s ease,
+    background-color 0.2s ease;
+}
+
 </style>

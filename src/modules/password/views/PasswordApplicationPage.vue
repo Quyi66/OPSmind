@@ -373,6 +373,8 @@ function handleEdit(row) {
 async function handleSubmit(row) {
   try {
     await ElMessageBox.confirm('确定要提交此申请吗？', '提示', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'info'
@@ -411,6 +413,8 @@ async function handleReapply(row) {
 async function handleDelete(row) {
   try {
     await ElMessageBox.confirm('确定要删除此申请吗？删除后无法恢复。', '提示', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'

@@ -5,8 +5,9 @@
     width="1100px"
     destroy-on-close
     append-to-body
-    :close-on-click-modal="false"
+    :close-on-click-modal="!showStepActions && !stepSubmitting"
     @close="handleClose"
+    :close-on-press-escape="!showStepActions && !stepSubmitting"
   >
     <div class="win-patch-task-detail">
       <div class="ops-action-bar win-patch-task-detail__actions">
@@ -54,9 +55,6 @@
             {{ getTaskStatusLabel(taskDetail) }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="Run ID">
-          {{ taskRunId || '-' }}
-        </el-descriptions-item>
         <el-descriptions-item label="当前步骤">
           <el-tag
             v-if="getTaskStepLabel(taskDetail) !== '-'"
@@ -85,8 +83,18 @@
         </el-descriptions-item>
       </el-descriptions>
 
+      <el-collapse v-if="taskDetail" class="win-patch-task-technical">
+        <el-collapse-item title="技术信息" name="technical">
+          <el-descriptions :column="1" border size="small">
+            <el-descriptions-item label="运行标识">
+              <span style="overflow-wrap: anywhere">{{ taskRunId || '-' }}</span>
+            </el-descriptions-item>
+          </el-descriptions>
+        </el-collapse-item>
+      </el-collapse>
+
       <div v-if="availableExecuteRuns.length" class="win-patch-task-runs">
-        <div class="win-patch-task-runs__title">作业详情</div>
+        <div class="win-patch-task-runs__title">执行结果</div>
         <div class="win-patch-task-runs__actions">
           <el-tag
             v-for="item in availableExecuteRuns"
@@ -421,7 +429,7 @@ const availableExecuteRuns = computed(() => {
   const executeLabel = getTaskTypeLabel(taskDetail.value) === '回滚' ? '执行回滚' : '执行安装'
   const candidates = [
     {
-      label: '主任务作业',
+      label: '主任务执行',
       runId: taskRunId.value
     },
     {
@@ -498,7 +506,7 @@ const stepActionHint = computed(() => {
   }
 
   if (isTaskRunning(taskDetail.value)) {
-    return '当前步骤执行中，等待回调完成后会自动刷新。'
+    return '当前步骤执行中；开启自动轮询后可持续查询状态，也可手动刷新。'
   }
 
   if (isExecutePhase.value) {
@@ -631,6 +639,8 @@ async function handleSkipStep() {
       `确定跳过“${getTaskStepLabel(taskDetail.value)}”步骤吗？`,
       '跳过步骤',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         type: 'warning'
       }
     )
@@ -744,6 +754,10 @@ watch(
 .win-patch-task-detail__actions {
   margin-bottom: 0;
   padding-right: 4px;
+}
+
+.win-patch-task-technical {
+  flex-shrink: 0;
 }
 
 .win-patch-descriptions {

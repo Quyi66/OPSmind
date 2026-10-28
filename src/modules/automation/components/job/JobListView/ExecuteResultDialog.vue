@@ -1,13 +1,14 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    :title="`运维工具运行结果${jobTitle ? ` · ${jobTitle}` : ''}`"
+    :title="`运维工具运行结果${jobTitle ? ` · ${getAutomationRunTitle({ job_title: jobTitle, job_id: jobId || result?.job_id || result?.jobId })}` : ''}`"
     width="1260px"
     :z-index="zIndex"
     append-to-body
     destroy-on-close
     class="execute-result-dialog-wrapper"
     @close="handleClose"
+    :close-on-click-modal="true"
   >
     <div class="result-dialog" v-loading="loading">
       <el-tabs v-model="activeTab">
@@ -27,10 +28,6 @@
                   </div>
                   <div class="overview-meta">
                     <div class="meta-item">
-                      <span class="meta-label">运行 ID</span>
-                      <span class="meta-value">{{ summary.runId }}</span>
-                    </div>
-                    <div class="meta-item">
                       <span class="meta-label">执行通道</span>
                       <span class="meta-value">
                         <el-tag
@@ -40,10 +37,6 @@
                           {{ summary.connectionTypeLabel }}
                         </el-tag>
                       </span>
-                    </div>
-                    <div v-if="summary.agentClientId" class="meta-item">
-                      <span class="meta-label">Agent Client ID</span>
-                      <span class="meta-value">{{ summary.agentClientId }}</span>
                     </div>
                     <div v-if="summary.agentVersion" class="meta-item">
                       <span class="meta-label">Agent 版本</span>
@@ -67,10 +60,7 @@
                     </div>
                   </div>
                 </div>
-                <JobUpgradeOverview
-                  v-if="isAnsibleJob"
-                  :ansible-contents="ansibleContents"
-                />
+                <JobUpgradeOverview v-if="isAnsibleJob" :ansible-contents="ansibleContents" />
 
                 <div v-if="agentRouteMismatchMessage" class="result-error route-mismatch-error">
                   <div class="error-title-bar">
@@ -82,7 +72,11 @@
                 </div>
 
                 <div
-                  v-if="summary.errorTitle || summary.errorDetails || (summary.errorList && summary.errorList.length)"
+                  v-if="
+                    summary.errorTitle ||
+                    summary.errorDetails ||
+                    (summary.errorList && summary.errorList.length)
+                  "
                   class="result-error"
                 >
                   <div class="error-title-bar">
@@ -473,6 +467,7 @@ import { AGENT_ERROR_MESSAGES, agentApi } from '@/modules/asset/api'
 import { authService } from '@/core/auth'
 import { extractAgentRouteMismatchMessage } from '@/modules/asset/utils/agentRouteMismatch'
 import { translateText } from '@/utils/i18n'
+import { getAutomationRunTitle } from '@/modules/automation/utils/resourcePresentation'
 import AnsibleLogViewer from '../AnsibleLogViewer.vue'
 import JobUpgradeOverview from './JobUpgradeOverview.vue'
 
@@ -513,6 +508,7 @@ const props = defineProps({
   visible: { type: Boolean, default: false },
   runId: { type: String, default: '' },
   jobTitle: { type: String, default: '' },
+  jobId: { type: [String, Number], default: '' },
   zIndex: { type: Number, default: undefined }
 })
 
@@ -1047,7 +1043,7 @@ function parseJobExecutionError(errorRaw, ansibleContents = [], jobStatus = '') 
   }
 
   if (isJsonFormatted || ansibleMsgs.length > 0 || isStatusFailed) {
-    let title = '作业执行失败'
+    let title = '执行失败'
     if (failedTaskCount !== null) {
       title += `（${failedTaskCount} 个任务失败）`
     }
@@ -1205,9 +1201,6 @@ async function refreshExecutionChannelInfo(data) {
     executionChannelInfo.value = {
       ...directInfo,
       connectionType: channels.length > 1 ? 'mixed' : channels[0] || directInfo.connectionType,
-      agentClientId: joinDisplayValues(
-        infos.map(info => info?.agentClientId || info?.clientId).filter(Boolean)
-      ) || directInfo.agentClientId,
       agentVersion: joinDisplayValues(
         infos.map(info => info?.agentVersion).filter(Boolean)
       ) || directInfo.agentVersion,
@@ -1242,7 +1235,6 @@ const summary = computed(() => {
     startTime: formatDateTime(start),
     endTime: formatDateTime(end),
     username: data.username || '-',
-    runId: data.runId || data.id || props.runId || '-',
     connectionType,
     isAgentConnection,
     connectionTypeLabel: connectionType === 'mixed'
@@ -1252,7 +1244,6 @@ const summary = computed(() => {
         : connectionType === 'ssh'
           ? 'SSH'
           : '未知',
-    agentClientId: executionChannelInfo.value.agentClientId || '',
     agentVersion: executionChannelInfo.value.agentVersion || '',
     agentNode: executionChannelInfo.value.agentNode || '',
     relayTraceId: executionChannelInfo.value.relayTraceId || '',

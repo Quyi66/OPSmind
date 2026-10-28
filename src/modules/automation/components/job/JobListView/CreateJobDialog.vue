@@ -6,9 +6,10 @@
     direction="rtl"
     destroy-on-close
     @close="handleClose"
-    :close-on-click-modal="false"
+    :close-on-click-modal="viewMode"
     class="create-job-drawer"
     append-to-body
+    :close-on-press-escape="viewMode"
   >
     <div class="create-job-drawer__layout">
       <div class="create-job-drawer__masthead">
@@ -18,10 +19,6 @@
             <span class="create-job-drawer__meta-item">
               <em>运维工具类型</em>
               <strong>{{ currentTypeLabel }}</strong>
-            </span>
-            <span class="create-job-drawer__meta-item">
-              <em>所属应用</em>
-              <strong>{{ currentAppletLabel }}</strong>
             </span>
           </div>
         </div>
@@ -68,7 +65,7 @@
 
             <!-- 脚本作业配置 -->
             <div v-if="job.type === 'script'" id="section-script" class="form-section">
-              <div class="section-title">脚本设置</div>
+              <div class="section-title">脚本与目标</div>
 
               <el-form-item label="脚本类型">
                 <el-radio-group v-model="jobConfig.scriptType">
@@ -148,29 +145,33 @@
                 </div>
               </el-form-item>
 
-              <el-form-item label="回调API">
-                <el-input v-model="jobConfig.callback" placeholder="执行完成后回调的URL" />
-              </el-form-item>
+              <el-collapse v-model="advancedSections">
+                <el-collapse-item title="高级执行设置" name="execution">
+                  <el-form-item label="完成后回调">
+                    <el-input v-model="jobConfig.callback" placeholder="执行完成后回调的URL" />
+                  </el-form-item>
 
-              <el-form-item label="任务超时">
-                <el-input-number v-model="jobConfig.taskTimeout" :min="-1" :step="60" />
-                <span style="margin-left: 8px">秒</span>
-              </el-form-item>
+                  <el-form-item label="任务超时">
+                    <el-input-number v-model="jobConfig.taskTimeout" :min="-1" :step="60" />
+                    <span style="margin-left: 8px">秒，-1 表示不限制</span>
+                  </el-form-item>
 
-              <el-form-item label="详细输出">
-                <el-select v-model="jobConfig.verbosity" style="width: 200px">
-                  <el-option label="正常" :value="0" />
-                  <el-option label="详细 (-v)" :value="1" />
-                  <el-option label="更详细 (-vv)" :value="2" />
-                  <el-option label="调试 (-vvv)" :value="3" />
-                  <el-option label="连接调试 (-vvvv)" :value="4" />
-                </el-select>
-              </el-form-item>
+                  <el-form-item label="详细输出">
+                    <el-select v-model="jobConfig.verbosity" style="width: 200px">
+                      <el-option label="正常" :value="0" />
+                      <el-option label="详细 (-v)" :value="1" />
+                      <el-option label="更详细 (-vv)" :value="2" />
+                      <el-option label="调试 (-vvv)" :value="3" />
+                      <el-option label="连接调试 (-vvvv)" :value="4" />
+                    </el-select>
+                  </el-form-item>
+                </el-collapse-item>
+              </el-collapse>
             </div>
 
             <!-- REST 作业配置 -->
             <div v-if="job.type === 'rest'" id="section-rest" class="form-section">
-              <div class="section-title">REST设置</div>
+              <div class="section-title">请求配置</div>
 
               <el-form-item label="CURL" required>
                 <el-input
@@ -189,7 +190,7 @@
 
             <!-- 命令作业配置 -->
             <div v-if="job.type === 'command'" id="section-command" class="form-section">
-              <div class="section-title">命令设置</div>
+              <div class="section-title">命令与目标</div>
 
               <el-form-item label="执行命令" required>
                 <div
@@ -330,7 +331,7 @@
 
             <!-- 日志和审核 -->
             <div id="section-audit" class="form-section">
-              <div class="section-title">日志和审核</div>
+              <div class="section-title">审批与日志</div>
 
               <el-form-item label="操作审批">
                 <el-checkbox v-model="job.needApprove" :disabled="job.needReview">
@@ -374,9 +375,6 @@
                 <div class="section-title">测试运维工具</div>
                 <div class="test-section-meta">
                   <span class="section-badge">{{ testStatusLabel }}</span>
-                  <span v-if="testRunId && !testJobResult" class="test-section-run-id">
-                    Run ID {{ testRunId }}
-                  </span>
                 </div>
               </div>
 
@@ -458,7 +456,7 @@
     v-model="showFileSelector"
     :multiple-select="true"
     :pre-selected="currentTaskScripts"
-    @confirm="handleFileSelect"
+    v-on="fileSelectorListeners"
   />
 
   <!-- 命令选择器对话框 -->
@@ -470,7 +468,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, reactive, nextTick } from 'vue'
+import { ref, computed, watch, reactive, nextTick, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as jaoApi from '@/modules/automation/api/jao'
 import * as gfsApi from '@/modules/automation/api/gfs'
@@ -553,18 +551,6 @@ const currentTypeLabel = computed(() => {
   return typeOption?.label || '待选择'
 })
 
-const currentAppletLabel = computed(() => {
-  const currentAppletCode = job.appletCode || props.appletCode
-  if (!currentAppletCode) {
-    return '未指定'
-  }
-
-  const matchedApplet = props.appletsList.find(item => item.name === currentAppletCode)
-  return (
-    matchedApplet?.displayTitle || matchedApplet?.title || matchedApplet?.name || currentAppletCode
-  )
-})
-
 const scriptFileCount = computed(() =>
   jobConfig.tasks.reduce((count, task) => count + (task.scripts?.length || 0), 0)
 )
@@ -576,7 +562,7 @@ const commandCount = computed(() =>
 const testStatusLabel = computed(() => testJobStatus.value?.title || '未运行')
 
 const footerFacts = computed(() => {
-  const facts = [currentTypeLabel.value, currentAppletLabel.value]
+  const facts = [currentTypeLabel.value]
 
   if (job.type === 'script') {
     facts.push(`脚本 ${scriptFileCount.value}`)
@@ -610,9 +596,13 @@ const paramTypeList = [
 
 // 状态
 const submitting = ref(false)
+const advancedSections = ref([])
 const showFileSelector = ref(false)
 const showCommandSelector = ref(false)
 const currentTaskIndex = ref(0)
+const fileSelectorListeners = ref({})
+let fileSelectionContext = null
+let fileExistRequestId = 0
 const fileStatusMap = ref({})
 const scrollbarRef = ref(null)
 const activeSection = ref('section-base')
@@ -632,18 +622,18 @@ const navSections = computed(() => {
   const sections = [{ id: 'section-base', label: '基本设置' }]
 
   if (job.type === 'script') {
-    sections.push({ id: 'section-script', label: '脚本设置' })
+    sections.push({ id: 'section-script', label: '脚本与目标' })
   } else if (job.type === 'rest') {
-    sections.push({ id: 'section-rest', label: 'REST设置' })
+    sections.push({ id: 'section-rest', label: '请求配置' })
   } else if (job.type === 'command') {
-    sections.push({ id: 'section-command', label: '命令设置' })
+    sections.push({ id: 'section-command', label: '命令与目标' })
   }
 
   if (job.type !== 'command') {
     sections.push({ id: 'section-params', label: '运行参数' })
   }
 
-  sections.push({ id: 'section-audit', label: '日志和审核' })
+  sections.push({ id: 'section-audit', label: '审批与日志' })
   if (!props.viewMode) {
     sections.push({ id: 'section-test', label: '测试运维工具' })
   }
@@ -843,38 +833,109 @@ function handleCommandSelect(commands) {
  * 打开文件选择器
  */
 function openFileSelector(taskIndex) {
+  const task = jobConfig.tasks[taskIndex]
+  if (formDisabled.value || !props.modelValue || job.type !== 'script' || !task) return
   currentTaskIndex.value = taskIndex
+  const context = { task, jobId: props.jobId }
+  fileSelectionContext = context
+  fileSelectorListeners.value = { confirm: files => handleFileSelect(files, context) }
   showFileSelector.value = true
 }
+
+function closeFileSelection() {
+  fileSelectionContext = null
+  fileSelectorListeners.value = {}
+  showFileSelector.value = false
+}
+
+watch(
+  () => [
+    props.modelValue,
+    props.jobId,
+    props.jobType,
+    props.viewMode,
+    job.type,
+    jobConfig.tasks[currentTaskIndex.value]
+  ],
+  () => {
+    closeFileSelection()
+    fileExistRequestId += 1
+  },
+  { flush: 'sync' }
+)
+
+watch(
+  showFileSelector,
+  isVisible => {
+    if (!isVisible) fileSelectionContext = null
+  },
+  { flush: 'sync' }
+)
+
+onBeforeUnmount(() => {
+  fileSelectionContext = null
+  fileExistRequestId += 1
+})
 
 /**
  * 处理文件选择
  */
-function handleFileSelect(files) {
+function handleFileSelect(files, context) {
   const task = jobConfig.tasks[currentTaskIndex.value]
-  if (!task) return
+  if (
+    !context ||
+    context !== fileSelectionContext ||
+    !showFileSelector.value ||
+    !props.modelValue ||
+    formDisabled.value ||
+    job.type !== 'script' ||
+    props.jobId !== context.jobId ||
+    task !== context.task ||
+    !Array.isArray(files)
+  )
+    return
 
-  task.scripts = files.map(f => ({
-    location: f.path,
-    argline: f.config || '',
-    tag: f.tag || ''
-  }))
+  const previousScripts = task.scripts || []
+  const matches = files.map(file => previousScripts.filter(script => script.location === file.path))
+  if (matches.some(scripts => scripts.length > 1)) {
+    ElMessage.warning('同一路径存在多份脚本配置，请先在表单中处理重复项后再选择文件')
+    return
+  }
+
+  // 只保留确认结果中仍选中的旧条目；新文件沿用原默认结构和确认顺序。
+  task.scripts = files.map((file, index) =>
+    matches[index].length === 1
+      ? { ...matches[index][0] }
+      : { location: file.path, argline: file.config || '', tag: file.tag || '' }
+  )
 
   // 检查文件是否存在
-  checkFilesExist(task.scripts)
+  checkFilesExist(task.scripts, context)
 }
 
 /**
  * 检查文件是否存在
  */
-async function checkFilesExist(scripts) {
+async function checkFilesExist(scripts, context) {
   if (!scripts || scripts.length === 0) return
 
+  const requestId = ++fileExistRequestId
   const paths = scripts.map(s => s.location)
+  const isCurrent = () =>
+    requestId === fileExistRequestId &&
+    props.modelValue &&
+    props.jobId === context.jobId &&
+    job.type === 'script' &&
+    jobConfig.tasks[currentTaskIndex.value] === context.task &&
+    context.task.scripts === scripts &&
+    scripts.length === paths.length &&
+    scripts.every((script, index) => script.location === paths[index])
   try {
     const response = await gfsApi.checkFileExist(paths)
+    if (!isCurrent()) return
     fileStatusMap.value = response.data || {}
   } catch (error) {
+    if (!isCurrent()) return
     console.error('检查文件存在性失败:', error)
   }
 }
@@ -1091,7 +1152,7 @@ async function save() {
     const payload = {
       title: job.title,
       type: job.type,
-      appletCode: job.appletCode,
+      appletCode: job.appletCode, // Keep the original association even though it is no longer displayed.
       description: job.description,
       params: job.params,
       needApprove: job.needApprove,
@@ -1174,6 +1235,8 @@ function resetForm() {
  * 关闭对话框
  */
 function handleClose() {
+  closeFileSelection()
+  fileExistRequestId += 1
   resetForm()
   emit('update:modelValue', false)
 }
@@ -1701,11 +1764,6 @@ watch(
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 8px;
-}
-
-.test-section-run-id {
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
 }
 
 .section-badge {

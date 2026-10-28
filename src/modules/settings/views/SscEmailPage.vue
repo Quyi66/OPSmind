@@ -81,7 +81,14 @@
     </el-card>
 
     <!-- 测试发送对话框 -->
-    <el-dialog v-model="testDialogVisible" title="测试发送邮件" width="400px" destroy-on-close>
+    <el-dialog
+      v-model="testDialogVisible"
+      title="测试发送邮件"
+      width="400px"
+      destroy-on-close
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+    >
       <el-form @submit.prevent="handleSendTest">
         <el-form-item label="收件人邮箱">
           <el-input
@@ -213,6 +220,8 @@ async function handleSave() {
 
   try {
     await ElMessageBox.confirm('确定要保存邮件配置吗？', '变更操作', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'

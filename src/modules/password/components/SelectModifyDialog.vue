@@ -4,7 +4,7 @@
     title="选择修改密码"
     width="650px"
     :close-on-click-modal="false"
-    :close-on-press-escape="!submitting"
+    :close-on-press-escape="false"
     :show-close="!submitting"
     @close="handleClose"
   >
@@ -66,7 +66,7 @@
             autocomplete="new-password"
             :disabled="submitting"
           />
-          <div class="hint-text">密码长度8-16位，由数字、大小写字母、~!@$%&_组成</div>
+          <div class="hint-text">密码长度需为8～16位</div>
         </el-form-item>
 
         <!-- 密码有效期 -->
@@ -201,6 +201,8 @@ async function handleSubmit() {
       `确定要修改选中的 ${selectedCount.value} 台服务器的密码吗？`,
       '确认修改密码',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         type: 'warning',
         confirmButtonText: '确认',
         cancelButtonText: '取消'

@@ -97,6 +97,7 @@
       v-model="showTemplateDialog"
       :title="currentTemplate?.name || '模板详情'"
       width="1000px"
+      :close-on-click-modal="true"
     >
       <div class="template-detail" v-if="currentTemplate">
         <el-descriptions :column="2" border>
@@ -169,6 +170,7 @@
       title="添加 sudo 命令"
       width="500px"
       :close-on-click-modal="false"
+      :close-on-press-escape="false"
     >
       <el-form
         ref="addCommandFormRef"
@@ -202,6 +204,7 @@
       title="新建 sudo 模板"
       width="500px"
       :close-on-click-modal="false"
+      :close-on-press-escape="false"
     >
       <el-form
         ref="createTemplateFormRef"
@@ -391,6 +394,8 @@ async function loadTemplateCommands() {
 async function confirmDeleteTemplate(template) {
   try {
     await ElMessageBox.confirm(`确定要删除模板「${template.name}」吗？`, '删除确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning',
       confirmButtonText: '删除',
       cancelButtonText: '取消'
@@ -442,6 +447,8 @@ async function handleAddCommand() {
 async function confirmDeleteCommand(command) {
   try {
     await ElMessageBox.confirm(`确定要删除命令「${command.command}」吗？`, '删除确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning',
       confirmButtonText: '删除',
       cancelButtonText: '取消'

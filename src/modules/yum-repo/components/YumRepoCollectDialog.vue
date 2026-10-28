@@ -5,6 +5,7 @@
     width="620px"
     destroy-on-close
     :close-on-click-modal="false"
+    :close-on-press-escape="false"
   >
     <div class="win-patch-dialog-body">
       <el-form label-width="110px">
@@ -15,7 +16,7 @@
           <span>{{ repoUrl }}</span>
         </el-form-item>
         <el-form-item label="执行方式">
-          <span>由 localhost 执行采集，无需选择主机</span>
+          <span>按所选仓库提交采集任务，无需选择主机</span>
         </el-form-item>
       </el-form>
     </div>

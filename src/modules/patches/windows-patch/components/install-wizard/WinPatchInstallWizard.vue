@@ -9,6 +9,7 @@
     :close-on-click-modal="false"
     :show-close="!dialogBusy"
     @closed="resetState"
+    :close-on-press-escape="false"
   >
     <WinPatchInstallWizardStepper
       :active-index="activeStep"
@@ -18,6 +19,7 @@
 
     <WinPatchInstallWizardSummaryStep
       v-show="currentStepKey === 'summary'"
+      :host-summaries="hostSummaries"
       :host-summary="hostSummary"
       :selected-rows="selectedPatchItems"
     />
@@ -61,6 +63,7 @@
       v-show="currentStepKey === 'execute'"
       :available-run-items="availableRunItems"
       :error-message="taskErrorMessage"
+      :host-summaries="hostSummaries"
       :host-summary="hostSummary"
       :install-options="installOptions"
       :pipeline-items="pipelineItems"
@@ -100,7 +103,9 @@
         <el-button
           v-else
           type="primary"
-          :disabled="selectedPatchStatusIds.length === 0"
+          :disabled="
+            !['success', 'failed'].includes(pipelineStatus) && selectedPatchStatusIds.length === 0
+          "
           @click="handlePrimaryAction"
         >
           {{ primaryButtonText }}
@@ -134,6 +139,10 @@ const props = defineProps({
   hostSummary: {
     type: Object,
     default: null
+  },
+  hostSummaries: {
+    type: Array,
+    default: () => []
   },
   selectedRows: {
     type: Array,

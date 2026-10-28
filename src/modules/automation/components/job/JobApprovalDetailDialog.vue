@@ -3,12 +3,12 @@
     v-model="dialogVisible"
     title="审批详情"
     width="600px"
-    :close-on-click-modal="false"
+    :close-on-click-modal="true"
     @close="handleClose"
   >
     <el-form label-width="120px" size="default">
       <el-form-item label="运维工具名称">
-        <span>{{ approveData.jobName }}</span>
+        <span>{{ getAutomationToolTitle({ jobId: approveData.jobId, title: approveData.jobName }) }}</span>
       </el-form-item>
 
       <el-form-item label="执行策略">
@@ -90,6 +90,7 @@
 </template>
 
 <script setup>
+import { getAutomationToolTitle } from '@/modules/automation/utils/resourcePresentation'
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { formatDateTime } from '@/modules/automation/utils/helpers'

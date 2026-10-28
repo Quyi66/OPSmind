@@ -6,6 +6,7 @@
     :close-on-click-modal="false"
     destroy-on-close
     @close="handleClose"
+    :close-on-press-escape="false"
   >
     <!-- 单个命令审核 -->
     <div v-if="isSingleMode" class="approve-content">

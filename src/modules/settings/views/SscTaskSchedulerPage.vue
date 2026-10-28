@@ -47,7 +47,6 @@
     <!-- 数据表格 -->
     <div class="ops-table-wrapper">
       <el-table :data="scheduleTasks" v-loading="loadingTasks" max-height="calc(100vh - 304px)">
-        <el-table-column prop="id" label="任务ID" width="120" />
         <el-table-column
           prop="description"
           label="任务备注"
@@ -55,8 +54,7 @@
           show-overflow-tooltip
         />
         <el-table-column prop="cronExpression" label="CRON表达式" width="140" />
-        <el-table-column prop="appResource" label="应用资源" width="120" />
-        <el-table-column prop="jobType" label="作业类型" width="100" />
+        <el-table-column prop="jobType" label="任务类型" width="100" />
         <el-table-column prop="status" label="当前状态" width="100">
           <template #default="{ row }">
             <el-tag :type="row.status === 'ENABLED' ? 'success' : 'info'" size="small">
@@ -122,7 +120,6 @@ async function loadScheduleTasks() {
       const kw = taskKeyword.value.toLowerCase()
       scheduleTasks.value = allTasks.filter(
         task =>
-          task.id?.toLowerCase().includes(kw) ||
           task.description?.toLowerCase().includes(kw) ||
           task.cronExpression?.toLowerCase().includes(kw)
       )

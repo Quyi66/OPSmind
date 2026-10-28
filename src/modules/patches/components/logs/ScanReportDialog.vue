@@ -5,6 +5,7 @@
     width="90%"
     destroy-on-close
     class="scan-report-dialog"
+    :close-on-click-modal="true"
   >
     <div class="dialog-content">
       <div class="summary-card" v-loading="summaryLoading">
@@ -127,6 +128,7 @@
     width="80%"
     destroy-on-close
     class="scan-host-detail-dialog"
+    :close-on-click-modal="true"
   >
     <div v-loading="hostDetailLoading" class="fix-dialog-content">
       <el-tabs v-model="activeTab" class="detail-tabs">

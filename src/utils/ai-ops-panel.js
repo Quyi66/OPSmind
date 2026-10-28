@@ -697,7 +697,6 @@ function mountAiOpsPanelEvents(elements) {
   bindEvent(window, 'keydown', event => {
     if (event.key === 'Escape') {
       stopInteraction()
-      closeAiOpsPanel()
     }
   })
 }

@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue'
+import { computed, onUnmounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { winPatchApi } from '../api'
 import { WIN_PATCH_ROLLBACK_PIPELINE_STEPS, WIN_PATCH_ROLLBACK_WIZARD_STEPS } from '../constants'
@@ -23,7 +23,7 @@ function getStepSuccessStatuses(stepKey) {
     case 'RESTART':
       return ['RESTART_DONE']
     case 'VALIDATE':
-      return ['COMPLETED']
+      return ['COMPLETED', 'SUCCESS', 'PASS']
     default:
       return []
   }
@@ -32,15 +32,31 @@ function getStepSuccessStatuses(stepKey) {
 function getStepFailedStatuses(stepKey) {
   switch (normalizeUpper(stepKey)) {
     case 'PRE_CHECK':
-      return ['PRE_CHECK_FAILED', 'FAILED']
+      return ['PRE_CHECK_FAILED']
     case 'ROLLBACK':
-      return ['ROLLBACK_FAILED', 'FAILED']
+    case 'EXECUTE':
+      return ['ROLLBACK_FAILED']
     case 'RESTART':
-      return ['FAILED']
+      return ['RESTART_FAILED']
     case 'VALIDATE':
-      return ['VALIDATE_FAILED', 'FAILED']
+      return ['VALIDATE_FAILED']
     default:
-      return ['FAILED', 'ERROR']
+      return []
+  }
+}
+
+function getStepRunningStatuses(stepKey) {
+  switch (normalizeUpper(stepKey)) {
+    case 'PRE_CHECK':
+      return ['PRE_CHECKING']
+    case 'ROLLBACK':
+      return ['ROLLING_BACK']
+    case 'RESTART':
+      return ['RESTARTING', 'RESTART_RUNNING']
+    case 'VALIDATE':
+      return ['VALIDATING']
+    default:
+      return []
   }
 }
 
@@ -107,12 +123,54 @@ function getAuditStepKey(step) {
   return normalizeUpper(step?.step)
 }
 
-function findAuditStep(steps = [], stepKey) {
+function filterAuditSteps(steps = [], stepKey) {
   const normalizedKeys = (Array.isArray(stepKey) ? stepKey : [stepKey])
     .map(key => normalizeUpper(key))
     .filter(Boolean)
 
-  return steps.find(step => normalizedKeys.includes(getAuditStepKey(step))) || null
+  return steps.filter(step => normalizedKeys.includes(getAuditStepKey(step)))
+}
+
+function resolveAggregatedAuditStep(steps = [], stepKey) {
+  const matchingSteps = filterAuditSteps(steps, stepKey)
+  if (!matchingSteps.length) {
+    return null
+  }
+
+  const statuses = matchingSteps.map(step => normalizeUpper(step?.status))
+  let aggregatedStatus = 'PENDING'
+
+  if (statuses.some(status => ['FAILED', 'ERROR'].includes(status))) {
+    aggregatedStatus = 'FAILED'
+  } else if (statuses.every(status => status === 'SKIPPED')) {
+    aggregatedStatus = 'SKIPPED'
+  } else if (statuses.every(status => ['SUCCESS', 'COMPLETED', 'SKIPPED'].includes(status))) {
+    aggregatedStatus = 'SUCCESS'
+  } else if (
+    statuses.some(status => ['RUNNING', 'IN_PROGRESS'].includes(status)) ||
+    (statuses.some(status => ['SUCCESS', 'COMPLETED'].includes(status)) &&
+      statuses.some(status => ['PENDING', 'WAITING', 'CREATED'].includes(status)))
+  ) {
+    aggregatedStatus = 'RUNNING'
+  } else if (statuses.every(status => ['PENDING', 'WAITING', 'CREATED'].includes(status))) {
+    aggregatedStatus = 'PENDING'
+  } else {
+    aggregatedStatus = statuses[0] || 'PENDING'
+  }
+
+  const runId = matchingSteps.find(step => String(step?.runId || '').trim())?.runId || ''
+  const remark = matchingSteps.find(step => String(step?.remark || '').trim())?.remark || ''
+
+  return {
+    ...matchingSteps[0],
+    status: aggregatedStatus,
+    runId,
+    remark
+  }
+}
+
+function findAuditStep(steps = [], stepKey) {
+  return resolveAggregatedAuditStep(steps, stepKey)
 }
 
 function resolveExecuteStepKeys(task = null) {
@@ -130,7 +188,10 @@ function resolvePipelineStepKeys(stepKey, task = null) {
 }
 
 function resolvePipelineCurrentStep(task = null) {
-  const currentStep = normalizeUpper(pickValue(task, ['currentStep', 'current_step'], ''))
+  const currentStep = normalizeUpper(
+    pickValue(task, ['currentStep', 'current_step'], '') ||
+      deriveCurrentStep(task, task?.steps || [])
+  )
   if (currentStep === 'EXECUTE') {
     return resolveExecuteStepKeys(task)[0]
   }
@@ -254,6 +315,99 @@ function mapPipelineUiStatus(status) {
   return 'idle'
 }
 
+const PIPELINE_STEP_ORDER = {
+  PRE_CHECK: 0,
+  ROLLBACK: 1,
+  EXECUTE: 1,
+  INSTALL: 1,
+  RESTART: 2,
+  VALIDATE: 3
+}
+
+function resolvePipelineStepUiStatus({
+  stepKey,
+  auditStatus,
+  task,
+  pipelineStatus,
+  isSkipped
+}) {
+  if (isSkipped || auditStatus === 'SKIPPED') {
+    return 'skipped'
+  }
+
+  const normalizedStepKey = normalizeUpper(stepKey)
+  const rawTaskStatus = normalizeUpper(
+    pickValue(task, ['taskStatus', 'task_status', 'status'], '')
+  )
+  const taskStatus = getTaskStatusValue(task)
+  const currentStep = normalizeUpper(resolvePipelineCurrentStep(task))
+  const stepOrder = PIPELINE_STEP_ORDER[normalizedStepKey] ?? -1
+  const currentStepOrder = PIPELINE_STEP_ORDER[currentStep] ?? -1
+  const runningStatuses = getStepRunningStatuses(normalizedStepKey)
+  const successStatuses = getStepSuccessStatuses(normalizedStepKey)
+  const failedStatuses = getStepFailedStatuses(normalizedStepKey)
+
+  const isCurrentStep = currentStep === normalizedStepKey
+  const isTaskGlobalFailed =
+    ['FAILED', 'ERROR'].includes(taskStatus) ||
+    ['FAILED', 'ERROR'].includes(rawTaskStatus) ||
+    pipelineStatus === 'failed'
+
+  // 1. 优先判定失败状态：步骤专属失败、聚合审计失败，或当前正在执行的步骤发生全局失败
+  if (
+    auditStatus === 'FAILED' ||
+    failedStatuses.includes(rawTaskStatus) ||
+    failedStatuses.includes(taskStatus) ||
+    (isCurrentStep && isTaskGlobalFailed)
+  ) {
+    return 'failed'
+  }
+
+  // 2. 判定尚未开始的后置步骤：防止全局 running 穿透至尚未到达的步骤
+  if (currentStepOrder !== -1 && stepOrder > currentStepOrder) {
+    return 'pending'
+  }
+
+  // 3. 判定运行中状态：主任务处于该步骤运行中，或当前处于该步骤且处于全局运行中，或聚合审计仍在运行中
+  if (
+    runningStatuses.includes(rawTaskStatus) ||
+    runningStatuses.includes(taskStatus) ||
+    auditStatus === 'RUNNING' ||
+    (isCurrentStep &&
+      (['RUNNING', 'IN_PROGRESS'].includes(taskStatus) || pipelineStatus === 'running'))
+  ) {
+    return 'running'
+  }
+
+  // 4. 判定完成成功状态（以主任务接口状态为主）
+  // (1) 主任务明确返回了该步骤的成功状态（如 RESTART_DONE, ROLLBACK_DONE, PRE_CHECK_DONE, COMPLETED）
+  // (2) 主任务已推进到后续步骤（currentStepOrder > stepOrder），说明前置步骤必然已完成
+  const isStepDoneByMainTask =
+    successStatuses.includes(rawTaskStatus) ||
+    successStatuses.includes(taskStatus) ||
+    (currentStepOrder > stepOrder && currentStepOrder !== -1)
+
+  if (isStepDoneByMainTask) {
+    return 'success'
+  }
+
+  // (3) 所有主机的审计均已成功，但若主任务仍停留在本步骤的未完成态，则绝不能提前显示成功
+  if (auditStatus === 'SUCCESS') {
+    if (isCurrentStep && !successStatuses.includes(rawTaskStatus)) {
+      if (
+        pipelineStatus === 'running' ||
+        ['RUNNING', 'IN_PROGRESS', 'PENDING', 'CREATED'].includes(taskStatus)
+      ) {
+        return 'running'
+      }
+    }
+    return 'success'
+  }
+
+  // 5. 兜底映射
+  return mapPipelineUiStatus(auditStatus)
+}
+
 export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess } = {}) {
   const activeStep = ref(0)
   const rollbackOptions = ref(createRollbackOptions())
@@ -272,6 +426,17 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
   const showRunResultDialog = ref(false)
   const currentRunId = ref('')
   const currentRunTitle = ref('')
+  let sessionId = 0
+  let cancelWait = null
+  let resumeStep = 0
+  let resumePolling = false
+  let scriptsSynced = false
+  let scanSubmitted = false
+  let taskHostIds = []
+
+  function checkSession(session) {
+    if (session !== sessionId) throw new Error('回滚向导已关闭')
+  }
 
   const { start, stop } = useWinPatchPolling(3000)
 
@@ -341,6 +506,13 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
   })
   const currentTaskStatus = computed(() => getTaskStatusValue(taskDetail.value))
   const currentPipelineStep = computed(() => resolvePipelineCurrentStep(taskDetail.value))
+  const stepKeyToSkipKeyMap = {
+    PRE_CHECK: 'pre-check',
+    ROLLBACK: 'execute',
+    RESTART: 'restart',
+    VALIDATE: 'validate'
+  }
+
   const pipelineItems = computed(() => {
     return WIN_PATCH_ROLLBACK_PIPELINE_STEPS.map(step => {
       const auditStep = findAuditStep(
@@ -348,18 +520,16 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
         resolvePipelineStepKeys(step.key, taskDetail.value)
       )
       const auditStatus = normalizeUpper(auditStep?.status)
-      let uiStatus = mapPipelineUiStatus(auditStatus)
+      const skipKey = stepKeyToSkipKeyMap[normalizeUpper(step.key)]
+      const isSkipped = skipKey ? Boolean(skippedSteps.value[skipKey]) : false
 
-      if (!auditStatus && currentTaskId.value && currentPipelineStep.value === step.key) {
-        if (
-          ['FAILED', 'ERROR'].includes(currentTaskStatus.value) ||
-          pipelineStatus.value === 'failed'
-        ) {
-          uiStatus = 'failed'
-        } else if (pipelineStatus.value === 'running') {
-          uiStatus = 'running'
-        }
-      }
+      const uiStatus = resolvePipelineStepUiStatus({
+        stepKey: step.key,
+        auditStatus,
+        task: taskDetail.value,
+        pipelineStatus: pipelineStatus.value,
+        isSkipped
+      })
 
       return {
         key: step.key,
@@ -380,7 +550,7 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
   const availableRunItems = computed(() => {
     const candidates = [
       {
-        label: '主任务作业',
+        label: '主任务执行',
         runId: String(pickValue(taskDetail.value, ['runId', 'run_id'], '')).trim()
       },
       {
@@ -431,6 +601,7 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
   })
 
   async function loadTaskRuntime(options = {}) {
+    const session = sessionId
     if (!currentTaskId.value) {
       return null
     }
@@ -439,6 +610,7 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
 
     try {
       const detailResponse = await winPatchApi.getTaskDetail(currentTaskId.value)
+      checkSession(session)
       const detailData = unwrapResponse(detailResponse)
       const baseTask = detailData?.task || detailData || null
       const nextAuditSteps = Array.isArray(detailData?.steps) ? detailData.steps : []
@@ -472,9 +644,11 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
       if (!options.silent) {
         ElMessage.error('加载 Windows 回滚任务详情失败')
       }
-      throw error
+      const queryError = new Error(resolveApiErrorMessage(error, '查询回滚任务状态失败'))
+      queryError.queryInterrupted = true
+      throw queryError
     } finally {
-      runtimeLoading.value = false
+      if (session === sessionId) runtimeLoading.value = false
     }
   }
 
@@ -499,6 +673,7 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
   }
 
   async function ensureTaskCreated() {
+    const session = sessionId
     if (currentTaskId.value) {
       return currentTaskId.value
     }
@@ -511,12 +686,14 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
       throw new Error('当前选择中缺少主机信息，无法创建回滚任务')
     }
 
+    taskHostIds = [...selectedHostIds.value]
     const response = await winPatchApi.createRollbackTask({
-      hostIds: selectedHostIds.value,
+      hostIds: taskHostIds,
       histUpdateIds: selectedHistUpdateIds.value,
       reboot: rollbackOptions.value.reboot,
       rescanAfter: rollbackOptions.value.rescanAfter
     })
+    checkSession(session)
     const task = unwrapResponse(response)
     const taskId = String(pickValue(task, ['id'], '')).trim()
 
@@ -574,8 +751,12 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
   }
 
   function waitForStepCompletion(stepKey, actionLabel) {
+    const normalizedStepKey = normalizeUpper(stepKey)
+    const session = sessionId
+
     return new Promise((resolve, reject) => {
       let settled = false
+      let queryFailures = 0
       const successStatuses = getStepSuccessStatuses(stepKey)
       const failedStatuses = getStepFailedStatuses(stepKey)
 
@@ -585,6 +766,7 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
         }
 
         settled = true
+        cancelWait = null
         stopRuntimePolling()
 
         if (success) {
@@ -594,22 +776,70 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
 
         reject(error || new Error(`${actionLabel}失败`))
       }
+      cancelWait = () => finalize(false, new Error('回滚向导已关闭'))
 
       const evaluate = () => {
         const stepStatus = getAuditStepStatus(stepKey)
+        const rawTaskStatus = normalizeUpper(
+          pickValue(taskDetail.value, ['taskStatus', 'task_status', 'status'], '')
+        )
         const taskStatus = getTaskStatusValue(taskDetail.value)
+        const currentStep = normalizeUpper(resolvePipelineCurrentStep(taskDetail.value))
+        const runningStatuses = getStepRunningStatuses(stepKey)
+        const isMainTaskRunningCurrentStep =
+          currentStep === normalizedStepKey &&
+          (['RUNNING', 'IN_PROGRESS'].includes(taskStatus) ||
+            ['RUNNING', 'IN_PROGRESS'].includes(rawTaskStatus))
+
+        // 如果主任务状态表明当前步骤仍处于运行态，或聚合审计状态仍处于运行态，继续轮询等待
+        if (
+          runningStatuses.includes(rawTaskStatus) ||
+          runningStatuses.includes(taskStatus) ||
+          stepStatus === 'RUNNING' ||
+          isMainTaskRunningCurrentStep
+        ) {
+          return
+        }
+
+        // 执行或跳过重启都须等待主任务进入 RESTART_DONE，审计状态不能替代校验前置条件
+        if (normalizedStepKey === 'RESTART') {
+          if (rawTaskStatus === 'RESTART_DONE') {
+            finalize(true)
+            return
+          }
+
+          if (
+            ['FAILED', 'ERROR'].includes(rawTaskStatus) ||
+            ['FAILED', 'ERROR'].includes(taskStatus) ||
+            failedStatuses.includes(rawTaskStatus) ||
+            failedStatuses.includes(taskStatus) ||
+            ['FAILED', 'ERROR'].includes(stepStatus)
+          ) {
+            finalize(false, new Error(taskErrorMessage.value || `${actionLabel}失败`))
+            return
+          }
+
+          // 中间状态（RESTARTING, RESTART_RUNNING, ROLLBACK_DONE 等）继续轮询
+          return
+        }
 
         if (['SUCCESS', 'SKIPPED'].includes(stepStatus)) {
           finalize(true)
           return
         }
 
-        if (successStatuses.includes(taskStatus)) {
+        if (successStatuses.includes(taskStatus) || successStatuses.includes(rawTaskStatus)) {
           finalize(true)
           return
         }
 
-        if (['FAILED', 'ERROR'].includes(stepStatus) || failedStatuses.includes(taskStatus)) {
+        if (
+          ['FAILED', 'ERROR'].includes(stepStatus) ||
+          ['FAILED', 'ERROR'].includes(taskStatus) ||
+          ['FAILED', 'ERROR'].includes(rawTaskStatus) ||
+          failedStatuses.includes(taskStatus) ||
+          failedStatuses.includes(rawTaskStatus)
+        ) {
           finalize(false, new Error(taskErrorMessage.value || `${actionLabel}失败`))
           return
         }
@@ -619,9 +849,17 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
         async () => {
           try {
             await loadTaskRuntime({ silent: true })
+            checkSession(session)
+            queryFailures = 0
             evaluate()
-          } catch (error) {
-            finalize(false, error)
+          } catch {
+            if (session !== sessionId || settled) return
+            queryFailures += 1
+            if (queryFailures >= 3) {
+              const queryError = new Error('连续三次查询任务状态失败')
+              queryError.queryInterrupted = true
+              finalize(false, queryError)
+            }
           }
         },
         { immediate: true }
@@ -630,12 +868,24 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
   }
 
   async function triggerTaskStep(stepKey, action, executeOptions = {}) {
+    const session = sessionId
+    const normalizedStepKey = normalizeUpper(stepKey)
     const currentStatus = getAuditStepStatus(stepKey)
-    if (['SUCCESS', 'SKIPPED'].includes(currentStatus)) {
+    const rawTaskStatus = normalizeUpper(
+      pickValue(taskDetail.value, ['taskStatus', 'task_status', 'status'], '')
+    )
+    if (normalizedStepKey === 'RESTART') {
+      if (rawTaskStatus === 'RESTART_DONE') {
+        return
+      }
+    } else if (['SUCCESS', 'SKIPPED'].includes(currentStatus)) {
       return
     }
 
-    if (['RUNNING', 'IN_PROGRESS'].includes(currentStatus)) {
+    if (
+      ['RUNNING', 'IN_PROGRESS'].includes(currentStatus) ||
+      (normalizedStepKey === 'RESTART' && ['RESTARTING', 'RESTART_RUNNING'].includes(rawTaskStatus))
+    ) {
       const stepLabel =
         WIN_PATCH_ROLLBACK_PIPELINE_STEPS.find(item => item.key === stepKey)?.label || stepKey
       await waitForStepCompletion(stepKey, stepLabel)
@@ -662,11 +912,12 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
               taskType: 'ROLLBACK',
               ...executeOptions
             })
+      checkSession(session)
       applyTaskSnapshot(unwrapResponse(response))
 
-      if (action === 'skip' && stepKey !== 'RESTART') {
+      if (action === 'skip' && normalizedStepKey !== 'RESTART') {
         taskAuditSteps.value = taskAuditSteps.value.map(step => {
-          if (normalizeUpper(step?.step) !== stepKey) {
+          if (normalizeUpper(step?.step) !== normalizedStepKey) {
             return step
           }
 
@@ -678,6 +929,7 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
       }
       await waitForStepCompletion(stepKey, actionLabel)
     } catch (error) {
+      if (error.queryInterrupted) throw error
       throw new Error(resolveApiErrorMessage(error, `${actionLabel}失败`))
     }
   }
@@ -687,39 +939,80 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
       return
     }
 
+    const session = sessionId
     executionSubmitting.value = true
     pipelineStatus.value = 'running'
     taskErrorMessage.value = ''
     activeStep.value = lastStepIndex
 
     try {
+      if (currentTaskId.value && !resumePolling) {
+        await loadTaskRuntime({ silent: true })
+        checkSession(session)
+      }
       await ensureTaskCreated()
-      if (!skippedSteps.value['pre-check']) {
+      checkSession(session)
+      if (!scriptsSynced && !skippedSteps.value['pre-check']) {
         await syncScriptConfig('pre-check', preScriptConfig.value, '预检查脚本')
+        checkSession(session)
       }
-      if (!skippedSteps.value.validate) {
+      if (!scriptsSynced && !skippedSteps.value.validate) {
         await syncScriptConfig('validate', validateScriptConfig.value, '校验脚本')
+        checkSession(session)
       }
-
-      await triggerTaskStep(
-        'PRE_CHECK',
-        skippedSteps.value['pre-check'] || !hasConfiguredScript(preScriptConfig.value)
-          ? 'skip'
-          : 'execute'
-      )
-      await triggerTaskStep('ROLLBACK', 'execute')
-      await triggerTaskStep(
-        'RESTART',
-        skippedSteps.value.restart || !rollbackOptions.value.reboot ? 'skip' : 'execute',
-        { confirmText: '确认重启' }
-      )
-      await triggerTaskStep(
-        'VALIDATE',
-        skippedSteps.value.validate || !hasConfiguredScript(validateScriptConfig.value)
-          ? 'skip'
-          : 'execute'
-      )
+      scriptsSynced = true
+      const steps = [
+        [
+          'PRE_CHECK',
+          skippedSteps.value['pre-check'] || !hasConfiguredScript(preScriptConfig.value)
+            ? 'skip'
+            : 'execute'
+        ],
+        ['ROLLBACK', 'execute'],
+        [
+          'RESTART',
+          skippedSteps.value.restart || !rollbackOptions.value.reboot ? 'skip' : 'execute'
+        ],
+        [
+          'VALIDATE',
+          skippedSteps.value.validate || !hasConfiguredScript(validateScriptConfig.value)
+            ? 'skip'
+            : 'execute'
+        ]
+      ]
+      for (; resumeStep < steps.length; resumeStep += 1) {
+        const [stepKey, action] = steps[resumeStep]
+        try {
+          if (resumePolling) {
+            await waitForStepCompletion(
+              stepKey,
+              WIN_PATCH_ROLLBACK_PIPELINE_STEPS.find(step => step.key === stepKey)?.label || stepKey
+            )
+          } else {
+            await triggerTaskStep(stepKey, action, { confirmText: '确认重启' })
+          }
+          checkSession(session)
+          resumePolling = false
+        } catch (error) {
+          if (error.queryInterrupted && session === sessionId) resumePolling = true
+          throw error
+        }
+      }
       await loadTaskRuntime({ silent: true })
+      checkSession(session)
+
+      if (rollbackOptions.value.rescanAfter && !scanSubmitted) {
+        try {
+          await winPatchApi.createScanTask(taskHostIds)
+        } catch (error) {
+          throw new Error(
+            `回滚已完成，但提交补丁重扫失败：${resolveApiErrorMessage(error, '请稍后重新扫描')}`
+          )
+        }
+        checkSession(session)
+        scanSubmitted = true
+        ElMessage.info('回滚已完成，系统将重新扫描补丁，请稍后查看最新补丁状态')
+      }
 
       pipelineStatus.value = 'success'
       ElMessage.success('Windows 补丁回滚流程已完成')
@@ -728,12 +1021,15 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
         onSuccess(taskDetail.value || createdTask.value || null)
       }
     } catch (error) {
-      pipelineStatus.value = 'failed'
+      if (session !== sessionId) return
+      pipelineStatus.value = error.queryInterrupted ? 'paused' : 'failed'
       taskErrorMessage.value = resolveApiErrorMessage(error, 'Windows 补丁回滚流程执行失败')
       ElMessage.error(taskErrorMessage.value)
     } finally {
-      executionSubmitting.value = false
-      stopRuntimePolling()
+      if (session === sessionId) {
+        executionSubmitting.value = false
+        stopRuntimePolling()
+      }
     }
   }
 
@@ -809,7 +1105,14 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
   }
 
   function resetState() {
+    sessionId += 1
+    cancelWait?.()
     stopRuntimePolling()
+    resumeStep = 0
+    resumePolling = false
+    scriptsSynced = false
+    scanSubmitted = false
+    taskHostIds = []
     activeStep.value = 0
     rollbackOptions.value = createRollbackOptions()
     preScriptConfig.value = createScriptConfig()
@@ -826,6 +1129,8 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
     pipelineStatus.value = 'idle'
     clearRunResult()
   }
+
+  onUnmounted(resetState)
 
   return {
     activeStep,

@@ -5,10 +5,11 @@
     width="500px"
     :close-on-click-modal="false"
     @closed="handleClosed"
+    :close-on-press-escape="false"
   >
     <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top">
       <el-form-item label="标签名称" prop="name">
-        <el-input v-model="formData.name" placeholder="请输入标签名称" />
+        <el-input v-model="formData.name" placeholder="仅支持中英文、数字、下划线和空格" />
       </el-form-item>
     </el-form>
 
@@ -23,6 +24,8 @@
 import { ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { apiService } from '@/core/api'
+import { throwIfTagJobFailed } from '../../utils/tagJobResult'
+import { createTagNameRules } from '../../utils/tagNameRules'
 
 const props = defineProps({
   modelValue: {
@@ -48,7 +51,7 @@ const formData = ref({
 })
 
 const formRules = {
-  name: [{ required: true, message: '请输入标签名称', trigger: 'blur' }]
+  name: createTagNameRules()
 }
 
 const saving = ref(false)
@@ -64,15 +67,19 @@ const handleSave = async () => {
   saving.value = true
   try {
     // Job: chq5Pe - 编辑标签
-    await apiService.post(`/workflow/api/workflow/jobs/chq5Pe/run?cacheBuster=${Date.now()}`, {
-      params: {
-        parentId: '',
-        id: props.tagData.id,
-        name: formData.value.name,
-        ciIds: null,
-        ciType: props.tagData.ci_type
+    const response = await apiService.post(
+      `/workflow/api/workflow/jobs/chq5Pe/run?cacheBuster=${Date.now()}`,
+      {
+        params: {
+          parentId: '',
+          id: props.tagData.id,
+          name: formData.value.name,
+          ciIds: null,
+          ciType: props.tagData.ci_type
+        }
       }
-    })
+    )
+    throwIfTagJobFailed(response)
     ElMessage.success('保存成功')
     visible.value = false
     emit('saved')

@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="visible" title="扫描补丁" width="760px" :close-on-click-modal="false">
+  <el-dialog v-model="visible" title="扫描补丁" width="760px" :close-on-click-modal="false" :close-on-press-escape="false">
     <el-alert
       title="可混选 Linux / Windows 主机，平台会按资产类型下发扫描任务。"
       type="info"
@@ -8,6 +8,7 @@
     <AcmDeviceSelector
       v-if="!submitted"
       v-model="selection"
+      :disabled="submitting"
       ci-types="linux,windows"
       :options="selectorOptions"
       class="scan-selector"
@@ -42,7 +43,7 @@
       <el-button
         type="primary"
         :loading="submitting"
-        :disabled="checking || !selection.length || !!issues.length"
+        :disabled="submitting || checking || !selection.length || !!issues.length"
         @click="submit"
       >
         扫描
@@ -74,7 +75,7 @@ const props = defineProps({
   modelValue: Boolean,
   preselectedHosts: { type: Array, default: () => [] }
 })
-const emit = defineEmits(['update:modelValue', 'submitted'])
+const emit = defineEmits(['update:modelValue', 'submitted', 'submitting-change'])
 const visible = computed({
   get: () => props.modelValue,
   set: value => emit('update:modelValue', value)
@@ -161,6 +162,7 @@ function openResult(run) {
   currentRunId.value = run.runId
   resultVisible.value = true
 }
+watch(submitting, value => emit('submitting-change', value), { flush: 'sync' })
 watch(selection, checkSelection, { deep: true })
 watch(visible, open => {
   version++

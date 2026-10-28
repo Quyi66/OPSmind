@@ -5,15 +5,23 @@
     width="600px"
     :close-on-click-modal="false"
     @closed="handleClosed"
+    :close-on-press-escape="false"
   >
     <div class="import-content">
       <!-- 第一步：下载模板 -->
       <div class="import-step">
         <div class="import-step-label">第一步：下载导入模板</div>
-        <el-button @click="handleDownloadTemplate" :disabled="!tenantId">
+        <el-button
+          @click="handleDownloadTemplate"
+          :disabled="!tenantId"
+          :loading="downloadingTemplate"
+        >
           <i class="fa fa-download" style="margin-right: 4px"></i>
           下载资产信息导入模板
         </el-button>
+        <div class="el-upload__tip">
+          可在模板的「网段区域」sheet 中填写网段与网络区域，导入后按主机 IP 自动划分区域。
+        </div>
       </div>
 
       <!-- 第二步：上传文件 -->
@@ -33,8 +41,8 @@
           </el-button>
           <template #tip>
             <div class="el-upload__tip">
-              只能上传 xlsx/xls 文件。“端口”列（ANSIBLE_PORT）填写后，后端会自动匹配并绑定对应的
-              Ansible 连接模板。
+              只能上传 xlsx/xls 文件。“端口”列（ANSIBLE_PORT）命中对应的 Ansible
+              连接模板时会自动绑定； 未命中时保留原绑定。
             </div>
           </template>
         </el-upload>
@@ -68,6 +76,7 @@
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { apiService } from '@/core/api'
+import { assetApi } from '../../api'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { isSuccessfulRunStatus } from '@/utils/taskStatus'
 
@@ -92,6 +101,7 @@ const visible = computed({
 const uploadRef = ref()
 const selectedFile = ref(null)
 const uploading = ref(false)
+const downloadingTemplate = ref(false)
 const resultDialogVisible = ref(false)
 const currentRunId = ref('')
 const savedRunId = ref('')
@@ -119,8 +129,22 @@ const handleFileRemove = () => {
 }
 
 // 下载导入模板
-const handleDownloadTemplate = () => {
-  window.open(`${import.meta.env.BASE_URL}templates/acm-template.xlsx`, '_blank', 'noopener')
+const handleDownloadTemplate = async () => {
+  if (downloadingTemplate.value) return
+  if (!props.tenantId) {
+    ElMessage.warning('当前租户信息缺失，无法下载导入模板')
+    return
+  }
+
+  downloadingTemplate.value = true
+  try {
+    await assetApi.downloadImportTemplate(props.tenantId)
+  } catch (error) {
+    console.error('下载导入模板失败:', error)
+    ElMessage.error('下载导入模板失败，请稍后重试')
+  } finally {
+    downloadingTemplate.value = false
+  }
 }
 
 // 上传

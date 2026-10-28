@@ -23,22 +23,24 @@
       <el-table
         v-loading="loading"
         :data="tableData"
-        max-height="calc(100vh - 294px)"
+        height="100%"
         style="width: 100%"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="50" />
-        <el-table-column prop="host_key" label="主机" min-width="200" />
-        <el-table-column prop="os_distro" label="OS" width="120" />
-        <el-table-column prop="os_version" label="OS版本" width="120" />
+        <el-table-column prop="host_key" label="主机" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="os_distro" label="OS" width="120" show-overflow-tooltip />
+        <el-table-column prop="os_version" label="OS版本" width="120" show-overflow-tooltip />
         <el-table-column prop="update_time" label="更新时间" width="180">
           <template #default="{ row }">
             {{ formatDate(row.update_time) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="60" fixed="right">
+        <el-table-column label="操作" width="80" fixed="right">
           <template #default="{ row }">
-            <el-button text type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+            <div class="software-row-actions">
+              <el-button text type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -115,6 +117,8 @@ async function handleBatchDelete() {
   const ids = selectedRows.value.map(item => item.id)
   try {
     await ElMessageBox.confirm('确定要批量删除选中的基准主机吗？', '确认删除', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning'
     })
 
@@ -133,6 +137,8 @@ async function handleBatchDelete() {
 async function handleDelete(row) {
   try {
     await ElMessageBox.confirm(`确定要删除基准主机 ${row.host_key} 吗？`, '确认删除', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning'
     })
 
@@ -154,9 +160,9 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.base-host-tab {
-  height: 100%;
-}
+@use '../../styles/layout' as software-layout;
 
-/* 使用全局的 ops-action-bar 和 ops-pagination-wrapper 样式 */
+.base-host-tab {
+  @include software-layout.table-tab;
+}
 </style>

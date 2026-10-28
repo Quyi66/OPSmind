@@ -218,7 +218,13 @@
     </div>
 
     <!-- 补丁详情对话框 -->
-    <el-dialog v-model="detailDialogVisible" title="补丁详情" width="1000px" destroy-on-close>
+    <el-dialog
+      v-model="detailDialogVisible"
+      title="补丁详情"
+      width="1000px"
+      destroy-on-close
+      :close-on-click-modal="true"
+    >
       <PatchDetailContent
         :patch="patchDetail || {}"
         :loading="detailLoading"
@@ -456,6 +462,8 @@ function handleVendorClick(vendor) {
 async function handleCheckPatchUpdate() {
   try {
     await ElMessageBox.confirm('执行导入最近补丁库将花费几分钟时间不等，点确定开始导入', '确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'info'
     })
 
@@ -556,7 +564,11 @@ async function handleViewDetail(row) {
 // 添加到白名单
 async function handleAddToWhitelist(row) {
   try {
-    await ElMessageBox.confirm('确认要将该补丁加入白名单吗？', '确认', { type: 'warning' })
+    await ElMessageBox.confirm('确认要将该补丁加入白名单吗？', '确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      type: 'warning'
+    })
     await runJob(ADD_WHITELIST_JOB_ID, {
       params: {
         patchIdList: [row.patch_id]
@@ -574,7 +586,11 @@ async function handleAddToWhitelist(row) {
 // 从白名单移除
 async function handleRemoveFromWhitelist(row) {
   try {
-    await ElMessageBox.confirm('确认要将该补丁移出白名单吗？', '确认', { type: 'warning' })
+    await ElMessageBox.confirm('确认要将该补丁移出白名单吗？', '确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      type: 'warning'
+    })
     await runJob(REMOVE_WHITELIST_JOB_ID, {
       params: {
         patchIdList: [row.patch_id]
@@ -594,7 +610,11 @@ async function handleBatchAddWhitelist() {
   if (selectedPatches.value.length === 0) return
 
   try {
-    await ElMessageBox.confirm('确认要加入白名单！', '确认', { type: 'info' })
+    await ElMessageBox.confirm('确认要加入白名单！', '确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      type: 'info'
+    })
 
     const patchIdList = selectedPatches.value.map(p => p.patch_id)
     await runJob(ADD_WHITELIST_JOB_ID, {
@@ -615,7 +635,11 @@ async function handleBatchRemoveWhitelist() {
   if (selectedPatches.value.length === 0) return
 
   try {
-    await ElMessageBox.confirm('确认要移除白名单！', '确认', { type: 'warning' })
+    await ElMessageBox.confirm('确认要移除白名单！', '确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      type: 'warning'
+    })
 
     const patchIdList = selectedPatches.value.map(p => p.patch_id)
     await runJob(REMOVE_WHITELIST_JOB_ID, {

@@ -1,137 +1,174 @@
 <template>
-  <div class="ops-page-layout">
-    <!-- 筛选区 -->
+  <div class="ops-page-layout template-list-page">
     <div class="ops-filter-bar">
-      <el-form :model="filters" inline size="small">
-        <el-form-item label="模板名称">
+      <el-form :model="filters" inline size="small" @submit.prevent="handleSearch">
+        <el-form-item label="关键词">
           <el-input
             v-model="filters.keyword"
-            placeholder="搜索模板名称"
+            placeholder="搜索名称、描述或执行人"
+            aria-label="搜索模板名称、描述或执行人"
             clearable
-            style="width: 250px" @keyup.enter="handleSearch" @clear="handleSearch">
+            size="small"
+            class="template-search"
+            @keyup.enter="handleSearch"
+            @clear="handleSearch"
+          >
             <template #prefix>
-              <el-icon>
-                <Search />
-              </el-icon>
+              <el-icon><Search /></el-icon>
             </template>
           </el-input>
         </el-form-item>
-        <!-- <el-form-item>
-          <el-button type="primary" :loading="loading" @click="handleSearch">
-            <el-icon>
-              <Search />
-            </el-icon>
-            搜索
-          </el-button>
-          <el-button @click="handleReset">
-            <el-icon>
-              <RefreshRight />
-            </el-icon>
-            重置
-          </el-button>
-        </el-form-item> -->
       </el-form>
     </div>
 
-    <!-- 功能按钮区 -->
     <div class="ops-action-bar">
       <el-button type="primary" size="small" @click="goToAdd">
-        <i class="fa fa-plus"></i>
+        <i class="fa fa-plus" aria-hidden="true"></i>
         新建模板
       </el-button>
-      <span style="flex: 1"></span>
+      <span v-if="hasResult" class="template-count" role="status">
+        {{ filteredData.length }} / {{ tableData.length }} 个模板
+      </span>
+      <span class="template-action-spacer"></span>
       <el-button
         class="toolbar-icon-btn"
         circle
         size="small"
         :loading="loading"
+        :disabled="!canRetry"
+        :title="error ? '重试读取' : '刷新'"
+        :aria-label="error ? '重试读取巡检模板' : '刷新巡检模板'"
         @click="loadTemplates"
-        title="刷新"
       >
-        <el-icon v-show="!loading">
-          <Refresh />
-        </el-icon>
+        <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
 
-    <!-- 表格区域 -->
-    <div class="ops-table-wrapper">
+    <el-alert v-if="error" :title="readMessage" type="warning" :closable="false" show-icon />
+
+    <div class="ops-table-wrapper template-table-wrapper">
       <el-table
         v-loading="loading"
         :data="paginatedData"
-        style="width: 100%"
         row-key="id"
+        height="100%"
+        style="width: 100%"
         :default-sort="{ prop: 'executedAt', order: 'descending' }"
-        max-height="calc(100vh - 260px)"
+        @sort-change="handleSortChange"
       >
-        <!-- 名称 -->
         <el-table-column
           prop="templateName"
-          label="名称"
-          min-width="180"
-          sortable
+          label="模板名称"
+          min-width="200"
+          show-overflow-tooltip
+        />
+        <el-table-column prop="description" label="描述" min-width="230" show-overflow-tooltip />
+        <el-table-column
+          prop="hostCount"
+          label="配置主机数"
+          min-width="120"
+          align="right"
+          sortable="custom"
           show-overflow-tooltip
         >
           <template #default="{ row }">
-            <a href="javascript:void(0)" class="template-name-link" @click="goToJobList(row)">
-              {{ row.templateName }}
-            </a>
+            <span class="template-count-value">{{ row.hostCount ?? '—' }}</span>
           </template>
         </el-table-column>
-
-        <!-- 描述 -->
-        <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
-
-        <!-- 检查项 -->
-        <el-table-column label="检查项" min-width="150" sortable>
+        <el-table-column
+          prop="scriptCount"
+          label="脚本数"
+          min-width="100"
+          align="right"
+          sortable="custom"
+          show-overflow-tooltip
+        >
           <template #default="{ row }">
-            主机: {{ row.hostCount }}, 脚本: {{ row.scriptCount }}
+            <span class="template-count-value">{{ row.scriptCount ?? '—' }}</span>
           </template>
         </el-table-column>
-
-        <!-- 上次检查时间 -->
-        <el-table-column prop="executedAt" label="上次检查时间" width="180" sortable>
-          <template #default="{ row }">
-            {{ row.executedAt ? formatDateTime(row.executedAt) : '-' }}
-          </template>
+        <el-table-column
+          prop="executedAt"
+          label="上次检查时间"
+          min-width="200"
+          sortable="custom"
+          show-overflow-tooltip
+        >
+          <template #default="{ row }">{{ formatDateTime(row.executedAt) }}</template>
         </el-table-column>
-
-        <!-- 执行人 -->
         <el-table-column prop="executedBy" label="执行人" min-width="120" show-overflow-tooltip />
-
-        <!-- 操作 -->
-        <el-table-column label="操作" width="132" align="left" fixed="right">
+        <el-table-column label="操作" width="200" align="left" fixed="right">
           <template #default="{ row }">
-            <el-button text type="primary" size="small" @click="runTemplate(row)">执行</el-button>
-            <el-button text type="primary" size="small" @click="editTemplate(row)">编辑</el-button>
-            <el-button text type="danger" size="small" @click="deleteTemplate(row)">删除</el-button>
+            <div class="template-row-actions" :title="rowActionReason">
+              <el-button text type="primary" size="small" @click="goToJobList(row)">
+                执行记录
+              </el-button>
+              <el-button
+                text
+                type="primary"
+                size="small"
+                :disabled="!isTemplateCurrent(row)"
+                @click="runTemplate(row)"
+              >
+                执行
+              </el-button>
+              <el-button
+                text
+                type="primary"
+                size="small"
+                :disabled="!isTemplateCurrent(row)"
+                @click="editTemplate(row)"
+              >
+                编辑
+              </el-button>
+              <el-button
+                text
+                type="danger"
+                size="small"
+                :disabled="deleting || !isTemplateCurrent(row)"
+                @click="deleteTemplate(row)"
+              >
+                删除
+              </el-button>
+            </div>
           </template>
         </el-table-column>
+        <template #empty>
+          <span v-if="loading">正在读取巡检模板…</span>
+          <span v-else-if="error">{{ readMessage }}</span>
+          <el-empty
+            v-else-if="hasResult && !tableData.length"
+            description="暂无巡检模板"
+            :image-size="80"
+          >
+            <el-button type="primary" size="small" @click="goToAdd">新建模板</el-button>
+          </el-empty>
+          <el-empty v-else-if="hasResult" description="没有匹配的模板" :image-size="80">
+            <el-button size="small" @click="filters.keyword = ''">清除搜索</el-button>
+          </el-empty>
+          <span v-else>尚未读取巡检模板</span>
+        </template>
       </el-table>
     </div>
 
-    <!-- 分页 -->
-    <div class="ops-pagination-wrapper">
+    <div class="template-footer">
+      <span class="template-note">数量为模板配置条目数，“—”表示无法核实。</span>
       <el-pagination
+        v-if="hasResult"
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
         :page-sizes="[10, 20, 50, 100]"
         :total="filteredData.length"
         layout="total, sizes, prev, pager, next, jumper"
         background
-        @size-change="handlePageSizeChange"
-        @current-change="handlePageChange"
       />
     </div>
 
-    <!-- 新建/编辑模板弹窗 -->
     <TemplateEditDialog
       v-model:visible="editDialogVisible"
       :template-id="editTemplateId"
       @success="handleEditSuccess"
     />
-
-    <!-- 执行巡检弹窗 -->
     <RunTemplateDialog
       v-model:visible="runDialogVisible"
       :template-id="runTemplateId"
@@ -141,231 +178,127 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Search, Refresh } from '@element-plus/icons-vue'
 import { formatDateTime as formatDateTimeGlobal } from '@/utils/date'
-import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { templateApi, paramApi } from '../api'
+import { useTemplateListData } from '../composables/useTemplateListData'
 import TemplateEditDialog from '../components/template/TemplateEditDialog.vue'
 import RunTemplateDialog from '../components/template/RunTemplateDialog.vue'
 
+defineEmits(['navigate'])
 const router = useRouter()
-const emit = defineEmits(['navigate'])
-
-const loading = ref(false)
-const tableData = ref([])
-const filters = reactive({
-  keyword: ''
-})
-const pageSize = ref(10)
-const currentPage = ref(1)
+const {
+  tableData,
+  filters,
+  currentPage,
+  pageSize,
+  loading,
+  hasResult,
+  error,
+  canRetry,
+  readMessage,
+  filteredData,
+  paginatedData,
+  handleSortChange,
+  loadTemplates,
+  isTemplateCurrent,
+  captureTemplate
+} = useTemplateListData()
 const dashboardEnabled = ref(false)
 const teamsEnabled = ref(false)
-
-// 编辑弹窗状态
 const editDialogVisible = ref(false)
 const editTemplateId = ref('')
-
-// 执行弹窗状态
 const runDialogVisible = ref(false)
 const runTemplateId = ref('')
+const deleting = ref(false)
+const rowActionReason = computed(() =>
+  error.value
+    ? '请刷新成功后再执行、编辑或删除模板'
+    : loading.value
+      ? '正在读取，暂不可执行、编辑或删除模板'
+      : ''
+)
 
-/**
- * 过滤后的数据
- */
-const filteredData = computed(() => {
-  let data = tableData.value
-  if (filters.keyword) {
-    const keyword = filters.keyword.toLowerCase()
-    data = data.filter(
-      item =>
-        item.templateName?.toLowerCase().includes(keyword) ||
-        item.description?.toLowerCase().includes(keyword) ||
-        item.executedBy?.toLowerCase().includes(keyword)
-    )
-  }
-  return data
-})
-
-/**
- * 分页后的数据
- */
-const paginatedData = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return filteredData.value.slice(start, end)
-})
-
-/**
- * 格式化日期时间
- */
-function formatDateTime(dateStr) {
-  if (!dateStr) return ''
-  return formatDateTimeGlobal(dateStr)
+function formatDateTime(value) {
+  if (value == null || value === '' || !Number.isFinite(new Date(value).getTime())) return '—'
+  return formatDateTimeGlobal(value)
 }
 
-/**
- * 加载配置参数
- */
+// Keep the original configuration read and defaults; this list does not expose new features.
 async function loadParams() {
   try {
     const response = await paramApi.getParams()
     const params = response?.data || response || []
-
     const paramMap = new Map()
-    if (Array.isArray(params)) {
-      params.forEach(item => paramMap.set(item.name, item.value))
-    }
-
+    if (Array.isArray(params)) params.forEach(item => paramMap.set(item.name, item.value))
     dashboardEnabled.value = paramMap.get('dashboard_switch') === 'yes'
     teamsEnabled.value = paramMap.get('teams_switch') === 'yes'
   } catch (error) {
     console.error('Failed to load params:', error)
-    // 默认值
     dashboardEnabled.value = false
     teamsEnabled.value = false
   }
 }
 
-/**
- * 加载模板列表
- */
-async function loadTemplates() {
-  loading.value = true
-  try {
-    const response = await templateApi.getTemplates()
-    const data = response?.data || response || []
-
-    tableData.value = data.map(template => {
-      // 解析 auditParams
-      let auditParams = []
-      try {
-        auditParams =
-          typeof template.auditParams === 'string'
-            ? JSON.parse(template.auditParams)
-            : template.auditParams || []
-      } catch {
-        auditParams = []
-      }
-
-      // 计算主机和脚本总数
-      let hostCount = 0
-      let scriptCount = 0
-      auditParams.forEach(param => {
-        hostCount += (param.hosts || []).length
-        scriptCount += (param.scripts || []).length
-      })
-
-      return {
-        ...template,
-        hostCount,
-        scriptCount
-      }
-    })
-  } catch (error) {
-    console.error('Failed to load templates:', error)
-    ElMessage.error('加载模板列表失败')
-    tableData.value = []
-  } finally {
-    loading.value = false
-  }
-}
-
-/**
- * 搜索处理
- */
 function handleSearch() {
   currentPage.value = 1
 }
-
-/**
- * 每页数量变化
- */
-function handlePageSizeChange() {
-  currentPage.value = 1
-}
-
-/**
- * 重置筛选
- */
-function handleReset() {
-  filters.keyword = ''
-  currentPage.value = 1
-  pageSize.value = 10
-}
-
-/**
- * 页码变化
- */
-function handlePageChange(page) {
-  currentPage.value = page
-}
-
-/**
- * 跳转到新增模板
- */
 function goToAdd() {
   editTemplateId.value = ''
   editDialogVisible.value = true
 }
-
-/**
- * 跳转到检查结果页面，并选中当前模板
- */
-function goToJobList(template) {
-  router.push(`/cac/results?templateId=${template.id}`)
+function jobListLocation(template) {
+  return { path: '/cac/results', query: { templateId: template.id } }
 }
-
-/**
- * 执行模板 - 打开执行弹窗
- */
+function goToJobList(template) {
+  router.push(jobListLocation(template))
+}
 function runTemplate(template) {
+  if (!isTemplateCurrent(template)) return
   runTemplateId.value = template.id
   runDialogVisible.value = true
 }
-
-/**
- * 编辑模板
- */
 function editTemplate(template) {
+  if (!isTemplateCurrent(template)) return
   editTemplateId.value = template.id
   editDialogVisible.value = true
 }
-
-/**
- * 编辑成功回调
- */
 function handleEditSuccess() {
   loadTemplates()
 }
-
-/**
- * 执行成功回调
- */
 function handleRunSuccess() {
   loadTemplates()
 }
 
-/**
- * 删除模板
- */
 async function deleteTemplate(template) {
+  if (deleting.value || !isTemplateCurrent(template)) return
+  const isCurrent = captureTemplate(template)
+  const id = template.id
+  const name = template.templateName
+  deleting.value = true
   try {
-    await ElMessageBox.confirm(`确定要删除模板「${template.templateName}」吗？`, '删除确认', {
+    await ElMessageBox.confirm(`确定要删除模板「${name}」吗？`, '删除确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       confirmButtonText: '删除',
       cancelButtonText: '取消',
       type: 'warning'
     })
-
-    await templateApi.deleteTemplate(template.id)
+    if (!isCurrent()) return
+    await templateApi.deleteTemplate(id)
+    if (!isCurrent()) return
     ElMessage.success('删除成功')
-    loadTemplates()
+    await loadTemplates()
   } catch (error) {
-    if (error !== 'cancel') {
+    if (isCurrent() && error !== 'cancel' && error !== 'close') {
       console.error('Failed to delete template:', error)
       ElMessage.error('删除失败')
     }
+  } finally {
+    deleting.value = false
   }
 }
 
@@ -373,116 +306,63 @@ onMounted(() => {
   loadParams()
   loadTemplates()
 })
-
-defineExpose({
-  refresh: loadTemplates
-})
+defineExpose({ refresh: loadTemplates })
 </script>
 
 <style scoped lang="scss">
-.template-list {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: var(--el-bg-color);
+.template-list-page {
+  min-width: 0;
+  gap: 12px;
 }
-
-.navbar {
+.template-footer {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  min-width: 0;
+}
+.template-footer {
   justify-content: space-between;
-  align-items: center;
-  padding: 12px 20px;
-  border-bottom: 1px solid var(--el-border-color-light);
-
-  .navbar-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--el-text-color-primary);
-  }
+  flex-shrink: 0;
 }
-
-.search-bar {
-  display: flex;
-  justify-content: flex-end;
-  padding: 12px 20px;
-  border-bottom: 1px solid var(--el-border-color-light);
-
-  .search-input {
-    width: 250px;
-  }
+.template-count,
+.template-note {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
 }
-
-.table-wrapper {
+.template-action-spacer {
   flex: 1;
-  padding: 0 20px;
-  overflow: auto;
-  display: flex;
-  flex-direction: column;
 }
-
-.template-name-link {
-  color: var(--el-color-primary);
-  text-decoration: none;
-
-  &:hover {
-    text-decoration: underline;
-  }
+.template-search {
+  width: 280px;
+  max-width: 100%;
 }
-
-.template-desc {
-  font-size: 13px;
-  color: var(--el-text-color-regular);
-  line-height: 1.4;
+.template-table-wrapper {
+  min-height: 0;
+  overflow: hidden;
 }
-
-.text-muted {
-  color: var(--el-text-color-secondary);
+.template-count-value {
+  font-variant-numeric: tabular-nums;
 }
-
-.check-item {
-  color: var(--el-text-color-regular);
-
-  strong {
-    color: var(--el-text-color-primary);
-    font-weight: 600;
-  }
-}
-
-.execution-time {
-  color: var(--el-text-color-regular);
-}
-
-.not-executed {
-  color: var(--el-text-color-secondary);
-}
-
-.action-btn {
-  padding: 4px 6px;
-  color: var(--el-text-color-regular);
-
-  i {
-    font-size: 14px;
-  }
-
-  &:hover {
-    color: var(--el-color-primary);
-  }
-}
-
-.table-footer {
-  display: flex;
+.template-row-actions {
+  display: inline-flex;
   align-items: center;
-  padding: 12px 0;
-  border-top: 1px solid var(--el-border-color-light);
-
-  .page-size-select {
-    width: 70px;
+  gap: 10px;
+  white-space: nowrap;
+  :deep(.el-button.is-text) {
+    margin-left: 0;
+    flex-shrink: 0;
   }
-
-  .pagination-info {
-    margin-left: 12px;
-    font-size: 13px;
-    color: var(--el-text-color-regular);
+}
+.template-footer :deep(.el-pagination) {
+  margin-left: auto;
+}
+@media (max-width: 640px) {
+  .template-search {
+    width: min(280px, 65vw);
+  }
+  .template-footer {
+    overflow-x: auto;
   }
 }
 </style>

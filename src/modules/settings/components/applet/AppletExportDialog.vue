@@ -5,6 +5,7 @@
     width="400px"
     :close-on-click-modal="false"
     @close="handleClose"
+    :close-on-press-escape="false"
   >
     <el-form label-width="120px" size="small">
       <el-form-item label="是否包含脚本">

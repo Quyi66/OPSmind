@@ -7,6 +7,7 @@
     class="host-selector-dialog"
     append-to-body
     @close="handleClose"
+    :close-on-press-escape="false"
   >
     <div class="selector-container">
       <!-- 已选主机卡片 -->
@@ -241,7 +242,7 @@
           @selection-change="handleRecentlySelectionChange"
         >
           <el-table-column type="selection" width="45" />
-          <el-table-column prop="jobTitle" label="作业" min-width="180" show-overflow-tooltip>
+          <el-table-column prop="jobTitle" label="运维工具" min-width="180" show-overflow-tooltip>
             <template #default="{ row }">
               <a href="javascript:void(0)" class="text-primary">{{ row.jobTitle }}</a>
             </template>
@@ -258,7 +259,7 @@
           </el-table-column>
           <el-table-column prop="jobType" label="类型" width="80" />
           <el-table-column prop="endTime" label="结束时间" width="160" />
-          <el-table-column prop="ataNode" label="Ansible Node" min-width="130">
+          <el-table-column prop="ataNode" label="执行节点" min-width="130">
             <template #default="{ row }">
               <div class="ata-node-cell">
                 <span v-for="(node, idx) in row.ataNode" :key="idx" class="badge badge-secondary">
@@ -327,7 +328,7 @@ const selectModes = [
   { key: 'group', title: '按分组', icon: 'fas fa-code' },
   { key: 'tag', title: '按标签', icon: 'fas fa-tags' },
   { key: 'input', title: '手动输入', icon: 'fas fa-pencil-alt' },
-  { key: 'recently', title: '最近作业设备', icon: 'fas fa-history' }
+  { key: 'recently', title: '最近执行设备', icon: 'fas fa-history' }
 ]
 
 // 状态

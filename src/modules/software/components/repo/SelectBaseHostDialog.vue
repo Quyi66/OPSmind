@@ -6,6 +6,7 @@
     :close-on-click-modal="false"
     destroy-on-close
     @close="handleClose"
+    :close-on-press-escape="false"
   >
     <div class="select-base-host-dialog">
       <!-- 选择按钮 -->
@@ -98,7 +99,9 @@ async function handleSubmit() {
   }
 
   try {
-    await ElMessageBox.confirm('确定将选中的主机设置为基准仓库主机吗？', '执行作业', {
+    await ElMessageBox.confirm('确定将选中的主机设置为基准仓库主机吗？', '执行运维工具', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'info'

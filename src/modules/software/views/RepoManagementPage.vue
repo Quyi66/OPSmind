@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout" style="padding: 0; gap: 0">
+  <div class="ops-page-layout repo-management-page" style="padding: 0; gap: 0">
     <!-- 页面描述 -->
     <el-alert type="info" :closable="false" class="page-description">
       <template #title>
@@ -28,7 +28,7 @@
     </div>
 
     <!-- 内容区 -->
-    <div class="ops-page-layout">
+    <div class="ops-page-layout repo-content">
       <!-- 基准仓库 Tab 内容 -->
       <template v-if="activeTab === 'baseRepo'">
         <!-- 筛选区域 -->
@@ -52,49 +52,90 @@
           <el-button
             type="primary"
             size="small"
-            :disabled="selectedBaseRepos.length === 0"
+            :disabled="selectedBaseRepos.length === 0 || !canUseBaseRepos"
             @click="handleConfigRepoToHost"
           >
             <i class="fa fa-cogs" style="margin-right: 4px"></i>
             配置到主机
           </el-button>
-          <el-button size="small" :disabled="!repoDefaultHosts" @click="handleRescanRepoInfo">
-            <i class="fa fa-undo-alt" style="margin-right: 4px"></i>
-            重新扫描仓库信息
-          </el-button>
+          <el-tooltip
+            content="当前页面暂不支持重新扫描仓库信息"
+            placement="top"
+            :trigger="['hover', 'focus']"
+          >
+            <span class="unavailable-action" tabindex="0" aria-label="重新扫描仓库信息暂不可用">
+              <el-button size="small" disabled @click="handleRescanRepoInfo">
+                <i class="fa fa-undo-alt" style="margin-right: 4px"></i>
+                重新扫描仓库信息
+              </el-button>
+            </span>
+          </el-tooltip>
           <span style="flex: 1"></span>
           <el-button
             class="toolbar-icon-btn"
             circle
             size="small"
             :loading="baseRepoLoading"
-            @click="loadBaseRepos"
-            title="刷新"
+            :disabled="!!baseRepoError && !canRetryBaseRepos"
+            @click="refreshBaseRepos"
+            :title="baseRepoError ? '重试读取' : '刷新'"
+            :aria-label="baseRepoError ? '重试读取基准仓库' : '刷新基准仓库'"
           >
             <el-icon v-show="!baseRepoLoading"><Refresh /></el-icon>
           </el-button>
         </div>
+
+        <el-alert
+          v-if="baseRepoError"
+          type="warning"
+          :closable="false"
+          show-icon
+          style="flex-shrink: 0"
+        >
+          <template #title>
+            {{ baseRepoErrorMessage }}
+            <span v-if="hasBaseRepoResult">刷新成功前，旧仓库数据仅供查看，暂不可配置到主机。</span>
+          </template>
+        </el-alert>
 
         <!-- 数据表格 -->
         <div class="ops-table-wrapper">
           <el-table
             v-loading="baseRepoLoading"
             :data="baseRepoData"
+            :empty-text="baseRepoEmptyText"
             style="width: 100%"
-            max-height="calc(100vh - 334px)"
+            height="100%"
             @selection-change="handleBaseRepoSelectionChange"
           >
-            <el-table-column type="selection" width="50" />
-            <el-table-column prop="repo_id" label="仓库ID" min-width="120">
+            <el-table-column type="selection" width="50" :selectable="() => canUseBaseRepos" />
+            <el-table-column prop="repo_id" label="仓库ID" min-width="120" show-overflow-tooltip>
               <template #default="{ row }">
-                <el-button type="primary" link size="small" @click="handleViewRepoDetail(row)">
+                <el-button
+                  class="software-cell-link"
+                  :title="row.repo_id"
+                  type="primary"
+                  link
+                  size="small"
+                  @click="handleViewRepoDetail(row)"
+                >
                   {{ row.repo_id }}
                 </el-button>
               </template>
             </el-table-column>
-            <el-table-column prop="scan_server" label="基准主机" min-width="150" />
-            <el-table-column prop="repo_name" label="名称" min-width="150" />
-            <el-table-column prop="repo_file" label="配置文件" min-width="150" />
+            <el-table-column
+              prop="scan_server"
+              label="基准主机"
+              min-width="150"
+              show-overflow-tooltip
+            />
+            <el-table-column prop="repo_name" label="名称" min-width="150" show-overflow-tooltip />
+            <el-table-column
+              prop="repo_file"
+              label="配置文件"
+              min-width="150"
+              show-overflow-tooltip
+            />
             <el-table-column prop="repo_pkgs" label="软件包数量" width="100">
               <template #default="{ row }">
                 {{ formatPkgCount(row.repo_pkgs) }}
@@ -111,7 +152,7 @@
                     size="small"
                     class="url-tag"
                   >
-                    {{ url }}
+                    <span :title="url">{{ url }}</span>
                   </el-tag>
                 </div>
               </template>
@@ -137,7 +178,7 @@
         </div>
 
         <!-- 分页 -->
-        <div class="ops-pagination-wrapper">
+        <div v-if="hasBaseRepoResult" class="ops-pagination-wrapper">
           <el-pagination
             v-model:current-page="baseRepoPage"
             v-model:page-size="baseRepoPageSize"
@@ -186,8 +227,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { computed, ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import { repoApi } from '../api'
 import BaseHostTab from '../components/repo/BaseHostTab.vue'
@@ -195,6 +236,7 @@ import CustomRepoTab from '../components/repo/CustomRepoTab.vue'
 import ConfiguredRepoTab from '../components/repo/ConfiguredRepoTab.vue'
 import RepoDetailDialog from '../components/repo/RepoDetailDialog.vue'
 import ConfigRepoToHostDialog from '../components/repo/ConfigRepoToHostDialog.vue'
+import { useSoftwareListRead } from '../composables/useSoftwareListRead'
 
 const tabs = [
   { key: 'baseRepo', label: '基准仓库', icon: 'fa fa-home' },
@@ -206,14 +248,29 @@ const tabs = [
 const activeTab = ref('baseRepo')
 
 // 基准仓库
-const baseRepoLoading = ref(false)
-const baseRepoData = ref([])
 const baseRepoPage = ref(1)
 const baseRepoPageSize = ref(10)
-const baseRepoTotal = ref(0)
 const baseRepoStatus = ref(['enabled'])
 const selectedBaseRepos = ref([])
 const repoDefaultHosts = ref('')
+const {
+  rows: baseRepoData,
+  total: baseRepoTotal,
+  loading: baseRepoLoading,
+  hasResult: hasBaseRepoResult,
+  error: baseRepoError,
+  errorMessage: baseRepoErrorMessage,
+  emptyText: baseRepoEmptyText,
+  canUseRows: canUseBaseRepos,
+  canRetry: canRetryBaseRepos,
+  load: readBaseRepos,
+  retry: retryBaseRepos
+} = useSoftwareListRead(params => repoApi.getRepoList(params), {
+  active: computed(() => activeTab.value === 'baseRepo'),
+  onDiscard: () => {
+    selectedBaseRepos.value = []
+  }
+})
 
 // 仓库详情弹窗
 const repoDetailVisible = ref(false)
@@ -262,24 +319,16 @@ function handleTabChange(tabKey) {
 }
 
 // ========== 基准仓库 ==========
-async function loadBaseRepos() {
-  baseRepoLoading.value = true
-  try {
-    const response = await repoApi.getRepoList({
-      page: baseRepoPage.value,
-      size: baseRepoPageSize.value,
-      repoStatus: baseRepoStatus.value.join(',')
-    })
-    const data = response?.data || response
-    baseRepoData.value = data?.records || []
-    baseRepoTotal.value = data?.total || 0
-  } catch (error) {
-    console.error('Failed to load base repos:', error)
-    baseRepoData.value = []
-    baseRepoTotal.value = 0
-  } finally {
-    baseRepoLoading.value = false
-  }
+function loadBaseRepos() {
+  return readBaseRepos({
+    page: baseRepoPage.value,
+    size: baseRepoPageSize.value,
+    repoStatus: baseRepoStatus.value.join(',')
+  })
+}
+
+function refreshBaseRepos() {
+  return baseRepoError.value ? retryBaseRepos() : loadBaseRepos()
 }
 
 // 加载基准主机ID列表
@@ -305,6 +354,10 @@ function handleViewRepoDetail(row) {
 }
 
 function handleConfigRepoToHost() {
+  if (!canUseBaseRepos.value) {
+    ElMessage.warning('请先成功刷新仓库列表，再配置到主机')
+    return
+  }
   if (selectedBaseRepos.value.length === 0) {
     ElMessage.warning('请先选择要配置的仓库')
     return
@@ -320,14 +373,8 @@ function handleConfigSuccess() {
 }
 
 function handleRescanRepoInfo() {
-  ElMessageBox.confirm('确定要重新扫描仓库信息吗？', '确认', {
-    type: 'warning'
-  })
-    .then(() => {
-      // TODO: 调用重新扫描 API
-      ElMessage.success('已提交扫描任务')
-    })
-    .catch(() => {})
+  // 独立仓库扫描的作业与参数尚未核实，不能仅凭旧封装下发任务。
+  ElMessage.warning('当前页面暂不支持重新扫描仓库信息，未提交扫描任务')
 }
 
 onMounted(() => {
@@ -337,8 +384,25 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+@use '../styles/layout' as software-layout;
+
+.repo-management-page {
+  min-width: 0;
+}
+
+.unavailable-action {
+  display: inline-flex;
+}
+
+.repo-content {
+  @include software-layout.table-tab;
+
+  height: auto;
+}
+
 // 页面描述样式
 .page-description {
+  flex-shrink: 0;
   margin: 0;
   border-radius: 0;
   border-left: none;
@@ -355,6 +419,9 @@ onMounted(() => {
 
 // 标签页样式 - 与资产列表页保持一致
 .type-tabs-wrapper {
+  flex-shrink: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
   background: var(--el-bg-color);
   border-bottom: 1px solid var(--el-border-color-light);
   padding: 0 16px;
@@ -363,10 +430,14 @@ onMounted(() => {
 .type-tabs {
   display: flex;
   gap: 4px;
+  width: max-content;
+  min-width: 100%;
 }
 
 .type-tab {
   display: flex;
+  flex-shrink: 0;
+  white-space: nowrap;
   align-items: center;
   gap: 6px;
   padding: 10px 16px;
@@ -400,7 +471,17 @@ onMounted(() => {
 
 .url-tag {
   max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+
+  :deep(.el-tag__content) {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 </style>

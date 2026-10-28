@@ -5,6 +5,7 @@
     width="800px"
     destroy-on-close
     @close="$emit('close')"
+    :close-on-click-modal="true"
   >
     <div class="kpi-filter-bar" style="margin-bottom: 12px">
       <el-input

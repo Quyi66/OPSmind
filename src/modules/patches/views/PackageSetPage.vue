@@ -95,6 +95,26 @@
               </div>
             </el-form-item>
 
+            <el-form-item label="计划执行时间" required>
+              <div style="display: flex; flex-wrap: wrap; gap: 8px; width: 100%;">
+                <el-date-picker v-model="scheduleDate" type="date" value-format="YYYY-MM-DD"
+                  :editable="false" placeholder="选择日期" style="flex: 1; min-width: 150px;" />
+                <el-select v-model="scheduleHour" filterable default-first-option placeholder="时" aria-label="执行小时，可输入筛选" no-match-text="请输入 00–23" style="width: 85px;">
+                  <el-option v-for="hour in scheduleHours" :key="hour" :label="`${hour} 时`" :value="hour" />
+                </el-select>
+                <el-select v-model="scheduleMinute" filterable default-first-option placeholder="分" aria-label="执行分钟，可输入筛选（每 5 分钟）" no-match-text="请选择 00、05 … 55" style="width: 85px;">
+                  <el-option v-for="minute in scheduleMinutes" :key="minute" :label="`${minute} 分`" :value="minute" />
+                </el-select>
+              </div>
+              <div class="mt-1" style="font-size: 12px; color: var(--el-text-color-secondary); width: 100%;">
+                时、分支持输入筛选，按回车选择。每 5 分钟一个执行时间点，分钟可选 00、05、10 … 55。
+              </div>
+              <div class="mt-1" style="font-size: 12px; color: var(--el-text-color-secondary);">
+                {{ isAdmin ? '提交后等待计划时间自动执行。' : '提交后须由管理员在计划时间前审批通过，否则申请自动失效。' }}
+                到点自动预检查并分批安装，默认不重启。
+              </div>
+            </el-form-item>
+
             <!-- 每批数量 -->
             <el-form-item label="分批大小 (每批主机数)" required>
               <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
@@ -105,7 +125,10 @@
                   style="width: 140px;"
                   :controls="false"
                 />
-                <el-tooltip content="目标主机会按照该数值拆分成多个批次，依次下发执行（前一批执行完成后自动接续下一批），以降低大规模并发更新时的网络及系统负载。" placement="top">
+                <el-tooltip
+                  content="目标主机会按照该数值拆分成多个批次，前一批执行完成后接续下一批。"
+                  placement="top"
+                >
                   <i class="fa fa-info-circle" style="color: var(--el-text-color-secondary); cursor: pointer;" />
                 </el-tooltip>
                 <span style="font-size: 12px; color: var(--el-text-color-secondary); margin-left: 4px;">
@@ -124,6 +147,7 @@
           </h3>
           <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column; margin-bottom: 20px;">
             <AcmDeviceSelector
+              class="package-host-selector"
               v-model="selectedHosts"
               ci-types="[auto]"
               :options="{
@@ -138,11 +162,12 @@
               type="primary"
               size="default"
               :disabled="isSubmitDisabled"
+              :loading="submitting"
               style="width: 100%; font-weight: 600;"
               @click="handleStartOneClickInstall"
             >
               <i class="fa fa-play-circle me-1" />
-              立即开始一键分批更新
+              {{ isAdmin ? '提交定时安装' : '提交安装申请' }}
             </el-button>
           </div>
         </div>
@@ -150,7 +175,7 @@
     </template>
 
     <!-- 软件包集管理 Tab -->
-    <template v-else-if="activeTab === 'management'">
+    <template v-if="activeTab === 'management'">
       <!-- 操作工具栏 -->
       <div class="ops-action-bar">
         <el-button type="primary" size="small" @click="handleCreatePackageSet">
@@ -219,6 +244,7 @@
       :title="editForm.id ? '编辑软件包集' : '新建软件包集'"
       width="600px"
       :close-on-click-modal="false"
+      :close-on-press-escape="false"
     >
       <el-form ref="editFormRef" :model="editForm" :rules="editRules" label-width="100px" size="small">
         <el-form-item label="包集名称" prop="name">
@@ -252,296 +278,23 @@
       </template>
     </el-dialog>
 
-    <!-- 一键更新执行进度对话框 -->
-    <el-dialog
-      v-model="progressVisible"
-      title="一键分批更新执行进度"
-      width="900px"
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-      @closed="handleProgressClosed"
-    >
-      <div v-if="taskDetail" style="display: flex; flex-direction: column; gap: 16px;">
-        <!-- 自定义步骤条 -->
-        <div class="ops-stepper">
-          <!-- 步骤 1: 创建任务 -->
-          <div class="stepper-item is-success">
-            <div class="stepper-icon">
-              <i class="fa fa-check"></i>
-            </div>
-            <div class="stepper-title">创建任务</div>
-          </div>
-          <div class="stepper-line is-active"></div>
-
-          <!-- 步骤 2: 前置预检查 -->
-          <div
-            class="stepper-item"
-            :class="{
-              'is-active': stepStates[1] === 'active',
-              'is-success': stepStates[1] === 'success',
-              'is-failed': stepStates[1] === 'failed'
-            }"
-          >
-            <div class="stepper-icon">
-              <i v-if="stepStates[1] === 'failed'" class="fa fa-times"></i>
-              <i v-else-if="stepStates[1] === 'success'" class="fa fa-check"></i>
-              <i v-else-if="stepStates[1] === 'active'" class="fa fa-spinner fa-spin"></i>
-              <span v-else>2</span>
-            </div>
-            <div class="stepper-title">前置预检查</div>
-          </div>
-          <div
-            class="stepper-line"
-            :class="{ 'is-active': ['success', 'active', 'failed'].includes(stepStates[2]) }"
-          ></div>
-
-          <!-- 步骤 3: 分批安装 -->
-          <div
-            class="stepper-item"
-            :class="{
-              'is-active': stepStates[2] === 'active',
-              'is-success': stepStates[2] === 'success',
-              'is-failed': stepStates[2] === 'failed'
-            }"
-          >
-            <div class="stepper-icon">
-              <i v-if="stepStates[2] === 'failed'" class="fa fa-times"></i>
-              <i v-else-if="stepStates[2] === 'success'" class="fa fa-check"></i>
-              <i v-else-if="stepStates[2] === 'active'" class="fa fa-spinner fa-spin"></i>
-              <span v-else>3</span>
-            </div>
-            <div class="stepper-title">分批安装</div>
-          </div>
-        </div>
-
-        <!-- 任务概览信息 -->
-        <div style="background: var(--el-fill-color-light); border-radius: 8px; padding: 16px; font-size: 13px; border: 1px solid var(--el-border-color-lighter); display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 24px;">
-          <div>
-            <strong style="color: var(--el-text-color-secondary);">安装内容：</strong>
-            <span style="color: var(--el-text-color-primary); font-weight: 500;">
-              {{ taskPackageSetName }}
-            </span>
-          </div>
-          <div>
-            <strong style="color: var(--el-text-color-secondary);">分批大小：</strong>
-            <span style="color: var(--el-text-color-primary); font-weight: 500;">
-              {{ taskDetail.batchSize || 50 }} 台/批
-            </span>
-          </div>
-          <div>
-            <strong style="color: var(--el-text-color-secondary);">目标资产数：</strong>
-            <span style="color: var(--el-text-color-primary); font-weight: 500;">
-              {{ taskTargetCount }} 台
-            </span>
-          </div>
-          <div>
-            <strong style="color: var(--el-text-color-secondary);">任务状态：</strong>
-            <div style="display: inline-flex; align-items: center; gap: 8px;">
-              <el-tag :type="getStatusTagType(taskDetail.status)" size="small" effect="light" round>
-                {{ getStatusLabel(taskDetail.status) }}
-              </el-tag>
-              <el-button
-                v-if="taskDetail.executeRunId"
-                type="primary"
-                link
-                size="small"
-                @click="openExecuteResult(taskDetail.executeRunId, '一键安装作业详情')"
-              >
-                查看作业详情
-              </el-button>
-            </div>
-          </div>
-
-          <div style="grid-column: span 2;" v-if="formattedErrorMessage">
-            <strong style="color: var(--el-color-danger);">异常原因：</strong>
-            <span style="color: var(--el-color-danger);">{{ formattedErrorMessage }}</span>
-          </div>
-        </div>
-
-        <!-- 预检查中 Loading 展示 -->
-        <div v-if="taskDetail.status === 'PRE_CHECKING'" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; border: 1px dashed var(--el-border-color); border-radius: 8px; background: var(--el-fill-color-blank); gap: 16px;">
-          <el-icon class="is-loading" style="font-size: 32px; color: var(--el-color-primary);">
-            <Loading />
-          </el-icon>
-          <div style="font-size: 14px; font-weight: 500; color: var(--el-text-color-regular);">
-            正在对目标资产进行前置环境预检查，请稍候...
-          </div>
-          <div style="font-size: 12px; color: var(--el-text-color-placeholder);">
-            这可能需要几十秒时间，检查内容包括：SSH 连接性、操作系统版本、依赖冲突等。
-          </div>
-        </div>
-
-        <!-- 安装中 Loading 展示 -->
-        <div v-if="taskDetail.status === 'INSTALLING'" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; border: 1px dashed var(--el-border-color); border-radius: 8px; background: var(--el-fill-color-blank); gap: 16px;">
-          <el-icon class="is-loading" style="font-size: 32px; color: var(--el-color-primary);">
-            <Loading />
-          </el-icon>
-          <div style="font-size: 14px; font-weight: 500; color: var(--el-text-color-regular);">
-            正在分批执行更新安装中，请稍候...
-          </div>
-          <div style="font-size: 12px; color: var(--el-text-color-placeholder);">
-            正在按照分批大小分批部署中。建议在此期间不要关闭或退出本页面。
-          </div>
-        </div>
-
-        <!-- 预检查失败结果展示 -->
-        <div v-if="taskDetail.status === 'PRE_CHECK_FAILED' && parsedPreCheckResult" style="border: 1px solid var(--el-border-color-light); border-radius: 6px; padding: 16px;">
-          <h4 class="m-0 mb-3" style="font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; color: var(--el-color-danger);">
-            <i class="fa fa-exclamation-triangle" />
-            前置环境检查未通过项
-          </h4>
-
-          <!-- 不可达主机列表 -->
-          <div v-if="parsedPreCheckResult.unreachable && parsedPreCheckResult.unreachable.length > 0" class="mb-3">
-            <div style="font-weight: 600; color: var(--el-color-danger); margin-bottom: 6px;">
-              不可达主机 ({{ parsedPreCheckResult.unreachable.length }} 台)：
-            </div>
-            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-              <el-tag
-                v-for="hostId in parsedPreCheckResult.unreachable"
-                :key="hostId"
-                type="danger"
-                size="small"
-              >
-                {{ getHostDisplayName(hostId) }}
-              </el-tag>
-            </div>
-          </div>
-
-          <!-- 主机检查项详情列表 -->
-          <div v-if="parsedPreCheckResult.results && parsedPreCheckResult.results.length > 0">
-            <el-collapse v-model="activeCollapseNames">
-              <el-collapse-item
-                v-for="hostResult in parsedPreCheckResult.results"
-                :key="hostResult.host_id"
-                :name="hostResult.host_id"
-              >
-                <template #title>
-                  <div style="display: flex; justify-content: space-between; align-items: center; width: 95%;">
-                    <span style="font-weight: 600;">
-                      <i class="fa fa-server me-1" />
-                      {{ getHostDisplayName(hostResult.host_id) }}
-                    </span>
-                    <div>
-                      <el-tag v-if="hostResult.blockers > 0" type="danger" size="small" class="me-1">
-                        阻断项: {{ hostResult.blockers }}
-                      </el-tag>
-                      <el-tag v-if="hostResult.warnings > 0" type="warning" size="small" class="me-1">
-                        警告项: {{ hostResult.warnings }}
-                      </el-tag>
-                      <el-tag v-if="hostResult.blockers === 0 && hostResult.warnings === 0" type="success" size="small">
-                        检查通过
-                      </el-tag>
-                    </div>
-                  </div>
-                </template>
-
-                <div style="padding: 0 8px;">
-                  <div
-                    v-for="check in sortChecks(hostResult.checks)"
-                    :key="check.id"
-                    style="display: flex; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--el-border-color-lighter);"
-                  >
-                    <i
-                      class="fa me-2"
-                      :class="{
-                        'fa-times-circle': check.status === 'fail',
-                        'fa-exclamation-circle': check.status === 'warn',
-                        'fa-check-circle': check.status === 'ok'
-                      }"
-                      :style="{
-                        color: check.status === 'fail' ? 'var(--el-color-danger)' : check.status === 'warn' ? 'var(--el-color-warning)' : 'var(--el-color-success)',
-                        fontSize: '14px',
-                        marginTop: '2px'
-                      }"
-                    />
-                    <div style="flex: 1;">
-                      <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-weight: 600; font-size: 13px;">
-                          {{ getCheckTitle(check.id) }}
-                        </span>
-                        <el-tag
-                          :type="check.status === 'fail' ? 'danger' : check.status === 'warn' ? 'warning' : 'success'"
-                          size="small"
-                          style="font-size: 10px; height: 16px; line-height: 14px; padding: 0 4px;"
-                        >
-                          {{ check.status === 'fail' ? '阻断' : check.status === 'warn' ? '警告' : '通过' }}
-                        </el-tag>
-                      </div>
-                      <div style="font-size: 12px; color: var(--el-text-color-regular); margin-top: 2px;">
-                        {{ check.detail }}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </el-collapse-item>
-            </el-collapse>
-          </div>
-        </div>
-
-        <!-- 任务结束成功提示 -->
-        <el-alert
-          v-if="taskDetail.status === 'INSTALL_DONE'"
-          title="分批自动安装任务已全部成功完成！"
-          type="success"
-          :closable="false"
-          show-icon
-        >
-          已成功将最新软件包版本更新并应用到所有目标机上（默认配置为不重启）。
-        </el-alert>
-
-        <!-- 任务结束部分失败提示 -->
-        <el-alert
-          v-if="taskDetail.status === 'INSTALL_FAILED' || taskDetail.status === 'FAILED'"
-          title="分批自动安装任务未能完全执行成功"
-          type="error"
-          :closable="false"
-          show-icon
-        >
-          部分主机的软件包更新可能失败，详情请查看后端日志或错误提示。
-        </el-alert>
-      </div>
-
-      <!-- 对话框操作区 -->
-      <template v-if="taskDetail && taskDetail.status === 'PRE_CHECK_FAILED'" #footer>
-        <div class="dialog-footer" style="display: flex; gap: 10px; justify-content: flex-end;">
-          <el-button
-            type="warning"
-            size="small"
-            :loading="stepActionLoading"
-            @click="handleSkipPreCheck"
-          >
-            我已知晓风险，跳过并执行安装
-          </el-button>
-          <el-button
-            type="primary"
-            size="small"
-            :loading="stepActionLoading"
-            @click="handleRetryPreCheck"
-          >
-            重新预检查
-          </el-button>
-        </div>
-      </template>
-    </el-dialog>
-
-    <ExecuteResultDialog
-      v-model:visible="executeResultVisible"
-      :run-id="currentExecuteRunId"
-      :job-title="currentExecuteJobTitle"
-    />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Refresh, Loading } from '@element-plus/icons-vue'
+import { Refresh } from '@element-plus/icons-vue'
 import { packageSetApi, patchInstallApi } from '../api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import { normalizeAcmDeviceSelection } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
-import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
+import { useAuth } from '@/core/auth'
+import { isFutureSchedule } from '../utils/patchInstallSchedule'
+import { parseRawPackagesText } from '../utils/packageParser'
 
+const { user } = useAuth()
+const isAdmin = computed(() => user.value?.login === 'admin')
+const submitting = ref(false)
 const activeTab = ref('install')
 
 // ============================================================
@@ -648,6 +401,8 @@ function handleEditPackageSet(row) {
 async function handleDeletePackageSet(row) {
   try {
     await ElMessageBox.confirm(`确定删除软件包集 "${row.name}" 吗？`, '删除确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       confirmButtonText: '确认删除',
       cancelButtonText: '取消',
       type: 'warning'
@@ -664,103 +419,6 @@ async function handleDeletePackageSet(row) {
   }
 }
 
-/**
- * 智能解析单个包名与版本
- * @param {string} rawStr 原始输入字符串
- * @returns {{name: string, version: string}} 解析后的包名和版本
- */
-function parsePackageItem(rawStr) {
-  let str = rawStr.trim()
-  if (!str) return null
-
-  // 1. 去除常见的包文件后缀 (如 .rpm, .deb)
-  const isDeb = /\.deb$/i.test(str)
-  str = str.replace(/\.(rpm|deb)$/i, '')
-
-  // 1.5 DEB 文件名使用 _ 分隔 (name_version_arch)，单独处理
-  if (isDeb && str.includes('_')) {
-    const debParts = str.split('_')
-    const knownArch = /^(x86_64|i[36]86|noarch|amd64|arm64|aarch64|all|mips64el|loongarch64)$/i
-    if (debParts.length >= 3 && knownArch.test(debParts[debParts.length - 1])) {
-      return { name: debParts[0], version: debParts.slice(1, -1).join('_') }
-    }
-    if (debParts.length >= 2 && /^[0-9]/.test(debParts[1])) {
-      return { name: debParts[0], version: debParts.slice(1).join('_') }
-    }
-  }
-
-  // 2. 去除常见的架构后缀 (如 .x86_64, .i686, .amd64, .noarch 等)
-  const archRegex = /\.(x86_64|i[36]86|noarch|amd64|arm64|aarch64|mips64el|loongarch64)$/i
-  str = str.replace(archRegex, '')
-
-  // 3. 兼容双等号 == 或单等号 =（使用 indexOf 单次分割，避免版本中含 = 时丢失后续部分）
-  if (str.includes('==')) {
-    const idx = str.indexOf('==')
-    return { name: str.slice(0, idx).trim(), version: str.slice(idx + 2).trim() }
-  }
-  if (str.includes('=')) {
-    const idx = str.indexOf('=')
-    return { name: str.slice(0, idx).trim(), version: str.slice(idx + 1).trim() }
-  }
-
-  // 4. 处理冒号分隔
-  if (str.includes(':')) {
-    const idx = str.indexOf(':')
-    const before = str.slice(0, idx).trim()
-    const after = str.slice(idx + 1).trim()
-    if (/^\d+$/.test(before)) {
-      // epoch 前缀 (如 1:openssl-1.0.2k)，剥离 epoch 后继续解析后续格式
-      str = after
-    } else if (/^[0-9]/.test(after)) {
-      // 包名:版本 格式 (如 openssl: 1.0.2)
-      return { name: before, version: after }
-    }
-  }
-
-  // 5. 智能识别 NVR 连字符格式 (如 openssl-devel-1.0.2k-23.el7)，非贪婪匹配找到第一个 -数字 边界
-  const nvrMatch = str.match(/^([\w\-+]+?)-([0-9].*)$/)
-  if (nvrMatch) {
-    return { name: nvrMatch[1], version: nvrMatch[2] }
-  }
-
-  // 6. 兼容空格或制表符分隔 (如 openssl 1.0.2, yum list / apt list 输出)
-  const spaceParts = str.split(/\s+/)
-  if (spaceParts.length >= 2) {
-    // 清理包名中的 .arch 后缀 (如 openssl.x86_64) 和 /repo 后缀 (如 openssl/focal-updates)
-    let name = spaceParts[0].replace(/\.(x86_64|i[36]86|noarch|amd64|arm64|aarch64|mips64el|loongarch64)$/i, '')
-    name = name.replace(/\/.*$/, '')
-    // 过滤版本后的噪声字段 (如 @updates, amd64, [installed])
-    const verParts = spaceParts.slice(1).filter(p =>
-      !/^[@\[]/.test(p) &&
-      !/^(x86_64|i[36]86|noarch|amd64|arm64|aarch64|mips64el|loongarch64)$/i.test(p)
-    )
-    const possibleVer = verParts.join(' ')
-    if (possibleVer && /^[0-9]/.test(possibleVer)) {
-      return { name, version: possibleVer }
-    }
-  }
-
-  // 7. 无版本，仅包名
-  return { name: str, version: '' }
-}
-
-/**
- * 批量解析用户输入
- * @param {string} text 用户输入的原始多行文本
- * @returns {string[]} 转换为后端需要的 name==version 数组
- */
-function parseRawPackagesText(text) {
-  if (!text) return []
-  const rawItems = text.split(/[,\n\r，]+/).map(p => p.trim()).filter(Boolean)
-  const results = rawItems
-    .map(item => {
-      const res = parsePackageItem(item)
-      if (!res) return ''
-      return res.version ? `${res.name}==${res.version}` : res.name
-    })
-    .filter(Boolean)
-  return [...new Set(results)]
-}
 
 async function submitEditForm() {
   if (!editFormRef.value) return
@@ -803,11 +461,21 @@ async function submitEditForm() {
 // 一键分批安装表单
 // ============================================================
 const selectedHosts = ref([])
+const scheduleDate = ref('')
+const scheduleHour = ref('')
+const scheduleMinute = ref('')
+const scheduleHours = Array.from({ length: 24 }, (_, hour) => String(hour).padStart(2, '0'))
+const scheduleMinutes = Array.from({ length: 12 }, (_, index) => String(index * 5).padStart(2, '0'))
 const installForm = reactive({
   useCustomPackages: false,
   packageSetId: '',
   customPackagesText: '',
-  batchSize: 50
+  batchSize: 50,
+  scheduledTime: ''
+})
+
+watch([scheduleDate, scheduleHour, scheduleMinute], ([date, hour, minute]) => {
+  installForm.scheduledTime = date && hour && minute ? `${date} ${hour}:${minute}` : ''
 })
 
 const selectedPackageSet = computed(() => {
@@ -825,6 +493,7 @@ const parsedSelectedPackages = computed(() => {
 })
 
 const isSubmitDisabled = computed(() => {
+  if (submitting.value || !installForm.scheduledTime) return true
   if (selectedHosts.value.length === 0) return true
   if (installForm.useCustomPackages) {
     return !installForm.customPackagesText.trim()
@@ -837,231 +506,16 @@ function handlePackageSetChange() {
   // 仅在改变包集时可用作展示
 }
 
-// ============================================================
-// 一键分批更新执行与轮询
-// ============================================================
-const progressVisible = ref(false)
-const taskDetail = ref(null)
-const stepActionLoading = ref(false)
-let pollingIntervalId = null
-
-const taskFinished = computed(() => {
-  if (!taskDetail.value) return false
-  const finishedStatuses = ['INSTALL_DONE', 'INSTALL_FAILED', 'FAILED']
-  return finishedStatuses.includes(taskDetail.value.status)
-})
-
-const stepStates = computed(() => {
-  const states = ['success', 'idle', 'idle']
-  if (!taskDetail.value) return states
-  const status = taskDetail.value.status
-
-  if (status === 'PRE_CHECKING') {
-    states[1] = 'active'
-  } else if (status === 'PRE_CHECK_FAILED') {
-    states[1] = 'failed'
-  } else if (['PRE_CHECK_DONE', 'INSTALLING', 'INSTALL_DONE', 'INSTALL_FAILED', 'FAILED'].includes(status)) {
-    states[1] = 'success'
-  }
-
-  if (status === 'INSTALLING') {
-    states[2] = 'active'
-  } else if (['INSTALL_FAILED', 'FAILED'].includes(status)) {
-    states[2] = 'failed'
-  } else if (status === 'INSTALL_DONE') {
-    states[2] = 'success'
-  }
-  return states
-})
-
-const taskPackageSetName = computed(() => {
-  if (!taskDetail.value) return ''
-  if (!taskDetail.value.packageSetId) {
-    return '自定义输入软件包'
-  }
-  const found = packageSets.value.find(s => s.id === taskDetail.value.packageSetId)
-  return found ? found.name : `软件包集 (${taskDetail.value.packageSetId})`
-})
-
-const taskTargetCount = computed(() => {
-  if (!taskDetail.value) return 0
-  if (Array.isArray(taskDetail.value.targets)) {
-    return taskDetail.value.targets.length
-  }
-  return selectedHosts.value.length
-})
-
-function getStatusLabel(status) {
-  const map = {
-    'PRE_CHECKING': '前置环境检查中',
-    'PRE_CHECK_FAILED': '环境检查阻断',
-    'PRE_CHECK_DONE': '准备分批安装',
-    'INSTALLING': '分批安装中',
-    'INSTALL_DONE': '安装任务完成',
-    'INSTALL_FAILED': '安装部分失败',
-    'FAILED': '任务执行失败'
-  }
-  return map[status] || status
-}
-
-// 执行详情弹窗
-const executeResultVisible = ref(false)
-const currentExecuteRunId = ref('')
-const currentExecuteJobTitle = ref('')
-
-function openExecuteResult(runId, jobTitle = '一键安装作业详情') {
-  currentExecuteRunId.value = runId
-  currentExecuteJobTitle.value = jobTitle
-  executeResultVisible.value = true
-}
-
-// 计算三个步骤的进度激活位置
-const currentStepActiveIndex = computed(() => {
-  if (!taskDetail.value) return 0
-  const status = taskDetail.value.status
-  if (status === 'PRE_CHECKING') return 1
-  if (status === 'PRE_CHECK_FAILED') return 1
-  if (status === 'PRE_CHECK_DONE' || status === 'INSTALLING') return 2
-  if (status === 'INSTALL_DONE' || status === 'INSTALL_FAILED' || status === 'FAILED') return 3
-  return 0
-})
-
-const preCheckStepStatus = computed(() => {
-  if (!taskDetail.value) return 'wait'
-  const status = taskDetail.value.status
-  if (status === 'PRE_CHECKING') return 'process'
-  if (status === 'PRE_CHECK_FAILED') return 'error'
-
-  const okStatuses = ['PRE_CHECK_DONE', 'INSTALLING', 'INSTALL_DONE', 'INSTALL_FAILED', 'FAILED']
-  if (okStatuses.includes(status)) return 'success'
-  return 'wait'
-})
-
-const preCheckStepDesc = computed(() => {
-  if (!taskDetail.value) return ''
-  const status = taskDetail.value.status
-  if (status === 'PRE_CHECKING') return '检查环境中...'
-  if (status === 'PRE_CHECK_FAILED') return '环境预检查阻断'
-
-  const okStatuses = ['PRE_CHECK_DONE', 'INSTALLING', 'INSTALL_DONE', 'INSTALL_FAILED', 'FAILED']
-  if (okStatuses.includes(status)) return '预检查已通过'
-  return ''
-})
-
-const installStepStatus = computed(() => {
-  if (!taskDetail.value) return 'wait'
-  const status = taskDetail.value.status
-  if (status === 'INSTALLING') return 'process'
-  if (status === 'INSTALL_DONE') return 'success'
-  if (status === 'INSTALL_FAILED' || status === 'FAILED') return 'error'
-  return 'wait'
-})
-
-const installStepDesc = computed(() => {
-  if (!taskDetail.value) return ''
-  const status = taskDetail.value.status
-  if (status === 'INSTALLING') return '分批推送安装中...'
-  if (status === 'INSTALL_DONE') return '安装成功'
-  if (status === 'INSTALL_FAILED' || status === 'FAILED') return '部分推送失败'
-  return ''
-})
-
-const parsedPreCheckResult = computed(() => {
-  if (!taskDetail.value?.preCheckResult) return null
-  try {
-    return typeof taskDetail.value.preCheckResult === 'string'
-      ? JSON.parse(taskDetail.value.preCheckResult)
-      : taskDetail.value.preCheckResult
-  } catch (error) {
-    console.error('Failed to parse preCheckResult:', error)
-    return null
-  }
-})
-
-const activeCollapseNames = ref([])
-
-const hostIdToIpMap = computed(() => {
-  const map = {}
-  try {
-    const normalized = normalizeAcmDeviceSelection(selectedHosts.value, 'linux')
-    normalized.forEach(h => {
-      if (h.key && h.value) {
-        map[h.key] = h.value
-      }
-    })
-  } catch (err) {
-    console.error('Failed to map host_id to ip:', err)
-  }
-  return map
-})
-
-function getHostDisplayName(hostId) {
-  return hostIdToIpMap.value[hostId] || hostId
-}
-
-const formattedErrorMessage = computed(() => {
-  let msg = taskDetail.value?.errorMessage || ''
-  if (!msg) return ''
-
-  const map = hostIdToIpMap.value
-  Object.keys(map).forEach(hostId => {
-    msg = msg.split(hostId).join(map[hostId])
-  })
-  return msg
-})
-
-// 自动将环境检查失败的所有主机默认展开
-watch(parsedPreCheckResult, (newVal) => {
-  if (newVal && Array.isArray(newVal.results)) {
-    activeCollapseNames.value = newVal.results.map(r => r.host_id)
-  } else {
-    activeCollapseNames.value = []
-  }
-}, { immediate: true })
-
-// 排序检查项
-function sortChecks(checks) {
-  if (!Array.isArray(checks)) return []
-  const severityMap = { fail: 0, warn: 1, ok: 2 }
-  return [...checks].sort((a, b) => {
-    const aVal = severityMap[a.status] ?? 3
-    const bVal = severityMap[b.status] ?? 3
-    return aVal - bVal
-  })
-}
-
-// 映射预检查项的中文标题
-const checkTitles = {
-  conn: '连通性',
-  sudo: '提权权限',
-  os: '操作系统识别',
-  pkg_manager: '包管理器',
-  pkg_lock: '包管理器占用',
-  pkg_db: '包数据库健康',
-  disk: '磁盘空间',
-  disk_boot: '/boot 空间',
-  kernel_pending: '待重启内核',
-  repo: '软件仓库',
-  pkg_exists: '目标包存在性',
-  version_ok: '目标版本可用性',
-  depsolve: '依赖解析',
-  already_satisfied: '已是目标版本',
-  exec: '检查执行异常'
-}
-
-function getCheckTitle(id) {
-  return checkTitles[id] || id
-}
-
-function getStatusTagType(status) {
-  if (!status) return 'info'
-  if (status.includes('DONE') || status.includes('SUCCESS')) return 'success'
-  if (status.includes('FAILED') || status.includes('ERROR')) return 'danger'
-  if (status.includes('ING')) return 'primary'
-  return 'info'
-}
-
 async function handleStartOneClickInstall() {
+  if (submitting.value) return
+  if (installForm.scheduledTime && !/^\d{4}-\d{2}-\d{2} \d{2}:[0-5][05]$/.test(installForm.scheduledTime)) {
+    ElMessage.warning('计划执行时间的分钟只能选择 5 的倍数')
+    return
+  }
+  if (!isFutureSchedule(installForm.scheduledTime)) {
+    ElMessage.warning('请选择晚于当前时间的计划执行时间')
+    return
+  }
   if (selectedHosts.value.length === 0) {
     ElMessage.warning('请选择目标主机')
     return
@@ -1071,6 +525,7 @@ async function handleStartOneClickInstall() {
   const targets = normalizeAcmDeviceSelection(selectedHosts.value, 'linux')
   const payload = {
     targets,
+    scheduledTime: `${installForm.scheduledTime}:00`,
     batchSize: installForm.batchSize || 50
   }
 
@@ -1089,125 +544,43 @@ async function handleStartOneClickInstall() {
     payload.packageSetId = installForm.packageSetId
   }
 
+  submitting.value = true
   try {
     await ElMessageBox.confirm(
-      `确定对已选中的 ${targets.length} 项目标资产执行软件包一键分批更新吗？（该任务将进行自动预检查、分批安装且默认不重启）`,
-      '确认一键分批安装',
+      `确定对已选中的 ${targets.length} 项目标资产提交定时安装吗？计划时间：${payload.scheduledTime}。${isAdmin.value ? '届时自动执行' : '需管理员提前审批通过'}，自动预检查、分批安装且默认不重启。`,
+      '确认提交定时安装',
       {
-        confirmButtonText: '确定开始',
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
+        confirmButtonText: '确认提交',
         cancelButtonText: '取消',
         type: 'info'
       }
     )
 
+    if (!isFutureSchedule(payload.scheduledTime)) {
+      ElMessage.warning('计划执行时间已过，请重新选择')
+      return
+    }
     const response = await patchInstallApi.createAndRunTask(payload)
     if (response?.data) {
-      taskDetail.value = response.data
-      progressVisible.value = true
-      startPollingTask()
+      ElMessage.success(response.data.status === 'PENDING_APPROVAL' ? '安装申请已提交，等待管理员审批' : '定时安装已提交，等待计划时间执行')
+      selectedHosts.value = []
+      if (installForm.useCustomPackages) {
+        installForm.customPackagesText = ''
+      } else {
+        installForm.packageSetId = ''
+      }
     } else {
       ElMessage.error('创建一键安装任务失败')
     }
   } catch (error) {
-    if (error !== 'cancel') {
+    if (error !== 'cancel' && error !== 'close') {
       console.error('Failed to create and run task:', error)
-      ElMessage.error(error?.response?.data?.error || error?.message || '创建任务失败，请检查参数')
-    }
-  }
-}
-
-// 轮询任务状态
-function startPollingTask() {
-  stopPollingTask()
-
-  pollingIntervalId = setInterval(async () => {
-    if (!taskDetail.value?.id) return
-    try {
-      const response = await patchInstallApi.getTask(taskDetail.value.id)
-      if (response?.data) {
-        taskDetail.value = response.data
-        if (taskFinished.value) {
-          stopPollingTask()
-        }
-      }
-    } catch (error) {
-      console.error('Failed to poll task detail:', error)
-    }
-  }, 2500)
-}
-
-// 停止轮询
-function stopPollingTask() {
-  if (pollingIntervalId) {
-    clearInterval(pollingIntervalId)
-    pollingIntervalId = null
-  }
-}
-
-// 重新预检查
-async function handleRetryPreCheck() {
-  if (!taskDetail.value?.id) return
-  stepActionLoading.value = true
-  try {
-    const response = await patchInstallApi.executePreCheck(taskDetail.value.id)
-    if (response?.data) {
-      taskDetail.value = response.data
-      ElMessage.success('已重新发起环境预检查')
-      startPollingTask()
-    }
-  } catch (error) {
-    console.error('Failed to retry precheck:', error)
-    ElMessage.error('重新发起预检查失败')
-  } finally {
-    stepActionLoading.value = false
-  }
-}
-
-// 跳过检查并执行安装
-async function handleSkipPreCheck() {
-  if (!taskDetail.value?.id) return
-  try {
-    await ElMessageBox.confirm(
-      '前置环境检查有未通过阻断项，跳过强行安装可能导致部署失败，是否确定跳过并执行安装？',
-      '强制安装确认',
-      {
-        confirmButtonText: '确定跳过并安装',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
-
-    stepActionLoading.value = true
-    // 1. 跳过预检查门禁
-    const skipRes = await patchInstallApi.skipPreCheck(taskDetail.value.id)
-    if (skipRes?.data) {
-      taskDetail.value = skipRes.data
-      // 2. 触发推送安装
-      const installRes = await patchInstallApi.executeInstallTask(taskDetail.value.id)
-      if (installRes?.data) {
-        taskDetail.value = installRes.data
-        ElMessage.success('已跳过环境检查，开始推送安装')
-        startPollingTask()
-      }
-    }
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('Failed to skip precheck and install:', error)
-      ElMessage.error('跳过预检查/启动安装失败')
+      ElMessage.error(error?.response?.data?.message || error?.response?.data?.error || error?.message || '创建任务失败，请检查参数')
     }
   } finally {
-    stepActionLoading.value = false
-  }
-}
-
-function handleProgressClosed() {
-  stopPollingTask()
-  taskDetail.value = null
-  selectedHosts.value = []
-  if (!installForm.useCustomPackages) {
-    installForm.packageSetId = ''
-  } else {
-    installForm.customPackagesText = ''
+    submitting.value = false
   }
 }
 
@@ -1218,13 +591,34 @@ onMounted(() => {
   loadPackageSets()
 })
 
-onUnmounted(() => {
-  stopPollingTask()
-})
 </script>
 
 <style scoped lang="scss">
-@use '../components/patch-task/wizard/PatchTaskWizard.scss' as *;
+.package-host-selector {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.package-host-selector :deep(.device-list-container) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+}
+
+.package-host-selector :deep(.device-list-container > div) {
+  flex-shrink: 0;
+}
+
+.package-host-selector :deep(.device-chip-list) {
+  min-height: 0;
+  max-height: none;
+  flex: 0 1 auto;
+  align-content: flex-start;
+}
+
 /* 遵循 UI 规范，不在 scoped 样式里包含任何 .el- 或 .ops- 前缀覆盖类 */
 .m-0 {
   margin: 0;

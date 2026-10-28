@@ -1,5 +1,13 @@
 <template>
-  <el-dialog v-model="visible" title="关联用户" width="800px" destroy-on-close @close="handleClose">
+  <el-dialog
+    v-model="visible"
+    title="关联用户"
+    width="800px"
+    destroy-on-close
+    @close="handleClose"
+    :close-on-click-modal="false"
+    :close-on-press-escape="false"
+  >
     <div v-loading="loading" class="link-user-container">
       <!-- 顶部提示栏 -->
       <div class="top-bar">

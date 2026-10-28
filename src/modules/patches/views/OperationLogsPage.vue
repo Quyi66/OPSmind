@@ -26,7 +26,9 @@
               <el-option label="补丁扫描" value="#{app_vap.menu.patch_scan.title}" />
               <el-option label="补丁安装" value="补丁安装" />
               <el-option label="补丁回滚" value="补丁回滚" />
-              <el-option label="Windows漏洞扫描" value="#{app_vap.menu.win_patch_scan.title}" />
+              <el-option label="Windows补丁扫描" value="Windows补丁扫描" />
+              <el-option label="Windows补丁安装" value="Windows补丁安装" />
+              <el-option label="Windows补丁回滚" value="Windows补丁回滚" />
               <el-option label="定时导入补丁库" value="#{app_vap.menu.import_patch_library_time}" />
             </el-select>
           </el-form-item>
@@ -84,7 +86,7 @@
               {{ translateAction(row.action) }}
             </template>
           </el-table-column>
-          <el-table-column prop="status" label="状态" width="90">
+          <el-table-column prop="status" label="状态" width="110">
             <template #default="{ row }">
               <RunLogStatusTag
                 :type="getStatusType(row.status)"
@@ -96,7 +98,7 @@
               </RunLogStatusTag>
             </template>
           </el-table-column>
-          <el-table-column prop="executor_node" label="执行引擎节点" width="120" />
+          <el-table-column prop="executor_node" label="执行节点" width="120" />
           <el-table-column prop="target_hosts" label="目标节点" width="240">
             <template #default="{ row }">
               <div
@@ -154,7 +156,7 @@
                 <el-button text type="primary" size="small" @click="handleViewRunResult(row)">
                   详情
                 </el-button>
-                <el-button
+                <!-- <el-button
                   v-if="canShowWindowsScanReport(row)"
                   text
                   size="small"
@@ -162,7 +164,7 @@
                   @click="handleWindowsScanReport(row)"
                 >
                   Windows扫描报告
-                </el-button>
+                </el-button> -->
                 <el-button
                   v-if="canShowScanReport(row)"
                   text
@@ -228,6 +230,7 @@
       width="680px"
       destroy-on-close
       class="hosts-dialog"
+      :close-on-click-modal="true"
     >
       <template #header>
         <div class="hosts-dialog-header">
@@ -301,7 +304,8 @@ import { ElMessage, ElTag } from 'element-plus'
 import { Refresh, Search, RefreshRight, Monitor } from '@element-plus/icons-vue'
 import { patchLogsApi } from '../api'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
-import { translateText } from '@/utils/i18n'
+import { initTranslations, translateText } from '@/utils/i18n'
+import { formatOperationLogMessage } from '@/utils/operationLogMessages'
 import { useApi } from '@/core/api'
 import { authService } from '@/core/auth'
 import ScanReportDialog from '../components/logs/ScanReportDialog.vue'
@@ -440,36 +444,9 @@ function translateAction(action) {
   return translated
 }
 
-function applyTemplateParams(template, params = {}) {
-  if (!template) return ''
-  return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-    if (Object.prototype.hasOwnProperty.call(params, key)) {
-      const value = params[key]
-      return value === null || value === undefined ? '' : String(value)
-    }
-    return ''
-  })
-}
-
 // 翻译消息（基于 i18n 模板）
 function translateMessage(messageStr) {
-  if (!messageStr) return ''
-
-  if (messageStr.includes('#{')) {
-    return translateText(messageStr)
-  }
-
-  try {
-    const msg = JSON.parse(messageStr)
-    const msgId = msg.msg_id
-    if (!msgId) return messageStr
-
-    const template = translateText(`#{${msgId}}`)
-    return applyTemplateParams(template, msg) || msgId
-  } catch (e) {
-    const translated = translateText(`#{${messageStr}}`)
-    return translated || messageStr
-  }
+  return formatOperationLogMessage(messageStr)
 }
 
 function parseHosts(hostsStr) {
@@ -558,14 +535,17 @@ async function loadData() {
     } else if (actionParam === '#{app_vap.menu.patch_rollback.title}') {
       actionParam = '补丁回滚'
     }
-    const response = await patchLogsApi.getLogs({
-      page: pagination.page,
-      size: pagination.pageSize,
-      action: actionParam,
-      status: statusFilter.value,
-      day: dayFilter.value,
-      filter: keywordFilter
-    })
+    const [response] = await Promise.all([
+      patchLogsApi.getLogs({
+        page: pagination.page,
+        size: pagination.pageSize,
+        action: actionParam,
+        status: statusFilter.value,
+        day: dayFilter.value,
+        filter: keywordFilter
+      }),
+      initTranslations()
+    ])
     tableData.value = response?.records || []
     pagination.total = response?.total || 0
   } catch (error) {
@@ -622,11 +602,23 @@ function isWindowsScan(row) {
 }
 
 function isPatchInstall(row) {
-  return row?.action === ACTION_KEYS.patchInstall || row?.action === '补丁安装' || translateAction(row?.action) === '补丁安装'
+  return (
+    row?.action === ACTION_KEYS.patchInstall ||
+    row?.action === '补丁安装' ||
+    row?.action === 'Windows补丁安装' ||
+    translateAction(row?.action) === '补丁安装'
+  )
 }
 
 function isPatchRollback(row) {
-  return row?.action === ACTION_KEYS.patchRollback || row?.action === '补丁回滚' || row?.action === '补丁回退' || translateAction(row?.action) === '补丁回滚' || translateAction(row?.action) === '补丁回退'
+  return (
+    row?.action === ACTION_KEYS.patchRollback ||
+    row?.action === '补丁回滚' ||
+    row?.action === 'Windows补丁回滚' ||
+    row?.action === '补丁回退' ||
+    translateAction(row?.action) === '补丁回滚' ||
+    translateAction(row?.action) === '补丁回退'
+  )
 }
 
 function isCompleted(row) {
@@ -676,7 +668,7 @@ async function fetchReportPath(runId, dir) {
       cacheBuster: Date.now()
     }
   })
-  return response?.data?.filePath || response?.filePath || response?.data?.path || response?.path
+  return response?.data?.filePath ?? response?.filePath ?? response?.data?.path ?? response?.path
 }
 
 async function fetchReportFileInfo(path) {
@@ -777,13 +769,13 @@ async function downloadInstallReport(row) {
   }
   try {
     const filePath = await fetchReportPath(row.run_id, 'patch_install')
-    const reportPath = filePath
-      ? `SECOPS_EXPORT_DATA/patch_install/${filePath}`
-      : 'SECOPS_EXPORT_DATA/patch_install/'
+    const reportPath = buildReportPath('patch_install', filePath)
     const fileInfo = await fetchReportFileInfo(reportPath)
+    if (fileInfo?.detail) {
+      throw new Error(fileInfo.message || '未找到报告文件')
+    }
     const downloadUri = fileInfo?.fileContent?.downloadUri || fileInfo?.downloadUri
-    const filename =
-      fileInfo?.fileContent?.name || `patch_install_${formatFilenameTimestamp(row.start_time)}.html`
+    const filename = resolveDownloadFilename(fileInfo, 'patch_install', row.start_time, filePath)
     if (!downloadUri) {
       throw new Error('未找到下载地址')
     }
@@ -794,15 +786,15 @@ async function downloadInstallReport(row) {
 }
 
 function buildReportPath(dir, filePath) {
-  if (!filePath) return `SECOPS_EXPORT_DATA/${dir}/`
+  if (!filePath) throw new Error('未找到报告文件')
   const normalized = filePath.startsWith(`${dir}/`)
     ? `SECOPS_EXPORT_DATA/${filePath}`
     : `SECOPS_EXPORT_DATA/${dir}/${filePath}`
   return normalized
 }
 
-function resolveDownloadFilename(fileInfo, fallbackBase, timestamp) {
-  const name = fileInfo?.fileContent?.name || fileInfo?.name
+function resolveDownloadFilename(fileInfo, fallbackBase, timestamp, filePath) {
+  const name = fileInfo?.fileContent?.name || fileInfo?.name || filePath?.split('/').pop()
   if (name) return name
   return `${fallbackBase}_${formatFilenameTimestamp(timestamp)}.xlsx`
 }
@@ -823,7 +815,7 @@ async function downloadRollbackReport(row) {
     if (!downloadUri) {
       throw new Error('未找到下载地址')
     }
-    const filename = resolveDownloadFilename(fileInfo, 'patch_rollback', row.start_time)
+    const filename = resolveDownloadFilename(fileInfo, 'patch_rollback', row.start_time, filePath)
     await downloadFromUri(`${downloadUri}?cacheBuster=${Date.now()}`, filename)
   } catch (error) {
     ElMessage.error(`下载回滚报告失败: ${error.message || '未知错误'}`)

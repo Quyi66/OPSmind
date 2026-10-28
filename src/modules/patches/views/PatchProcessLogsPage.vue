@@ -71,19 +71,25 @@
         </el-table-column>
         <el-table-column prop="taskType" label="任务类型" width="120">
           <template #default="{ row }">
-            <el-tag :type="getTaskTypeTagType(row.taskType)" size="small" effect="light">
+            <el-tag
+              :type="getTaskTypeTagType(row.taskType)"
+              :style="getTaskTypeTagStyle(row.taskType)"
+              size="small"
+              effect="plain"
+            >
               {{ formatTaskType(row.taskType) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="120">
+        <el-table-column prop="status" label="状态" width="150">
           <template #default="{ row }">
             <RunLogStatusTag
               :type="getTaskStatusTagType(row.status)"
+              :style="getTaskStatusTagStyle(row.status)"
               size="small"
               @click="openDetail(row)"
             >
-              {{ formatTaskStatus(row.status) }}
+              {{ row.status === 'CREATED' && row.scheduledTime ? '等待定时执行' : formatTaskStatus(row.status) }}
             </RunLogStatusTag>
           </template>
         </el-table-column>
@@ -101,9 +107,18 @@
             {{ formatJsonArray(row.patchPkgs) || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="90" fixed="right">
+        <el-table-column label="操作" width="170" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="openDetail(row)">详情</el-button>
+            <el-button
+              v-if="row.taskType !== 'rollback'"
+              text
+              type="primary"
+              size="small"
+              @click="openFailedHosts(row)"
+            >
+              失败主机
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -123,6 +138,7 @@
     </div>
 
     <PatchProcessLogDetailDialog v-model="detailVisible" :task="selectedTask" />
+    <PatchTaskFailedHostsDialog v-model="failedHostsVisible" :task-id="failedHostsTaskId" />
   </div>
 </template>
 
@@ -132,6 +148,7 @@ import { ElMessage } from 'element-plus'
 import { Refresh, RefreshRight, Search } from '@element-plus/icons-vue'
 import { patchLogsApi } from '../api'
 import PatchProcessLogDetailDialog from '../components/logs/PatchProcessLogDetailDialog.vue'
+import PatchTaskFailedHostsDialog from '../components/patch-task/dialogs/PatchTaskFailedHostsDialog.vue'
 import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
 import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
 import {
@@ -141,7 +158,9 @@ import {
   formatTaskType,
   getOsIcon,
   getTaskStatusTagType,
-  getTaskTypeTagType
+  getTaskStatusTagStyle,
+  getTaskTypeTagType,
+  getTaskTypeTagStyle
 } from '../utils/patchProcessLogs'
 
 const DEFAULT_PAGE_SIZE = 20
@@ -151,11 +170,18 @@ const loading = ref(false)
 const tableData = ref([])
 const detailVisible = ref(false)
 const selectedTask = ref(null)
+const failedHostsVisible = ref(false)
+const failedHostsTaskId = ref('')
+
+function openFailedHosts(task) {
+  failedHostsTaskId.value = String(task.id || task.taskId || '')
+  failedHostsVisible.value = true
+}
 
 useActiveTaskListPolling({
   records: tableData,
   refresh: loadData,
-  activeStatuses: ['PRE_CHECKING', 'INSTALLING', 'ROLLING_BACK', 'RESTARTING', 'VALIDATING']
+  activeStatuses: ['PENDING_APPROVAL', 'CREATED', 'PRE_CHECKING', 'INSTALLING', 'ROLLING_BACK', 'RESTARTING', 'VALIDATING']
 })
 
 const filters = reactive(createDefaultFilters())

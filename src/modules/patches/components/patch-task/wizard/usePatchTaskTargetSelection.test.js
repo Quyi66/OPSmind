@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import { ElMessage } from 'element-plus'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { patchInstallApi } from '../../../api'
+import { dataManageApi } from '@/modules/asset/api'
 import { usePatchTaskTargetSelection } from './usePatchTaskTargetSelection'
 
 vi.mock('element-plus', () => ({
@@ -14,8 +15,19 @@ vi.mock('element-plus', () => ({
 
 vi.mock('../../../api', () => ({
   patchInstallApi: {
-    getAffectedPackages: vi.fn()
+    getAffectedPackages: vi.fn(),
+    getMachinesByPatch: vi.fn()
   }
+}))
+
+vi.mock('@/modules/asset/api', () => ({
+  dataManageApi: { getAllGroups: vi.fn(), getAllTags: vi.fn().mockResolvedValue({ records: [] }) }
+}))
+
+vi.mock('../../../utils/agentCapability', () => ({
+  getAgentHostId: host => host.hostId,
+  resolveAgentCapabilityHosts: vi.fn(async hosts => hosts),
+  validateAgentCapability: vi.fn(() => true)
 }))
 
 function createDeferred() {
@@ -65,6 +77,78 @@ describe('usePatchTaskTargetSelection', () => {
     vi.restoreAllMocks()
     vi.clearAllMocks()
     vi.useRealTimers()
+  })
+
+  it('loads Linux groups and refreshes hosts with selected group IDs', async () => {
+    dataManageApi.getAllGroups.mockResolvedValue({
+      records: [
+        { id: 'linux-root', ci_type: 'linux', path: '/' },
+        { id: 'windows-root', ci_type: 'windows', path: '/' },
+        { id: 'windows-group', ci_type: 'windows', path: '/Windows' },
+        { id: 'group-1', ci_type: 'linux', path: '/生产环境' },
+        { id: 'group-2', ci_type: 'linux', path: '/测试环境' }
+      ]
+    })
+    patchInstallApi.getMachinesByPatch.mockResolvedValue({ data: { records: [] } })
+    const { targetSelection, wrapper } = mountTargetSelection()
+
+    targetSelection.openTargetSelection()
+    await flushPromises()
+    expect(dataManageApi.getAllGroups).toHaveBeenCalledWith('linux')
+    expect(targetSelection.groupOptions.value).toEqual([
+      { id: 'group-1', label: '/生产环境' },
+      { id: 'group-2', label: '/测试环境' }
+    ])
+
+    targetSelection.selectedHosts.value = [{ hostId: 'old-host' }]
+    targetSelection.selectedGroupIds.value = ['group-1', 'group-2']
+    targetSelection.handleHostGroupChange()
+    expect(patchInstallApi.getMachinesByPatch).toHaveBeenLastCalledWith({
+      patch_ids: ['patch-1'],
+      hostId: '@@(linux)',
+      groupIds: ['group-1', 'group-2'],
+      tagNames: []
+    })
+    expect(targetSelection.selectedHosts.value).toEqual([])
+    wrapper.unmount()
+  })
+
+  it('ignores hosts returned for an earlier wizard session after reopening', async () => {
+    const first = createDeferred()
+    const second = createDeferred()
+    patchInstallApi.getMachinesByPatch
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(second.promise)
+    const { targetSelection, wrapper } = mountTargetSelection()
+    targetSelection.openTargetSelection()
+    targetSelection.closeTargetSelection()
+    targetSelection.openTargetSelection()
+    const hosts = [{ hostId: 'current-host' }]
+    second.resolve({ data: { records: hosts } })
+    await flushPromises()
+    first.resolve({ data: { records: [{ hostId: 'stale-host' }] } })
+    await flushPromises()
+    expect(targetSelection.affectedHosts.value).toEqual(hosts)
+    wrapper.unmount()
+  })
+
+  it('keeps loading the current session when an older host request finishes', async () => {
+    const first = createDeferred()
+    const second = createDeferred()
+    patchInstallApi.getMachinesByPatch
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(second.promise)
+    const { targetSelection, wrapper } = mountTargetSelection()
+    targetSelection.openTargetSelection()
+    targetSelection.closeTargetSelection()
+    targetSelection.openTargetSelection()
+    first.resolve({ data: { records: [] } })
+    await flushPromises()
+    expect(targetSelection.installDataLoading.value).toBe(true)
+    second.resolve({ data: { records: [] } })
+    await flushPromises()
+    expect(targetSelection.installDataLoading.value).toBe(false)
+    wrapper.unmount()
   })
 
   it('retries the current selection when an A to B to A request supersedes the original request', async () => {

@@ -10,12 +10,29 @@ const TASK_TYPE_LABELS = {
 
 const TASK_TYPE_TAGS = {
   install: 'primary',
-  rollback: 'danger',
+  rollback: 'info',
   pkg_update: 'warning',
   vuln_fix: 'success'
 }
 
+function normalizeTaskStatus(status) {
+  return String(status ?? '').trim().toUpperCase()
+}
+
+export function getTaskStatusTagStyle(status) {
+  // 保留全局浅底和边框，仅微调文字深浅，区分最终完成和审批驳回。
+  const accents = {
+    COMPLETED: 'success',
+    REJECTED: 'danger'
+  }
+  const accent = accents[normalizeTaskStatus(status)]
+  return accent ? { '--el-tag-text-color': `var(--el-color-${accent}-dark-2)` } : {}
+}
+
 const TASK_STATUS_LABELS = {
+  PENDING_APPROVAL: '待管理员审批',
+  REJECTED: '审批驳回',
+  EXPIRED: '已失效',
   CREATED: '已创建',
   PRE_CHECKING: '预检查中',
   PRE_CHECK_DONE: '预检查完成',
@@ -51,11 +68,28 @@ export function getTaskTypeTagType(taskType) {
   return TASK_TYPE_TAGS[taskType] || 'info'
 }
 
+export function getTaskTypeTagStyle(taskType) {
+  const type = getTaskTypeTagType(taskType)
+  // 回滚是恢复类操作，使用柔和紫色，与安装蓝色及失败红色区分。
+  const isRollback = taskType === 'rollback'
+  return {
+    '--el-tag-text-color': isRollback ? '#9673c2' : `var(--el-color-${type})`,
+    '--el-tag-bg-color': 'var(--el-bg-color)',
+    '--el-tag-border-color': isRollback
+      ? 'color-mix(in srgb, #9673c2 45%, var(--el-bg-color))'
+      : `var(--el-color-${type}-light-5)`
+  }
+}
+
 export function formatTaskStatus(status) {
-  return TASK_STATUS_LABELS[status] || status || '-'
+  return TASK_STATUS_LABELS[normalizeTaskStatus(status)] || status || '-'
 }
 
 export function getTaskStatusTagType(status) {
+  status = normalizeTaskStatus(status)
+  if (status === 'PENDING_APPROVAL' || status === 'RESTART_PENDING') return 'warning'
+  if (status === 'REJECTED') return 'danger'
+  if (status === 'EXPIRED') return 'info'
   if (status === 'COMPLETED' || status?.endsWith('_DONE')) return 'success'
   if (status === 'FAILED' || status?.endsWith('_FAILED')) return 'danger'
   if (status?.endsWith('ING')) return 'primary'
@@ -172,6 +206,8 @@ export function getLatestRecord(records = [], predicate = () => true) {
 
 export function getRecordDisplayState(record) {
   if (!record) return 'idle'
+  if (record.action === 'REJECT' || record.action === 'EXPIRE') return 'failed'
+  if (record.action === 'APPROVE') return 'success'
   if (record.action === 'FAILED' || record.status === 'FAILED') return 'failed'
   if (record.status === 'RUNNING') return 'running'
   if (isSkippedRecord(record)) return 'success'

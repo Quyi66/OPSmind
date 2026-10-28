@@ -178,6 +178,7 @@
     append-to-body
     :with-header="false"
     class="host-output-drawer"
+    :close-on-click-modal="true"
   >
     <div v-loading="hostOutputLoading" class="host-output-drawer__body">
       <div class="host-output-drawer__header">

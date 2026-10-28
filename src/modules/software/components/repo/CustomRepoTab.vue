@@ -7,7 +7,7 @@
           <i class="fa fa-plus" />
           添加仓库
         </el-button>
-        <el-button :disabled="selectedRows.length === 0" @click="handleConfigToHost">
+        <el-button :disabled="selectedRows.length === 0 || !canUseRows" @click="handleConfigToHost">
           <i class="fa fa-angle-right" />
           配置到主机
         </el-button>
@@ -22,29 +22,58 @@
       </div>
     </div>
 
+    <el-alert v-if="readError" type="warning" :closable="false" show-icon style="flex-shrink: 0">
+      <template #title>
+        {{ readErrorMessage }}
+        <span v-if="hasResult">刷新成功前，旧仓库数据仅供查看，暂不可配置、编辑或删除。</span>
+        <el-button v-if="canRetry" link type="primary" :loading="loading" @click="retry">
+          重试读取
+        </el-button>
+      </template>
+    </el-alert>
+
     <div class="ops-table-wrapper">
       <el-table
         v-loading="loading"
         :data="tableData"
-        max-height="calc(100vh - 294px)"
+        :empty-text="emptyText"
+        height="100%"
         style="width: 100%"
         @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="50" />
-        <el-table-column prop="repo_name" label="仓库名" min-width="150" />
-        <el-table-column prop="repo_file" label="仓库文件" min-width="150" />
+        <el-table-column type="selection" width="50" :selectable="() => canUseRows" />
+        <el-table-column prop="repo_name" label="仓库名" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="repo_file" label="仓库文件" min-width="150" show-overflow-tooltip />
         <el-table-column prop="repo_desc" label="描述" min-width="200" show-overflow-tooltip />
         <el-table-column prop="repo_url" label="地址" min-width="250" show-overflow-tooltip />
-        <el-table-column label="操作" width="88" fixed="right">
+        <el-table-column label="操作" width="128" fixed="right">
           <template #default="{ row }">
-            <el-button text type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
-            <el-button text type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+            <div class="software-row-actions">
+              <el-button
+                text
+                type="primary"
+                size="small"
+                :disabled="!canUseRows"
+                @click="handleEdit(row)"
+              >
+                编辑
+              </el-button>
+              <el-button
+                text
+                type="danger"
+                size="small"
+                :disabled="!canUseRows"
+                @click="handleDelete(row)"
+              >
+                删除
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
     </div>
 
-    <div class="ops-pagination-wrapper">
+    <div v-if="hasResult" class="ops-pagination-wrapper">
       <el-pagination
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
@@ -79,13 +108,29 @@ import { repoApi } from '../../api'
 import RepoImportDialog from './RepoImportDialog.vue'
 import RepoAddDialog from './RepoAddDialog.vue'
 import ConfigRepoToHostDialog from './ConfigRepoToHostDialog.vue'
+import { useSoftwareListRead } from '../../composables/useSoftwareListRead'
 
-const loading = ref(false)
-const tableData = ref([])
 const currentPage = ref(1)
 const pageSize = ref(10)
-const total = ref(0)
 const selectedRows = ref([])
+const {
+  rows: tableData,
+  total,
+  loading,
+  hasResult,
+  error: readError,
+  errorMessage: readErrorMessage,
+  emptyText,
+  canUseRows,
+  canRetry,
+  load,
+  retry,
+  captureReady
+} = useSoftwareListRead(params => repoApi.getCustomRepoList(params), {
+  onDiscard: () => {
+    selectedRows.value = []
+  }
+})
 
 // 弹窗相关
 const importDialogVisible = ref(false)
@@ -93,23 +138,8 @@ const addDialogVisible = ref(false)
 const editingRepo = ref(null)
 const configDialogVisible = ref(false)
 
-async function loadData() {
-  loading.value = true
-  try {
-    const response = await repoApi.getCustomRepoList({
-      page: currentPage.value,
-      size: pageSize.value
-    })
-    const data = response?.data || response
-    tableData.value = data?.records || []
-    total.value = data?.total || 0
-  } catch (error) {
-    console.error('Failed to load custom repos:', error)
-    tableData.value = []
-    total.value = 0
-  } finally {
-    loading.value = false
-  }
+function loadData() {
+  return load({ page: currentPage.value, size: pageSize.value })
 }
 
 function handleSelectionChange(selection) {
@@ -119,7 +149,7 @@ function handleSelectionChange(selection) {
 function handleDownloadTemplate() {
   // 下载模板文件（位于 public/templates/vap/ 目录）
   const link = document.createElement('a')
-  link.href = '/templates/vap/vap_repo_template.xlsx'
+  link.href = `${import.meta.env.BASE_URL}templates/vap/vap_repo_template.xlsx`
   link.download = 'vap_repo_template.xlsx'
   document.body.appendChild(link)
   link.click()
@@ -136,20 +166,29 @@ function handleAddRepo() {
 }
 
 function handleEdit(row) {
+  if (!requireCurrentRows()) return
   editingRepo.value = row
   addDialogVisible.value = true
 }
 
 async function handleDelete(row) {
+  if (!requireCurrentRows()) return
+  const isCurrent = captureReady()
+  const id = row.id
   try {
     await ElMessageBox.confirm('确认删除选中镜像源？', '确认删除', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning'
     })
 
-    await repoApi.deleteCustomRepo(row.id)
+    if (!isCurrent()) return
+    await repoApi.deleteCustomRepo(id)
+    if (!isCurrent()) return
     ElMessage.success('删除成功')
     loadData()
   } catch (error) {
+    if (!isCurrent()) return
     if (error !== 'cancel') {
       console.error('Failed to delete repo:', error)
       ElMessage.error('删除失败')
@@ -158,11 +197,18 @@ async function handleDelete(row) {
 }
 
 function handleConfigToHost() {
+  if (!requireCurrentRows()) return
   if (selectedRows.value.length === 0) {
     ElMessage.warning('请先选择要配置的仓库')
     return
   }
   configDialogVisible.value = true
+}
+
+function requireCurrentRows() {
+  if (canUseRows.value) return true
+  ElMessage.warning('请先成功刷新仓库列表，再配置、编辑或删除')
+  return false
 }
 
 function handleConfigSuccess() {
@@ -178,9 +224,9 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.custom-repo-tab {
-  height: 100%;
-}
+@use '../../styles/layout' as software-layout;
 
-/* 使用全局的 ops-action-bar 和 ops-pagination-wrapper 样式 */
+.custom-repo-tab {
+  @include software-layout.table-tab;
+}
 </style>

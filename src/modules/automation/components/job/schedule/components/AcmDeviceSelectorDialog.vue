@@ -7,6 +7,7 @@
     :z-index="5000"
     append-to-body
     class="acm-device-selector-dialog"
+    :close-on-press-escape="false"
   >
     <div class="selector-container">
       <!-- CI类型选择 -->
@@ -36,14 +37,14 @@
             >
               <span>
                 <i class="fa fa-briefcase-medical text-muted me-2" />
-                已选主机
+                已选项
                 <el-badge :value="selectedHostsByCiType.length" type="danger" class="ms-2" />
               </span>
               <div style="display: flex; gap: 8px; align-items: center">
                 <el-input
                   v-if="selectedHostsByCiType.length > 10"
                   v-model="searchSelectedQuery"
-                  placeholder="搜索已选主机..."
+                  placeholder="搜索已选项..."
                   size="small"
                   clearable
                   style="width: 180px"

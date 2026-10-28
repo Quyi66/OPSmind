@@ -3,24 +3,10 @@
     <!-- 筛选栏 -->
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
-        <el-form-item label="应用范围">
-          <el-select
-            v-model="selectedAppletName"
-            filterable
-            style="width: 220px"
-            placeholder="全部应用" @change="handleSearch">
-            <el-option
-              v-for="applet in appOptions"
-              :key="applet.name || 'all'"
-              :label="applet.title"
-              :value="applet.name"
-            />
-          </el-select>
-        </el-form-item>
         <el-form-item label="类型">
           <el-select
             v-model="filters.jobType"
-            style="width: 120px"
+            style="width: 150px"
             placeholder="全部类型"
             @change="handleSearch"
           >
@@ -38,7 +24,7 @@
             v-model="filters.keyword"
             placeholder="搜索运维工具标题、描述..."
             clearable
-            style="width: 200px"
+            style="width: 230px"
             @keyup.enter="handleSearch"
             @clear="handleSearch"
           >
@@ -141,16 +127,16 @@
         <el-table-column prop="title" label="运维工具" min-width="160" show-overflow-tooltip>
           <template #default="{ row }">
             <!-- <span class="job-title__text" style="color: #0077EE; cursor: pointer;" @click="handleEditJob(row)">
-                {{ translateText(row.title) || '-' }}
+                {{ getAutomationToolTitle(row) }}
               </span> -->
             <el-button text type="primary" @click="handleEditJob(row)">
-              {{ translateText(row.title) || '-' }}
+              {{ getAutomationToolTitle(row) }}
             </el-button>
           </template>
         </el-table-column>
         <el-table-column prop="description" label="描述" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
-            {{ translateText(row.description) || '-' }}
+            {{ getAutomationToolDescription(row) || '-' }}
           </template>
         </el-table-column>
         <el-table-column label="类型" width="140">
@@ -168,11 +154,6 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="appletCode" label="所属应用" min-width="100">
-          <template #default="{ row }">
-            {{ row.appletCode || '未分类' }}
-          </template>
-        </el-table-column>
         <el-table-column prop="updatedBy" label="修改人" width="100" />
         <el-table-column prop="updatedAt" label="修改时间" width="180" sortable="custom">
           <template #default="{ row }">
@@ -184,12 +165,27 @@
             {{ formatDate(row.lastRunTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" fixed="right" width="130">
+        <el-table-column label="操作" fixed="right" width="230">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="handleViewJob(row)">执行</el-button>
             <el-button text type="primary" size="small" @click="handleCopy(row)">复制</el-button>
             <el-button text type="primary" size="small" @click="handleViewHistory(row)">
               历史
+            </el-button>
+            <el-button
+              v-if="row.id && ['script', 'rest'].includes(row.type)"
+              text
+              type="primary"
+              size="small"
+              :disabled="!!(row.needApprove || row.isApproving)"
+              :title="
+                row.needApprove || row.isApproving
+                  ? '请先按原审批流程处理'
+                  : '使用当前工具创建定时任务'
+              "
+              @click="handleCreateSchedule(row)"
+            >
+              创建定时任务
             </el-button>
           </template>
         </el-table-column>
@@ -214,6 +210,14 @@
       :job-id="executeJobMeta?.id || ''"
       :job-type="executeJobMeta?.type || ''"
       :fallback-config-json="executeJobMeta?.configJson || ''"
+      @success="executeJobMeta.onSuccess"
+    />
+    <ExecuteResultDialog
+      v-if="resultDialogVisible"
+      v-model:visible="resultDialogVisible"
+      :run-id="resultMeta.runId"
+      :job-id="resultMeta.jobId"
+      :job-title="resultMeta.jobTitle"
     />
     <ExecuteHistoryDialog
       v-if="historyDialogVisible"
@@ -229,6 +233,11 @@
       :applet-code="currentApp.name"
       :applets-list="appOptions"
       @success="handleCreateSuccess"
+    />
+    <CronJobFormDialog
+      v-if="scheduleDialogVisible"
+      v-model="scheduleDialogVisible"
+      :initial-job="scheduleJob"
     />
     <JobApproveDialog
       v-if="approveDialogVisible"
@@ -248,12 +257,18 @@ import { storeToRefs } from 'pinia'
 import { useAutomationJobStore, JOB_TYPE_OPTIONS } from '@/modules/automation/stores/useJobStore'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Delete, Refresh, Search, ArrowDown, RefreshRight } from '@element-plus/icons-vue'
-import { translateText } from '@/utils/i18n'
+import {
+  getAutomationExecutionPresentation,
+  getAutomationToolDescription,
+  getAutomationToolTitle
+} from '@/modules/automation/utils/resourcePresentation'
 import * as jaoApi from '@/modules/automation/api/jao'
 import ExecuteJobDialog from '../../components/job/JobListView/ExecuteJobDialog.vue'
+import ExecuteResultDialog from '../../components/job/JobListView/ExecuteResultDialog.vue'
 import ExecuteHistoryDialog from '../../components/job/JobListView/ExecuteHistoryDialog.vue'
 import CreateJobDialog from '../../components/job/JobListView/CreateJobDialog.vue'
 import JobApproveDialog from '../../components/job/JobListView/JobApproveDialog.vue'
+import CronJobFormDialog from '../../components/job/components/CronJobFormDialog.vue'
 
 const store = useAutomationJobStore()
 const { error, filteredJobs, jobs } = storeToRefs(store)
@@ -278,8 +293,13 @@ const filters = reactive({
 
 const executeDialogVisible = ref(false)
 const executeJobMeta = ref(null)
+let executeSession = 0
+const resultDialogVisible = ref(false)
+const resultMeta = ref({ runId: '', jobId: '', jobTitle: '' })
 const historyDialogVisible = ref(false)
 const historyJobMeta = ref(null)
+const scheduleDialogVisible = ref(false)
+const scheduleJob = ref(null)
 const createDialogVisible = ref(false)
 const createJobType = ref('')
 const editJobId = ref('')
@@ -291,16 +311,6 @@ const approveJobMeta = ref(null)
 // 统一的弹窗可见性（新建或编辑都使用同一个弹窗）
 const jobDialogVisible = ref(false)
 
-const selectedAppletName = computed({
-  get: () => currentApp.value?.name ?? '',
-  set: value => {
-    const app = appOptions.value.find(item => item.name === value)
-    if (app) {
-      selectApplet(app)
-    }
-  }
-})
-
 /** 过滤列表 - 支持关键词和类型筛选 */
 function filterList() {
   let filtered = originalJobs.value
@@ -310,14 +320,19 @@ function filterList() {
     filtered = filtered.filter(job => job.type === filters.jobType)
   }
 
-  // 按关键词搜索（搜索标题、描述、ID）
+  // 按关键词搜索原始值和列表中显示的翻译值
   if (filters.keyword && filters.keyword.trim()) {
     const kw = filters.keyword.trim().toLowerCase()
     filtered = filtered.filter(job => {
-      return (
-        (job.title && job.title.toLowerCase().includes(kw)) ||
-        (job.description && job.description.toLowerCase().includes(kw)) ||
-        (job.id && job.id.toLowerCase().includes(kw))
+      const searchableValues = [
+        job.title,
+        getAutomationToolTitle(job),
+        job.description,
+        getAutomationToolDescription(job),
+        job.updatedBy
+      ]
+      return searchableValues.some(value =>
+        typeof value === 'string' && value.toLowerCase().includes(kw)
       )
     })
   }
@@ -372,6 +387,8 @@ function handleSortChange({ prop, order }) {
 function handleDeleteJobs() {
   const jobIds = selectedIds.value
   ElMessageBox.confirm(`确定要删除选中的 ${jobIds.length} 个运维工具吗？`, '删除确认', {
+    closeOnClickModal: false,
+    closeOnPressEscape: false,
     type: 'warning',
     confirmButtonText: '删除',
     cancelButtonText: '取消'
@@ -420,16 +437,34 @@ async function handleViewJob(row) {
       ElMessage.info('该运维工具审批申请已提交，请等待审批')
     } else {
       // 不需要审批，直接执行
+      const session = ++executeSession
+      const job = { id: row.id, title: row.title || '' }
       executeJobMeta.value = {
         id: row.id,
         type: row.type ?? '',
-        configJson: row.configJson ?? ''
+        configJson: row.configJson ?? '',
+        onSuccess: payload => handleExecuteJobSuccess(payload, session, job)
       }
       executeDialogVisible.value = true
     }
   } catch (error) {
     ElMessage.error(error?.message || '检查审批状态失败')
   }
+}
+
+function handleExecuteJobSuccess(payload = {}, session, job) {
+  if (!executeDialogVisible.value || session !== executeSession) return
+  if (payload.jobId && payload.jobId !== job.id) return
+  executeDialogVisible.value = false
+  if (!payload.runId) {
+    ElMessage.info('本次提交未返回运行标识，请从该工具的历史查看运行结果')
+    return
+  }
+  resultMeta.value = {
+    runId: payload.runId,
+    ...getAutomationExecutionPresentation(payload, job)
+  }
+  resultDialogVisible.value = true
 }
 
 watch(executeDialogVisible, visible => {
@@ -609,6 +644,8 @@ async function handleMoveJobs() {
       `确定将选中的 ${selectedIds.value.length} 个运维工具移动到「${targetLabel}」吗？`,
       '移动运维工具',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         type: 'warning',
         confirmButtonText: '确认',
         cancelButtonText: '取消'
@@ -637,6 +674,8 @@ async function handleCopy(row) {
 
   try {
     await ElMessageBox.confirm(`确定要复制运维工具「${row.title}」吗？`, '复制确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'info'
@@ -663,6 +702,16 @@ function handleViewHistory(row) {
     title: row.title || ''
   }
   historyDialogVisible.value = true
+}
+
+function handleCreateSchedule(row) {
+  if (!row?.id || !['script', 'rest'].includes(row.type)) return
+  if (row.needApprove || row.isApproving) {
+    ElMessage.info('需审批或审批中的工具请先按原审批流程处理')
+    return
+  }
+  scheduleJob.value = { id: row.id, type: row.type }
+  scheduleDialogVisible.value = true
 }
 
 function handleCreateJob(type) {

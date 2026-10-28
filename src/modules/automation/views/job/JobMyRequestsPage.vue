@@ -65,7 +65,7 @@
         <el-table-column label="运维工具" min-width="150">
           <template #default="{ row }">
             <el-button text type="primary" @click="handleViewDetail(row)">
-              {{ row.jobName }}
+              {{ getAutomationToolTitle({ ...row, id: undefined }) }}
             </el-button>
           </template>
         </el-table-column>
@@ -161,6 +161,7 @@
 </template>
 
 <script setup>
+import { getAutomationToolTitle } from '../../utils/resourcePresentation'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
@@ -190,6 +191,9 @@ const filteredData = computed(() => {
     data = data.filter(
       item =>
         item.jobName?.toLowerCase().includes(keyword) ||
+        getAutomationToolTitle({ ...item, id: undefined })
+          .toLowerCase()
+          .includes(keyword) ||
         item.jobId?.toLowerCase().includes(keyword) ||
         item.approver?.toLowerCase().includes(keyword)
     )
@@ -307,6 +311,8 @@ function handleDetailSuccess() {
 async function handleCancel(row) {
   try {
     await ElMessageBox.confirm('确定要取消此审批吗？', '取消审批', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning'
     })
 

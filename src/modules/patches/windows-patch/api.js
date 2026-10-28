@@ -224,48 +224,46 @@ export const winPatchApi = {
   },
 
   getTaskDetail(taskId) {
-    const encodedTaskId = encodeURIComponent(taskId)
-
     return Promise.allSettled([
       patchInstallApi.getTask(taskId),
-      patchInstallApi.getAuditDetail(taskId),
-      apiService.get(`${WIN_PATCH_API_PREFIX}/tasks/${encodedTaskId}`)
+      patchInstallApi.getAuditDetail(taskId)
     ]).then(results => {
-      const [taskResult, auditResult, historyResult] = results
+      const [taskResult, auditResult] = results
 
       if (results.every(result => result.status === 'rejected')) {
-        throw taskResult.reason || auditResult.reason || historyResult.reason
+        throw taskResult.reason || auditResult.reason
       }
 
       const taskData = extractResponseData(taskResult)
       const auditData = extractResponseData(auditResult)
-      const historyData = extractResponseData(historyResult)
-
-      const historyTask =
-        historyData && typeof historyData === 'object'
-          ? (historyData.task ?? historyData)
-          : null
 
       const mergedTask = {
-        ...(historyTask && typeof historyTask === 'object' ? historyTask : {}),
         ...(taskData && typeof taskData === 'object' ? taskData : {}),
         ...(auditData?.task && typeof auditData.task === 'object' ? auditData.task : {})
       }
 
+      const steps = Array.isArray(auditData?.steps)
+        ? auditData.steps
+        : Array.isArray(taskData?.steps)
+          ? taskData.steps
+          : []
+      const logs = Array.isArray(auditData?.logs)
+        ? auditData.logs
+        : Array.isArray(taskData?.logs)
+          ? taskData.logs
+          : []
+      const hosts = Array.isArray(taskData?.hosts)
+        ? taskData.hosts
+        : Array.isArray(auditData?.hosts)
+          ? auditData.hosts
+          : []
+
       return {
         data: {
           task: Object.keys(mergedTask).length ? mergedTask : null,
-          steps: Array.isArray(auditData?.steps)
-            ? auditData.steps
-            : Array.isArray(historyData?.steps)
-              ? historyData.steps
-              : [],
-          logs: Array.isArray(auditData?.logs)
-            ? auditData.logs
-            : Array.isArray(historyData?.logs)
-              ? historyData.logs
-              : [],
-          hosts: Array.isArray(historyData?.hosts) ? historyData.hosts : []
+          steps,
+          logs,
+          hosts
         }
       }
     })

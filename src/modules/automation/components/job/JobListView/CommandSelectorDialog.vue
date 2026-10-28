@@ -7,6 +7,7 @@
     @close="handleClose"
     :close-on-click-modal="false"
     class="command-selector-dialog"
+    :close-on-press-escape="false"
   >
     <div class="command-selector-content">
       <!-- 搜索栏 -->

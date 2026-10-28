@@ -39,4 +39,22 @@ describe('Windows patch API', () => {
 
     expect(apiMocks.get).toHaveBeenCalledWith('/secops/api/secops/win-patch/hosts?page=0&size=20')
   })
+
+  it('loads task detail without calling deprecated /win-patch/tasks/{id} endpoint', async () => {
+    apiMocks.get.mockImplementation(url => {
+      if (url.includes('/secops/v2/patch/task/task-123/audit/detail')) {
+        return Promise.resolve({ data: { steps: [{ step: 'INSTALL', status: 'SUCCESS' }] } })
+      }
+      if (url.includes('/secops/v2/patch/task/task-123')) {
+        return Promise.resolve({ data: { id: 'task-123', status: 'INSTALL_DONE' } })
+      }
+      return Promise.resolve({ data: {} })
+    })
+
+    const result = await winPatchApi.getTaskDetail('task-123')
+
+    expect(result.data.task).toEqual(expect.objectContaining({ id: 'task-123', status: 'INSTALL_DONE' }))
+    expect(result.data.steps).toEqual([{ step: 'INSTALL', status: 'SUCCESS' }])
+    expect(apiMocks.get).not.toHaveBeenCalledWith(expect.stringMatching(/\/win-patch\/tasks\/task-123/))
+  })
 })

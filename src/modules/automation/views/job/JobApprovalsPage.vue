@@ -65,7 +65,7 @@
         <el-table-column label="运维工具" min-width="150">
           <template #default="{ row }">
             <el-button type="primary" text @click="handleViewDetail(row)">
-              {{ row.jobName }}
+              {{ getAutomationToolTitle({ ...row, id: undefined }) }}
             </el-button>
           </template>
         </el-table-column>
@@ -180,6 +180,7 @@
 </template>
 
 <script setup>
+import { getAutomationToolTitle } from '../../utils/resourcePresentation'
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
@@ -209,6 +210,9 @@ const filteredData = computed(() => {
     data = data.filter(
       item =>
         item.jobName?.toLowerCase().includes(keyword) ||
+        getAutomationToolTitle({ ...item, id: undefined })
+          .toLowerCase()
+          .includes(keyword) ||
         item.jobId?.toLowerCase().includes(keyword) ||
         item.applicant?.toLowerCase().includes(keyword)
     )
@@ -337,9 +341,11 @@ function handleViewDetail(row) {
 
 async function handlePass(row) {
   try {
-    await ElMessageBox.confirm(`确定要通过运维工具 "${row.jobName}" 的审批申请吗？`, '通过审批', {
-      type: 'success'
-    })
+    await ElMessageBox.confirm(
+      `确定要通过运维工具 "${getAutomationToolTitle({ ...row, id: undefined })}" 的审批申请吗？`,
+      '通过审批',
+      { closeOnClickModal: false, closeOnPressEscape: false, type: 'success' }
+    )
 
     loading.value = true
     await jaoApi.passApprove(row.id, null)
@@ -357,6 +363,8 @@ async function handlePass(row) {
 async function handleRefuse(row) {
   try {
     const { value: reason } = await ElMessageBox.prompt('请输入拒绝理由', '拒绝审批', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       inputType: 'textarea',
@@ -382,6 +390,8 @@ async function handleDiscard(row) {
       '确定要作废该审批吗？可选填写作废原因',
       '作废审批',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         inputType: 'textarea',

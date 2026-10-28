@@ -37,7 +37,7 @@
       :closable="false"
       class="ac-alert"
       show-icon
-      description="注意：连接凭据是针对每一个自动化资产的默认连接配置进行修改，使用场景如下：执行用户/密码、登录用户/密码、执行引擎节点配置等"
+      description="注意：连接凭据是针对每一个自动化资产的默认连接配置进行修改，使用场景如下：执行用户/密码、登录用户/密码、执行节点配置等"
     />
 
     <!-- 工具栏：筛选 + 搜索 -->
@@ -79,7 +79,7 @@
       <el-table-column prop="assetCode" label="资产代码" width="120" />
       <el-table-column prop="ip" label="IP" width="160" />
       <el-table-column prop="name" label="连接凭据名称" min-width="160" />
-      <el-table-column prop="instanceGroup" label="执行引擎节点(instance group)" min-width="220" />
+      <el-table-column prop="instanceGroup" label="执行节点(instance group)" min-width="220" />
       <el-table-column prop="aapGroup" label="AAP instance group" min-width="180" />
       <el-table-column prop="loginUser" label="登录用户" width="120" />
       <el-table-column prop="execUser" label="执行用户" width="120" />
@@ -102,7 +102,13 @@
     </div>
 
     <!-- 批量修改对话框 -->
-    <el-dialog v-model="batchVisible" title="批量修改纳管设备" width="520px">
+    <el-dialog
+      v-model="batchVisible"
+      title="批量修改纳管设备"
+      width="520px"
+      :close-on-press-escape="false"
+      :close-on-click-modal="false"
+    >
       <div class="batch-tip">
         请选择 Excel 模版文件（.xlsx / .xls），上传后将按模版批量更新纳管设备的登录/执行密码。
       </div>
@@ -132,7 +138,12 @@
     </el-dialog>
 
     <!-- 批量结果对话框 -->
-    <el-dialog v-model="batchResultVisible" title="批量处理结果" width="680px">
+    <el-dialog
+      v-model="batchResultVisible"
+      title="批量处理结果"
+      width="680px"
+      :close-on-click-modal="true"
+    >
       <div class="result-summary">
         <el-tag type="info">总计: {{ batchResult?.total || 0 }}</el-tag>
         <el-tag type="success" style="margin-left:8px">成功: {{ batchResult?.successCount || 0 }}</el-tag>

@@ -5,14 +5,13 @@
     width="600px"
     :close-on-click-modal="false"
     @closed="handleClosed"
+    :close-on-press-escape="false"
   >
     <!-- 说明信息 -->
     <el-alert type="success" :closable="false" class="mb-4">
       <p class="help-text">
         <strong>说明：</strong>
-        用于指定脚本库，oplus内置脚本库无需该设定，如需指定外部Git库
-        （目前支持Github、Bitbucket、Gitlab、Gitee、Coding），按照以下指定方式配置Oplus同步外部Git库，
-        该设定会清空当前已存在脚本库中所有内容，请详细阅读说明后再使用！！
+        用于配置外部 Git 脚本库。 同步前请先备份现有脚本库内容，并确认外部 Git 库地址。
       </p>
     </el-alert>
 
@@ -22,9 +21,9 @@
         <el-tooltip placement="top">
           <template #content>
             <div style="max-width: 300px">
-              HTTPS：基于用户名密码安全认证
+              HTTPS：填写 Git 库账户和密码
               <br />
-              SSH：基于RSA非对称加密，将自定义生成公钥上传Git库中，将私钥上传Oplus平台
+              SSH：上传用于 Git 库认证的私钥文件
             </div>
           </template>
           <el-radio-group v-model="form.authType">
@@ -36,17 +35,14 @@
 
       <!-- 仓库名 -->
       <el-form-item label="仓库名" prop="repoName">
-        <el-tooltip content="用户指定生成的Git仓库名，未指定则会自动生成仓库名" placement="top">
+        <el-tooltip content="填写此脚本库的仓库名，可留空" placement="top">
           <el-input v-model="form.repoName" :disabled="!form.canEdit" placeholder="请输入仓库名" />
         </el-tooltip>
       </el-form-item>
 
       <!-- 同步策略 -->
       <el-form-item label="同步策略" prop="jobInterval">
-        <el-tooltip
-          content="设定自动从远程Git服务器拉取最新更新间隔时间(范围10~60)"
-          placement="top"
-        >
+        <el-tooltip content="填写同步间隔，单位为分钟" placement="top">
           <div class="interval-input">
             <el-input-number
               v-model="form.jobInterval"
@@ -61,10 +57,7 @@
 
       <!-- Git库地址 -->
       <el-form-item label="Git库地址" prop="repoUrl">
-        <el-tooltip
-          content="用于配置外部Git库地址，目前支持Github、Bitbucket、Gitlab、Gitee、Coding"
-          placement="top"
-        >
+        <el-tooltip content="填写需要同步的外部 Git 库地址" placement="top">
           <el-input
             v-model="form.repoUrl"
             :disabled="!form.canEdit"
@@ -250,9 +243,13 @@ async function handleSave() {
   // 确认提示
   try {
     await ElMessageBox.confirm(
-      `确认同步 ${form.value.repoUrl} 到Oplus脚本库中？`,
+      `确认同步 ${form.value.repoUrl} 到KoreOPS脚本库中？`,
       '外部Git库同步确认',
-      { type: 'warning' }
+      {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
+        type: 'warning'
+      }
     )
   } catch {
     return

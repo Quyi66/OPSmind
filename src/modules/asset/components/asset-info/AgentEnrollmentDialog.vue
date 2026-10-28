@@ -4,6 +4,7 @@
     :title="page === 'command' ? '生成 Agent 安装命令' : '待处理 Agent'"
     width="min(1040px, calc(100vw - 32px))"
     :close-on-click-modal="false"
+    :close-on-press-escape="false"
     destroy-on-close
   >
     <template v-if="page === 'command'">

@@ -75,6 +75,7 @@
       width="800px"
       destroy-on-close
       @close="recipientDialogVisible = false"
+      :close-on-click-modal="true"
     >
       <div v-loading="recipientLoading" class="recipient-dialog">
         <div class="dialog-header">
@@ -124,6 +125,8 @@
       width="500px"
       destroy-on-close
       @close="recipientFormVisible = false"
+      :close-on-press-escape="false"
+      :close-on-click-modal="false"
     >
       <el-form
         ref="recipientFormRef"
@@ -170,6 +173,8 @@
       width="600px"
       destroy-on-close
       @close="customContentDialogVisible = false"
+      :close-on-press-escape="false"
+      :close-on-click-modal="false"
     >
       <div v-loading="customContentLoading" class="custom-content-dialog">
         <div class="template-info">
@@ -486,6 +491,8 @@ async function saveRecipient() {
 async function deleteRecipient(row) {
   try {
     await ElMessageBox.confirm('确定要删除该收件人吗？', '确认删除', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning'
     })
     await emailConfigApi.deleteRecipient(row._dataId)

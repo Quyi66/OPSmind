@@ -372,7 +372,11 @@ function handleStatusClick(row) {
 async function handleToggleStatus(row) {
   if (row.status === 3) {
     try {
-      await ElMessageBox.confirm('确定要启用该命令吗？', '启用命令', { type: 'warning' })
+      await ElMessageBox.confirm('确定要启用该命令吗？', '启用命令', {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
+        type: 'warning'
+      })
       const command = { ...row, status: 0 }
       await saveCommand(command)
       ElMessage.success('操作成功')
@@ -384,7 +388,11 @@ async function handleToggleStatus(row) {
     }
   } else if (row.status === 0) {
     try {
-      await ElMessageBox.confirm('确定要停用该命令吗？', '停用命令', { type: 'warning' })
+      await ElMessageBox.confirm('确定要停用该命令吗？', '停用命令', {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
+        type: 'warning'
+      })
       const command = { ...row, status: 3 }
       await saveCommand(command)
       ElMessage.success('操作成功')
@@ -400,7 +408,11 @@ async function handleToggleStatus(row) {
 // 删除命令
 async function handleDelete(row) {
   try {
-    await ElMessageBox.confirm('确定要删除该命令吗？', '删除命令', { type: 'warning' })
+    await ElMessageBox.confirm('确定要删除该命令吗？', '删除命令', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      type: 'warning'
+    })
     await apiDeleteCommand(row.id)
     ElMessage.success('操作成功')
     loadData()

@@ -22,6 +22,9 @@
             <div class="modern-header mb-4">
               <div class="header-top">
                 <h1 class="cve-title">{{ cveId }}</h1>
+                <el-button type="primary" plain size="small" @click="affectedHostsVisible = true">
+                  受影响主机
+                </el-button>
                 <el-tag
                   v-if="currentMiddleware"
                   :type="getSeverityType(currentMiddleware.severity)"
@@ -198,14 +201,20 @@
         <el-button type="primary" @click="goBack">返回列表</el-button>
       </el-empty>
     </div>
+    <MiddlewareAffectedHostsDialog
+      v-model="affectedHostsVisible"
+      :cve-id="cveId"
+      :middleware-type="currentMiddleware?.middlewareType || ''"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import { TopRight } from '@element-plus/icons-vue'
 import { formatDateTime as formatDateTimeGlobal } from '@/utils/date'
 import { middlewareCveApi } from '../../../api'
+import MiddlewareAffectedHostsDialog from '../MiddlewareAffectedHostsDialog.vue'
 
 // Props
 const props = defineProps({
@@ -223,6 +232,8 @@ const cveDetail = ref(null)
 const activeTab = ref('basic')
 const currentMiddlewareIndex = ref(0)
 const currentMiddleware = ref(null)
+const affectedHostsVisible = ref(false)
+let detailRequestId = 0
 
 // 返回列表
 function goBack() {
@@ -272,20 +283,27 @@ function getSeverityLabel(severity) {
 }
 
 async function loadCveDetail() {
+  const requestId = ++detailRequestId
   loading.value = true
+  cveDetail.value = null
+  currentMiddleware.value = null
+  currentMiddlewareIndex.value = 0
+  activeTab.value = 'basic'
+  affectedHostsVisible.value = false
   try {
     const data = await middlewareCveApi.getDetail(props.cveId)
+    if (requestId !== detailRequestId) return
     const result = data?.data || data
     cveDetail.value = result
 
-    if (result.middlewares && result.middlewares.length > 0) {
+    if (result?.middlewares && result.middlewares.length > 0) {
       currentMiddlewareIndex.value = 0
       selectMiddleware(0)
     }
   } catch (error) {
     console.error('加载详情失败:', error)
   } finally {
-    loading.value = false
+    if (requestId === detailRequestId) loading.value = false
   }
 }
 
@@ -295,9 +313,7 @@ function selectMiddleware(index) {
   }
 }
 
-onMounted(() => {
-  loadCveDetail()
-})
+watch(() => props.cveId, loadCveDetail, { immediate: true })
 </script>
 
 <style scoped lang="scss">

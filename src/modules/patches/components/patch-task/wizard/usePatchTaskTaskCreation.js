@@ -53,7 +53,7 @@ export function usePatchTaskTaskCreation({
     }
   }
 
-  async function createExecutionTask() {
+  async function createExecutionTask(isCurrent = () => true) {
     try {
       const requestPayload = buildTaskRequestPayload()
       const res = isRollbackTask.value
@@ -77,6 +77,7 @@ export function usePatchTaskTaskCreation({
                 osType: 'linux'
               })
 
+      if (!isCurrent()) return
       const data = res?.data || null
       const taskId = data?.id || ''
       if (!taskId) {

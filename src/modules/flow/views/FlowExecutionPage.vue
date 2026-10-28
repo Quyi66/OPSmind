@@ -288,7 +288,11 @@ function handleView(row) {
 
 async function handleDelete(row) {
   try {
-    await ElMessageBox.confirm('确定要删除此执行记录吗？', '提示', { type: 'warning' })
+    await ElMessageBox.confirm('确定要删除此执行记录吗？', '提示', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      type: 'warning'
+    })
     await flowApi.deleteExecution(row.id)
     ElMessage.success('删除成功')
     loadExecutionList()
@@ -303,6 +307,8 @@ async function handleBatchDelete() {
   if (selectedRows.value.length === 0) return
   try {
     await ElMessageBox.confirm(`确定要删除选中的 ${selectedRows.value.length} 条记录吗？`, '提示', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning'
     })
     const ids = selectedRows.value.map(r => r.id)
@@ -319,6 +325,8 @@ async function handleBatchDelete() {
 async function handleTerminateProcess() {
   try {
     await ElMessageBox.confirm('确定要终止此流程的所有运行实例吗？', '终止确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning'
     })
     await flowApi.terminateProcess(activeProcessId.value)
@@ -333,7 +341,11 @@ async function handleTerminateProcess() {
 
 async function handleTerminateAll() {
   try {
-    await ElMessageBox.confirm('确定要终止所有流程的运行实例吗？', '终止确认', { type: 'warning' })
+    await ElMessageBox.confirm('确定要终止所有流程的运行实例吗？', '终止确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      type: 'warning'
+    })
     await flowApi.terminateAllProcesses()
     ElMessage.success('终止成功')
     loadExecutionList()

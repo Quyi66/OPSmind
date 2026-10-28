@@ -6,6 +6,7 @@
     :close-on-click-modal="false"
     destroy-on-close
     @close="handleClose"
+    :close-on-press-escape="false"
   >
     <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
       <!-- 创建作业时需要填写标题和描述 -->

@@ -161,6 +161,11 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
+// 首页容器与顶部导航随视口展开，避免高分辨率下固定宽度产生大面积留白
+.main-layout.is-home {
+  --app-max-width: none;
+}
+
 // 顶部导航
 .main-header {
   flex-shrink: 0;

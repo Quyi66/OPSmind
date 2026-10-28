@@ -3,9 +3,10 @@
     v-model="dialogVisible"
     title="Git库"
     width="900px"
-    :close-on-click-modal="false"
+    :close-on-click-modal="selectedRepos.length === 0"
     @closed="handleClosed"
     class="git-repo-dialog"
+    :close-on-press-escape="selectedRepos.length === 0"
   >
     <div class="ops-page-layout dialog-layout">
       <!-- 筛选栏 -->
@@ -255,6 +256,8 @@ function handleEditRepo(row) {
 async function handleDeleteRepo(row) {
   try {
     await ElMessageBox.confirm(`确定删除仓库 "${row.repoName}" 吗？`, '删除确认', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning'
     })
     await gfsApi.delExternalRepo(props.repoType, props.repo, row.repoName)
@@ -274,7 +277,11 @@ async function handleBatchDelete() {
     await ElMessageBox.confirm(
       `确定删除选中的 ${selectedRepos.value.length} 个仓库吗？`,
       '批量删除确认',
-      { type: 'warning' }
+      {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
+        type: 'warning'
+      }
     )
     const repoIds = selectedRepos.value.map(r => r.id)
     await gfsApi.delBatchExternalRepo(props.repoType, props.repo, repoIds)
@@ -292,17 +299,17 @@ async function handleBatchDelete() {
 async function handleReset() {
   try {
     await ElMessageBox.confirm(
-      '确认初始化当前脚本库为Oplus内置脚本库？该操作会清空当前脚本库中所有内容！',
+      '确认初始化当前脚本库为KoreOPS内置脚本库？该操作会清空当前脚本库中所有内容！',
       '初始化Git库确认',
-      { type: 'warning' }
+      { closeOnClickModal: false, closeOnPressEscape: false, type: 'warning' }
     )
     await gfsApi.initCurrentGitRepo(props.repo)
-    ElMessage.success('初始化Oplus内置脚本库成功')
+    ElMessage.success('初始化KoreOPS内置脚本库成功')
     loadRepoList()
     emit('success')
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error(error?.message || '初始化Oplus内置脚本库失败')
+      ElMessage.error(error?.message || '初始化KoreOPS内置脚本库失败')
     }
   }
 }

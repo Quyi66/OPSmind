@@ -5,6 +5,7 @@
     width="800px"
     :close-on-click-modal="false"
     @close="handleClose"
+    :close-on-press-escape="false"
   >
     <el-form ref="formRef" :model="formData" label-width="120px" class="modify-user-form">
       <!-- 选择主机 -->

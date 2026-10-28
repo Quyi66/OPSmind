@@ -33,7 +33,7 @@
               警告项: {{ hostResult.warnings }}
             </el-tag>
             <el-tag
-              v-if="hostResult.blockers === 0 && hostResult.warnings === 0"
+              v-if="isHostPassed(hostResult)"
               type="success"
               size="small"
               effect="dark"
@@ -43,7 +43,7 @@
           </div>
         </div>
 
-        <div class="host-result-body">
+        <div v-if="shouldShowChecks(hostResult)" class="host-result-body">
           <el-collapse v-model="activeCollapseNames" class="no-border-collapse">
             <el-collapse-item title="查看检查项明细" :name="hostResult.host_id">
               <div class="checks-list">
@@ -119,7 +119,7 @@ watch(
   result => {
     activeCollapseNames.value = Array.isArray(result?.results)
       ? result.results
-          .filter(item => item.blockers > 0 || item.warnings > 0)
+          .filter(item => shouldShowChecks(item))
           .map(item => item.host_id)
       : []
   },
@@ -139,6 +139,18 @@ function isHostUnreachable(hostResult) {
     Array.isArray(hostResult?.checks) &&
     hostResult.checks.some(check => check.id === 'conn' && check.status === 'fail')
   )
+}
+
+function isHostPassed(hostResult) {
+  return (
+    Number(hostResult?.blockers || 0) === 0 &&
+    Number(hostResult?.warnings || 0) === 0 &&
+    !isHostUnreachable(hostResult)
+  )
+}
+
+function shouldShowChecks(hostResult) {
+  return !isHostPassed(hostResult) && Array.isArray(hostResult?.checks) && hostResult.checks.length > 0
 }
 
 function sortChecks(checks) {
@@ -255,6 +267,10 @@ function checkStatusText(status) {
     .host-name {
       color: var(--el-color-danger);
     }
+  }
+
+  &:last-child {
+    border-bottom: none;
   }
 }
 

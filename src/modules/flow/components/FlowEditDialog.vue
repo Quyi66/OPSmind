@@ -5,6 +5,7 @@
     width="500px"
     :close-on-click-modal="false"
     @close="handleClose"
+    :close-on-press-escape="false"
   >
     <div class="dialog-form">
       <!-- mode: process - 编辑流程基本信息 -->

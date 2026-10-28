@@ -2,23 +2,28 @@
   <el-dialog
     v-model="visible"
     :title="`仓库详情 - ${repoId}`"
-    width="900px"
+    width="min(900px, calc(100vw - 32px))"
+    class="repo-detail-shell"
     destroy-on-close
     @close="handleClose"
+    :close-on-click-modal="true"
   >
     <div class="repo-detail-dialog">
       <!-- 操作按钮在表格上方 -->
       <div class="ops-action-bar">
         <div class="action-left">
-          <el-button
-            type="danger"
-            plain
-            :disabled="selectedRows.length === 0"
-            @click="handleRemoveRepoFromHost"
+          <el-tooltip
+            content="当前页面暂不支持移除主机配置"
+            placement="top"
+            :trigger="['hover', 'focus']"
           >
-            <i class="fa fa-calendar-minus" />
-            移除主机配置
-          </el-button>
+            <span class="unavailable-action" tabindex="0" aria-label="移除主机配置暂不可用">
+              <el-button type="danger" plain disabled @click="handleRemoveRepoFromHost">
+                <i class="fa fa-calendar-minus" />
+                移除主机配置
+              </el-button>
+            </span>
+          </el-tooltip>
         </div>
       </div>
 
@@ -32,15 +37,20 @@
           @selection-change="handleSelectionChange"
         >
           <el-table-column type="selection" width="50" />
-          <el-table-column prop="host_key" label="主机" min-width="200">
+          <el-table-column prop="host_key" label="主机" min-width="200" show-overflow-tooltip>
             <template #default="{ row }">
-              <el-link type="primary" @click="handleViewHost(row)">
+              <el-link
+                class="software-cell-link"
+                :title="row.host_key"
+                type="primary"
+                @click="handleViewHost(row)"
+              >
                 {{ row.host_key }}
               </el-link>
             </template>
           </el-table-column>
-          <el-table-column prop="os_distro" label="OS" width="120" />
-          <el-table-column prop="os_version" label="OS版本" width="120" />
+          <el-table-column prop="os_distro" label="OS" width="120" show-overflow-tooltip />
+          <el-table-column prop="os_version" label="OS版本" width="120" show-overflow-tooltip />
           <el-table-column prop="scan_date" label="最后扫描时间" width="180">
             <template #default="{ row }">
               {{ formatDate(row.scan_date) }}
@@ -67,7 +77,7 @@
 
 <script setup>
 import { ref, watch } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { repoApi } from '../../api'
 
 const props = defineProps({
@@ -163,22 +173,8 @@ function handleViewHost(row) {
 }
 
 function handleRemoveRepoFromHost() {
-  const hosts = selectedRows.value.map(item => item.host_id).join(',')
-  ElMessageBox.confirm('确定要从选中的主机上移除该仓库配置吗？', '确认移除', {
-    type: 'warning'
-  })
-    .then(async () => {
-      // TODO: 调用移除仓库配置 API
-      // await repoApi.removeRepoFromHost({
-      //   repo_name: repoInfo.value?.refid,
-      //   hosts: hosts,
-      //   repo_file: repoInfo.value?.repo_file
-      // })
-      ElMessage.success('移除成功')
-      loadData()
-      emit('refresh')
-    })
-    .catch(() => {})
+  // refid 与删除作业 repo_name 的语义尚未核实，保留未接通状态。
+  ElMessage.warning('当前页面暂不支持移除主机配置，未移除任何配置')
 }
 
 function handleClose() {
@@ -187,3 +183,23 @@ function handleClose() {
   currentPage.value = 1
 }
 </script>
+
+<style lang="scss">
+@use '../../styles/layout' as software-layout;
+
+.repo-detail-shell.el-dialog {
+  @include software-layout.detail-shell;
+}
+</style>
+
+<style scoped lang="scss">
+@use '../../styles/layout' as software-layout;
+
+.repo-detail-shell {
+  @include software-layout.detail-dialog;
+}
+
+.unavailable-action {
+  display: inline-flex;
+}
+</style>

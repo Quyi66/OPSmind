@@ -146,7 +146,7 @@ function getOverviewHint(row) {
   if (!status || status === 'NOT_COLLECTED' || status === 'UNCOLLECTED') return '尚未采集软件包清单'
   if (status === 'FAILED') return '最近一次采集失败，请重新执行'
   if (status === 'PENDING' || status === 'RUNNING') return '仓库正在采集中，完成后会自动继续比对'
-  return '已采集，正在自动生成比对结果；如长时间未出现可手动重试'
+  return '暂无比对结果，可查看采集状态或手动执行比对'
 }
 
 function getCardTone(row) {

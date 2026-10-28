@@ -6,6 +6,8 @@
     append-to-body
     destroy-on-close
     @open="onOpen"
+    :close-on-press-escape="false"
+    :close-on-click-modal="false"
   >
     <el-tabs v-model="activeTab" class="export-tabs">
       <el-tab-pane label="批量输入" name="batch">

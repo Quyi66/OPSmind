@@ -7,6 +7,7 @@
     destroy-on-close
     class="file-selector-custom-dialog"
     @close="handleClose"
+    :close-on-press-escape="false"
   >
     <div class="file-selector-main">
       <!-- 左侧：浏览器区域 -->
