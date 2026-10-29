@@ -365,7 +365,7 @@ function selectMatchedHost(id) {
     targetHosts.value = [{ ...host, key: host.hostId, value: host.ip, assetType: host.ciType }]
 }
 function handleTargetOsChange() {
-  token.value = null
+  return generateToken()
 }
 function handleNodeChange() {
   token.value = null
@@ -478,10 +478,6 @@ async function submitBind() {
       .map(([key, value]) => [key, value.trim()])
       .filter(([, value]) => value)
   )
-  if (bindMode.value === 'gateway' && assetMode.value === 'new') {
-    if (!fields.hostname || !fields.ciType) return ElMessage.warning('请填写代管主机名称和资产类型')
-    fields.ip = fields.ip || targetIp.value.trim()
-  }
   const version = session
   binding.value = true
   try {

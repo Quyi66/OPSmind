@@ -14,6 +14,13 @@
       @closed="resetInstallState"
     >
       <PatchTaskStepper :steps="wizardSteps" :active-index="installStep" :states="stepStates" />
+      <el-alert
+        v-if="currentStepKey === 'select' && selectionCapabilitySummary"
+        :title="selectionCapabilitySummary"
+        :type="selectionCapabilityIssues.length ? 'warning' : 'info'"
+        :closable="false"
+        show-icon
+      />
 
       <!-- Step 0: 选择目标主机 -->
       <PatchTaskSelectionOverview
@@ -450,6 +457,10 @@ import { usePatchTaskScripts } from './usePatchTaskScripts'
 import { usePatchTaskTaskCreation } from './usePatchTaskTaskCreation'
 import { usePatchTaskTaskPreparation } from './usePatchTaskTaskPreparation'
 import { useLazyDisplayList } from '../../../composables/useLazyDisplayList'
+import {
+  getAgentCapabilityIssues,
+  formatAgentCapabilitySummary
+} from '../../../utils/agentCapability'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import PatchTaskPackageList from '../PatchTaskPackageList.vue'
 import PatchTaskPipeline from '../PatchTaskPipeline.vue'
@@ -547,6 +558,18 @@ const {
 })
 
 // 软件包渲染性能优化：分页与过滤
+const selectionCapabilityHosts = computed(() =>
+  hasFixedHosts.value ? resolvedFixedHosts.value : selectedHosts.value
+)
+const selectionCapabilityIssues = computed(() =>
+  getAgentCapabilityIssues(
+    selectionCapabilityHosts.value,
+    isRollbackTask.value ? 'rollback' : 'patch'
+  )
+)
+const selectionCapabilitySummary = computed(() =>
+  formatAgentCapabilitySummary(selectionCapabilityHosts.value, selectionCapabilityIssues.value)
+)
 const {
   searchText: packageSearchText,
   displayedList: displayedPackages,

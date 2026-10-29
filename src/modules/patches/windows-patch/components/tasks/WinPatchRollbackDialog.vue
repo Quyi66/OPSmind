@@ -23,6 +23,13 @@
       :host-items="selectedHostItems"
       :selected-rows="selectedRollbackItems"
     />
+    <el-alert
+      v-if="capabilitySummary && !currentTaskId"
+      :title="checkingCapability ? '正在校验 Agent 实时状态…' : capabilitySummary"
+      :type="capabilityIssues.length ? 'warning' : 'info'"
+      :closable="false"
+      show-icon
+    />
 
     <WinPatchInstallWizardScriptStep
       v-show="currentStepKey === 'pre-check'"
@@ -110,7 +117,12 @@
         <el-button
           v-else
           type="primary"
-          :disabled="pipelineStatus === 'idle' && selectedHistUpdateIds.length === 0"
+          :disabled="
+            pipelineStatus === 'idle' &&
+            (selectedHistUpdateIds.length === 0 ||
+              checkingCapability ||
+              capabilityIssues.length > 0)
+          "
           @click="handlePrimaryAction"
         >
           {{ primaryButtonText }}
@@ -158,6 +170,9 @@ const visibleModel = computed({
 })
 
 const {
+  checkingCapability,
+  capabilityIssues,
+  capabilitySummary,
   activeStep,
   availableRunItems,
   canGoBack,
@@ -192,6 +207,7 @@ const {
   wizardStepStates,
   wizardSteps
 } = useWinPatchRollbackWizard({
+  enabled: toRef(props, 'modelValue'),
   selectedRows: toRef(props, 'selectedRows'),
   onSubmitted: task =>
     emit('submitted', {

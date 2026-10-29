@@ -11,7 +11,9 @@ const api = vi.hoisted(() => ({
   stop: vi.fn()
 }))
 vi.mock('@/modules/asset/api', () => ({ agentApi: { getHostAgentInfo: api.hostInfo } }))
-vi.mock('@/modules/patches/api/scan', () => ({ scanPatchHosts: api.scan }))
+vi.mock('@/modules/patches/windows-patch/api', () => ({
+  winPatchApi: { createScanTask: api.scan }
+}))
 vi.mock('@/composables/useJobPolling', () => ({
   useJobPolling: () => ({ startPolling: api.poll, stopPolling: api.stop })
 }))
@@ -64,7 +66,7 @@ beforeEach(() => {
   api.hostInfo.mockImplementation(async hostIds =>
     hostIds.map(hostId => ({ hostId, connectionType: 'ssh' }))
   )
-  api.scan.mockResolvedValue({ windowsRunId: 'windows/run-1', windowsHosts: 2 })
+  api.scan.mockResolvedValue({ data: { runId: 'windows/run-1' } })
 })
 afterEach(() => wrapper?.unmount())
 
@@ -112,50 +114,26 @@ describe('Windows patch scan dialog', () => {
     expect(api.scan).not.toHaveBeenCalled()
   })
 
-  it('rechecks live Agent status and blocks a host that went offline before submission', async () => {
-    await open()
-    api.hostInfo.mockImplementation(async hostIds =>
-      hostIds.map(hostId => ({
-        hostId,
-        connectionType: 'koreops_agent',
-        agentStatus: 'offline',
-        capabilities: ['scan']
-      }))
-    )
-    await button('提交扫描任务').trigger('click')
-    await flushPromises()
-    expect(wrapper.text()).toContain('离线')
-    expect(button('提交扫描任务').element.disabled).toBe(true)
-    expect(api.scan).not.toHaveBeenCalled()
-    expect(wrapper.emitted('submitted')).toBeUndefined()
-  })
-
-  it('keeps capability lookup failures visible and allows recovery after changing selection', async () => {
-    api.hostInfo.mockRejectedValueOnce(new Error('状态查询不可用'))
-    await open()
-    expect(wrapper.text()).toContain('状态查询不可用')
-    expect(button('提交扫描任务').element.disabled).toBe(true)
-    selector().vm.$emit('update:modelValue', [selector().props('modelValue')[0]])
-    await flushPromises()
-    expect(button('提交扫描任务').element.disabled).toBe(false)
-    expect(wrapper.text()).not.toContain('状态查询不可用')
-  })
-
   it.each(['ssh', 'koreops_agent'])(
     'submits %s asset IDs and polls the Windows run before refreshing',
     async connectionType => {
-      api.hostInfo.mockImplementation(async hostIds =>
-        hostIds.map(hostId => ({
-          hostId,
-          connectionType,
-          agentStatus: 'online',
-          capabilities: ['scan']
-        }))
-      )
-      await open()
+      if (connectionType === 'ssh')
+        api.hostInfo.mockRejectedValue(new Error('Agent 信息服务不可用'))
+      else
+        api.hostInfo.mockImplementation(async ids =>
+          ids.map(hostId => ({
+            hostId,
+            connectionType,
+            agentStatus: 'online',
+            capabilities: ['scan']
+          }))
+        )
+      await open({ preselectedHosts: hosts.map(host => ({ ...host, connectionType })) })
       await button('提交扫描任务').trigger('click')
       await flushPromises()
       expect(api.scan).toHaveBeenCalledExactlyOnceWith(['asset/windows-a', 'asset/windows-b'])
+      if (connectionType === 'ssh') expect(api.hostInfo).not.toHaveBeenCalled()
+      else expect(api.hostInfo).toHaveBeenCalled()
       expect(api.poll).toHaveBeenCalledWith(
         'windows/run-1',
         expect.objectContaining({
@@ -172,7 +150,7 @@ describe('Windows patch scan dialog', () => {
       await flushPromises()
       expect(wrapper.emitted('update:modelValue')).toEqual([[false]])
       expect(wrapper.emitted('submitted')).toEqual([
-        [{ windowsRunId: 'windows/run-1', windowsHosts: 2, refreshOverview: true }]
+        [{ runId: 'windows/run-1', refreshOverview: true }]
       ])
       expect(ElMessage.success).toHaveBeenLastCalledWith('扫描作业已完成，正在刷新主机列表')
     }
@@ -192,6 +170,43 @@ describe('Windows patch scan dialog', () => {
     expect(api.poll).not.toHaveBeenCalled()
   })
 
+  it.each(['offline', 'missing-capability', 'unavailable'])(
+    'blocks the whole batch for an Agent with %s and shows the reason',
+    async kind => {
+      const agents = hosts.map(host => ({ ...host, connectionType: 'koreops_agent' }))
+      if (kind === 'unavailable') api.hostInfo.mockRejectedValue(new Error('状态查询失败'))
+      else
+        api.hostInfo.mockImplementation(async ids =>
+          ids.map((hostId, index) => ({
+            hostId,
+            connectionType: 'koreops_agent',
+            agentStatus: index === 0 && kind === 'offline' ? 'offline' : 'online',
+            capabilities: index === 0 && kind === 'missing-capability' ? ['patch'] : ['scan']
+          }))
+        )
+      await open({ preselectedHosts: agents })
+      expect(button('提交扫描任务').element.disabled).toBe(true)
+      expect(wrapper.text()).toContain(
+        kind === 'unavailable' ? '可执行 0 台 / 不可执行 2 台' : '可执行 1 台 / 不可执行 1 台'
+      )
+      expect(wrapper.text()).toContain(
+        kind === 'offline' ? '离线' : kind === 'unavailable' ? '无法读取' : '[scan]'
+      )
+      expect(api.scan).not.toHaveBeenCalled()
+    }
+  )
+
+  it('refreshes capability at submit so a newly offline Agent is not submitted', async () => {
+    await open()
+    api.hostInfo.mockImplementation(async ids =>
+      ids.map(hostId => ({ hostId, connectionType: 'koreops_agent', agentStatus: 'offline' }))
+    )
+    await button('提交扫描任务').trigger('click')
+    await flushPromises()
+    expect(api.scan).not.toHaveBeenCalled()
+    expect(button('提交扫描任务').element.disabled).toBe(true)
+  })
+
   it.each(['error', 'timeout'])(
     'refreshes after a polling %s without reporting execution success',
     async outcome => {
@@ -209,7 +224,7 @@ describe('Windows patch scan dialog', () => {
   )
 
   it('treats a response without a run ID as submitted and does not claim execution success', async () => {
-    api.scan.mockResolvedValueOnce({ windowsHosts: 2 })
+    api.scan.mockResolvedValueOnce({ data: { _status: 'ok' } })
     await open()
     await button('提交扫描任务').trigger('click')
     await flushPromises()
@@ -234,7 +249,7 @@ describe('Windows patch scan dialog', () => {
     await wrapper.setProps({ modelValue: false })
     await wrapper.setProps({ modelValue: true, preselectedHosts: [hosts[1]] })
     await flushPromises()
-    resolveScan({ windowsRunId: 'old-run' })
+    resolveScan({ data: { runId: 'old-run' } })
     await flushPromises()
     expect(api.poll).not.toHaveBeenCalled()
     expect(wrapper.emitted('submitted')).toBeUndefined()

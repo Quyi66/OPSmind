@@ -1,6 +1,8 @@
 import { computed, onUnmounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { winPatchApi } from '../api'
+import { getAgentCapabilityIssues, formatAgentCapabilitySummary } from '../../utils/agentCapability'
+import { useAgentCapabilitySelection } from '../../composables/useAgentCapabilitySelection'
 import { WIN_PATCH_ROLLBACK_PIPELINE_STEPS, WIN_PATCH_ROLLBACK_WIZARD_STEPS } from '../constants'
 import { useWinPatchPolling } from './useWinPatchPolling'
 import {
@@ -324,21 +326,13 @@ const PIPELINE_STEP_ORDER = {
   VALIDATE: 3
 }
 
-function resolvePipelineStepUiStatus({
-  stepKey,
-  auditStatus,
-  task,
-  pipelineStatus,
-  isSkipped
-}) {
+function resolvePipelineStepUiStatus({ stepKey, auditStatus, task, pipelineStatus, isSkipped }) {
   if (isSkipped || auditStatus === 'SKIPPED') {
     return 'skipped'
   }
 
   const normalizedStepKey = normalizeUpper(stepKey)
-  const rawTaskStatus = normalizeUpper(
-    pickValue(task, ['taskStatus', 'task_status', 'status'], '')
-  )
+  const rawTaskStatus = normalizeUpper(pickValue(task, ['taskStatus', 'task_status', 'status'], ''))
   const taskStatus = getTaskStatusValue(task)
   const currentStep = normalizeUpper(resolvePipelineCurrentStep(task))
   const stepOrder = PIPELINE_STEP_ORDER[normalizedStepKey] ?? -1
@@ -408,7 +402,12 @@ function resolvePipelineStepUiStatus({
   return mapPipelineUiStatus(auditStatus)
 }
 
-export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess } = {}) {
+export function useWinPatchRollbackWizard({
+  selectedRows,
+  onSubmitted,
+  onSuccess,
+  enabled = true
+} = {}) {
   const activeStep = ref(0)
   const rollbackOptions = ref(createRollbackOptions())
   const preScriptConfig = ref(createScriptConfig())
@@ -505,6 +504,18 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
     return Array.from(new Set(selectedHostItems.value.map(item => item.hostId).filter(Boolean)))
   })
   const currentTaskStatus = computed(() => getTaskStatusValue(taskDetail.value))
+  const capabilityHosts = computed(() =>
+    selectedHostItems.value.map(host => ({
+      ...(selectedRows?.value || []).find(row => resolveHostId(row) === host.hostId),
+      ...host
+    }))
+  )
+  const {
+    checking: checkingCapability,
+    issues: capabilityIssues,
+    summary: capabilitySummary,
+    refresh: refreshCapabilities
+  } = useAgentCapabilitySelection(capabilityHosts, 'rollback', enabled)
   const currentPipelineStep = computed(() => resolvePipelineCurrentStep(taskDetail.value))
   const stepKeyToSkipKeyMap = {
     PRE_CHECK: 'pre-check',
@@ -686,6 +697,11 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
       throw new Error('当前选择中缺少主机信息，无法创建回滚任务')
     }
 
+    const targets = await refreshCapabilities()
+    checkSession(session)
+    if (!targets) throw new Error('目标主机已变更，请重新确认')
+    const issues = getAgentCapabilityIssues(targets, 'rollback')
+    if (issues.length) throw new Error(formatAgentCapabilitySummary(targets, issues))
     taskHostIds = [...selectedHostIds.value]
     const response = await winPatchApi.createRollbackTask({
       hostIds: taskHostIds,
@@ -1133,6 +1149,9 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
   onUnmounted(resetState)
 
   return {
+    checkingCapability,
+    capabilityIssues,
+    capabilitySummary,
     activeStep,
     availableRunItems,
     canGoBack,

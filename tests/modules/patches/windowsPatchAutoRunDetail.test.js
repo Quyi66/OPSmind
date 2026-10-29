@@ -66,8 +66,15 @@ describe('Windows one-click task detail', () => {
       expect(controls.props('task').logs).toEqual(logs)
       expect(wrapper.findComponent({ name: 'TestHostTable' }).props('data')).toEqual(hosts)
     }
-    expect(winPatchApi.getTaskDetail).toHaveBeenCalledTimes(4)
+    winPatchApi.getTaskDetail.mockRejectedValueOnce(new Error('audit unavailable'))
+    controls.vm.$emit('updated', { ...task, status: 'COMPLETED' })
+    await flushPromises()
+    expect(controls.props('task').status).toBe('COMPLETED')
+    expect(wrapper.findComponent({ name: 'TestHostTable' }).props('data')[0].hostKey).toBe(
+      'win-host'
+    )
+    expect(winPatchApi.getTaskDetail).toHaveBeenCalledTimes(5)
     await vi.advanceTimersByTimeAsync(9000)
-    expect(winPatchApi.getTaskDetail).toHaveBeenCalledTimes(4)
+    expect(winPatchApi.getTaskDetail).toHaveBeenCalledTimes(5)
   })
 })

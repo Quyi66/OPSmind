@@ -18,6 +18,9 @@ describe('WinPatchRollbackDialog controls', () => {
 
   beforeEach(() => {
     wizard = {
+      checkingCapability: ref(false),
+      capabilityIssues: ref([]),
+      capabilitySummary: ref(''),
       activeStep: ref(4),
       currentStepKey: ref('execute'),
       pipelineStatus: ref('success'),

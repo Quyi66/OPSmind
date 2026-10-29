@@ -1,76 +1,57 @@
 import { ElMessage } from 'element-plus'
 import { agentApi } from '@/modules/asset/api'
 
-const AGENT_CONNECTION_TYPE = 'koreops_agent'
+const AGENT_CONNECTION_TYPES = ['koreops_agent', 'agent', 'oplus_agent']
+const isAgentHost = host =>
+  AGENT_CONNECTION_TYPES.includes(host?.connectionType || host?.connection_type)
 
 export function getAgentHostId(host) {
   if (!host || typeof host !== 'object') return ''
   return String(
-    host.hostId ||
-    host.host_id ||
-    host.id ||
-    host.hostsId ||
-    host.hosts_id ||
-    host.key ||
-    ''
+    host.hostId || host.host_id || host.id || host.hostsId || host.hosts_id || host.key || ''
   ).trim()
 }
 
-function mergeAgentInfo(host, info) {
-  if (!info) {
-    return { ...host, agentInfoUnavailable: true }
-  }
-
-  return {
-    ...host,
-    connectionType: info.connectionType,
-    agentStatus: info.agentStatus,
-    capabilities: info.capabilities,
-    agentClientId: info.agentClientId || info.clientId || host.agentClientId,
-    agentVersion: info.agentVersion || host.agentVersion,
-    agentMode: info.agentMode || host.agentMode,
-    agentNode: info.agentNode ?? host.agentNode ?? null,
-    agentPlatform: info.agentPlatform || host.agentPlatform,
-    agentOs: info.os || host.agentOs,
-    cmdbIp: info.cmdbIp || host.cmdbIp,
-    agentIp: info.agentIp,
-    ipMismatch: info.ipMismatch ?? host.ipMismatch,
-    targetIp: info.targetIp || host.targetIp,
-    lastSeenAt: info.lastSeenAt || host.lastSeenAt,
-    agentInfoUnavailable: false
-  }
-}
-
 /**
- * 以 host-info 的实时结果富化目标主机。返回顺序与输入主机顺序一致。
+ * 明确的 SSH 主机沿用原业务；其余主机按需补充 Agent 状态。
+ * 信息查询失败只标记已确认的 Agent，不将普通/未知主机误判为不可执行。
  */
 export async function resolveAgentCapabilityHosts(hosts) {
   const hostList = extractHostList(hosts).map(host =>
     typeof host === 'object' && host !== null ? { ...host } : { value: String(host || '') }
   )
-  const hostIds = [...new Set(hostList.map(getAgentHostId).filter(Boolean))]
-
-  if (hostIds.length === 0) {
-    throw new Error('目标主机缺少资产 ID，无法确认 Agent 状态')
-  }
-
-  const infoByHostId = new Map()
+  const hostIds = [
+    ...new Set(
+      hostList
+        .filter(host => (host.connectionType || host.connection_type) !== 'ssh')
+        .map(getAgentHostId)
+        .filter(Boolean)
+    )
+  ]
+  if (!hostIds.length) return hostList
+  const infoById = new Map()
   for (let index = 0; index < hostIds.length; index += 100) {
-    const response = await agentApi.getHostAgentInfo(hostIds.slice(index, index + 100))
-    if (!Array.isArray(response)) {
-      throw new Error('主机 Agent 状态接口返回格式异常')
+    try {
+      const infos = await agentApi.getHostAgentInfo(hostIds.slice(index, index + 100))
+      if (!Array.isArray(infos)) throw new Error('主机 Agent 状态接口返回格式异常')
+      infos.forEach(info => {
+        if (info?.hostId) infoById.set(String(info.hostId), info)
+      })
+    } catch {
+      // 单批查询失败不丢弃其他批次已确认的信息。
     }
-    response.forEach(info => {
-      if (info?.hostId) infoByHostId.set(String(info.hostId), info)
-    })
   }
-
-  return hostList.map(host => mergeAgentInfo(host, infoByHostId.get(getAgentHostId(host))))
+  return hostList.map(host => {
+    if ((host.connectionType || host.connection_type) === 'ssh') return host
+    const info = infoById.get(getAgentHostId(host))
+    if (info) return { ...host, ...info, agentInfoUnavailable: false }
+    return isAgentHost(host) ? { ...host, agentInfoUnavailable: true } : host
+  })
 }
 
 /**
  * 从多形态的 host 数据结构中提取归一化主机列表
- * @param {Array|Object} input 
+ * @param {Array|Object} input
  * @returns {Array} 归一化后的主机/简略主机对象列表
  */
 function extractHostList(input) {
@@ -82,21 +63,27 @@ function extractHostList(input) {
     if (!item) return
 
     // 适配数组类型的受影响/目标主机字段（包含驼峰与蛇形）
-    const affectedArr = item.affectedHosts || item.affected_hosts || item.targetHosts || item.target_hosts
-    const hostsStr = typeof item.affected_hosts_str === 'string'
-      ? item.affected_hosts_str
-      : typeof item.affected_hosts === 'string'
-        ? item.affected_hosts
-        : typeof item.target_hosts === 'string'
-          ? item.target_hosts
-          : null
+    const affectedArr =
+      item.affectedHosts || item.affected_hosts || item.targetHosts || item.target_hosts
+    const hostsStr =
+      typeof item.affected_hosts_str === 'string'
+        ? item.affected_hosts_str
+        : typeof item.affected_hosts === 'string'
+          ? item.affected_hosts
+          : typeof item.target_hosts === 'string'
+            ? item.target_hosts
+            : null
 
     if (Array.isArray(affectedArr) && affectedArr.length > 0) {
       result.push(...affectedArr)
     } else if (hostsStr) {
-      hostsStr.split(',').map(s => s.trim()).filter(Boolean).forEach(h => {
-        result.push({ key: '', value: h })
-      })
+      hostsStr
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean)
+        .forEach(h => {
+          result.push({ key: '', value: h })
+        })
     } else if (Array.isArray(item.hosts) && item.hosts.length > 0) {
       item.hosts.forEach(h => {
         if (typeof h === 'object') result.push(h)
@@ -115,17 +102,38 @@ function extractHostList(input) {
  */
 function findMatchedHost(target, availableHosts = []) {
   if (!availableHosts || availableHosts.length === 0) return null
-  const targetKey = typeof target === 'string'
-    ? target.trim()
-    : String(target.hostId || target.host_id || target.id || target.ip || target.hostKey || target.host_key || target.key || target.value || '').trim()
+  const targetKey =
+    typeof target === 'string'
+      ? target.trim()
+      : String(
+          target.hostId ||
+            target.host_id ||
+            target.id ||
+            target.ip ||
+            target.hostKey ||
+            target.host_key ||
+            target.key ||
+            target.value ||
+            ''
+        ).trim()
 
   if (!targetKey) return null
 
   return availableHosts.find(h => {
     if (!h) return false
     const hIds = [
-      h.id, h.host_id, h.hostId, h.ip, h.host_key, h.hostKey, h.hostname, h.key, h.value
-    ].filter(Boolean).map(String)
+      h.id,
+      h.host_id,
+      h.hostId,
+      h.ip,
+      h.host_key,
+      h.hostKey,
+      h.hostname,
+      h.key,
+      h.value
+    ]
+      .filter(Boolean)
+      .map(String)
     return hIds.some(id => id.trim() === targetKey)
   })
 }
@@ -140,7 +148,7 @@ function findMatchedHost(target, availableHosts = []) {
 export function getAgentCapabilityIssues(hosts, requiredCap = 'scan', availableHosts = []) {
   const hostList = extractHostList(hosts)
   const issues = []
-  
+
   for (const item of hostList) {
     // 尝试直接获取或在大表中反查完整主机对象
     let host = typeof item === 'object' ? { ...item } : { value: String(item) }
@@ -153,25 +161,19 @@ export function getAgentCapabilityIssues(hosts, requiredCap = 'scan', availableH
       host = { ...matched, ...cleanHost }
     }
 
-    const hostDisplayName = host.ip || host.hostname || host.host_key || host.hostKey || host.hostId || host.value || '未知主机'
+    const hostDisplayName =
+      host.ip ||
+      host.hostname ||
+      host.host_key ||
+      host.hostKey ||
+      host.hostId ||
+      host.value ||
+      '未知主机'
+    if (!isAgentHost(host)) continue
     if (host.agentInfoUnavailable) {
       issues.push({
         host: hostDisplayName,
         reason: '无法读取 Agent 实时状态'
-      })
-      continue
-    }
-
-    const connType = host.connectionType || host.connection_type
-    if (connType === 'ssh') {
-      continue
-    }
-
-    const isAgent = connType === AGENT_CONNECTION_TYPE
-    if (!isAgent) {
-      issues.push({
-        host: hostDisplayName,
-        reason: '无法确认接入方式或 Agent 实时状态'
       })
       continue
     }
@@ -193,7 +195,7 @@ export function getAgentCapabilityIssues(hosts, requiredCap = 'scan', availableH
       : typeof rawCaps === 'string'
         ? rawCaps.split(',').map(s => s.trim())
         : []
-    
+
     if (caps.length === 0 || !caps.includes(requiredCap)) {
       issues.push({
         host: hostDisplayName,
@@ -207,33 +209,24 @@ export function getAgentCapabilityIssues(hosts, requiredCap = 'scan', availableH
 
 export function formatAgentCapabilityIssues(issues = []) {
   if (!issues.length) return ''
-  const details = issues.slice(0, 3).map(item => `[${item.host}] ${item.reason}`).join('；')
+  const details = issues
+    .slice(0, 3)
+    .map(item => `[${item.host}] ${item.reason}`)
+    .join('；')
   const more = issues.length > 3 ? `；另有 ${issues.length - 3} 台不可执行` : ''
   return `已阻止操作：${issues.length} 台主机不可通过 Agent 执行。${details}${more}`
 }
 
-/**
- * 用于批量操作界面，明确展示可执行/不可执行数量，避免用户误以为系统会静默跳过失败主机。
- */
 export function formatAgentCapabilitySummary(hosts, issues = []) {
   const total = extractHostList(hosts).length
   if (!total) return ''
-
-  const executable = Math.max(total - issues.length, 0)
-  if (!issues.length) return `可执行 ${executable} 台`
-
-  const details = issues.slice(0, 3).map(item => `[${item.host}] ${item.reason}`).join('；')
-  const more = issues.length > 3 ? `；另有 ${issues.length - 3} 台不可执行` : ''
-  return `可执行 ${executable} 台 / 不可执行 ${issues.length} 台。${details}${more}`
+  const counts = `可执行 ${Math.max(0, total - issues.length)} 台 / 不可执行 ${issues.length} 台`
+  return issues.length ? `${counts}。${formatAgentCapabilityIssues(issues)}` : counts
 }
 
 export function validateAgentCapability(hosts, requiredCap = 'scan', availableHosts = []) {
   const issues = getAgentCapabilityIssues(hosts, requiredCap, availableHosts)
-  if (issues.length === 0) return true
-
-  ElMessage.warning({
-    message: formatAgentCapabilityIssues(issues),
-    duration: 5000
-  })
+  if (!issues.length) return true
+  ElMessage.warning({ message: formatAgentCapabilitySummary(hosts, issues), duration: 5000 })
   return false
 }

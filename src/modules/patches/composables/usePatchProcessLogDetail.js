@@ -202,14 +202,18 @@ export function usePatchProcessLogDetail(sourceTask) {
     await fetchDetail(false)
   }
 
-  async function refresh() {
-    await fetchDetail(true)
+  async function refresh(taskSnapshot = null) {
+    await fetchDetail(true, taskSnapshot)
   }
 
-  async function fetchDetail(silent) {
+  async function fetchDetail(silent, taskSnapshot = null) {
     const version = ++requestVersion
     const taskId = sourceTask.value?.id || sourceTask.value?.taskId
     if (!taskId) return
+    const snapshot =
+      String(taskSnapshot?.id || taskSnapshot?.taskId || '') === String(taskId)
+        ? taskSnapshot
+        : null
 
     if (!silent) loading.value = true
     try {
@@ -217,12 +221,14 @@ export function usePatchProcessLogDetail(sourceTask) {
       if (version !== requestVersion) return
 
       const detail = response?.data || response || {}
-      task.value = detail.task || task.value || sourceTask.value || null
+      const baseTask = detail.task || task.value || sourceTask.value || null
+      task.value = snapshot ? { ...baseTask, ...snapshot } : baseTask
       steps.value = Array.isArray(detail.steps) ? detail.steps : []
       history.value = Array.isArray(detail.logs) ? detail.logs : []
     } catch {
       if (version !== requestVersion) return
       await loadLegacyDetail(taskId, version)
+      if (version === requestVersion && snapshot) task.value = { ...task.value, ...snapshot }
     } finally {
       if (version === requestVersion) loading.value = false
     }

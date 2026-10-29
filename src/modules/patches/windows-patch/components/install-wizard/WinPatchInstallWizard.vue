@@ -23,6 +23,13 @@
       :host-summary="hostSummary"
       :selected-rows="selectedPatchItems"
     />
+    <el-alert
+      v-if="capabilitySummary && !currentTaskId"
+      :title="checkingCapability ? '正在校验 Agent 实时状态…' : capabilitySummary"
+      :type="capabilityIssues.length ? 'warning' : 'info'"
+      :closable="false"
+      show-icon
+    />
 
     <WinPatchInstallWizardScriptStep
       v-show="currentStepKey === 'pre-check'"
@@ -104,7 +111,10 @@
           v-else
           type="primary"
           :disabled="
-            !['success', 'failed'].includes(pipelineStatus) && selectedPatchStatusIds.length === 0
+            !['success', 'failed'].includes(pipelineStatus) &&
+            (selectedPatchStatusIds.length === 0 ||
+              checkingCapability ||
+              capabilityIssues.length > 0)
           "
           @click="handlePrimaryAction"
         >
@@ -158,6 +168,9 @@ const visibleModel = computed({
 })
 
 const {
+  checkingCapability,
+  capabilityIssues,
+  capabilitySummary,
   activeStep,
   availableRunItems,
   canGoBack,
@@ -191,7 +204,9 @@ const {
   wizardStepStates,
   wizardSteps
 } = useWinPatchInstallWizard({
+  enabled: toRef(props, 'modelValue'),
   hostSummary: toRef(props, 'hostSummary'),
+  hostSummaries: toRef(props, 'hostSummaries'),
   selectedRows: toRef(props, 'selectedRows'),
   onSubmitted: task => emit('submitted', task),
   onSuccess: task => emit('success', task)

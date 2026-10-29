@@ -22,6 +22,9 @@ vi.mock('@/modules/asset/api', () => ({
   dataManageApi: { getCurrentTenantId: vi.fn().mockResolvedValue('tenant') }
 }))
 vi.mock('@/core/api', () => ({ apiService: { post: api.post } }))
+vi.mock('@/core/auth', () => ({
+  authService: { hasPermission: () => true, hasRole: () => true }
+}))
 vi.mock('@/composables/useJobPolling', () => ({ pollJobStatus: vi.fn() }))
 vi.mock('vue-router', () => ({ useRoute: () => ({ query: {} }) }))
 
@@ -128,8 +131,7 @@ async function openPage() {
             'BatchEditDialog',
             'AddTagDialog',
             'AgentEnrollmentDialog',
-            'AgentInstallDialog',
-            'UnifiedPatchScanDialog'
+            'AgentInstallDialog'
           ].map(name => [name, true])
         )
       },
@@ -171,6 +173,23 @@ afterEach(() => {
 })
 
 describe('设备清单跨页选择与原添加分组链路', () => {
+  it('保留 Agent 接入、待处理和安装入口，不再挂载旧统一扫描弹窗', async () => {
+    await openPage()
+    await button('Agent 接入').trigger('click')
+    expect(state().agentEnrollmentVisible).toBe(true)
+    expect(state().agentEnrollmentMode).toBe('enroll')
+    await button('待处理 Agent').trigger('click')
+    expect(state().agentEnrollmentMode).toBe('pending')
+    state().selectedRows = [rows[0]]
+    await flushPromises()
+    await button('安装 Agent').trigger('click')
+    await flushPromises()
+    expect(state().agentInstallVisible).toBe(true)
+    expect(state().agentInstallHosts.map(host => host.id)).toEqual(['asset-a'])
+    expect(wrapper.findAll('button').some(item => item.text() === '扫描')).toBe(false)
+    expect(wrapper.findAll('button').some(item => item.text() === '一键全选')).toBe(false)
+  })
+
   it('真实表格跨两页累计选择，当前页取消不影响其他页，返回及调整页大小恢复勾选', async () => {
     await openPage()
     await selectRow('host-a')

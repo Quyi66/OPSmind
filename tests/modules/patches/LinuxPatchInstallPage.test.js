@@ -4,7 +4,6 @@ import { flushPromises, shallowMount } from '@vue/test-utils'
 import LinuxPatchInstallPage from '@/modules/patches/components/LinuxPatchInstallWorkbench.vue'
 import { patchInstallApi, patchScanApi } from '@/modules/patches/api'
 import { ElMessage, ElPagination } from 'element-plus'
-import { agentApi } from '@/modules/asset/api'
 
 vi.mock('element-plus', async importOriginal => ({
   ...(await importOriginal()),
@@ -25,7 +24,7 @@ vi.mock('@/modules/patches/api', () => ({
 }))
 vi.mock('@/modules/asset/api', () => ({
   dataManageApi: { getAllTags: vi.fn().mockResolvedValue({ records: [] }) },
-  agentApi: { getHostAgentInfo: vi.fn() },
+  agentApi: {},
   assetApi: { getAssetList: vi.fn().mockResolvedValue({ records: [] }) }
 }))
 vi.mock('@/modules/patches/components/patch-task/wizard/PatchInstallWizard.vue', () => ({
@@ -97,9 +96,6 @@ async function selectRows(rows) {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  agentApi.getHostAgentInfo.mockImplementation(async hostIds =>
-    hostIds.map(hostId => ({ hostId, connectionType: 'ssh' }))
-  )
   records = Array.from({ length: 12 }, (_, index) => ({
     patch_id: `KYSA-202503-${1055 + index}`,
     effect_host_count: 10
@@ -415,12 +411,11 @@ describe('LinuxPatchInstallPage host selection', () => {
     expect(buttonWithText('重新扫描补丁').text()).toContain('(2)')
     TableStub.methods.toggleRowSelection.mockClear()
     await search(hostRecords[0].host_key)
-    expect(TableStub.methods.toggleRowSelection).toHaveBeenCalledWith(expect.objectContaining(hostRecords[0]), true)
+    expect(TableStub.methods.toggleRowSelection).toHaveBeenCalledWith(hostRecords[0], true)
     await selectRows([table.props('data')[0]])
     await buttonWithText('安装选中主机补丁').trigger('click')
-    await flushPromises()
     expect(wrapper.findComponent({ name: 'BatchInstallPatchDrawer' }).props('hosts')).toEqual(
-      expect.arrayContaining(hostRecords.slice(0, 2).map(host => expect.objectContaining(host)))
+      expect.arrayContaining(hostRecords.slice(0, 2))
     )
     await selectRows([])
     expect(buttonWithText('安装选中主机补丁').text()).toContain('(1)')
@@ -438,9 +433,8 @@ describe('LinuxPatchInstallPage host selection', () => {
     await flushPromises()
     expect(buttonWithText('安装选中主机补丁').text()).toContain('(3)')
     await buttonWithText('安装选中主机补丁').trigger('click')
-    await flushPromises()
     expect(wrapper.findComponent({ name: 'BatchInstallPatchDrawer' }).props('hosts')).toEqual(
-      expect.arrayContaining([hostRecords[0], hostRecords[1], hostRecords[20]].map(host => expect.objectContaining(host)))
+      expect.arrayContaining([hostRecords[0], hostRecords[1], hostRecords[20]])
     )
   })
 
@@ -468,7 +462,7 @@ describe('LinuxPatchInstallPage host selection', () => {
     expect(table.props('data')).toEqual([])
     expect(buttonWithText('安装选中主机补丁').text()).toContain('(1)')
     await search(hostRecords[0].host_key)
-    expect(TableStub.methods.toggleRowSelection).toHaveBeenCalledWith(expect.objectContaining(hostRecords[0]), true)
+    expect(TableStub.methods.toggleRowSelection).toHaveBeenCalledWith(hostRecords[0], true)
   })
 
   it.each(['resolve', 'reject'])(

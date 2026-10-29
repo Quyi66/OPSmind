@@ -185,38 +185,6 @@
               {{ formatDateTime(pickValue(row, ['completedDate', 'completed_date'], '')) }}
             </template>
           </el-table-column>
-          <el-table-column label="Windows 结果" min-width="220">
-            <template #default="{ row }">
-              <div v-if="getWindowsPatchResultMeta(row).hasData" class="windows-result-meta">
-                <el-tag
-                  v-if="getWindowsPatchResultMeta(row).rebootRequired !== null"
-                  :type="getWindowsPatchResultMeta(row).rebootRequired ? 'warning' : 'info'"
-                  size="small"
-                  effect="plain"
-                >
-                  {{ getWindowsPatchResultMeta(row).rebootRequired ? '需重启生效' : '无需重启' }}
-                </el-tag>
-                <el-tag
-                  v-if="getWindowsPatchResultMeta(row).uninstallable !== null"
-                  :type="getWindowsPatchResultMeta(row).uninstallable ? 'success' : 'info'"
-                  size="small"
-                  effect="plain"
-                >
-                  {{ getWindowsPatchResultMeta(row).uninstallable ? '支持卸载' : '不支持卸载' }}
-                </el-tag>
-                <span v-if="getWindowsPatchResultMeta(row).hresult" class="windows-result-code">
-                  HRESULT {{ getWindowsPatchResultMeta(row).hresult }}
-                </span>
-                <span v-if="getWindowsPatchResultMeta(row).resultCode" class="windows-result-code">
-                  Result {{ getWindowsPatchResultMeta(row).resultCode }}
-                </span>
-                <span v-if="getWindowsPatchResultMeta(row).errorDescription" class="windows-result-description">
-                  {{ getWindowsPatchResultMeta(row).errorDescription }}
-                </span>
-              </div>
-              <span v-else>-</span>
-            </template>
-          </el-table-column>
           <el-table-column label="错误信息" min-width="240" show-overflow-tooltip>
             <template #default="{ row }">
               {{ pickValue(row, ['errorMessage', 'error_message'], '-') }}
@@ -255,7 +223,6 @@ import {
   getTaskStatusTagType,
   getTaskTypeLabel,
   getTaskTypeTagType,
-  getWindowsPatchResultMeta,
   isStepControlledTask,
   isTaskRunning,
   normalizeUpper,
@@ -462,7 +429,8 @@ const availableExecuteRuns = computed(() => {
 })
 const canExecuteCurrentStep = computed(() => {
   return (
-    showStepActions.value && !autoRunActive.value &&
+    showStepActions.value &&
+    !autoRunActive.value &&
     Boolean(currentStepValue.value) &&
     currentStepValue.value !== 'COMPLETED' &&
     ![
@@ -493,6 +461,7 @@ const executeButtonText = computed(() => {
 })
 const stepActionHint = computed(() => {
   if (!showStepActions.value) return ''
+  if (autoRunActive.value) return '一键执行中，平台自动推进任务；需要重启时请确认重启策略。'
 
   if (['COMPLETED', 'SUCCESS', 'PASS'].includes(currentTaskStatusValue.value)) {
     return '任务已完成，无需继续处理。'
@@ -537,13 +506,6 @@ function applyTaskSnapshot(taskSnapshot = null) {
     ...(taskDetail.value || {}),
     ...taskSnapshot
   }
-}
-
-function handleAutoRunTaskUpdate(taskSnapshot) {
-  applyTaskSnapshot(taskSnapshot)
-  // 包括执行中、失败及完成状态，刷新逐台结果和审计步骤。
-  // 保留本次轮询的任务快照，避免审计接口的旧快照覆盖当前状态。
-  loadTaskDetail({ silent: true, taskSnapshot })
 }
 
 async function loadTaskDetail(options = {}) {
@@ -593,6 +555,7 @@ async function loadTaskDetail(options = {}) {
     }
 
     console.error('加载任务详情失败:', error)
+    if (options.silent) return
     taskDetail.value = null
     taskHosts.value = []
     taskAuditSteps.value = []
@@ -609,6 +572,11 @@ async function loadTaskDetail(options = {}) {
   }
 }
 
+function handleAutoRunTaskUpdate(task) {
+  applyTaskSnapshot(task)
+  loadTaskDetail({ silent: true, taskSnapshot: task })
+}
+
 async function handleExecuteStep() {
   if (!currentTaskId.value || !canExecuteCurrentStep.value) return
 
@@ -620,7 +588,7 @@ async function handleExecuteStep() {
     applyTaskSnapshot(unwrapResponse(response))
     ElMessage.success(`${executeButtonText.value}已发起`)
 
-    if (!autoRunActive.value && autoPollingEnabled.value && isTaskRunning(taskDetail.value)) {
+    if (autoPollingEnabled.value && isTaskRunning(taskDetail.value)) {
       start(() => loadTaskDetail({ silent: true }))
     }
   } catch (error) {
@@ -654,7 +622,7 @@ async function handleSkipStep() {
     applyTaskSnapshot(unwrapResponse(response))
     ElMessage.success(`${getTaskStepLabel(taskDetail.value)}已跳过`)
 
-    if (!autoRunActive.value && autoPollingEnabled.value && isTaskRunning(taskDetail.value)) {
+    if (autoPollingEnabled.value && isTaskRunning(taskDetail.value)) {
       start(() => loadTaskDetail({ silent: true }))
     }
   } catch (error) {
@@ -699,19 +667,16 @@ watch(
   { immediate: true }
 )
 
-watch(
-  () => autoPollingEnabled.value,
-  value => {
-    if (!value) {
-      stop()
-      return
-    }
-
-    if (!autoRunActive.value && visibleModel.value && currentTaskId.value && isTaskRunning(taskDetail.value)) {
-      start(() => loadTaskDetail({ silent: true }))
-    }
+watch([() => autoPollingEnabled.value, autoRunActive], ([value, autoActive]) => {
+  if (!value || autoActive) {
+    stop()
+    return
   }
-)
+
+  if (visibleModel.value && currentTaskId.value && isTaskRunning(taskDetail.value)) {
+    start(() => loadTaskDetail({ silent: true }))
+  }
+})
 
 watch(
   () => props.modelValue,
@@ -882,25 +847,6 @@ watch(
   margin-top: 0;
   flex: 1 1 auto;
   min-height: 0;
-}
-
-.windows-result-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 6px;
-}
-
-.windows-result-code {
-  font-family: Consolas, Monaco, monospace;
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-}
-
-.windows-result-description {
-  width: 100%;
-  color: var(--el-text-color-regular);
-  font-size: 12px;
 }
 
 @media (max-width: 1200px) {

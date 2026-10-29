@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { apiService } from '@/core/api'
 import { agentApi, getAgentErrorMessage } from '@/modules/asset/api'
 import { getAgentReportedIp } from '@/modules/asset/utils/agentInfo'
-import { scanPatchHosts, getScanRuns } from '@/modules/patches/api/scan'
 
 vi.mock('@/core/api', () => ({
   apiService: { get: vi.fn(), post: vi.fn(), delete: vi.fn() },
@@ -74,14 +73,5 @@ describe('simplified agent management API', () => {
       getAgentErrorMessage({ response: { data: { detail: '请选择 hostId 或 newHost' } } })
     ).toBe('请选择 hostId 或 newHost')
     expect(getAgentReportedIp({ agentIp: '10.0.0.2', ip: '10.0.0.1' })).toBe('10.0.0.2')
-  })
-  it('submits mixed-platform scans and keeps every returned run', async () => {
-    const result = { windowsRunId: 'w', linuxRunIds: ['l1', 'l2'], windowsHosts: 1, linuxHosts: 2 }
-    apiService.post.mockResolvedValue({ data: result })
-    expect(await scanPatchHosts(['win', 'linux', 'win'])).toEqual(result)
-    expect(apiService.post).toHaveBeenCalledWith('/secops/api/secops/patch/scan', {
-      hostIds: ['win', 'linux']
-    })
-    expect(getScanRuns(result).map(run => run.runId)).toEqual(['w', 'l1', 'l2'])
   })
 })

@@ -4,7 +4,6 @@ import { flushPromises, shallowMount } from '@vue/test-utils'
 import LinuxPatchRollbackPage from '@/modules/patches/views/LinuxPatchRollbackPage.vue'
 import CveLinkList from '@/modules/patches/components/common/CveLinkList.vue'
 import { getCnnvdUrl } from '@/modules/patches/composables/useFormatters'
-import { ElMessage } from 'element-plus'
 
 const api = vi.hoisted(() => ({ getHistUpdatePkgs: vi.fn() }))
 vi.mock('@/modules/patches/api', () => ({ patchRollbackApi: api }))
@@ -65,30 +64,63 @@ function mount(component, props = {}, extraStubs = {}) {
 }
 
 beforeEach(() => api.getHistUpdatePkgs.mockReset())
-afterEach(() => {
-  wrappers.splice(0).forEach(wrapper => wrapper.unmount())
-  vi.restoreAllMocks()
-})
+afterEach(() => wrappers.splice(0).forEach(wrapper => wrapper.unmount()))
 
 describe('rollback/install history update dimension', () => {
-  it('checks rollback support on every source record in a merged row', async () => {
-    api.getHistUpdatePkgs.mockResolvedValue({ data: { records: [
-      { id: 'allowed', patch_id: 'RHSA-1', update_time: '2026-10-28', rollbackSupported: true },
-      {
-        id: 'blocked', patch_id: 'RHSA-1', update_time: '2026-10-28', rollbackSupported: false,
-        rollbackUnsupportedReason: '缺少原版本软件包'
+  it('构造回滚目标时保留已确认的 Agent 通道、状态和能力', async () => {
+    api.getHistUpdatePkgs.mockResolvedValue({
+      data: {
+        records: [
+          {
+            id: 'hist-agent',
+            patch_id: 'RHSA-1',
+            hosts_id: 'agent-host',
+            hosts: '192.0.2.1',
+            connectionType: 'koreops_agent',
+            agentStatus: 'offline',
+            capabilities: ['scan']
+          }
+        ]
       }
-    ] } })
-    const warning = vi.spyOn(ElMessage, 'warning').mockImplementation(() => {})
+    })
+    const wrapper = mount(LinuxPatchRollbackPage)
+    await flushPromises()
+    const state = wrapper.vm.$.setupState
+    await state.openRollbackWizard(state.allData)
+    expect(state.rollbackTargetHosts[0]).toMatchObject({
+      hostId: 'agent-host',
+      connectionType: 'koreops_agent',
+      agentStatus: 'offline',
+      capabilities: ['scan']
+    })
+  })
+  it('缺少旧 rollbackSupported 字段的普通历史记录仍能进入回滚向导，合并行保留全部原始 ID', async () => {
+    api.getHistUpdatePkgs.mockResolvedValue({ data: { records: [
+          {
+            id: 'hist-a',
+            patch_id: 'RHSA-1',
+            hosts_id: 'host-a',
+            hosts: '192.0.2.1',
+            update_time: '2026-10-29'
+          },
+          {
+            id: 'hist-b',
+            patch_id: 'RHSA-1',
+            hosts_id: 'host-b',
+            hosts: '192.0.2.2',
+            update_time: '2026-10-29'
+          }
+        ]
+      }
+    })
     const wrapper = mount(LinuxPatchRollbackPage)
     await flushPromises()
     const state = wrapper.vm.$.setupState
     expect(state.allData).toHaveLength(1)
-    state.selectedRows = [state.allData[0]]
-    expect(state.selectedRollbackSupportIssues).toHaveLength(1)
-    await state.openRollbackWizard(state.selectedRows)
-    expect(state.rollbackWizardVisible).toBe(false)
-    expect(warning).toHaveBeenCalledWith(expect.stringContaining('缺少原版本软件包'))
+    await state.openRollbackWizard(state.allData)
+    expect(state.rollbackWizardVisible).toBe(true)
+    expect(state.rollbackHistUpdateIds).toEqual(['hist-a', 'hist-b'])
+    expect(state.rollbackTargetHosts.map(host => host.hostId)).toEqual(['host-a', 'host-b'])
   })
 
   it('renders every comma-separated CVE as a separate link while packages stays plain text', async () => {

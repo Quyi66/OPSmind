@@ -15,7 +15,8 @@ const response = (status = 'INSTALLING') => ({ data: {
   task: { id: 'task-1', taskType: 'pkg_update', status },
   steps: [{ step: 'INSTALL', status: status === 'INSTALLING' ? 'RUNNING' : 'SUCCESS' }],
   logs: []
-} })
+  }
+})
 
 describe('process detail background refresh', () => {
   let scope
@@ -103,4 +104,22 @@ describe('process detail background refresh', () => {
     expect(detail.currentStep.value).toBe(0)
     expect(detail.task.value.id).toBe('task-2')
   })
+
+  it.each([false, true])(
+    'keeps a newer one-click snapshot while refreshing audit details (fallback=%s)',
+    async fallback => {
+      const { detail } = setup()
+      await detail.load()
+      detail.currentStep.value = 4
+      if (fallback) {
+        api.getAuditDetail.mockRejectedValueOnce(new Error('audit unavailable'))
+        api.getTask.mockResolvedValueOnce({ data: { id: 'task-1', status: 'INSTALLING' } })
+        api.getTaskAuditHistoryAll.mockResolvedValueOnce({ data: [] })
+      }
+      await detail.refresh({ id: 'task-1', status: 'INSTALL_DONE', restartType: 'system' })
+      expect(detail.task.value.status).toBe('INSTALL_DONE')
+      expect(detail.task.value.restartType).toBe('system')
+      expect(detail.currentStep.value).toBe(4)
+    }
+  )
 })

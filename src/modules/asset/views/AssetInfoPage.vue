@@ -125,7 +125,6 @@
             </el-button>
             <el-button v-if="canManageAgents" size="small" @click="openAgentEnrollment(null, 'pending')">待处理 Agent</el-button>
             <el-button v-if="canManageAgents" size="small" :disabled="selectedCount === 0" @click="openAgentInstall()">安装 Agent</el-button>
-            <el-button size="small" @click="openUnifiedScan">扫描</el-button>
             <el-button size="small" @click="importDialogVisible = true">
               <i class="fa fa-file-import" style="margin-right: 4px"></i>
               导入设备
@@ -138,18 +137,6 @@
             >
               <i class="fa fa-trash-alt" style="margin-right: 4px"></i>
               批量删除设备
-            </el-button>
-            <el-button
-              size="small"
-              :type="allSelected ? 'default' : 'primary'"
-              :loading="selectAllLoading"
-              @click="handleToggleSelectAll"
-            >
-              <i
-                :class="`fa fa-${allSelected ? 'times' : 'check-double'}`"
-                style="margin-right: 4px"
-              ></i>
-              {{ allSelected ? '一键取消' : '一键全选' }}
             </el-button>
           </div>
           <span style="flex: 1"></span>
@@ -642,7 +629,6 @@
     />
 
     <AgentInstallDialog v-model="agentInstallVisible" :hosts="agentInstallHosts" @updated="loadAssetList" />
-    <UnifiedPatchScanDialog v-model="unifiedScanVisible" :preselected-hosts="scanHosts" @submitted="loadAssetList" />
 
   </div>
 </template>
@@ -653,7 +639,6 @@ import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import AgentEnrollmentDialog from '../components/asset-info/AgentEnrollmentDialog.vue'
 import AgentInstallDialog from '../components/asset-info/AgentInstallDialog.vue'
-import UnifiedPatchScanDialog from '@/modules/patches/components/common/UnifiedPatchScanDialog.vue'
 import {
   Edit,
   Delete,
@@ -713,8 +698,6 @@ const agentEnrollmentInitialAsset = ref(null)
 const agentEnrollmentMode = ref('enroll')
 const agentInstallVisible = ref(false)
 const agentInstallHosts = ref([])
-const unifiedScanVisible = ref(false)
-const scanHosts = ref([])
 const agentServiceError = ref('')
 
 const canManageAgents = computed(() =>
@@ -1496,13 +1479,6 @@ const openAgentInstall = async row => {
   if (!hosts?.length) return
   agentInstallHosts.value = hosts
   agentInstallVisible.value = true
-}
-
-const openUnifiedScan = async () => {
-  const hosts = selectedCount.value ? await resolveSelectedRowsForAction('请选择主机') : []
-  if (!hosts) return
-  scanHosts.value = hosts
-  unifiedScanVisible.value = true
 }
 
 const unbindAgent = async row => {

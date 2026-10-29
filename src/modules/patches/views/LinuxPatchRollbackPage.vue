@@ -39,8 +39,7 @@
       <el-button
         type="primary"
         size="small"
-        :disabled="selectedIds.length === 0 || selectedRollbackSupportIssues.length > 0"
-        :title="selectedRollbackSupportHint"
+        :disabled="selectedIds.length === 0"
         @click="handleBatchRollback"
       >
         批量回滚
@@ -73,14 +72,6 @@
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
-    <el-alert
-      v-if="selectedIds.length && selectedRollbackSupportIssues.length"
-      class="mb-3"
-      type="warning"
-      :closable="false"
-      show-icon
-      :title="selectedRollbackSupportHint"
-    />
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
@@ -224,14 +215,12 @@ import { getCveUrl } from '../composables/useFormatters'
 import { useTableSelectAll } from '../composables/useTableSelectAll'
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
 import CveLinkList from '../components/common/CveLinkList.vue'
-import { resolveAgentCapabilityHosts, validateAgentCapability } from '../utils/agentCapability'
 import {
   flattenRollbackSourceRecords,
   getRollbackRecordIds,
   getRollbackRowKey,
   mergeRollbackHistoryRecords
 } from '../utils/rollbackHistory'
-import { formatRollbackSupportIssues, getRollbackSupportIssues } from '../utils/rollbackCapability'
 
 // 加载状态
 const loading = ref(false)
@@ -253,12 +242,6 @@ const sortState = reactive({ prop: 'update_time', order: 'descending' })
 // 选中的ID列表
 // 合并行执行操作时仍需携带其包含的全部原始记录
 const selectedIds = computed(() => getRollbackRecordIds(selectedRows.value))
-const selectedRollbackSupportIssues = computed(() =>
-  getRollbackSupportIssues(flattenRollbackSourceRecords(selectedRows.value))
-)
-const selectedRollbackSupportHint = computed(() =>
-  formatRollbackSupportIssues(selectedRollbackSupportIssues.value)
-)
 
 // 分页
 const pagination = reactive({
@@ -437,8 +420,13 @@ function buildRollbackTargetHosts(rows) {
 
       const mapKey = `${hostId}-${hostKey}`
       if (!hostMap.has(mapKey)) {
-        const connType = row.connectionType || row.connection_type || hostObj.connectionType || hostObj.connection_type
-        const agentStatus = row.agentStatus || row.agent_status || hostObj.agentStatus || hostObj.agent_status
+        const connType =
+          row.connectionType ||
+          row.connection_type ||
+          hostObj.connectionType ||
+          hostObj.connection_type
+        const agentStatus =
+          row.agentStatus || row.agent_status || hostObj.agentStatus || hostObj.agent_status
         const capabilities = row.capabilities || hostObj.capabilities
 
         const targetObj = {
@@ -478,10 +466,6 @@ function buildRollbackPackageCandidates(rows) {
   ).filter(Boolean)
 }
 
-async function enrichRollbackAgentInfo(targetHosts) {
-  return resolveAgentCapabilityHosts(targetHosts)
-}
-
 async function openRollbackWizard(rows) {
   if (!rows.length) {
     ElMessage.warning('请先选择要回滚的记录')
@@ -490,30 +474,11 @@ async function openRollbackWizard(rows) {
 
   const sourceRows = flattenRollbackSourceRecords(rows)
   const histUpdateIds = getRollbackRecordIds(rows)
-  let targetHosts = buildRollbackTargetHosts(sourceRows)
+  const targetHosts = buildRollbackTargetHosts(sourceRows)
   const patches = buildRollbackTaskPatches(sourceRows)
-
-  const rollbackSupportIssues = getRollbackSupportIssues(sourceRows)
-  if (rollbackSupportIssues.length) {
-    ElMessage.warning(formatRollbackSupportIssues(rollbackSupportIssues))
-    return
-  }
 
   if (targetHosts.length === 0) {
     ElMessage.warning('当前记录缺少主机ID，无法创建回滚任务')
-    return
-  }
-
-  try {
-    // 回滚历史并不保证携带 Agent 字段，必须以 host-info 的实时结果为准。
-    targetHosts = await enrichRollbackAgentInfo(targetHosts)
-  } catch (error) {
-    console.error('加载回滚目标的 Agent 状态失败:', error)
-    ElMessage.error('无法确认目标 Agent 状态，已阻止创建回滚任务')
-    return
-  }
-
-  if (!validateAgentCapability(targetHosts, 'rollback', [])) {
     return
   }
 

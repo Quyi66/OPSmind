@@ -64,31 +64,6 @@
               />
             </el-select>
           </el-form-item>
-            <el-form-item label="接入方式">
-              <el-select
-                v-model="hostFilters.connectionType"
-                placeholder="全部接入方式"
-                clearable
-                style="width: 140px"
-                @change="handleHostFilter"
-              >
-                <el-option label="SSH" value="ssh" />
-                <el-option label="Agent" value="koreops_agent" />
-                <el-option label="未知" value="unknown" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="Agent 状态">
-              <el-select
-                v-model="hostFilters.agentStatus"
-                placeholder="全部状态"
-                clearable
-                style="width: 130px"
-                @change="handleHostFilter"
-              >
-                <el-option label="在线" value="online" />
-                <el-option label="离线" value="offline" />
-              </el-select>
-            </el-form-item>
           <el-form-item label="标签">
             <el-select
               v-model="hostFilters.tags"
@@ -137,19 +112,31 @@
         <el-button
           type="primary"
           size="small"
-          :disabled="hostLoading || batchSelectedHosts.length === 0 || batchInstallCapabilityIssues.length > 0"
-          :title="batchInstallCapabilitySummary"
+          :disabled="
+            hostLoading ||
+            batchSelectedHosts.length === 0 ||
+            batchInstallCapabilityIssues.length > 0
+          "
+          :title="batchInstallCapabilityHint"
           @click="handleOpenBatchInstallDrawer"
         >
           <i class="fa fa-chevron-circle-right" />
           安装选中主机补丁 ({{ batchSelectedHosts.length }})
         </el-button>
-        <slot name="scan-action" :hosts="batchSelectedHosts" :loading="hostLoading">
+        <slot
+          name="scan-action"
+          :hosts="batchSelectedHosts"
+          :loading="hostLoading"
+          :blocked="batchScanCapabilityIssues.length > 0"
+          :hint="batchScanCapabilityHint"
+        >
           <el-button
             plain
             size="small"
-            :disabled="hostLoading || batchSelectedHosts.length === 0 || batchScanCapabilityIssues.length > 0"
-            :title="batchScanCapabilitySummary"
+            :disabled="
+              hostLoading || batchSelectedHosts.length === 0 || batchScanCapabilityIssues.length > 0
+            "
+            :title="batchScanCapabilityHint"
             :loading="rescanLoading"
             @click="handleRescan"
           >
@@ -188,15 +175,19 @@
           <el-icon v-show="!hostLoading"><Refresh /></el-icon>
         </el-button>
       </div>
-      <el-alert
-        v-if="batchSelectedHosts.length && (batchInstallCapabilityIssues.length || batchScanCapabilityIssues.length)"
-        class="mb-3"
-        type="warning"
-        :closable="false"
-        show-icon
-        :title="batchCapabilitySummary"
-      />
 
+      <el-alert
+        v-if="batchInstallCapabilityHint"
+        :title="'安装：' + batchInstallCapabilityHint"
+        :type="batchInstallCapabilityIssues.length ? 'warning' : 'info'"
+        :closable="false"
+      />
+      <el-alert
+        v-if="batchScanCapabilityHint"
+        :title="'扫描：' + batchScanCapabilityHint"
+        :type="batchScanCapabilityIssues.length ? 'warning' : 'info'"
+        :closable="false"
+      />
       <!-- 主机表格 -->
       <div class="ops-table-wrapper">
         <el-table
@@ -216,44 +207,6 @@
               </el-link>
             </template>
           </el-table-column>
-            <el-table-column label="接入方式" width="120">
-              <template #default="{ row }">
-                <el-tag
-                  v-if="row.connectionType === 'koreops_agent'"
-                  type="success"
-                  size="small"
-                  effect="plain"
-                >
-                  Agent<span v-if="row.agentMode === 'gateway'"> (跳板)</span>
-                </el-tag>
-                <el-tag
-                  v-else
-                  :type="row.connectionType === 'ssh' ? 'info' : 'warning'"
-                  size="small"
-                  effect="plain"
-                >
-                  {{ row.connectionType === 'ssh' ? 'SSH' : '未知' }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="Agent 状态" width="120">
-              <template #default="{ row }">
-                <template v-if="row.connectionType === 'koreops_agent'">
-                  <el-tag
-                    :type="row.agentStatus === 'online' ? 'success' : row.agentStatus === 'offline' ? 'danger' : 'warning'"
-                    size="small"
-                    :title="row.agentStatus === 'offline' ? `最后在线: ${row.lastSeenAt || '未知'}` : ''"
-                  >
-                    {{ row.agentStatus === 'online' ? '在线' : row.agentStatus === 'offline' ? '离线' : '未知' }}
-                  </el-tag>
-                  <span v-if="row.agentVersion" style="font-size: 11px; color: #909399; margin-left: 4px">
-                    v{{ row.agentVersion }}
-                  </span>
-                </template>
-                <span v-else class="text-muted">-</span>
-              </template>
-            </el-table-column>
-
           <el-table-column prop="num_critical" width="80">
             <template #header>
               严重
@@ -349,46 +302,6 @@
               {{ [row.os_version, row.os_sp_version].filter(Boolean).join(' ') || '-' }}
             </template>
           </el-table-column>
-            <el-table-column label="内存" width="170">
-              <template #default="{ row }">
-                <div v-if="row.memoryOverview" class="memory-overview">
-                  <div
-                    v-if="row.memoryOverview.usedPercent !== null"
-                    class="memory-usage"
-                    :class="`memory-usage--${row.memoryOverview.usageLevel}`"
-                  >
-                    <div
-                      class="memory-usage__track"
-                      :title="`已使用 ${row.memoryOverview.usedPercent}%`"
-                    >
-                      <div
-                        class="memory-usage__fill"
-                        :style="{ width: `${row.memoryOverview.usedPercent}%` }"
-                      />
-                    </div>
-                    <div class="memory-usage__desc">
-                      {{ row.memoryOverview.freeGb }} GB 可用, 共
-                      {{ row.memoryOverview.totalGb }} GB
-                    </div>
-                  </div>
-                  <div v-else class="memory-usage memory-usage--unknown">
-                    <div class="memory-usage__track" />
-                    <div class="memory-usage__desc">
-                      {{
-                        row.memoryOverview.freeGb !== null
-                          ? `${row.memoryOverview.freeGb} GB 可用`
-                          : '-'
-                      }}{{
-                        row.memoryOverview.totalGb !== null
-                          ? `, 共 ${row.memoryOverview.totalGb} GB`
-                          : ', 总量未知'
-                      }}
-                    </div>
-                  </div>
-                </div>
-                <span v-else class="text-muted">-</span>
-              </template>
-            </el-table-column>
           <el-table-column prop="scan_timestamp" label="最后扫描时间" width="200" sortable>
             <template #default="{ row }">
               {{ formatDateTime(row.scan_timestamp) }}
@@ -399,7 +312,8 @@
               <el-button
                 text
                 type="primary"
-                :disabled="hostLoading"
+                :disabled="hostLoading || getAgentCapabilityIssues([row], 'patch').length > 0"
+                :title="formatAgentCapabilityIssues(getAgentCapabilityIssues([row], 'patch'))"
                 @click="handleInstallHost(row)"
               >
                 安装补丁
@@ -407,7 +321,13 @@
               <el-button
                 text
                 type="primary"
-                :disabled="hostLoading || rescanLoading || scanLoading"
+                :disabled="
+                  hostLoading ||
+                  rescanLoading ||
+                  scanLoading ||
+                  getAgentCapabilityIssues([row], 'scan').length > 0
+                "
+                :title="formatAgentCapabilityIssues(getAgentCapabilityIssues([row], 'scan'))"
                 @click="handleScanHost(row)"
               >
                 扫描
@@ -696,8 +616,8 @@ import { ElMessage } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { getCveUrl } from '../composables/useFormatters'
 import { patchInstallApi, patchScanApi, vulnerabilityApi } from '../api'
-import { agentApi, assetApi, dataManageApi } from '@/modules/asset/api'
-import { buildMemoryOverview, parseOsVersionFilter } from '../utils/linuxPatchScan'
+import { assetApi, dataManageApi } from '@/modules/asset/api'
+import { parseOsVersionFilter } from '../utils/linuxPatchScan'
 import { formatDateTime } from '@/utils/date'
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
 import PatchScheduleInstallDialog from '../components/patch-task/schedule/PatchScheduleInstallDialog.vue'
@@ -712,6 +632,7 @@ import OperationLogsDialog from '../components/logs/OperationLogsDialog.vue'
 import {
   validateAgentCapability,
   getAgentCapabilityIssues,
+  formatAgentCapabilityIssues,
   formatAgentCapabilitySummary,
   resolveAgentCapabilityHosts
 } from '../utils/agentCapability'
@@ -754,8 +675,6 @@ const hostFilters = reactive({
   os_distro: '',
   os_version: '',
   os_sp_version: '',
-  connectionType: '',
-  agentStatus: '',
   tags: [],
   keyword: ''
 })
@@ -777,10 +696,7 @@ let hostLoadRequestId = 0
 const getHostSelectionKey = host => host.host_id || host.id || host.host_key || ''
 
 const hostFilteredData = computed(() => {
-  return allHostData.value.filter(host =>
-    (!hostFilters.connectionType || host.connectionType === hostFilters.connectionType) &&
-    (!hostFilters.agentStatus || host.agentStatus === hostFilters.agentStatus)
-  )
+  return allHostData.value
 })
 
 const hostTableData = computed(() => {
@@ -790,23 +706,17 @@ const hostTableData = computed(() => {
 })
 
 const batchInstallCapabilityIssues = computed(() =>
-  getAgentCapabilityIssues(batchSelectedHosts.value, 'patch', hostTableData.value || [])
+  getAgentCapabilityIssues(batchSelectedHosts.value, 'patch')
 )
 const batchScanCapabilityIssues = computed(() =>
-  getAgentCapabilityIssues(batchSelectedHosts.value, 'scan', hostTableData.value || [])
+  getAgentCapabilityIssues(batchSelectedHosts.value, 'scan')
 )
-const batchInstallCapabilitySummary = computed(() =>
+const batchInstallCapabilityHint = computed(() =>
   formatAgentCapabilitySummary(batchSelectedHosts.value, batchInstallCapabilityIssues.value)
 )
-const batchScanCapabilitySummary = computed(() =>
+const batchScanCapabilityHint = computed(() =>
   formatAgentCapabilitySummary(batchSelectedHosts.value, batchScanCapabilityIssues.value)
 )
-const batchCapabilitySummary = computed(() => {
-  if (batchInstallCapabilityIssues.value.length) {
-    return `安装补丁：${batchInstallCapabilitySummary.value}`
-  }
-  return `重新扫描：${batchScanCapabilitySummary.value}`
-})
 
 const {
   allSelected: hostAllSelected,
@@ -825,6 +735,7 @@ const {
 
 // 重新扫描相关状态
 const rescanLoading = ref(false)
+let scanSubmitVersion = 0
 const runResultDialogVisible = ref(false)
 const runResultRunId = ref('')
 const operationLogsVisible = ref(false)
@@ -853,18 +764,9 @@ async function loadHostData() {
         : []
     await enrichRebootStatus(records)
     if (requestId !== hostLoadRequestId) return
-    try {
-      await enrichHostAgentInfo(records)
-    } catch (error) {
-      // Agent 信息富化失败不能阻断原有 SSH 主机列表；提交时仍会执行能力校验。
-      console.warn('获取主机 Agent 信息失败:', error)
-      records.forEach(record => {
-        record.connectionType = 'unknown'
-        record.agentStatus = 'unknown'
-        record.agentInfoUnavailable = true
-      })
-    }
+    const resolvedRecords = await resolveAgentCapabilityHosts(records)
     if (requestId !== hostLoadRequestId) return
+    records.forEach((record, index) => Object.assign(record, resolvedRecords[index]))
     mergeHostOsVersionOptions(records)
 
     allHostData.value = records
@@ -873,7 +775,7 @@ async function loadHostData() {
     batchSelectedHosts.value = batchSelectedHosts.value.map(
       host => hostsById.get(getHostSelectionKey(host)) || host
     )
-    hostPagination.total = hostFilteredData.value.length
+    hostPagination.total = records.length
 
     nextTick(() => {
       restoreHostPageSelection()
@@ -907,50 +809,11 @@ async function enrichRebootStatus(records) {
     const byIp = new Map((response?.records || []).map(asset => [asset.IP, asset]))
     records.forEach(host => {
       const asset = byIp.get(host.host_key)
-      if (asset) {
-        host.need_reboot = asset.needReboot
-        host.memoryOverview = buildMemoryOverview(
-          asset.memtotal_mb ?? asset.MEMTOTAL_MB,
-          asset.memfree_mb ?? asset.MEMFREE_MB
-        )
-      }
+      if (asset) host.need_reboot = asset.needReboot
     })
   } catch (error) {
     console.warn('Failed to load reboot status:', error)
   }
-}
-
-async function enrichHostAgentInfo(records) {
-  const hostIds = [...new Set(records
-    .map(row => row.host_id || row.hostId || row.id || row.hosts_id || row.hostsId)
-    .filter(Boolean))]
-  if (hostIds.length === 0) return
-
-  const infoByHostId = new Map()
-  for (let index = 0; index < hostIds.length; index += 100) {
-    const result = await agentApi.getHostAgentInfo(hostIds.slice(index, index + 100))
-    if (!Array.isArray(result)) throw new Error('主机 Agent 状态接口返回格式异常')
-    result.forEach(info => {
-      if (info?.hostId) infoByHostId.set(String(info.hostId), info)
-    })
-  }
-
-  records.forEach(row => {
-    const hostId = String(row.host_id || row.hostId || row.id || row.hosts_id || row.hostsId || '')
-    const info = infoByHostId.get(hostId)
-    if (!info) {
-      row.connectionType = 'unknown'
-      row.agentStatus = 'unknown'
-      row.agentInfoUnavailable = true
-      return
-    }
-    row.connectionType = info.connectionType || row.connectionType
-    row.agentStatus = info.agentStatus ?? row.agentStatus
-    row.capabilities = info.capabilities ?? row.capabilities
-    row.agentVersion = info.agentVersion ?? row.agentVersion
-    row.agentMode = info.agentMode ?? row.agentMode
-    row.lastSeenAt = info.lastSeenAt ?? row.lastSeenAt
-  })
 }
 
 function mergeHostOsVersionOptions(records = []) {
@@ -1034,8 +897,6 @@ function handleHostReset() {
   hostFilters.os_distro = ''
   hostFilters.os_version = ''
   hostFilters.os_sp_version = ''
-  hostFilters.connectionType = ''
-  hostFilters.agentStatus = ''
   hostFilters.tags = []
   hostVersionFilter.value = ''
   hostFilters.keyword = ''
@@ -1115,28 +976,21 @@ function normalizeRescanHost(host) {
 }
 
 async function submitRescan(hosts) {
-  let resolvedHosts
-  try {
-    resolvedHosts = await resolveAgentCapabilityHosts(hosts)
-  } catch (error) {
-    console.error('Failed to refresh Agent status before scan:', error)
-    ElMessage.error(error?.message || '无法确认目标主机的 Agent 状态，已阻止扫描')
-    return false
-  }
-
-  if (!validateAgentCapability(resolvedHosts, 'scan', [])) {
-    return false
-  }
-
-  const normalizedHosts = resolvedHosts.map(normalizeRescanHost).filter(item => item.value)
-
-  if (normalizedHosts.length === 0) {
-    ElMessage.warning('请选择至少一个有效的待扫描主机')
-    return false
-  }
-
+  if (rescanLoading.value) return false
+  const version = ++scanSubmitVersion
   rescanLoading.value = true
   try {
+    const resolvedHosts = await resolveAgentCapabilityHosts(hosts)
+    if (version !== scanSubmitVersion) return false
+    if (!validateAgentCapability(resolvedHosts, 'scan')) return false
+
+    const normalizedHosts = resolvedHosts.map(normalizeRescanHost).filter(item => item.value)
+
+    if (normalizedHosts.length === 0) {
+      ElMessage.warning('请选择至少一个有效的待扫描主机')
+      return false
+    }
+
     const { executeJob } = await import('@/modules/automation/api/jao')
     const response = await executeJob({
       jobId: '0g3GfW',
@@ -1266,6 +1120,7 @@ watch(
 )
 
 onBeforeUnmount(() => {
+  scanSubmitVersion++
   affectedHostsRequestId += 1
   hostLoadRequestId += 1
   patchLoadRequestId += 1
@@ -1279,7 +1134,7 @@ function handleInstallAffectedPatch() {
 }
 
 function handleInstallHost(host) {
-  if (hostLoading.value) return
+  if (hostLoading.value || !validateAgentCapability([host], 'patch')) return
   installTargetHosts.value = [host]
   batchInstallDrawerVisible.value = true
 }
@@ -1292,18 +1147,11 @@ function handleSeverityCountClick(host, severity) {
 
 async function handleOpenBatchInstallDrawer() {
   if (hostLoading.value || !batchSelectedHosts.value.length) return
-  let resolvedHosts
-  try {
-    resolvedHosts = await resolveAgentCapabilityHosts(batchSelectedHosts.value)
-  } catch (error) {
-    console.error('Failed to refresh Agent status before install:', error)
-    ElMessage.error(error?.message || '无法确认目标主机的 Agent 状态，已阻止安装')
-    return
-  }
-
-  if (!validateAgentCapability(resolvedHosts, 'patch', [])) {
-    return
-  }
+  const selectedHosts = batchSelectedHosts.value
+  const requestId = hostLoadRequestId
+  const resolvedHosts = await resolveAgentCapabilityHosts(selectedHosts)
+  if (requestId !== hostLoadRequestId || selectedHosts !== batchSelectedHosts.value) return
+  if (!validateAgentCapability(resolvedHosts, 'patch')) return
   batchSelectedHosts.value = resolvedHosts
   installTargetHosts.value = [...resolvedHosts]
   batchInstallDrawerVisible.value = true
@@ -1665,65 +1513,4 @@ defineExpose({ refresh, refreshHosts: loadHostData })
     color: #fff;
   }
 }
-.memory-overview {
-  width: 100%;
-  padding: 5px 0;
-}
-
-.memory-usage {
-  --memory-color: var(--el-color-success);
-  --memory-color-soft: var(--el-color-success-light-9);
-
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-
-  &--warning {
-    --memory-color: var(--el-color-warning);
-    --memory-color-soft: var(--el-color-warning-light-9);
-  }
-
-  &--danger {
-    --memory-color: var(--el-color-danger);
-    --memory-color-soft: var(--el-color-danger-light-9);
-  }
-
-  &--unknown {
-    --memory-color: var(--el-border-color);
-    --memory-color-soft: var(--el-fill-color-light);
-  }
-}
-
-.memory-usage__desc {
-  font-size: 11px;
-  line-height: 16px;
-  color: var(--el-text-color-regular);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.memory-usage__track {
-  height: 8px;
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--memory-color) 22%, transparent);
-  border-radius: 5px;
-  background: var(--memory-color-soft);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
-}
-
-.memory-usage__fill {
-  height: 100%;
-  min-width: 2px;
-  border-radius: inherit;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--memory-color) 78%, white),
-    var(--memory-color)
-  );
-  box-shadow: 1px 0 4px color-mix(in srgb, var(--memory-color) 45%, transparent);
-  transition:
-    width 0.35s ease,
-    background-color 0.2s ease;
-}
-
 </style>

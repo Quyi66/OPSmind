@@ -196,4 +196,119 @@ describe('one-click patch execution', () => {
     expect(patchInstallApi.confirmRestart).toHaveBeenCalledWith('t2', false, undefined)
     expect(patchInstallApi.executeRestart).not.toHaveBeenCalled()
   })
+
+  it('blocks duplicate starts and manual step actions while the start request is pending', async () => {
+    let finish
+    patchInstallApi.runTask.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          finish = resolve
+        })
+    )
+    create({ id: 'pending', status: 'CREATED' })
+    await findButton('一键执行').trigger('click')
+    expect(wrapper.emitted('active-change').at(-1)).toEqual([true])
+    await findButton('一键执行').trigger('click')
+    expect(patchInstallApi.runTask).toHaveBeenCalledTimes(1)
+    finish({ data: { id: 'pending', status: 'PRE_CHECK_DONE' } })
+    await flushPromises()
+    expect(findButton('一键执行')).toBeUndefined()
+    expect(wrapper.emitted('active-change').at(-1)).toEqual([true])
+  })
+
+  it('stops on execution failure and allows a deliberate retry', async () => {
+    patchInstallApi.runTask.mockResolvedValue({ data: { id: 'retry', status: 'INSTALLING' } })
+    patchInstallApi.getTask.mockResolvedValue({
+      data: { id: 'retry', status: 'INSTALL_FAILED', errorMessage: '执行失败' }
+    })
+    create({ id: 'retry', status: 'CREATED' })
+    await findButton('一键执行').trigger('click')
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(12000)
+    expect(patchInstallApi.getTask).toHaveBeenCalledTimes(1)
+    expect(wrapper.emitted('active-change').at(-1)).toEqual([false])
+    expect(findButton('一键执行')).toBeDefined()
+    await findButton('一键执行').trigger('click')
+    await flushPromises()
+    expect(patchInstallApi.runTask).toHaveBeenCalledTimes(2)
+  })
+
+  it('pauses after a query error and continues with GET rather than another start', async () => {
+    rememberAutoRunTask('query-error')
+    patchInstallApi.getTask.mockRejectedValueOnce(new Error('network unavailable'))
+    create({ id: 'query-error', status: 'INSTALLING' })
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(9000)
+    expect(patchInstallApi.getTask).toHaveBeenCalledTimes(1)
+    patchInstallApi.getTask.mockResolvedValue({ data: { id: 'query-error', status: 'COMPLETED' } })
+    await findButton('继续查询').trigger('click')
+    await flushPromises()
+    expect(patchInstallApi.runTask).not.toHaveBeenCalled()
+    expect(wrapper.emitted('active-change').at(-1)).toEqual([false])
+  })
+
+  it('does not prompt or execute restart when the task needs none', async () => {
+    rememberAutoRunTask('no-restart')
+    patchInstallApi.getTask.mockResolvedValue({
+      data: { id: 'no-restart', status: 'INSTALL_DONE', restartType: 'none' }
+    })
+    create({ id: 'no-restart', status: 'INSTALLING' })
+    await flushPromises()
+    expect(patchInstallApi.getRestartOptions).not.toHaveBeenCalled()
+    expect(findButton('确认重启策略')).toBeUndefined()
+    expect(patchInstallApi.executeRestart).not.toHaveBeenCalled()
+    patchInstallApi.getTask.mockResolvedValue({ data: { id: 'no-restart', status: 'COMPLETED' } })
+    await vi.advanceTimersByTimeAsync(3000)
+    expect(wrapper.emitted('active-change').at(-1)).toEqual([false])
+  })
+
+  it('ignores old task responses after switching tasks and still remembers accepted starts', async () => {
+    let finish
+    patchInstallApi.runTask.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          finish = resolve
+        })
+    )
+    create({ id: 'old', status: 'CREATED' })
+    await findButton('一键执行').trigger('click')
+    await wrapper.setProps({ task: { id: 'new', status: 'CREATED' } })
+    finish({ data: { id: 'old', status: 'INSTALLING' } })
+    await flushPromises()
+    expect(isAutoRunTask({ id: 'old' })).toBe(true)
+    expect(wrapper.emitted('updated')).toBeUndefined()
+    expect(wrapper.emitted('active-change').at(-1)).toEqual([false])
+    expect(findButton('一键执行')).toBeDefined()
+  })
+
+  it('shares a pending start across closing and reopening the same task', async () => {
+    let finish
+    patchInstallApi.runTask.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          finish = resolve
+        })
+    )
+    create({ id: 'reopen', status: 'CREATED' })
+    await findButton('一键执行').trigger('click')
+    await flushPromises()
+    await wrapper.setProps({ enabled: false })
+    await wrapper.setProps({ enabled: true })
+    await findButton('一键执行').trigger('click')
+    expect(patchInstallApi.runTask).toHaveBeenCalledTimes(1)
+    finish({ data: { id: 'reopen', status: 'INSTALLING' } })
+    await flushPromises()
+    expect(wrapper.emitted('active-change').at(-1)).toEqual([true])
+    expect(wrapper.emitted('updated').at(-1)[0].status).toBe('INSTALLING')
+  })
+
+  it('keeps the latest status instead of reverting to a delayed audit snapshot', async () => {
+    patchInstallApi.runTask.mockResolvedValue({ data: { id: 'fresh', status: 'INSTALLING' } })
+    create({ id: 'fresh', status: 'CREATED' })
+    await findButton('一键执行').trigger('click')
+    await flushPromises()
+    await wrapper.setProps({ task: { id: 'fresh', status: 'CREATED' } })
+    expect(findButton('一键执行')).toBeUndefined()
+    expect(wrapper.emitted('active-change').at(-1)).toEqual([true])
+  })
 })

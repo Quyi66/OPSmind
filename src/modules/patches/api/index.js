@@ -457,7 +457,9 @@ export const patchInstallApi = {
   },
 
   runTask(id) {
-    return apiService.post(`${PATCH_TASK_API_PREFIX}/${id}/run`).then(normalizePatchTaskResponse)
+    return apiService
+      .post(`${PATCH_TASK_API_PREFIX}/${encodeURIComponent(id)}/run`)
+      .then(normalizePatchTaskResponse)
   },
 
   /**

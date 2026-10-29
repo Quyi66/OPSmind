@@ -1,6 +1,8 @@
 import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { winPatchApi } from '../api'
+import { getAgentCapabilityIssues, formatAgentCapabilitySummary } from '../../utils/agentCapability'
+import { useAgentCapabilitySelection } from '../../composables/useAgentCapabilitySelection'
 import { WIN_PATCH_INSTALL_PIPELINE_STEPS, WIN_PATCH_INSTALL_WIZARD_STEPS } from '../constants'
 import { useWinPatchPolling } from './useWinPatchPolling'
 import {
@@ -322,21 +324,13 @@ const PIPELINE_STEP_ORDER = {
   VALIDATE: 3
 }
 
-function resolvePipelineStepUiStatus({
-  stepKey,
-  auditStatus,
-  task,
-  pipelineStatus,
-  isSkipped
-}) {
+function resolvePipelineStepUiStatus({ stepKey, auditStatus, task, pipelineStatus, isSkipped }) {
   if (isSkipped || auditStatus === 'SKIPPED') {
     return 'skipped'
   }
 
   const normalizedStepKey = normalizeUpper(stepKey)
-  const rawTaskStatus = normalizeUpper(
-    pickValue(task, ['taskStatus', 'task_status', 'status'], '')
-  )
+  const rawTaskStatus = normalizeUpper(pickValue(task, ['taskStatus', 'task_status', 'status'], ''))
   const taskStatus = getTaskStatusValue(task)
   const currentStep = normalizeUpper(resolvePipelineCurrentStep(task))
   const stepOrder = PIPELINE_STEP_ORDER[normalizedStepKey] ?? -1
@@ -408,7 +402,9 @@ function resolvePipelineStepUiStatus({
 
 export function useWinPatchInstallWizard({
   hostSummary,
+  hostSummaries,
   selectedRows,
+  enabled = true,
   onSubmitted,
   onSuccess
 } = {}) {
@@ -462,6 +458,23 @@ export function useWinPatchInstallWizard({
 
     return Array.from(new Set([...rowHostIds, fallbackHostId].filter(Boolean)))
   })
+  const capabilityHosts = computed(() =>
+    selectedHostIds.value.map(hostId => {
+      const summary =
+        (hostSummaries?.value || []).find(host => resolveHostId(host) === hostId) ||
+        hostSummary?.value ||
+        hostSummary ||
+        {}
+      const row = (selectedRows?.value || []).find(item => resolveHostId(item) === hostId)
+      return { ...row, ...(resolveHostId(summary) === hostId ? summary : {}), hostId }
+    })
+  )
+  const {
+    checking: checkingCapability,
+    issues: capabilityIssues,
+    summary: capabilitySummary,
+    refresh: refreshCapabilities
+  } = useAgentCapabilitySelection(capabilityHosts, 'patch', enabled)
   const selectedPatchItems = computed(() => {
     const rows = Array.isArray(selectedRows?.value) ? selectedRows.value : []
     return rows.map(row => ({
@@ -651,6 +664,10 @@ export function useWinPatchInstallWizard({
       throw new Error('当前选择中缺少主机信息，无法创建安装任务')
     }
 
+    const targets = await refreshCapabilities()
+    if (!targets) throw new Error('目标主机已变更，请重新确认')
+    const issues = getAgentCapabilityIssues(targets, 'patch')
+    if (issues.length) throw new Error(formatAgentCapabilitySummary(targets, issues))
     const response = await winPatchApi.createInstallTask({
       hostIds: selectedHostIds.value,
       patchStatusIds: selectedPatchStatusIds.value,
@@ -1028,6 +1045,9 @@ export function useWinPatchInstallWizard({
   }
 
   return {
+    checkingCapability,
+    capabilityIssues,
+    capabilitySummary,
     activeStep,
     availableRunItems,
     canGoBack,

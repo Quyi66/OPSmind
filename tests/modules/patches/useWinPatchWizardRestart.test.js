@@ -14,6 +14,11 @@ const apiMocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/modules/patches/windows-patch/api', () => ({ winPatchApi: apiMocks }))
+vi.mock('@/modules/asset/api', () => ({
+  agentApi: {
+    getHostAgentInfo: vi.fn(async ids => ids.map(hostId => ({ hostId, connectionType: 'ssh' })))
+  }
+}))
 vi.mock('element-plus', () => ({
   ElMessage: { success: vi.fn(), error: vi.fn(), warning: vi.fn(), info: vi.fn() }
 }))

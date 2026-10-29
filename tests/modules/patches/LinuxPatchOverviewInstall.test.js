@@ -5,7 +5,6 @@ import { ElTable, ElTableColumn } from 'element-plus'
 import Overview from '@/modules/patches/views/LinuxPatchScanPage.vue'
 import Workbench from '@/modules/patches/components/LinuxPatchInstallWorkbench.vue'
 import DeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
-import UnifiedPatchScanDialog from '@/modules/patches/components/common/UnifiedPatchScanDialog.vue'
 
 const api = vi.hoisted(() => ({
   hosts: vi.fn(),
@@ -14,7 +13,6 @@ const api = vi.hoisted(() => ({
   stats: vi.fn(),
   vulnerabilities: vi.fn(),
   execute: vi.fn(),
-  scan: vi.fn(),
   agentInfo: vi.fn(),
   route: { name: 'patches-machineScan', query: {} },
   push: vi.fn(),
@@ -33,13 +31,6 @@ vi.mock('@/modules/automation/api/jao', () => ({
   executeJob: api.execute,
   getExecuteResult: vi.fn()
 }))
-vi.mock('@/modules/patches/api/scan', async importOriginal => ({
-  ...(await importOriginal()),
-  scanPatchHosts: api.scan
-}))
-vi.mock('@/composables/useJobPolling', () => ({
-  getJobRunResult: vi.fn().mockResolvedValue({ status: 'COMPLETED' })
-}))
 vi.mock('@/modules/patches/api', () => ({
   patchScanApi: { getScanResults: api.hosts },
   patchInstallApi: { getAvailablePatches: api.patches, getMachinesByPatch: api.affectedHosts },
@@ -54,9 +45,7 @@ vi.mock('@/modules/patches/api', () => ({
 vi.mock('@/modules/asset/api', () => ({
   agentApi: { getHostAgentInfo: api.agentInfo },
   assetApi: {
-    getAssetList: vi.fn().mockResolvedValue({
-      records: [{ IP: '192.0.2.1', needReboot: 1, memtotal_mb: 8192, memfree_mb: 4096 }]
-    })
+    getAssetList: vi.fn().mockResolvedValue({ records: [{ IP: '192.0.2.1', needReboot: 1 }] })
   },
   dataManageApi: { getAllTags: vi.fn().mockResolvedValue({ records: [] }) }
 }))
@@ -94,8 +83,8 @@ vi.mock('@/modules/patches/components/host-detail/dialogs/HostSeverityPatchDialo
 }))
 
 const hosts = [
-  { host_id: 'host/A', host_key: '192.0.2.1', num_critical: 2 },
-  { host_id: 'host/B', host_key: '192.0.2.2' }
+  { host_id: 'host/A', host_key: '192.0.2.1', num_critical: 2, connectionType: 'ssh' },
+  { host_id: 'host/B', host_key: '192.0.2.2', connectionType: 'ssh' }
 ]
 const patch = { patch_id: 'patch/A', effect_host_count: 1 }
 const Dialog = {
@@ -108,8 +97,6 @@ let wrapper
 const button = text => wrapper.findAll('button').find(item => item.text() === text)
 const workbench = () => wrapper.findComponent(Workbench)
 const state = () => workbench().vm.$.setupState
-const scanDialog = () => wrapper.findComponent(UnifiedPatchScanDialog)
-const scanButton = () => scanDialog().findAll('button').find(item => item.text() === '扫描')
 async function open(component = Overview) {
   wrapper = mount(component, {
     global: {
@@ -166,10 +153,6 @@ beforeEach(() => {
   vi.clearAllMocks()
   api.route.query = {}
   api.execute.mockReset().mockResolvedValue({ data: [{ runId: 'scan/run-1' }] })
-  api.scan.mockReset().mockResolvedValue({ linuxRunIds: ['scan/run-1'], linuxHosts: 1 })
-  api.agentInfo.mockReset().mockImplementation(async hostIds =>
-    hostIds.map(hostId => ({ hostId, connectionType: 'ssh' }))
-  )
   api.hosts.mockReset().mockResolvedValue({ data: { records: hosts.map(host => ({ ...host })) } })
   api.patches.mockReset().mockResolvedValue({ data: { records: [patch] } })
   api.affectedHosts
@@ -184,6 +167,35 @@ afterEach(() => {
 })
 
 describe('Linux 默认概览直接安装', () => {
+  it('离线 Agent 禁用安装与扫描，批量选择不静默排除该主机', async () => {
+    api.hosts.mockResolvedValue({
+      data: {
+        records: hosts.map((host, index) => ({
+          ...host,
+          connectionType: index === 0 ? 'koreops_agent' : 'ssh'
+        }))
+      }
+    })
+    api.agentInfo.mockResolvedValue([
+      {
+        hostId: 'host/A',
+        connectionType: 'koreops_agent',
+        agentStatus: 'offline',
+        capabilities: ['scan', 'patch']
+      }
+    ])
+    await open()
+    expect(button('安装补丁').element.disabled).toBe(true)
+    expect(button('扫描').element.disabled).toBe(true)
+    workbench().findComponent(ElTable).vm.$emit('select', state().allHostData)
+    await nextTick()
+    expect(button('安装选中主机补丁 (2)').element.disabled).toBe(true)
+    expect(button('扫描选中主机 (2)').element.disabled).toBe(true)
+    expect(wrapper.text()).toContain('可执行 1 台 / 不可执行 1 台')
+    expect(state().batchSelectedHosts).toHaveLength(2)
+    await state().submitRescan(state().batchSelectedHosts)
+    expect(api.execute).not.toHaveBeenCalled()
+  })
   it('单台安装直接打开原抽屉并传原主机，不导航也不提交任务', async () => {
     await open()
     expect(wrapper.text()).not.toContain('前往安装补丁')
@@ -198,8 +210,6 @@ describe('Linux 默认概览直接安装', () => {
       keyword: ''
     })
     expect(state().allHostData[0].need_reboot).toBe(1)
-    expect(state().allHostData[0].memoryOverview.usedPercent).toBe(50)
-    expect(workbench().find('.memory-overview').exists()).toBe(true)
     await button('安装补丁').trigger('click')
     const drawer = workbench().findComponent({ name: 'BatchInstallPatchDrawer' })
     expect(drawer.props('visible')).toBe(true)
@@ -219,8 +229,8 @@ describe('Linux 默认概览直接安装', () => {
     workbench().findComponent(ElTable).vm.$emit('select', state().allHostData)
     await nextTick()
     await button('安装选中主机补丁 (2)').trigger('click')
-    await flushPromises()
     expect(state().installTargetHosts.map(host => host.host_id)).toEqual(['host/A', 'host/B'])
+    expect(api.agentInfo).not.toHaveBeenCalled()
     state().batchInstallDrawerVisible = false
     await button('按补丁安装').trigger('click')
     await flushPromises()
@@ -304,40 +314,38 @@ describe('Linux 默认概览直接安装', () => {
     await open()
     await button('一键全选').trigger('click')
     await button('扫描选中主机 (2)').trigger('click')
-    await flushPromises()
     const selector = wrapper.findComponent(DeviceSelector)
     expect(selector.props('modelValue').map(host => [host.key, host.value])).toEqual([
       ['host/A', '192.0.2.1'],
       ['host/B', '192.0.2.2']
     ])
-    expect(api.scan).not.toHaveBeenCalled()
-    scanDialog().findComponent(Dialog).vm.$emit('update:modelValue', false)
-    await flushPromises()
+    expect(api.execute).not.toHaveBeenCalled()
+    await button('取消').trigger('click')
     expect(state().batchSelectedHosts).toHaveLength(2)
     await button('清空选择').trigger('click')
     await button('扫描补丁').trigger('click')
-    await flushPromises()
     expect(wrapper.findComponent(DeviceSelector).props('modelValue')).toEqual([])
-    expect(scanButton().attributes('disabled')).toBeDefined()
-    expect(api.scan).not.toHaveBeenCalled()
+    expect(button('开始扫描').attributes('disabled')).toBeDefined()
+    expect(api.execute).not.toHaveBeenCalled()
   })
 
-  it('行内扫描只预填当前主机，确认使用统一扫描接口和真实主机 ID', async () => {
+  it('行内扫描只预填当前主机，确认使用原任务和真实主机 ID', async () => {
     await open()
     await button('一键全选').trigger('click')
     await wrapper
       .findAll('button')
       .filter(item => item.text() === '扫描')[1]
       .trigger('click')
-    await flushPromises()
     const selector = wrapper.findComponent(DeviceSelector)
     expect(selector.props('modelValue')).toHaveLength(1)
     expect(selector.props('modelValue')[0]).toMatchObject({ key: 'host/B', value: '192.0.2.2' })
-    expect(api.scan).not.toHaveBeenCalled()
-    await scanButton().trigger('click')
-    await flushPromises()
-    expect(api.scan).toHaveBeenCalledExactlyOnceWith(['host/B'])
     expect(api.execute).not.toHaveBeenCalled()
+    await button('开始扫描').trigger('click')
+    await flushPromises()
+    expect(api.execute).toHaveBeenCalledExactlyOnceWith({
+      jobId: '0g3GfW',
+      params: { hosts: [{ key: 'host/B', value: '192.0.2.2', assetType: 'linux' }] }
+    })
     expect(state().batchSelectedHosts).toHaveLength(2)
   })
 
@@ -345,17 +353,16 @@ describe('Linux 默认概览直接安装', () => {
     await open()
     await button('一键全选').trigger('click')
     await button('扫描选中主机 (2)').trigger('click')
-    await flushPromises()
     let rejectScan
-    api.scan.mockImplementationOnce(
+    api.execute.mockImplementationOnce(
       () =>
         new Promise((_, reject) => {
           rejectScan = reject
         })
     )
-    await scanButton().trigger('click')
+    await button('开始扫描').trigger('click')
     await flushPromises()
-    expect(api.scan.mock.calls[0][0]).toEqual([
+    expect(api.execute.mock.calls[0][0].params.hosts.map(host => host.key)).toEqual([
       'host/A',
       'host/B'
     ])
@@ -370,7 +377,7 @@ describe('Linux 默认概览直接安装', () => {
     const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {})
     rejectScan(new Error('offline'))
     await flushPromises()
-    expect(scanButton().exists()).toBe(true)
+    expect(button('开始扫描').exists()).toBe(true)
     expect(wrapper.findComponent(DeviceSelector).props('modelValue')).toHaveLength(2)
     expect(wrapper.findComponent(DeviceSelector).props('disabled')).toBe(false)
     errorLog.mockRestore()
@@ -407,37 +414,5 @@ describe('Linux 默认概览直接安装', () => {
     resolveLast({ data: { records: [{ hostId: 'late' }] } })
     await flushPromises()
     expect(target.affectedHosts).toEqual([])
-  })
-
-  it('共享工作台保留 Agent 接入方式和在线状态筛选', async () => {
-    api.agentInfo.mockImplementation(async hostIds => hostIds.map(hostId => ({
-      hostId,
-      connectionType: hostId === 'host/A' ? 'koreops_agent' : 'ssh',
-      agentStatus: hostId === 'host/A' ? 'online' : null,
-      capabilities: ['scan', 'patch']
-    })))
-    await open()
-    state().hostFilters.connectionType = 'koreops_agent'
-    state().hostFilters.agentStatus = 'online'
-    state().handleHostFilter()
-    await flushPromises()
-    expect(state().hostTableData.map(host => host.host_id)).toEqual(['host/A'])
-    expect(state().hostPagination.total).toBe(1)
-    state().handleHostReset()
-    await flushPromises()
-    expect(state().hostTableData).toHaveLength(2)
-    expect(state().hostPagination.total).toBe(2)
-  })
-
-  it('扫描确认重新校验 Agent 状态，离线主机不提交扫描', async () => {
-    await open()
-    api.agentInfo.mockImplementation(async hostIds => hostIds.map(hostId => ({
-      hostId, connectionType: 'koreops_agent', agentStatus: 'offline', capabilities: ['scan']
-    })))
-    await button('扫描').trigger('click')
-    await flushPromises()
-    expect(scanDialog().text()).toContain('离线')
-    expect(scanButton().attributes('disabled')).toBeDefined()
-    expect(api.scan).not.toHaveBeenCalled()
   })
 })
