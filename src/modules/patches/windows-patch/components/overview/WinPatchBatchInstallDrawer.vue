@@ -12,7 +12,13 @@
   >
     <div class="win-patch-batch-install-dialog">
       <div class="win-patch-batch-hosts-summary">
-        <el-descriptions :column="1" border size="small" label-width="80px" class="win-patch-descriptions">
+        <el-descriptions
+          :column="1"
+          border
+          size="small"
+          label-width="80px"
+          class="win-patch-descriptions"
+        >
           <el-descriptions-item label="选中主机">
             <div class="win-patch-batch-hosts-list">
               <el-tag
@@ -81,7 +87,7 @@
           安装选中补丁
         </el-button>
         <span class="win-patch-selection-text">
-          已选 {{ installableSelection.length }} 条可安装补丁
+          已选 {{ installableSelection.length }} 条可安装补丁（跨页、跨筛选保留）
         </span>
         <span style="flex: 1"></span>
         <el-button
@@ -117,7 +123,25 @@
           </el-table-column>
           <el-table-column label="KB 编号" width="130">
             <template #default="{ row }">
-              {{ pickValue(row, ['kbNumber', 'kb_number'], '-') }}
+              <WindowsKbLinkList
+                :kb-numbers="
+                  pickValue(
+                    row,
+                    [
+                      'kbNumber',
+                      'kb_number',
+                      'updateKbNumbers',
+                      'update_kb_numbers',
+                      'kbArticle',
+                      'kb_article'
+                    ],
+                    ''
+                  )
+                "
+                :has-cve="hasCve(row)"
+                :kb-detail="row"
+                @select-kb="openKbDetail"
+              />
             </template>
           </el-table-column>
           <el-table-column label="标题" min-width="280" show-overflow-tooltip>
@@ -177,6 +201,13 @@
         @submitted="handleInstallTaskCreated"
         @success="handleInstallSuccess"
       />
+
+      <WindowsKbDetailDialog
+        v-if="kbDetailDialogVisible"
+        :key="selectedKbNumber"
+        v-model="kbDetailDialogVisible"
+        :kb-number="selectedKbNumber"
+      />
     </div>
   </el-drawer>
 </template>
@@ -186,6 +217,8 @@ import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import WinPatchInstallWizard from '../install-wizard/WinPatchInstallWizard.vue'
+import WindowsKbLinkList from '../kb/WindowsKbLinkList.vue'
+import WindowsKbDetailDialog from '../kb/WindowsKbDetailDialog.vue'
 import { winPatchApi } from '../../api'
 import {
   WIN_PATCH_PAGE_SIZE_OPTIONS,
@@ -232,6 +265,8 @@ const patchTableRef = ref(null)
 const installWizardVisible = ref(false)
 const wizardRows = ref([])
 const wizardHosts = ref([])
+const kbDetailDialogVisible = ref(false)
+const selectedKbNumber = ref('')
 let loadRequestId = 0
 
 const pagination = reactive({
@@ -285,6 +320,19 @@ const installableSelection = computed(() =>
 
 function isPatchActionable(row) {
   return isPatchInstallable(row)
+}
+
+function hasCve(row) {
+  const raw = pickValue(row, ['cveIds', 'cve_ids'], '')
+  const values = Array.isArray(raw) ? raw : String(raw).split(/[,，;；\s]+/)
+  return values.some(value => String(value || '').trim())
+}
+
+function openKbDetail(kbNumber) {
+  if (!props.modelValue || !kbNumber) return
+
+  selectedKbNumber.value = kbNumber
+  kbDetailDialogVisible.value = true
 }
 
 function clearSelection() {
@@ -371,7 +419,6 @@ async function loadAllPatches() {
 
 function handleSearch() {
   pagination.page = 1
-  clearSelection()
 }
 
 function handleReset() {
@@ -379,7 +426,6 @@ function handleReset() {
   filters.patchStatus = ''
   filters.keyword = ''
   pagination.page = 1
-  clearSelection()
 }
 
 function handlePageChange(page) {
@@ -406,8 +452,8 @@ function handleInstallSuccess() {
 watch(
   () => [filters.severity, filters.patchStatus, filters.keyword],
   () => {
+    // 筛选仅改变可见列表，跨页/跨筛选选择由原 row-key 和 reserve-selection 保留。
     pagination.page = 1
-    clearSelection()
   }
 )
 
@@ -422,6 +468,8 @@ watch(
     installWizardVisible.value = false
     wizardRows.value = []
     wizardHosts.value = []
+    kbDetailDialogVisible.value = false
+    selectedKbNumber.value = ''
     if (!open || !hosts?.length) return
 
     pagination.page = 1
