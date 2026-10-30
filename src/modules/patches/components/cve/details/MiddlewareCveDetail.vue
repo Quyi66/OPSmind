@@ -117,7 +117,9 @@
                       :class="currentMiddleware.cvss3Score ? 'text-danger fw-bold' : 'text-muted'"
                     >
                       {{
-                        currentMiddleware.cvss3Score ? currentMiddleware.cvss3Score.toFixed(1) : '-'
+                        formatCvssScore(currentMiddleware.cvss3Score) === '未评分'
+                          ? '-'
+                          : formatCvssScore(currentMiddleware.cvss3Score)
                       }}
                     </span>
                     <span v-if="currentMiddleware.cvss3Vector" class="text-muted ms-2 code-font">
@@ -213,6 +215,7 @@
 import { ref, watch } from 'vue'
 import { TopRight } from '@element-plus/icons-vue'
 import { formatDateTime as formatDateTimeGlobal } from '@/utils/date'
+import { formatCvssScore } from '@/utils/workspacePresentation'
 import { middlewareCveApi } from '../../../api'
 import MiddlewareAffectedHostsDialog from '../MiddlewareAffectedHostsDialog.vue'
 
