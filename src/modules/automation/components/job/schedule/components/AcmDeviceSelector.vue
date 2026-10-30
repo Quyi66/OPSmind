@@ -6,7 +6,13 @@
         <div
           class="device-summary btn btn-sm btn-default op-hover-trigger"
           :class="{ 'pe-none': disabled }"
+          role="button"
+          :tabindex="disabled ? -1 : 0"
+          :aria-disabled="disabled"
+          aria-label="重新选择设备"
           @click="handleOpenSelector"
+          @keydown.enter.prevent="handleOpenSelector"
+          @keydown.space.prevent="handleOpenSelector"
         >
           <span
             v-if="!disabled"
