@@ -3,7 +3,7 @@
     <div class="content-view-area">
       <!-- 筛选区 -->
       <div class="ops-filter-bar">
-        <el-form :inline="true" size="small">
+        <el-form :inline="true" size="small" @submit.prevent>
           <el-form-item label="时间范围">
             <el-select v-model="filters.day" style="width: 95px" @change="handleFilterChange">
               <el-option label="今天" :value="1" />
@@ -42,7 +42,8 @@
               clearable
               style="width: 170px"
               @keyup.enter="handleFilterChange"
-            @clear="handleFilterChange" />
+              @input="handleSearchInput"
+            />
           </el-form-item>
 
           <el-form-item class="filter-actions">
@@ -200,7 +201,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onBeforeUnmount, onDeactivated } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
@@ -303,6 +304,7 @@ function syncRouteQuery() {
 }
 
 function applyRouteQuery(query) {
+  clearSearchDebounce()
   filters.value = {
     ...filters.value,
     day: normalizeDay(query.day),
@@ -366,16 +368,20 @@ async function loadData() {
 
 // 筛选变化
 function handleFilterChange() {
+  clearSearchDebounce()
   currentPage.value = 1
   syncRouteQuery()
 }
 
 // 搜索输入防抖
 let searchDebounceTimer = null
-watch(searchKeyword, newVal => {
-  if (searchDebounceTimer) {
-    clearTimeout(searchDebounceTimer)
-  }
+function clearSearchDebounce() {
+  clearTimeout(searchDebounceTimer)
+  searchDebounceTimer = null
+}
+
+function handleSearchInput(newVal) {
+  clearSearchDebounce()
   if (!newVal) {
     handleFilterChange()
   } else {
@@ -383,10 +389,14 @@ watch(searchKeyword, newVal => {
       handleFilterChange()
     }, 300)
   }
-})
+}
+
+onBeforeUnmount(clearSearchDebounce)
+onDeactivated(clearSearchDebounce)
 
 // 重置
 function handleReset() {
+  clearSearchDebounce()
   filters.value = {
     day: 1,
     ataNode: 'all',
@@ -408,9 +418,11 @@ function handlePageSizeChange() {
   loadData()
 }
 
+// 缓存页面只响应自身路由，避免在其他资产页面操作时读取日志。
 watch(
-  () => route.query,
-  query => {
+  () => [route.path, route.query],
+  ([path, query]) => {
+    if (path.replace(/\/$/, '') !== '/acm/log') return
     applyRouteQuery(query)
     openRunResultByQuery(query)
   },
