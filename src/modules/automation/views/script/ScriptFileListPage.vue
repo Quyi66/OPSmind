@@ -629,7 +629,7 @@ function handleSizeChange() {
 }
 
 function handleCurrentChange() {
-  const tableBody = document.querySelector('.file-table-container .el-table__body-wrapper')
+  const tableBody = fileTableRef.value?.$el?.querySelector('.el-table__body-wrapper')
   if (tableBody) {
     tableBody.scrollTop = 0
   }
@@ -641,7 +641,10 @@ const hasSelection = computed(() => selectedFiles.value.length > 0)
 // 是否可以粘贴
 const canPaste = computed(() => {
   if (!clipboard.value.length) return false
-  const isPasteInCut = clipboard.value.some(f => currentDir.value.startsWith(f.path))
+  const isPasteInCut = clipboard.value.some(f => {
+    const path = typeof f.path === 'string' ? f.path.replace(/\/+$/, '') : ''
+    return !path || currentDir.value === path || currentDir.value.startsWith(`${path}/`)
+  })
   return !isPasteInCut && clipboardDir.value !== currentDir.value
 })
 
