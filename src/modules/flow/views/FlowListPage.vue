@@ -2,7 +2,7 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <el-form :model="filters" inline size="small">
+      <el-form :model="filters" inline size="small" @submit.prevent>
         <el-form-item label="流程名称">
           <el-input
             v-model="filters.processName"
@@ -210,7 +210,7 @@ function handlePageChange(page) {
 
 function handleSearch() {
   // 点击搜索时才应用筛选条件
-  appliedKeyword.value = filters.processName
+  appliedKeyword.value = filters.processName.trim()
   currentPage.value = 1
 }
 

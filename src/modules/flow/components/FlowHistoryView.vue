@@ -20,6 +20,7 @@
           size="small"
           clearable
           style="width: 200px"
+          @input="handleSearch"
           @clear="handleSearch"
           @keyup.enter="handleSearch"
         >
@@ -90,8 +91,7 @@
           :page-sizes="[10, 20, 50]"
           layout="total, sizes, prev, pager, next, jumper"
           background
-          @size-change="handlePageChange"
-          @current-change="handlePageChange"
+          @size-change="handleSearch"
         />
       </div>
     </div>
@@ -101,7 +101,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowLeft, Search, Refresh } from '@element-plus/icons-vue'
+import { Search, Refresh } from '@element-plus/icons-vue'
 import * as flowApi from '@/modules/flow/api'
 
 const props = defineProps({
@@ -124,10 +124,10 @@ const pageSize = ref(10)
 
 // 过滤后的列表
 const filteredList = computed(() => {
-  if (!searchKeyword.value) {
+  const keyword = searchKeyword.value.trim().toLowerCase()
+  if (!keyword) {
     return historyList.value
   }
-  const keyword = searchKeyword.value.toLowerCase()
   return historyList.value.filter(item => {
     const remark = (item.versionRemarks || item.remark || '').toLowerCase()
     return remark.includes(keyword)
@@ -143,10 +143,6 @@ const paginatedList = computed(() => {
 
 function handleSearch() {
   currentPage.value = 1
-}
-
-function handlePageChange() {
-  // 分页变化时自动更新显示
 }
 
 async function loadHistory() {
