@@ -1,6 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import { ElCheckbox, ElTable, ElTableColumn, ElMessage, ElMessageBox } from 'element-plus'
+import {
+  ElCheckbox,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElPagination,
+  ElTable,
+  ElTableColumn,
+  ElMessage,
+  ElMessageBox
+} from 'element-plus'
 import ResourcePermissionPage from '@/modules/asset/views/ResourcePermissionPage.vue'
 
 const api = vi.hoisted(() => ({ getTablePermission: vi.fn(), saveTablePermission: vi.fn() }))
@@ -38,7 +48,7 @@ async function openPage() {
   wrapper = mount(ResourcePermissionPage, {
     attachTo: document.body,
     global: {
-      components: { ElTable, ElTableColumn, ElCheckbox },
+      components: { ElTable, ElTableColumn, ElCheckbox, ElForm, ElFormItem, ElInput, ElPagination },
       stubs: {
         'el-table': false,
         'el-table-column': false,
@@ -47,12 +57,13 @@ async function openPage() {
           props: ['disabled', 'loading'],
           template: '<button :disabled="disabled || loading"><slot /></button>'
         },
-        'el-form': { template: '<form><slot /></form>' },
-        'el-form-item': { template: '<div><slot /></div>' },
+        'el-form': false,
+        'el-form-item': false,
+        'el-input': false,
         'el-tag': { template: '<span><slot /></span>' },
         'el-alert': { props: ['title'], template: '<div>{{ title }}<slot /></div>' },
         'el-icon': true,
-        'el-pagination': true
+        'el-pagination': false
       },
       directives: { loading() {} }
     }
@@ -75,6 +86,94 @@ beforeEach(() => {
       disconnect() {}
     }
   )
+})
+
+const sortBy = async (label, order) => {
+  await wrapper
+    .findAll('th')
+    .find(item => item.text() === label)
+    .get(`.sort-caret.${order}`)
+    .trigger('click')
+  await flushPromises()
+}
+const largeFixture = () =>
+  Array.from({ length: 25 }, (_, index) => ({
+    id: `resource-${index + 1}`,
+    groupInfo: `/group-${index + 1}`,
+    extra_param: [{ name: 'assets_type', data: index >= 20 ? 'windows' : 'linux' }],
+    teamInfo: [{ teamName: 'Administrators', permission: ['r', 'audit'], teamId: 'original-team' }],
+    resourceMetadata: { original: index }
+  }))
+
+describe('访问控制的完整记录排序和可见类型搜索', () => {
+  it('路径排序覆盖其他页，回首页并保持未保存草稿，取消恢复接口顺序', async () => {
+    api.getTablePermission.mockResolvedValueOnce(largeFixture())
+    await openPage()
+    await change('执行', true, '/group-1')
+    await wrapper
+      .findAll('.el-pager li')
+      .find(item => item.text() === '2')
+      .trigger('click')
+    await sortBy('资源分组路径', 'descending')
+    expect(wrapper.findComponent(ElPagination).props('currentPage')).toBe(1)
+    expect(wrapper.findComponent(ElTable).props('data')[0].id).toBe('resource-25')
+    expect(state().changedRowIds).toEqual(['resource-1'])
+    expect(state().permissionData[0].teamInfo[0].permission).toEqual(['r', 'audit', 'x'])
+    await sortBy('资源分组路径', 'descending')
+    expect(wrapper.findComponent(ElTable).props('data')[0].id).toBe('resource-1')
+    expect(checked('执行', '/group-1')).toBe(true)
+    expect(api.getTablePermission).toHaveBeenCalledTimes(1)
+    expect(api.saveTablePermission).not.toHaveBeenCalled()
+  })
+
+  it('类型排序覆盖全部记录，搜索支持可见中文类型与原类型code，搜索仍需显式应用', async () => {
+    api.getTablePermission.mockResolvedValueOnce(largeFixture())
+    await openPage()
+    await sortBy('适用资产类型', 'descending')
+    expect(wrapper.findComponent(ElTable).props('data')[0].id).toBe('resource-21')
+    await wrapper.get('.ops-filter-bar input').setValue('  Linux 服务器  ')
+    expect(wrapper.findComponent(ElPagination).props('total')).toBe(25)
+    await button('搜索').trigger('click')
+    await flushPromises()
+    expect(wrapper.findComponent(ElPagination).props('total')).toBe(20)
+    expect(wrapper.findComponent(ElTable).props('data')[0].id).toBe('resource-1')
+    await wrapper.get('.ops-filter-bar input').setValue(' WINDOWS ')
+    await wrapper.get('.ops-filter-bar input').trigger('keyup.enter')
+    await flushPromises()
+    expect(wrapper.findComponent(ElPagination).props('total')).toBe(5)
+    expect(
+      wrapper
+        .findComponent(ElTable)
+        .props('data')
+        .every(row => row.assets_type === 'windows')
+    ).toBe(true)
+    expect(api.getTablePermission).toHaveBeenCalledTimes(1)
+    expect(api.saveTablePermission).not.toHaveBeenCalled()
+  })
+
+  it('排序后保存仍提交真实ID/完整原始顺序和额外字段，不把展示类型写回', async () => {
+    const source = largeFixture()
+    api.getTablePermission.mockResolvedValueOnce(source)
+    await openPage()
+    await sortBy('资源分组路径', 'descending')
+    await change('修改', true, '/group-25')
+    await button('保存权限更改').trigger('click')
+    await flushPromises()
+    const expected = largeFixture()
+    expected[24].teamInfo[0].permission.push('w')
+    expect(api.saveTablePermission).toHaveBeenCalledExactlyOnceWith('ACM', expected)
+    expect(source).toEqual(largeFixture())
+  })
+
+  it('筛选表单拦截原生提交，保留草稿且不触发权限保存', async () => {
+    await openPage()
+    await change('执行', true)
+    const event = new Event('submit', { bubbles: true, cancelable: true })
+    wrapper.get('form').element.dispatchEvent(event)
+    expect(event.defaultPrevented).toBe(true)
+    expect(state().changedRowIds).toEqual(['resource-a'])
+    expect(api.saveTablePermission).not.toHaveBeenCalled()
+  })
 })
 
 afterEach(() => {

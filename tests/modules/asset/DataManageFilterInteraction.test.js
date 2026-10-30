@@ -79,6 +79,7 @@ async function open(query = { tab: 'tag', keyword: '标签1' }, cached = false) 
         'el-button': { template: '<button><slot /></button>' },
         'el-link': { template: '<button><slot /></button>' },
         'el-tag': { template: '<span><slot /></span>' },
+        'el-alert': true,
         'el-icon': true
       },
       directives: { loading() {} }

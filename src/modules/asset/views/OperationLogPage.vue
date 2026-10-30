@@ -74,6 +74,10 @@
         </el-button>
       </div>
 
+      <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
+        <el-button link type="primary" @click="loadData">重试</el-button>
+      </el-alert>
+
       <!-- 表格区域 -->
       <div class="ops-table-wrapper card-table">
         <el-table
@@ -82,6 +86,7 @@
           height="100%"
           row-key="run_id"
           row-class-name="modern-table-row"
+          :empty-text="loading ? '正在读取操作日志…' : loadError || '暂无符合条件的操作日志'"
         >
           <!-- 1. 开始时间 -->
           <el-table-column prop="start_time" label="开始执行时间" width="180" sortable>
@@ -179,6 +184,7 @@
       <!-- 分页 -->
       <div class="ops-pagination-wrapper">
         <el-pagination
+          v-if="!loadError"
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
           :page-sizes="[10, 20, 50, 100]"
@@ -229,6 +235,8 @@ const searchKeyword = ref('')
 // 表格数据
 const loading = ref(false)
 const tableData = ref([])
+const loadError = ref('')
+let logRequest = 0
 
 useActiveTaskListPolling({
   records: tableData,
@@ -329,7 +337,14 @@ function openRunResultByQuery(query) {
 
 // 加载数据
 async function loadData() {
+  if (route.path.replace(/\/$/, '') !== '/acm/log') return
+  const request = ++logRequest
+  const routePath = route.fullPath
+  const isCurrent = () => request === logRequest && routePath === route.fullPath
   loading.value = true
+  loadError.value = ''
+  tableData.value = []
+  ataNodes.value = []
   try {
     const response = await operationLogApi.getOperationLogs(
       {
@@ -344,6 +359,7 @@ async function loadData() {
         filter: searchKeyword.value.trim() ? `executor_node:*${searchKeyword.value.trim()}*` : undefined
       }
     )
+    if (!isCurrent()) return
 
     const data = response?.records || []
     tableData.value = data
@@ -359,12 +375,24 @@ async function loadData() {
 
     total.value = response?.total || 0
   } catch (error) {
+    if (!isCurrent()) return
+    loadError.value = '加载操作记录失败，请重试'
     console.error('加载操作记录失败:', error)
     ElMessage.error('加载操作记录失败')
   } finally {
-    loading.value = false
+    if (isCurrent()) loading.value = false
   }
 }
+
+function invalidateLogRead() {
+  logRequest += 1
+  if (loading.value) loadError.value = '操作日志读取已中断，请刷新重试'
+  loading.value = false
+  runResultDialogVisible.value = false
+  currentRunId.value = ''
+}
+onBeforeUnmount(invalidateLogRead)
+onDeactivated(invalidateLogRead)
 
 // 筛选变化
 function handleFilterChange() {
@@ -422,7 +450,10 @@ function handlePageSizeChange() {
 watch(
   () => [route.path, route.query],
   ([path, query]) => {
-    if (path.replace(/\/$/, '') !== '/acm/log') return
+    if (path.replace(/\/$/, '') !== '/acm/log') {
+      invalidateLogRead()
+      return
+    }
     applyRouteQuery(query)
     openRunResultByQuery(query)
   },
@@ -513,7 +544,7 @@ function calculateDuration(startTime, endTime) {
   const end = new Date(endTime).getTime()
   const diff = Math.floor((end - start) / 1000)
 
-  if (diff < 0) return '-'
+  if (!Number.isFinite(diff) || diff < 0) return '-'
 
   const hours = Math.floor(diff / 3600)
   const minutes = Math.floor((diff % 3600) / 60)

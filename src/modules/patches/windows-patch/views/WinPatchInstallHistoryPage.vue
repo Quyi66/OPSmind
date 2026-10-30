@@ -1,7 +1,7 @@
 <template>
   <div class="ops-page-layout win-patch-page">
     <div class="ops-filter-bar">
-      <el-form :inline="true" size="small">
+      <el-form :inline="true" size="small" @submit.prevent>
         <el-form-item label="主机 ID">
           <el-input
             v-model="filters.hostId"
@@ -95,8 +95,10 @@
 
     <div class="ops-pagination-wrapper">
       <el-pagination
-        v-model:current-page="pagination.page"
-        v-model:page-size="pagination.pageSize"
+        v-if="totalKnown"
+        :current-page="pagination.page"
+        :page-size="pagination.pageSize"
+        :disabled="loading"
         :page-sizes="WIN_PATCH_PAGE_SIZE_OPTIONS"
         :total="pagination.total"
         layout="total, sizes, prev, pager, next, jumper"
@@ -104,6 +106,9 @@
         @size-change="handleSizeChange"
         @current-change="handlePageChange"
       />
+      <span v-else-if="!loadError" class="win-patch-selection-text">
+        总数暂不可核实，请刷新重试
+      </span>
     </div>
 
     <WinPatchRollbackDialog
@@ -137,6 +142,7 @@ import { formatDateTime, isRollbackSelectable, parsePageResponse, pickValue } fr
 const route = useRoute()
 const loading = ref(false)
 const loadError = ref('')
+const totalKnown = ref(true)
 let loadRequestId = 0
 const logList = ref([])
 const selectedRows = ref([])
@@ -150,6 +156,7 @@ const selectedKbNumber = ref('')
 const filters = reactive({
   hostId: ''
 })
+const appliedHostId = ref('')
 
 const pagination = reactive({
   page: 1,
@@ -160,28 +167,61 @@ const pagination = reactive({
 async function loadLogs() {
   if (route.name !== 'patches-windowsRollback') return
   const requestId = ++loadRequestId
+  const isCurrentRequest = () => requestId === loadRequestId
+  let query = {
+    hostId: appliedHostId.value || undefined,
+    page: pagination.page - 1,
+    size: pagination.pageSize
+  }
   loading.value = true
   loadError.value = ''
   logList.value = []
-  pagination.total = 0
   selectedRows.value = []
   try {
-    const response = await winPatchApi.getInstallLogs({
-      hostId: filters.hostId || undefined,
-      page: pagination.page - 1,
-      size: pagination.pageSize
-    })
-    if (requestId !== loadRequestId) return
+    let response = await winPatchApi.getInstallLogs(query)
+    if (!isCurrentRequest()) return
+    // 对照主机概览，只用明确的总数校正失效页，最多补查一次。
+    const total = getExplicitTotal(response)
+    if (total !== null) {
+      const lastPage = Math.max(0, Math.ceil(total / query.size) - 1)
+      if (query.page > lastPage) {
+        query = { ...query, page: lastPage }
+        pagination.page = lastPage + 1
+        response = await winPatchApi.getInstallLogs(query)
+        if (!isCurrentRequest()) return
+        const correctedTotal = getExplicitTotal(response)
+        if (
+          correctedTotal !== null &&
+          query.page > Math.max(0, Math.ceil(correctedTotal / query.size) - 1)
+        ) {
+          throw new Error('安装历史分页已变化，请重试')
+        }
+      }
+    }
     const page = parsePageResponse(response)
+    if (!Number.isSafeInteger(page.total) || page.total < 0) {
+      throw new Error('安装历史总数无效')
+    }
     logList.value = page.content
+    totalKnown.value = getExplicitTotal(response) !== null
     pagination.total = page.total
     selectedRows.value = []
   } catch {
-    if (requestId !== loadRequestId) return
+    if (!isCurrentRequest()) return
+    totalKnown.value = false
+    pagination.total = 0
     loadError.value = '加载安装历史失败，请重试'
   } finally {
-    if (requestId === loadRequestId) loading.value = false
+    if (isCurrentRequest()) loading.value = false
   }
+}
+
+function getExplicitTotal(response) {
+  const data = response?.data ?? response
+  const raw = data?.totalElements ?? data?.total
+  if (!['number', 'string'].includes(typeof raw) || String(raw).trim() === '') return null
+  const total = Number(raw)
+  return Number.isSafeInteger(total) && total >= 0 ? total : null
 }
 
 function isRollbackRowSelectable(row) {
@@ -210,23 +250,29 @@ function openRunResult(row) {
 }
 
 function handleSearch() {
+  appliedHostId.value = filters.hostId.trim()
   pagination.page = 1
+  pagination.total = 0
   loadLogs()
 }
 
 function handleReset() {
   filters.hostId = ''
+  appliedHostId.value = ''
   pagination.page = 1
   pagination.pageSize = 20
+  pagination.total = 0
   loadLogs()
 }
 
 function handlePageChange(page) {
+  if (loading.value || page === pagination.page) return
   pagination.page = page
   loadLogs()
 }
 
 function handleSizeChange(size) {
+  if (loading.value || size === pagination.pageSize) return
   pagination.pageSize = size
   pagination.page = 1
   loadLogs()
@@ -287,6 +333,7 @@ watch(
 
     const value = Array.isArray(hostId) ? hostId[0] : hostId
     filters.hostId = typeof value === 'string' ? value : ''
+    appliedHostId.value = filters.hostId.trim()
     pagination.page = 1
     loadLogs()
   },

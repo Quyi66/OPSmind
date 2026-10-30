@@ -41,7 +41,8 @@ async function open(query = {}, cached = false) {
         'el-table-column': true,
         'el-tag': true,
         'el-link': true,
-        'el-pagination': true
+        'el-pagination': true,
+        'el-alert': true
       },
       directives: { loading() {} }
     }

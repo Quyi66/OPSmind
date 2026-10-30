@@ -34,8 +34,23 @@
             :label="opt.label"
           />
         </el-select>
+        <el-input
+          v-model="filterText"
+          placeholder="搜索检查项名称"
+          clearable
+          style="width: 240px"
+          class="ms-2"
+        />
+        <span class="text-muted ms-2">
+          匹配 {{ filteredCheckItems.length }} / 已加载 {{ checkItems?.length || 0 }} 条
+        </span>
       </div>
-      <el-table v-loading="loading" :data="checkItems" max-height="400">
+      <el-table
+        v-loading="loading"
+        :data="filteredCheckItems"
+        max-height="400"
+        :empty-text="filterText.trim() ? '没有匹配的已加载检查项' : '暂无检查项'"
+      >
         <el-table-column prop="name" label="检查项" min-width="200" />
         <el-table-column label="状态" width="120" align="left">
           <template #default="{ row }">
@@ -56,10 +71,11 @@
 </template>
 
 <script setup>
+import { computed, ref, watch } from 'vue'
 import { STATUS_FILTER_OPTIONS } from '../../constants/status'
 import { getKpiStatusTagType, getKpiStatusIcon, getKpiStatusLabel } from '../../constants/status'
 
-defineProps({
+const props = defineProps({
   visible: Boolean,
   host: Object,
   machineInfo: Object,
@@ -71,6 +87,21 @@ defineProps({
 defineEmits(['close', 'filter-change', 'show-detail'])
 
 const statusOptions = STATUS_FILTER_OPTIONS
+const filterText = ref('')
+const filteredCheckItems = computed(() => {
+  const rows = props.checkItems || []
+  const keyword = filterText.value.trim().toLowerCase()
+  if (!keyword) return rows
+  return rows.filter(item =>
+    String(item.name ?? '')
+      .toLowerCase()
+      .includes(keyword)
+  )
+})
+
+watch([() => props.visible, () => props.host?.host_id, () => props.host?.host_key], () => {
+  filterText.value = ''
+})
 </script>
 
 <style scoped lang="scss">

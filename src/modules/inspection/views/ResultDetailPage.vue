@@ -533,7 +533,7 @@ const {
 } = useResultDetailData()
 
 // 使用弹窗 composable
-const dialogs = useResultDetailDialogs(jobId, jobInfo)
+const dialogs = useResultDetailDialogs(jobId, jobInfo, () => route.fullPath)
 
 // 本地状态
 const activeTab = ref('host')

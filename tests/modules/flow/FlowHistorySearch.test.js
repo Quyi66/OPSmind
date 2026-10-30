@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import { ElInput, ElPagination, ElTable, ElTableColumn } from 'element-plus'
+import { ElInput, ElMessage, ElPagination, ElTable, ElTableColumn } from 'element-plus'
 import FlowHistoryView from '@/modules/flow/components/FlowHistoryView.vue'
 
 const api = vi.hoisted(() => ({ getFlowInfo: vi.fn(), getFlowVersionHistory: vi.fn() }))
@@ -18,7 +18,8 @@ async function open() {
         'el-breadcrumb': { template: '<div><slot /></div>' },
         'el-breadcrumb-item': { template: '<span><slot /></span>' },
         'el-tag': { template: '<span><slot /></span>' },
-        'el-icon': true
+        'el-icon': true,
+        'el-alert': { props: ['title'], template: '<div role="alert">{{ title }}<slot /></div>' }
       },
       directives: { loading() {} }
     }
@@ -48,6 +49,118 @@ beforeEach(() => {
       disconnect() {}
     }
   )
+})
+
+function deferred() {
+  let resolve, reject
+  const promise = new Promise((yes, no) => {
+    resolve = yes
+    reject = no
+  })
+  return { promise, resolve, reject }
+}
+const refresh = () =>
+  wrapper
+    .findAll('button')
+    .find(item => item.text() === '刷新')
+    .trigger('click')
+
+describe('流程历史版本只读刷新上下文', () => {
+  it('连续刷新中旧流程信息不覆盖新标题，也不继续读取旧历史', async () => {
+    await open()
+    const old = deferred(),
+      latest = deferred()
+    api.getFlowInfo.mockReturnValueOnce(old.promise).mockReturnValueOnce(latest.promise)
+    api.getFlowVersionHistory.mockClear().mockResolvedValue({ data: [{ id: 'latest-version' }] })
+    await refresh()
+    await refresh()
+    latest.resolve({ data: { processName: '当前标题' } })
+    await flushPromises()
+    old.resolve({ data: { processName: '过期标题' } })
+    await flushPromises()
+    expect(state().processInfo.processName).toBe('当前标题')
+    expect(api.getFlowVersionHistory).toHaveBeenCalledTimes(1)
+    expect(state().historyList).toEqual([{ id: 'latest-version' }])
+  })
+
+  it('切换流程清除原记录和搜索，新读取只使用新流程真实ID', async () => {
+    await open()
+    await page(3)
+    await wrapper.get('input').setValue('RELEASE')
+    const pending = deferred()
+    api.getFlowInfo.mockReturnValueOnce(pending.promise)
+    await wrapper.setProps({ processId: 'flow-b' })
+    expect(state().historyList).toEqual([])
+    expect(state().searchKeyword).toBe('')
+    expect(state().currentPage).toBe(1)
+    pending.resolve({ data: { processName: '流程B' } })
+    await flushPromises()
+    expect(api.getFlowInfo).toHaveBeenLastCalledWith('flow-b')
+    expect(api.getFlowVersionHistory).toHaveBeenLastCalledWith('flow-b')
+  })
+
+  it('刷新保留搜索、每页数量和有效页，记录缩量后约束到有效页', async () => {
+    await open()
+    await wrapper.get('input').setValue('release')
+    state().pageSize = 20
+    await page(2)
+    await refresh()
+    await flushPromises()
+    expect(state().currentPage).toBe(2)
+    expect(state().searchKeyword).toBe('release')
+    api.getFlowVersionHistory.mockResolvedValueOnce({
+      data: [{ id: 'remaining', versionRemarks: 'Release' }]
+    })
+    await refresh()
+    await flushPromises()
+    expect(state().currentPage).toBe(1)
+    expect(state().pageSize).toBe(20)
+    expect(state().paginatedList.map(row => row.id)).toEqual(['remaining'])
+  })
+
+  it('当前错误清除可操作旧记录并可在原页重试，旧错误不结束新加载', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const error = vi.spyOn(ElMessage, 'error').mockImplementation(() => {})
+    await open()
+    await wrapper.get('input').setValue('release')
+    await page(2)
+    const old = deferred(),
+      latest = deferred()
+    api.getFlowInfo.mockReturnValueOnce(old.promise).mockReturnValueOnce(latest.promise)
+    await refresh()
+    await refresh()
+    old.reject(new Error('old'))
+    await flushPromises()
+    expect(error).not.toHaveBeenCalled()
+    expect(state().loading).toBe(true)
+    latest.reject(new Error('current'))
+    await flushPromises()
+    expect(state().historyList).toEqual([])
+    expect(state().searchKeyword).toBe('release')
+    expect(state().currentPage).toBe(2)
+    expect(wrapper.text()).toContain('加载历史版本失败，请重试')
+    await wrapper
+      .findAll('button')
+      .find(item => item.text() === '重试')
+      .trigger('click')
+    await flushPromises()
+    expect(state().historyList).toHaveLength(65)
+    expect(state().currentPage).toBe(2)
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false)
+  })
+
+  it('卸载后旧读取失败不弹提示', async () => {
+    const error = vi.spyOn(ElMessage, 'error').mockImplementation(() => {})
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    await open()
+    const old = deferred()
+    api.getFlowInfo.mockReturnValueOnce(old.promise)
+    await refresh()
+    wrapper.unmount()
+    old.reject(new Error('old'))
+    await flushPromises()
+    expect(error).not.toHaveBeenCalled()
+  })
 })
 afterEach(() => {
   wrapper?.unmount()

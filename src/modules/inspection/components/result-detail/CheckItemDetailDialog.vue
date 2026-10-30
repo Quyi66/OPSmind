@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="visible"
-    :title="item?.hostKey || '巡检结果'"
+    :title="item?.hostKey || item?.host_key || '巡检结果'"
     width="700px"
     destroy-on-close
     @close="$emit('close')"
@@ -21,7 +21,10 @@
       <div class="result-item">
         <span class="result-label">结果输出：</span>
       </div>
-      <div v-if="item?.output" class="output-content">
+      <div
+        v-if="item?.output !== null && item?.output !== undefined && item?.output !== ''"
+        class="output-content"
+      >
         <pre>{{ item.output }}</pre>
       </div>
       <div v-else class="output-content">

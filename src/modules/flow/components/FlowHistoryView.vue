@@ -37,11 +37,15 @@
 
     <!-- 历史版本列表 -->
     <div class="history-content">
+      <el-alert v-if="loadError" :title="loadError" type="error" show-icon :closable="false">
+        <el-button link type="primary" @click="loadHistory">重试</el-button>
+      </el-alert>
       <el-table
         :data="paginatedList"
         v-loading="loading"
         style="width: 100%"
         max-height="calc(100vh - 234px)"
+        :empty-text="loading ? '正在读取历史版本…' : loadError || '暂无匹配的历史版本'"
       >
         <el-table-column label="版本" width="150">
           <template #default="{ row }">
@@ -72,12 +76,20 @@
               text
               type="primary"
               size="small"
-              :disabled="row.version === row.currentVersion"
+              :disabled="loading || row.version === row.currentVersion"
               @click="handleChangeVersion(row)"
             >
               切换版本
             </el-button>
-            <el-button text type="primary" size="small" @click="handleDesign(row)">设计</el-button>
+            <el-button
+              text
+              type="primary"
+              size="small"
+              :disabled="loading"
+              @click="handleDesign(row)"
+            >
+              设计
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -99,7 +111,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh } from '@element-plus/icons-vue'
 import * as flowApi from '@/modules/flow/api'
@@ -114,6 +126,8 @@ const props = defineProps({
 const emit = defineEmits(['back', 'view-version'])
 
 const loading = ref(false)
+const loadError = ref('')
+let historyRequest = 0
 const historyList = ref([])
 const processInfo = ref({
   processName: ''
@@ -141,6 +155,14 @@ const paginatedList = computed(() => {
   return filteredList.value.slice(start, end)
 })
 
+watch(
+  () => filteredList.value.length,
+  count => {
+    if (loading.value || loadError.value) return
+    currentPage.value = Math.min(currentPage.value, Math.max(1, Math.ceil(count / pageSize.value)))
+  }
+)
+
 function handleSearch() {
   currentPage.value = 1
 }
@@ -148,21 +170,30 @@ function handleSearch() {
 async function loadHistory() {
   if (!props.processId) return
 
+  const request = ++historyRequest
+  const processId = props.processId
+  const isCurrent = () => request === historyRequest && processId === props.processId
   loading.value = true
+  loadError.value = ''
   try {
     // 加载流程信息
-    const infoRes = await flowApi.getFlowInfo(props.processId)
-    processInfo.value = infoRes?.data || infoRes || {}
+    const infoRes = await flowApi.getFlowInfo(processId)
+    if (!isCurrent()) return
 
     // 加载历史版本
-    const response = await flowApi.getFlowVersionHistory(props.processId)
+    const response = await flowApi.getFlowVersionHistory(processId)
+    if (!isCurrent()) return
     const data = response?.data || response
+    processInfo.value = infoRes?.data || infoRes || {}
     historyList.value = Array.isArray(data) ? data : []
   } catch (error) {
+    if (!isCurrent()) return
+    historyList.value = []
+    loadError.value = '加载历史版本失败，请重试'
     console.error('Failed to load history:', error)
     ElMessage.error('加载历史版本失败')
   } finally {
-    loading.value = false
+    if (isCurrent()) loading.value = false
   }
 }
 
@@ -220,8 +251,22 @@ async function handleChangeVersion(row) {
   }
 }
 
-onMounted(() => {
-  loadHistory()
+watch(
+  () => props.processId,
+  () => {
+    historyRequest += 1
+    loading.value = false
+    loadError.value = ''
+    historyList.value = []
+    processInfo.value = { processName: '' }
+    searchKeyword.value = ''
+    currentPage.value = 1
+    loadHistory()
+  },
+  { immediate: true }
+)
+onBeforeUnmount(() => {
+  historyRequest += 1
 })
 </script>
 
