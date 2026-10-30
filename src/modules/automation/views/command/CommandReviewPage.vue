@@ -2,7 +2,7 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <el-form :inline="true" size="small">
+      <el-form :inline="true" size="small" @submit.prevent>
         <el-form-item label="关键词">
           <el-input
             v-model="searchKeyword"
@@ -50,10 +50,11 @@
         :data="pagedCommands"
         max-height="calc(100vh - 264px)"
         @selection-change="handleSelectionChange"
+        @sort-change="handleSortChange"
       >
         <el-table-column type="selection" width="45" />
 
-        <el-table-column prop="name" label="名称" min-width="200" sortable>
+        <el-table-column prop="name" label="名称" min-width="200" sortable="custom">
           <template #default="{ row }">
             <div class="command-name-cell">
               <el-button text type="primary" class="name-link" @click="handleApprove(row)">
@@ -64,7 +65,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="unapprovedCommand" label="命令" min-width="300" sortable>
+        <el-table-column prop="unapprovedCommand" label="命令" min-width="300" sortable="custom">
           <template #default="{ row }">
             <div class="command-preview" :title="row.unapprovedCommand">
               {{ truncateCommand(row.unapprovedCommand) }}
@@ -72,13 +73,25 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="createdAt" label="创建时间" width="170" align="left" sortable>
+        <el-table-column
+          prop="createdAt"
+          label="创建时间"
+          width="170"
+          align="left"
+          sortable="custom"
+        >
           <template #default="{ row }">
             {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
 
-        <el-table-column prop="createdBy" label="创建人" width="100" align="left" sortable />
+        <el-table-column
+          prop="createdBy"
+          label="创建人"
+          width="100"
+          align="left"
+          sortable="custom"
+        />
 
         <el-table-column label="操作" width="80" fixed="right" align="left">
           <template #default="{ row }">
@@ -118,6 +131,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import { formatDateTime } from '../../utils/helpers'
+import { sortCommandRows } from '../../utils/commandListSort'
 const formatDate = formatDateTime
 import { findAllUnapprovedCommand } from '@/modules/automation/api/command'
 import { useReviewCountStore } from '@/stores/useReviewCountStore.js'
@@ -131,6 +145,7 @@ const searchKeyword = ref('')
 const tableRef = ref(null)
 const currentPage = ref(1)
 const pageSize = ref(10)
+const sortState = ref({ prop: '', order: null })
 
 // 审核对话框状态
 const approveDialogVisible = ref(false)
@@ -152,10 +167,17 @@ const filteredCommands = computed(() => {
   )
 })
 
+const sortedCommands = computed(() => sortCommandRows(filteredCommands.value, sortState.value))
 const pagedCommands = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
-  return filteredCommands.value.slice(start, start + pageSize.value)
+  return sortedCommands.value.slice(start, start + pageSize.value)
 })
+
+function handleSortChange({ prop, order }) {
+  sortState.value = { prop, order }
+  currentPage.value = 1
+  clearSelection()
+}
 
 const paginationInfo = computed(() => {
   const total = filteredCommands.value.length
