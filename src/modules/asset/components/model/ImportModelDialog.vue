@@ -16,6 +16,7 @@
         :limit="1"
         accept=".xlsx,.xls"
         :on-change="handleFileChange"
+        :on-remove="handleFileRemove"
         :on-exceed="handleExceed"
       >
         <i class="fa fa-cloud-upload-alt upload-icon"></i>
@@ -81,6 +82,10 @@ const uploading = ref(false)
 // 文件选择
 const handleFileChange = file => {
   selectedFile.value = file.raw
+}
+
+const handleFileRemove = () => {
+  selectedFile.value = null
 }
 
 // 超出限制

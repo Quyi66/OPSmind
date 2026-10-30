@@ -37,7 +37,7 @@
       <div class="ops-table-wrapper card-table">
         <el-table
           v-loading="loading"
-          :data="filteredModelList"
+          :data="paginatedModelList"
           height="100%"
           row-class-name="modern-table-row"
         >
@@ -118,6 +118,7 @@
           :total="pagination.total"
           layout="total, sizes, prev, pager, next, jumper"
           background
+          @size-change="handlePageSizeChange"
         />
       </div>
 
@@ -178,6 +179,15 @@ const filteredModelList = computed(() => {
     item => item.title?.toLowerCase().includes(kw) || item.code?.toLowerCase().includes(kw)
   )
 })
+
+const paginatedModelList = computed(() => {
+  const start = (pagination.value.page - 1) * pagination.value.size
+  return filteredModelList.value.slice(start, start + pagination.value.size)
+})
+
+function handlePageSizeChange() {
+  pagination.value.page = 1
+}
 
 // 分页信息
 const paginationInfo = computed(() => {
