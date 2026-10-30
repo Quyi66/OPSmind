@@ -75,8 +75,14 @@
           </div>
 
           <div class="ops-table-wrapper">
-            <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 324px)">
-              <el-table-column label="开始时间" width="180" sortable>
+            <el-table
+              v-loading="loading"
+              :data="tableData"
+              max-height="calc(100vh - 324px)"
+              :default-sort="{ prop: 'start_time', order: 'descending' }"
+              @sort-change="handleSortChange"
+            >
+              <el-table-column prop="start_time" label="开始时间" width="180" sortable="custom">
                 <template #default="{ row }">
                   {{ formatDateTime(row.start_time) }}
                 </template>
@@ -112,7 +118,7 @@
                 </template>
               </el-table-column>
 
-              <el-table-column label="结束时间" width="180" sortable>
+              <el-table-column prop="end_time" label="结束时间" width="180" sortable="custom">
                 <template #default="{ row }">
                   {{ formatDateTime(row.end_time) }}
                 </template>
@@ -195,7 +201,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
@@ -205,6 +211,7 @@ import ExecuteResultDialog from '../../components/job/JobListView/ExecuteResultD
 import JobStatisticsPage from './JobStatisticsPage.vue'
 import { getAutomationRunTitle } from '../../utils/resourcePresentation'
 import { formatDateTime } from '../../utils/helpers'
+import { getRunLogOrderBy } from '../../utils/runLogSort'
 import {
   RUN_LOG_STATUS_MAP,
   getRunLogStatusLabel,
@@ -215,6 +222,8 @@ import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
 import { throwIfWorkflowFailed } from '@/utils/workflowResult'
 
 const loading = ref(false)
+const orderBy = ref('start_time desc')
+let listRequestId = 0
 const tableData = ref([])
 const filters = ref({
   day: '0',
@@ -325,6 +334,7 @@ function handleTabChange(tab) {
 }
 
 async function fetchData() {
+  const requestId = ++listRequestId
   loading.value = true
   try {
     const payload = {
@@ -337,22 +347,34 @@ async function fetchData() {
       },
       size: pagination.value.size,
       page: pagination.value.page,
-      orderBy: 'start_time desc',
+      orderBy: orderBy.value,
       filter: filters.value.search
         ? `start_time|username|executor_url:*${filters.value.search}*`
         : undefined
     }
 
     const response = await jaoApi.fetchJobRunLogs(payload)
+    if (requestId !== listRequestId) return
     const data = response?.data || response
     tableData.value = data.records || []
     pagination.value.total = data.total || 0
   } catch (error) {
+    if (requestId !== listRequestId) return
     ElMessage.error(error?.message || '获取运行记录失败')
   } finally {
-    loading.value = false
+    if (requestId === listRequestId) loading.value = false
   }
 }
+
+function handleSortChange(sort) {
+  orderBy.value = getRunLogOrderBy(sort)
+  pagination.value.page = 1
+  fetchData()
+}
+
+onBeforeUnmount(() => {
+  listRequestId += 1
+})
 
 function handleSearch() {
   pagination.value.page = 1
