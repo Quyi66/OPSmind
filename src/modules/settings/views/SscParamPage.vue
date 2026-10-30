@@ -5,7 +5,7 @@
       <el-tab-pane label="系统参数配置" name="sysParams">
         <!-- 筛选区 -->
         <div class="ops-filter-bar">
-          <el-form :inline="true" size="small">
+          <el-form :inline="true" size="small" @submit.prevent>
             <el-form-item label="关键词">
               <el-input
                 v-model="sysSearchKeyword"
@@ -94,6 +94,7 @@
             :page-sizes="[10, 20, 50, 100]"
             layout="total, sizes, prev, pager, next, jumper"
             background
+            @size-change="handleSysSearch"
           />
         </div>
       </el-tab-pane>
@@ -101,7 +102,7 @@
       <el-tab-pane label="应用参数配置" name="appParams">
         <!-- 筛选区 -->
         <div class="ops-filter-bar">
-          <el-form :inline="true" size="small">
+          <el-form :inline="true" size="small" @submit.prevent>
             <el-form-item label="关键词">
               <el-input
                 v-model="appSearchKeyword"
@@ -183,6 +184,7 @@
             :page-sizes="[10, 20, 50, 100]"
             layout="total, sizes, prev, pager, next, jumper"
             background
+            @size-change="handleAppSearch"
           />
         </div>
       </el-tab-pane>
@@ -429,7 +431,7 @@ const paginatedAppParams = computed(() => {
 
 // 搜索
 function handleSysSearch() {
-  sysAppliedSearchKeyword.value = sysSearchKeyword.value
+  sysAppliedSearchKeyword.value = sysSearchKeyword.value.trim()
   sysCurrentPage.value = 1
 }
 
@@ -440,7 +442,7 @@ function handleSysReset() {
 }
 
 function handleAppSearch() {
-  appAppliedSearchKeyword.value = appSearchKeyword.value
+  appAppliedSearchKeyword.value = appSearchKeyword.value.trim()
   appCurrentPage.value = 1
 }
 
