@@ -1,7 +1,7 @@
 <template>
   <div class="ops-page-layout linux-yum-manage-page">
     <div class="ops-filter-bar">
-      <el-form :model="hostFilters" inline size="small">
+      <el-form :model="hostFilters" inline size="small" @submit.prevent>
         <el-form-item label="关键词">
           <el-input
             v-model="hostFilterText"
@@ -9,6 +9,7 @@
             style="width: 200px"
             clearable
             maxlength="50"
+            @input="hostPagination.page = 1"
           >
             <template #prefix>
               <el-icon>
@@ -104,9 +105,14 @@
     >
       <div class="host-detail-dialog-content">
         <div class="ops-filter-bar">
-          <el-form inline size="small">
+          <el-form inline size="small" @submit.prevent>
             <el-form-item label="状态">
-              <el-select v-model="detailRepoStatus" placeholder="请选择" style="width: 120px">
+              <el-select
+                v-model="detailRepoStatus"
+                placeholder="请选择"
+                style="width: 120px"
+                @change="handleDetailStatusChange"
+              >
                 <el-option value="enabled" label="启用" />
                 <el-option value="disabled" label="禁用" />
               </el-select>
@@ -117,6 +123,7 @@
                 placeholder="搜索名称、地址..."
                 style="width: 220px"
                 clearable
+                @input="handleDetailFilterChange"
               >
                 <template #prefix>
                   <el-icon><Search /></el-icon>
@@ -228,7 +235,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { yumManageApi } from '../api'
@@ -265,10 +272,22 @@ const detailPagination = reactive({
   pageSize: 20,
   total: 0
 })
+let detailRequestId = 0
+
+watch(hostDetailDialogVisible, visible => {
+  if (!visible) {
+    detailRequestId += 1
+    hostDetailLoading.value = false
+  }
+})
+
+onBeforeUnmount(() => {
+  detailRequestId += 1
+})
 
 const filteredHostTableData = computed(() => {
-  if (!hostFilterText.value) return hostTableData.value
-  const keyword = hostFilterText.value.toLowerCase()
+  const keyword = hostFilterText.value.trim().toLowerCase()
+  if (!keyword) return hostTableData.value
   return hostTableData.value.filter(item => {
     return (
       item.$data_owner?.toLowerCase().includes(keyword) ||
@@ -285,8 +304,8 @@ const paginatedHostTableData = computed(() => {
 })
 
 const filteredRepoDetailData = computed(() => {
-  if (!detailFilterText.value) return hostRepoDetailData.value
-  const keyword = detailFilterText.value.toLowerCase()
+  const keyword = detailFilterText.value.trim().toLowerCase()
+  if (!keyword) return hostRepoDetailData.value
   return hostRepoDetailData.value.filter(row => {
     return (
       row['repo-name']?.toLowerCase().includes(keyword) ||
@@ -382,6 +401,7 @@ async function executeScanJob() {
 
 function handleViewHostDetail(row) {
   currentHostDetail.value = row
+  hostRepoDetailData.value = []
   detailRepoStatus.value = 'enabled'
   detailFilterText.value = ''
   detailPagination.page = 1
@@ -393,28 +413,39 @@ function handleDetailFilterChange() {
   detailPagination.page = 1
 }
 
+function handleDetailStatusChange() {
+  handleDetailFilterChange()
+  hostRepoDetailData.value = []
+  loadHostRepoDetail()
+}
+
 function handleDetailReset() {
+  const statusChanged = detailRepoStatus.value !== 'enabled'
   detailFilterText.value = ''
   detailRepoStatus.value = 'enabled'
-  handleDetailFilterChange()
+  if (statusChanged) handleDetailStatusChange()
+  else handleDetailFilterChange()
 }
 
 async function loadHostRepoDetail() {
-  if (!currentHostDetail.value) return
+  if (!currentHostDetail.value || !hostDetailDialogVisible.value) return
 
+  const requestId = ++detailRequestId
   hostDetailLoading.value = true
   try {
     const response = await yumManageApi.getHostRepoDetail({
       data_owner: currentHostDetail.value.$data_owner,
       repo_status: detailRepoStatus.value
     })
+    if (requestId !== detailRequestId || !hostDetailDialogVisible.value) return
     hostRepoDetailData.value = response?.data?.records || response?.data || []
     detailPagination.page = 1
   } catch (error) {
+    if (requestId !== detailRequestId || !hostDetailDialogVisible.value) return
     console.error('Failed to load host repo detail:', error)
     hostRepoDetailData.value = []
   } finally {
-    hostDetailLoading.value = false
+    if (requestId === detailRequestId) hostDetailLoading.value = false
   }
 }
 
