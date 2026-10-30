@@ -123,8 +123,10 @@
               <i class="fa fa-plug" style="margin-right: 4px"></i>
               Agent 接入
             </el-button>
+            <!-- 简化流程:暂时隐藏「待处理 Agent」「安装 Agent」按钮,后续可能恢复
             <el-button v-if="canManageAgents" size="small" @click="openAgentEnrollment(null, 'pending')">待处理 Agent</el-button>
             <el-button v-if="canManageAgents" size="small" :disabled="selectedCount === 0" @click="openAgentInstall()">安装 Agent</el-button>
+            -->
             <el-button size="small" @click="importDialogVisible = true">
               <i class="fa fa-file-import" style="margin-right: 4px"></i>
               导入设备
@@ -492,7 +494,9 @@
             <el-table-column label="操作" width="230" fixed="right">
               <template #default="{ row }">
                 <template v-if="canManageAgents && !isAgentAsset(row)">
+                  <!-- 简化流程:暂时隐藏行内「安装Agent」按钮,后续可能恢复
                   <el-button text type="primary" size="small" :disabled="row.agentInfoUnavailable" @click="openAgentInstall(row)">安装Agent</el-button>
+                  -->
                   <el-button text type="primary" size="small" :disabled="row.agentInfoUnavailable" @click="openAgentEnrollment(row)">生成本机安装命令</el-button>
                 </template>
                 <el-button v-if="canManageAgents && isAgentAsset(row)" text type="danger" size="small" @click="unbindAgent(row)">解绑Agent</el-button>
@@ -628,7 +632,9 @@
       @success="handleAgentEnrollmentSuccess"
     />
 
+    <!-- 简化流程:安装 Agent 弹窗暂时隐藏,后续可能恢复
     <AgentInstallDialog v-model="agentInstallVisible" :hosts="agentInstallHosts" @updated="loadAssetList" />
+    -->
 
   </div>
 </template>
