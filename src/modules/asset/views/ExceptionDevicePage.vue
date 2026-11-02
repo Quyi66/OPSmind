@@ -7,9 +7,14 @@
 
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <el-form :model="filters" inline size="small">
+      <el-form :model="filters" inline size="small" @submit.prevent>
         <el-form-item label="设备类型">
-          <el-select v-model="filters.cit" placeholder="全部" style="width: 140px" @change="handleSearch">
+          <el-select
+            v-model="filters.cit"
+            placeholder="全部"
+            style="width: 140px"
+            @change="handleSearch"
+          >
             <el-option label="全部" value="sjxy_all" />
             <el-option
               v-for="item in resourceTypes"
@@ -107,6 +112,10 @@
       </el-button>
     </div>
 
+    <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
+      <el-button link type="primary" @click="loadTableData">重试</el-button>
+    </el-alert>
+
     <!-- 表格区域 -->
     <div class="ops-table-wrapper card-table">
       <el-table
@@ -116,6 +125,7 @@
         :row-key="getRowKey"
         class="natural-height-table"
         row-class-name="modern-table-row"
+        :empty-text="tableLoading ? '正在读取设备…' : loadError || '暂无符合条件的设备'"
         @selection-change="handleSelectionChange"
       >
         <el-table-column
@@ -288,7 +298,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount, onDeactivated, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -352,10 +362,13 @@ const filters = reactive({
   conditions: CONNECT_EXCEPTION_DEFAULT_CONDITION,
   ip: ''
 })
+const appliedFilters = reactive({ ...filters })
 
 // 表格数据
 const tableData = ref([])
 const tableLoading = ref(false)
+const loadError = ref('')
+let tableRequest = 0
 const total = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -401,33 +414,52 @@ const loadResourceTypes = async () => {
 
 // 加载表格数据
 const loadTableData = async () => {
+  if (route.path.replace(/\/$/, '') !== '/acm/exception') return
+  const request = ++tableRequest
+  const routePath = route.fullPath
+  const isCurrent = () => request === tableRequest && routePath === route.fullPath
   tableLoading.value = true
+  loadError.value = ''
+  tableData.value = []
   try {
     const res = await exceptionApi.getConnectException(
       {
-        cit: filters.cit,
-        conditions: filters.conditions,
-        ip: filters.ip || undefined
+        cit: appliedFilters.cit,
+        conditions: appliedFilters.conditions,
+        ip: appliedFilters.ip || undefined
       },
       {
         size: pageSize.value,
         page: currentPage.value
       }
     )
+    if (!isCurrent()) return
     tableData.value = res.records || []
     total.value = res.total || 0
   } catch (error) {
+    if (!isCurrent()) return
+    clearTableSelection()
+    loadError.value = '加载连通巡检设备失败，请重试'
     console.error('加载表格数据失败:', error)
   } finally {
-    tableLoading.value = false
+    if (isCurrent()) tableLoading.value = false
   }
 }
+
+const invalidateTableRead = () => {
+  tableRequest += 1
+  if (tableLoading.value) loadError.value = '设备读取已中断，请刷新重试'
+  tableLoading.value = false
+}
+onBeforeUnmount(invalidateTableRead)
+onDeactivated(invalidateTableRead)
 
 const applyRouteQuery = query => {
   clearTableSelection()
   filters.cit = typeof query.cit === 'string' && query.cit ? query.cit : 'sjxy_all'
   filters.conditions = normalizeConnectExceptionCondition(query.conditions)
   filters.ip = typeof query.ip === 'string' ? query.ip : ''
+  Object.assign(appliedFilters, filters, { ip: filters.ip.trim() })
   currentPage.value = 1
   pageSize.value = 10
   loadTableData()
@@ -437,12 +469,15 @@ const applyRouteQuery = query => {
 const handleKpiClick = params => {
   clearTableSelection()
   filters.conditions = params.conditions
+  Object.assign(appliedFilters, filters, { ip: filters.ip.trim() })
+  currentPage.value = 1
   loadTableData()
 }
 
 // 处理搜索
 const handleSearch = () => {
   clearTableSelection()
+  Object.assign(appliedFilters, filters, { ip: filters.ip.trim() })
   currentPage.value = 1
   loadTableData()
 }
@@ -474,6 +509,7 @@ const handleReset = () => {
   filters.cit = 'sjxy_all'
   filters.conditions = CONNECT_EXCEPTION_DEFAULT_CONDITION
   filters.ip = ''
+  Object.assign(appliedFilters, filters)
   currentPage.value = 1
   pageSize.value = 10
   loadTableData()
@@ -772,9 +808,9 @@ onMounted(() => {
 })
 
 watch(
-  () => route.query,
-  query => {
-    applyRouteQuery(query)
+  () => [route.path, route.query],
+  ([path, query]) => {
+    if (path.replace(/\/$/, '') === '/acm/exception') applyRouteQuery(query)
   },
   { immediate: true }
 )

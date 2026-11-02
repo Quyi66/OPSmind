@@ -28,7 +28,7 @@
       <div class="content-view-area">
         <!-- 筛选区域 -->
         <div class="ops-filter-bar">
-          <el-form :inline="true" size="small">
+          <el-form :inline="true" size="small" @submit.prevent>
             <el-form-item label="在线状态">
               <el-select v-model="filters.status" style="width: 85px" @change="handleSearch">
                 <el-option label="全部" value="all" />
@@ -1788,15 +1788,14 @@ onMounted(() => {
 })
 
 // 监听路由参数变化进行联动搜索
-watch(
-  () => route.query,
-  query => {
-    if (query.ip) {
-      searchText.value = query.ip
-      loadAssetList()
-    }
+watch([() => route.path, () => route.query.ip], ([path, ip]) => {
+  if (path.replace(/\/$/, '') !== '/acm/info') return
+  if (ip) {
+    searchText.value = ip
+    currentPage.value = 1
+    loadAssetList()
   }
-)
+})
 </script>
 <style scoped lang="scss">
 // 页面级操作栏

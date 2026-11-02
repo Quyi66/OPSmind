@@ -8,7 +8,10 @@
             v-model="filters.processName"
             placeholder="搜索流程名称"
             clearable
-            style="width: 250px" @keyup.enter="handleSearch" @clear="handleSearch">
+            style="width: 250px"
+            @keyup.enter="handleSearch"
+            @clear="handleSearch"
+          >
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
@@ -36,13 +39,17 @@
       <el-button
         size="small"
         type="danger"
-        :disabled="!selectedRows.length"
+        :disabled="loading || !!loadError || !selectedRows.length"
         @click="handleBatchDelete"
       >
         <el-icon><Delete /></el-icon>
         删除
       </el-button>
-      <el-button size="small" :disabled="!selectedRows.length" @click="handleExport">
+      <el-button
+        size="small"
+        :disabled="loading || !!loadError || !selectedRows.length"
+        @click="handleExport"
+      >
         <el-icon><Download /></el-icon>
         导出
       </el-button>
@@ -59,16 +66,21 @@
       </el-button>
     </div>
 
+    <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
+      <el-button link type="primary" @click="loadData">重试</el-button>
+    </el-alert>
+
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
       <el-table
+        ref="tableRef"
         :data="paginatedData"
         v-loading="loading"
         @selection-change="handleSelectionChange"
         style="width: 100%"
         max-height="calc(100vh - 264px)"
       >
-        <el-table-column type="selection" width="40" />
+        <el-table-column type="selection" width="40" :selectable="() => !loading && !loadError" />
         <el-table-column prop="processName" label="流程名称" min-width="150" />
         <el-table-column prop="processAbbr" label="流程简称" min-width="120" />
         <el-table-column prop="remarks" label="备注" min-width="150" show-overflow-tooltip />
@@ -76,18 +88,60 @@
         <el-table-column label="操作" width="300" fixed="right">
           <template #default="{ row }">
             <div class="action-buttons">
-              <el-button text type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
-              <el-button text type="primary" size="small" @click="handleDesign(row)">
+              <el-button
+                text
+                type="primary"
+                size="small"
+                :disabled="loading || !!loadError"
+                @click="handleEdit(row)"
+              >
+                编辑
+              </el-button>
+              <el-button
+                text
+                type="primary"
+                size="small"
+                :disabled="loading || !!loadError"
+                @click="handleDesign(row)"
+              >
                 设计
               </el-button>
-              <el-button text type="primary" size="small" @click="handleExecute(row)">
+              <el-button
+                text
+                type="primary"
+                size="small"
+                :disabled="loading || !!loadError"
+                @click="handleExecute(row)"
+              >
                 执行
               </el-button>
-              <el-button text type="primary" size="small" @click="handleClone(row)">克隆</el-button>
-              <el-button type="primary" text size="small" @click="handleViewHistory(row)">
+              <el-button
+                text
+                type="primary"
+                size="small"
+                :disabled="loading || !!loadError"
+                @click="handleClone(row)"
+              >
+                克隆
+              </el-button>
+              <el-button
+                type="primary"
+                text
+                size="small"
+                :disabled="loading || !!loadError"
+                @click="handleViewHistory(row)"
+              >
                 历史版本
               </el-button>
-              <el-button text type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+              <el-button
+                text
+                type="danger"
+                size="small"
+                :disabled="loading || !!loadError"
+                @click="handleDelete(row)"
+              >
+                删除
+              </el-button>
             </div>
           </template>
         </el-table-column>
@@ -129,7 +183,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, inject } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount, onDeactivated, inject } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, RefreshRight, Plus, Delete, Download } from '@element-plus/icons-vue'
 import * as flowApi from '@/modules/flow/api'
@@ -143,6 +197,9 @@ const handleExecuteInjected = inject('handleExecute', null)
 const handleHistoryInjected = inject('handleHistory', null)
 
 const loading = ref(false)
+const loadError = ref('')
+const tableRef = ref(null)
+let listRequest = 0
 const tableData = ref([])
 const selectedRows = ref([])
 const filters = reactive({
@@ -188,17 +245,35 @@ const paginatedData = computed(() => {
 })
 
 async function loadData() {
+  const request = ++listRequest
   loading.value = true
+  loadError.value = ''
+  selectedRows.value = []
+  tableRef.value?.clearSelection()
   try {
     const response = await flowApi.getFlowList()
+    if (request !== listRequest) return
     tableData.value = response?.data || []
+    currentPage.value = Math.min(
+      currentPage.value,
+      Math.max(1, Math.ceil(filteredData.value.length / pageSize.value))
+    )
   } catch (error) {
+    if (request !== listRequest) return
+    loadError.value = '加载流程列表失败，当前数据可能已过期，请重试'
     console.error('Failed to load flow list:', error)
-    tableData.value = []
   } finally {
-    loading.value = false
+    if (request === listRequest) loading.value = false
   }
 }
+
+function invalidateListRead() {
+  listRequest += 1
+  if (loading.value) loadError.value = '流程列表读取已中断，请刷新重试'
+  loading.value = false
+}
+onBeforeUnmount(invalidateListRead)
+onDeactivated(invalidateListRead)
 
 function updatePagination() {
   currentPage.value = 1

@@ -545,8 +545,9 @@ onBeforeUnmount(() => {
 })
 
 watch(
-  () => route.query,
+  () => (route.name === 'patches-windowsKbList' ? route.query : null),
   query => {
+    if (!query) return
     if (query.view === 'detail' && query.kbNumber) {
       selectedKbNumber.value = String(query.kbNumber)
       currentView.value = 'detail'

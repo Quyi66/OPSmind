@@ -738,6 +738,7 @@ function normalizeDialogValue(value) {
 }
 
 function replaceToOverviewIfNeeded(dialogType) {
+  if (route.name !== 'patches-windowsVulnerability') return
   if (normalizeDialogValue(route.query.dialog) !== dialogType) {
     return
   }
@@ -746,8 +747,9 @@ function replaceToOverviewIfNeeded(dialogType) {
 }
 
 watch(
-  () => route.query.dialog,
-  dialog => {
+  [() => route.name, () => route.query.dialog],
+  ([name, dialog]) => {
+    if (name !== 'patches-windowsVulnerability') return
     const normalized = normalizeDialogValue(dialog)
 
     if (normalized === 'report') {

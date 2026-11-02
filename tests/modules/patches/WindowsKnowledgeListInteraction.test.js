@@ -85,6 +85,7 @@ async function open(component = CvePage) {
         'el-date-picker': DatePicker,
         'el-option': true,
         'el-icon': true,
+        'el-link': true,
         'el-tag': { template: '<span><slot /></span>' },
         'el-pagination': {
           name: 'ElPagination',

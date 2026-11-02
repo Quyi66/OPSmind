@@ -161,6 +161,25 @@ afterEach(() => {
 })
 
 describe('Windows 主机概览列表交互', () => {
+  it('缓存离开后忽略其他页面dialog参数，不打开报告或将路由拉回概览', async () => {
+    await open()
+    const context = state()
+    const reads = api.getHosts.mock.calls.length
+    await router.push({ path: '/other', query: { dialog: 'unrelated-dialog' } })
+    await flushPromises()
+    expect(router.currentRoute.value.path).toBe('/other')
+    expect(context.reportDialogVisible).toBe(false)
+    await router.replace({ path: '/other', query: { dialog: 'report' } })
+    await flushPromises()
+    expect(router.currentRoute.value.path).toBe('/other')
+    expect(context.reportDialogVisible).toBe(false)
+    expect(api.getHosts).toHaveBeenCalledTimes(reads)
+    await router.push({ name: 'patches-windowsVulnerability', query: { dialog: 'report' } })
+    await flushPromises()
+    expect(state()).toBe(context)
+    expect(context.reportDialogVisible).toBe(true)
+  })
+
   it('关键词仅搜索/Enter/清空应用；即时筛选、分页和刷新沿已应用关键词，重置只查一次', async () => {
     await open()
     const input = page().findComponent(Input)

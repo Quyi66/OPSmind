@@ -639,8 +639,9 @@ onMounted(() => {
 })
 
 watch(
-  () => route.query,
+  () => (route.name === 'patches-cveList' ? route.query : null),
   query => {
+    if (!query) return
     if (query.view === 'detail' && query.cveId) {
       selectedCveId.value = query.cveId
       currentView.value = 'detail'
