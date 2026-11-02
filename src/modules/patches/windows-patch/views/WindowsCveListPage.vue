@@ -514,8 +514,9 @@ onBeforeUnmount(() => {
 })
 
 watch(
-  () => route.query,
+  () => (route.name === 'patches-windowsCveList' ? route.query : null),
   query => {
+    if (!query) return
     if (query.view === 'detail' && query.cveId) {
       selectedCveId.value = query.cveId
       currentView.value = 'detail'

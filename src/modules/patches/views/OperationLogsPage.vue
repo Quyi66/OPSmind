@@ -1,162 +1,185 @@
 <template>
   <div class="ops-page-layout">
     <!-- 操作记录 -->
-      <div class="ops-filter-bar">
-        <el-form :model="filters" inline size="small">
-          <el-form-item label="时间范围">
-            <el-select v-model="dayFilter" style="width: 100px" @change="handleFilterChange">
-              <el-option label="今天" :value="1" />
-              <el-option label="近3天" :value="3" />
-              <el-option label="近7天" :value="7" />
-              <el-option label="近30天" :value="30" />
-              <el-option label="近一年" :value="365" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="状态">
-            <el-select v-model="statusFilter" placeholder="状态" style="width: 80px" clearable @change="handleFilterChange">
-              <el-option label="全部" value="all" />
-              <el-option label="完成" value="COMPLETED" />
-              <el-option label="失败" value="FAILED" />
-              <el-option label="运行中" value="RUNNING" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="操作类型">
-            <el-select v-model="actionFilter" placeholder="操作类型" style="width: 150px" clearable @change="handleFilterChange">
-              <el-option label="全部" value="all" />
-              <el-option label="补丁扫描" value="#{app_vap.menu.patch_scan.title}" />
-              <el-option label="补丁安装" value="补丁安装" />
-              <el-option label="补丁回滚" value="补丁回滚" />
-              <el-option label="Windows补丁扫描" value="Windows补丁扫描" />
-              <el-option label="Windows补丁安装" value="Windows补丁安装" />
-              <el-option label="Windows补丁回滚" value="Windows补丁回滚" />
-              <el-option label="定时导入补丁库" value="#{app_vap.menu.import_patch_library_time}" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="关键词">
-            <el-input v-model="searchText" placeholder="搜索" style="width: 250px" clearable @keyup.enter="handleFilterChange" @clear="handleFilterChange">
-              <template #prefix>
-                <el-icon>
-                  <Search />
-                </el-icon>
-              </template>
-            </el-input>
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" :loading="loading" @click="handleFilterChange">
+    <div class="ops-filter-bar">
+      <el-form :model="filters" inline size="small" @submit.prevent>
+        <el-form-item label="时间范围">
+          <el-select v-model="dayFilter" style="width: 100px" @change="handleFilterChange">
+            <el-option label="今天" :value="1" />
+            <el-option label="近3天" :value="3" />
+            <el-option label="近7天" :value="7" />
+            <el-option label="近30天" :value="30" />
+            <el-option label="近一年" :value="365" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select
+            v-model="statusFilter"
+            placeholder="状态"
+            style="width: 80px"
+            clearable
+            @change="handleFilterChange"
+          >
+            <el-option label="全部" value="all" />
+            <el-option label="完成" value="COMPLETED" />
+            <el-option label="失败" value="FAILED" />
+            <el-option label="运行中" value="RUNNING" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="操作类型">
+          <el-select
+            v-model="actionFilter"
+            placeholder="操作类型"
+            style="width: 150px"
+            clearable
+            @change="handleFilterChange"
+          >
+            <el-option label="全部" value="all" />
+            <el-option label="补丁扫描" value="#{app_vap.menu.patch_scan.title}" />
+            <el-option label="补丁安装" value="补丁安装" />
+            <el-option label="补丁回滚" value="补丁回滚" />
+            <el-option label="Windows补丁扫描" value="Windows补丁扫描" />
+            <el-option label="Windows补丁安装" value="Windows补丁安装" />
+            <el-option label="Windows补丁回滚" value="Windows补丁回滚" />
+            <el-option label="定时导入补丁库" value="#{app_vap.menu.import_patch_library_time}" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="关键词">
+          <el-input
+            v-model="searchText"
+            placeholder="搜索"
+            style="width: 250px"
+            clearable
+            @keyup.enter="handleFilterChange"
+            @clear="handleFilterChange"
+          >
+            <template #prefix>
               <el-icon>
                 <Search />
               </el-icon>
-              搜索
-            </el-button>
-            <el-button @click="handleReset">
-              <el-icon>
-                <RefreshRight />
-              </el-icon>
-              重置
-            </el-button>
-          </el-form-item>
-        </el-form>
-      </div>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="loading" @click="handleFilterChange">
+            <el-icon>
+              <Search />
+            </el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon>
+              <RefreshRight />
+            </el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </div>
 
-      <div class="ops-action-bar">
-        <span style="flex: 1"></span>
-        <el-button
-          class="toolbar-icon-btn"
-          circle
-          size="small"
-          :loading="loading"
-          @click="handleFilterChange"
-          title="刷新"
-        >
-          <el-icon v-show="!loading">
-            <Refresh />
-          </el-icon>
-        </el-button>
-      </div>
+    <div class="ops-action-bar">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadData"
+        title="刷新"
+      >
+        <el-icon v-show="!loading">
+          <Refresh />
+        </el-icon>
+      </el-button>
+    </div>
 
-      <div class="ops-table-wrapper">
-        <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 314px)">
-          <el-table-column prop="start_time" label="开始时间" width="180" sortable>
-            <template #default="{ row }">
-              {{ formatTimestamp(row.start_time) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="action" label="操作" width="160" show-overflow-tooltip>
-            <template #default="{ row }">
-              {{ translateAction(row.action) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="status" label="状态" width="110">
-            <template #default="{ row }">
-              <RunLogStatusTag
-                :type="getStatusType(row.status)"
-                size="small"
-                :clickable="!!row.run_record"
-                @click="handleViewRunResult(row)"
-              >
-                {{ getStatusLabel(row.status) }}
-              </RunLogStatusTag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="executor_node" label="执行节点" width="120" />
-          <el-table-column prop="target_hosts" label="目标节点" width="240">
-            <template #default="{ row }">
-              <div
-                v-if="row.target_hosts"
-                class="host-tags-wrapper"
-                @click="handleShowAllHosts(row)"
-              >
-                <div class="host-tags">
+    <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
+      <el-button link type="primary" @click="loadData">重试</el-button>
+    </el-alert>
+    <div class="ops-table-wrapper">
+      <el-table
+        v-loading="loading"
+        :data="visibleRows"
+        max-height="calc(100vh - 314px)"
+        :empty-text="loading ? '正在读取变更日志…' : loadError || '暂无符合条件的变更日志'"
+      >
+        <el-table-column prop="start_time" label="开始时间" width="180" sortable>
+          <template #default="{ row }">
+            {{ formatTimestamp(row.start_time) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="action" label="操作" width="160" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ translateAction(row.action) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="status" label="状态" width="110">
+          <template #default="{ row }">
+            <RunLogStatusTag
+              :type="getStatusType(row.status)"
+              size="small"
+              :clickable="!!row.run_record"
+              @click="handleViewRunResult(row)"
+            >
+              {{ getStatusLabel(row.status) }}
+            </RunLogStatusTag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="executor_node" label="执行节点" width="120" />
+        <el-table-column prop="target_hosts" label="目标节点" width="240">
+          <template #default="{ row }">
+            <div v-if="row.target_hosts" class="host-tags-wrapper" @click="handleShowAllHosts(row)">
+              <div class="host-tags">
+                <el-tag
+                  v-for="(host, idx) in getHostPreview(row.target_hosts).leading"
+                  :key="idx"
+                  type="info"
+                  size="small"
+                  class="host-clickable-tag"
+                >
+                  {{ host }}
+                </el-tag>
+                <template v-if="getHostPreview(row.target_hosts).last">
+                  <el-tag type="info" size="small" class="host-clickable-tag">
+                    {{ getHostPreview(row.target_hosts).last }}
+                  </el-tag>
                   <el-tag
-                    v-for="(host, idx) in getHostPreview(row.target_hosts).leading"
-                    :key="idx"
+                    v-if="getHostPreview(row.target_hosts).extraCount > 0"
                     type="info"
                     size="small"
                     class="host-clickable-tag"
                   >
-                    {{ host }}
+                    +{{ getHostPreview(row.target_hosts).extraCount }}
                   </el-tag>
-                  <template v-if="getHostPreview(row.target_hosts).last">
-                    <el-tag type="info" size="small" class="host-clickable-tag">
-                      {{ getHostPreview(row.target_hosts).last }}
-                    </el-tag>
-                    <el-tag
-                      v-if="getHostPreview(row.target_hosts).extraCount > 0"
-                      type="info"
-                      size="small"
-                      class="host-clickable-tag"
-                    >
-                      +{{ getHostPreview(row.target_hosts).extraCount }}
-                    </el-tag>
-                  </template>
-                </div>
+                </template>
               </div>
-              <span v-else>-</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="message" label="结果" min-width="300" show-overflow-tooltip>
-            <template #default="{ row }">
-              {{ translateMessage(row.message) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="username" label="用户" width="100" sortable />
-          <el-table-column prop="end_time" label="结束时间" width="180" sortable>
-            <template #default="{ row }">
-              {{ formatTimestamp(row.end_time) }}
-            </template>
-          </el-table-column>
-          <el-table-column label="耗时" width="90">
-            <template #default="{ row }">
-              {{ calculateDuration(row.start_time, row.end_time) }}
-            </template>
-          </el-table-column>
-          <el-table-column :width="actionColumnWidth" fixed="right" label="操作">
-            <template #default="{ row }">
-              <div class="action-buttons">
-                <el-button text type="primary" size="small" @click="handleViewRunResult(row)">
-                  详情
-                </el-button>
-                <!-- <el-button
+            </div>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="message" label="结果" min-width="300" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ translateMessage(row.message) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="username" label="用户" width="100" sortable />
+        <el-table-column prop="end_time" label="结束时间" width="180" sortable>
+          <template #default="{ row }">
+            {{ formatTimestamp(row.end_time) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="耗时" width="90">
+          <template #default="{ row }">
+            {{ calculateDuration(row.start_time, row.end_time) }}
+          </template>
+        </el-table-column>
+        <el-table-column :width="actionColumnWidth" fixed="right" label="操作">
+          <template #default="{ row }">
+            <div class="action-buttons">
+              <el-button text type="primary" size="small" @click="handleViewRunResult(row)">
+                详情
+              </el-button>
+              <!-- <el-button
                   v-if="canShowWindowsScanReport(row)"
                   text
                   size="small"
@@ -165,53 +188,53 @@
                 >
                   Windows扫描报告
                 </el-button> -->
-                <el-button
-                  v-if="canShowScanReport(row)"
-                  text
-                  size="small"
-                  type="primary"
-                  @click="handleScanReport(row)"
-                >
-                  扫描报告
-                </el-button>
-                <el-button
-                  v-if="canShowInstallReport(row)"
-                  text
-                  size="small"
-                  type="primary"
-                  @click="handleInstallReport(row)"
-                >
-                  安装报告
-                </el-button>
-                <el-button
-                  v-if="canShowRollbackReport(row)"
-                  text
-                  size="small"
-                  type="primary"
-                  @click="handleRollbackReport(row)"
-                >
-                  回滚报告
-                </el-button>
-              </div>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
+              <el-button
+                v-if="canShowScanReport(row)"
+                text
+                size="small"
+                type="primary"
+                @click="handleScanReport(row)"
+              >
+                扫描报告
+              </el-button>
+              <el-button
+                v-if="canShowInstallReport(row)"
+                text
+                size="small"
+                type="primary"
+                @click="handleInstallReport(row)"
+              >
+                安装报告
+              </el-button>
+              <el-button
+                v-if="canShowRollbackReport(row)"
+                text
+                size="small"
+                type="primary"
+                @click="handleRollbackReport(row)"
+              >
+                回滚报告
+              </el-button>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
 
-      <!-- 分页区域 -->
-      <div class="ops-pagination-wrapper">
-        <el-pagination
-          v-model:current-page="pagination.page"
-          v-model:page-size="pagination.pageSize"
-          :page-sizes="[10, 25, 50, 100]"
-          :total="pagination.total"
-          layout="total, sizes, prev, pager, next, jumper"
-          background
-          @size-change="handleSizeChange"
-          @current-change="handlePageChange"
-        />
-      </div>
-
+    <!-- 分页区域 -->
+    <div class="ops-pagination-wrapper" v-if="!loadError">
+      <el-pagination
+        v-model:current-page="pagination.page"
+        v-model:page-size="pagination.pageSize"
+        :page-sizes="[10, 25, 50, 100]"
+        :total="pagination.total"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        :disabled="loading"
+        @size-change="handleSizeChange"
+        @current-change="handlePageChange"
+      />
+    </div>
 
     <!-- 运行结果对话框 -->
     <ExecuteResultDialog
@@ -262,10 +285,7 @@
               placement="top"
               :show-after="300"
             >
-              <div
-                class="host-item-tag"
-                @click="handleCopyHost(host)"
-              >
+              <div class="host-item-tag" @click="handleCopyHost(host)">
                 <el-icon class="host-icon"><Monitor /></el-icon>
                 <span>{{ host }}</span>
               </div>
@@ -276,11 +296,7 @@
             description="未找到匹配的目标节点"
             :image-size="70"
           />
-          <el-empty
-            v-else
-            description="暂无目标节点数据"
-            :image-size="70"
-          />
+          <el-empty v-else description="暂无目标节点数据" :image-size="70" />
         </el-scrollbar>
       </div>
 
@@ -299,7 +315,15 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import {
+  ref,
+  reactive,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  onActivated,
+  onDeactivated
+} from 'vue'
 import { ElMessage, ElTag } from 'element-plus'
 import { Refresh, Search, RefreshRight, Monitor } from '@element-plus/icons-vue'
 import { patchLogsApi } from '../api'
@@ -315,10 +339,16 @@ import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
 
 // ========== 操作记录 ==========
 const loading = ref(false)
+const loadError = ref('')
+const active = ref(true)
+let listRequest = 0
+let lastQueryKey = ''
 const tableData = ref([])
+const visibleRows = computed(() => (loading.value || loadError.value ? [] : tableData.value))
 
 useActiveTaskListPolling({
   records: tableData,
+  enabled: () => active.value && !loadError.value,
   refresh: loadData
 })
 
@@ -333,6 +363,7 @@ const actionFilter = ref('all')
 const statusFilter = ref('all')
 const dayFilter = ref(1)
 const searchText = ref('')
+const appliedFilters = reactive({ action: 'all', status: 'all', day: 1, keyword: '' })
 const filters = reactive({
   keyword: ''
 })
@@ -399,8 +430,9 @@ function getStatusLabel(status) {
 
 // 时间格式化
 function formatTimestamp(timestamp) {
-  if (!timestamp) return '-'
+  if (timestamp == null || timestamp === '' || typeof timestamp === 'boolean') return '-'
   const date = new Date(timestamp)
+  if (!Number.isFinite(date.getTime())) return '-'
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
@@ -512,9 +544,18 @@ function getHostPreview(hostsStr) {
 
 // 计算耗时（格式化为 H:mm:ss）
 function calculateDuration(startTime, endTime) {
-  if (!startTime || !endTime) return '-'
+  if (
+    startTime == null ||
+    endTime == null ||
+    startTime === '' ||
+    endTime === '' ||
+    typeof startTime === 'boolean' ||
+    typeof endTime === 'boolean'
+  )
+    return '-'
   const start = new Date(startTime).getTime()
   const end = new Date(endTime).getTime()
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return '-'
   const totalSeconds = Math.floor((end - start) / 1000)
 
   const hours = Math.floor(totalSeconds / 3600)
@@ -526,37 +567,51 @@ function calculateDuration(startTime, endTime) {
 
 // ========== 操作记录相关方法 ==========
 async function loadData() {
+  if (!active.value) return
+  const request = ++listRequest
+  const params = buildQueryParams()
+  lastQueryKey = JSON.stringify(params)
+  const isCurrent = () => active.value && request === listRequest
   loading.value = true
+  loadError.value = ''
   try {
-    const keywordFilter = searchText.value ? `message|username:*${searchText.value}*` : ''
-    let actionParam = actionFilter.value
-    if (actionParam === '#{app_vap.menu.patch_install.title}') {
-      actionParam = '补丁安装'
-    } else if (actionParam === '#{app_vap.menu.patch_rollback.title}') {
-      actionParam = '补丁回滚'
-    }
-    const [response] = await Promise.all([
-      patchLogsApi.getLogs({
-        page: pagination.page,
-        size: pagination.pageSize,
-        action: actionParam,
-        status: statusFilter.value,
-        day: dayFilter.value,
-        filter: keywordFilter
-      }),
-      initTranslations()
-    ])
+    const [response] = await Promise.all([patchLogsApi.getLogs(params), initTranslations()])
+    if (!isCurrent()) return
     tableData.value = response?.records || []
     pagination.total = response?.total || 0
   } catch (error) {
+    if (!isCurrent()) return
+    loadError.value = '加载变更日志失败，请重试'
     console.error('Failed to load logs:', error)
     ElMessage.error('加载数据失败')
   } finally {
-    loading.value = false
+    if (isCurrent()) loading.value = false
+  }
+}
+
+function buildQueryParams() {
+  let action = appliedFilters.action
+  if (action === '#{app_vap.menu.patch_install.title}') action = '补丁安装'
+  else if (action === '#{app_vap.menu.patch_rollback.title}') action = '补丁回滚'
+  return {
+    page: pagination.page,
+    size: pagination.pageSize,
+    action,
+    status: appliedFilters.status,
+    day: appliedFilters.day,
+    filter: appliedFilters.keyword ? `message|username:*${appliedFilters.keyword}*` : ''
   }
 }
 
 function handleFilterChange() {
+  actionFilter.value = actionFilter.value || 'all'
+  statusFilter.value = statusFilter.value || 'all'
+  Object.assign(appliedFilters, {
+    action: actionFilter.value || 'all',
+    status: statusFilter.value || 'all',
+    day: dayFilter.value,
+    keyword: searchText.value.trim()
+  })
   pagination.page = 1
   loadData()
 }
@@ -566,6 +621,7 @@ function handleReset() {
   statusFilter.value = 'all'
   actionFilter.value = 'all'
   searchText.value = ''
+  Object.assign(appliedFilters, { action: 'all', status: 'all', day: 1, keyword: '' })
   pagination.page = 1
   pagination.pageSize = 10
   loadData()
@@ -573,6 +629,7 @@ function handleReset() {
 
 function handlePageChange(page) {
   pagination.page = page
+  if (JSON.stringify(buildQueryParams()) === lastQueryKey) return
   loadData()
 }
 
@@ -594,11 +651,19 @@ function handleViewRunResult(row) {
 }
 
 function isPatchScan(row) {
-  return row?.action === ACTION_KEYS.patchScan || row?.action === '补丁扫描' || translateAction(row?.action) === '补丁扫描'
+  return (
+    row?.action === ACTION_KEYS.patchScan ||
+    row?.action === '补丁扫描' ||
+    translateAction(row?.action) === '补丁扫描'
+  )
 }
 
 function isWindowsScan(row) {
-  return row?.action === ACTION_KEYS.winPatchScan || row?.action === 'Windows漏洞扫描' || translateAction(row?.action) === 'Windows漏洞扫描'
+  return (
+    row?.action === ACTION_KEYS.winPatchScan ||
+    row?.action === 'Windows漏洞扫描' ||
+    translateAction(row?.action) === 'Windows漏洞扫描'
+  )
 }
 
 function isPatchInstall(row) {
@@ -823,6 +888,24 @@ async function downloadRollbackReport(row) {
 }
 
 onMounted(() => {
+  loadData()
+})
+
+function invalidateListRead() {
+  active.value = false
+  listRequest += 1
+  if (loading.value) loadError.value = '变更日志读取已中断，请刷新重试'
+  loading.value = false
+  runResultDialogVisible.value = false
+  scanReportVisible.value = false
+  winScanReportVisible.value = false
+  hostsDialogVisible.value = false
+}
+onBeforeUnmount(invalidateListRead)
+onDeactivated(invalidateListRead)
+onActivated(() => {
+  if (active.value) return
+  active.value = true
   loadData()
 })
 </script>

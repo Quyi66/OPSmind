@@ -19,6 +19,9 @@
     </nav>
 
     <!-- KPI 指标卡片 -->
+    <el-alert v-if="kpiError" :title="kpiError" type="error" :closable="false" show-icon>
+      <el-button link type="primary" @click="loadKpiData">重试</el-button>
+    </el-alert>
     <div v-loading="kpiLoading" class="kpi-container">
       <div
         v-for="item in kpiList"
@@ -38,6 +41,9 @@
     </div>
 
     <!-- 结构图区域 -->
+    <el-alert v-if="diagramError" :title="diagramError" type="error" :closable="false" show-icon>
+      <el-button link type="primary" @click="loadDiagramData">重试</el-button>
+    </el-alert>
     <div v-loading="loading" class="diagram-container">
       <div ref="chartRef" class="echart-container"></div>
     </div>
@@ -50,7 +56,18 @@
       destroy-on-close
       :close-on-click-modal="true"
     >
-      <div class="primary-detail-content">
+      <div v-loading="primaryLoading" class="primary-detail-content">
+        <el-alert
+          v-if="primaryError"
+          :title="primaryError"
+          type="error"
+          :closable="false"
+          show-icon
+        >
+          <el-button link type="primary" @click="showPrimaryDialog(currentPrimaryService, true)">
+            重试
+          </el-button>
+        </el-alert>
         <div class="filter-bar" style="margin-bottom: 12px">
           <el-input
             v-model="primaryFilterText"
@@ -93,7 +110,28 @@
       destroy-on-close
       :close-on-click-modal="true"
     >
-      <el-tabs v-model="secondaryActiveTab">
+      <el-alert
+        v-if="secondaryError"
+        :title="secondaryError"
+        type="error"
+        :closable="false"
+        show-icon
+      >
+        <el-button
+          link
+          type="primary"
+          @click="
+            showSecondaryDialog(
+              currentSecondaryContext.primaryService,
+              currentSecondaryContext.secondaryService,
+              true
+            )
+          "
+        >
+          重试
+        </el-button>
+      </el-alert>
+      <el-tabs v-model="secondaryActiveTab" v-loading="secondaryLoading">
         <el-tab-pane label="按检查项" name="item">
           <div
             class="tab-header"
@@ -189,7 +227,7 @@
       <div class="kpi-detail-content">
         <!-- 搜索筛选 -->
         <div class="kpi-filter-bar" style="margin-bottom: 12px">
-          <el-form inline size="small">
+          <el-form inline size="small" @submit.prevent>
             <el-form-item :label="kpiSearchLabel">
               <el-input
                 v-model="kpiFilterText"
@@ -205,6 +243,15 @@
           </el-form>
         </div>
 
+        <el-alert
+          v-if="kpiDialogError"
+          :title="kpiDialogError"
+          type="error"
+          :closable="false"
+          show-icon
+        >
+          <el-button link type="primary" @click="handleKpiClick(currentKpi, true)">重试</el-button>
+        </el-alert>
         <el-table
           v-loading="kpiDialogLoading"
           :data="filteredKpiDialogData"
@@ -284,6 +331,17 @@
       :close-on-click-modal="true"
     >
       <div v-loading="checkItemDetailLoading" class="check-item-detail-dialog">
+        <el-alert
+          v-if="checkItemError"
+          :title="checkItemError"
+          type="error"
+          :closable="false"
+          show-icon
+        >
+          <el-button link type="primary" @click="showCheckItemDetail(selectedCheckItem)">
+            重试
+          </el-button>
+        </el-alert>
         <div class="result-item">
           <span class="result-label">结果：</span>
           <el-tag
@@ -301,7 +359,10 @@
         <div class="result-item">
           <span class="result-label">结果输出：</span>
         </div>
-        <div v-if="currentCheckItem?.output" class="output-content">
+        <div
+          v-if="currentCheckItem?.output != null && currentCheckItem.output !== ''"
+          class="output-content"
+        >
           <pre>{{ currentCheckItem.output }}</pre>
         </div>
         <div v-else class="output-content">
@@ -313,7 +374,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import {
+  ref,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  onUnmounted,
+  onActivated,
+  onDeactivated,
+  nextTick,
+  watch
+} from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
@@ -343,6 +414,18 @@ const currentJobId = ref('')
 const jobInfo = ref({})
 const diagramData = ref([])
 const kpiList = ref([])
+const kpiError = ref('')
+const diagramError = ref('')
+const reads = { job: 0, kpi: 0, diagram: 0, primary: 0, secondary: 0, kpiDetail: 0, item: 0 }
+let disposed = false
+let active = true
+let contextRequest = 0
+
+function beginRead(key) {
+  const request = ++reads[key]
+  const jobId = currentJobId.value
+  return () => !disposed && active && request === reads[key] && jobId === currentJobId.value
+}
 
 // 图表相关
 const chartRef = ref(null)
@@ -354,13 +437,16 @@ const primaryDialogTitle = ref('')
 const primaryData = ref([])
 const primaryStats = ref({ count: 0, itemTotal: 0, hostTotal: 0 })
 const primaryFilterText = ref('')
+const primaryLoading = ref(false)
+const primaryError = ref('')
+const currentPrimaryService = ref('')
 
 /**
  * 一级业务过滤数据
  */
 const filteredPrimaryData = computed(() => {
-  if (!primaryFilterText.value) return primaryData.value
-  const keyword = primaryFilterText.value.toLowerCase()
+  const keyword = primaryFilterText.value.trim().toLowerCase()
+  if (!keyword) return primaryData.value
   return primaryData.value.filter(item => item.name?.toLowerCase().includes(keyword))
 })
 
@@ -372,13 +458,16 @@ const itemData = ref([])
 const hostData = ref([])
 const secondaryItemFilterText = ref('')
 const secondaryHostFilterText = ref('')
+const secondaryLoading = ref(false)
+const secondaryError = ref('')
+const currentSecondaryContext = ref({ primaryService: '', secondaryService: '' })
 
 /**
  * 二级业务项过滤数据
  */
 const filteredItemData = computed(() => {
-  if (!secondaryItemFilterText.value) return itemData.value
-  const keyword = secondaryItemFilterText.value.toLowerCase()
+  const keyword = secondaryItemFilterText.value.trim().toLowerCase()
+  if (!keyword) return itemData.value
   return itemData.value.filter(item => item.item?.toLowerCase().includes(keyword))
 })
 
@@ -386,8 +475,8 @@ const filteredItemData = computed(() => {
  * 二级业务主机过滤数据
  */
 const filteredHostData = computed(() => {
-  if (!secondaryHostFilterText.value) return hostData.value
-  const keyword = secondaryHostFilterText.value.toLowerCase()
+  const keyword = secondaryHostFilterText.value.trim().toLowerCase()
+  if (!keyword) return hostData.value
   return hostData.value.filter(item => item.host?.toLowerCase().includes(keyword))
 })
 
@@ -403,15 +492,16 @@ const kpiDialogData = ref([])
 const kpiDialogLoading = ref(false)
 const kpiDialogType = ref('') // KPI 类型，用于动态显示不同列
 const kpiFilterText = ref('')
+const kpiDialogError = ref('')
+const currentKpi = ref(null)
 
 /**
  * KPI 详情过滤数据
  */
 const filteredKpiDialogData = computed(() => {
   const data = kpiDialogData.value || []
-  if (!kpiFilterText.value) return data
-
-  const keyword = kpiFilterText.value.toLowerCase()
+  const keyword = kpiFilterText.value.trim().toLowerCase()
+  if (!keyword) return data
   return data.filter(item => {
     // 根据当前类型决定匹配哪些字段
     if (kpiDialogType.value === 'itemAll') {
@@ -456,6 +546,26 @@ const kpiSearchLabel = computed(() => {
 const checkItemDetailVisible = ref(false)
 const checkItemDetailLoading = ref(false)
 const currentCheckItem = ref(null)
+const selectedCheckItem = ref(null)
+const checkItemError = ref('')
+
+for (const [visible, key, pending] of [
+  [primaryDialogVisible, 'primary', primaryLoading],
+  [secondaryDialogVisible, 'secondary', secondaryLoading],
+  [kpiDialogVisible, 'kpiDetail', kpiDialogLoading],
+  [checkItemDetailVisible, 'item', checkItemDetailLoading]
+]) {
+  watch(
+    visible,
+    value => {
+      if (!value) {
+        reads[key] += 1
+        pending.value = false
+      }
+    },
+    { flush: 'sync' }
+  )
+}
 
 // KPI 定义
 const kpiDefs = {
@@ -529,10 +639,13 @@ function getStatusLabel(status) {
  * 加载任务信息
  */
 async function loadJobInfo() {
+  const isCurrent = beginRead('job')
   try {
     const res = await jobApi.getJob(currentJobId.value)
+    if (!isCurrent()) return
     jobInfo.value = res?.data || res || {}
   } catch (error) {
+    if (!isCurrent()) return
     console.error('获取任务信息失败:', error)
   }
 }
@@ -541,9 +654,13 @@ async function loadJobInfo() {
  * 加载 KPI 数据
  */
 async function loadKpiData() {
+  const isCurrent = beginRead('kpi')
   kpiLoading.value = true
+  kpiError.value = ''
+  kpiList.value = []
   try {
     const res = await dtsApi.getStructuralKpi(currentJobId.value)
+    if (!isCurrent()) return
     const data = res?.data || res || {}
     const records = data.records || []
 
@@ -566,9 +683,11 @@ async function loadKpiData() {
     list.sort((a, b) => a._order - b._order)
     kpiList.value = list
   } catch (error) {
+    if (!isCurrent()) return
+    kpiError.value = '加载架构图统计失败，请重试'
     console.error('加载 KPI 数据失败:', error)
   } finally {
-    kpiLoading.value = false
+    if (isCurrent()) kpiLoading.value = false
   }
 }
 
@@ -576,18 +695,24 @@ async function loadKpiData() {
  * 加载结构图数据
  */
 async function loadDiagramData() {
+  const isCurrent = beginRead('diagram')
   loading.value = true
+  diagramError.value = ''
   try {
     const res = await jobApi.getStructuralDiagram(currentJobId.value)
+    if (!isCurrent()) return
     diagramData.value = res?.data || res || []
 
     await nextTick()
+    if (!isCurrent()) return
     renderChart()
   } catch (error) {
+    if (!isCurrent()) return
+    diagramError.value = '加载架构图失败，请重试'
     console.error('加载结构图失败:', error)
     ElMessage.error('加载结构图失败')
   } finally {
-    loading.value = false
+    if (isCurrent()) loading.value = false
   }
 }
 
@@ -765,17 +890,24 @@ function renderChart() {
 /**
  * 显示一级业务详情弹窗
  */
-async function showPrimaryDialog(primaryService) {
+async function showPrimaryDialog(primaryService, preserveSearch = false) {
+  const isCurrent = beginRead('primary')
+  currentPrimaryService.value = primaryService
   // 重置搜索
-  primaryFilterText.value = ''
+  if (!preserveSearch) primaryFilterText.value = ''
   primaryDialogTitle.value = `${primaryService} - 二级业务列表`
   primaryDialogVisible.value = true
+  primaryLoading.value = true
+  primaryError.value = ''
+  primaryData.value = []
+  primaryStats.value = { count: 0, itemTotal: 0, hostTotal: 0 }
 
   try {
     const res = await jobApi.getStructuralDiagramPrimaryInfo({
       jobId: currentJobId.value,
       primaryService
     })
+    if (!isCurrent() || !primaryDialogVisible.value) return
     const data = res?.data || res || {}
     primaryData.value = data.primaryData || []
     primaryStats.value = {
@@ -784,21 +916,33 @@ async function showPrimaryDialog(primaryService) {
       hostTotal: data.hostTotal || 0
     }
   } catch (error) {
+    if (!isCurrent() || !primaryDialogVisible.value) return
+    primaryError.value = '获取一级业务详情失败，请重试'
     console.error('获取一级业务详情失败:', error)
     ElMessage.error('获取详情失败')
+  } finally {
+    if (isCurrent() && primaryDialogVisible.value) primaryLoading.value = false
   }
 }
 
 /**
  * 显示二级业务详情弹窗
  */
-async function showSecondaryDialog(primaryService, secondaryService) {
+async function showSecondaryDialog(primaryService, secondaryService, preserveSearch = false) {
+  const isCurrent = beginRead('secondary')
+  currentSecondaryContext.value = { primaryService, secondaryService }
   // 重置搜索
-  secondaryItemFilterText.value = ''
-  secondaryHostFilterText.value = ''
+  if (!preserveSearch) {
+    secondaryItemFilterText.value = ''
+    secondaryHostFilterText.value = ''
+    secondaryActiveTab.value = 'item'
+  }
   secondaryDialogTitle.value = `${secondaryService} - 详情`
-  secondaryActiveTab.value = 'item'
   secondaryDialogVisible.value = true
+  secondaryLoading.value = true
+  secondaryError.value = ''
+  itemData.value = []
+  hostData.value = []
 
   try {
     const res = await jobApi.getStructuralDiagramHostItemInfo({
@@ -806,12 +950,17 @@ async function showSecondaryDialog(primaryService, secondaryService) {
       primaryService,
       secondaryService
     })
+    if (!isCurrent() || !secondaryDialogVisible.value) return
     const data = res?.data || res || {}
     itemData.value = data.itemLists || []
     hostData.value = data.hostLists || []
   } catch (error) {
+    if (!isCurrent() || !secondaryDialogVisible.value) return
+    secondaryError.value = '获取二级业务详情失败，请重试'
     console.error('获取二级业务详情失败:', error)
     ElMessage.error('获取详情失败')
+  } finally {
+    if (isCurrent() && secondaryDialogVisible.value) secondaryLoading.value = false
   }
 }
 
@@ -840,13 +989,17 @@ function showItemList(itemStr) {
 /**
  * KPI 卡片点击 - 打开详情弹窗
  */
-async function handleKpiClick(item) {
+async function handleKpiClick(item, preserveSearch = false) {
   // 重置搜索
-  kpiFilterText.value = ''
+  if (!preserveSearch) kpiFilterText.value = ''
   if (!item.pageParam) {
     console.warn('Unknown KPI type:', item.pageParam)
     return
   }
+
+  const isCurrent = beginRead('kpiDetail')
+  currentKpi.value = item
+  kpiDialogError.value = ''
 
   kpiDialogType.value = item.pageParam
   kpiDialogTitle.value = `${item.name} - 详情`
@@ -871,13 +1024,16 @@ async function handleKpiClick(item) {
     } else {
       throw new Error(`Unknown KPI type: ${item.pageParam}`)
     }
+    if (!isCurrent() || !kpiDialogVisible.value) return
     const data = res?.data || res || {}
     kpiDialogData.value = data.records || []
   } catch (error) {
+    if (!isCurrent() || !kpiDialogVisible.value) return
+    kpiDialogError.value = '获取统计详情失败，请重试'
     console.error('获取 KPI 详情失败:', error)
     ElMessage.error('获取详情失败')
   } finally {
-    kpiDialogLoading.value = false
+    if (isCurrent() && kpiDialogVisible.value) kpiDialogLoading.value = false
   }
 }
 
@@ -886,6 +1042,9 @@ async function handleKpiClick(item) {
  * 调用 CAC_GET_CHECK_ITEM_INFO 数据集获取详细信息
  */
 async function showCheckItemDetail(row) {
+  const isCurrent = beginRead('item')
+  selectedCheckItem.value = { ...row }
+  checkItemError.value = ''
   currentCheckItem.value = { ...row }
   checkItemDetailVisible.value = true
   checkItemDetailLoading.value = true
@@ -894,6 +1053,7 @@ async function showCheckItemDetail(row) {
     // 通过 id 调用 CAC_GET_CHECK_ITEM_INFO 获取详细信息
     if (row.id) {
       const res = await dtsApi.getCheckItemInfo(row.id)
+      if (!isCurrent() || !checkItemDetailVisible.value) return
       const data = res?.data || res || {}
       const records = data.records || []
       if (records.length > 0) {
@@ -902,7 +1062,7 @@ async function showCheckItemDetail(row) {
           ...row,
           status: record.status,
           name: record.name,
-          output: record.output || '',
+          output: record.output ?? '',
           host_key: record.host_key,
           host_id: record.host_id,
           job_id: record.job_id
@@ -910,10 +1070,12 @@ async function showCheckItemDetail(row) {
       }
     }
   } catch (error) {
+    if (!isCurrent() || !checkItemDetailVisible.value) return
+    checkItemError.value = '获取检查项详情失败，当前仅显示已有信息，请重试'
     console.error('获取检查项详情失败:', error)
     // 即使失败也显示基本信息
   } finally {
-    checkItemDetailLoading.value = false
+    if (isCurrent() && checkItemDetailVisible.value) checkItemDetailLoading.value = false
   }
 }
 
@@ -1056,33 +1218,75 @@ function initData() {
     return
   }
 
+  invalidateReads()
+  jobInfo.value = {}
+  kpiList.value = []
+  diagramData.value = []
+  kpiError.value = ''
+  diagramError.value = ''
+  chartInstance?.clear()
+
   // 加载数据
   loadJobInfo()
   loadKpiData()
   loadDiagramData()
 }
 
-// 监听 props.jobId 变化
+function invalidateReads() {
+  Object.keys(reads).forEach(key => {
+    reads[key] += 1
+  })
+  loading.value = false
+  kpiLoading.value = false
+  primaryDialogVisible.value = false
+  secondaryDialogVisible.value = false
+  listDialogVisible.value = false
+  kpiDialogVisible.value = false
+  checkItemDetailVisible.value = false
+}
+
+function scheduleInit() {
+  const request = ++contextRequest
+  nextTick(() => {
+    if (request === contextRequest && active && !disposed && currentJobId.value) initData()
+  })
+}
+
+// 嵌入窗口使用传入报告；独立页只消费自身路由中的报告。
 watch(
-  () => props.jobId,
+  () => props.jobId || (route.path.includes('/structural-diagram/') ? extractJobId() : ''),
   newJobId => {
-    if (newJobId) {
-      currentJobId.value = newJobId
-      initData()
+    currentJobId.value = newJobId
+    if (newJobId) scheduleInit()
+    else {
+      contextRequest += 1
+      invalidateReads()
     }
   },
-  { immediate: true }
+  { immediate: true, flush: 'post' }
 )
 
 onMounted(() => {
-  // 如果没有通过 props 传入 jobId，则从路由中提取
-  if (!props.jobId) {
-    currentJobId.value = extractJobId()
-    initData()
-  }
+  if (!currentJobId.value) initData()
 
   // 监听窗口大小变化
   window.addEventListener('resize', handleResize)
+})
+
+onActivated(() => {
+  if (active) return
+  active = true
+  if (currentJobId.value) scheduleInit()
+})
+onDeactivated(() => {
+  active = false
+  contextRequest += 1
+  invalidateReads()
+})
+onBeforeUnmount(() => {
+  disposed = true
+  contextRequest += 1
+  invalidateReads()
 })
 
 onUnmounted(() => {

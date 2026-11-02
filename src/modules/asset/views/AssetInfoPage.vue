@@ -1859,15 +1859,14 @@ onMounted(() => {
 })
 
 // 监听路由参数变化进行联动搜索
-watch(
-  () => route.query,
-  query => {
-    if (query.ip) {
-      searchText.value = query.ip
-      loadAssetList()
-    }
+watch([() => route.path, () => route.query.ip], ([path, ip]) => {
+  if (path.replace(/\/$/, '') !== '/acm/info') return
+  if (ip) {
+    searchText.value = ip
+    currentPage.value = 1
+    loadAssetList()
   }
-)
+})
 </script>
 <style scoped lang="scss">
 // 页面级操作栏

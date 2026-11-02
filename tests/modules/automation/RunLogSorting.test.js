@@ -68,6 +68,7 @@ async function open(component) {
           template: '<button :disabled="disabled || loading"><slot /></button>'
         },
         'el-tag': { template: '<span><slot /></span>' },
+        'el-alert': { template: '<div><slot /></div>' },
         'el-icon': true,
         'el-dialog': { template: '<div />' }
       },

@@ -39,6 +39,7 @@ async function open() {
         'el-table-column': true,
         'el-pagination': true,
         'el-tag': true,
+        'el-alert': true,
         'el-popover': true,
         'el-dropdown': Dropdown,
         'el-dropdown-menu': { template: '<div><slot /></div>' },

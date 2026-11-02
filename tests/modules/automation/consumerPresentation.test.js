@@ -102,6 +102,7 @@ function mountConsumer(component, props = {}) {
         'el-tooltip': true,
         'el-input-number': true,
         'el-empty': true,
+        'el-alert': Slot,
         'el-button': Slot
       },
       directives: { loading() {} }
@@ -237,7 +238,7 @@ it('审批确认也保护缺失的工具身份，取消不调用审批接口', a
   expect(confirm).toHaveBeenCalledWith(
     `确定要通过运维工具 "${original}" 的审批申请吗？`,
     '通过审批',
-    { type: 'success' }
+    { type: 'success', closeOnClickModal: false, closeOnPressEscape: false }
   )
 })
 
