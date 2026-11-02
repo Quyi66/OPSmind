@@ -1347,8 +1347,9 @@ const handleClusterTagChange = values => {
     next = rest.length === clusterTagOptions.value.length ? [] : [...clusterTagOptions.value]
     filters.value.clusterTag = next
   }
+  const others = selectedTags.value.filter(name => !clusterTagOptions.value.includes(name))
   selectedGroups.value = []
-  selectedTags.value = next
+  selectedTags.value = [...others, ...next]
   applySidebarSelection()
 }
 

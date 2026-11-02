@@ -47,7 +47,7 @@
           </el-form-item>
           <el-form-item label="集群标签">
             <el-select
-              v-model="hostFilters.clusterTag"
+              v-model="hostClusterTagModel"
               placeholder="全部"
               multiple
               collapse-tags
@@ -671,8 +671,16 @@ const hostFilters = reactive({
   os_version: '',
   os_sp_version: '',
   tags: [],
-  clusterTag: [],
   keyword: ''
+})
+
+// 集群标签是 hostFilters.tags 中名称含“集群”部分的视图，与“标签”筛选共用同一份数据
+const hostClusterTagModel = computed({
+  get: () => hostFilters.tags.filter(tag => hostClusterTagOptions.value.includes(tag)),
+  set: values => {
+    const others = hostFilters.tags.filter(tag => !hostClusterTagOptions.value.includes(tag))
+    hostFilters.tags = [...others, ...values.filter(value => value !== '__ALL_CLUSTER_TAGS__')]
+  }
 })
 
 const hostPagination = reactive({
@@ -742,7 +750,7 @@ async function loadHostData() {
       os_distro: hostFilters.os_distro,
       os_version: hostFilters.os_version,
       os_sp_version: hostFilters.os_sp_version,
-      tags: [...new Set([...hostFilters.tags, ...hostFilters.clusterTag])],
+      tags: hostFilters.tags,
       keyword: hostFilters.keyword
     }
     const response = await patchScanApi.getScanResults(params)
@@ -908,7 +916,7 @@ function handleHostClusterTagChange(values) {
   const ALL = '__ALL_CLUSTER_TAGS__'
   if ((values || []).includes(ALL)) {
     const rest = values.filter(item => item !== ALL)
-    hostFilters.clusterTag =
+    hostClusterTagModel.value =
       rest.length === hostClusterTagOptions.value.length ? [] : [...hostClusterTagOptions.value]
   }
   handleHostFilter()
@@ -928,7 +936,6 @@ function handleHostReset() {
   hostFilters.os_version = ''
   hostFilters.os_sp_version = ''
   hostFilters.tags = []
-  hostFilters.clusterTag = []
   hostVersionFilter.value = ''
   hostFilters.keyword = ''
   hostPagination.page = 1
