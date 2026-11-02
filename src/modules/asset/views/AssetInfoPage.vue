@@ -18,8 +18,8 @@
       <AssetSidebar
         :group-tree-data="groupTreeData"
         :tag-list="tagList"
-        :selected-group="selectedGroup"
-        :selected-tag="selectedTag"
+        :selected-groups="selectedGroups"
+        :selected-tags="selectedTags"
         @select-group="handleSelectGroup"
         @select-tag="handleSelectTag"
       />
@@ -56,6 +56,32 @@
             </el-form-item>
             -->
 
+            <el-form-item label="集群标签">
+              <el-select
+                v-model="filters.clusterTag"
+                placeholder="所有"
+                multiple
+                collapse-tags
+                collapse-tags-tooltip
+                clearable
+                filterable
+                style="width: 140px"
+                @change="handleClusterTagChange"
+              >
+                <el-option
+                  v-if="clusterTagOptions.length > 0"
+                  label="全部集群标签"
+                  value="__ALL_CLUSTER_TAGS__"
+                />
+                <el-option
+                  v-for="item in clusterTagOptions"
+                  :key="item"
+                  :label="item"
+                  :value="item"
+                />
+              </el-select>
+            </el-form-item>
+            
             <el-form-item label="最近连通">
               <el-select v-model="filters.connLatestStatus" style="width: 105px" @change="handleSearch">
                 <el-option label="所有" value="all" />
@@ -65,7 +91,7 @@
               </el-select>
             </el-form-item>
 
-            <el-form-item label="系统版本">
+            <!-- <el-form-item label="系统版本">
               <el-select
                 v-model="filters.osVersion"
                 placeholder="所有"
@@ -81,12 +107,12 @@
                   :value="item.value"
                 />
               </el-select>
-            </el-form-item>
+            </el-form-item> -->
 
             <el-form-item label="关键词">
               <el-input
                 v-model="searchText"
-                placeholder="IP/主机名"
+                placeholder="IP/主机名/系统版本"
                 clearable
                 style="width: 180px"
                 @keyup.enter="handleSearch"
@@ -779,9 +805,16 @@ const currentType = ref('')
 // 主机选择器数据
 const groupTreeData = ref([])
 const tagList = ref([])
-const selectedGroup = ref('all')
-const selectedGroupName = ref('全部设备')
-const selectedTag = ref('')
+const selectedGroups = ref([])
+const selectedTags = ref([])
+
+// 集群标签选项：来源于左侧常用标签列表，仅保留标签名包含“集群”的项
+const clusterTagOptions = computed(() => {
+  const names = (tagList.value || [])
+    .map(item => (typeof item === 'string' ? item : item?.name))
+    .filter(Boolean)
+  return [...new Set(names.filter(name => name.includes('集群')))]
+})
 
 // 树形组件配置
 const _treeProps = {
@@ -829,7 +862,8 @@ function createDefaultFilters() {
     connectionType: 'all',
     agentStatus: 'all',
     connLatestStatus: 'all',
-    osVersion: []
+    osVersion: [],
+    clusterTag: []
   }
 }
 
@@ -1265,26 +1299,57 @@ const loadTagList = async () => {
 }
 
 // 选择分组 (侧边栏触发)
-const handleSelectGroup = (groupId, groupName = '全部设备') => {
-  selectedGroup.value = groupId
-  selectedGroupName.value = groupId === 'all' ? '全部设备' : groupName
-  selectedTag.value = ''
-  if (groupId === 'all') {
-    filters.value.hostKeys = '@@'
+// 根据当前选中的分组/标签应用筛选（分组与标签互斥，各自支持多选）
+const applySidebarSelection = () => {
+  filters.value.clusterTag = selectedTags.value.filter(name =>
+    clusterTagOptions.value.includes(name)
+  )
+  if (selectedGroups.value.length > 0) {
+    filters.value.hostKeys = selectedGroups.value.join(',')
+  } else if (selectedTags.value.length > 0) {
+    filters.value.hostKeys = `,${selectedTags.value.map(name => `#${name}`).join(',')}`
   } else {
-    filters.value.hostKeys = groupId
+    filters.value.hostKeys = '@@'
   }
   currentPage.value = 1
   loadAssetList({ preserveSelection: true })
 }
 
-// 选择标签 (侧边栏触发)
+// 选择分组 (侧边栏触发)：'all' 清空所有选择，其余为切换选中
+const handleSelectGroup = groupId => {
+  selectedTags.value = []
+  if (groupId === 'all') {
+    selectedGroups.value = []
+  } else if (selectedGroups.value.includes(groupId)) {
+    selectedGroups.value = selectedGroups.value.filter(item => item !== groupId)
+  } else {
+    selectedGroups.value = [...selectedGroups.value, groupId]
+  }
+  applySidebarSelection()
+}
+
+// 选择标签 (侧边栏触发)：切换选中
 const handleSelectTag = tag => {
-  selectedTag.value = tag.name
-  selectedGroup.value = ''
-  filters.value.hostKeys = `,#${tag.name}`
-  currentPage.value = 1
-  loadAssetList({ preserveSelection: true })
+  selectedGroups.value = []
+  selectedTags.value = selectedTags.value.includes(tag.name)
+    ? selectedTags.value.filter(item => item !== tag.name)
+    : [...selectedTags.value, tag.name]
+  applySidebarSelection()
+}
+
+const CLUSTER_TAG_ALL = '__ALL_CLUSTER_TAGS__'
+
+// 集群标签下拉筛选（含“全部集群标签”：未全选时全选，已全选时清空）
+const handleClusterTagChange = values => {
+  let next = [...(values || [])]
+  if (next.includes(CLUSTER_TAG_ALL)) {
+    const rest = next.filter(item => item !== CLUSTER_TAG_ALL)
+    next = rest.length === clusterTagOptions.value.length ? [] : [...clusterTagOptions.value]
+    filters.value.clusterTag = next
+  }
+  selectedGroups.value = []
+  selectedTags.value = next
+  applySidebarSelection()
 }
 
 // 加载设备类型列表
@@ -1410,10 +1475,10 @@ const handleTypeChange = code => {
 // 监听类型变化
 watch(currentType, () => {
   currentPage.value = 1
-  selectedGroup.value = 'all'
-  selectedGroupName.value = '全部设备'
-  selectedTag.value = ''
+  selectedGroups.value = []
+  selectedTags.value = []
   filters.value.hostKeys = '@@'
+  filters.value.clusterTag = []
   loadOsVersionOptions()
   loadGroupTree()
   loadTagList()
@@ -1432,9 +1497,8 @@ const handleSearch = () => {
 const handleReset = () => {
   filters.value = createDefaultFilters()
   searchText.value = ''
-  selectedGroup.value = 'all'
-  selectedGroupName.value = '全部设备'
-  selectedTag.value = ''
+  selectedGroups.value = []
+  selectedTags.value = []
   currentPage.value = 1
   loadAssetList({ preserveSelection: true })
 }

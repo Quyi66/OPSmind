@@ -39,28 +39,35 @@
               filterable
               allow-create
               default-first-option
-              style="width: 180px"
+              style="width: 130px"
               @change="handleHostFilter"
             >
               <el-option v-for="item in osDistroList" :key="item" :label="item" :value="item" />
             </el-select>
           </el-form-item>
-          <el-form-item label="系统版本">
+          <el-form-item label="集群标签">
             <el-select
-              v-model="hostVersionFilter"
+              v-model="hostFilters.clusterTag"
               placeholder="全部"
+              multiple
+              collapse-tags
+              collapse-tags-tooltip
               clearable
               filterable
-              allow-create
-              default-first-option
-              style="width: 180px"
-              @change="handleHostVersionChange"
+              :loading="hostTagLoading"
+              style="width: 130px"
+              @change="handleHostClusterTagChange"
             >
               <el-option
-                v-for="item in hostOsVersionOptions"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
+                v-if="hostClusterTagOptions.length > 0"
+                label="全部集群标签"
+                value="__ALL_CLUSTER_TAGS__"
+              />
+              <el-option
+                v-for="tag in hostClusterTagOptions"
+                :key="tag"
+                :label="tag"
+                :value="tag"
               />
             </el-select>
           </el-form-item>
@@ -74,17 +81,36 @@
               clearable
               filterable
               :loading="hostTagLoading"
-              style="width: 180px"
+              style="width: 130px"
               @change="handleHostFilter"
             >
               <el-option v-for="tag in hostTagOptions" :key="tag" :label="tag" :value="tag" />
             </el-select>
           </el-form-item>
+          <el-form-item label="系统版本">
+            <el-select
+              v-model="hostVersionFilter"
+              placeholder="全部"
+              clearable
+              filterable
+              allow-create
+              default-first-option
+              style="width: 130px"
+              @change="handleHostVersionChange"
+            >
+              <el-option
+                v-for="item in hostOsVersionOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+          </el-form-item>
           <el-form-item label="关键词">
             <el-input
               v-model="hostFilters.keyword"
-              placeholder="主机名 / IP / 资产 ID"
-              style="width: 220px"
+              placeholder="主机名 / IP"
+              style="width: 160px"
               clearable
               @keyup.enter="handleHostFilter"
               @clear="handleHostFilter"
@@ -632,6 +658,9 @@ const hostLoading = ref(false)
 const allHostData = ref([])
 const hostTagLoading = ref(false)
 const hostTagOptions = ref([])
+const hostClusterTagOptions = computed(() =>
+  hostTagOptions.value.filter(tag => tag.includes('集群'))
+)
 const osDistroList = ref([])
 const osVersionList = ref([])
 const hostOsVersionOptions = ref([])
@@ -642,6 +671,7 @@ const hostFilters = reactive({
   os_version: '',
   os_sp_version: '',
   tags: [],
+  clusterTag: [],
   keyword: ''
 })
 
@@ -712,7 +742,7 @@ async function loadHostData() {
       os_distro: hostFilters.os_distro,
       os_version: hostFilters.os_version,
       os_sp_version: hostFilters.os_sp_version,
-      tags: hostFilters.tags,
+      tags: [...new Set([...hostFilters.tags, ...hostFilters.clusterTag])],
       keyword: hostFilters.keyword
     }
     const response = await patchScanApi.getScanResults(params)
@@ -873,6 +903,17 @@ function handleHostFilter() {
   loadHostData()
 }
 
+// 集群标签筛选（含“全部集群标签”：未全选时全选，已全选时清空）
+function handleHostClusterTagChange(values) {
+  const ALL = '__ALL_CLUSTER_TAGS__'
+  if ((values || []).includes(ALL)) {
+    const rest = values.filter(item => item !== ALL)
+    hostFilters.clusterTag =
+      rest.length === hostClusterTagOptions.value.length ? [] : [...hostClusterTagOptions.value]
+  }
+  handleHostFilter()
+}
+
 function handleHostVersionChange(value) {
   const option = hostOsVersionOptions.value.find(item => item.value === value)
   const parsedValue = parseOsVersionFilter(value)
@@ -887,6 +928,7 @@ function handleHostReset() {
   hostFilters.os_version = ''
   hostFilters.os_sp_version = ''
   hostFilters.tags = []
+  hostFilters.clusterTag = []
   hostVersionFilter.value = ''
   hostFilters.keyword = ''
   hostPagination.page = 1
