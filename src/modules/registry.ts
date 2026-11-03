@@ -5,7 +5,8 @@ import {
   windowsPatchesModule,
   patchLogsModule,
   patchProcessLogsModule,
-  middlewareCveModule
+  middlewareCveModule,
+  hostHealthModule
 } from './patches'
 import { yumRepoModule } from './yum-repo'
 import {
@@ -56,6 +57,7 @@ export const registeredModules: ModuleDefinition[] = [
   patchLogsModule,
   patchProcessLogsModule,
   middlewareCveModule,
+  hostHealthModule,
   yumRepoModule,
   cacModule,
   usersModule,

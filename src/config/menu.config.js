@@ -48,7 +48,8 @@ export const MENU_CONFIG = {
         'windows-patches',
         'patch-logs',
         'patch-process-logs',
-        'middleware-cve'
+        'middleware-cve',
+        'host-health'
       ]
     },
     {
