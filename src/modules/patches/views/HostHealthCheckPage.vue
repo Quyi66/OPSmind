@@ -131,21 +131,31 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="hostname" label="主机名" min-width="140" show-overflow-tooltip>
+        <el-table-column prop="hostname" label="主机名" min-width="120" show-overflow-tooltip>
           <template #default="{ row }">
             {{ row.hostname || '—' }}
           </template>
         </el-table-column>
 
-        <el-table-column prop="os" label="操作系统" min-width="220" show-overflow-tooltip>
+        <el-table-column prop="os" label="操作系统" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
             {{ row.os || '—' }}
           </template>
         </el-table-column>
 
-        <el-table-column prop="status" label="健康状态" width="100">
+        <el-table-column prop="status" label="健康状态" width="105">
           <template #default="{ row }">
-            <el-tag :type="getHealthStatusMeta(row.status).tagType" size="small" round>
+            <el-tag
+              :type="getHealthStatusMeta(row.status).tagType"
+              :class="['health-status-tag', `health-status-tag--${row.status.toLowerCase()}`]"
+              size="small"
+              round
+            >
+              <i
+                v-if="row.status === 'UNREACHABLE'"
+                class="fas fa-unlink tag-icon-mini"
+                aria-hidden="true"
+              ></i>
               {{ getHealthStatusMeta(row.status).label }}
             </el-tag>
           </template>
@@ -153,23 +163,45 @@
 
         <el-table-column prop="score" label="健康评分" width="90">
           <template #default="{ row }">
-            {{ formatHostScore(row) }}
+            <span
+              v-if="row.status === 'UNREACHABLE'"
+              class="score-unscored-text"
+              title="主机不可达，未执行巡检，未参与健康评分"
+            >
+              —
+            </span>
+            <span
+              v-else-if="row.status === 'UNCHECKED'"
+              class="score-unscored-text"
+              title="未巡检，暂无评分"
+            >
+              —
+            </span>
+            <span v-else class="score-value-text">
+              {{ formatHostScore(row) }}
+            </span>
           </template>
         </el-table-column>
 
-        <el-table-column label="风险提示" min-width="280" show-overflow-tooltip>
+        <el-table-column label="风险提示" min-width="300">
           <template #default="{ row }">
-            {{ formatHostRiskSummary(row) }}
+            <div
+              class="risk-summary-clamp"
+              :class="{ 'is-muted': !row.risks?.length && row.status !== 'UNREACHABLE' }"
+              :title="formatHostRiskSummary(row)"
+            >
+              {{ formatHostRiskSummary(row) }}
+            </div>
           </template>
         </el-table-column>
 
-        <el-table-column prop="checkTime" label="最近巡检时间" width="175" show-overflow-tooltip>
+        <el-table-column prop="checkTime" label="最近巡检时间" width="180" show-overflow-tooltip>
           <template #default="{ row }">
             {{ formatHealthDateTime(row.checkTime) }}
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" width="140" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="openHostDetail(row)">
               详情
@@ -349,5 +381,86 @@ onMounted(() => {
 <style scoped lang="scss">
 .action-bar-spacer {
   flex: 1;
+}
+
+/* 评分列显示微调 */
+.score-unscored-text {
+  color: var(--el-text-color-placeholder);
+  font-family: inherit;
+  cursor: help;
+}
+
+.score-value-text {
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 风险提示列：最多展示两行，超出省略，告别频繁单行鼠标移入 */
+.risk-summary-clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.45;
+  font-size: 12px;
+  color: var(--el-text-color-regular);
+  word-break: break-all;
+  user-select: text;
+
+  &.is-muted {
+    color: var(--el-text-color-placeholder);
+  }
+}
+
+/* 健康状态 Tag 定制增强（提升不可达等状态辨识度与对比度，避免过度使用红色） */
+:deep(.health-status-tag) {
+  font-weight: 600;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+
+  .tag-icon-mini {
+    font-size: 10px;
+    opacity: 0.85;
+  }
+
+  /* 不可达：低饱和度石板冷灰（深色文字 + 清晰轮廓），告别发虚与无力感 */
+  &.health-status-tag--unreachable {
+    background-color: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #334155;
+
+    .tag-icon-mini {
+      color: #475569;
+    }
+  }
+
+  &.health-status-tag--healthy {
+    background-color: #ecfdf5;
+    border-color: #a7f3d0;
+    color: #065f46;
+  }
+
+  &.health-status-tag--warning {
+    background-color: #fffbeb;
+    border-color: #fde68a;
+    color: #92400e;
+  }
+
+  &.health-status-tag--critical {
+    background-color: #fef2f2;
+    border-color: #fecaca;
+    color: #991b1b;
+  }
+
+  &.health-status-tag--unchecked {
+    background-color: #f8fafc;
+    border-color: #e2e8f0;
+    color: #64748b;
+  }
 }
 </style>

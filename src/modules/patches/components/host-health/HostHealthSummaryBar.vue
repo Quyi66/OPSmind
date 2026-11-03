@@ -1,72 +1,93 @@
 <template>
   <section v-loading="loading" class="health-overview mb-3" aria-label="主机健康概览">
-    <div class="health-overview-row">
-      <!-- 左侧：综合健康总览主卡（融合平均分、纳管总数与最近巡检时间） -->
-      <div
-        class="overview-main-card"
-        :class="[`overview-main-card--${scoreGrade.theme}`, { 'is-active': !activeStatus }]"
-        role="button"
-        tabindex="0"
-        title="点击查看全部状态主机"
-        @click="emit('select-status', '')"
-        @keydown.enter.prevent="emit('select-status', '')"
-      >
-        <!-- 分数与仪表环 -->
-        <div class="main-score-block">
-          <div class="score-dial">
-            <svg class="score-dial-svg" viewBox="0 0 72 72" aria-hidden="true">
-              <circle class="score-dial-track" cx="36" cy="36" r="30" />
-              <circle
-                class="score-dial-arc"
-                cx="36"
-                cy="36"
-                r="30"
-                :stroke-dasharray="ringCircumference"
-                :stroke-dashoffset="ringDashOffset"
-              />
-            </svg>
-            <div class="score-dial-value">
-              <strong>{{ hasScore ? summary.avgScore : '—' }}</strong>
-              <span v-if="hasScore">分</span>
-            </div>
+    <!-- 方案 A：一体化流线型看板 (Unibody Metric Panel) -->
+    <div class="overview-unibody-panel">
+      <!-- 左侧：综合健康总评与纳管资产基数 -->
+      <div class="unibody-left-block">
+        <!-- 76x76 精致环形得分仪表（尺寸与三行元信息形成黄金视觉对齐） -->
+        <div class="score-dial-wrap" :class="`score-dial-wrap--${scoreGrade.theme}`">
+          <svg class="score-dial-svg" viewBox="0 0 76 76" aria-hidden="true">
+            <circle class="score-dial-track" cx="38" cy="38" r="31" />
+            <circle
+              class="score-dial-arc"
+              cx="38"
+              cy="38"
+              r="31"
+              :stroke-dasharray="ringCircumference"
+              :stroke-dashoffset="ringDashOffset"
+            />
+          </svg>
+          <div class="score-dial-center">
+            <strong class="score-dial-val">{{ hasScore ? summary.avgScore : '—' }}</strong>
+            <span v-if="hasScore" class="score-dial-unit">分</span>
           </div>
         </div>
 
-        <!-- 右侧关键摘要与巡检元数据 -->
-        <div class="main-info-block">
-          <div class="main-info-head">
-            <span class="main-info-title">平台平均健康分</span>
-            <el-tag :type="scoreGrade.tagType" size="small" round>
+        <!-- 评分描述与纳管基数 -->
+        <div class="score-meta-block">
+          <div class="meta-row-header">
+            <span class="meta-title">参评主机平均健康分</span>
+            <el-tooltip
+              placement="top"
+              effect="dark"
+              :content="`平均分仅基于已连通巡检的有效主机计算（当前共 ${scoredHostsCount.toLocaleString()} 台）。不可达（${unreachableCount.toLocaleString()} 台）及未巡检主机不参与平均分计算。`"
+            >
+              <i class="far fa-question-circle score-rule-tip-icon" aria-hidden="true"></i>
+            </el-tooltip>
+            <el-tag :type="scoreGrade.tagType" size="small" round effect="light" class="grade-tag">
               {{ scoreGrade.label }}
             </el-tag>
-            <span class="main-total-badge">
-              共 <strong>{{ summary.totalHosts.toLocaleString() }}</strong> 台
-            </span>
           </div>
 
-          <div class="main-run-meta">
+          <!-- 明确参评主机与纳管基数，消除 93分 与 5725台不可达 的认知冲突 -->
+          <div class="meta-row-total">
+            <span class="total-label">评分基数：</span>
+            <span class="scored-hosts-badge" :title="`有效参评主机：${scoredHostsCount} 台`">
+              参评 <strong>{{ scoredHostsCount.toLocaleString() }}</strong> 台
+            </span>
+            <span class="total-sep">·</span>
+            <button
+              type="button"
+              class="total-action-btn"
+              :class="{ 'is-active': !activeStatus }"
+              title="点击查看/重置为全部状态主机"
+              @click="emit('select-status', '')"
+            >
+              纳管共 <strong>{{ totalHostsCount.toLocaleString() }}</strong> 台
+            </button>
+            <span v-if="!activeStatus" class="total-active-pill">全量</span>
+            <button
+              v-else
+              type="button"
+              class="total-reset-btn"
+              title="点击重置，查看全部状态主机"
+              @click="emit('select-status', '')"
+            >
+              <i class="fas fa-undo-alt me-1"></i>重置
+            </button>
+          </div>
+
+          <div class="meta-row-run">
             <template v-if="summary.latestRun">
-              <span class="run-meta-status" :class="`is-${summary.latestRun.status}`">
+              <span class="run-status-indicator" :class="`is-${summary.latestRun.status}`">
                 <i
                   v-if="summary.latestRun.status === 'RUNNING'"
                   class="fas fa-spinner fa-spin"
                   aria-hidden="true"
                 ></i>
-                <span v-else class="run-status-dot"></span>
+                <span v-else class="run-dot"></span>
                 {{ latestRunStatusMeta.label }}
               </span>
-              <span class="meta-sep">·</span>
-              <span>已检 {{ summary.latestRun.hostChecked }}/{{ summary.latestRun.hostTotal }} 台</span>
-              <template v-if="latestRunDisplayTime">
-                <span class="meta-sep">·</span>
-                <span :title="`巡检时间：${latestRunDisplayTime}`">{{ latestRunDisplayTime }}</span>
-              </template>
+              <span v-if="latestRunDisplayTime" class="meta-sep">·</span>
+              <span v-if="latestRunDisplayTime" class="run-time" :title="`巡检时间：${latestRunDisplayTime}`">
+                {{ latestRunDisplayTime }}
+              </span>
               <template v-if="summary.latestRun.runId">
                 <span class="meta-sep">·</span>
                 <el-link
                   type="primary"
                   :underline="false"
-                  class="run-detail-link"
+                  class="run-link"
                   @click.stop="emit('view-run-detail', summary.latestRun.runId)"
                 >
                   作业详情
@@ -74,56 +95,86 @@
               </template>
             </template>
             <template v-else>
-              <span class="run-meta-status">尚未执行过巡检</span>
+              <span class="run-time-empty">尚未执行巡检</span>
             </template>
-          </div>
-
-          <div class="main-schedule-note">
-            <i class="far fa-clock" aria-hidden="true"></i>
-            <span>每日 02:00 自动全量巡检</span>
           </div>
         </div>
       </div>
 
-      <!-- 右侧：5 类健康状态精简卡片 -->
-      <div class="status-card-list">
-        <button
-          v-for="item in statusCards"
-          :key="item.value"
-          type="button"
-          class="status-card"
-          :class="[
-            `status-card--${item.cardVariant}`,
-            {
-              'is-active': activeStatus === item.value,
-              'has-count': item.count > 0
-            }
-          ]"
-          :title="`点击按「${item.label}」状态筛选主机`"
-          @click="emit('select-status', item.value)"
-        >
-          <div class="status-card-head">
-            <span class="status-label-wrap">
-              <span class="status-dot" aria-hidden="true"></span>
-              <span class="status-name">{{ item.label }}</span>
+      <!-- 中间微质感垂直分割线 -->
+      <div class="unibody-divider" aria-hidden="true"></div>
+
+      <!-- 右侧：全局资产健康分布连续堆叠条 + 5 个交互式指标筛选项 -->
+      <div class="unibody-right-block">
+        <!-- 顶部：全局健康分布全景条 -->
+        <div class="distribution-header-bar">
+          <div class="distrib-info">
+            <span class="distrib-title">资产健康分布全景</span>
+            <span class="distrib-caption">共 {{ totalHostsCount.toLocaleString() }} 台</span>
+          </div>
+
+          <!-- 异常处置态势提示 -->
+          <div class="distrib-status-tip">
+            <span v-if="riskCount > 0" class="tip-risk-warn">
+              <i class="fas fa-exclamation-circle me-1" aria-hidden="true"></i>
+              <strong>{{ riskCount }}</strong> 台待处置（严重/告警）
             </span>
-            <i :class="[item.icon, 'status-watermark-icon']" aria-hidden="true"></i>
+            <span v-else class="tip-risk-ok">
+              <i class="fas fa-check-circle me-1" aria-hidden="true"></i>
+              无严重或告警主机
+            </span>
           </div>
+        </div>
 
-          <div class="status-card-body">
-            <strong class="status-count">{{ item.count.toLocaleString() }}</strong>
-            <span class="status-unit">台</span>
-          </div>
+        <!-- 连续彩色胶囊堆叠比例条 (6px 轻薄流线，柔和高级色系，消除黑灰沉闷感) -->
+        <div class="stacked-distribution-bar" aria-label="健康状态占比堆叠条">
+          <div
+            v-for="seg in distributionSegments"
+            :key="seg.value"
+            class="stacked-bar-seg"
+            :class="`seg--${seg.variant}`"
+            :style="{ width: `${seg.renderWidth}%` }"
+            :title="`${seg.label}: ${seg.count.toLocaleString()} 台 (${seg.percentText})`"
+          ></div>
+        </div>
 
-          <!-- 底部微缩占比进度条 -->
-          <div class="status-bar-track" aria-hidden="true">
-            <div class="status-bar-fill" :style="{ width: `${item.barWidth}%` }"></div>
-          </div>
-        </button>
+        <!-- 底部：5 个精致中控指标卡（解耦告警态与选中激活态，质感统一） -->
+        <div class="status-metrics-row">
+          <button
+            v-for="item in statusCards"
+            :key="item.value"
+            type="button"
+            class="metric-filter-pill"
+            :class="[
+              `metric-pill--${item.cardVariant}`,
+              {
+                'is-active': activeStatus === item.value,
+                'has-count': item.count > 0,
+                'is-zero': item.count === 0,
+                'is-risk-focus': item.isRisk && item.count > 0
+              }
+            ]"
+            :title="`点击${activeStatus === item.value ? '取消筛选' : '按「' + item.label + '」筛选'}`"
+            @click="handleCardClick(item.value)"
+          >
+            <div class="pill-top-row">
+              <span class="pill-name-wrap">
+                <span class="pill-dot" aria-hidden="true"></span>
+                <span class="pill-label">{{ item.label }}</span>
+              </span>
+              <span class="pill-percent-tag">{{ item.percentText }}</span>
+            </div>
+
+            <div class="pill-bottom-row">
+              <strong class="pill-count-num">{{ item.count.toLocaleString() }}</strong>
+              <span class="pill-unit-text">台</span>
+            </div>
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- 部分批次未带回结果提示 -->
+    <!-- 运行消息提示 -->
     <el-alert
       v-if="summary.latestRun?.message"
       :title="summary.latestRun.message"
@@ -157,7 +208,8 @@ const props = defineProps({
 
 const emit = defineEmits(['select-status', 'view-run-detail'])
 
-const RING_RADIUS = 30
+// 仪表盘参数（76x76 viewBox 下半径 31，黄金尺寸）
+const RING_RADIUS = 31
 const ringCircumference = 2 * Math.PI * RING_RADIUS
 
 const hasScore = computed(
@@ -184,18 +236,94 @@ const scoreGrade = computed(() => {
   return { label: '高危风险', tagType: 'danger', theme: 'danger' }
 })
 
+const totalHostsCount = computed(() => Number(props.summary?.totalHosts) || 0)
+
+// 不可达主机数量
+const unreachableCount = computed(() => Number(props.summary?.counts?.UNREACHABLE) || 0)
+
+// 实际参与评分的主机总数（健康 + 告警 + 严重，不可达与未巡检不计入平均分）
+const scoredHostsCount = computed(() => {
+  const counts = props.summary?.counts || {}
+  return (
+    (Number(counts.HEALTHY) || 0) +
+    (Number(counts.WARNING) || 0) +
+    (Number(counts.CRITICAL) || 0)
+  )
+})
+
+// 风险待处置总台数（严重 + 告警）
+const riskCount = computed(() => {
+  const counts = props.summary?.counts || {}
+  return (Number(counts.CRITICAL) || 0) + (Number(counts.WARNING) || 0)
+})
+
+/**
+ * 格式化百分比显示
+ */
+function formatPercentText(count, total) {
+  if (total <= 0 || count <= 0) return '0%'
+  const raw = (count / total) * 100
+  if (raw >= 99.95) return '100%'
+  if (raw >= 0.1) return `${raw.toFixed(1)}%`
+  return '<0.1%'
+}
+
+/**
+ * 5 类状态卡片核心数据
+ */
 const statusCards = computed(() => {
   const counts = props.summary?.counts || {}
-  const total = Number(props.summary?.totalHosts) || 0
+  const total = totalHostsCount.value
 
   return HEALTH_STATUS_LIST.map(item => {
     const count = Number(counts[item.value]) || 0
-    const rawPercent = total > 0 ? (count / total) * 100 : 0
-    const barWidth = count > 0 ? Math.max(8, Math.min(100, rawPercent)) : 0
+    const percentText = formatPercentText(count, total)
+    const isRisk = item.value === 'CRITICAL' || item.value === 'WARNING'
+
     return {
       ...item,
       count,
-      barWidth
+      percentText,
+      isRisk
+    }
+  })
+})
+
+/**
+ * 全局连续色彩堆叠比例条的各段数据
+ * 为避免微小比例（如 0.05%）彻底消失，给有计数的段设定保底展示宽度，随后进行归一化
+ */
+const distributionSegments = computed(() => {
+  const total = totalHostsCount.value
+  if (total <= 0) {
+    return [{ value: 'EMPTY', label: '暂无数据', count: 0, percentText: '0%', renderWidth: 100, variant: 'empty' }]
+  }
+
+  const cards = statusCards.value
+  const activeSegments = cards.filter(c => c.count > 0)
+
+  if (activeSegments.length === 0) {
+    return [{ value: 'EMPTY', label: '暂无数据', count: 0, percentText: '0%', renderWidth: 100, variant: 'empty' }]
+  }
+
+  // 计算加权展示宽度（有数值项至少保障 2% 宽度以便直观感知和悬浮交互）
+  const minVisualWidth = 2.0
+  let rawWidths = activeSegments.map(item => {
+    const realPercent = (item.count / total) * 100
+    return Math.max(minVisualWidth, realPercent)
+  })
+
+  const sumWidths = rawWidths.reduce((acc, cur) => acc + cur, 0)
+  // 归一化为 100%
+  return activeSegments.map((item, index) => {
+    const renderWidth = (rawWidths[index] / sumWidths) * 100
+    return {
+      value: item.value,
+      label: item.label,
+      count: item.count,
+      percentText: item.percentText,
+      renderWidth: Number(renderWidth.toFixed(2)),
+      variant: item.cardVariant
     }
   })
 })
@@ -209,6 +337,17 @@ const latestRunDisplayTime = computed(() => {
   if (!run) return ''
   return formatHealthDateTime(run.finishedAt || run.startedAt)
 })
+
+/**
+ * 卡片点击交互：若已选中该项再次点击则切回全部，提升交互灵活性
+ */
+function handleCardClick(value) {
+  if (props.activeStatus === value) {
+    emit('select-status', '')
+  } else {
+    emit('select-status', value)
+  }
+}
 </script>
 
 <style scoped lang="scss">
@@ -216,69 +355,61 @@ const latestRunDisplayTime = computed(() => {
   flex-shrink: 0;
 }
 
-.health-overview-row {
+/* 一体化流线型面板容器 */
+.overview-unibody-panel {
   display: grid;
-  grid-template-columns: 380px minmax(0, 1fr);
-  gap: 12px;
-  align-items: stretch;
+  grid-template-columns: 385px 1px minmax(0, 1fr);
+  gap: 22px;
+  align-items: center;
+  padding: 16px 22px;
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    border-color: var(--el-border-color);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+  }
 }
 
-/* 左侧综合健康主卡 */
-.overview-main-card {
-  --main-accent: #165dff;
-  --main-tint: rgba(22, 93, 255, 0.04);
+/* ================= 左侧健康总评区 ================= */
+.unibody-left-block {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 14px 18px;
-  border-radius: 10px;
-  border: 1px solid var(--el-border-color-lighter);
-  background: linear-gradient(135deg, var(--main-tint) 0%, var(--el-bg-color) 70%);
-  cursor: pointer;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    transform 0.2s ease;
+  min-width: 0;
+}
+
+/* 76x76 黄金尺寸仪表盘容器 */
+.score-dial-wrap {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  flex-shrink: 0;
+  user-select: none;
+
+  --dial-accent: var(--el-color-primary);
 
   &--good {
-    --main-accent: #10b981;
-    --main-tint: rgba(16, 185, 129, 0.05);
+    --dial-accent: #10b981;
   }
-
   &--warn {
-    --main-accent: #f59e0b;
-    --main-tint: rgba(245, 158, 11, 0.05);
+    --dial-accent: #f59e0b;
   }
-
   &--danger {
-    --main-accent: #ef4444;
-    --main-tint: rgba(239, 68, 68, 0.05);
+    --dial-accent: #f43f5e;
   }
-
-  &:hover {
-    border-color: var(--el-color-primary-light-5);
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+  &--neutral {
+    --dial-accent: #64748b;
   }
-
-  &.is-active {
-    border-color: var(--el-color-primary);
-    box-shadow: 0 0 0 1px var(--el-color-primary) inset;
-  }
-}
-
-.main-score-block {
-  flex-shrink: 0;
-}
-
-.score-dial {
-  position: relative;
-  width: 68px;
-  height: 68px;
 }
 
 .score-dial-svg {
-  width: 100%;
-  height: 100%;
+  width: 76px;
+  height: 76px;
+  display: block;
   transform: rotate(-90deg);
 }
 
@@ -290,292 +421,517 @@ const latestRunDisplayTime = computed(() => {
 
 .score-dial-arc {
   fill: none;
-  stroke: var(--main-accent);
+  stroke: var(--dial-accent);
   stroke-width: 5.5;
   stroke-linecap: round;
-  transition: stroke-dashoffset 0.4s ease;
+  transition: stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.score-dial-value {
+.score-dial-center {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: baseline;
   justify-content: center;
-  padding-top: 21px;
+  padding-top: 24px;
 
-  strong {
-    font-size: 22px;
-    font-weight: 700;
+  .score-dial-val {
+    font-size: 24px;
+    font-weight: 800;
     line-height: 1;
     color: var(--el-text-color-primary);
     font-variant-numeric: tabular-nums;
   }
 
-  span {
+  .score-dial-unit {
     font-size: 11px;
+    font-weight: 500;
     color: var(--el-text-color-secondary);
     margin-left: 1px;
   }
 }
 
-.main-info-block {
+.score-meta-block {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
 }
 
-.main-info-head {
+.meta-row-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 6px;
 }
 
-.main-info-title {
+.meta-title {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--el-text-color-primary);
+  white-space: nowrap;
 }
 
-.main-total-badge {
-  margin-left: auto;
+.score-rule-tip-icon {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+  cursor: pointer;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: var(--el-color-primary);
+  }
+}
+
+.grade-tag {
+  font-weight: 600;
+  border: none;
+  margin-left: 2px;
+}
+
+.meta-row-total {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 12px;
   color: var(--el-text-color-regular);
+  flex-wrap: nowrap;
+}
+
+.total-label {
+  color: var(--el-text-color-secondary);
+}
+
+.scored-hosts-badge {
+  color: var(--el-text-color-primary);
+  font-size: 12px;
 
   strong {
-    font-weight: 600;
-    color: var(--el-text-color-primary);
+    font-weight: 700;
+    color: var(--el-color-primary);
     font-variant-numeric: tabular-nums;
   }
 }
 
-.main-run-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 5px;
+.total-sep {
+  color: var(--el-border-color-dark);
+  margin: 0 1px;
+}
+
+.total-action-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
   font-size: 12px;
   color: var(--el-text-color-regular);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  transition: color 0.2s ease;
+
+  strong {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--el-text-color-primary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &:hover {
+    color: var(--el-color-primary);
+    strong {
+      color: var(--el-color-primary);
+    }
+  }
+}
+
+.total-active-pill {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
+  line-height: 16px;
+  margin-left: 2px;
+}
+
+.total-reset-btn {
+  background: var(--el-color-primary-light-9);
+  border: 1px solid var(--el-color-primary-light-7);
+  padding: 0 7px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 10px;
+  color: var(--el-color-primary);
+  line-height: 16px;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 2px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--el-color-primary);
+    color: #ffffff;
+    border-color: var(--el-color-primary);
+  }
+}
+
+.meta-row-run {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--el-text-color-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.run-meta-status {
+.run-status-indicator {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   font-weight: 500;
-  color: var(--el-text-color-primary);
+  color: var(--el-text-color-regular);
 
-  &.is-COMPLETED .run-status-dot {
+  &.is-COMPLETED .run-dot {
     background: #10b981;
   }
 
-  &.is-FAILED .run-status-dot {
-    background: #ef4444;
+  &.is-FAILED .run-dot {
+    background: #f43f5e;
+  }
+
+  &.is-RUNNING {
+    color: var(--el-color-primary);
   }
 }
 
-.run-status-dot {
+.run-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--el-text-color-secondary);
+  background: var(--el-text-color-placeholder);
 }
 
 .meta-sep {
   color: var(--el-border-color-dark);
 }
 
-.run-detail-link {
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.main-schedule-note {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
+.run-time {
   color: var(--el-text-color-secondary);
 }
 
-/* 右侧 5 个状态卡片 */
-.status-card-list {
+.run-time-empty {
+  color: var(--el-text-color-placeholder);
+}
+
+.run-link {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* ================= 垂直分割线 ================= */
+.unibody-divider {
+  width: 1px;
+  height: 68px;
+  background: var(--el-border-color-lighter);
+}
+
+/* ================= 右侧分布与筛选区 ================= */
+.unibody-right-block {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.distribution-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 11px;
+  margin-bottom: 1px;
+}
+
+.distrib-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.distrib-title {
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.distrib-caption {
+  color: var(--el-text-color-secondary);
+}
+
+.distrib-status-tip {
+  font-size: 11px;
+}
+
+.tip-risk-warn {
+  color: #d97706;
+  font-weight: 500;
+
+  strong {
+    font-weight: 700;
+  }
+}
+
+.tip-risk-ok {
+  color: #10b981;
+  font-weight: 500;
+}
+
+/* 连续堆叠色彩胶囊条（轻薄 6px，温润无生硬感） */
+.stacked-distribution-bar {
+  height: 6px;
+  width: 100%;
+  border-radius: 999px;
+  background: var(--el-fill-color-light);
+  display: flex;
+  overflow: hidden;
+  gap: 2px;
+  padding: 1px;
+  margin-bottom: 2px;
+}
+
+.stacked-bar-seg {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &.seg--danger {
+    background: #f43f5e;
+  }
+
+  &.seg--warning {
+    background: #f59e0b;
+  }
+
+  &.seg--success {
+    background: #10b981;
+  }
+
+  /* 不可达：温和通透的蓝灰色，告别黑沉与脏感 */
+  &.seg--info {
+    background: #94a3b8;
+  }
+
+  /* 未巡检：柔和浅雾灰 */
+  &.seg--muted {
+    background: #cbd5e1;
+  }
+
+  &.seg--empty {
+    background: var(--el-fill-color-dark);
+  }
+}
+
+/* 5 个指标筛选块（网格间距微调为 10px，更显从容） */
+.status-metrics-row {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
 }
 
-.status-card {
-  --state-color: #64748b;
-  --state-ring: rgba(100, 116, 139, 0.16);
-  --state-bg-active: rgba(100, 116, 139, 0.05);
+.metric-filter-pill {
+  --pill-color: #64748b;
+  --pill-bg-default: var(--el-fill-color-blank);
+  --pill-bg-hover: var(--el-fill-color-light);
+  --pill-bg-active: rgba(100, 116, 139, 0.1);
+  --pill-border-default: var(--el-border-color-lighter);
+  --pill-border-hover: var(--el-border-color);
+
   position: relative;
   appearance: none;
+  /* 统一卡片浅边框与底色，形成整齐有序的控制台按键质感 */
+  border: 1px solid var(--pill-border-default);
+  background: var(--pill-bg-default);
+  border-radius: 8px;
+  padding: 9px 12px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 12px 16px;
-  border-radius: 10px;
-  border: 1px solid var(--el-border-color-lighter);
-  background: var(--el-bg-color);
-  text-align: left;
   cursor: pointer;
+  text-align: left;
+  user-select: none;
   transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    transform 0.2s ease,
-    background-color 0.2s ease;
+    transform 0.18s ease,
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
 
   &--danger {
-    --state-color: #f53f3f;
-    --state-ring: rgba(245, 63, 63, 0.16);
-    --state-bg-active: rgba(245, 63, 63, 0.04);
+    --pill-color: #f43f5e;
+    --pill-bg-active: rgba(244, 63, 94, 0.08);
   }
 
   &--warning {
-    --state-color: #ff7d00;
-    --state-ring: rgba(255, 125, 0, 0.16);
-    --state-bg-active: rgba(255, 125, 0, 0.04);
+    --pill-color: #f59e0b;
+    --pill-bg-active: rgba(245, 158, 11, 0.08);
   }
 
   &--success {
-    --state-color: #10b981;
-    --state-ring: rgba(16, 185, 129, 0.16);
-    --state-bg-active: rgba(16, 185, 129, 0.04);
+    --pill-color: #10b981;
+    --pill-bg-active: rgba(16, 185, 129, 0.08);
   }
 
+  /* 不可达状态：石板冷灰深色轮廓，提升辨识度 */
   &--info {
-    --state-color: #64748b;
-    --state-ring: rgba(100, 116, 139, 0.16);
-    --state-bg-active: rgba(100, 116, 139, 0.04);
+    --pill-color: #475569;
+    --pill-bg-active: rgba(71, 85, 105, 0.1);
+
+    .pill-label {
+      color: #334155;
+      font-weight: 600;
+    }
+
+    .pill-dot {
+      background: #475569;
+      box-shadow: 0 0 0 2px rgba(71, 85, 105, 0.15);
+    }
   }
 
   &--muted {
-    --state-color: #94a3b8;
-    --state-ring: rgba(148, 163, 184, 0.18);
-    --state-bg-active: rgba(148, 163, 184, 0.05);
+    --pill-color: #94a3b8;
+    --pill-bg-active: rgba(148, 163, 184, 0.12);
   }
 
   &:hover {
     transform: translateY(-1px);
-    border-color: var(--state-color);
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+    background: var(--pill-bg-hover);
+    border-color: var(--pill-border-hover);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
   }
 
+  /* 只有真正点击激活选中时，才赋予高亮色与底色 */
   &.is-active {
-    border-color: var(--state-color);
-    background: var(--state-bg-active);
-    box-shadow: 0 0 0 1px var(--state-color) inset;
+    border-color: var(--pill-color);
+    background: var(--pill-bg-active);
+    box-shadow: 0 0 0 1px var(--pill-color) inset, 0 2px 8px rgba(15, 23, 42, 0.06);
+
+    .pill-label {
+      color: var(--el-text-color-primary);
+      font-weight: 700;
+    }
+  }
+
+  /* 当有告警但【未选中】时：底色保持统一的默认白底，只高亮圆点和数字！绝不伪装成选中框！ */
+  &.is-risk-focus:not(.is-active) {
+    .pill-dot {
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+    }
+    .pill-count-num {
+      color: #d97706;
+    }
+    .pill-percent-tag {
+      color: #d97706;
+      font-weight: 600;
+    }
+  }
+
+  &--danger.has-count:not(.is-active) {
+    .pill-dot {
+      box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.25);
+    }
+    .pill-count-num {
+      color: #e11d48;
+    }
+    .pill-percent-tag {
+      color: #e11d48;
+      font-weight: 600;
+    }
   }
 }
 
-.status-card-head {
+.pill-top-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 4px;
 }
 
-.status-label-wrap {
+.pill-name-wrap {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
-.status-dot {
-  width: 7px;
-  height: 7px;
+.pill-dot {
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: var(--state-color);
-  box-shadow: 0 0 0 3px var(--state-ring);
+  background: var(--pill-color);
   flex-shrink: 0;
+  transition: box-shadow 0.2s ease;
 }
 
-.status-name {
-  font-size: 13px;
+.pill-label {
+  font-size: 12px;
   font-weight: 500;
   color: var(--el-text-color-regular);
+  line-height: 1;
 }
 
-.status-watermark-icon {
-  font-size: 15px;
-  color: var(--state-color);
-  opacity: 0.28;
-  transition: opacity 0.2s ease;
+.pill-percent-tag {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--el-text-color-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
-.status-card:hover .status-watermark-icon,
-.status-card.is-active .status-watermark-icon {
-  opacity: 0.65;
-}
-
-.status-card-body {
+.pill-bottom-row {
   display: flex;
   align-items: baseline;
-  gap: 4px;
-  margin: 8px 0 10px;
+  gap: 3px;
+  margin-top: 6px;
 }
 
-.status-count {
-  font-size: 24px;
-  font-weight: 700;
+.pill-count-num {
+  font-size: 18px;
+  font-weight: 800;
   line-height: 1;
   color: var(--el-text-color-primary);
   font-variant-numeric: tabular-nums;
 }
 
-.status-card--danger.has-count .status-count {
-  color: #f53f3f;
+.metric-filter-pill.is-zero .pill-count-num {
+  color: var(--el-text-color-placeholder);
 }
 
-.status-card--warning.has-count .status-count {
-  color: #ff7d00;
-}
-
-.status-card--success.has-count .status-count {
-  color: #10b981;
-}
-
-.status-unit {
-  font-size: 12px;
+.pill-unit-text {
+  font-size: 10px;
   color: var(--el-text-color-secondary);
 }
 
-.status-bar-track {
-  width: 100%;
-  height: 3px;
-  border-radius: 999px;
-  background: var(--el-fill-color);
-  overflow: hidden;
-}
-
-.status-bar-fill {
-  height: 100%;
-  border-radius: 999px;
-  background: var(--state-color);
-  transition: width 0.3s ease;
-}
-
-@media (max-width: 1360px) {
-  .health-overview-row {
+/* 响应式断点适配 */
+@media (max-width: 1320px) {
+  .overview-unibody-panel {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .unibody-divider {
+    display: none;
   }
 }
 
-@media (max-width: 960px) {
-  .status-card-list {
+@media (max-width: 768px) {
+  .status-metrics-row {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 640px) {
-  .status-card-list {
+@media (max-width: 480px) {
+  .status-metrics-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

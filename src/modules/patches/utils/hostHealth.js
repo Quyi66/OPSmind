@@ -218,9 +218,16 @@ export function findScoringRuleForItem(name = '') {
 
 /**
  * 格式化主机评分展示文本
+ * - UNCHECKED（未巡检）与 UNREACHABLE（不可达）未实际参与评分，不显示具体分值，返回 '—'
  */
 export function formatHostScore(row) {
-  if (!row || row.status === 'UNCHECKED' || row.score === null || row.score === undefined) {
+  if (
+    !row ||
+    row.status === 'UNCHECKED' ||
+    row.status === 'UNREACHABLE' ||
+    row.score === null ||
+    row.score === undefined
+  ) {
     return '—'
   }
   return `${row.score} 分`
