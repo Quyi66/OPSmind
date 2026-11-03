@@ -10,9 +10,13 @@
     @close="handleClose"
     :close-on-click-modal="true"
   >
-    <div class="result-dialog" v-loading="loading">
+    <div class="result-dialog" v-loading="loading && !isLiveRefreshing">
+      <div v-if="isLiveRefreshing" class="live-refresh-banner">
+        <span class="live-dot" />
+        <span>任务运行中，数据每 3 秒自动刷新</span>
+      </div>
       <el-tabs v-model="activeTab">
-        <el-tab-pane v-for="tab in visibleTabs" :key="tab.name" :label="tab.label" :name="tab.name">
+        <el-tab-pane v-for="tab in visibleTabs" :key="tab.name" :label="tab.label" :name="tab.name" lazy>
           <template v-if="tab.name === 'overview'">
             <el-scrollbar class="overview-scroll">
               <template v-if="result">
@@ -136,7 +140,7 @@
                     </el-button>
                     <template #dropdown>
                       <el-dropdown-menu>
-                        <el-dropdown-item command="export" :disabled="!ansibleRawOutput">
+                        <el-dropdown-item command="export" :disabled="!ansibleContents.length">
                           <span>导出输出</span>
                         </el-dropdown-item>
                         <el-dropdown-item divided command="merge">
@@ -435,7 +439,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch, nextTick, onBeforeUnmount } from 'vue'
+import { computed, ref, shallowRef, watch, nextTick, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import { formatDateTime } from '@/modules/automation/utils/helpers'
 import * as jaoApi from '@/modules/automation/api/jao'
@@ -498,11 +502,18 @@ const dialogVisible = computed({
 
 const activeTab = ref('overview')
 const loading = ref(false)
-const result = ref(null)
+// result 体量很大（数千台主机），使用 shallowRef 避免深层响应式代理带来的初始化开销
+const result = shallowRef(null)
+// 仅在对应标签页被访问后才计算其重型数据
+const visitedTabs = ref({ overview: true })
 const executionChannelInfo = ref({})
 let executionChannelRequestSequence = 0
 const pollTimer = ref()
 const hasObservedActiveRun = ref(false)
+// 任务处于活跃状态时会持续轮询，用于在弹窗顶部提示数据正在实时刷新
+const isLiveRefreshing = computed(
+  () => props.visible && isActiveRunStatus(normalizeRunStatus(result.value?.status))
+)
 const jobType = computed(() => normalizeJobType(result.value?.jobType ?? result.value?.job_type))
 const isAnsibleJob = computed(() => ANSIBLE_JOB_TYPES.includes(jobType.value))
 const isProcessJob = computed(() => jobType.value === 'process')
@@ -513,8 +524,13 @@ const processModelPretty = computed(() =>
 )
 const ansibleArtifacts = computed(() => buildAnsibleArtifacts(result.value, isAnsibleJob.value))
 const ansibleContents = computed(() => ansibleArtifacts.value.contents)
-const ansibleRawOutput = computed(() => ansibleArtifacts.value.raw)
-const ansibleHostRows = computed(() => summarizeHostRows(ansibleContents.value))
+const ansibleRawOutput = computed(() => {
+  const contents = ansibleContents.value
+  return contents.length ? JSON.stringify(contents, null, 2) : ''
+})
+const ansibleHostRows = computed(() =>
+  visitedTabs.value.list ? summarizeHostRows(ansibleContents.value) : []
+)
 const hostTreeRef = ref(null)
 const hostFilterText = ref('')
 const hostTaskSearch = ref('')
@@ -529,8 +545,10 @@ const listKeyword = ref('')
 const listCurrentPage = ref(1)
 const listPageSize = ref(50)
 const showFullRawOutput = ref(false)
-const ansibleTreeData = computed(
-  () => buildHostTree(ansibleContents.value, { mergeBatches: mergeBatches.value }).tree
+const ansibleTreeData = computed(() =>
+  visitedTabs.value.hosts
+    ? buildHostTree(ansibleContents.value, { mergeBatches: mergeBatches.value }).tree
+    : []
 )
 
 const hasHostInfo = computed(() => {
@@ -640,6 +658,16 @@ watch(
   }
 )
 
+watch(
+  activeTab,
+  tab => {
+    if (tab && !visitedTabs.value[tab]) {
+      visitedTabs.value = { ...visitedTabs.value, [tab]: true }
+    }
+  },
+  { immediate: true }
+)
+
 watch(visibleTabs, tabs => {
   if (!tabs.length) return
   const exists = tabs.some(tab => tab.name === activeTab.value)
@@ -725,6 +753,7 @@ function handleClose() {
 
 function resetState() {
   activeTab.value = 'overview'
+  visitedTabs.value = { overview: true }
   result.value = null
   executionChannelInfo.value = {}
   executionChannelRequestSequence += 1
@@ -1432,7 +1461,7 @@ function buildAnsibleArtifacts(data, enabled) {
   })
   return {
     contents,
-    raw: contents.length ? JSON.stringify(contents, null, 2) : ''
+    raw: ''
   }
 }
 
@@ -1737,6 +1766,39 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.live-refresh-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--el-color-success);
+  background: var(--el-color-success-light-9);
+  border: 1px solid var(--el-color-success-light-7);
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--el-color-success);
+  animation: live-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.7);
+  }
+}
+
 .result-dialog {
   --result-text-secondary: var(--el-text-color-secondary);
   --result-text-placeholder: var(--el-text-color-placeholder);
