@@ -23,6 +23,15 @@ export const ACM_ROUTE_DEFS = [
     component: () => import('./views/AssetInfoPage.vue')
   },
   {
+    key: 'hostHealthCheck',
+    path: 'hostHealthCheck',
+    name: 'acm-hostHealthCheck',
+    title: '主机健康巡检',
+    navLabel: '健康巡检',
+    icon: 'fad fa-fw fa-heartbeat',
+    component: () => import('@/modules/patches/views/HostHealthCheckPage.vue')
+  },
+  {
     key: 'exception',
     path: 'exception',
     name: 'acm-exception',

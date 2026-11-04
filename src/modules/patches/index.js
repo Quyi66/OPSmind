@@ -47,7 +47,7 @@ export const patchesModule = {
       PATCHES_ROUTE_DEFS.filter(
         def => def.navLabel &&
                def.platform !== 'windows' &&
-               !['logs', 'processLogs', 'middlewareCveList', 'hostHealthCheck'].includes(def.key)
+               !['logs', 'processLogs', 'middlewareCveList'].includes(def.key)
       ),
       '/patches',
       PATCHES_NAV_GROUPS
@@ -146,23 +146,3 @@ export const middlewareCveModule = {
   }))
 }
 
-// 虚拟子模块：主机健康巡检
-export const hostHealthModule = {
-  code: 'host-health',
-  groupCode: 'patch-testing',
-  name: '主机健康巡检',
-  icon: 'fas fa-heartbeat',
-  description: 'Linux主机健康状态评分与风险巡检',
-  permissions: ['applet:vap'],
-  defaultRoute: '/patches/hostHealthCheck',
-  isVirtual: true,
-  navItems: PATCHES_ROUTE_DEFS.filter(
-    def => def.navLabel && def.key === 'hostHealthCheck'
-  ).map(def => ({
-    key: def.key,
-    label: def.navLabel || def.title,
-    icon: def.icon,
-    path: `/patches/${def.path}`,
-    platform: 'linux'
-  }))
-}

@@ -238,16 +238,5 @@ export const PATCHES_ROUTE_DEFS = [
     icon: 'fas fa-stream',
     platform: 'common',
     component: () => import('./views/PatchProcessLogsPage.vue')
-  },
-  {
-    key: 'hostHealthCheck',
-    path: 'hostHealthCheck',
-    name: 'patches-hostHealthCheck',
-    menuCode: 'host-health',
-    title: '主机健康巡检',
-    navLabel: '主机健康巡检',
-    icon: 'fas fa-heartbeat',
-    platform: 'linux',
-    component: () => import('./views/HostHealthCheckPage.vue')
   }
 ]
