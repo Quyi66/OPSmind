@@ -1,29 +1,61 @@
 <template>
   <section v-loading="loading" class="health-overview mb-3" aria-label="主机健康概览">
-    <!-- 方案 A：一体化流线型看板 (Unibody Metric Panel) -->
-    <div class="overview-unibody-panel">
-      <!-- 左侧：综合健康总评与纳管资产基数 -->
-      <div class="unibody-left-block">
-        <!-- 76x76 精致环形得分仪表（尺寸与三行元信息形成黄金视觉对齐） -->
-        <div class="score-dial-wrap" :class="`score-dial-wrap--${scoreGrade.theme}`">
-          <svg class="score-dial-svg" viewBox="0 0 76 76" aria-hidden="true">
-            <circle class="score-dial-track" cx="38" cy="38" r="31" />
+    <!-- 主体：左侧健康评分仪表盘卡片 + 右侧资产统计卡片 -->
+    <div class="overview-grid">
+      <!-- 1. 顶部健康概览卡片 (仅环形仪表盘使用渐变，其余保持纯净白底) -->
+      <div class="health-score-card">
+        <!-- 环形仪表盘（唯一应用渐变色区域） -->
+        <div class="score-dial-wrap">
+          <svg class="score-dial-svg" viewBox="0 0 88 88" aria-hidden="true">
+            <defs>
+              <!-- 良好：葱郁碧绿渐变 -->
+              <linearGradient id="score-grad-good" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#34d399" />
+                <stop offset="100%" stop-color="#059669" />
+              </linearGradient>
+              <!-- 告警：明亮琥珀橙渐变 -->
+              <linearGradient id="score-grad-warn" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#fbbf24" />
+                <stop offset="100%" stop-color="#d97706" />
+              </linearGradient>
+              <!-- 危险：艳丽玫红渐变 -->
+              <linearGradient id="score-grad-danger" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#fb7185" />
+                <stop offset="100%" stop-color="#e11d48" />
+              </linearGradient>
+              <!-- 未评分：低调高级灰渐变 -->
+              <linearGradient id="score-grad-neutral" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#cbd5e1" />
+                <stop offset="100%" stop-color="#94a3b8" />
+              </linearGradient>
+            </defs>
+
+            <!-- 轨道背景圆环 -->
+            <circle class="score-dial-track" cx="44" cy="44" r="35" />
+
+            <!-- 渐变动效得分弧线（自正上方起针顺时针旋转） -->
             <circle
               class="score-dial-arc"
-              cx="38"
-              cy="38"
-              r="31"
+              cx="44"
+              cy="44"
+              r="35"
+              transform="rotate(-90 44 44)"
+              :stroke="`url(#score-grad-${scoreGrade.theme})`"
               :stroke-dasharray="ringCircumference"
               :stroke-dashoffset="ringDashOffset"
             />
           </svg>
+
+          <!-- 环心数值与单位（自适应 2 位与 3 位数排版，防止 100 分时拥挤） -->
           <div class="score-dial-center">
-            <strong class="score-dial-val">{{ hasScore ? summary.avgScore : '—' }}</strong>
-            <span v-if="hasScore" class="score-dial-unit">分</span>
+            <div class="score-number-group" :class="{ 'is-three-digits': isThreeDigits }">
+              <strong class="score-dial-val">{{ hasScore ? summary.avgScore : '—' }}</strong>
+              <span v-if="hasScore" class="score-dial-unit">分</span>
+            </div>
           </div>
         </div>
 
-        <!-- 评分描述与纳管基数 -->
+        <!-- 评分描述与元信息 -->
         <div class="score-meta-block">
           <div class="meta-row-header">
             <span class="meta-title">参评主机平均健康分</span>
@@ -34,32 +66,35 @@
             >
               <i class="far fa-question-circle score-rule-tip-icon" aria-hidden="true"></i>
             </el-tooltip>
-            <el-tag :type="scoreGrade.tagType" size="small" round effect="light" class="grade-tag">
+            <span class="grade-pill-tag" :class="`grade-pill--${scoreGrade.theme}`">
               {{ scoreGrade.label }}
-            </el-tag>
+            </span>
           </div>
 
-          <!-- 明确参评主机与纳管基数，消除 93分 与 5725台不可达 的认知冲突 -->
-          <div class="meta-row-total">
-            <span class="total-label">评分基数：</span>
-            <span class="scored-hosts-badge" :title="`有效参评主机：${scoredHostsCount} 台`">
-              参评 <strong>{{ scoredHostsCount.toLocaleString() }}</strong> 台
+          <!-- 参评与纳管基数 -->
+          <div class="meta-row-hosts">
+            <span class="hosts-stat-item" :title="`有效参评主机：${scoredHostsCount} 台`">
+              <span class="hosts-label">参评主机:</span>
+              <strong class="hosts-val">{{ scoredHostsCount.toLocaleString() }}</strong>
+              <span class="hosts-unit">台</span>
             </span>
-            <span class="total-sep">·</span>
+            <span class="hosts-sep">|</span>
             <button
               type="button"
-              class="total-action-btn"
+              class="hosts-stat-btn"
               :class="{ 'is-active': !activeStatus }"
               title="点击查看/重置为全部状态主机"
               @click="emit('select-status', '')"
             >
-              纳管共 <strong>{{ totalHostsCount.toLocaleString() }}</strong> 台
+              <span class="hosts-label">纳管主机:</span>
+              <strong class="hosts-val">{{ totalHostsCount.toLocaleString() }}</strong>
+              <span class="hosts-unit">台</span>
             </button>
-            <span v-if="!activeStatus" class="total-active-pill">全量</span>
+            <span v-if="!activeStatus" class="hosts-all-pill">全量</span>
             <button
               v-else
               type="button"
-              class="total-reset-btn"
+              class="hosts-reset-btn"
               title="点击重置，查看全部状态主机"
               @click="emit('select-status', '')"
             >
@@ -67,66 +102,56 @@
             </button>
           </div>
 
+          <!-- 最近巡检作业信息 -->
           <div class="meta-row-run">
             <template v-if="summary.latestRun">
-              <span class="run-status-indicator" :class="`is-${summary.latestRun.status}`">
-                <i
-                  v-if="summary.latestRun.status === 'RUNNING'"
-                  class="fas fa-spinner fa-spin"
-                  aria-hidden="true"
-                ></i>
-                <span v-else class="run-dot"></span>
-                {{ latestRunStatusMeta.label }}
-              </span>
-              <span v-if="latestRunDisplayTime" class="meta-sep">·</span>
-              <span v-if="latestRunDisplayTime" class="run-time" :title="`巡检时间：${latestRunDisplayTime}`">
-                {{ latestRunDisplayTime }}
+              <span class="run-dot" :class="`is-${summary.latestRun.status}`"></span>
+              <span class="run-label">最近巡检:</span>
+              <span class="run-time" :title="`巡检时间：${latestRunDisplayTime}`">
+                {{ latestRunDisplayTime || '—' }}
               </span>
               <template v-if="summary.latestRun.runId">
-                <span class="meta-sep">·</span>
-                <el-link
-                  type="primary"
-                  :underline="false"
-                  class="run-link"
+                <span class="run-sep">|</span>
+                <button
+                  type="button"
+                  class="run-detail-link"
                   @click.stop="emit('view-run-detail', summary.latestRun.runId)"
                 >
-                  作业详情
-                </el-link>
+                  查看详情 <i class="fas fa-chevron-right ms-1"></i>
+                </button>
               </template>
             </template>
             <template v-else>
+              <span class="run-dot is-empty"></span>
               <span class="run-time-empty">尚未执行巡检</span>
             </template>
           </div>
         </div>
       </div>
 
-      <!-- 中间微质感垂直分割线 -->
-      <div class="unibody-divider" aria-hidden="true"></div>
-
-      <!-- 右侧：全局资产健康分布连续堆叠条 + 5 个交互式指标筛选项 -->
-      <div class="unibody-right-block">
-        <!-- 顶部：全局健康分布全景条 -->
-        <div class="distribution-header-bar">
-          <div class="distrib-info">
-            <span class="distrib-title">资产健康分布全景</span>
-            <span class="distrib-caption">共 {{ totalHostsCount.toLocaleString() }} 台</span>
+      <!-- 2. 资产统计分布卡片 (状态文字在颜色区域以外) -->
+      <div class="health-distrib-card">
+        <!-- 顶部：健康分布全景与待处置异常提示 -->
+        <div class="distrib-header">
+          <div class="distrib-title-wrap">
+            <span class="distrib-title">资产健康分布</span>
+            <span class="distrib-total">共 {{ totalHostsCount.toLocaleString() }} 台</span>
           </div>
 
-          <!-- 异常处置态势提示 -->
-          <div class="distrib-status-tip">
-            <span v-if="riskCount > 0" class="tip-risk-warn">
+          <!-- 待处置异常风险态势提示 -->
+          <div class="distrib-badge-wrap">
+            <span v-if="riskCount > 0" class="risk-badge">
               <i class="fas fa-exclamation-circle me-1" aria-hidden="true"></i>
               <strong>{{ riskCount }}</strong> 台待处置（严重/告警）
             </span>
-            <span v-else class="tip-risk-ok">
+            <span v-else class="safe-badge">
               <i class="fas fa-check-circle me-1" aria-hidden="true"></i>
               无严重或告警主机
             </span>
           </div>
         </div>
 
-        <!-- 连续彩色胶囊堆叠比例条 (6px 轻薄流线，柔和高级色系，消除黑灰沉闷感) -->
+        <!-- 连续彩色胶囊堆叠比例条 (7px 细条，圆角胶囊段) -->
         <div class="stacked-distribution-bar" aria-label="健康状态占比堆叠条">
           <div
             v-for="seg in distributionSegments"
@@ -138,7 +163,7 @@
           ></div>
         </div>
 
-        <!-- 底部：5 个精致中控指标卡（解耦告警态与选中激活态，质感统一） -->
+        <!-- 底部：5 个精致中控指标卡（回退到原始统一浅边框白底结构） -->
         <div class="status-metrics-row">
           <button
             v-for="item in statusCards"
@@ -146,6 +171,7 @@
             type="button"
             class="metric-filter-pill"
             :class="[
+              `metric-filter-pill--${item.cardVariant}`,
               `metric-pill--${item.cardVariant}`,
               {
                 'is-active': activeStatus === item.value,
@@ -208,13 +234,20 @@ const props = defineProps({
 
 const emit = defineEmits(['select-status', 'view-run-detail'])
 
-// 仪表盘参数（76x76 viewBox 下半径 31，黄金尺寸）
-const RING_RADIUS = 31
+// 仪表盘参数（88x88 viewBox 下半径 35，圆周长 2*PI*35 ≈ 219.911）
+const RING_RADIUS = 35
 const ringCircumference = 2 * Math.PI * RING_RADIUS
 
 const hasScore = computed(
   () => props.summary?.avgScore !== null && props.summary?.avgScore !== undefined
 )
+
+// 判断是否为 3 位数得分（如 100 分），用于触发紧凑排版适配
+const isThreeDigits = computed(() => {
+  if (!hasScore.value) return false
+  const scoreVal = Math.round(Number(props.summary.avgScore) || 0)
+  return scoreVal >= 100 || String(scoreVal).length >= 3
+})
 
 const normalizedScore = computed(() => {
   if (!hasScore.value) return 0
@@ -291,7 +324,6 @@ const statusCards = computed(() => {
 
 /**
  * 全局连续色彩堆叠比例条的各段数据
- * 为避免微小比例（如 0.05%）彻底消失，给有计数的段设定保底展示宽度，随后进行归一化
  */
 const distributionSegments = computed(() => {
   const total = totalHostsCount.value
@@ -306,15 +338,14 @@ const distributionSegments = computed(() => {
     return [{ value: 'EMPTY', label: '暂无数据', count: 0, percentText: '0%', renderWidth: 100, variant: 'empty' }]
   }
 
-  // 计算加权展示宽度（有数值项至少保障 2% 宽度以便直观感知和悬浮交互）
-  const minVisualWidth = 2.0
+  // 保障微小比例有基础显示宽度，随后归一化
+  const minVisualWidth = 2.5
   let rawWidths = activeSegments.map(item => {
     const realPercent = (item.count / total) * 100
     return Math.max(minVisualWidth, realPercent)
   })
 
   const sumWidths = rawWidths.reduce((acc, cur) => acc + cur, 0)
-  // 归一化为 100%
   return activeSegments.map((item, index) => {
     const renderWidth = (rawWidths[index] / sumWidths) * 100
     return {
@@ -339,7 +370,7 @@ const latestRunDisplayTime = computed(() => {
 })
 
 /**
- * 卡片点击交互：若已选中该项再次点击则切回全部，提升交互灵活性
+ * 卡片点击交互：若已选中该项再次点击则切回全部
  */
 function handleCardClick(value) {
   if (props.activeStatus === value) {
@@ -355,108 +386,113 @@ function handleCardClick(value) {
   flex-shrink: 0;
 }
 
-/* 一体化流线型面板容器 */
-.overview-unibody-panel {
+/* 左右双卡片网格布局 */
+.overview-grid {
   display: grid;
-  grid-template-columns: 385px 1px minmax(0, 1fr);
-  gap: 22px;
+  grid-template-columns: 385px minmax(0, 1fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+/* ================= 1. 左侧健康总评卡片 (纯净平白卡片，无额外渐变装饰) ================= */
+.health-score-card {
+  position: relative;
+  display: flex;
   align-items: center;
-  padding: 16px 22px;
-  background: var(--el-bg-color);
-  border: 1px solid var(--el-border-color-lighter);
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--el-bg-color, #ffffff);
+  border: 1px solid var(--el-border-color-lighter, #e2e8f0);
   border-radius: 12px;
   box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
   &:hover {
-    border-color: var(--el-border-color);
+    border-color: var(--el-border-color, #cbd5e1);
     box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
   }
 }
 
-/* ================= 左侧健康总评区 ================= */
-.unibody-left-block {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  min-width: 0;
-}
-
-/* 76x76 黄金尺寸仪表盘容器 */
+/* 88x88 环形仪表盘容器（渐变仅作用于此处的进度弧线） */
 .score-dial-wrap {
   position: relative;
-  width: 76px;
-  height: 76px;
+  width: 88px;
+  height: 88px;
   flex-shrink: 0;
   user-select: none;
-
-  --dial-accent: var(--el-color-primary);
-
-  &--good {
-    --dial-accent: #10b981;
-  }
-  &--warn {
-    --dial-accent: #f59e0b;
-  }
-  &--danger {
-    --dial-accent: #f43f5e;
-  }
-  &--neutral {
-    --dial-accent: #64748b;
-  }
 }
 
 .score-dial-svg {
-  width: 76px;
-  height: 76px;
+  width: 88px;
+  height: 88px;
   display: block;
-  transform: rotate(-90deg);
 }
 
 .score-dial-track {
   fill: none;
-  stroke: var(--el-fill-color-dark);
-  stroke-width: 5.5;
+  stroke: var(--el-fill-color, #f1f5f9);
+  stroke-width: 6;
 }
 
 .score-dial-arc {
   fill: none;
-  stroke: var(--dial-accent);
-  stroke-width: 5.5;
+  stroke-width: 6;
   stroke-linecap: round;
-  transition: stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .score-dial-center {
   position: absolute;
   inset: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.score-number-group {
   display: flex;
   align-items: baseline;
   justify-content: center;
-  padding-top: 24px;
+  max-width: 100%;
 
-  .score-dial-val {
-    font-size: 24px;
-    font-weight: 800;
-    line-height: 1;
-    color: var(--el-text-color-primary);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .score-dial-unit {
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--el-text-color-secondary);
-    margin-left: 1px;
+  /* 针对 100 分及 3 位数进行专门排版适配，缩小字号并微收字间距，确保安全边距 */
+  &.is-three-digits {
+    .score-dial-val {
+      font-size: 20px;
+      letter-spacing: -0.8px;
+    }
+    .score-dial-unit {
+      font-size: 10px;
+      margin-left: 1px;
+    }
   }
 }
 
+.score-dial-val {
+  font-size: 25px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--el-text-color-primary, #0f172a);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+  transition: font-size 0.2s ease, letter-spacing 0.2s ease;
+}
+
+.score-dial-unit {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--el-text-color-secondary, #64748b);
+  margin-left: 1.5px;
+}
+
+/* 评分右侧元数据区 */
 .score-meta-block {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
 }
 
 .meta-row-header {
@@ -466,114 +502,134 @@ function handleCardClick(value) {
 }
 
 .meta-title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
-  color: var(--el-text-color-primary);
+  color: var(--el-text-color-primary, #0f172a);
   white-space: nowrap;
 }
 
 .score-rule-tip-icon {
   font-size: 13px;
-  color: var(--el-text-color-secondary);
+  color: var(--el-text-color-placeholder, #94a3b8);
   cursor: pointer;
   transition: color 0.2s ease;
 
   &:hover {
-    color: var(--el-color-primary);
+    color: var(--el-color-primary, #2563eb);
   }
 }
 
-.grade-tag {
+.grade-pill-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
   font-weight: 600;
-  border: none;
-  margin-left: 2px;
+  line-height: 1.2;
+  padding: 2px 8px;
+  border-radius: 999px;
+  user-select: none;
+
+  &.grade-pill--good {
+    background: #ecfdf5;
+    color: #059669;
+  }
+  &.grade-pill--warn {
+    background: #fffbeb;
+    color: #d97706;
+  }
+  &.grade-pill--danger {
+    background: #fef2f2;
+    color: #e11d48;
+  }
+  &.grade-pill--neutral {
+    background: #f1f5f9;
+    color: #64748b;
+  }
 }
 
-.meta-row-total {
+.meta-row-hosts {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   font-size: 12px;
-  color: var(--el-text-color-regular);
-  flex-wrap: nowrap;
-}
+  color: var(--el-text-color-regular, #64748b);
+  white-space: nowrap;
 
-.total-label {
-  color: var(--el-text-color-secondary);
-}
+  .hosts-stat-item {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+  }
 
-.scored-hosts-badge {
-  color: var(--el-text-color-primary);
-  font-size: 12px;
+  .hosts-label {
+    color: var(--el-text-color-secondary, #64748b);
+  }
 
-  strong {
+  .hosts-val {
+    color: var(--el-text-color-primary, #0f172a);
     font-weight: 700;
-    color: var(--el-color-primary);
     font-variant-numeric: tabular-nums;
   }
-}
 
-.total-sep {
-  color: var(--el-border-color-dark);
-  margin: 0 1px;
-}
+  .hosts-unit {
+    color: var(--el-text-color-secondary, #64748b);
+  }
 
-.total-action-btn {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  font-size: 12px;
-  color: var(--el-text-color-regular);
-  display: inline-flex;
-  align-items: baseline;
-  gap: 2px;
-  transition: color 0.2s ease;
+  .hosts-sep {
+    color: var(--el-border-color, #cbd5e1);
+    margin: 0 1px;
+  }
 
-  strong {
+  .hosts-stat-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
     font-size: 12px;
-    font-weight: 600;
-    color: var(--el-text-color-primary);
-    font-variant-numeric: tabular-nums;
-  }
+    color: var(--el-text-color-regular, #64748b);
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+    transition: color 0.2s ease;
 
-  &:hover {
-    color: var(--el-color-primary);
-    strong {
-      color: var(--el-color-primary);
+    &:hover {
+      color: var(--el-color-primary, #2563eb);
+      .hosts-val {
+        color: var(--el-color-primary, #2563eb);
+      }
     }
   }
-}
 
-.total-active-pill {
-  font-size: 10px;
-  font-weight: 500;
-  padding: 0 5px;
-  border-radius: 999px;
-  background: var(--el-color-primary-light-9);
-  color: var(--el-color-primary);
-  line-height: 16px;
-  margin-left: 2px;
-}
+  .hosts-all-pill {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--el-color-primary-light-9, rgba(59, 130, 246, 0.08));
+    color: var(--el-color-primary, #2563eb);
+    line-height: 16px;
+    margin-left: 2px;
+  }
 
-.total-reset-btn {
-  background: var(--el-color-primary-light-9);
-  border: 1px solid var(--el-color-primary-light-7);
-  padding: 0 7px;
-  border-radius: 999px;
-  cursor: pointer;
-  font-size: 10px;
-  color: var(--el-color-primary);
-  line-height: 16px;
-  display: inline-flex;
-  align-items: center;
-  margin-left: 2px;
-  transition: all 0.2s ease;
+  .hosts-reset-btn {
+    background: var(--el-color-primary-light-9, rgba(59, 130, 246, 0.08));
+    border: 1px solid var(--el-color-primary-light-7, rgba(59, 130, 246, 0.2));
+    padding: 0 7px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 10px;
+    color: var(--el-color-primary, #2563eb);
+    line-height: 16px;
+    display: inline-flex;
+    align-items: center;
+    margin-left: 2px;
+    transition: all 0.2s ease;
 
-  &:hover {
-    background: var(--el-color-primary);
-    color: #ffffff;
-    border-color: var(--el-color-primary);
+    &:hover {
+      background: var(--el-color-primary, #2563eb);
+      color: #ffffff;
+      border-color: var(--el-color-primary, #2563eb);
+    }
   }
 }
 
@@ -582,125 +638,154 @@ function handleCardClick(value) {
   align-items: center;
   gap: 6px;
   font-size: 11px;
-  color: var(--el-text-color-secondary);
+  color: var(--el-text-color-secondary, #64748b);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
 
-.run-status-indicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-weight: 500;
-  color: var(--el-text-color-regular);
+  .run-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--el-text-color-placeholder, #cbd5e1);
+    flex-shrink: 0;
 
-  &.is-COMPLETED .run-dot {
-    background: #10b981;
+    &.is-COMPLETED {
+      background: #10b981;
+    }
+    &.is-FAILED {
+      background: #ef4444;
+    }
+    &.is-RUNNING {
+      background: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+    }
+    &.is-empty {
+      background: #cbd5e1;
+    }
   }
 
-  &.is-FAILED .run-dot {
-    background: #f43f5e;
+  .run-label {
+    color: var(--el-text-color-secondary, #64748b);
   }
 
-  &.is-RUNNING {
-    color: var(--el-color-primary);
+  .run-time {
+    color: var(--el-text-color-secondary, #64748b);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .run-time-empty {
+    color: var(--el-text-color-placeholder, #94a3b8);
+  }
+
+  .run-sep {
+    color: var(--el-border-color, #cbd5e1);
+    margin: 0 1px;
+  }
+
+  .run-detail-link {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--el-color-primary, #2563eb);
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: #1d4ed8;
+      text-decoration: underline;
+    }
   }
 }
 
-.run-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--el-text-color-placeholder);
-}
-
-.meta-sep {
-  color: var(--el-border-color-dark);
-}
-
-.run-time {
-  color: var(--el-text-color-secondary);
-}
-
-.run-time-empty {
-  color: var(--el-text-color-placeholder);
-}
-
-.run-link {
-  font-size: 11px;
-  font-weight: 500;
-}
-
-/* ================= 垂直分割线 ================= */
-.unibody-divider {
-  width: 1px;
-  height: 68px;
-  background: var(--el-border-color-lighter);
-}
-
-/* ================= 右侧分布与筛选区 ================= */
-.unibody-right-block {
-  flex: 1;
-  min-width: 0;
+/* ================= 2. 右侧资产分布与统计卡片 ================= */
+.health-distrib-card {
+  background: var(--el-bg-color, #ffffff);
+  border: 1px solid var(--el-border-color-lighter, #e2e8f0);
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  justify-content: space-between;
+  gap: 12px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    border-color: var(--el-border-color, #cbd5e1);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+  }
 }
 
-.distribution-header-bar {
+.distrib-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  font-size: 11px;
-  margin-bottom: 1px;
 }
 
-.distrib-info {
+.distrib-title-wrap {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 8px;
 }
 
 .distrib-title {
-  font-weight: 600;
-  color: var(--el-text-color-primary);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--el-text-color-primary, #0f172a);
 }
 
-.distrib-caption {
-  color: var(--el-text-color-secondary);
+.distrib-total {
+  font-size: 12px;
+  color: var(--el-text-color-secondary, #64748b);
 }
 
-.distrib-status-tip {
+.distrib-badge-wrap {
   font-size: 11px;
 }
 
-.tip-risk-warn {
+.risk-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
   color: #d97706;
-  font-weight: 500;
+  background: rgba(245, 158, 11, 0.1);
+  padding: 2px 10px;
+  border-radius: 999px;
 
   strong {
     font-weight: 700;
   }
 }
 
-.tip-risk-ok {
-  color: #10b981;
-  font-weight: 500;
+.safe-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #059669;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 2px 10px;
+  border-radius: 999px;
 }
 
-/* 连续堆叠色彩胶囊条（轻薄 6px，温润无生硬感） */
+/* 连续堆叠色彩胶囊条 (7px 细条，轻薄圆润) */
 .stacked-distribution-bar {
-  height: 6px;
+  height: 7px;
   width: 100%;
   border-radius: 999px;
-  background: var(--el-fill-color-light);
+  background: var(--el-fill-color-light, #f1f5f9);
   display: flex;
   overflow: hidden;
-  gap: 2px;
+  gap: 3px;
   padding: 1px;
-  margin-bottom: 2px;
 }
 
 .stacked-bar-seg {
@@ -709,33 +794,26 @@ function handleCardClick(value) {
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &.seg--danger {
-    background: #f43f5e;
+    background: #ef4444;
   }
-
   &.seg--warning {
     background: #f59e0b;
   }
-
   &.seg--success {
     background: #10b981;
   }
-
-  /* 不可达：温和通透的蓝灰色，告别黑沉与脏感 */
   &.seg--info {
     background: #94a3b8;
   }
-
-  /* 未巡检：柔和浅雾灰 */
   &.seg--muted {
     background: #cbd5e1;
   }
-
   &.seg--empty {
-    background: var(--el-fill-color-dark);
+    background: var(--el-fill-color, #e2e8f0);
   }
 }
 
-/* 5 个指标筛选块（网格间距微调为 10px，更显从容） */
+/* 5 个指标筛选块（回退到修改前样式：纯净白底、统一浅边框控制台质感） */
 .status-metrics-row {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -744,11 +822,13 @@ function handleCardClick(value) {
 
 .metric-filter-pill {
   --pill-color: #64748b;
-  --pill-bg-default: var(--el-fill-color-blank);
-  --pill-bg-hover: var(--el-fill-color-light);
-  --pill-bg-active: rgba(100, 116, 139, 0.1);
-  --pill-border-default: var(--el-border-color-lighter);
-  --pill-border-hover: var(--el-border-color);
+  --pill-text-color: #475569;
+  --pill-bg-default: var(--el-fill-color-blank, #ffffff);
+  --pill-bg-hover: var(--el-fill-color-light, #f8fafc);
+  --pill-bg-active: rgba(100, 116, 139, 0.08);
+  --pill-border-default: var(--el-border-color-lighter, #e2e8f0);
+  --pill-border-hover: var(--el-border-color, #cbd5e1);
+  --pill-dot-glow: rgba(100, 116, 139, 0.2);
 
   position: relative;
   appearance: none;
@@ -769,40 +849,46 @@ function handleCardClick(value) {
     border-color 0.18s ease,
     box-shadow 0.18s ease;
 
-  &--danger {
-    --pill-color: #f43f5e;
-    --pill-bg-active: rgba(244, 63, 94, 0.08);
+  &--danger,
+  &.metric-pill--danger {
+    --pill-color: #ef4444;
+    --pill-text-color: #dc2626;
+    --pill-bg-active: rgba(239, 68, 68, 0.08);
+    --pill-dot-glow: rgba(239, 68, 68, 0.25);
   }
 
-  &--warning {
+  &--warning,
+  &.metric-pill--warning {
     --pill-color: #f59e0b;
+    --pill-text-color: #d97706;
     --pill-bg-active: rgba(245, 158, 11, 0.08);
+    --pill-dot-glow: rgba(245, 158, 11, 0.25);
   }
 
-  &--success {
+  &--success,
+  &.metric-pill--success {
     --pill-color: #10b981;
+    --pill-text-color: #059669;
     --pill-bg-active: rgba(16, 185, 129, 0.08);
+    --pill-dot-glow: rgba(16, 185, 129, 0.25);
   }
 
-  /* 不可达状态：石板冷灰深色轮廓，提升辨识度 */
-  &--info {
+  /* 不可达状态：石板冷灰（与上方堆叠分布条及状态标签保持灰调统一，避免误导为信息蓝） */
+  &--info,
+  &.metric-pill--info {
     --pill-color: #475569;
+    --pill-text-color: #334155;
     --pill-bg-active: rgba(71, 85, 105, 0.1);
-
-    .pill-label {
-      color: #334155;
-      font-weight: 600;
-    }
-
-    .pill-dot {
-      background: #475569;
-      box-shadow: 0 0 0 2px rgba(71, 85, 105, 0.15);
-    }
+    --pill-dot-glow: rgba(71, 85, 105, 0.2);
   }
 
-  &--muted {
+  /* 未巡检状态：柔和浅雾灰 */
+  &--muted,
+  &.metric-pill--muted {
     --pill-color: #94a3b8;
-    --pill-bg-active: rgba(148, 163, 184, 0.12);
+    --pill-text-color: #475569;
+    --pill-bg-active: rgba(148, 163, 184, 0.1);
+    --pill-dot-glow: rgba(148, 163, 184, 0.2);
   }
 
   &:hover {
@@ -812,21 +898,36 @@ function handleCardClick(value) {
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
   }
 
-  /* 只有真正点击激活选中时，才赋予高亮色与底色 */
+  /* 选中状态使用对应的专属颜色（边框、专属浅底色、圆点及高亮数值） */
   &.is-active {
     border-color: var(--pill-color);
     background: var(--pill-bg-active);
-    box-shadow: 0 0 0 1px var(--pill-color) inset, 0 2px 8px rgba(15, 23, 42, 0.06);
+    box-shadow: 0 0 0 1px var(--pill-color) inset, 0 2px 10px rgba(15, 23, 42, 0.06);
 
     .pill-label {
-      color: var(--el-text-color-primary);
+      color: var(--el-text-color-primary, #0f172a);
       font-weight: 700;
+    }
+
+    .pill-dot {
+      background: var(--pill-color);
+      box-shadow: 0 0 0 2px var(--pill-dot-glow);
+    }
+
+    .pill-count-num {
+      color: var(--pill-text-color);
+    }
+
+    .pill-percent-tag {
+      color: var(--pill-text-color);
+      font-weight: 600;
     }
   }
 
-  /* 当有告警但【未选中】时：底色保持统一的默认白底，只高亮圆点和数字！绝不伪装成选中框！ */
+  /* 当有告警但【未选中】时：底色保持统一的默认白底，只高亮圆点和数字 */
   &.is-risk-focus:not(.is-active) {
     .pill-dot {
+      background: #f59e0b;
       box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
     }
     .pill-count-num {
@@ -838,15 +939,17 @@ function handleCardClick(value) {
     }
   }
 
-  &--danger.has-count:not(.is-active) {
+  &--danger.has-count:not(.is-active),
+  &.metric-pill--danger.has-count:not(.is-active) {
     .pill-dot {
-      box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.25);
+      background: #ef4444;
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25);
     }
     .pill-count-num {
-      color: #e11d48;
+      color: #dc2626;
     }
     .pill-percent-tag {
-      color: #e11d48;
+      color: #dc2626;
       font-weight: 600;
     }
   }
@@ -877,14 +980,14 @@ function handleCardClick(value) {
 .pill-label {
   font-size: 12px;
   font-weight: 500;
-  color: var(--el-text-color-regular);
+  color: var(--el-text-color-regular, #64748b);
   line-height: 1;
 }
 
 .pill-percent-tag {
   font-size: 10px;
   font-weight: 500;
-  color: var(--el-text-color-secondary);
+  color: var(--el-text-color-secondary, #94a3b8);
   font-variant-numeric: tabular-nums;
 }
 
@@ -899,28 +1002,43 @@ function handleCardClick(value) {
   font-size: 18px;
   font-weight: 800;
   line-height: 1;
-  color: var(--el-text-color-primary);
+  color: var(--el-text-color-primary, #0f172a);
   font-variant-numeric: tabular-nums;
 }
 
 .metric-filter-pill.is-zero .pill-count-num {
-  color: var(--el-text-color-placeholder);
+  color: var(--el-text-color-placeholder, #cbd5e1);
+}
+
+.metric-filter-pill.is-zero:not(.is-active) .pill-dot {
+  background: var(--el-text-color-placeholder, #cbd5e1);
+  box-shadow: none;
 }
 
 .pill-unit-text {
   font-size: 10px;
-  color: var(--el-text-color-secondary);
+  color: var(--el-text-color-secondary, #64748b);
 }
 
-/* 响应式断点适配 */
-@media (max-width: 1320px) {
-  .overview-unibody-panel {
-    grid-template-columns: 1fr;
-    gap: 16px;
+/* ================= 深色模式适配 ================= */
+:global(html.dark) {
+  .health-score-card,
+  .health-distrib-card {
+    background: var(--el-bg-color-overlay, #1e293b);
+    border-color: var(--el-border-color-lighter, #334155);
   }
 
-  .unibody-divider {
-    display: none;
+  .distrib-title,
+  .meta-title {
+    color: var(--el-text-color-primary, #f1f5f9);
+  }
+}
+
+/* ================= 响应式断点适配 ================= */
+@media (max-width: 1320px) {
+  .overview-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 }
 
