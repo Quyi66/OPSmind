@@ -14,7 +14,7 @@
 
     <!-- 主体区域：顶部筛选与列表内容 -->
     <div class="main-body-layout">
-      <div class="content-view-area" style="padding: 16px 8px">
+      <div class="content-view-area" style="padding: 16px 10px">
         <!-- 筛选区域 -->
         <div class="ops-filter-bar">
           <el-form :inline="true" size="small">
