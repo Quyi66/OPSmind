@@ -277,7 +277,7 @@
           </el-table-column>
           <el-table-column label="重启要求" width="100">
             <template #default="{ row }">
-              {{ row.need_reboot === 1 ? '是' : row.need_reboot === 0 ? '否' : '未知' }}
+              {{ row.need_reboot === 1 ? '需重启' : row.need_reboot === 0 ? '无需重启' : '未知' }}
             </template>
           </el-table-column>
           <el-table-column prop="hostname" label="主机名" min-width="120" show-overflow-tooltip />
@@ -288,7 +288,8 @@
                   v-for="(tag, index) in row.tags"
                   :key="`${tag}-${index}`"
                   size="small"
-                  effect="plain"
+                  type="info"
+                  effect="light"
                 >
                   {{ tag }}
                 </el-tag>
