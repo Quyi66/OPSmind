@@ -1,10 +1,13 @@
 <template>
   <div class="critical-cve-alert">
     <div class="section-header">
-      <h3 class="section-title">
-        <img :src="cveHeaderIcon" alt="" class="section-icon" />
-        漏洞情报
-      </h3>
+      <div class="header-left">
+        <h3 class="section-title">
+          <img :src="cveHeaderIcon" alt="" class="section-icon" />
+          漏洞情报
+        </h3>
+        <span class="section-subtitle">近期查询结果（最多 20 条），按受影响主机数排序</span>
+      </div>
       <div class="header-actions">
         <button class="more-btn" @click="navigateToCveList" title="查看全部">
           <span>查看全部</span>
@@ -13,7 +16,6 @@
       </div>
     </div>
 
-    <p class="section-scope">近期查询结果（最多 20 条），按受影响主机数排序。</p>
     <div v-loading="loading" class="cve-content" element-loading-text="正在加载漏洞情报...">
       <div v-if="loadError" class="empty-state" role="status">
         <p class="empty-text">漏洞情报暂不可用，不能据此判断当前风险。</p>
@@ -273,6 +275,20 @@ onMounted(() => {
   gap: 6px;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.section-subtitle {
+  font-size: 11px;
+  color: var(--el-text-color-secondary);
+  opacity: 0.8;
+  font-weight: normal;
+}
+
 .section-icon {
   width: 18px;
   height: 18px;
@@ -331,14 +347,6 @@ onMounted(() => {
   flex-direction: column;
 }
 
-.section-scope {
-  margin: 0;
-  padding: 6px 16px;
-  flex-shrink: 0;
-  color: var(--el-text-color-secondary);
-  font-size: 11px;
-}
-
 .empty-state {
   flex: 1;
   display: flex;
@@ -363,6 +371,7 @@ onMounted(() => {
 .cve-list {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 12px 16px;
   display: flex;
   flex-direction: column;
@@ -477,28 +486,18 @@ onMounted(() => {
 
 .source-tag {
   font-size: 11px;
-  padding: 2px 8px;
+  padding: 1px 7px;
   border-radius: 4px;
   font-weight: 500;
   background-color: var(--el-fill-color-light);
   border: 1px solid var(--el-border-color-lighter);
   color: var(--el-text-color-regular);
 
-  &.is-redhat {
-    color: #dc2626;
-    background-color: rgba(254, 242, 242, 0.7);
-    border-color: rgba(254, 202, 202, 0.5);
-  }
-
-  &.is-kylin {
-    color: #2563eb;
-    background-color: rgba(239, 246, 255, 0.7);
-    border-color: rgba(191, 219, 254, 0.5);
-  }
-
+  &.is-redhat,
+  &.is-kylin,
   &.is-other {
-    color: #4b5563;
-    background-color: var(--el-fill-color-lighter);
+    color: var(--el-text-color-regular);
+    background-color: var(--el-fill-color-light);
     border-color: var(--el-border-color-lighter);
   }
 }

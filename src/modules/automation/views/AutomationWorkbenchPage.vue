@@ -120,7 +120,7 @@
             <div class="wb-job-panel-stats" aria-label="按运维工具类型筛选">
               <button
                 type="button"
-                class="wb-job-panel-stat wb-job-panel-stat--total"
+                class="wb-job-panel-stat"
                 :class="{ 'is-active': !selectedJobType }"
                 :aria-pressed="!selectedJobType"
                 @click="selectedJobType = ''"
@@ -133,7 +133,7 @@
                 :key="item.key"
                 type="button"
                 class="wb-job-panel-stat"
-                :class="[`wb-job-panel-stat--${item.type}`, { 'is-active': selectedJobType === item.type }]"
+                :class="{ 'is-active': selectedJobType === item.type }"
                 :aria-pressed="selectedJobType === item.type"
                 @click="selectedJobType = item.type"
               >
@@ -182,88 +182,223 @@
           </div>
         </div>
         <div class="wb-job-panel-summary" aria-live="polite">
-          <span>最近变更优先 · 当前展示 {{ workbenchJobs.length }} / {{ filteredWorkbenchJobs.length }} 项</span>
-          <span v-if="selectedJobType">已筛选：{{ workbenchJobTypeLabel(selectedJobType) }}</span>
+          <div class="wb-job-panel-summary__info">
+            <span>最近变更优先 · 当前展示 {{ currentDisplayedCount }} / {{ filteredWorkbenchJobs.length }} 项</span>
+            <span v-if="selectedJobType">已筛选：{{ workbenchJobTypeLabel(selectedJobType) }}</span>
+          </div>
+          <div class="wb-job-view-switch" role="group" aria-label="视图切换">
+            <button
+              type="button"
+              class="wb-view-btn"
+              :class="{ 'is-active': workbenchViewMode === 'card' }"
+              title="卡片视图"
+              @click="workbenchViewMode = 'card'"
+            >
+              <i class="fa fa-th-large" />
+            </button>
+            <button
+              type="button"
+              class="wb-view-btn"
+              :class="{ 'is-active': workbenchViewMode === 'table' }"
+              title="列表视图"
+              @click="workbenchViewMode = 'table'"
+            >
+              <i class="fa fa-list" />
+            </button>
+          </div>
         </div>
         <div ref="jobViewportRef" class="wb-workbench-job-viewport">
-          <transition-group
-            v-if="workbenchJobs.length"
-            name="wb-stack-slide"
-            tag="div"
-            class="wb-workbench-job-grid"
-            :style="workbenchJobGridStyle"
-          >
-            <article
-              v-for="job in workbenchJobs"
-              :key="job.id"
-              class="wb-workbench-job-card"
-              :class="`wb-workbench-job-card--${job.type || 'rest'}`"
-              @click="handleEditJobFromDrawer(job)"
+          <template v-if="filteredWorkbenchJobs.length">
+            <!-- 卡片视图 -->
+            <div
+              v-show="workbenchViewMode === 'card'"
+              class="wb-workbench-job-grid"
+              :style="workbenchJobGridStyle"
             >
-              <div class="wb-workbench-job-card__body">
-                <div class="wb-workbench-job-card__head">
-                  <el-tag size="small" round :type="job.displayTypeTag">
-                    {{ job.displayTypeLabel }}
-                  </el-tag>
-                  <span class="wb-workbench-job-card__time" :title="job.displayTime.title">{{ job.displayTime.label }}</span>
+              <article
+                v-for="job in workbenchJobs"
+                :key="job.id"
+                class="wb-workbench-job-card"
+                :class="`wb-workbench-job-card--${job.type || 'rest'}`"
+                @click="handleEditJobFromDrawer(job)"
+              >
+                <div class="wb-workbench-job-card__body">
+                  <div class="wb-workbench-job-card__head">
+                    <el-tag size="small" :type="job.displayTypeTag" class="wb-job-type-tag">
+                      {{ job.displayTypeLabel }}
+                    </el-tag>
+                    <span class="wb-workbench-job-card__time" :title="job.displayTime.title">{{ job.displayTime.label }}</span>
+                  </div>
+                  <div
+                    class="wb-workbench-job-card__info"
+                    :class="{ 'has-description': job.displayDesc }"
+                  >
+                    <strong class="wb-workbench-job-card__name" :title="job.displayTitle">{{ job.displayTitle }}</strong>
+                    <p v-if="job.displayDesc" class="wb-workbench-job-card__desc" :title="job.displayDesc">
+                      {{ job.displayDesc }}
+                    </p>
+                  </div>
                 </div>
-                <div class="wb-workbench-job-card__info">
-                  <strong class="wb-workbench-job-card__name" :title="job.displayTitle">{{ job.displayTitle }}</strong>
-                </div>
-              </div>
-              <div class="wb-workbench-job-card__actions">
-                <button
-                  type="button"
-                  class="wb-workbench-job-card__action"
-                  @click.stop="handleExecuteJobFromDrawer(job)"
-                >
-                  <i class="fa fa-play" />
-                  <span>执行</span>
-                </button>
-                <button
-                  type="button"
-                  class="wb-workbench-job-card__action"
-                  @click.stop="handleEditJobFromDrawer(job)"
-                >
-                  <i class="fa fa-cog" />
-                  <span>编辑</span>
-                </button>
-                <button
-                  type="button"
-                  class="wb-workbench-job-card__action"
-                  @click.stop="handleOpenJobHistory(job)"
-                >
-                  <i class="fa fa-history" />
-                  <span>历史</span>
-                </button>
-                <el-dropdown
-                  trigger="click"
-                  placement="bottom-end"
-                  @command="handleWorkbenchJobCommand(job, $event)"
-                >
+                <div class="wb-workbench-job-card__actions">
                   <button
                     type="button"
-                    class="wb-workbench-job-card__action wb-workbench-job-card__action--more"
-                    aria-label="更多运维工具操作"
-                    @click.stop
+                    class="wb-workbench-job-card__action wb-workbench-job-card__action--primary"
+                    title="执行工具"
+                    @click.stop="handleExecuteJobFromDrawer(job)"
                   >
-                    <i class="fa fa-ellipsis-h" />
+                    <i class="fa fa-play" />
+                    <span>执行</span>
                   </button>
-                  <template #dropdown>
-                    <el-dropdown-menu>
-                      <el-dropdown-item command="copy">
-                        <i class="fa fa-copy wb-workbench-job-card__menu-icon" />
-                        <span>复制</span>
-                      </el-dropdown-item>
-                      <el-dropdown-item command="delete" divided>
-                        <span class="wb-workbench-job-delete"><i class="fa fa-trash wb-workbench-job-card__menu-icon" />删除</span>
-                      </el-dropdown-item>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
+                  <div class="wb-workbench-job-card__sub-actions">
+                    <button
+                      type="button"
+                      class="wb-workbench-job-card__action-btn"
+                      title="编辑"
+                      @click.stop="handleEditJobFromDrawer(job)"
+                    >
+                      <i class="fa fa-cog" />
+                      <span>编辑</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="wb-workbench-job-card__action-btn"
+                      title="历史"
+                      @click.stop="handleOpenJobHistory(job)"
+                    >
+                      <i class="fa fa-history" />
+                      <span>历史</span>
+                    </button>
+                    <el-dropdown
+                      trigger="click"
+                      placement="bottom-end"
+                      @command="handleWorkbenchJobCommand(job, $event)"
+                    >
+                      <button
+                        type="button"
+                        class="wb-workbench-job-card__action-btn wb-workbench-job-card__action-btn--more"
+                        aria-label="更多运维工具操作"
+                        @click.stop
+                      >
+                        <i class="fa fa-ellipsis-h" />
+                      </button>
+                      <template #dropdown>
+                        <el-dropdown-menu>
+                          <el-dropdown-item command="copy">
+                            <i class="fa fa-copy wb-workbench-job-card__menu-icon" />
+                            <span>复制</span>
+                          </el-dropdown-item>
+                          <el-dropdown-item command="delete" divided>
+                            <span class="wb-workbench-job-delete"><i class="fa fa-trash wb-workbench-job-card__menu-icon" />删除</span>
+                          </el-dropdown-item>
+                        </el-dropdown-menu>
+                      </template>
+                    </el-dropdown>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <!-- 列表视图（便于大量工具快速检索与浏览） -->
+            <div
+              v-show="workbenchViewMode === 'table'"
+              class="wb-workbench-job-table-wrap"
+            >
+              <div class="wb-table-inner">
+                <el-table
+                  ref="workbenchTableRef"
+                  :data="pagedTableJobs"
+                  size="small"
+                  height="100%"
+                  style="width: 100%"
+                  @row-click="handleEditJobFromDrawer"
+                >
+                  <el-table-column prop="type" label="类型" width="90">
+                    <template #default="{ row }">
+                      <el-tag size="small" :type="workbenchJobTypeTag(row.type)" class="wb-job-type-tag">
+                        {{ workbenchJobTypeLabel(row.type) }}
+                      </el-tag>
+                    </template>
+                  </el-table-column>
+                  <el-table-column prop="name" label="工具名称" min-width="200" show-overflow-tooltip>
+                    <template #default="{ row }">
+                      <span class="wb-table-job-name">{{ getAutomationToolTitle(row) }}</span>
+                    </template>
+                  </el-table-column>
+                  <el-table-column prop="description" label="描述" min-width="180" show-overflow-tooltip>
+                    <template #default="{ row }">
+                      <span class="wb-table-job-desc">{{ row.description || row.desc || '-' }}</span>
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="更新时间" width="160">
+                    <template #default="{ row }">
+                      <span class="wb-table-job-time" :title="formatWorkbenchJobDate(row).title">
+                        {{ formatWorkbenchJobDate(row).label }}
+                      </span>
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="操作" width="210" fixed="right">
+                    <template #default="{ row }">
+                      <div class="wb-table-actions" @click.stop>
+                        <el-button
+                          type="primary"
+                          link
+                          size="small"
+                          class="wb-table-exec-btn"
+                          @click="handleExecuteJobFromDrawer(row)"
+                        >
+                          <i class="fa fa-play" style="margin-right: 3px;" />执行
+                        </el-button>
+                        <el-button
+                          link
+                          size="small"
+                          @click="handleEditJobFromDrawer(row)"
+                        >
+                          编辑
+                        </el-button>
+                        <el-button
+                          link
+                          size="small"
+                          @click="handleOpenJobHistory(row)"
+                        >
+                          历史
+                        </el-button>
+                        <el-dropdown
+                          trigger="click"
+                          placement="bottom-end"
+                          @command="handleWorkbenchJobCommand(row, $event)"
+                        >
+                          <el-button link size="small" class="wb-table-more-btn" aria-label="更多操作">
+                            <i class="fa fa-ellipsis-h" />
+                          </el-button>
+                          <template #dropdown>
+                            <el-dropdown-menu>
+                              <el-dropdown-item command="copy">
+                                <i class="fa fa-copy" style="margin-right: 6px;" />复制
+                              </el-dropdown-item>
+                              <el-dropdown-item command="delete" divided>
+                                <span class="text-danger"><i class="fa fa-trash" style="margin-right: 6px;" />删除</span>
+                              </el-dropdown-item>
+                            </el-dropdown-menu>
+                          </template>
+                        </el-dropdown>
+                      </div>
+                    </template>
+                  </el-table-column>
+                </el-table>
               </div>
-            </article>
-          </transition-group>
+              <div class="wb-table-pagination">
+                <el-pagination
+                  v-model:current-page="tableCurrentPage"
+                  v-model:page-size="tablePageSize"
+                  :page-sizes="[15, 30, 50]"
+                  :total="filteredWorkbenchJobs.length"
+                  layout="total, sizes, prev, pager, next"
+                  small
+                  background
+                />
+              </div>
+            </div>
+          </template>
           <el-empty v-else :description="selectedJobType ? '该类型暂无运维工具' : '暂无运维工具'" :image-size="60" />
         </div>
       </section>
@@ -701,7 +836,18 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, onActivated, onBeforeUnmount, onDeactivated, onMounted, reactive, ref } from 'vue'
+import {
+  computed,
+  defineAsyncComponent,
+  nextTick,
+  onActivated,
+  onBeforeUnmount,
+  onDeactivated,
+  onMounted,
+  reactive,
+  ref,
+  watch
+} from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
@@ -836,7 +982,41 @@ let jobResizeObserver
 
 const totalJobCount = computed(() => jobList.value.length)
 const selectedJobType = ref('')
+const workbenchViewMode = ref('card')
+const workbenchTableRef = ref(null)
+const tableCurrentPage = ref(1)
+const tablePageSize = ref(15)
+
 const filteredWorkbenchJobs = computed(() => selectWorkbenchJobs(jobList.value, selectedJobType.value))
+
+const pagedTableJobs = computed(() => {
+  const start = (tableCurrentPage.value - 1) * tablePageSize.value
+  return filteredWorkbenchJobs.value.slice(start, start + tablePageSize.value)
+})
+
+const currentDisplayedCount = computed(() => {
+  if (workbenchViewMode.value === 'table') {
+    return pagedTableJobs.value.length
+  }
+  return workbenchJobs.value.length
+})
+
+watch(selectedJobType, () => {
+  tableCurrentPage.value = 1
+})
+
+watch([() => filteredWorkbenchJobs.value.length, tablePageSize], ([total, pageSize]) => {
+  const lastPage = Math.max(1, Math.ceil(total / pageSize))
+  tableCurrentPage.value = Math.min(tableCurrentPage.value, lastPage)
+})
+
+watch(workbenchViewMode, (mode) => {
+  if (mode === 'table') {
+    nextTick(() => {
+      workbenchTableRef.value?.doLayout?.()
+    })
+  }
+})
 
 const workbenchJobLayout = computed(() => getWorkbenchCardLayout(jobViewportWidth.value, jobViewportHeight.value))
 const workbenchJobLimit = computed(() => workbenchJobLayout.value.limit)
@@ -852,6 +1032,7 @@ const workbenchJobs = computed(() =>
   filteredWorkbenchJobs.value.slice(0, workbenchJobLimit.value).map(job => ({
     ...job,
     displayTitle: getAutomationToolTitle(job),
+    displayDesc: job.description || job.desc || '',
     displayTime: formatWorkbenchJobDate(job),
     displayTypeLabel: workbenchJobTypeLabel(job?.type),
     displayTypeTag: workbenchJobTypeTag(job?.type)
@@ -2103,9 +2284,10 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--wb-panel-border);
   border-radius: 999px;
-  background: #f8fafc;
+  background: var(--wb-panel-bg);
+  color: var(--wb-text-secondary);
   line-height: 1;
   font: inherit;
   cursor: pointer;
@@ -2116,46 +2298,14 @@ onBeforeUnmount(() => {
 
   &__label {
     font-size: 12px;
-    color: var(--wb-text-secondary);
+    color: inherit;
     white-space: nowrap;
   }
 
   &__value {
     font-size: 12px;
     font-weight: 700;
-    color: var(--wb-text-primary);
-  }
-
-  &--total {
-    border-color: rgba(100, 116, 139, 0.18);
-    background: rgba(148, 163, 184, 0.08);
-  }
-
-  &--rest {
-    border-color: rgba(59, 130, 246, 0.2);
-    background: rgba(59, 130, 246, 0.08);
-
-    .wb-job-panel-stat__value {
-      color: var(--wb-info);
-    }
-  }
-
-  &--script {
-    border-color: rgba(34, 197, 94, 0.2);
-    background: rgba(34, 197, 94, 0.08);
-
-    .wb-job-panel-stat__value {
-      color: var(--wb-success);
-    }
-  }
-
-  &--command {
-    border-color: rgba(245, 158, 11, 0.22);
-    background: rgba(245, 158, 11, 0.08);
-
-    .wb-job-panel-stat__value {
-      color: var(--wb-warning);
-    }
+    color: inherit;
   }
 }
 
@@ -2408,7 +2558,9 @@ onBeforeUnmount(() => {
 
 .wb-job-panel-stats .wb-job-panel-stat.is-active {
   border-color: var(--el-color-primary);
-  box-shadow: 0 0 0 1px var(--el-color-primary);
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
+  box-shadow: inset 0 0 0 1px var(--el-color-primary);
 }
 
 // ── 作业分布卡片 ──
@@ -2429,7 +2581,10 @@ onBeforeUnmount(() => {
   flex: 1 1 0;
   min-height: 0;
   padding: 16px;
-  overflow: auto;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .wb-panel--jobs .wb-workbench-job-grid {
@@ -2438,7 +2593,9 @@ onBeforeUnmount(() => {
   grid-template-rows: repeat(var(--wb-job-rows), minmax(var(--wb-job-min-height), 1fr));
   gap: var(--wb-job-gap);
   height: 100%;
+  width: 100%;
   position: relative;
+  overflow: auto;
 }
 
 .wb-workbench-job-card {
@@ -2449,25 +2606,21 @@ onBeforeUnmount(() => {
   min-height: var(--wb-job-min-height, 112px);
   max-height: var(--wb-job-max-height, 148px);
   min-width: 0;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
+  border: 1px solid var(--wb-panel-border, #e2e8f0);
+  border-radius: 10px;
   background: var(--wb-panel-bg);
   overflow: hidden;
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.05),
-    0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
   transition:
-    transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-    border-color 0.25s,
-    box-shadow 0.25s;
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.2s,
+    box-shadow 0.2s;
   cursor: pointer;
 
   &:hover {
-    transform: translateY(-3px);
+    transform: translateY(-2px);
     border-color: var(--wb-workbench-job-accent);
-    box-shadow:
-      0 10px 25px -5px rgba(0, 0, 0, 0.08),
-      0 8px 10px -6px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 6px 16px -4px rgba(0, 0, 0, 0.06);
   }
 
   &--rest {
@@ -2486,39 +2639,44 @@ onBeforeUnmount(() => {
     display: flex;
     flex: 1;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
     min-width: 0;
+    min-height: 0;
     padding: 6px 12px;
-    background: linear-gradient(180deg, rgba(248, 250, 252, 0.8) 0%, rgba(255, 255, 255, 1) 100%);
+    background: var(--wb-panel-bg);
   }
 
   &__head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
+    flex-shrink: 0;
   }
 
   &__time {
     flex-shrink: 0;
     font-size: 11px;
     color: var(--wb-text-muted);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
   }
 
   &__info {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
     min-width: 0;
+    min-height: 0;
+    overflow: hidden;
   }
 
   &__name {
     display: -webkit-box;
-    height: 2.9em;
-    min-height: 2.9em;
-    font-size: 14px;
+    flex-shrink: 0;
+    font-size: 13.5px;
     font-weight: 700;
-    line-height: 1.45;
+    line-height: 1.35;
     color: var(--wb-text-primary);
     word-break: break-word;
     overflow: hidden;
@@ -2528,64 +2686,229 @@ onBeforeUnmount(() => {
     -webkit-box-orient: vertical;
   }
 
-  &__actions {
-    display: grid;
-    grid-template-columns: minmax(0, 1.15fr) repeat(2, minmax(0, 1fr)) 40px;
-    border-top: 1px solid #cbd5e1;
-    background: #f8fafc;
+  &__info.has-description &__name {
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
   }
 
-  &__action {
+  &__desc {
+    margin: 0;
+    flex-shrink: 0;
+    font-size: 11px;
+    color: var(--wb-text-muted);
+    line-height: 1.35;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    border-top: 1px solid var(--wb-panel-border, #e2e8f0);
+    background: #f8fafc;
+    flex-shrink: 0;
+  }
+
+  &__action--primary {
     appearance: none;
     -webkit-appearance: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    height: 32px;
-    padding: 0 8px;
+    gap: 5px;
+    height: 26px;
+    padding: 0 10px;
+    border: 1px solid var(--el-color-primary-light-7);
+    border-radius: 6px;
+    background: var(--el-color-primary-light-9);
+    color: var(--el-color-primary);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+      background: var(--el-color-primary);
+      color: #fff;
+      border-color: var(--el-color-primary);
+    }
+  }
+
+  &__sub-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  &__action-btn {
+    appearance: none;
+    -webkit-appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: 26px;
+    padding: 0 6px;
     border: none;
-    border-right: 1px solid #cbd5e1;
+    border-radius: 4px;
     background: transparent;
     color: var(--wb-text-secondary);
     font-size: 11px;
-    font-weight: 600;
     cursor: pointer;
-    transition:
-      background 0.15s,
-      color 0.15s;
-
-    &:focus-visible {
-      outline: 2px solid var(--el-color-primary);
-      outline-offset: -2px;
-    }
+    transition: all 0.15s ease;
 
     &:hover {
-      background: rgba(148, 163, 184, 0.05);
-      color: var(--wb-workbench-job-accent);
+      background: rgba(148, 163, 184, 0.12);
+      color: var(--wb-text-primary);
     }
 
     i {
-      font-size: 12px;
+      font-size: 11px;
     }
-  }
-
-  &__action:first-child {
-    border-bottom-left-radius: 11px;
-  }
-
-  &__action--danger:hover {
-    color: var(--wb-danger);
-  }
-
-  &__action--more {
-    width: 40px;
-    border-right: none;
-    border-bottom-right-radius: 11px;
   }
 
   &__menu-icon {
     margin-right: 6px;
+  }
+}
+
+.wb-job-type-tag {
+  height: 20px !important;
+  line-height: 18px !important;
+  font-size: 11px !important;
+  padding: 0 8px !important;
+  border-radius: 4px !important;
+  font-weight: 500 !important;
+}
+
+.wb-job-panel-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 16px;
+  font-size: 12px;
+  color: var(--wb-text-muted);
+
+  &__info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+}
+
+.wb-job-view-switch {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--wb-panel-border, #e2e8f0);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--wb-panel-bg);
+}
+
+.wb-view-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  width: 28px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--wb-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    color: var(--wb-text-primary);
+    background: var(--el-fill-color-light);
+  }
+
+  &.is-active {
+    background: var(--el-color-primary-light-9);
+    color: var(--el-color-primary);
+    font-weight: 600;
+  }
+
+  i {
+    font-size: 12px;
+  }
+}
+
+.wb-workbench-job-table-wrap {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  .wb-table-inner {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .wb-table-pagination {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding-top: 10px;
+    flex-shrink: 0;
+  }
+
+  .wb-table-job-name {
+    font-weight: 600;
+    color: var(--wb-text-primary);
+  }
+
+  .wb-table-job-desc {
+    color: var(--wb-text-muted);
+    font-size: 12px;
+  }
+
+  .wb-table-job-time {
+    color: var(--wb-text-secondary);
+    font-size: 12px;
+  }
+
+  .wb-table-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+
+    :deep(.el-button) {
+      height: 24px !important;
+      padding: 0 4px !important;
+      margin-left: 0 !important;
+      font-size: 12px !important;
+      line-height: 1 !important;
+    }
+
+    :deep(.el-button + .el-button) {
+      margin-left: 0 !important;
+    }
+
+    :deep(.el-dropdown) {
+      margin-left: 0;
+      display: inline-flex;
+      align-items: center;
+
+      .el-button {
+        padding: 0 4px !important;
+      }
+    }
+
+    .wb-table-exec-btn {
+      font-weight: 600;
+      color: var(--el-color-primary) !important;
+    }
   }
 }
 
@@ -2995,9 +3318,9 @@ html.dark .automation-workbench .wb-job-panel-stat {
   border-color: #334155;
 }
 
-html.dark .automation-workbench .wb-job-panel-stat--total {
-  background: #253347;
-  border-color: #3c4c62;
+html.dark .automation-workbench .wb-job-panel-stat.is-active {
+  background: var(--el-color-primary-light-9);
+  border-color: var(--el-color-primary);
 }
 
 html.dark .automation-workbench .wb-job-type-item {

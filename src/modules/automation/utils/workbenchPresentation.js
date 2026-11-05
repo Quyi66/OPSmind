@@ -67,7 +67,7 @@ export function selectWorkbenchJobs(rows, type = '') {
     .map(item => item.job)
 }
 
-export function formatWorkbenchJobDate(job, now = new Date()) {
+export function formatWorkbenchJobDate(job) {
   const { timestamp, source } = getWorkbenchJobDate(job)
   if (timestamp === null) return { label: '时间未提供', title: '更新时间和创建时间均未提供或无效' }
   const date = new Date(timestamp)
@@ -76,7 +76,7 @@ export function formatWorkbenchJobDate(job, now = new Date()) {
   const time = `${pad(date.getHours())}:${pad(date.getMinutes())}`
   const fullDate = `${date.getFullYear()}-${monthDay}`
   return {
-    label: `${source} ${date.getFullYear() === now.getFullYear() ? monthDay : fullDate} ${time}`,
+    label: `${source} ${fullDate} ${time}`,
     title: `${source}时间：${fullDate} ${time}:${pad(date.getSeconds())}`
   }
 }

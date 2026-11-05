@@ -109,16 +109,15 @@ describe('自动化工作台业务数据展示', () => {
     })
   })
 
-  it('跨年日期展示年份，并使用与排序一致的有效时间和来源', () => {
-    const now = new Date(2026, 9, 15)
-    expect(formatWorkbenchJobDate({ updatedAt: new Date(2025, 6, 8, 14, 2) }, now)).toEqual({
+  it('不同年份统一展示完整日期，并使用与排序一致的有效时间和来源', () => {
+    expect(formatWorkbenchJobDate({ updatedAt: new Date(2025, 6, 8, 14, 2) })).toEqual({
       label: '更新 2025-07-08 14:02',
       title: '更新时间：2025-07-08 14:02:00'
     })
     expect(
-      formatWorkbenchJobDate({ updatedAt: 'invalid', createdAt: new Date(2026, 9, 1, 9, 5) }, now)
+      formatWorkbenchJobDate({ updatedAt: 'invalid', createdAt: new Date(2026, 9, 1, 9, 5) })
         .label
-    ).toBe('创建 10-01 09:05')
-    expect(formatWorkbenchJobDate({}, now).label).toBe('时间未提供')
+    ).toBe('创建 2026-10-01 09:05')
+    expect(formatWorkbenchJobDate({}).label).toBe('时间未提供')
   })
 })
