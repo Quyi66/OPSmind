@@ -12,29 +12,57 @@
       </el-tabs>
     </div>
 
-    <!-- 主体区域：左边常驻侧边栏，右边列表内容 -->
+    <!-- 主体区域：顶部筛选与列表内容 -->
     <div class="main-body-layout">
-      <!-- 左侧边栏 -->
-      <AssetSidebar
-        :group-tree-data="groupTreeData"
-        :tag-list="tagList"
-        :selected-groups="selectedGroups"
-        :selected-tags="selectedTags"
-        @select-group="handleSelectGroup"
-        @select-tag="handleSelectTag"
-      />
-
-      <!-- 右侧内容区 -->
-      <div class="content-view-area">
+      <div class="content-view-area" style="padding: 16px 8px">
         <!-- 筛选区域 -->
         <div class="ops-filter-bar">
           <el-form :inline="true" size="small">
+            <el-form-item label="集群标签">
+              <el-select
+                v-model="filters.clusterTag"
+                placeholder="所有"
+                multiple
+                collapse-tags
+                collapse-tags-tooltip
+                clearable
+                filterable
+                style="width: 140px"
+                @change="handleClusterTagChange"
+              >
+                <el-option
+                  v-if="clusterTagOptions.length > 0"
+                  label="全部集群标签"
+                  :value="CLUSTER_TAG_ALL"
+                />
+                <el-option v-for="item in clusterTagOptions" :key="item" :label="item" :value="item" />
+              </el-select>
+            </el-form-item>
             <el-form-item label="在线状态">
               <el-select v-model="filters.status" style="width: 85px" @change="handleSearch">
                 <el-option label="全部" value="all" />
                 <el-option label="在线" value="1" />
                 <el-option label="下线" value="0" />
               </el-select>
+            </el-form-item>
+            <el-form-item label="分组">
+              <el-tree-select
+                v-model="selectedGroups"
+                :data="groupTreeData"
+                :props="treeProps"
+                node-key="path"
+                :default-expanded-keys="['/']"
+                placeholder="全部分组"
+                multiple
+                show-checkbox
+                check-strictly
+                collapse-tags
+                collapse-tags-tooltip
+                clearable
+                filterable
+                style="width: 160px"
+                @change="handleGroupChange"
+              />
             </el-form-item>
 
             <!-- [Agent 功能暂停]
@@ -56,34 +84,24 @@
             </el-form-item>
             -->
 
-            <el-form-item label="集群标签">
+            <el-form-item label="标签">
               <el-select
-                v-model="filters.clusterTag"
-                placeholder="所有"
+                v-model="selectedTags"
+                placeholder="全部标签"
                 multiple
                 collapse-tags
                 collapse-tags-tooltip
                 clearable
                 filterable
                 style="width: 140px"
-                @change="handleClusterTagChange"
+                @change="handleTagChange"
               >
-                <el-option
-                  v-if="clusterTagOptions.length > 0"
-                  label="全部集群标签"
-                  value="__ALL_CLUSTER_TAGS__"
-                />
-                <el-option
-                  v-for="item in clusterTagOptions"
-                  :key="item"
-                  :label="item"
-                  :value="item"
-                />
+                <el-option v-for="item in tagOptions" :key="item" :label="item" :value="item" />
               </el-select>
             </el-form-item>
-            
+
             <el-form-item label="最近连通">
-              <el-select v-model="filters.connLatestStatus" style="width: 105px" @change="handleSearch">
+              <el-select v-model="filters.connLatestStatus" style="width: 95px" @change="handleSearch">
                 <el-option label="所有" value="all" />
                 <el-option label="连通成功" value="1" />
                 <el-option label="连通失败" value="0" />
@@ -114,7 +132,7 @@
                 v-model="searchText"
                 placeholder="IP/主机名/系统版本"
                 clearable
-                style="width: 180px"
+                style="width: 160px"
                 @keyup.enter="handleSearch"
                 @clear="handleSearch"
               />
@@ -755,7 +773,6 @@ import {
 import { assetApi, dataManageApi } from '../api'
 import { apiService } from '@/core/api'
 import { pollJobStatus } from '@/composables/useJobPolling'
-import AssetSidebar from '../components/asset-info/AssetSidebar.vue'
 import AssetDetailDialog from '../components/asset-info/AssetDetailDialog.vue'
 import AssetEditDialog from '../components/asset-info/AssetEditDialog.vue'
 import AssetHistoryDialog from '../components/asset-info/AssetHistoryDialog.vue'
@@ -808,16 +825,17 @@ const tagList = ref([])
 const selectedGroups = ref([])
 const selectedTags = ref([])
 
-// 集群标签选项：来源于左侧常用标签列表，仅保留标签名包含“集群”的项
-const clusterTagOptions = computed(() => {
+// 标签展示完整列表，集群标签另保留独立快捷筛选入口
+const tagOptions = computed(() => {
   const names = (tagList.value || [])
     .map(item => (typeof item === 'string' ? item : item?.name))
     .filter(Boolean)
-  return [...new Set(names.filter(name => name.includes('集群')))]
+  return [...new Set(names)]
 })
+const clusterTagOptions = computed(() => tagOptions.value.filter(name => name.includes('集群')))
 
 // 树形组件配置
-const _treeProps = {
+const treeProps = {
   label: 'name',
   children: 'children'
 }
@@ -1298,16 +1316,13 @@ const loadTagList = async () => {
   }
 }
 
-// 选择分组 (侧边栏触发)
-// 根据当前选中的分组/标签应用筛选（分组与标签互斥，各自支持多选）
-const applySidebarSelection = () => {
-  filters.value.clusterTag = selectedTags.value.filter(name =>
-    clusterTagOptions.value.includes(name)
-  )
+// 标签与集群标签共同参与查询并去重，分组与标签筛选保持互斥
+const applyHostSelection = () => {
+  const tags = [...new Set([...selectedTags.value, ...filters.value.clusterTag])]
   if (selectedGroups.value.length > 0) {
     filters.value.hostKeys = selectedGroups.value.join(',')
-  } else if (selectedTags.value.length > 0) {
-    filters.value.hostKeys = `,${selectedTags.value.map(name => `#${name}`).join(',')}`
+  } else if (tags.length > 0) {
+    filters.value.hostKeys = `,${tags.map(name => `#${name}`).join(',')}`
   } else {
     filters.value.hostKeys = '@@'
   }
@@ -1315,42 +1330,33 @@ const applySidebarSelection = () => {
   loadAssetList({ preserveSelection: true })
 }
 
-// 选择分组 (侧边栏触发)：'all' 清空所有选择，其余为切换选中
-const handleSelectGroup = groupId => {
+// TreeSelect 返回完整的已选路径，父子节点独立选择
+const handleGroupChange = values => {
+  selectedGroups.value = values || []
   selectedTags.value = []
-  if (groupId === 'all') {
-    selectedGroups.value = []
-  } else if (selectedGroups.value.includes(groupId)) {
-    selectedGroups.value = selectedGroups.value.filter(item => item !== groupId)
-  } else {
-    selectedGroups.value = [...selectedGroups.value, groupId]
-  }
-  applySidebarSelection()
+  filters.value.clusterTag = []
+  applyHostSelection()
 }
 
-// 选择标签 (侧边栏触发)：切换选中
-const handleSelectTag = tag => {
+// 标签支持多选和清空，不影响独立的集群标签筛选
+const handleTagChange = values => {
   selectedGroups.value = []
-  selectedTags.value = selectedTags.value.includes(tag.name)
-    ? selectedTags.value.filter(item => item !== tag.name)
-    : [...selectedTags.value, tag.name]
-  applySidebarSelection()
+  selectedTags.value = values || []
+  applyHostSelection()
 }
 
 const CLUSTER_TAG_ALL = '__ALL_CLUSTER_TAGS__'
 
-// 集群标签下拉筛选（含“全部集群标签”：未全选时全选，已全选时清空）
+// 保留客户要求的集群标签全选入口，仅作用于集群标签
 const handleClusterTagChange = values => {
   let next = [...(values || [])]
   if (next.includes(CLUSTER_TAG_ALL)) {
     const rest = next.filter(item => item !== CLUSTER_TAG_ALL)
     next = rest.length === clusterTagOptions.value.length ? [] : [...clusterTagOptions.value]
-    filters.value.clusterTag = next
   }
-  const others = selectedTags.value.filter(name => !clusterTagOptions.value.includes(name))
   selectedGroups.value = []
-  selectedTags.value = [...others, ...next]
-  applySidebarSelection()
+  filters.value.clusterTag = next
+  applyHostSelection()
 }
 
 // 加载设备类型列表

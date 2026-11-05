@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h, watch } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
-import { ElTable, ElTableColumn, ElMessage } from 'element-plus'
+import { ElTable, ElTableColumn, ElTreeSelect, ElSelect, ElMessage } from 'element-plus'
 import Page from '@/modules/asset/views/AssetInfoPage.vue'
 import AddGroupDialog from '@/modules/asset/components/asset-info/AddGroupDialog.vue'
 
@@ -62,6 +62,22 @@ const groupState = () => groupDialog().vm.$.setupState
 const mainTable = () =>
   wrapper.findAllComponents(ElTable).find(table => table.props('height') === '100%')
 const ids = () => state().selectedRows.map(row => row.id)
+const groupFilter = () => wrapper.find('.ops-filter-bar').findComponent(ElTreeSelect)
+const tagFilter = () =>
+  wrapper
+    .find('.ops-filter-bar')
+    .findAllComponents(ElSelect)
+    .find(select => select.props('placeholder') === '全部标签')
+const clusterTagFilter = () =>
+  wrapper
+    .find('.ops-filter-bar')
+    .findAllComponents(ElSelect)
+    .find(select => select.props('multiple') && select.props('placeholder') === '所有')
+async function changeFilter(select, values) {
+  select.vm.$emit('update:modelValue', values)
+  select.vm.$emit('change', values)
+  await flushPromises()
+}
 const button = (text, within = wrapper) => {
   const found = within.findAll('button').find(item => item.text() === text)
   if (!found)
@@ -87,7 +103,7 @@ async function page(number) {
 async function openPage() {
   wrapper = mount(Page, {
     global: {
-      components: { ElTable, ElTableColumn },
+      components: { ElTable, ElTableColumn, ElTreeSelect, ElSelect },
       stubs: {
         transition: { template: '<div><slot /></div>' },
         ElTable: false,
@@ -108,6 +124,7 @@ async function openPage() {
             'ElTabPane',
             'ElOption',
             'ElSelect',
+            'ElTreeSelect',
             'ElIcon',
             'ElRadio',
             'ElRadioGroup',
@@ -117,7 +134,6 @@ async function openPage() {
             'ElProgress',
             'ElAvatar',
             'ElPagination',
-            'AssetSidebar',
             'AssetDetailDialog',
             'AssetEditDialog',
             'AssetHistoryDialog',
@@ -289,8 +305,8 @@ describe('设备清单跨页选择与原添加分组链路', () => {
         state().handleSearch()
       }
       if (kind === 'type') state().handleTypeChange('windows')
-      if (kind === 'group') state().handleSelectGroup('/existing')
-      if (kind === 'tag') state().handleSelectTag({ name: 'production' })
+      if (kind === 'group') await changeFilter(groupFilter(), ['/existing'])
+      if (kind === 'tag') await changeFilter(tagFilter(), ['production'])
       await flushPromises()
       if (kind === 'type') {
         expect(state().hasSelection).toBe(false)
@@ -302,6 +318,98 @@ describe('设备清单跨页选择与原添加分组链路', () => {
       expect(api.post).not.toHaveBeenCalled()
     }
   )
+
+  it('顶部分组树多选沿用原路径查询，完整标签列表包含集群标签并支持多选、清空', async () => {
+    api.getGroupList.mockResolvedValue({ records: ['/existing', '/existing/child', '/other'] })
+    api.getTagList.mockResolvedValue({
+      records: [{ name: 'production' }, { name: '集群 A' }, '集群 B', 'staging', { name: 'production' }]
+    })
+    await openPage()
+    expect(wrapper.find('.asset-sidebar').exists()).toBe(false)
+    expect(groupFilter().props()).toMatchObject({
+      nodeKey: 'path',
+      multiple: true,
+      checkStrictly: true,
+      filterable: true,
+      clearable: true,
+      props: { label: 'name', children: 'children' }
+    })
+    expect(groupFilter().props('data')[0].children.find(node => node.path === '/existing')).toMatchObject({
+      path: '/existing',
+      children: [{ path: '/existing/child', name: 'child' }]
+    })
+    expect(state().tagOptions).toEqual(['production', '集群 A', '集群 B', 'staging'])
+    expect(state().clusterTagOptions).toEqual(['集群 A', '集群 B'])
+    await selectRow('host-a')
+    await page(2)
+    await changeFilter(groupFilter(), ['/existing', '/existing/child'])
+    expect(api.getAssetList.mock.calls.at(-1)).toEqual([
+      expect.objectContaining({ hostKeys: '/existing,/existing/child' }),
+      { size: 10, page: 1, filter: '' }
+    ])
+    await changeFilter(tagFilter(), ['production'])
+    expect(groupFilter().props('modelValue')).toEqual([])
+    expect(api.getAssetList.mock.calls.at(-1)[0].hostKeys).toBe(',#production')
+    await changeFilter(tagFilter(), ['production', '集群 A'])
+    expect(tagFilter().props('modelValue')).toEqual(['production', '集群 A'])
+    expect(api.getAssetList.mock.calls.at(-1)[0].hostKeys).toBe(',#production,#集群 A')
+    await changeFilter(tagFilter(), [])
+    expect(tagFilter().props('modelValue')).toEqual([])
+    expect(api.getAssetList.mock.calls.at(-1)[0].hostKeys).toBe('@@')
+    await changeFilter(tagFilter(), ['production'])
+    await changeFilter(groupFilter(), ['/existing'])
+    expect(tagFilter().props('modelValue')).toEqual([])
+    await changeFilter(groupFilter(), [])
+    expect(api.getAssetList.mock.calls.at(-1)[0].hostKeys).toBe('@@')
+    expect(ids()).toEqual(['asset-a'])
+  })
+
+  it('独立集群标签保留专属全选入口，与通用标签重复选择时查询去重', async () => {
+    api.getTagList.mockResolvedValue({ records: ['production', '集群 A', '集群 B'] })
+    await openPage()
+    await changeFilter(tagFilter(), ['production', '集群 A'])
+    await changeFilter(clusterTagFilter(), ['__ALL_CLUSTER_TAGS__'])
+    expect(clusterTagFilter().props('modelValue')).toEqual(['集群 A', '集群 B'])
+    expect(tagFilter().props('modelValue')).toEqual(['production', '集群 A'])
+    expect(api.getAssetList.mock.calls.at(-1)[0].hostKeys).toBe(',#production,#集群 A,#集群 B')
+    await changeFilter(clusterTagFilter(), ['集群 A', '集群 B', '__ALL_CLUSTER_TAGS__'])
+    expect(clusterTagFilter().props('modelValue')).toEqual([])
+    expect(tagFilter().props('modelValue')).toEqual(['production', '集群 A'])
+    expect(api.getAssetList.mock.calls.at(-1)[0].hostKeys).toBe(',#production,#集群 A')
+    await changeFilter(clusterTagFilter(), ['集群 A'])
+    await changeFilter(tagFilter(), [])
+    expect(clusterTagFilter().props('modelValue')).toEqual(['集群 A'])
+    expect(api.getAssetList.mock.calls.at(-1)[0].hostKeys).toBe(',#集群 A')
+    await changeFilter(clusterTagFilter(), [])
+    expect(api.getAssetList.mock.calls.at(-1)[0].hostKeys).toBe('@@')
+    await changeFilter(clusterTagFilter(), ['集群 B'])
+    await changeFilter(groupFilter(), ['/existing'])
+    expect(clusterTagFilter().props('modelValue')).toEqual([])
+    expect(api.getAssetList.mock.calls.at(-1)[0].hostKeys).toBe('/existing')
+  })
+
+  it('重置或切换资产类型同步清空顶部分组和标签', async () => {
+    await openPage()
+    await changeFilter(groupFilter(), ['/existing'])
+    await changeFilter(clusterTagFilter(), ['集群 A'])
+    await button('重置').trigger('click')
+    await flushPromises()
+    expect(groupFilter().props('modelValue')).toEqual([])
+    expect(tagFilter().props('modelValue')).toEqual([])
+    expect(clusterTagFilter().props('modelValue')).toEqual([])
+    expect(api.getAssetList.mock.calls.at(-1)[0].hostKeys).toBe('@@')
+    await changeFilter(tagFilter(), ['production'])
+    await changeFilter(clusterTagFilter(), ['集群 A'])
+    state().handleTypeChange('windows')
+    await flushPromises()
+    expect(groupFilter().props('modelValue')).toEqual([])
+    expect(tagFilter().props('modelValue')).toEqual([])
+    expect(clusterTagFilter().props('modelValue')).toEqual([])
+    expect(api.getAssetList.mock.calls.at(-1)[0]).toMatchObject({
+      assetType: 'windows',
+      hostKeys: '@@'
+    })
+  })
 
   it('同范围重复搜索/刷新保留选择，迟到的翻页响应不覆盖新页及累计选择', async () => {
     await openPage()
