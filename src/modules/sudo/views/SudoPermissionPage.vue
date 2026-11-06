@@ -104,7 +104,7 @@
     </div>
 
     <!-- 扫描主机对话框 -->
-    <ScanHostsDialog v-model="showScanDialog" @scanned="handleScanCompleted" />
+    <ScanHostsDialog v-model="showScanDialog" @completed="handleScanCompleted" />
   </div>
 </template>
 

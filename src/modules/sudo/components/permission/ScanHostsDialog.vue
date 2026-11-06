@@ -1,57 +1,42 @@
 <template>
+  <AcmDeviceSelectorDialog
+    :model-value="visible && !jobStatus"
+    ci-types="linux"
+    :initial-selection="selectedHosts"
+    :options="{ selectMode: 'host,group,tag,input,recently', selector: 'multiple' }"
+    title="选择设备 · 扫描 sudo 权限"
+    confirm-text="开始扫描"
+    description="点击“开始扫描”后将立即采集所选主机的 sudo 权限配置。"
+    :allow-empty="false"
+    :close-on-confirm="false"
+    :submitting="submitting"
+    @update:model-value="handleSelectorVisibleChange"
+    @confirm="handleStartScan"
+  />
   <el-dialog
-    v-model="visible"
-    title="扫描主机"
+    :model-value="visible && !!jobStatus"
+    title="sudo 权限扫描进度"
     width="700px"
     :close-on-click-modal="false"
     :close-on-press-escape="false"
     :show-close="!submitting"
-    @close="handleClose"
+    :before-close="handleBeforeClose"
   >
-    <div class="scan-hosts-content">
-      <!-- 主机选择 -->
-      <!-- <div class="form-section">
-        <div class="section-title">选择主机</div>
-        <div class="section-content">
-
-        </div>
-      </div> -->
-      <AcmDeviceSelector
-        v-model="selectedHosts"
-        ci-types="linux"
-        :options="{ label: '选择主机' }"
-        :disabled="submitting"
-      />
-      <div v-if="jobStatus" class="job-status">
-        <div class="status-header">
-          <i class="fa fa-spinner fa-spin" v-if="isRunning"></i>
-          <i class="fa fa-check-circle text-success" v-else-if="isSuccess"></i>
-          <i class="fa fa-times-circle text-danger" v-else-if="isFailed"></i>
-          <span>{{ statusText }}</span>
-        </div>
-        <div v-if="jobResult" class="status-detail">
-          <div v-if="jobResult.startTime">开始时间：{{ formatDateTime(jobResult.startTime) }}</div>
-          <div v-if="jobResult.endTime">结束时间：{{ formatDateTime(jobResult.endTime) }}</div>
-        </div>
+    <div v-if="jobStatus" class="job-status">
+      <div class="status-header">
+        <i class="fa fa-spinner fa-spin" v-if="isRunning"></i>
+        <i class="fa fa-check-circle text-success" v-else-if="isSuccess"></i>
+        <i class="fa fa-times-circle text-danger" v-else-if="isFailed"></i>
+        <span>{{ statusText }}</span>
+      </div>
+      <div v-if="jobResult" class="status-detail">
+        <div v-if="jobResult.startTime">开始时间：{{ formatDateTime(jobResult.startTime) }}</div>
+        <div v-if="jobResult.endTime">结束时间：{{ formatDateTime(jobResult.endTime) }}</div>
       </div>
     </div>
-
+    <p>关闭窗口不会取消已提交的后台扫描任务。</p>
     <template #footer>
-      <div class="dialog-footer">
-        <el-button @click="handleClose" :disabled="submitting && isRunning">
-          {{ isSuccess || isFailed ? '关闭' : '取消' }}
-        </el-button>
-        <el-button
-          v-if="!isSuccess && !isFailed"
-          type="primary"
-          size="small"
-          :loading="submitting"
-          :disabled="selectedHosts.length === 0"
-          @click="handleStartScan"
-        >
-          开始扫描
-        </el-button>
-      </div>
+      <el-button @click="handleClose" :disabled="submitting && isRunning">关闭</el-button>
     </template>
   </el-dialog>
 </template>
@@ -59,7 +44,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
 import { normalizeAcmDeviceJobHosts } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
 import * as sudoApi from '@/modules/sudo/api'
 import { useJobPolling } from '@/composables/useJobPolling'
@@ -126,7 +111,8 @@ watch(
     if (val) {
       resetForm()
     }
-  }
+  },
+  { immediate: true }
 )
 
 watch(visible, val => {
@@ -137,19 +123,21 @@ watch(visible, val => {
 })
 
 function resetForm() {
+  submitting.value = false
   selectedHosts.value = []
   jobStatus.value = ''
   jobResult.value = null
 }
 
-async function handleStartScan() {
+async function handleStartScan(selection = selectedHosts.value) {
+  if (submitting.value) return
+  selectedHosts.value = selection
   if (selectedHosts.value.length === 0) {
     ElMessage.warning('请选择需要扫描的主机')
     return
   }
 
   submitting.value = true
-  jobStatus.value = 'WAITING'
 
   try {
     const hosts = normalizeAcmDeviceJobHosts(selectedHosts.value, 'linux')
@@ -184,9 +172,21 @@ async function handleStartScan() {
   } catch (error) {
     console.error('Failed to start scan:', error)
     submitting.value = false
-    jobStatus.value = 'ERROR'
+    jobStatus.value = ''
     ElMessage.error('启动扫描失败')
+  } finally {
+    submitting.value = false
   }
+}
+
+function handleSelectorVisibleChange(value) {
+  if (!value) handleClose()
+}
+
+function handleBeforeClose(done) {
+  if (submitting.value && isRunning.value) return
+  handleClose()
+  done()
 }
 
 function handleClose() {
@@ -199,29 +199,6 @@ function handleClose() {
 </script>
 
 <style scoped lang="scss">
-.scan-hosts-content {
-  padding: 10px 0;
-}
-
-.form-section {
-  margin-bottom: 20px;
-  background: var(--el-bg-color-page);
-  border-radius: 6px;
-  overflow: hidden;
-
-  .section-title {
-    padding: 10px 16px;
-    font-weight: 500;
-    color: var(--el-text-color-primary);
-    background: var(--el-fill-color-light);
-    font-size: 14px;
-  }
-
-  .section-content {
-    padding: 16px;
-  }
-}
-
 .job-status {
   margin-top: 20px;
   padding: 16px;
@@ -248,12 +225,5 @@ function handleClose() {
     font-size: 12px;
     color: var(--el-text-color-secondary);
   }
-}
-
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding-top: 10px;
 }
 </style>
