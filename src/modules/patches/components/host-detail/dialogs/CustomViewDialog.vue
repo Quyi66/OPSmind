@@ -42,7 +42,7 @@
               自定义展示列与展示顺序调整 (左起依次为从左往右展示顺序)
             </div>
 
-            <div class="tag-flow-container">
+            <el-checkbox-group v-model="selectedColumns" class="tag-flow-container">
               <div
                 v-for="(attr, index) in localOrderedAttrs"
                 :key="attr.code"
@@ -64,12 +64,12 @@
                 </span>
 
                 <!-- 复选框与标题 -->
-                <el-checkbox v-model="selectedColumns" :value="attr.code" class="checkbox-item">
+                <el-checkbox :value="attr.code" class="checkbox-item">
                   <span class="item-title">{{ attr.title }}</span>
                   <span class="item-code">({{ attr.code }})</span>
                 </el-checkbox>
               </div>
-            </div>
+            </el-checkbox-group>
           </div>
         </el-tab-pane>
 
@@ -96,7 +96,7 @@
               自定义展示属性与显示顺序调整 (左起依次为从上往下展示顺序)
             </div>
 
-            <div class="tag-flow-container">
+            <el-checkbox-group v-model="selectedDetailColumns" class="tag-flow-container">
               <div
                 v-for="(attr, index) in localOrderedDetailAttrs"
                 :key="attr.code"
@@ -118,16 +118,12 @@
                 </span>
 
                 <!-- 复选框与标题 -->
-                <el-checkbox
-                  v-model="selectedDetailColumns"
-                  :value="attr.code"
-                  class="checkbox-item"
-                >
+                <el-checkbox :value="attr.code" class="checkbox-item">
                   <span class="item-title">{{ attr.title }}</span>
                   <span class="item-code">({{ attr.code }})</span>
                 </el-checkbox>
               </div>
-            </div>
+            </el-checkbox-group>
           </div>
         </el-tab-pane>
       </el-tabs>
