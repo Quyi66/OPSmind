@@ -9,7 +9,12 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="设备类型">
-          <el-select v-model="filters.cit" placeholder="全部" style="width: 140px" @change="handleSearch">
+          <el-select
+            v-model="filters.cit"
+            placeholder="全部"
+            style="width: 140px"
+            @change="handleSearch"
+          >
             <el-option label="全部" value="sjxy_all" />
             <el-option
               v-for="item in resourceTypes"
@@ -66,7 +71,7 @@
       <el-button
         size="small"
         type="primary"
-        :disabled="quickCheckLoading"
+        :disabled="quickCheckLoading || actionLoading"
         @click="openActionDialog('checkConnectivity')"
       >
         <i class="fa fa-plug" style="margin-right: 4px"></i>
@@ -76,7 +81,7 @@
         size="small"
         type="primary"
         plain
-        :disabled="selectedExceptionRows.length === 0"
+        :disabled="selectedExceptionRows.length === 0 || actionLoading"
         :loading="quickCheckLoading"
         @click="handleCheckSelected"
       >
@@ -84,7 +89,11 @@
         检测选中设备
         <span v-if="selectedExceptionRows.length">（{{ selectedExceptionRows.length }}）</span>
       </el-button>
-      <el-button size="small" @click="openActionDialog('collectInfo')">
+      <el-button
+        size="small"
+        :disabled="quickCheckLoading || actionLoading"
+        @click="openActionDialog('collectInfo')"
+      >
         <i class="fa fa-download" style="margin-right: 4px"></i>
         信息数据采集
       </el-button>
@@ -245,36 +254,19 @@
       />
     </div>
 
-    <!-- 动作弹窗 -->
-    <el-dialog
+    <!-- 选择设备后直接执行，由业务页面在提交成功后关闭选择器 -->
+    <AcmDeviceSelectorDialog
       v-model="actionDialogVisible"
-      :title="currentActionMeta.title"
-      width="820px"
-      :close-on-click-modal="false"
-      @closed="resetActionDialog"
-      class="premium-action-dialog"
-      :close-on-press-escape="false"
-    >
-      <div class="dialog-content">
-        <AcmDeviceSelector
-          v-model="actionHosts"
-          ci-types="[auto]"
-          :options="actionSelectorOptions"
-        />
-      </div>
-      <template #footer>
-        <el-button @click="actionDialogVisible = false" size="small">取消</el-button>
-        <el-button
-          type="primary"
-          size="small"
-          :disabled="actionHosts.length === 0"
-          :loading="actionLoading"
-          @click="confirmAction()"
-        >
-          {{ currentActionMeta.confirmButtonText }}
-        </el-button>
-      </template>
-    </el-dialog>
+      ci-types="[auto]"
+      :options="actionSelectorOptions"
+      :title="`选择设备 · ${currentActionMeta.title}`"
+      :confirm-text="currentActionMeta.confirmButtonText"
+      :description="currentActionMeta.confirmMessage"
+      :submitting="actionLoading"
+      :allow-empty="false"
+      :close-on-confirm="false"
+      @confirm="handleActionConfirm"
+    />
 
     <ExecuteResultDialog
       v-if="runResultDialogVisible"
@@ -293,7 +285,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import KpiCards from '../components/exception/KpiCards.vue'
-import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
 import { normalizeAcmDeviceJobHosts } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { dataManageApi, exceptionApi } from '../api'
@@ -312,8 +304,8 @@ const ACTION_CONFIG = {
   checkConnectivity: {
     title: '检查连通性',
     confirmButtonText: '立即检查连通性',
-    confirmMessage: '连通性检查将花费数分钟至半小时不等，确认后将立即开始执行。',
-    pendingMessage: '连通性检查任务已发起，可以关闭当前弹窗',
+    confirmMessage: '连通性检查将花费数分钟至半小时不等，点击“立即检查连通性”后将立即开始执行。',
+    pendingMessage: '连通性检查任务已发起，可在连通性历史日志中查看',
     successMessage: '连通性检查完成',
     failureMessage: '连通性检查失败',
     startErrorMessage: '启动检查任务失败',
@@ -323,8 +315,9 @@ const ACTION_CONFIG = {
   collectInfo: {
     title: '采集信息',
     confirmButtonText: '立即采集资产数据',
-    confirmMessage: '资产数据采集将花费数分钟至半小时不等，确认后将立即开始执行。',
-    pendingMessage: '信息采集任务已发起，可以关闭当前弹窗',
+    confirmMessage:
+      '资产数据采集将花费数分钟至半小时不等，点击“立即采集资产数据”后将立即开始执行。',
+    pendingMessage: '信息采集任务已发起，可在采集历史日志中查看',
     successMessage: '信息采集完成',
     failureMessage: '信息采集失败',
     startErrorMessage: '启动采集任务失败',
@@ -367,7 +360,6 @@ const quickCheckLoading = ref(false)
 // 动作弹窗
 const actionDialogVisible = ref(false)
 const currentActionKey = ref('checkConnectivity')
-const actionHosts = ref([])
 const actionLoading = ref(false)
 const currentActionMeta = computed(() => ACTION_CONFIG[currentActionKey.value])
 
@@ -507,19 +499,13 @@ const openOperationLog = actionKey => {
 }
 
 const openActionDialog = actionKey => {
+  if (actionLoading.value || quickCheckLoading.value) return
   currentActionKey.value = actionKey
-  actionHosts.value = []
   actionDialogVisible.value = true
-}
-
-const resetActionDialog = () => {
-  actionHosts.value = []
-  actionLoading.value = false
 }
 
 const closeActionDialog = () => {
   actionDialogVisible.value = false
-  resetActionDialog()
 }
 
 const refreshExceptionData = () => {
@@ -549,11 +535,13 @@ const isJobSuccess = result => result?.status === 'COMPLETED' || result?.status 
 const isJobFailed = result => result?.status === 'FAILED' || result?.status === 'ERROR'
 
 const confirmAction = async ({
-  selection = actionHosts.value,
+  selection = [],
   actionKey = currentActionKey.value,
   confirmMessage,
+  requireConfirmation = true,
   closeDialogOnSubmit = true
 } = {}) => {
+  if (actionLoading.value) return false
   if (selection.length === 0) {
     ElMessage.warning('请先选择设备')
     return false
@@ -561,21 +549,23 @@ const confirmAction = async ({
 
   const actionMeta = ACTION_CONFIG[actionKey]
 
-  try {
-    await ElMessageBox.confirm(confirmMessage || actionMeta.confirmMessage, '执行运维工具', {
-      closeOnClickModal: false,
-      closeOnPressEscape: false,
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
-  } catch {
-    return false
-  }
-
   actionLoading.value = true
 
   try {
+    if (requireConfirmation) {
+      try {
+        await ElMessageBox.confirm(confirmMessage || actionMeta.confirmMessage, '执行运维工具', {
+          closeOnClickModal: false,
+          closeOnPressEscape: false,
+          confirmButtonText: '确认',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
+      } catch {
+        return false
+      }
+    }
+
     const hosts = normalizeAcmDeviceJobHosts(selection, 'linux')
     if (hosts.length === 0) {
       ElMessage.warning('没有可执行操作的有效设备')
@@ -638,7 +628,10 @@ const confirmAction = async ({
   }
 }
 
+const handleActionConfirm = selection => confirmAction({ selection, requireConfirmation: false })
+
 const handleCheckSelected = async () => {
+  if (quickCheckLoading.value || actionLoading.value) return
   const rows = [...selectedExceptionRows.value]
   if (rows.length === 0) {
     ElMessage.warning('请先勾选需要检测的设备')
@@ -823,9 +816,5 @@ watch(
       }
     }
   }
-}
-
-.dialog-content {
-  padding: 8px 4px;
 }
 </style>
