@@ -182,6 +182,33 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
+describe('基准仓库无数据引导', () => {
+  it('成功空结果才展示准备条件，并能转到基准主机页签', async () => {
+    mocks.base.mockResolvedValueOnce(empty())
+    const wrapper = shallowMount(RepoManagementPage, {
+      global: {
+        ...global,
+        stubs: {
+          ...global.stubs,
+          ElTable: {
+            props: ['data'],
+            template: '<div><slot v-if="!data.length" name="empty" /></div>'
+          },
+          ElEmpty: { props: ['description'], template: '<div>{{ description }}<slot /></div>' }
+        }
+      }
+    })
+    wrappers.push(wrapper)
+    await flushPromises()
+    expect(wrapper.text()).toContain('暂无基准仓库')
+    expect(wrapper.text()).toContain('需要已有基准主机及其采集的仓库数据')
+    expect(action(wrapper, '配置到主机').attributes('disabled')).toBeDefined()
+    await action(wrapper, '查看基准主机').trigger('click')
+    expect(wrapper.vm.activeTab).toBe('baseHost')
+    expect(mocks.scan).not.toHaveBeenCalled()
+  })
+})
+
 describe.each(cases)('$name 的只读读取反馈', testCase => {
   it('区分首次失败与成功空结果，使用唯一重试入口恢复且不展示未核实总数', async () => {
     testCase.api.mockRejectedValueOnce(new Error('network'))
@@ -474,6 +501,8 @@ describe('查询草稿与仓库操作边界', () => {
     await wrapper.vm.retry()
     await wrapper.vm.handleDelete({ id: 0 })
     expect(mocks.confirm).toHaveBeenLastCalledWith('确认删除选中镜像源？', '确认删除', {
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
       type: 'warning'
     })
     expect(mocks.deleteRepo).toHaveBeenCalledExactlyOnceWith(0)

@@ -112,39 +112,20 @@
       :host-key="selectedHostKey"
     />
 
-    <!-- 扫描目标主机对话框 -->
-    <el-dialog
+    <!-- 直接选择扫描目标 -->
+    <AcmDeviceSelectorDialog
       v-model="scanDialogVisible"
-      title="选择目标主机"
-      width="600px"
-      destroy-on-close
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-    >
-      <div class="scan-dialog-content">
-        <!-- 使用 AcmDeviceSelector 组件 -->
-        <AcmDeviceSelector
-          v-model="selectedScanHosts"
-          ci-types="linux"
-          :options="{
-            selectMode: 'host,group,tag,input,recently',
-            selector: 'multiple',
-            label: '选择'
-          }"
-        />
-      </div>
-      <template #footer>
-        <el-button @click="scanDialogVisible = false">取消</el-button>
-        <el-button
-          type="primary"
-          :loading="scanLoading"
-          :disabled="selectedScanHosts.length === 0"
-          @click="executeScan"
-        >
-          开始扫描
-        </el-button>
-      </template>
-    </el-dialog>
+      ci-types="linux"
+      :initial-selection="selectedScanHosts"
+      :options="{ selectMode: 'host,group,tag,input,recently', selector: 'multiple' }"
+      title="选择设备 · 软件包扫描"
+      confirm-text="开始扫描"
+      description="点击“开始扫描”后将立即采集所选主机的软件包信息。"
+      :allow-empty="false"
+      :close-on-confirm="false"
+      :submitting="scanLoading"
+      @confirm="executeScan"
+    />
   </div>
 </template>
 
@@ -154,12 +135,15 @@ import { ElMessage } from 'element-plus'
 import { Search, Refresh } from '@element-plus/icons-vue'
 import { hostOverviewApi, softwareScanApi } from '../../api'
 import HostDetailDialog from './HostDetailDialog.vue'
-import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
-import { useJobPolling } from '@/composables/useJobPolling'
+import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
+import { normalizeAcmDeviceJobHosts } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
+import { usePatchScanCompletion } from '@/modules/patches/composables/usePatchScanCompletion'
 import { useSoftwareListRead } from '../../composables/useSoftwareListRead'
 
-// 使用作业轮询 composable
-const { isPolling, startPolling } = useJobPolling()
+const { trackScan } = usePatchScanCompletion(() => {
+  loadData()
+  emit('rescan')
+})
 
 const emit = defineEmits(['rescan', 'view-host', 'view-installed'])
 
@@ -264,12 +248,15 @@ function handleExport() {
 
 // 重新扫描 - 打开对话框
 function handleRescan() {
+  if (scanLoading.value) return
   selectedScanHosts.value = []
   scanDialogVisible.value = true
 }
 
 // 执行扫描
-async function executeScan() {
+async function executeScan(selection = selectedScanHosts.value) {
+  if (scanLoading.value) return
+  selectedScanHosts.value = selection
   if (selectedScanHosts.value.length === 0) {
     ElMessage.warning('请选择要扫描的主机')
     return
@@ -278,11 +265,7 @@ async function executeScan() {
   scanLoading.value = true
   try {
     // 构造主机列表，格式: [{ key, value, assetType }]
-    const hosts = selectedScanHosts.value.map(host => ({
-      key: host.key || host.id || host.host_key,
-      value: host.value || host.ip || host.host_key,
-      assetType: host.assetType || host.ci_type || 'linux'
-    }))
+    const hosts = normalizeAcmDeviceJobHosts(selectedScanHosts.value, 'linux')
 
     // 调用扫描 API
     const response = await softwareScanApi.scan({ hosts })
@@ -293,24 +276,14 @@ async function executeScan() {
       scanDialogVisible.value = false
       selectedScanHosts.value = []
 
-      // 使用 composable 开始轮询任务状态
-      startPolling(runResult.runId, {
-        successMessage: '软件包扫描完成',
-        errorMessage: '软件包扫描失败',
-        onSuccess: () => {
-          loadData()
-          emit('rescan')
-        },
-        onComplete: () => {
-          scanLoading.value = false
-        }
-      })
+      trackScan(runResult.runId)
     } else {
       throw new Error('未获取到任务运行ID')
     }
   } catch (error) {
     console.error('Scan failed:', error)
     ElMessage.error(`扫描失败: ${error.message || '未知错误'}`)
+  } finally {
     scanLoading.value = false
   }
 }
