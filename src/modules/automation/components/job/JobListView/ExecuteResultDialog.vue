@@ -53,6 +53,12 @@
                   </div>
                 </div>
                 <JobUpgradeOverview v-if="isAnsibleJob" :ansible-contents="ansibleContents" />
+                <ExecutionFailureDetails
+                  :error="result.error || ''"
+                  :contents="ansibleContents"
+                  :has-log="!!ansibleRawOutput"
+                  @view-log="activeTab = 'raw'"
+                />
 
                 <div
                   v-if="
@@ -451,6 +457,7 @@ import { translateText } from '@/utils/i18n'
 import { getAutomationRunTitle } from '@/modules/automation/utils/resourcePresentation'
 import AnsibleLogViewer from '../AnsibleLogViewer.vue'
 import JobUpgradeOverview from './JobUpgradeOverview.vue'
+import ExecutionFailureDetails from './ExecutionFailureDetails.vue'
 
 const ANSIBLE_JOB_TYPES = ['script', 'command', 'process']
 const TASK_STATUS_LABELS = {
