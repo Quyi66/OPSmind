@@ -19,10 +19,23 @@ const api = vi.hoisted(() => ({
 }))
 vi.mock('@/modules/patches/api', () => ({ yumManageApi: api }))
 vi.mock('@/modules/automation/api/command', () => ({ runJob: api.runJob }))
+vi.mock('@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue', () => ({
+  default: { name: 'ExecuteResultDialog', props: ['visible', 'runId'], template: '<div />' }
+}))
 vi.mock('@/composables/useJobPolling', () => ({ useJobPolling: () => ({ startPolling: vi.fn() }) }))
 vi.mock('@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue', () => ({
   default: { template: '<div />' }
 }))
+vi.mock(
+  '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue',
+  () => ({
+    default: {
+      name: 'AcmDeviceSelectorDialog',
+      props: ['modelValue', 'allowEmpty', 'closeOnConfirm', 'submitting'],
+      template: '<div />'
+    }
+  })
+)
 let wrapper
 function deferred() {
   let resolve, reject
@@ -59,6 +72,7 @@ async function open() {
         'el-link': { template: '<a href="#" @click.prevent><slot /></a>' },
         'el-tag': { template: '<span><slot /></span>' },
         'el-icon': true,
+        'el-alert': { template: '<aside><slot name="title" /></aside>' },
         'el-dialog': {
           name: 'ElDialog',
           props: ['modelValue'],
@@ -127,6 +141,60 @@ afterEach(() => {
 })
 
 describe('YUM源清单现有筛选接线', () => {
+  it('扫描 YUM 源直接选择设备，确认时保留原作业及分组参数', async () => {
+    await open()
+    state().handleScanRepoList()
+    await flushPromises()
+    const selector = wrapper.findComponent({ name: 'AcmDeviceSelectorDialog' })
+    expect(selector.props()).toMatchObject({
+      modelValue: true,
+      allowEmpty: false,
+      closeOnConfirm: false
+    })
+    expect(api.runJob).not.toHaveBeenCalled()
+    const hosts = [
+      { key: 'group/A', value: '/group', assetType: 'linux', runType: 'group', total_hosts: 3 }
+    ]
+    api.runJob.mockResolvedValueOnce({ data: [{ runId: 'yum/run-id' }] })
+    selector.vm.$emit('confirm', hosts)
+    selector.vm.$emit('confirm', hosts)
+    await flushPromises()
+    expect(api.runJob).toHaveBeenCalledExactlyOnceWith('IxL8nr', {
+      params: { hosts, func: 'yum-list' }
+    })
+    expect(selector.props('modelValue')).toBe(false)
+    expect(selector.props('submitting')).toBe(false)
+    expect(wrapper.text()).toContain('最近提交的 YUM 源扫描任务')
+    await button('查看进度与结果').trigger('click')
+    const result = wrapper.findComponent({ name: 'ExecuteResultDialog' })
+    expect(result.props()).toMatchObject({ visible: true, runId: 'yum/run-id' })
+    result.vm.$emit('update:visible', false)
+    await flushPromises()
+    await button('查看进度与结果').trigger('click')
+    expect(result.props('visible')).toBe(true)
+    expect(api.runJob).toHaveBeenCalledTimes(1)
+    state().handleScanRepoList()
+    await flushPromises()
+    expect(selector.props('modelValue')).toBe(true)
+  })
+
+  it('明确提交失败时保留选择器，不创建虚假的任务结果入口', async () => {
+    await open()
+    state().handleScanRepoList()
+    await flushPromises()
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    api.runJob.mockResolvedValueOnce({
+      data: { status: 'FAILED', runId: 'failed-id', error: '原始原因 X9' }
+    })
+    const selector = wrapper.findComponent({ name: 'AcmDeviceSelectorDialog' })
+    selector.vm.$emit('confirm', [{ key: 'host/A', value: '192.0.2.1' }])
+    await flushPromises()
+    expect(selector.props('modelValue')).toBe(true)
+    expect(selector.props('submitting')).toBe(false)
+    expect(wrapper.text()).not.toContain('最近提交的 YUM 源扫描任务')
+    error.mockRestore()
+  })
+
   it('主机后页实时搜索回首页，trim/大小写匹配，清除恢复且不重复读取', async () => {
     await open()
     await page(0, 6)

@@ -38,6 +38,12 @@
       </el-button>
     </div>
 
+    <el-alert v-if="latestScanRunId" type="info" :closable="false" show-icon class="mb-3">
+      <template #title>
+        最近提交的 YUM 源扫描任务
+        <el-button link type="primary" @click="scanResultVisible = true">查看进度与结果</el-button>
+      </template>
+    </el-alert>
     <div class="ops-table-wrapper">
       <el-table v-loading="hostLoading" :data="paginatedHostTableData" height="100%">
         <el-table-column prop="$data_owner" label="主机" min-width="150">
@@ -66,36 +72,24 @@
       />
     </div>
 
-    <el-dialog
+    <ExecuteResultDialog
+      v-if="latestScanRunId"
+      v-model:visible="scanResultVisible"
+      :run-id="latestScanRunId"
+      job-title="YUM 源扫描"
+    />
+    <AcmDeviceSelectorDialog
       v-model="selectHostDialogVisible"
-      title="选择目标主机"
-      width="500px"
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-    >
-      <div class="select-host-dialog-content">
-        <AcmDeviceSelector
-          v-model="selectedDevices"
-          ci-types="[auto]"
-          :options="{
-            selectMode: 'host,group,tag,input,recently',
-            selector: 'multiple',
-            label: '选择设备'
-          }"
-        />
-      </div>
-      <template #footer>
-        <el-button @click="selectHostDialogVisible = false">取消</el-button>
-        <el-button
-          type="primary"
-          :loading="jobExecuting"
-          :disabled="selectedDevices.length === 0"
-          @click="executeScanJob"
-        >
-          开始扫描
-        </el-button>
-      </template>
-    </el-dialog>
+      ci-types="[auto]"
+      :options="{ selectMode: 'host,group,tag,input,recently', selector: 'multiple' }"
+      title="选择设备 · 扫描 YUM 源"
+      confirm-text="开始扫描"
+      description="点击“开始扫描”后将立即采集所选主机的 YUM 源配置。"
+      :allow-empty="false"
+      :close-on-confirm="false"
+      :submitting="jobExecuting"
+      @confirm="executeScanJob"
+    />
 
     <el-dialog
       v-model="hostDetailDialogVisible"
@@ -239,11 +233,13 @@ import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { yumManageApi } from '../api'
-import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
+import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
+import { normalizeAcmDeviceJobHosts } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
 import { runJob } from '@/modules/automation/api/command'
-import { useJobPolling } from '@/composables/useJobPolling'
+import { usePatchScanCompletion } from '../composables/usePatchScanCompletion'
 
-const { startPolling } = useJobPolling()
+const { trackScan } = usePatchScanCompletion(loadHostData)
 const YUM_JOB_ID = 'IxL8nr'
 
 const hostLoading = ref(false)
@@ -260,6 +256,8 @@ const hostPagination = reactive({
 const selectHostDialogVisible = ref(false)
 const selectedDevices = ref([])
 const jobExecuting = ref(false)
+const latestScanRunId = ref('')
+const scanResultVisible = ref(false)
 
 const hostDetailDialogVisible = ref(false)
 const hostDetailLoading = ref(false)
@@ -349,11 +347,14 @@ function handleHostPageChange(page) {
 }
 
 function handleScanRepoList() {
+  if (jobExecuting.value) return
   selectedDevices.value = []
   selectHostDialogVisible.value = true
 }
 
-async function executeScanJob() {
+async function executeScanJob(selection = selectedDevices.value) {
+  if (jobExecuting.value) return
+  selectedDevices.value = selection
   if (selectedDevices.value.length === 0) {
     ElMessage.warning('请选择至少一台主机')
     return
@@ -361,11 +362,7 @@ async function executeScanJob() {
 
   jobExecuting.value = true
   try {
-    const hosts = selectedDevices.value.map(host => ({
-      key: host.key || host.id,
-      value: host.value || host.hostname || host.$data_owner,
-      assetType: host.ci_type || host.assetType || 'linux'
-    }))
+    const hosts = normalizeAcmDeviceJobHosts(selectedDevices.value, 'linux')
 
     const response = await runJob(YUM_JOB_ID, {
       params: {
@@ -373,7 +370,12 @@ async function executeScanJob() {
         func: 'yum-list'
       }
     })
-    const runResult = (response?.data || response || [])[0]
+    const data = response?.data || response
+    const runResult = Array.isArray(data) ? data[0] : data
+
+    if (['FAILED', 'ERROR'].includes(runResult?.status)) {
+      throw new Error(runResult.error || '扫描任务提交失败')
+    }
 
     if (!runResult?.runId) {
       throw new Error('未获取到任务运行ID')
@@ -381,20 +383,13 @@ async function executeScanJob() {
 
     ElMessage.success('扫描任务已提交')
     selectHostDialogVisible.value = false
+    latestScanRunId.value = String(runResult.runId)
 
-    startPolling(runResult.runId, {
-      successMessage: '任务执行成功',
-      errorMessage: '任务执行失败',
-      onSuccess: () => {
-        loadHostData()
-      },
-      onComplete: () => {
-        jobExecuting.value = false
-      }
-    })
+    trackScan(runResult.runId)
   } catch (error) {
     console.error('Job execution failed:', error)
     ElMessage.error(`任务执行失败: ${error.message || '未知错误'}`)
+  } finally {
     jobExecuting.value = false
   }
 }

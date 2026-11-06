@@ -361,6 +361,7 @@
       v-model="scanDialogVisible"
       :preselected-hosts="scanDialogHosts"
       @submitted="handleTaskSubmitted"
+      @completed="loadPageData"
     />
 
     <WinPatchReportDialog v-model="reportDialogVisible" :preselected-hosts="reportDialogHosts" />
