@@ -19,7 +19,6 @@ export function getWorkbenchCardLayout(width, height) {
   const gap = 20
   const minHeight = 112
   const targetHeight = 124
-  const maxHeight = 148
   const columns = Math.max(1, Math.floor((width + gap) / (260 + gap)))
   const maxRows = Math.max(1, Math.floor((height + gap) / (minHeight + gap)))
   const rows = Math.min(maxRows, Math.max(1, Math.round((height + gap) / (targetHeight + gap))))
@@ -28,8 +27,7 @@ export function getWorkbenchCardLayout(width, height) {
     rows,
     limit: width > 0 && height > 0 ? columns * rows : 0,
     gap,
-    minHeight,
-    maxHeight
+    minHeight
   }
 }
 

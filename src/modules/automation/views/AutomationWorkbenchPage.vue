@@ -1,40 +1,7 @@
 <template>
   <div class="automation-workbench ops-page-layout">
-    <!-- ── 头部：标题 + 统计卡片 ── -->
+    <!-- ── 数据指标 ── -->
     <section class="wb-header">
-      <div class="wb-header__top">
-        <div class="wb-header__summary">
-          <h2 class="wb-header__title">自动化工作台</h2>
-        </div>
-        <div v-if="canViewScripts" class="wb-header__tools">
-          <span class="wb-header__tools-label">脚本管理</span>
-          <button type="button" class="wb-header-path" @click="scriptPathDialogVisible = true">
-            <i class="fas fa-folder-open" />
-            <span class="wb-header-path__label">目标路径</span>
-            <span class="wb-header-path__value">{{ scriptDirLabel }}</span>
-          </button>
-          <button
-            type="button"
-            class="wb-header-action"
-            @click="handleLauncherAction('create-script-file')"
-          >
-            <i class="fas fa-scroll" />
-            <span>新建脚本</span>
-          </button>
-          <button
-            type="button"
-            class="wb-header-action"
-            @click="handleLauncherAction('upload-file')"
-          >
-            <i class="fas fa-upload" />
-            <span>上传文件</span>
-          </button>
-        </div>
-        <el-button circle size="small" :loading="loading" title="刷新数据" @click="refreshAll">
-          <el-icon v-show="!loading"><Refresh /></el-icon>
-        </el-button>
-      </div>
-
       <!-- ── 数据指标条 ── -->
       <div class="wb-metrics-bar">
         <button
@@ -178,6 +145,16 @@
               @click="openFilteredJobListDrawer"
             >
               查看全部
+            </el-button>
+            <el-button
+              circle
+              size="small"
+              :loading="loading"
+              title="刷新数据"
+              aria-label="刷新数据"
+              @click="refreshAll"
+            >
+              <el-icon v-show="!loading"><Refresh /></el-icon>
             </el-button>
           </div>
         </div>
@@ -674,33 +651,6 @@
       @saved="handleFlowSaved"
     />
 
-    <AddScriptDialog
-      v-if="scriptDialogVisible"
-      v-model="scriptDialogVisible"
-      repo-type="git"
-      :repo="scriptRepo"
-      :dir="scriptDir"
-      @success="handleScriptDialogSuccess"
-    />
-
-    <UploadFileDialog
-      v-if="uploadDialogVisible"
-      v-model="uploadDialogVisible"
-      repo-type="git"
-      :repo="scriptRepo"
-      :dir="scriptDir"
-      @success="handleUploadDialogSuccess"
-    />
-
-    <GfsDirectoryPickerDialog
-      v-if="scriptPathDialogVisible"
-      v-model="scriptPathDialogVisible"
-      repo-type="git"
-      :repo="scriptRepo"
-      :init-dir="scriptDir"
-      @confirm="handleScriptPathSelected"
-    />
-
     <ExecuteResultDialog
       v-if="resultDialogVisible"
       v-model:visible="resultDialogVisible"
@@ -908,15 +858,6 @@ const FlowEditor = defineAsyncComponent(
 const FlowInstanceViewer = defineAsyncComponent(
   () => import('@/modules/automation/components/job/schedule/components/FlowInstanceViewer.vue')
 )
-const AddScriptDialog = defineAsyncComponent(
-  () => import('@/modules/automation/components/script/dialogs/AddScriptDialog.vue')
-)
-const UploadFileDialog = defineAsyncComponent(
-  () => import('@/modules/automation/components/script/dialogs/UploadFileDialog.vue')
-)
-const GfsDirectoryPickerDialog = defineAsyncComponent(
-  () => import('@/modules/automation/components/script/dialogs/GfsDirectoryPickerDialog.vue')
-)
 
 const router = useRouter()
 
@@ -1024,7 +965,6 @@ const workbenchJobGridStyle = computed(() => ({
   '--wb-job-columns': workbenchJobLayout.value.columns,
   '--wb-job-rows': workbenchJobLayout.value.rows,
   '--wb-job-gap': `${workbenchJobLayout.value.gap}px`,
-  '--wb-job-max-height': `${workbenchJobLayout.value.maxHeight}px`,
   '--wb-job-min-height': `${workbenchJobLayout.value.minHeight}px`
 }))
 
@@ -1043,7 +983,6 @@ const cronStatusLabel = computed(
   () => `启用 ${cronSummary.value.enabled} / 停用 ${cronSummary.value.disabled}`
 )
 const commandJobCount = computed(() => commandJobList.value.length)
-const scriptDirLabel = computed(() => (scriptDir.value ? `~/${scriptDir.value}` : '~'))
 
 const { appletsList } = useAppletTranslation()
 
@@ -1069,12 +1008,6 @@ const flowEditorMode = ref('create')
 const flowEditorId = ref('')
 const flowInstanceViewerVisible = ref(false)
 const viewingFlowInstanceId = ref('')
-const scriptDialogVisible = ref(false)
-const scriptPathDialogVisible = ref(false)
-const uploadDialogVisible = ref(false)
-
-const scriptRepo = '$tnt'
-const scriptDir = ref('')
 
 // cron 行内操作 loading 状态：key 为 `${id}_exec` / `${id}_toggle`
 const cronActionLoading = reactive({})
@@ -1120,12 +1053,6 @@ function handleLauncherAction(action) {
       flowEditorMode.value = 'create'
       flowEditorId.value = ''
       flowEditorVisible.value = true
-    },
-    'create-script-file': () => {
-      scriptDialogVisible.value = true
-    },
-    'upload-file': () => {
-      uploadDialogVisible.value = true
     }
   }
 
@@ -1164,18 +1091,6 @@ function handleCronDialogSuccess() {
 function handleFlowSaved() {
   refreshAll()
   ElMessage.success('流程已保存。')
-}
-
-function handleScriptDialogSuccess() {
-  ElMessage.success('脚本已创建，可转为脚本运维工具或进入脚本库查看。')
-}
-
-function handleUploadDialogSuccess() {
-  ElMessage.success('文件已上传。')
-}
-
-function handleScriptPathSelected(dir = '') {
-  scriptDir.value = dir || ''
 }
 
 function openCommandEditor(mode = 'create', command = null) {
@@ -1953,116 +1868,6 @@ onBeforeUnmount(() => {
   gap: 12px;
 }
 
-.wb-header__top {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.wb-header__summary {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.wb-header__title {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--wb-text-primary);
-  line-height: 1.4;
-}
-
-.wb-header__tools {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border: 1px solid var(--wb-panel-border);
-  border-radius: 999px;
-  background: var(--wb-panel-bg);
-  box-shadow: var(--wb-panel-shadow);
-}
-
-.wb-header__tools-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--wb-text-secondary);
-  white-space: nowrap;
-}
-
-.wb-header-path {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  max-width: 280px;
-  height: 30px;
-  padding: 0 12px;
-  border-radius: 999px;
-  border: 1px dashed #cbd5e1;
-  background: #f8fafc;
-  color: var(--wb-text-secondary);
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.15s;
-
-  &:hover {
-    border-color: #94a3b8;
-    background: #f1f5f9;
-    color: var(--wb-text-primary);
-  }
-
-  i {
-    font-size: 12px;
-    flex-shrink: 0;
-  }
-
-  &__label {
-    flex-shrink: 0;
-  }
-
-  &__value {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: var(--wb-text-primary);
-    font-weight: 500;
-  }
-}
-
-.wb-header-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 30px;
-  padding: 0 12px;
-  border-radius: 999px;
-  border: 1px solid var(--wb-panel-border);
-  background: var(--wb-bg);
-  color: var(--wb-text-secondary);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s;
-  white-space: nowrap;
-
-  i {
-    font-size: 12px;
-  }
-
-  &:hover {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
-    color: var(--wb-text-primary);
-  }
-}
-
-// ── 数据指标条（Metrics Bar） ──
 .wb-metrics-bar {
   display: flex;
   align-items: stretch;
@@ -2231,6 +2036,7 @@ onBeforeUnmount(() => {
 
   &__header {
     display: flex;
+    flex-shrink: 0;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
@@ -2244,6 +2050,7 @@ onBeforeUnmount(() => {
 
     &-actions {
       display: flex;
+      align-items: center;
       gap: 4px;
       flex-wrap: wrap;
       justify-content: flex-end;
@@ -2604,7 +2411,6 @@ onBeforeUnmount(() => {
   position: relative;
   flex-direction: column;
   min-height: var(--wb-job-min-height, 112px);
-  max-height: var(--wb-job-max-height, 148px);
   min-width: 0;
   border: 1px solid var(--wb-panel-border, #e2e8f0);
   border-radius: 10px;
@@ -2786,6 +2592,7 @@ onBeforeUnmount(() => {
 
 .wb-job-panel-summary {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -3110,17 +2917,6 @@ onBeforeUnmount(() => {
     gap: 12px;
   }
 
-  .wb-header__top {
-    flex-wrap: wrap;
-    align-items: stretch;
-  }
-
-  .wb-header__tools {
-    width: 100%;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-  }
-
   .wb-stats {
     gap: 8px;
   }
@@ -3255,35 +3051,6 @@ html.dark .automation-workbench .wb-nav-item:hover {
   background: rgba(13, 148, 136, 0.12);
   border-color: rgba(13, 148, 136, 0.4);
   color: #2dd4bf;
-}
-
-html.dark .automation-workbench .wb-header__tools {
-  background: #1e293b;
-  border-color: #334155;
-}
-
-html.dark .automation-workbench .wb-header-path {
-  background: #253044;
-  border-color: #475569;
-  color: #94a3b8;
-}
-
-html.dark .automation-workbench .wb-header-path:hover {
-  background: #2d3d56;
-  border-color: #64748b;
-  color: #e2e8f0;
-}
-
-html.dark .automation-workbench .wb-header-action {
-  background: #253044;
-  border-color: #334155;
-  color: #94a3b8;
-}
-
-html.dark .automation-workbench .wb-header-action:hover {
-  background: #2d3d56;
-  border-color: #475569;
-  color: #e2e8f0;
 }
 
 html.dark .automation-workbench .wb-workbench-job-card {
