@@ -70,6 +70,27 @@ describe('自动化工作台业务数据展示', () => {
     }
   })
 
+  it('低分辨率紧凑模式容纳四列并增加完整行，保留内容高度下限', () => {
+    expect(getWorkbenchCardLayout(1050, 490)).toMatchObject({ columns: 3, rows: 3, limit: 9 })
+    expect(getWorkbenchCardLayout(1050, 490, true)).toMatchObject({
+      columns: 4,
+      rows: 4,
+      limit: 16,
+      gap: 12,
+      minHeight: 112
+    })
+    expect(getWorkbenchCardLayout(995, 490, true).columns).toBe(3)
+    expect(getWorkbenchCardLayout(996, 490, true).columns).toBe(4)
+    expect(getWorkbenchCardLayout(200, 100, true)).toMatchObject({ columns: 1, rows: 1 })
+    for (let height = 112; height <= 814; height++) {
+      const layout = getWorkbenchCardLayout(1050, height, true)
+      expect((height - (layout.rows - 1) * layout.gap) / layout.rows).toBeGreaterThanOrEqual(
+        layout.minHeight - 1e-6
+      )
+    }
+    expect(getWorkbenchCardLayout(1050, 490, false)).toEqual(getWorkbenchCardLayout(1050, 490))
+  })
+
   it('类型筛选先于容量截取，排序不改变接口数据和同一时间下的原有顺序', () => {
     const rows = [
       { id: 'old', type: 'script', updatedAt: '2025-07-08T12:00:00Z' },

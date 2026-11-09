@@ -15,11 +15,12 @@ export function getWorkbenchJobType(record) {
   return JOB_TYPES[type] || { label: type || '类型未知', tag: 'info' }
 }
 
-export function getWorkbenchCardLayout(width, height) {
-  const gap = 20
+export function getWorkbenchCardLayout(width, height, compact = false) {
+  const gap = compact ? 12 : 20
   const minHeight = 112
-  const targetHeight = 124
-  const columns = Math.max(1, Math.floor((width + gap) / (260 + gap)))
+  const targetHeight = compact ? minHeight : 124
+  const minWidth = compact ? 240 : 260
+  const columns = Math.max(1, Math.floor((width + gap) / (minWidth + gap)))
   const maxRows = Math.max(1, Math.floor((height + gap) / (minHeight + gap)))
   const rows = Math.min(maxRows, Math.max(1, Math.round((height + gap) / (targetHeight + gap))))
   return {

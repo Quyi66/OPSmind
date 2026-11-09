@@ -919,6 +919,8 @@ const RUN_FEEDBACK_RETRY_DELAYS = [1200, 3200, 6500]
 const jobViewportRef = ref(null)
 const jobViewportWidth = ref(0)
 const jobViewportHeight = ref(0)
+const compactJobCards = ref(false)
+let compactJobCardsMedia
 let jobResizeObserver
 
 const totalJobCount = computed(() => jobList.value.length)
@@ -959,7 +961,9 @@ watch(workbenchViewMode, (mode) => {
   }
 })
 
-const workbenchJobLayout = computed(() => getWorkbenchCardLayout(jobViewportWidth.value, jobViewportHeight.value))
+const workbenchJobLayout = computed(() =>
+  getWorkbenchCardLayout(jobViewportWidth.value, jobViewportHeight.value, compactJobCards.value)
+)
 const workbenchJobLimit = computed(() => workbenchJobLayout.value.limit)
 const workbenchJobGridStyle = computed(() => ({
   '--wb-job-columns': workbenchJobLayout.value.columns,
@@ -1803,7 +1807,14 @@ async function openScriptReviewDrawer() {
   }
 }
 
+function updateCompactJobCards() {
+  compactJobCards.value = compactJobCardsMedia.matches
+}
+
 onMounted(() => {
+  compactJobCardsMedia = window.matchMedia('(max-width: 1383px) and (max-height: 815px)')
+  updateCompactJobCards()
+  compactJobCardsMedia.addEventListener('change', updateCompactJobCards)
   observeJobViewport()
   refreshAll()
 })
@@ -1812,6 +1823,7 @@ onActivated(observeJobViewport)
 onDeactivated(() => jobResizeObserver?.disconnect())
 
 onBeforeUnmount(() => {
+  compactJobCardsMedia?.removeEventListener('change', updateCompactJobCards)
   jobResizeObserver?.disconnect()
   clearScheduledWorkbenchRunFeedback()
 })
