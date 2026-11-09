@@ -84,7 +84,23 @@
             </template>
           </el-table-column>
 
-          <!-- 3. 自动化纳管 -->
+          <!-- 3. 已纳管设备数 -->
+          <el-table-column prop="count" label="已纳管设备数" width="150" align="left" sortable>
+            <template #default="{ row }">
+              <el-tag
+                size="small"
+                type="primary"
+                round
+                class="count-tag-badge clickable-tag"
+                title="点击查看该类型下的设备清单"
+                @click="handleViewModel(row)"
+              >
+                {{ row.count ?? 0 }} 台
+              </el-tag>
+            </template>
+          </el-table-column>
+
+          <!-- 4. 自动化纳管 -->
           <el-table-column prop="is_auto" label="自动化纳管" width="150" align="left">
             <template #default="{ row }">
               <el-tag
@@ -98,22 +114,6 @@
                   :class="row.is_auto === 1 ? 'fa-check-circle' : 'fa-minus-circle'"
                 ></i>
                 <span style="margin-left: 4px">{{ row.is_auto === 1 ? '支持' : '不支持' }}</span>
-              </el-tag>
-            </template>
-          </el-table-column>
-
-          <!-- 4. 已纳管设备数 -->
-          <el-table-column prop="count" label="已纳管设备数" width="150" align="left" sortable>
-            <template #default="{ row }">
-              <el-tag
-                size="small"
-                type="primary"
-                round
-                class="count-tag-badge clickable-tag"
-                title="点击查看该类型下的设备清单"
-                @click="handleViewModel(row)"
-              >
-                {{ row.count ?? 0 }} 台
               </el-tag>
             </template>
           </el-table-column>
