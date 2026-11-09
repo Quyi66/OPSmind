@@ -5,6 +5,15 @@
 
 export const ACM_ROUTE_DEFS = [
   {
+    key: 'hostHealthCheck',
+    path: 'hostHealthCheck',
+    name: 'acm-hostHealthCheck',
+    title: '系统健康度',
+    navLabel: '系统健康度',
+    icon: 'fad fa-fw fa-heartbeat',
+    component: () => import('@/modules/patches/views/HostHealthCheckPage.vue')
+  },
+  {
     key: 'overview',
     path: 'overview',
     name: 'acm-overview',
@@ -21,15 +30,6 @@ export const ACM_ROUTE_DEFS = [
     navLabel: '设备清单',
     icon: 'fad fa-fw fa-server',
     component: () => import('./views/AssetInfoPage.vue')
-  },
-  {
-    key: 'hostHealthCheck',
-    path: 'hostHealthCheck',
-    name: 'acm-hostHealthCheck',
-    title: '主机健康巡检',
-    navLabel: '健康巡检',
-    icon: 'fad fa-fw fa-heartbeat',
-    component: () => import('@/modules/patches/views/HostHealthCheckPage.vue')
   },
   {
     key: 'exception',
@@ -72,7 +72,7 @@ export const ACM_ROUTE_DEFS = [
     path: 'permission',
     name: 'acm-permission',
     title: '访问控制',
-    navLabel: '访问控制',
+    // 暂时隐藏菜单入口，保留路由和页面功能。
     icon: 'fad fa-fw fa-user-lock',
     component: () => import('./views/ResourcePermissionPage.vue')
   },
