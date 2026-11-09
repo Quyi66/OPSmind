@@ -80,9 +80,9 @@ export const ACM_ROUTE_DEFS = [
     key: 'model',
     path: 'model',
     name: 'acm-model',
-    title: '模型定义',
-    navLabel: '模型定义',
-    icon: 'fad fa-fw fa-project-diagram',
+    title: '资产类型',
+    navLabel: '资产类型',
+    icon: 'fad fa-fw fa-cubes',
     component: () => import('./views/AssetModelPage.vue')
   }
 ]

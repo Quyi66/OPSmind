@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="导入模型"
+    title="导入资产类型"
     width="600px"
     :close-on-click-modal="false"
     @closed="handleClosed"
@@ -35,9 +35,9 @@
           导入说明：
         </p>
         <ul>
-          <li>请使用标准的模型导入模板</li>
-          <li>模型代码必须唯一且以字母开头</li>
-          <li>导入会覆盖同名的模型配置</li>
+          <li>请使用标准的资产类型导入模板</li>
+          <li>类型编码必须唯一且以英文字母开头</li>
+          <li>导入会更新覆盖同编码的类型配置</li>
         </ul>
       </div>
     </div>

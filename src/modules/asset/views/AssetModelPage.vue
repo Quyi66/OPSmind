@@ -1,24 +1,46 @@
 <template>
   <div class="ops-page-layout">
-    <!-- 编辑器视图 -->
-    <ModelEditor
-      v-if="showEditor"
-      :model-id="editorModelId"
-      @back="handleEditorBack"
-      @saved="handleEditorSaved"
-    />
+    <div class="content-view-area">
+      <!-- 筛选区域 -->
+      <div class="ops-filter-bar">
+        <el-form :inline="true" size="small" @submit.prevent>
+          <el-form-item label="自动化纳管">
+            <el-select v-model="autoFilter" style="width: 120px" @change="handleSearch">
+              <el-option label="全部" value="all" />
+              <el-option label="支持" :value="1" />
+              <el-option label="不支持" :value="0" />
+            </el-select>
+          </el-form-item>
 
-    <!-- 列表视图 -->
-    <template v-else>
+          <el-form-item label="关键词">
+            <el-input
+              v-model="keyword"
+              placeholder="搜索类型名称或编码..."
+              clearable
+              style="width: 220px"
+              @keyup.enter="handleSearch"
+              @clear="handleSearch"
+            />
+          </el-form-item>
+
+          <el-form-item class="filter-actions">
+            <el-button type="primary" @click="handleSearch">
+              <el-icon><Search /></el-icon>
+              搜索
+            </el-button>
+            <el-button @click="handleReset">
+              <el-icon><RefreshRight /></el-icon>
+              重置
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+
       <!-- 操作按钮区域 -->
       <div class="ops-action-bar">
         <el-button type="primary" size="small" @click="handleAddModel">
           <i class="fa fa-plus" style="margin-right: 4px"></i>
-          新建模型定义
-        </el-button>
-        <el-button size="small" @click="handleImportModel" plain>
-          <i class="fa fa-file-import" style="margin-right: 4px"></i>
-          导入模型
+          新建资产类型
         </el-button>
         <span style="flex: 1"></span>
         <el-button
@@ -26,8 +48,8 @@
           circle
           size="small"
           :loading="loading"
-          @click="loadModelList"
           title="刷新"
+          @click="loadModelList"
         >
           <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
@@ -41,8 +63,8 @@
           height="100%"
           row-class-name="modern-table-row"
         >
-          <!-- 1. 模型名称 -->
-          <el-table-column prop="title" label="模型名称" min-width="160" fixed="left">
+          <!-- 1. 类型名称 -->
+          <el-table-column prop="title" label="类型名称" min-width="180" fixed="left">
             <template #default="{ row }">
               <el-link
                 type="primary"
@@ -50,17 +72,20 @@
                 class="model-name-link"
                 @click="handleViewModel(row)"
               >
-                <i class="fa fa-cube model-icon-decorator"></i>
                 {{ row.title }}
               </el-link>
             </template>
           </el-table-column>
 
-          <!-- 2. 资产代码 -->
-          <el-table-column prop="code" label="资产类型代码" width="160" />
+          <!-- 2. 类型编码 -->
+          <el-table-column prop="code" label="类型编码" min-width="160">
+            <template #default="{ row }">
+              <span class="code-text">{{ row.code || '-' }}</span>
+            </template>
+          </el-table-column>
 
-          <!-- 3. 是否自动化 -->
-          <el-table-column prop="is_auto" label="是否自动化管理" width="150" align="left">
+          <!-- 3. 自动化纳管 -->
+          <el-table-column prop="is_auto" label="自动化纳管" width="150" align="left">
             <template #default="{ row }">
               <el-tag
                 :type="row.is_auto === 1 ? 'success' : 'info'"
@@ -72,31 +97,41 @@
                   class="fa"
                   :class="row.is_auto === 1 ? 'fa-check-circle' : 'fa-minus-circle'"
                 ></i>
-                <span style="margin-left: 4px">{{ row.is_auto === 1 ? '是' : '否' }}</span>
+                <span style="margin-left: 4px">{{ row.is_auto === 1 ? '支持' : '不支持' }}</span>
               </el-tag>
             </template>
           </el-table-column>
 
-          <!-- 4. 资产数量 -->
-          <el-table-column prop="count" label="已登记资产数" width="140" align="left">
+          <!-- 4. 已纳管设备数 -->
+          <el-table-column prop="count" label="已纳管设备数" width="150" align="left" sortable>
             <template #default="{ row }">
-              <el-tag size="small" type="primary" round class="count-tag-badge">
-                {{ row.count }} 台
+              <el-tag
+                size="small"
+                type="primary"
+                round
+                class="count-tag-badge clickable-tag"
+                title="点击查看该类型下的设备清单"
+                @click="handleViewModel(row)"
+              >
+                {{ row.count ?? 0 }} 台
               </el-tag>
             </template>
           </el-table-column>
 
-          <!-- 5. 最后更新 -->
-          <el-table-column prop="updated_at" label="最后修改时间" min-width="180">
+          <!-- 5. 更新时间 -->
+          <el-table-column prop="updated_at" label="更新时间" min-width="180" sortable>
             <template #default="{ row }">
               <span>{{ formatDateTime(row.updated_at) }}</span>
             </template>
           </el-table-column>
 
           <!-- 6. 操作 -->
-          <el-table-column label="操作" width="120" align="left" fixed="right">
+          <el-table-column label="操作" width="170" align="left" fixed="right">
             <template #default="{ row }">
               <div class="action-cell">
+                <el-button text type="primary" size="small" @click="handleViewModel(row)">
+                  查看设备
+                </el-button>
                 <el-button text type="primary" size="small" @click="handleEditModel(row)">
                   编辑
                 </el-button>
@@ -115,69 +150,67 @@
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.size"
           :page-sizes="[10, 20, 50, 100]"
-          :total="pagination.total"
+          :total="filteredModelList.length"
           layout="total, sizes, prev, pager, next, jumper"
           background
           @size-change="handlePageSizeChange"
         />
       </div>
+    </div>
 
-      <!-- 导入模型弹窗 -->
-      <ImportModelDialog v-model="importModelDialogVisible" @saved="loadModelList" />
+    <!-- 新建 / 编辑资产类型弹窗 -->
+    <ModelFormDialog
+      v-model="modelFormDialogVisible"
+      :model-data="currentModel"
+      @saved="loadModelList"
+    />
 
-      <!-- 模型详情弹窗 -->
-      <ModelDetailDialog v-model="modelDetailDialogVisible" :model-data="currentModel" />
-    </template>
+    <!-- 导入资产类型弹窗 -->
+    <ImportModelDialog v-model="importModelDialogVisible" @saved="loadModelList" />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, inject } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, computed, onMounted, inject } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { assetApi } from '../api'
 import { apiService } from '@/core/api'
 import ImportModelDialog from '../components/model/ImportModelDialog.vue'
-import ModelDetailDialog from '../components/model/ModelDetailDialog.vue'
-import ModelEditor from './ModelEditor.vue'
+import ModelFormDialog from '../components/model/ModelFormDialog.vue'
 import { formatDateTime } from '../utils/helpers'
 
-const route = useRoute()
 const router = useRouter()
 
 // 从父组件注入方法
 const handleViewAssetTypeFn = inject('handleViewAssetType', null)
 
-// 是否显示编辑器
-const showEditor = computed(() => {
-  return route.query.editor === 'model'
-})
-
-// 编辑器的模型ID
-const editorModelId = computed(() => {
-  return route.query.modelId || 'new'
-})
-
 const loading = ref(false)
 const keyword = ref('')
+const autoFilter = ref('all')
 const modelList = ref([])
 const pagination = ref({ page: 1, size: 10, total: 0 })
 
 // 弹窗状态
 const importModelDialogVisible = ref(false)
-const modelDetailDialogVisible = ref(false)
+const modelFormDialogVisible = ref(false)
 const currentModel = ref(null)
 
 // 过滤后的列表
 const filteredModelList = computed(() => {
-  if (!keyword.value) {
-    return modelList.value
-  }
-  const kw = keyword.value.toLowerCase()
-  return modelList.value.filter(
-    item => item.title?.toLowerCase().includes(kw) || item.code?.toLowerCase().includes(kw)
-  )
+  return modelList.value.filter(item => {
+    if (autoFilter.value !== 'all' && Number(item.is_auto) !== Number(autoFilter.value)) {
+      return false
+    }
+    if (keyword.value) {
+      const kw = keyword.value.trim().toLowerCase()
+      const matchTitle = item.title?.toLowerCase().includes(kw)
+      const matchCode = item.code?.toLowerCase().includes(kw)
+      if (!matchTitle && !matchCode) return false
+    }
+    return true
+  })
 })
 
 const paginatedModelList = computed(() => {
@@ -189,17 +222,7 @@ function handlePageSizeChange() {
   pagination.value.page = 1
 }
 
-// 分页信息
-const paginationInfo = computed(() => {
-  const total = filteredModelList.value.length
-  const start = (pagination.value.page - 1) * pagination.value.size + 1
-  const end = Math.min(pagination.value.page * pagination.value.size, total)
-  if (total === 0) return '0 - 0 / 0'
-  return `${start} - ${end} / ${total}`
-})
-
-
-// 加载模型列表
+// 加载资产类型列表
 const loadModelList = async () => {
   loading.value = true
   try {
@@ -207,8 +230,8 @@ const loadModelList = async () => {
     modelList.value = res?.records || []
     pagination.value.total = modelList.value.length
   } catch (error) {
-    console.error('加载模型列表失败:', error)
-    ElMessage.error('加载模型列表失败')
+    console.error('加载资产类型列表失败:', error)
+    ElMessage.error('加载资产类型列表失败')
   } finally {
     loading.value = false
   }
@@ -219,49 +242,45 @@ const handleSearch = () => {
   pagination.value.page = 1
 }
 
-// 添加模型 - 打开编辑器页面（新建模式）
-const handleAddModel = () => {
-  router.push({
-    path: '/acm/model',
-    query: { editor: 'model', modelId: 'new' }
-  })
+// 重置筛选
+const handleReset = () => {
+  keyword.value = ''
+  autoFilter.value = 'all'
+  pagination.value.page = 1
 }
 
-// 导入模型
+// 新建资产类型 - 打开弹窗
+const handleAddModel = () => {
+  currentModel.value = null
+  modelFormDialogVisible.value = true
+}
+
+// 导入资产类型
 const handleImportModel = () => {
   importModelDialogVisible.value = true
 }
 
-// 查看模型详情 - 跳转到资产信息页面
+// 查看该类型下的设备清单
 const handleViewModel = row => {
   if (handleViewAssetTypeFn) {
     handleViewAssetTypeFn(row.code)
+  } else {
+    router.push({
+      path: '/acm/info',
+      query: { type: row.code }
+    })
   }
 }
 
-// 编辑模型 - 打开编辑器页面
+// 编辑资产类型 - 打开弹窗
 const handleEditModel = row => {
-  const modelId = row.id || row.cit_id || row.citId
-  router.push({
-    path: '/acm/model',
-    query: { editor: 'model', modelId }
-  })
+  currentModel.value = { ...row }
+  modelFormDialogVisible.value = true
 }
 
-// 编辑器返回
-const handleEditorBack = () => {
-  router.push({ path: '/acm/model' })
-}
-
-// 编辑器保存后
-const handleEditorSaved = () => {
-  router.push({ path: '/acm/model' })
-  loadModelList()
-}
-
-// 删除模型
+// 删除资产类型
 const handleDeleteModel = row => {
-  ElMessageBox.confirm('确定要删除该模型定义吗？删除后不可恢复。', '删除确认', {
+  ElMessageBox.confirm(`确定要删除资产类型“${row.title || row.code}”吗？删除后不可恢复。`, '删除确认', {
     closeOnClickModal: false,
     closeOnPressEscape: false,
     type: 'warning'
@@ -283,16 +302,7 @@ const handleDeleteModel = row => {
 
 // 初始化
 onMounted(() => {
-  if (!showEditor.value) {
-    loadModelList()
-  }
-})
-
-// 监听路由变化，当从编辑器返回时刷新列表
-watch(showEditor, (newVal, oldVal) => {
-  if (!newVal && oldVal) {
-    loadModelList()
-  }
+  loadModelList()
 })
 
 // 暴露方法供父组件调用
@@ -305,14 +315,11 @@ defineExpose({
 .model-name-link {
   font-size: 13px;
   font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
 }
 
-.model-icon-decorator {
-  color: var(--el-color-primary);
-  font-size: 12px;
+.code-text {
+  font-family: var(--el-font-family-monospace, monospace);
+  color: var(--el-text-color-regular);
 }
 
 .auto-badge-tag {
@@ -325,5 +332,14 @@ defineExpose({
 
 .count-tag-badge {
   font-weight: 500;
+}
+
+.clickable-tag {
+  cursor: pointer;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 0.85;
+  }
 }
 </style>
