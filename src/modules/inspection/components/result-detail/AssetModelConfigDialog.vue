@@ -1,22 +1,23 @@
 <template>
   <el-dialog
     :model-value="visible"
-    title="导出配置"
-    width="960px"
+    title="报告导出列配置"
+    width="940px"
     destroy-on-close
     @close="$emit('close')"
     :close-on-press-escape="false"
     :close-on-click-modal="false"
   >
     <div class="asset-model-config-dialog">
-      <el-alert type="success" :closable="false" show-icon class="info-alert">
-        <template #title>
-          <strong>导出配置说明</strong>
-        </template>
-        <template #default>
-          <div>选择需要在巡检结果中导出的资产模型字段，修改后点击底部保存按钮生效。</div>
-        </template>
-      </el-alert>
+      <div class="config-banner">
+        <div class="banner-icon">
+          <i class="fas fa-columns" aria-hidden="true"></i>
+        </div>
+        <div class="banner-text">
+          <strong>导出资产属性列配置</strong>
+          <p>勾选需要在 Excel 巡检报告中附带导出的 CMDB 资产模型字段，修改后点击保存即可生效。</p>
+        </div>
+      </div>
 
       <div v-loading="loading || saving" class="model-list">
         <template v-if="assetModelTypes.length > 0">
@@ -24,13 +25,16 @@
             v-for="modelType in assetModelTypes"
             :key="modelType"
             class="model-card"
-            shadow="hover"
+            shadow="never"
           >
             <template #header>
               <div class="card-header">
-                <span class="card-title">{{ modelType }}</span>
-                <el-tag type="info" size="small">
-                  {{ getSelectedCount(modelType) }} / {{ assetModelData[modelType]?.length || 0 }}
+                <span class="card-title">
+                  <i class="fas fa-cube" aria-hidden="true"></i>
+                  {{ modelType }}
+                </span>
+                <el-tag type="primary" effect="light" size="small">
+                  已选 {{ getSelectedCount(modelType) }} / {{ assetModelData[modelType]?.length || 0 }} 项
                 </el-tag>
               </div>
             </template>
@@ -265,12 +269,38 @@ watch(
   min-height: 200px;
 }
 
-.info-alert {
-  margin-bottom: 16px;
+.config-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  background: var(--el-color-primary-light-9);
+  border: 1px solid var(--el-color-primary-light-7);
+  border-radius: 8px;
 
-  :deep(.el-alert__content) {
-    .el-alert__title {
-      font-size: 14px;
+  .banner-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: var(--el-bg-color);
+    color: var(--el-color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+
+  .banner-text {
+    strong {
+      font-size: 13px;
+      color: var(--el-text-color-primary);
+    }
+    p {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: var(--el-text-color-regular);
     }
   }
 }
@@ -278,17 +308,20 @@ watch(
 .model-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  max-height: 60vh;
+  gap: 12px;
+  max-height: 58vh;
   overflow: auto;
   padding-right: 4px;
 }
 
 .model-card {
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+
   :deep(.el-card__header) {
-    padding: 12px 20px;
-    background: var(--el-color-success-light-9);
-    border-bottom: 1px solid var(--el-color-success-light-7);
+    padding: 10px 16px;
+    background: var(--el-fill-color-lighter);
+    border-bottom: 1px solid var(--el-border-color-lighter);
   }
 
   .card-header {
@@ -297,14 +330,20 @@ watch(
     align-items: center;
 
     .card-title {
-      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
       font-weight: 600;
-      color: var(--el-color-success);
+      color: var(--el-text-color-primary);
+      i {
+        color: var(--el-color-primary);
+      }
     }
   }
 
   :deep(.el-card__body) {
-    padding: 16px 20px;
+    padding: 14px 16px;
   }
 }
 

@@ -1,52 +1,84 @@
 <template>
-  <div class="ops-page-layout" style="padding: 0">
-    <!-- 顶部导航栏 -->
-    <nav class="page-navbar">
-      <div class="navbar-left">
-        <el-breadcrumb separator=">">
-          <el-breadcrumb-item>
-            <a @click="goBack">执行记录</a>
-          </el-breadcrumb-item>
-          <el-breadcrumb-item>{{ jobInfo.templateName || '架构图' }}</el-breadcrumb-item>
-        </el-breadcrumb>
-      </div>
-      <div class="navbar-right">
-        <el-button @click="exportExcel">
-          <i class="fa fa-file-export"></i>
-          导出结果
-        </el-button>
-      </div>
-    </nav>
+  <div class="ops-page-layout structural-diagram-page">
+    <!-- 顶部导航与操作卡片 -->
+    <section class="topology-header-card">
+      <nav class="page-navbar">
+        <div class="navbar-left">
+          <el-breadcrumb separator="/">
+            <el-breadcrumb-item>
+              <a @click="goBack">执行记录</a>
+            </el-breadcrumb-item>
+            <el-breadcrumb-item>{{ jobInfo.templateName || '业务拓扑分析' }}</el-breadcrumb-item>
+          </el-breadcrumb>
+        </div>
+        <div class="navbar-right">
+          <el-button size="small" @click="downloadImage">
+            <i class="fa fa-image" aria-hidden="true"></i>
+            保存拓扑图
+          </el-button>
+          <el-button type="primary" plain size="small" @click="exportExcel">
+            <i class="fa fa-file-export" aria-hidden="true"></i>
+            导出报告 (Excel)
+          </el-button>
+        </div>
+      </nav>
 
-    <!-- KPI 指标卡片 -->
-    <el-alert v-if="kpiError" :title="kpiError" type="error" :closable="false" show-icon>
-      <el-button link type="primary" @click="loadKpiData">重试</el-button>
-    </el-alert>
-    <div v-loading="kpiLoading" class="kpi-container">
-      <div
-        v-for="item in kpiList"
-        :key="item.pageParam"
-        class="kpi-card"
-        :class="getKpiTheme(item)"
-        @click="handleKpiClick(item)"
-      >
-        <div class="kpi-icon">
-          <i :class="['fa', item.icon]"></i>
+      <!-- KPI 指标卡片 -->
+      <el-alert v-if="kpiError" :title="kpiError" type="error" :closable="false" show-icon>
+        <el-button link type="primary" @click="loadKpiData">重试</el-button>
+      </el-alert>
+
+      <div v-loading="kpiLoading" class="kpi-section-body">
+        <div class="kpi-section-heading">
+          <span class="kpi-heading-title">检查指标汇总</span>
+          <span class="kpi-heading-hint">点击任意指标数值可查看对应清单</span>
         </div>
-        <div class="kpi-content">
-          <div class="kpi-value">{{ item.value }}</div>
-          <div class="kpi-title">{{ item.name }}</div>
+        <div class="kpi-container">
+          <div
+            v-for="item in kpiList"
+            :key="item.pageParam"
+            class="kpi-card"
+            :class="getKpiTheme(item)"
+            @click="handleKpiClick(item)"
+          >
+            <span class="kpi-title">
+              <span class="kpi-dot"></span>
+              {{ item.name }}
+            </span>
+            <div class="kpi-content">
+              <div class="kpi-value">{{ item.value }}</div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- 结构图区域 -->
     <el-alert v-if="diagramError" :title="diagramError" type="error" :closable="false" show-icon>
       <el-button link type="primary" @click="loadDiagramData">重试</el-button>
     </el-alert>
-    <div v-loading="loading" class="diagram-container">
+
+    <section v-loading="loading" class="diagram-container">
+      <div class="diagram-toolbar">
+        <div class="diagram-title">
+          <h2>业务服务异常传导拓扑</h2>
+          <span class="diagram-subtitle">
+            展示一级业务、二级系统与异常巡检项的关联关系（红色胶囊数字代表异常计数）
+          </span>
+        </div>
+        <div class="diagram-legend">
+          <span class="legend-chip">
+            <i class="fas fa-mouse-pointer" aria-hidden="true"></i>
+            双击一级业务节点：查看二级业务汇总
+          </span>
+          <span class="legend-chip">
+            <i class="fas fa-hand-pointer" aria-hidden="true"></i>
+            单击二级业务节点：查看异常检查项与主机
+          </span>
+        </div>
+      </div>
       <div ref="chartRef" class="echart-container"></div>
-    </div>
+    </section>
 
     <!-- 一级业务详情弹窗 -->
     <el-dialog
@@ -768,16 +800,16 @@ function renderChart() {
         bottom: '2%',
         right: '40%',
         itemStyle: {
-          borderColor: '#99512F',
+          borderColor: '#3b82f6',
           borderWidth: 2,
           backgroundColor: '#ffffff'
         },
         lineStyle: {
-          color: '#99512F',
-          width: 2,
-          curveness: 0.3
+          color: '#94a3b8',
+          width: 1.5,
+          curveness: 0.35
         },
-        symbolSize: 7,
+        symbolSize: 8,
         label: {
           position: 'left',
           formatter: params => {
@@ -802,31 +834,33 @@ function renderChart() {
               verticalAlign: 'middle',
               align: 'right',
               borderRadius: 6,
-              padding: [5, 10, 5, 10],
-              backgroundColor: '#ff5e63',
-              color: '#ffffff'
+              padding: [6, 12, 6, 12],
+              backgroundColor: '#1e293b',
+              color: '#ffffff',
+              fontWeight: 600
             },
             root_count: {
-              padding: [7, 10, 4, 8],
+              padding: [6, 10, 4, 8],
               color: '#ffffff',
-              backgroundColor: '#dc3545',
+              backgroundColor: '#ef4444',
               fontWeight: 'bold',
-              borderRadius: 50
+              borderRadius: 999
             },
             sub_count: {
-              padding: [7, 10, 4, 8],
+              padding: [6, 10, 4, 8],
               color: '#ffffff',
-              backgroundColor: '#dc3545',
+              backgroundColor: '#ef4444',
               fontWeight: 'bold',
-              borderRadius: 50
+              borderRadius: 999
             },
             sub_name: {
               verticalAlign: 'middle',
               align: 'right',
               borderRadius: 6,
-              padding: [5, 10, 5, 10],
-              backgroundColor: '#ff5e63',
-              color: '#ffffff'
+              padding: [6, 12, 6, 12],
+              backgroundColor: '#2563eb',
+              color: '#ffffff',
+              fontWeight: 500
             }
           }
         },
@@ -838,23 +872,23 @@ function renderChart() {
             },
             rich: {
               count: {
-                padding: [7, 10, 4, 8],
+                padding: [6, 10, 4, 8],
                 color: '#ffffff',
-                backgroundColor: '#dc3545',
+                backgroundColor: '#ef4444',
                 fontWeight: 'bold',
-                borderRadius: 50
+                borderRadius: 999
               },
               name: {
                 verticalAlign: 'middle',
                 align: 'left',
-                fontSize: 10,
-                fontWeight: 400,
-                borderColor: '#99512F',
+                fontSize: 11,
+                fontWeight: 500,
+                borderColor: '#cbd5e1',
                 borderWidth: 1,
                 borderRadius: 6,
                 padding: [5, 10, 5, 10],
-                backgroundColor: '#ffffff',
-                color: 'black'
+                backgroundColor: '#f8fafc',
+                color: '#0f172a'
               }
             }
           }
@@ -1304,8 +1338,21 @@ onUnmounted(() => {
 .structural-diagram-page {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  background: var(--el-bg-color-page);
+  gap: 16px;
+  min-width: 0;
+  overflow: auto;
+}
+
+.topology-header-card,
+.diagram-container {
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+  min-width: 0;
+}
+
+.topology-header-card {
+  flex-shrink: 0;
 }
 
 // 顶部导航栏
@@ -1313,13 +1360,14 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  background: var(--el-bg-color);
-  border-bottom: 1px solid var(--el-border-color-light);
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
 
   .navbar-left {
     :deep(.el-breadcrumb) {
-      font-size: 14px;
+      font-size: 13px;
 
       .el-breadcrumb__item {
         .el-breadcrumb__inner {
@@ -1337,7 +1385,7 @@ onUnmounted(() => {
         &:last-child {
           .el-breadcrumb__inner {
             color: var(--el-text-color-primary);
-            font-weight: 500;
+            font-weight: 600;
           }
         }
       }
@@ -1347,104 +1395,196 @@ onUnmounted(() => {
   .navbar-right {
     display: flex;
     gap: 8px;
+    i {
+      margin-right: 4px;
+    }
+  }
+}
+
+.kpi-section-body {
+  padding: 12px 16px;
+}
+
+.kpi-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+
+  .kpi-heading-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--el-text-color-primary);
+  }
+
+  .kpi-heading-hint {
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
   }
 }
 
 // KPI 容器
 .kpi-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 16px;
-  background: var(--el-bg-color);
-  border-bottom: 1px solid var(--el-border-color-light);
+  display: grid;
+  grid-template-columns: repeat(8, minmax(110px, 1fr));
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 6px;
+  background: var(--el-fill-color-blank);
+  overflow: hidden;
 }
 
 .kpi-card {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 8px;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 10px 14px;
+  background: transparent;
+  border-right: 1px solid var(--el-border-color-lighter);
   cursor: pointer;
-  transition: all 0.2s;
-  min-width: 140px;
+  transition: background-color 0.15s ease;
 
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  &:last-child {
+    border-right: none;
   }
 
-  .kpi-icon {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
+  &:hover {
+    background: var(--el-fill-color-light);
+  }
 
-    i {
-      font-size: 18px;
-      color: inherit;
-    }
+  .kpi-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--el-text-color-regular);
+    white-space: nowrap;
+  }
+
+  .kpi-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
   }
 
   .kpi-content {
     .kpi-value {
-      font-size: 24px;
-      font-weight: bold;
-      line-height: 1.2;
-    }
-
-    .kpi-title {
-      font-size: 12px;
-      opacity: 0.9;
+      font-size: 20px;
+      font-weight: 600;
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+      color: var(--el-text-color-primary);
     }
   }
 
-  // 主题样式
   &.theme-success {
-    background: #28a745;
-    color: #fff;
+    .kpi-dot {
+      background: var(--el-color-success);
+    }
   }
 
   &.theme-danger {
-    background: #dc3545;
-    color: #fff;
+    .kpi-dot {
+      background: var(--el-color-danger);
+    }
+    .kpi-value {
+      color: var(--el-color-danger);
+    }
   }
 
   &.theme-info {
-    background: #00b0f0;
-    color: #fff;
+    .kpi-dot {
+      background: var(--el-color-warning);
+    }
   }
 
   &.theme-primary {
-    background: #206933;
-    color: #fff;
+    .kpi-dot {
+      background: var(--el-color-primary);
+    }
   }
 
   &.theme-secondary {
-    background: #6c757d;
-    color: #fff;
+    .kpi-dot {
+      background: var(--el-text-color-secondary);
+    }
+  }
+}
+
+@media (max-width: 1280px) {
+  .kpi-container {
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
+  }
+  .kpi-card {
+    border-bottom: 1px solid var(--el-border-color-lighter);
   }
 }
 
 // 图表容器
 .diagram-container {
-  flex: 1;
-  padding: 16px;
-  // overflow: auto;
-  background: var(--el-bg-color);
-  margin: 16px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  // 保留图表的内容高度，超出可用空间时由页面滚动。
+  flex: 1 0 auto;
+  overflow: hidden;
+}
+
+.diagram-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+.diagram-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  h2 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--el-text-color-primary);
+  }
+  .diagram-subtitle {
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+  }
+}
+
+.diagram-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.legend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--el-text-color-regular);
+  background: var(--el-fill-color-lighter);
+  border: 1px solid var(--el-border-color-lighter);
+  padding: 4px 10px;
+  border-radius: 999px;
+  i {
+    color: var(--el-color-primary);
+  }
 }
 
 .echart-container {
+  flex: 1 0 auto;
   width: 100%;
   min-height: 620px;
-  height: 100%;
+  height: 620px;
+  padding: 12px;
 }
 
 // 弹窗统计信息

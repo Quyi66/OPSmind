@@ -1,8 +1,8 @@
 <template>
   <el-dialog
     :model-value="visible"
-    title="黑名单列表"
-    width="900px"
+    title="检查项豁免黑名单列表"
+    width="920px"
     destroy-on-close
     @close="$emit('close')"
     :close-on-click-modal="true"
@@ -13,22 +13,26 @@
         v-model="searchText"
         placeholder="搜索主机、检查项、模板名称..."
         clearable
+        size="small"
         style="width: 300px"
         @input="handleSearch"
       >
         <template #prefix>
-          <i class="fa fa-search"></i>
+          <i class="fa fa-search" aria-hidden="true"></i>
         </template>
       </el-input>
+      <span class="whitelist-count">
+        共 {{ filteredData.length }} 项豁免规则
+      </span>
     </div>
 
     <!-- 表格 -->
-    <el-table v-loading="loading" :data="paginatedData" max-height="350">
-      <el-table-column prop="hostKey" label="主机" width="140" />
-      <el-table-column prop="checkName" label="检查项" min-width="180" show-overflow-tooltip />
-      <el-table-column prop="templateName" label="模板名称" min-width="150" show-overflow-tooltip />
-      <el-table-column prop="scriptPath" label="脚本路径" min-width="250" show-overflow-tooltip />
-      <el-table-column label="操作" width="80" align="left" fixed="right">
+    <el-table v-loading="loading" :data="paginatedData" max-height="360">
+      <el-table-column prop="hostKey" label="目标主机" width="140" />
+      <el-table-column prop="checkName" label="豁免检查项" min-width="180" show-overflow-tooltip />
+      <el-table-column prop="templateName" label="所属模板" min-width="150" show-overflow-tooltip />
+      <el-table-column prop="scriptPath" label="关联脚本路径" min-width="240" show-overflow-tooltip />
+      <el-table-column label="操作" width="84" align="left" fixed="right">
         <template #default="{ row }">
           <el-button text type="danger" size="small" @click="$emit('delete', row)">删除</el-button>
         </template>
@@ -120,7 +124,21 @@ watch(
 
 <style scoped>
 .search-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
   margin-bottom: 12px;
+  background: var(--el-fill-color-lighter);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+}
+
+.whitelist-count {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
 .pagination-wrapper {

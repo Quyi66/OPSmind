@@ -1,129 +1,199 @@
 <template>
   <el-dialog
     :model-value="visible"
-    :title="isEdit ? '编辑模板' : '新建模板'"
-    width="800px"
+    :title="isEdit ? '编辑巡检模板' : '新建巡检模板'"
+    width="820px"
     :close-on-click-modal="false"
     @update:model-value="handleVisibleChange"
     @close="handleClose"
     :close-on-press-escape="false"
   >
-    <el-form ref="formRef" :model="formData" :rules="rules" label-position="top">
-      <!-- 名称 -->
-      <el-form-item label="名称" prop="templateName">
-        <el-input v-model="formData.templateName" placeholder="请输入模板名称" maxlength="100" />
-      </el-form-item>
-
-      <!-- 描述 -->
-      <el-form-item label="描述" prop="description">
-        <el-input
-          v-model="formData.description"
-          type="textarea"
-          :rows="3"
-          placeholder="请输入描述"
-        />
-      </el-form-item>
-
-      <!-- 图标 -->
-      <el-form-item label="图标" prop="icon">
-        <div class="icon-selector">
-          <div class="icon-preview">
-            <i :class="getIconClass(formData.icon)" />
+    <el-form ref="formRef" :model="formData" :rules="rules" label-position="top" class="template-edit-form">
+      <!-- 基础信息区块 -->
+      <section class="config-section-card">
+        <div class="section-card-header">
+          <div class="section-card-title">
+            <span class="section-step-badge">1</span>
+            <div>
+              <h3>基础标识信息</h3>
+              <p>定义巡检模板的名称、识别图标与适用场景说明。</p>
+            </div>
           </div>
-          <el-popover
-            v-model:visible="showIconPicker"
-            placement="bottom-start"
-            :width="400"
-            trigger="click"
-          >
-            <template #reference>
-              <el-button size="small" class="ml-2">选择图标</el-button>
-            </template>
-            <div class="icon-picker-content">
+        </div>
+        <div class="section-card-body">
+          <div class="basic-meta-grid">
+            <el-form-item label="模板名称" prop="templateName" class="name-form-item">
               <el-input
-                v-model="iconSearch"
-                placeholder="搜索图标"
-                prefix-icon="Search"
-                size="small"
-                class="mb-2"
+                v-model="formData.templateName"
+                placeholder="请输入巡检模板名称（如：Linux 基线合规检查）"
+                maxlength="100"
+                show-word-limit
               />
-              <div class="icon-grid">
-                <div
-                  v-for="icon in filteredIcons"
-                  :key="icon"
-                  class="icon-item"
-                  :class="{ active: formData.icon === icon }"
-                  @click="selectIcon(icon)"
-                >
-                  <i :class="'fas ' + icon" />
+            </el-form-item>
+
+            <el-form-item label="模板图标" prop="icon" class="icon-form-item">
+              <div class="icon-selector">
+                <div class="icon-preview">
+                  <i :class="getIconClass(formData.icon)" />
                 </div>
+                <el-popover
+                  v-model:visible="showIconPicker"
+                  placement="bottom-end"
+                  :width="380"
+                  trigger="click"
+                >
+                  <template #reference>
+                    <el-button size="small">更换图标</el-button>
+                  </template>
+                  <div class="icon-picker-content">
+                    <el-input
+                      v-model="iconSearch"
+                      placeholder="搜索图标名称..."
+                      prefix-icon="Search"
+                      size="small"
+                      class="mb-2"
+                    />
+                    <div class="icon-grid">
+                      <div
+                        v-for="icon in filteredIcons"
+                        :key="icon"
+                        class="icon-item"
+                        :class="{ active: formData.icon === icon }"
+                        @click="selectIcon(icon)"
+                      >
+                        <i :class="'fas ' + icon" />
+                      </div>
+                    </div>
+                  </div>
+                </el-popover>
+              </div>
+            </el-form-item>
+          </div>
+
+          <el-form-item label="场景描述" prop="description" class="mb-0">
+            <el-input
+              v-model="formData.description"
+              type="textarea"
+              :rows="2"
+              placeholder="简要说明该巡检模板覆盖的系统类型、检查基线或业务范围"
+            />
+          </el-form-item>
+        </div>
+      </section>
+
+      <!-- 脚本与参数区块 -->
+      <section class="config-section-card">
+        <div class="section-card-header">
+          <div class="section-card-title">
+            <span class="section-step-badge">2</span>
+            <div>
+              <h3>巡检剧本与运行参数</h3>
+              <p>从脚本库关联巡检 Playbook 或脚本文件，并按需配置运行时参数。</p>
+            </div>
+          </div>
+          <div class="section-card-actions">
+            <span class="config-count-pill">
+              已选 <strong>{{ formData.scripts.length }}</strong> 个脚本
+            </span>
+            <el-button type="primary" plain size="small" @click="openScriptSelector">
+              <i class="fas fa-folder-open" aria-hidden="true"></i>
+              {{ formData.scripts.length ? '重新选择脚本' : '选择巡检脚本' }}
+            </el-button>
+          </div>
+        </div>
+        <div class="section-card-body">
+          <el-form-item prop="scripts" class="mb-0">
+            <div class="script-selector">
+              <div
+                v-if="formData.scripts.length === 0"
+                class="script-empty-box"
+                @click="openScriptSelector"
+              >
+                <div class="script-empty-icon">
+                  <i class="fas fa-file-code" aria-hidden="true" />
+                </div>
+                <div class="script-empty-text">
+                  <span>暂未关联巡检脚本</span>
+                  <small>点击此处从 GFS 脚本库中选择 Playbook 或巡检脚本</small>
+                </div>
+                <el-button size="small" type="primary" plain>选择脚本</el-button>
+              </div>
+              <div v-else class="selected-scripts">
+                <el-table :data="formData.scripts" size="small" class="script-table" max-height="260px">
+                  <el-table-column prop="scriptPath" label="巡检脚本路径" min-width="220">
+                    <template #default="{ row }">
+                      <el-tooltip :content="row.scriptPath || '未提供路径'" placement="top">
+                        <span class="script-path-badge">
+                          <i class="fas fa-file-code" aria-hidden="true"></i>
+                          {{ getInspectionScriptLabel(row) }}
+                        </span>
+                      </el-tooltip>
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="运行参数（可选）" min-width="180">
+                    <template #default="{ row }">
+                      <el-input
+                        v-model="row.scriptParams"
+                        size="small"
+                        placeholder="例如：--extra-vars 'env=prod'"
+                      />
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="操作" width="68" align="center">
+                    <template #default="{ $index }">
+                      <el-button
+                        type="danger"
+                        link
+                        size="small"
+                        title="移除该脚本"
+                        @click="removeScript($index)"
+                      >
+                        移除
+                      </el-button>
+                    </template>
+                  </el-table-column>
+                </el-table>
               </div>
             </div>
-          </el-popover>
+          </el-form-item>
         </div>
-      </el-form-item>
+      </section>
 
-      <!-- 脚本选择 -->
-      <el-form-item label="脚本" prop="scripts">
-        <div class="script-selector">
-          <div
-            v-if="formData.scripts.length === 0"
-            class="empty-placeholder"
-            @click="openScriptSelector"
-          >
-            <i class="fal fa-file-alt empty-icon" />
-            <el-button size="small">选择文件</el-button>
-          </div>
-          <div v-else class="selected-scripts">
-            <div class="script-header">
-              <el-button size="small" @click="openScriptSelector">
-                共
-                <strong>{{ formData.scripts.length }}</strong>
-                个文件
-              </el-button>
+      <!-- 主机选择区块 -->
+      <section class="config-section-card">
+        <div class="section-card-header">
+          <div class="section-card-title">
+            <span class="section-step-badge">3</span>
+            <div>
+              <h3>默认巡检资产范围</h3>
+              <p>配置该模板默认覆盖的目标主机、分组或资产标签。</p>
             </div>
-            <el-table :data="formData.scripts" size="small" class="script-table" max-height="300px">
-              <el-table-column prop="scriptPath" label="脚本" min-width="200">
-                <template #default="{ row }">
-                  <el-tooltip :content="row.scriptPath || '未提供路径'" placement="top">
-                    <span>{{ getInspectionScriptLabel(row) }}</span>
-                  </el-tooltip>
-                </template>
-              </el-table-column>
-              <el-table-column label="脚本参数" min-width="150">
-                <template #default="{ row }">
-                  <el-input v-model="row.scriptParams" size="small" placeholder="脚本参数" />
-                </template>
-              </el-table-column>
-              <el-table-column width="60" align="left">
-                <template #default="{ $index }">
-                  <el-button type="danger" link size="small" @click="removeScript($index)">
-                    <i class="fa fa-minus"></i>
-                  </el-button>
-                </template>
-              </el-table-column>
-            </el-table>
+          </div>
+          <div class="section-card-actions">
+            <span class="config-count-pill">
+              已配置 <strong>{{ formData.hosts.length }}</strong> 项资产
+            </span>
           </div>
         </div>
-      </el-form-item>
-
-      <!-- 主机选择 -->
-      <el-form-item label="主机" prop="hosts">
-        <AcmDeviceSelector
-          v-model="formData.hosts"
-          ci-types="[auto]"
-          :options="{
-            selectMode: 'host,group,tag,input,recently',
-            selector: 'multiple',
-            label: '选择'
-          }"
-        />
-      </el-form-item>
+        <div class="section-card-body">
+          <el-form-item prop="hosts" class="mb-0">
+            <AcmDeviceSelector
+              v-model="formData.hosts"
+              ci-types="[auto]"
+              :options="{
+                selectMode: 'host,group,tag,input,recently',
+                selector: 'multiple',
+                label: '选择巡检主机'
+              }"
+            />
+          </el-form-item>
+        </div>
+      </section>
     </el-form>
 
     <template #footer>
       <el-button @click="handleClose">取消</el-button>
-      <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
+      <el-button type="primary" :loading="saving" @click="handleSave">保存模板</el-button>
     </template>
 
     <!-- 脚本选择弹窗 -->
@@ -465,24 +535,127 @@ watch(
 </script>
 
 <style scoped lang="scss">
+.template-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.config-section-card {
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.section-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 12px 16px;
+  background: var(--el-fill-color-blank);
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+.section-card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+
+  h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--el-text-color-primary);
+  }
+
+  p {
+    margin: 2px 0 0;
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+  }
+}
+
+.section-step-badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.section-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  i {
+    margin-right: 5px;
+  }
+}
+
+.config-count-pill {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  background: var(--el-fill-color-light);
+  padding: 3px 10px;
+  border-radius: 999px;
+  strong {
+    color: var(--el-color-primary);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.section-card-body {
+  padding: 14px 16px;
+}
+
+.basic-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: start;
+}
+
+.name-form-item {
+  margin-bottom: 12px;
+}
+
+.icon-form-item {
+  margin-bottom: 12px;
+}
+
+.mb-0 {
+  margin-bottom: 0 !important;
+}
+
 .icon-selector {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .icon-preview {
-  width: 40px;
-  height: 40px;
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 4px;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--el-border-color-lighter);
+  background: var(--el-fill-color-lighter);
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
 
   i {
-    font-size: 20px;
-    color: var(--el-text-color-regular);
+    font-size: 18px;
+    color: var(--el-color-primary);
   }
 }
 
@@ -502,7 +675,7 @@ watch(
     align-items: center;
     justify-content: center;
     border: 1px solid var(--el-border-color-light);
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
 
     i {
@@ -530,67 +703,72 @@ watch(
   width: 100%;
 }
 
-.empty-placeholder {
-  background: var(--el-bg-color-page);
-  padding: 40px;
-  text-align: center;
-  border-radius: 4px;
+.script-empty-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px dashed var(--el-border-color);
+  border-radius: 6px;
+  background: var(--el-fill-color-lighter);
   cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
 
-  .empty-icon {
-    font-size: 48px;
-    color: var(--el-text-color-placeholder);
-    display: block;
-    margin-bottom: 12px;
+  &:hover {
+    border-color: var(--el-color-primary);
+    background: var(--el-color-primary-light-9);
+  }
+}
+
+.script-empty-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-lighter);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--el-color-primary);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.script-empty-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  span {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--el-text-color-primary);
+  }
+  small {
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
   }
 }
 
 .selected-scripts {
-  .script-header {
-    margin-bottom: 8px;
-  }
-
   .script-table {
-    border: 1px solid var(--el-border-color-light);
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 6px;
+    overflow: hidden;
   }
 }
 
-.host-selector {
-  width: 100%;
-}
-
-.empty-host {
-  .el-button {
-    i {
-      margin-right: 4px;
-    }
+.script-path-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--el-font-family-mono, monospace);
+  font-size: 12px;
+  color: var(--el-text-color-primary);
+  i {
+    color: var(--el-color-primary);
   }
-}
-
-.selected-hosts {
-  .host-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
-
-    .host-search {
-      width: 150px;
-      margin-left: auto;
-    }
-  }
-
-  .host-list {
-    max-height: 120px;
-    overflow-y: auto;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-}
-
-.ml-2 {
-  margin-left: 8px;
 }
 
 .mb-2 {

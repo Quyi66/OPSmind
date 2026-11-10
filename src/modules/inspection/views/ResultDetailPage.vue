@@ -1,254 +1,275 @@
 <template>
   <div class="ops-page-layout result-detail-page">
-    <!-- 顶部导航栏 -->
-    <nav class="page-navbar">
-      <div class="navbar-left">
-        <el-breadcrumb separator=">">
-          <el-breadcrumb-item>
-            <a :href="router.resolve(reportReturn.location).href" @click.prevent="goBack">
-              {{ reportReturn.label }}
-            </a>
-          </el-breadcrumb-item>
-          <el-breadcrumb-item>{{ jobInfo.templateName || '结果详情' }}</el-breadcrumb-item>
-        </el-breadcrumb>
-      </div>
-      <div class="navbar-right">
-        <el-button @click="assetModelConfigVisible = true">
-          <i class="fa fa-cog"></i>
-          导出配置
-        </el-button>
-        <el-button @click="exportResult">
-          <i class="fa fa-file-export"></i>
-          导出结果
-        </el-button>
-      </div>
-    </nav>
+    <!-- 报告概览与结果统计并排总览面板 -->
+    <section class="report-overview-card">
+      <!-- 顶部导航与操作栏 -->
+      <nav class="page-navbar">
+        <div class="navbar-left">
+          <el-breadcrumb separator="/">
+            <el-breadcrumb-item>
+              <a :href="router.resolve(reportReturn.location).href" @click.prevent="goBack">
+                {{ reportReturn.label }}
+              </a>
+            </el-breadcrumb-item>
+            <el-breadcrumb-item>{{ jobInfo.templateName || '检查结果' }}</el-breadcrumb-item>
+          </el-breadcrumb>
+          <el-tag
+            v-if="jobInfo.jobStatus"
+            :type="getJobStatusType(jobInfo.jobStatus)"
+            size="small"
+          >
+            {{ getJobStatusText(jobInfo.jobStatus) }}
+          </el-tag>
+        </div>
+        <div class="navbar-right">
+          <el-button size="small" @click="assetModelConfigVisible = true">
+            导出列配置
+          </el-button>
+          <el-button type="primary" size="small" @click="exportResult">
+            导出结果
+          </el-button>
+        </div>
+      </nav>
 
-    <!-- 任务信息头部 -->
-    <div v-loading="loading" class="job-header">
-      <div class="job-status">
-        <el-tag :type="getJobStatusType(jobInfo.jobStatus)" effect="dark" round>
-          {{ getJobStatusText(jobInfo.jobStatus) }}
-        </el-tag>
-        <span class="time-info">
-          <strong>开始时间：</strong>
-          {{ formatDateTime(jobInfo.createdAt) }}
-          <strong style="margin-left: 16px">结束时间：</strong>
-          {{ formatDateTime(jobInfo.endedAt) }}
-        </span>
-      </div>
-
-      <div class="job-info-row">
-        <span class="info-label">主机</span>
-        <span class="info-value">
-          <el-tag type="primary" size="small" round>{{ hostList.length }}</el-tag>
-          <template v-for="(host, index) in hostList" :key="index">
-            <el-tag v-if="index < 5" class="host-tag">{{ host.hostKey }}</el-tag>
-          </template>
-          <span v-if="hostList.length > 5" class="more-hosts">...</span>
-        </span>
-      </div>
-
-      <div class="job-info-row">
-        <span class="info-label">脚本</span>
-        <span class="info-value">
-          <template v-for="(script, index) in scriptList" :key="index">
-            <el-tag type="info" class="script-tag">{{ getInspectionScriptLabel(script) }}</el-tag>
-          </template>
-        </span>
-      </div>
-      <el-collapse v-if="scriptList.length">
-        <el-collapse-item title="脚本技术信息" name="scripts">
-          <el-descriptions :column="1" border size="small">
-            <el-descriptions-item
-              v-for="(script, index) in scriptList"
-              :key="index"
-              :label="getInspectionScriptLabel(script)"
-            >
-              <span style="overflow-wrap: anywhere">{{ script.scriptPath || '未提供路径' }}</span>
-            </el-descriptions-item>
-          </el-descriptions>
-        </el-collapse-item>
-      </el-collapse>
-    </div>
-
-    <!-- 统计卡片 -->
-    <StatisticsCards v-loading="statsLoading" :statistics="statistics" @click="handleStatClick" />
-
-    <!-- 标签页 -->
-    <div class="tabs-container">
-      <el-tabs v-model="activeTab">
-        <el-tab-pane name="host">
-          <template #label>
-            <span>
-              主机概览
-              <i class="fa fa-external-link-alt" style="font-size: 10px; margin-left: 4px"></i>
+      <!-- 左右分栏：左侧执行信息，右侧检查结果统计 -->
+      <div v-loading="loading" class="report-overview-body">
+        <div class="job-meta-panel">
+          <div class="meta-item">
+            <span class="meta-label">开始时间</span>
+            <span class="meta-value meta-value--mono">{{ formatDateTime(jobInfo.createdAt) || '—' }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">结束时间</span>
+            <span class="meta-value meta-value--mono">{{ formatDateTime(jobInfo.endedAt) || '—' }}</span>
+          </div>
+          <div
+            class="meta-item"
+            :title="hostList.map(item => item.hostKey).join('、')"
+          >
+            <span class="meta-label">配置主机</span>
+            <span class="meta-value">
+              <strong>{{ hostList.length }}</strong> 台
+              <span v-if="hostList.length" class="meta-subtext">
+                （{{ hostList.slice(0, 2).map(item => item.hostKey).join('、') }}{{ hostList.length > 2 ? ' 等' : '' }}）
+              </span>
             </span>
-          </template>
-        </el-tab-pane>
-        <el-tab-pane label="巡检概览" name="overview" />
-      </el-tabs>
+          </div>
+          <div
+            class="meta-item"
+            :title="scriptList.map(item => item.scriptPath || getInspectionScriptLabel(item)).join('、')"
+          >
+            <span class="meta-label">执行脚本</span>
+            <span class="meta-value meta-value--ellipsis">
+              <template v-if="scriptList.length">
+                {{ scriptList.map(item => getInspectionScriptLabel(item)).join('、') }}
+              </template>
+              <template v-else>—</template>
+            </span>
+          </div>
+        </div>
 
-      <!-- 工具栏 -->
-      <div class="toolbar">
-        <template v-if="activeTab === 'host'">
-          <el-button :disabled="selectedHostIds.length === 0" @click="addToWhitelist">
-            <i class="fa fa-plus"></i>
-            添加黑名单
-          </el-button>
-          <el-button :disabled="selectedHostIds.length === 0" @click="removeFromWhitelist">
-            <i class="fa fa-trash-alt"></i>
-            移除黑名单
-          </el-button>
-          <el-button @click="dialogs.showWhitelistDialog()">
-            <i class="fa fa-list"></i>
-            黑名单列表
-          </el-button>
-        </template>
-        <div class="toolbar-right">
-          <el-input
-            v-if="activeTab === 'host'"
-            v-model="hostSearchText"
-            placeholder="输入主机名搜索"
-            clearable
-            style="width: 180px"
-            @keyup.enter="handleSearch"
-            @clear="handleSearch"
-          >
-            <template #prefix>
-              <i class="fa fa-search"></i>
+        <StatisticsCards
+          v-loading="statsLoading"
+          :statistics="statistics"
+          @click="handleStatClick"
+        />
+      </div>
+    </section>
+
+    <!-- 明细列表面板 -->
+    <section class="tabs-container">
+      <div class="workspace-header">
+        <el-tabs v-model="activeTab" class="workspace-tabs">
+          <el-tab-pane name="host">
+            <template #label>
+              <span class="tab-label-item">
+                主机明细
+                <span v-if="pagination.total" class="tab-count-pill">{{ pagination.total }}</span>
+              </span>
             </template>
-          </el-input>
-          <el-input
-            v-else
-            v-model="overviewSearchText"
-            placeholder="输入检查项名称搜索"
-            clearable
-            style="width: 180px"
-            @keyup.enter="handleSearch"
-            @clear="handleSearch"
-          >
-            <template #prefix>
-              <i class="fa fa-search"></i>
+          </el-tab-pane>
+          <el-tab-pane name="overview">
+            <template #label>
+              <span class="tab-label-item">
+                检查项汇总
+                <span v-if="overviewPagination.total" class="tab-count-pill">
+                  {{ overviewPagination.total }}
+                </span>
+              </span>
             </template>
-          </el-input>
-          <el-button type="primary" @click="handleSearch">搜索</el-button>
-          <!-- <el-button @click="exportTable">
-            <i class="fa fa-file-export"></i>
-          </el-button> -->
-          <el-button @click="refreshData" circle>
-            <i class="fa fa-sync"></i>
-          </el-button>
+          </el-tab-pane>
+        </el-tabs>
+
+        <!-- 工具栏 -->
+        <div class="toolbar">
+          <template v-if="activeTab === 'host'">
+            <div class="toolbar-batch-actions">
+              <el-button size="small" :disabled="selectedHostIds.length === 0" @click="addToWhitelist">
+                添加黑名单
+              </el-button>
+              <el-button
+                size="small"
+                :disabled="selectedHostIds.length === 0"
+                @click="removeFromWhitelist"
+              >
+                移除黑名单
+              </el-button>
+              <el-button size="small" @click="dialogs.showWhitelistDialog()">
+                黑名单列表
+              </el-button>
+            </div>
+          </template>
+          <div class="toolbar-right">
+            <el-input
+              v-if="activeTab === 'host'"
+              v-model="hostSearchText"
+              placeholder="搜索主机"
+              clearable
+              size="small"
+              style="width: 200px"
+              @keyup.enter="handleSearch"
+              @clear="handleSearch"
+            >
+              <template #prefix>
+                <i class="fa fa-search" aria-hidden="true"></i>
+              </template>
+            </el-input>
+            <el-input
+              v-else
+              v-model="overviewSearchText"
+              placeholder="搜索检查项"
+              clearable
+              size="small"
+              style="width: 200px"
+              @keyup.enter="handleSearch"
+              @clear="handleSearch"
+            >
+              <template #prefix>
+                <i class="fa fa-search" aria-hidden="true"></i>
+              </template>
+            </el-input>
+            <el-button type="primary" size="small" @click="handleSearch">搜索</el-button>
+            <el-button
+              class="toolbar-icon-btn"
+              size="small"
+              circle
+              title="刷新"
+              @click="refreshData"
+            >
+              <i class="fa fa-sync-alt" aria-hidden="true"></i>
+            </el-button>
+          </div>
         </div>
       </div>
 
-      <!-- 主机概览表格 -->
+      <!-- 主机明细表格 -->
       <div v-if="activeTab === 'host'" class="table-container">
-        <el-table
-          v-loading="tableLoading"
-          :data="machineData"
-          height="calc(100vh - 600px)"
-          style="width: 100%"
-          @selection-change="handleSelectionChange"
-        >
-          <el-table-column type="selection" width="50" />
-          <el-table-column prop="host_key" label="主机" min-width="140">
-            <template #default="{ row }">
-              <el-button type="primary" link @click="handleHostClick(row)">
-                {{ row.host_key }}
-              </el-button>
-            </template>
-          </el-table-column>
-          <el-table-column prop="os_distro" label="操作系统" min-width="180" />
-          <el-table-column prop="os_version" label="系统版本" width="100" />
-          <el-table-column label="黑名单" width="80" align="left">
-            <template #default="{ row }">
-              <el-tag v-if="row.black_count > 0" type="primary" size="small" round>
-                <i class="fa fa-check"></i>
-                是
-              </el-tag>
-              <el-tag v-else type="info" size="small" round>
-                <i class="fa fa-times"></i>
-                否
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="检查通过" width="100" align="left">
-            <template #header>
-              <span>
-                <!-- <i class="fa fa-check"></i> -->
-                检查通过
-              </span>
-            </template>
-            <template #default="{ row }">
-              <el-button type="primary" link @click="dialogs.showItemsByStatus(row, 'OK')">
-                {{ row.ok_count }}
-              </el-button>
-            </template>
-          </el-table-column>
-          <el-table-column label="检查失败" width="100" align="left">
-            <template #header>
-              <span>
-                <!-- <i class="fa fa-times"></i> -->
-                检查失败
-              </span>
-            </template>
-            <template #default="{ row }">
-              <el-button type="primary" link @click="dialogs.showItemsByStatus(row, 'FAILED')">
-                {{ row.failed_count }}
-              </el-button>
-            </template>
-          </el-table-column>
-          <el-table-column label="人工检查" width="100" align="left">
-            <template #header>
-              <span>
-                <!-- <i class="fa fa-user-md"></i> -->
-                人工检查
-              </span>
-            </template>
-            <template #default="{ row }">
-              <el-button type="primary" link @click="dialogs.showItemsByStatus(row, 'CHECK')">
-                {{ row.check_count }}
-              </el-button>
-            </template>
-          </el-table-column>
-          <el-table-column label="已跳过" width="100" align="left">
-            <template #header>
-              <span>
-                <!-- <i class="fa fa-adjust"></i> -->
-                已跳过
-              </span>
-            </template>
-            <template #default="{ row }">
-              <el-button type="primary" link @click="dialogs.showItemsByStatus(row, 'SKIPPING')">
-                {{ row.skipping_count }}
-              </el-button>
-            </template>
-          </el-table-column>
-          <el-table-column label="数据缺失" width="100" align="left">
-            <template #header>
-              <span>
-                <!-- <i class="fa fa-question"></i> -->
-                数据缺失
-              </span>
-            </template>
-            <template #default="{ row }">
-              <el-button type="primary" link @click="dialogs.showItemsByStatus(row, 'UNREACHABLE')">
-                {{ row.unreachable_count }}
-              </el-button>
-            </template>
-          </el-table-column>
-          <el-table-column prop="check_item_count" label="巡检项" width="80" align="left">
-            <template #default="{ row }">
-              <el-button type="primary" link @click="dialogs.showHostDetail(row)">
-                {{ row.check_item_count }}
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+        <div class="workspace-table-wrapper">
+          <el-table
+            v-loading="tableLoading"
+            :data="machineData"
+            height="100%"
+            style="width: 100%"
+            @selection-change="handleSelectionChange"
+          >
+            <el-table-column type="selection" width="46" />
+            <el-table-column prop="host_key" label="主机" min-width="150">
+              <template #default="{ row }">
+                <el-button type="primary" link class="host-link-btn" @click="handleHostClick(row)">
+                  {{ row.host_key }}
+                </el-button>
+              </template>
+            </el-table-column>
+            <el-table-column prop="os_distro" label="操作系统" min-width="160" show-overflow-tooltip />
+            <el-table-column prop="os_version" label="系统版本" width="110" />
+            <el-table-column label="黑名单" width="100" align="left">
+              <template #default="{ row }">
+                <el-tag v-if="row.black_count > 0" type="warning" size="small">
+                  是
+                </el-tag>
+                <el-tag v-else type="info" size="small" effect="plain">否</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="失败" width="90" align="right">
+              <template #default="{ row }">
+                <el-button
+                  :type="row.failed_count > 0 ? 'danger' : 'info'"
+                  link
+                  class="metric-link-btn"
+                  @click="dialogs.showItemsByStatus(row, 'FAILED')"
+                >
+                  {{ row.failed_count }}
+                </el-button>
+              </template>
+            </el-table-column>
+            <el-table-column label="数据缺失" width="100" align="right">
+              <template #default="{ row }">
+                <el-button
+                  :type="row.unreachable_count > 0 ? 'warning' : 'info'"
+                  link
+                  class="metric-link-btn"
+                  @click="dialogs.showItemsByStatus(row, 'UNREACHABLE')"
+                >
+                  {{ row.unreachable_count }}
+                </el-button>
+              </template>
+            </el-table-column>
+            <el-table-column label="人工检查" width="100" align="right">
+              <template #default="{ row }">
+                <el-button
+                  :type="row.check_count > 0 ? 'primary' : 'info'"
+                  link
+                  class="metric-link-btn"
+                  @click="dialogs.showItemsByStatus(row, 'CHECK')"
+                >
+                  {{ row.check_count }}
+                </el-button>
+              </template>
+            </el-table-column>
+            <el-table-column label="已跳过" width="90" align="right">
+              <template #default="{ row }">
+                <el-button
+                  type="info"
+                  link
+                  class="metric-link-btn"
+                  @click="dialogs.showItemsByStatus(row, 'SKIPPING')"
+                >
+                  {{ row.skipping_count }}
+                </el-button>
+              </template>
+            </el-table-column>
+            <el-table-column label="检查通过" width="100" align="right">
+              <template #default="{ row }">
+                <el-button
+                  :type="row.ok_count > 0 ? 'success' : 'info'"
+                  link
+                  class="metric-link-btn"
+                  @click="dialogs.showItemsByStatus(row, 'OK')"
+                >
+                  {{ row.ok_count }}
+                </el-button>
+              </template>
+            </el-table-column>
+            <el-table-column prop="check_item_count" label="检查项" width="90" align="right">
+              <template #default="{ row }">
+                <el-button
+                  type="primary"
+                  link
+                  class="metric-link-btn"
+                  @click="dialogs.showHostDetail(row)"
+                >
+                  {{ row.check_item_count }}
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
 
         <!-- 分页 -->
-        <div class="ops-pagination-wrapper">
+        <div class="ops-pagination-wrapper workspace-footer">
+          <span class="workspace-note">
+            点击主机可管理单机检查项黑名单；点击各状态数值可查看该主机对应的检查项输出。
+          </span>
           <el-pagination
             v-model:current-page="pagination.page"
             v-model:page-size="pagination.size"
@@ -262,32 +283,40 @@
         </div>
       </div>
 
-      <!-- 巡检概览表格 -->
+      <!-- 检查项汇总表格 -->
       <div v-else-if="activeTab === 'overview'" class="table-container">
-        <el-table
-          v-loading="overviewLoading"
-          :data="overviewData"
-          style="width: 100%"
-          height="calc(100vh - 600px)"
-        >
-          <el-table-column prop="name" label="检查项" min-width="300">
-            <template #default="{ row }">
-              <el-button type="primary" link @click="dialogs.showCheckItemHostsDialog(row)">
-                {{ row.name }}
-              </el-button>
-            </template>
-          </el-table-column>
-          <el-table-column prop="check_host_count" label="关联主机" width="120" align="left">
-            <template #default="{ row }">
-              <el-button type="info" link @click="dialogs.showCheckItemHostsDialog(row)">
-                {{ row.check_host_count }}
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+        <div class="workspace-table-wrapper">
+          <el-table
+            v-loading="overviewLoading"
+            :data="overviewData"
+            style="width: 100%"
+            height="100%"
+          >
+            <el-table-column prop="name" label="检查项名称" min-width="320">
+              <template #default="{ row }">
+                <el-button type="primary" link @click="dialogs.showCheckItemHostsDialog(row)">
+                  {{ row.name }}
+                </el-button>
+              </template>
+            </el-table-column>
+            <el-table-column prop="check_host_count" label="覆盖主机数" width="140" align="right">
+              <template #default="{ row }">
+                <el-button
+                  type="primary"
+                  link
+                  class="metric-link-btn"
+                  @click="dialogs.showCheckItemHostsDialog(row)"
+                >
+                  {{ row.check_host_count }}
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
 
         <!-- 分页 -->
-        <div class="ops-pagination-wrapper">
+        <div class="ops-pagination-wrapper workspace-footer">
+          <span class="workspace-note">点击检查项名称或覆盖主机数，可查看所有主机在该检查项上的检查结果。</span>
           <el-pagination
             v-model:current-page="overviewPagination.page"
             v-model:page-size="overviewPagination.size"
@@ -300,26 +329,26 @@
           />
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- 巡检项详情弹窗 -->
     <el-dialog
       v-model="inspectionDetailVisible"
-      :title="`巡检项详情${selectedHost ? ' - ' + selectedHost.host_key : ''}`"
-      width="1200px"
+      :title="`主机检查项明细${selectedHost ? ' · ' + selectedHost.host_key : ''}`"
+      width="1160px"
       class="inspection-detail-dialog"
       append-to-body
       destroy-on-close
       :close-on-click-modal="true"
     >
-      <div style="display: flex; justify-content: space-between; margin-bottom: 16px">
-        <div style="display: flex; gap: 12px">
+      <div class="inspection-dialog-toolbar">
+        <div class="inspection-dialog-filters">
           <el-select
             v-model="inspectionResultFilter"
-            placeholder="选择结果"
+            placeholder="全部状态"
             clearable
             size="small"
-            style="width: 120px"
+            style="width: 130px"
           >
             <el-option label="通过" value="OK" />
             <el-option label="失败" value="FAILED" />
@@ -332,20 +361,20 @@
             placeholder="输入检查项或输出内容搜索"
             clearable
             size="small"
-            style="width: 220px"
+            style="width: 240px"
           >
             <template #prefix>
-              <i class="fa fa-search"></i>
+              <i class="fa fa-search" aria-hidden="true"></i>
             </template>
           </el-input>
         </div>
         <el-button size="small" @click="dialogs.showItemWhitelist()">
-          <i class="fa fa-adjust"></i>
-          黑名单列表
+          <i class="fa fa-list-ul" aria-hidden="true"></i>
+          检查项黑名单列表
         </el-button>
       </div>
-      <div v-if="inspectionRefreshFailed" role="alert">
-        检查项刷新失败，当前列表可能不是最新数据。
+      <div v-if="inspectionRefreshFailed" class="inspection-refresh-alert" role="alert">
+        <span>检查项刷新失败，当前列表可能不是最新数据。</span>
         <el-button link type="primary" :disabled="inspectionDetailLoading" @click="retryInspection">
           重试刷新
         </el-button>
@@ -357,8 +386,8 @@
         max-height="calc(100vh - 350px)"
       >
         <el-table-column prop="hostKey" label="主机" width="140" />
-        <el-table-column prop="name" label="检查项" min-width="150" show-overflow-tooltip />
-        <el-table-column label="结果" width="100" align="left">
+        <el-table-column prop="name" label="检查项" min-width="180" show-overflow-tooltip />
+        <el-table-column label="检查结果" width="104" align="left">
           <template #default="{ row }">
             <el-tag v-if="row.status === 'OK'" type="success" size="small">通过</el-tag>
             <el-tag v-else-if="row.status === 'FAILED'" type="danger" size="small">失败</el-tag>
@@ -367,9 +396,9 @@
             <el-tag v-else type="info" size="small">无数据</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="output" label="输出" min-width="300" show-overflow-tooltip>
+        <el-table-column prop="output" label="原始输出摘要" min-width="320" show-overflow-tooltip>
           <template #default="{ row }">
-            <span>{{ row.output || '无' }}</span>
+            <span class="output-snippet">{{ row.output || '无' }}</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="120" fixed="right">
@@ -1055,127 +1084,262 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .result-detail-page {
-  overflow: auto;
+  gap: 14px;
+  min-width: 0;
+}
+
+.report-overview-card,
+.tabs-container {
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+  min-width: 0;
+}
+
+.report-overview-card {
+  flex-shrink: 0;
 }
 
 .page-navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  background: var(--el-bg-color);
-  border-bottom: 1px solid var(--el-border-color-light);
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
 
   .navbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+
     :deep(.el-breadcrumb) {
-      font-size: 14px;
+      font-size: 13px;
       a {
         color: var(--el-color-primary);
         cursor: pointer;
+        text-decoration: none;
         &:hover {
           color: var(--el-color-primary-light-3);
         }
       }
     }
   }
+
+  .navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 }
 
-.job-header {
-  background: var(--el-bg-color);
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--el-border-color-light);
+.report-overview-body {
+  display: grid;
+  grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+  gap: 16px 24px;
+  align-items: center;
+  padding: 12px 16px;
+}
 
-  .job-status {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 12px;
-    .time-info {
-      font-size: 13px;
-      color: var(--el-text-color-regular);
-    }
+.job-meta-panel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  padding-right: 20px;
+  border-right: 1px solid var(--el-border-color-lighter);
+  min-width: 0;
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.meta-label {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.meta-value {
+  font-size: 13px;
+  color: var(--el-text-color-primary);
+  min-width: 0;
+
+  strong {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
   }
 
-  .job-info-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-top: 8px;
-
-    .info-label {
-      color: var(--el-text-color-secondary);
-      font-size: 13px;
-      min-width: 40px;
-    }
-    .info-value {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-      .host-tag,
-      .script-tag {
-        max-width: 300px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      .more-hosts {
-        color: var(--el-text-color-secondary);
-      }
-    }
+  &--mono {
+    font-variant-numeric: tabular-nums;
   }
+
+  &--ellipsis {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.meta-subtext {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
 }
 
 .tabs-container {
-  background: var(--el-bg-color);
-  margin: 16px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
   flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
 
+.workspace-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 6px 16px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  flex-shrink: 0;
+}
+
+.workspace-tabs {
   :deep(.el-tabs__header) {
     margin: 0;
-    padding: 0 16px;
-    border-bottom: 1px solid var(--el-border-color-light);
   }
+  :deep(.el-tabs__nav-wrap::after) {
+    display: none;
+  }
+}
+
+.tab-label-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+.tab-count-pill {
+  font-size: 11px;
+  line-height: 1.4;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--el-fill-color-light);
+  color: var(--el-text-color-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
 .toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--el-border-color-light);
-  .toolbar-right {
-    margin-left: auto;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-left: auto;
+
+  .toolbar-batch-actions {
     display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .toolbar-right {
+    display: flex;
+    align-items: center;
     gap: 8px;
   }
 }
 
 .table-container {
-  padding: 16px 16px 0 16px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
-.table-footer {
+.workspace-table-wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.host-link-btn {
+  font-weight: 500;
+}
+
+.metric-link-btn {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.workspace-footer {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding-top: 12px;
-  .pagination-info {
-    color: var(--el-text-color-secondary);
-    font-size: 13px;
-  }
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--el-border-color-lighter);
+  flex-shrink: 0;
 }
 
-:deep(.el-table) {
-  font-size: 13px;
-  .el-table__header th {
-    font-weight: 500;
-  }
-}
-
-.no-data {
-  color: var(--el-text-color-secondary);
+.workspace-note {
   font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.inspection-dialog-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  background: var(--el-fill-color-lighter);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+}
+
+.inspection-dialog-filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.inspection-refresh-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  background: var(--el-color-warning-light-9);
+  border: 1px solid var(--el-color-warning-light-7);
+  color: var(--el-color-warning-dark-2);
+  font-size: 13px;
+}
+
+.output-snippet {
+  font-family: var(--el-font-family-mono, monospace);
+  font-size: 12px;
+}
+
+@media (max-width: 1100px) {
+  .report-overview-body {
+    grid-template-columns: 1fr;
+  }
+  .job-meta-panel {
+    padding-right: 0;
+    padding-bottom: 12px;
+    border-right: none;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+  }
 }
 </style>

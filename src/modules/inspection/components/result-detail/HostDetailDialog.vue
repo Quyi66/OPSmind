@@ -2,28 +2,30 @@
   <el-dialog
     :model-value="visible"
     :title="`${host?.host_key || ''} - 巡检项详情`"
-    width="900px"
+    width="920px"
     destroy-on-close
     @close="$emit('close')"
     :close-on-click-modal="true"
   >
     <div v-if="host" class="host-detail-dialog">
-      <div class="host-info">
+      <div class="host-info-card">
+        <div class="host-badge">
+          <i class="fas fa-server" aria-hidden="true"></i>
+        </div>
         <div class="host-info-main">
           <span class="host-name">{{ host.host_key }}</span>
           <span class="host-os">
-            OS：{{ machineInfo.os_distro || host.os_distro }}
-            {{ machineInfo.os_version || host.os_version }}
+            操作系统：{{ machineInfo.os_distro || host.os_distro || '未知' }}
+            {{ machineInfo.os_version || host.os_version || '' }}
           </span>
         </div>
-        <div class="host-icon">
-          <i class="fa fa-desktop"></i>
-        </div>
       </div>
+
       <div class="host-detail-toolbar">
         <el-select
           :model-value="statusFilter"
           placeholder="检查状态"
+          size="small"
           style="width: 150px"
           @update:model-value="$emit('filter-change', $event)"
         >
@@ -38,31 +40,34 @@
           v-model="filterText"
           placeholder="搜索检查项名称"
           clearable
+          size="small"
           style="width: 240px"
-          class="ms-2"
         />
-        <span class="text-muted ms-2">
+        <span class="match-count-badge">
           匹配 {{ filteredCheckItems.length }} / 已加载 {{ checkItems?.length || 0 }} 条
         </span>
       </div>
+
       <el-table
         v-loading="loading"
         :data="filteredCheckItems"
         max-height="400"
         :empty-text="filterText.trim() ? '没有匹配的已加载检查项' : '暂无检查项'"
       >
-        <el-table-column prop="name" label="检查项" min-width="200" />
-        <el-table-column label="状态" width="120" align="left">
+        <el-table-column prop="name" label="检查项" min-width="220" />
+        <el-table-column label="状态" width="130" align="left">
           <template #default="{ row }">
-            <el-tag :type="getKpiStatusTagType(row.status)" effect="dark" round size="small">
+            <el-tag :type="getKpiStatusTagType(row.status)" effect="light" round size="small">
               <i :class="['fa', getKpiStatusIcon(row.status)]" style="margin-right: 5px"></i>
               {{ getKpiStatusLabel(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="80" align="left">
+        <el-table-column label="操作" width="84" align="left">
           <template #default="{ row }">
-            <el-button type="primary" text @click="$emit('show-detail', row)">详情</el-button>
+            <el-button type="primary" text size="small" @click="$emit('show-detail', row)">
+              详情
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -106,41 +111,62 @@ watch([() => props.visible, () => props.host?.host_id, () => props.host?.host_ke
 
 <style scoped lang="scss">
 .host-detail-dialog {
-  .host-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .host-info-card {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
-    padding: 16px;
-    background: var(--el-bg-color-page);
-    border-radius: 4px;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--el-fill-color-lighter);
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 8px;
+
+    .host-badge {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--el-color-primary-light-9);
+      color: var(--el-color-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
 
     .host-info-main {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 2px;
 
       .host-name {
-        font-size: 18px;
-        font-weight: bold;
+        font-size: 15px;
+        font-weight: 600;
         color: var(--el-text-color-primary);
       }
 
       .host-os {
-        font-size: 14px;
-        color: var(--el-text-color-regular);
+        font-size: 12px;
+        color: var(--el-text-color-secondary);
       }
-    }
-
-    .host-icon {
-      font-size: 48px;
-      color: var(--el-text-color-secondary);
-      opacity: 0.5;
     }
   }
 
   .host-detail-toolbar {
-    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+
+    .match-count-badge {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
+      font-variant-numeric: tabular-nums;
+    }
   }
 }
 </style>
