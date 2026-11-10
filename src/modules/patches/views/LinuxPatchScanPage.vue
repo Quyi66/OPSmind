@@ -110,6 +110,12 @@
             {{ hosts.length ? `扫描选中主机 (${hosts.length})` : '扫描补丁' }}
           </el-button>
         </template>
+        <template #host-export-action>
+          <el-button size="small" @click="handleVulnExport">
+            <i class="fa fa-download" />
+            导出漏洞报表
+          </el-button>
+        </template>
       </LinuxPatchInstallWorkbench>
 
       <!-- 漏洞明细保留独立修复流程，不进入常规安装主路径。 -->

@@ -156,6 +156,7 @@
             重新扫描补丁 ({{ batchSelectedHosts.length }})
           </el-button>
         </slot>
+        <slot name="host-export-action" />
         <el-button
           size="small"
           :type="hostAllSelected ? 'default' : 'primary'"
