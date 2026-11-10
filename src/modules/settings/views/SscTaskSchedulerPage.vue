@@ -2,7 +2,7 @@
   <div class="ops-page-layout">
     <!-- 筛选区域 -->
     <div class="ops-filter-bar">
-      <el-form :inline="true" size="small">
+      <el-form :inline="true" size="small" @submit.prevent>
         <el-form-item label="关键词">
           <el-input
             v-model="taskKeyword"
@@ -10,14 +10,16 @@
             clearable
             style="width: 200px"
             maxlength="50"
-            @keyup.enter="loadScheduleTasks" @clear="loadScheduleTasks">
+            @keyup.enter="handleSearchTasks"
+            @clear="handleSearchTasks"
+          >
             <template #prefix>
               <i class="fa fa-search"></i>
             </template>
           </el-input>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="loadScheduleTasks">
+          <el-button type="primary" @click="handleSearchTasks">
             <el-icon><Search /></el-icon>
             搜索
           </el-button>
@@ -46,7 +48,7 @@
 
     <!-- 数据表格 -->
     <div class="ops-table-wrapper">
-      <el-table :data="scheduleTasks" v-loading="loadingTasks" max-height="calc(100vh - 304px)">
+      <el-table :data="paginatedTasks" v-loading="loadingTasks" max-height="calc(100vh - 304px)">
         <el-table-column
           prop="description"
           label="任务备注"
@@ -86,15 +88,14 @@
         :total="taskTotal"
         layout="total, sizes, prev, pager, next, jumper"
         background
-        @size-change="loadScheduleTasks"
-        @current-change="loadScheduleTasks"
+        @size-change="handleTaskPageSizeChange"
       />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { apiService } from '@/core/api'
 
@@ -106,6 +107,19 @@ const taskKeyword = ref('')
 const taskPage = ref(1)
 const taskPageSize = ref(10)
 const taskTotal = ref(0)
+const paginatedTasks = computed(() => {
+  const start = (taskPage.value - 1) * taskPageSize.value
+  return scheduleTasks.value.slice(start, start + taskPageSize.value)
+})
+
+function handleSearchTasks() {
+  taskPage.value = 1
+  loadScheduleTasks()
+}
+
+function handleTaskPageSizeChange() {
+  taskPage.value = 1
+}
 
 // 加载定时任务
 async function loadScheduleTasks() {
@@ -116,8 +130,8 @@ async function loadScheduleTasks() {
     })
     const allTasks = response?.data || response || []
     // 客户端筛选
-    if (taskKeyword.value) {
-      const kw = taskKeyword.value.toLowerCase()
+    const kw = taskKeyword.value.trim().toLowerCase()
+    if (kw) {
       scheduleTasks.value = allTasks.filter(
         task =>
           task.description?.toLowerCase().includes(kw) ||
@@ -127,9 +141,13 @@ async function loadScheduleTasks() {
       scheduleTasks.value = allTasks
     }
     taskTotal.value = scheduleTasks.value.length
+    const lastPage = Math.max(1, Math.ceil(taskTotal.value / taskPageSize.value))
+    taskPage.value = Math.min(taskPage.value, lastPage)
   } catch (error) {
     console.error('Failed to load schedule tasks:', error)
     scheduleTasks.value = []
+    taskTotal.value = 0
+    taskPage.value = 1
   } finally {
     loadingTasks.value = false
   }

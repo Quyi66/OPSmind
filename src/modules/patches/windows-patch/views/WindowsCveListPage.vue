@@ -84,7 +84,7 @@
       </div>
 
       <div class="ops-filter-bar mb-3">
-        <el-form :model="searchParams" inline>
+        <el-form :model="searchParams" inline @submit.prevent>
           <el-form-item label="关键字">
             <el-input
               v-model="searchParams.keyword"
@@ -145,7 +145,7 @@
           circle
           size="small"
           :loading="loading"
-          @click="search"
+          @click="loadData"
           title="刷新"
         >
           <el-icon v-show="!loading"><Refresh /></el-icon>
@@ -179,8 +179,8 @@
           </el-table-column>
           <el-table-column prop="cvss3Score" label="CVSS 评分" width="120" sortable="custom">
             <template #default="{ row }">
-              <span v-if="row.cvss3Score" style="font-weight: 600">
-                {{ Number(row.cvss3Score).toFixed(1) }}
+              <span v-if="formatCvssScore(row.cvss3Score) !== '未评分'" style="font-weight: 600">
+                {{ formatCvssScore(row.cvss3Score) }}
               </span>
               <span v-else class="text-muted">-</span>
             </template>
@@ -231,10 +231,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed, watch } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { formatCvssScore } from '@/utils/workspacePresentation'
 import { winCveApi } from '../../api'
 import ManualExportDialog from '../../components/cve/dialogs/ManualExportDialog.vue'
 import WindowsCveDetail from '../components/cve/details/WindowsCveDetail.vue'
@@ -249,6 +250,7 @@ const statistics = ref(null)
 const loading = ref(false)
 const statisticsLoading = ref(false)
 const manualExportVisible = ref(false)
+let listRequestId = 0
 
 const searchParams = reactive({
   severity: 'all',
@@ -377,9 +379,13 @@ async function loadStatistics() {
 }
 
 async function loadData() {
+  if (!validateDateRange()) return
+  const requestId = ++listRequestId
+  const params = { ...searchParams }
   loading.value = true
   try {
-    const data = await winCveApi.getCveList(searchParams)
+    const data = await winCveApi.getCveList(params)
+    if (requestId !== listRequestId) return
     const result = data?.data || data
 
     cveList.value = result.content || []
@@ -389,16 +395,30 @@ async function loadData() {
     pagination.first = result.first !== false
     pagination.last = result.last !== false
   } catch (error) {
+    if (requestId !== listRequestId) return
     console.error('Windows CVE 列表查询失败:', error)
     ElMessage.error('查询失败，请稍后重试')
     cveList.value = []
     pagination.totalElements = 0
   } finally {
-    loading.value = false
+    if (requestId === listRequestId) loading.value = false
   }
 }
 
+function validateDateRange() {
+  if (
+    searchParams.startDate &&
+    searchParams.endDate &&
+    searchParams.startDate > searchParams.endDate
+  ) {
+    ElMessage.warning('开始日期不能晚于结束日期')
+    return false
+  }
+  return true
+}
+
 function search() {
+  if (!validateDateRange()) return
   searchParams.page = 0
   loadData()
 }
@@ -430,7 +450,10 @@ function onDateChange() {
     const autoEndDate = new Date(startDate)
     autoEndDate.setFullYear(autoEndDate.getFullYear() + 1)
     searchParams.endDate = autoEndDate.toISOString().split('T')[0]
+    searchParams.endDateObj = searchParams.endDate
   }
+
+  search()
 }
 
 function handleSizeChange(size) {
@@ -486,9 +509,14 @@ onMounted(() => {
   search()
 })
 
+onBeforeUnmount(() => {
+  listRequestId += 1
+})
+
 watch(
-  () => route.query,
+  () => (route.name === 'patches-windowsCveList' ? route.query : null),
   query => {
+    if (!query) return
     if (query.view === 'detail' && query.cveId) {
       selectedCveId.value = query.cveId
       currentView.value = 'detail'

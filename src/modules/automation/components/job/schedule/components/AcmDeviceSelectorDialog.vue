@@ -1,15 +1,26 @@
 <template>
   <el-dialog
-    v-model="visible"
-    title="选择设备"
+    :model-value="visible"
+    :title="title"
     width="1200px"
     :close-on-click-modal="false"
     :z-index="5000"
     append-to-body
     class="acm-device-selector-dialog"
     :close-on-press-escape="false"
+    :show-close="!submitting"
+    :before-close="handleBeforeClose"
   >
-    <div class="selector-container">
+    <div v-loading="submitting" class="selector-container" :aria-busy="submitting">
+      <el-alert
+        v-if="description"
+        :title="description"
+        type="info"
+        :closable="false"
+        show-icon
+        class="selector-description"
+      />
+      <slot name="context" :selection="allSelectedHosts" />
       <!-- CI类型选择 -->
       <div v-if="ciTypeDefs.length > 1" class="ci-type-selector mb-3">
         <el-select
@@ -171,8 +182,20 @@
     </div>
 
     <template #footer>
-      <el-button @click="handleCancel">取消</el-button>
-      <el-button type="primary" @click="handleConfirm">确定</el-button>
+      <div class="selector-footer">
+        <DeviceSelectionSummary class="selection-summary" :selection="allSelectedHosts" />
+        <div>
+          <el-button :disabled="submitting" @click="handleCancel">取消</el-button>
+          <el-button
+            type="primary"
+            :loading="submitting"
+            :disabled="submitting || (!allowEmpty && allSelectedHosts.length === 0)"
+            @click="handleConfirm"
+          >
+            {{ confirmText }}
+          </el-button>
+        </div>
+      </div>
     </template>
   </el-dialog>
 </template>
@@ -184,12 +207,20 @@ import GroupSelector from './acm/GroupSelector.vue'
 import TagSelector from './acm/TagSelector.vue'
 import InputFilter from './acm/InputFilter.vue'
 import RecentlySelector from './acm/RecentlySelector.vue'
+import DeviceSelectionSummary from './DeviceSelectionSummary.vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   ciTypes: { type: [String, Array], default: 'linux' },
   initialSelection: { type: Array, default: () => [] },
+  title: { type: String, default: '选择设备' },
+  confirmText: { type: String, default: '确定' },
+  description: { type: String, default: '' },
+  submitting: { type: Boolean, default: false },
+  // 表单选择默认立即关闭且允许清空；直接执行时由业务页面在提交成功后关闭。
+  closeOnConfirm: { type: Boolean, default: true },
+  allowEmpty: { type: Boolean, default: true },
   options: {
     type: Object,
     default: () => ({
@@ -275,14 +306,18 @@ const selectModeDefs = computed(() => {
   return modes
 })
 
-watch(visible, val => {
-  if (val) {
-    allSelectedHosts.value = normalizeSingleSelection([...(props.initialSelection || [])])
-    initCiTypes()
-  } else {
-    selectedHostsByCiType.value = []
-  }
-})
+watch(
+  visible,
+  val => {
+    if (val) {
+      allSelectedHosts.value = normalizeSingleSelection([...(props.initialSelection || [])])
+      initCiTypes()
+    } else {
+      selectedHostsByCiType.value = []
+    }
+  },
+  { immediate: true }
+)
 
 watch(activeCiType, (newVal, oldVal) => {
   if (newVal && newVal !== oldVal) {
@@ -445,12 +480,23 @@ function removeHost(host) {
 }
 
 function handleConfirm() {
-  emit('confirm', allSelectedHosts.value)
-  visible.value = false
+  if (props.submitting) return
+  if (!props.allowEmpty && allSelectedHosts.value.length === 0) return
+  emit('confirm', [...allSelectedHosts.value])
+  if (props.closeOnConfirm) {
+    visible.value = false
+  }
 }
 
 function handleCancel() {
+  if (props.submitting) return
   visible.value = false
+}
+
+function handleBeforeClose(done) {
+  if (props.submitting) return
+  visible.value = false
+  done()
 }
 </script>
 
@@ -489,6 +535,23 @@ function handleCancel() {
   display: flex;
   align-items: center;
   flex-shrink: 0;
+}
+
+.selector-description {
+  flex-shrink: 0;
+  margin-bottom: 8px;
+}
+
+.selector-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.selection-summary {
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
 }
 
 .acm-device-selector-dialog .selected-hosts-card .card-header-content {

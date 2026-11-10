@@ -94,7 +94,11 @@
                   <span class="label">CVSS 评分</span>
                   <div class="value">
                     <span :class="cveDetail.cvss3Score ? 'text-danger fw-bold' : 'text-muted'">
-                      {{ cveDetail.cvss3Score ? cveDetail.cvss3Score.toFixed(1) : '-' }}
+                      {{
+                        formatCvssScore(cveDetail.cvss3Score) === '未评分'
+                          ? '-'
+                          : formatCvssScore(cveDetail.cvss3Score)
+                      }}
                     </span>
                     <span v-if="cveDetail.cvssVector" class="text-muted ms-2 code-font">
                       ({{ cveDetail.cvssVector }})
@@ -466,6 +470,7 @@ import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDateTime as formatDateTimeGlobal } from '@/utils/date'
+import { formatCvssScore } from '@/utils/workspacePresentation'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import * as echarts from 'echarts'
 import { useTheme } from '@/composables/useTheme'

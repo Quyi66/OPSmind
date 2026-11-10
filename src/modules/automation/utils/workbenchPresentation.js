@@ -15,12 +15,12 @@ export function getWorkbenchJobType(record) {
   return JOB_TYPES[type] || { label: type || '类型未知', tag: 'info' }
 }
 
-export function getWorkbenchCardLayout(width, height) {
-  const gap = 20
+export function getWorkbenchCardLayout(width, height, compact = false) {
+  const gap = compact ? 12 : 20
   const minHeight = 112
-  const targetHeight = 124
-  const maxHeight = 148
-  const columns = Math.max(1, Math.floor((width + gap) / (260 + gap)))
+  const targetHeight = compact ? minHeight : 124
+  const minWidth = compact ? 240 : 260
+  const columns = Math.max(1, Math.floor((width + gap) / (minWidth + gap)))
   const maxRows = Math.max(1, Math.floor((height + gap) / (minHeight + gap)))
   const rows = Math.min(maxRows, Math.max(1, Math.round((height + gap) / (targetHeight + gap))))
   return {
@@ -28,8 +28,7 @@ export function getWorkbenchCardLayout(width, height) {
     rows,
     limit: width > 0 && height > 0 ? columns * rows : 0,
     gap,
-    minHeight,
-    maxHeight
+    minHeight
   }
 }
 
@@ -67,7 +66,7 @@ export function selectWorkbenchJobs(rows, type = '') {
     .map(item => item.job)
 }
 
-export function formatWorkbenchJobDate(job, now = new Date()) {
+export function formatWorkbenchJobDate(job) {
   const { timestamp, source } = getWorkbenchJobDate(job)
   if (timestamp === null) return { label: '时间未提供', title: '更新时间和创建时间均未提供或无效' }
   const date = new Date(timestamp)
@@ -76,7 +75,7 @@ export function formatWorkbenchJobDate(job, now = new Date()) {
   const time = `${pad(date.getHours())}:${pad(date.getMinutes())}`
   const fullDate = `${date.getFullYear()}-${monthDay}`
   return {
-    label: `${source} ${date.getFullYear() === now.getFullYear() ? monthDay : fullDate} ${time}`,
+    label: `${source} ${fullDate} ${time}`,
     title: `${source}时间：${fullDate} ${time}:${pad(date.getSeconds())}`
   }
 }

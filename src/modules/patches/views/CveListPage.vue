@@ -91,7 +91,7 @@
 
       <!-- 筛选区域 -->
       <div class="ops-filter-bar mb-3">
-        <el-form :model="searchParams" inline size="small">
+        <el-form :model="searchParams" inline size="small" @submit.prevent>
           <el-form-item label="关键字">
             <el-input
               v-model="searchParams.keyword"
@@ -164,7 +164,7 @@
           circle
           size="small"
           :loading="loading"
-          @click="search"
+          @click="loadData"
           title="刷新"
         >
           <el-icon v-show="!loading"><Refresh /></el-icon>
@@ -210,8 +210,8 @@
           </el-table-column>
           <el-table-column prop="cvss3Score" label="CVSS 评分" width="120" sortable="custom">
             <template #default="{ row }">
-              <span v-if="row.cvss3Score" style="font-weight: 600">
-                {{ row.cvss3Score.toFixed(1) }}
+              <span v-if="formatCvssScore(row.cvss3Score) !== '未评分'" style="font-weight: 600">
+                {{ formatCvssScore(row.cvss3Score) }}
               </span>
               <span v-else class="text-muted">-</span>
             </template>
@@ -289,6 +289,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { cveApi } from '../api'
 import { ElMessage } from 'element-plus'
+import { formatCvssScore } from '@/utils/workspacePresentation'
 import {
   buildCveSourceOptions,
   getCveSourceLabel,
@@ -469,6 +470,7 @@ async function loadStatistics() {
 
 // 加载数据
 async function loadData() {
+  if (!validateDateRange()) return
   const requestId = ++latestListRequestId
   loading.value = true
   try {
@@ -498,8 +500,21 @@ async function loadData() {
   }
 }
 
+function validateDateRange() {
+  if (
+    searchParams.startDate &&
+    searchParams.endDate &&
+    searchParams.startDate > searchParams.endDate
+  ) {
+    ElMessage.warning('开始日期不能晚于结束日期')
+    return false
+  }
+  return true
+}
+
 // 执行搜索
 function search() {
+  if (!validateDateRange()) return
   searchParams.page = 0
   loadData()
 }
@@ -615,8 +630,9 @@ onMounted(() => {
 })
 
 watch(
-  () => route.query,
+  () => (route.name === 'patches-cveList' ? route.query : null),
   query => {
+    if (!query) return
     if (query.view === 'detail' && query.cveId) {
       selectedCveId.value = query.cveId
       currentView.value = 'detail'

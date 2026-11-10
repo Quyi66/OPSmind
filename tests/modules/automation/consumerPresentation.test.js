@@ -102,6 +102,7 @@ function mountConsumer(component, props = {}) {
         'el-tooltip': true,
         'el-input-number': true,
         'el-empty': true,
+        'el-alert': Slot,
         'el-button': Slot
       },
       directives: { loading() {} }

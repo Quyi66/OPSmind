@@ -1,27 +1,33 @@
 <template>
   <el-dialog
     :model-value="visible"
-    :title="item?.hostKey || '巡检结果'"
-    width="700px"
+    :title="item?.hostKey || item?.host_key || '巡检结果'"
+    width="740px"
     destroy-on-close
     @close="$emit('close')"
     :close-on-click-modal="true"
   >
     <div v-loading="loading" class="check-item-detail-dialog">
-      <div class="result-item">
-        <span class="result-label">检查项：</span>
-        <span class="result-value">{{ item?.name || '-' }}</span>
+      <div class="meta-summary-card">
+        <div class="result-item">
+          <span class="result-label">检查项名称</span>
+          <strong class="result-value">{{ item?.name || '-' }}</strong>
+        </div>
+        <div class="result-item">
+          <span class="result-label">诊断结果</span>
+          <el-tag v-if="item" :type="getKpiStatusTagType(item.status)" size="small" effect="light">
+            {{ getKpiStatusLabel(item.status) }}
+          </el-tag>
+        </div>
       </div>
-      <div class="result-item">
-        <span class="result-label">结果：</span>
-        <el-tag v-if="item" :type="getKpiStatusTagType(item.status)" size="small">
-          {{ getKpiStatusLabel(item.status) }}
-        </el-tag>
+
+      <div class="output-section-header">
+        <span class="result-label">原始执行输出</span>
       </div>
-      <div class="result-item">
-        <span class="result-label">结果输出：</span>
-      </div>
-      <div v-if="item?.output" class="output-content">
+      <div
+        v-if="item?.output !== null && item?.output !== undefined && item?.output !== ''"
+        class="output-content"
+      >
         <pre>{{ item.output }}</pre>
       </div>
       <div v-else class="output-content">
@@ -37,6 +43,7 @@
             <el-button
               v-if="!isInWhitelist"
               type="primary"
+              plain
               @click="handleAddToWhitelist"
               :loading="whitelistLoading"
             >
@@ -46,6 +53,7 @@
             <el-button
               v-else
               type="danger"
+              plain
               @click="handleRemoveFromWhitelist"
               :loading="whitelistLoading"
             >
@@ -166,34 +174,54 @@ async function handleRemoveFromWhitelist() {
 
 <style scoped lang="scss">
 .check-item-detail-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .meta-summary-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    padding: 12px 16px;
+    background: var(--el-fill-color-lighter);
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 8px;
+  }
+
   .result-item {
-    margin-bottom: 12px;
-    font-size: 14px;
-    line-height: 1.8;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
 
     .result-label {
-      font-weight: bold;
-      color: var(--el-text-color-primary);
-      display: inline-block;
-      width: 80px;
+      color: var(--el-text-color-secondary);
     }
 
     .result-value {
-      color: var(--el-text-color-regular);
+      color: var(--el-text-color-primary);
+      font-weight: 600;
     }
   }
 
-  .output-content {
-    margin-top: 8px;
+  .output-section-header {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--el-text-color-secondary);
+  }
 
+  .output-content {
     pre {
-      max-height: 350px;
-      padding: 12px;
-      background: var(--el-bg-color-page);
-      color: var(--el-text-color-primary);
-      border: 1px solid var(--el-border-color-light);
-      border-radius: 4px;
-      font-size: 13px;
+      margin: 0;
+      max-height: 360px;
+      padding: 14px 16px;
+      background: #0f172a;
+      color: #e2e8f0;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      font-size: 12.5px;
       line-height: 1.6;
       overflow: auto;
       white-space: pre-wrap;
@@ -201,7 +229,9 @@ async function handleRemoveFromWhitelist() {
       font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
 
       &.empty {
+        background: var(--el-fill-color-lighter);
         color: var(--el-text-color-secondary);
+        border-color: var(--el-border-color-lighter);
         font-style: italic;
       }
     }
@@ -213,11 +243,7 @@ async function handleRemoveFromWhitelist() {
   justify-content: space-between;
   align-items: center;
 
-  .footer-left {
-    display: flex;
-    gap: 8px;
-  }
-
+  .footer-left,
   .footer-right {
     display: flex;
     gap: 8px;

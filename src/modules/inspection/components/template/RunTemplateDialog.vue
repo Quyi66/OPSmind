@@ -1,86 +1,125 @@
 <template>
   <el-dialog
     :model-value="visible"
-    title="执行巡检"
-    width="800px"
+    title="启动巡检任务"
+    width="820px"
     :close-on-click-modal="false"
     @update:model-value="handleVisibleChange"
     @close="handleClose"
     :close-on-press-escape="false"
   >
-    <el-form ref="formRef" :model="formData" :rules="rules" label-position="top">
-      <!-- 名称 -->
-      <el-form-item label="名称" prop="templateName">
-        <el-input v-model="formData.templateName" placeholder="请输入模板名称" />
-      </el-form-item>
-
-      <!-- 描述 -->
-      <el-form-item label="描述" prop="description">
-        <el-input
-          v-model="formData.description"
-          type="textarea"
-          :rows="3"
-          placeholder="请输入描述"
-        />
-      </el-form-item>
-
-      <!-- 巡检参数区域 -->
-      <div class="audit-params-section">
-        <div class="params-header">
-          <span>
-            <i class="fa fa-laptop"></i>
-            主机
-            <strong>{{ totalHosts }}</strong>
-          </span>
-          <span class="ml-4">
-            <i class="fa fa-file-code"></i>
-            脚本
-            <strong>{{ totalScripts }}</strong>
-          </span>
+    <div class="run-summary-banner">
+      <div class="banner-main">
+        <div class="banner-title">
+          <i class="fas fa-bolt" aria-hidden="true"></i>
+          <span>执行前配置确认</span>
         </div>
+        <p>可针对本次巡检任务微调运行参数或目标主机范围，变更仅对本次任务生效。</p>
+      </div>
+      <div class="banner-metrics">
+        <div class="banner-metric-item">
+          <span class="metric-dot metric-dot--primary"></span>
+          <span>目标主机项</span>
+          <strong>{{ totalHosts }}</strong>
+        </div>
+        <div class="banner-metric-item">
+          <span class="metric-dot metric-dot--success"></span>
+          <span>关联脚本数</span>
+          <strong>{{ totalScripts }}</strong>
+        </div>
+      </div>
+    </div>
 
-        <div class="params-body">
-          <!-- 脚本选择 -->
-          <el-form-item label="脚本" prop="scripts">
+    <el-form ref="formRef" :model="formData" :rules="rules" label-position="top" class="run-template-form">
+      <!-- 任务基础信息 -->
+      <section class="config-section-card">
+        <div class="section-card-header">
+          <div class="section-card-title">
+            <span class="section-step-badge">1</span>
+            <div>
+              <h3>任务标识与说明</h3>
+              <p>确认本次巡检记录显示的模板名称与描述信息。</p>
+            </div>
+          </div>
+        </div>
+        <div class="section-card-body">
+          <div class="form-row-grid">
+            <el-form-item label="模板名称" prop="templateName" class="mb-0">
+              <el-input v-model="formData.templateName" placeholder="请输入模板名称" />
+            </el-form-item>
+            <el-form-item label="场景说明" prop="description" class="mb-0">
+              <el-input
+                v-model="formData.description"
+                placeholder="可选：补充本次执行的备注或描述"
+              />
+            </el-form-item>
+          </div>
+        </div>
+      </section>
+
+      <!-- 脚本与主机配置 -->
+      <section class="config-section-card">
+        <div class="section-card-header">
+          <div class="section-card-title">
+            <span class="section-step-badge">2</span>
+            <div>
+              <h3>巡检剧本与运行参数</h3>
+              <p>核实本次执行的巡检脚本路径与附加命令行参数。</p>
+            </div>
+          </div>
+          <div class="section-card-actions">
+            <span class="config-count-pill">
+              共 <strong>{{ formData.scripts.length }}</strong> 个文件
+            </span>
+            <el-button type="primary" plain size="small" @click="openScriptSelector">
+              <i class="fas fa-folder-open" aria-hidden="true"></i>
+              更换脚本
+            </el-button>
+          </div>
+        </div>
+        <div class="section-card-body">
+          <el-form-item prop="scripts" class="mb-0">
             <div class="script-selector">
               <div
                 v-if="formData.scripts.length === 0"
-                class="empty-placeholder"
+                class="script-empty-box"
                 @click="openScriptSelector"
               >
-                <i class="fal fa-file-alt empty-icon" />
-                <el-button size="small">选择文件</el-button>
+                <div class="script-empty-icon">
+                  <i class="fas fa-file-code" aria-hidden="true" />
+                </div>
+                <div class="script-empty-text">
+                  <span>暂未关联巡检脚本</span>
+                  <small>点击选择本次巡检要执行的脚本文件</small>
+                </div>
+                <el-button size="small" type="primary" plain>选择文件</el-button>
               </div>
               <div v-else class="selected-scripts">
-                <div class="script-header">
-                  <el-button size="small" @click="openScriptSelector">
-                    共
-                    <strong>{{ formData.scripts.length }}</strong>
-                    个文件
-                  </el-button>
-                </div>
                 <el-table
                   :data="formData.scripts"
                   size="small"
                   class="script-table"
-                  max-height="300px"
+                  max-height="260px"
                 >
-                  <el-table-column prop="scriptPath" label="脚本" min-width="200">
+                  <el-table-column prop="scriptPath" label="巡检脚本路径" min-width="220">
                     <template #default="{ row }">
                       <el-tooltip :content="row.scriptPath || '未提供路径'" placement="top">
-                        <span>{{ getInspectionScriptLabel(row) }}</span>
+                        <span class="script-path-badge">
+                          <i class="fas fa-file-code" aria-hidden="true"></i>
+                          {{ getInspectionScriptLabel(row) }}
+                        </span>
                       </el-tooltip>
                     </template>
                   </el-table-column>
-                  <el-table-column label="脚本参数" min-width="150">
+                  <el-table-column label="运行参数" min-width="180">
                     <template #default="{ row }">
-                      <el-input v-model="row.scriptParams" size="small" placeholder="脚本参数" />
+                      <el-input v-model="row.scriptParams" size="small" placeholder="脚本运行参数" />
                     </template>
                   </el-table-column>
-                  <el-table-column width="60" align="left">
+                  <el-table-column label="操作" width="68" align="center">
                     <template #default="{ $index }">
                       <el-button type="danger" link size="small" @click="removeScript($index)">
-                        <i class="fa fa-minus"></i>
+                        移除
                       </el-button>
                     </template>
                   </el-table-column>
@@ -88,26 +127,44 @@
               </div>
             </div>
           </el-form-item>
+        </div>
+      </section>
 
-          <!-- 主机选择 -->
-          <el-form-item label="主机" prop="hosts">
+      <!-- 目标主机 -->
+      <section class="config-section-card">
+        <div class="section-card-header">
+          <div class="section-card-title">
+            <span class="section-step-badge">3</span>
+            <div>
+              <h3>本次巡检目标主机</h3>
+              <p>选择或调整本次巡检覆盖的目标主机、分组或标签。</p>
+            </div>
+          </div>
+          <div class="section-card-actions">
+            <span class="config-count-pill">
+              已选 <strong>{{ totalHosts }}</strong> 项主机配置
+            </span>
+          </div>
+        </div>
+        <div class="section-card-body">
+          <el-form-item prop="hosts" class="mb-0">
             <AcmDeviceSelector
               v-model="formData.hosts"
               ci-types="[auto]"
               :options="{
                 selectMode: 'host,group,tag,input,recently',
                 selector: 'multiple',
-                label: '选择'
+                label: '选择巡检主机'
               }"
             />
           </el-form-item>
         </div>
-      </div>
+      </section>
     </el-form>
 
     <template #footer>
       <el-button @click="handleClose">取消</el-button>
-      <el-button type="primary" :loading="running" @click="handleRun">执行</el-button>
+      <el-button type="primary" :loading="running" @click="handleRun">立即执行</el-button>
     </template>
 
     <!-- 脚本选择弹窗 -->
@@ -388,98 +445,229 @@ watch(
 </script>
 
 <style scoped lang="scss">
-.audit-params-section {
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 4px;
+.run-summary-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  background: var(--el-color-primary-light-9);
+  border: 1px solid var(--el-color-primary-light-7);
+  border-radius: 8px;
+}
+
+.banner-main {
+  min-width: 0;
+  .banner-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--el-color-primary);
+  }
+  p {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: var(--el-text-color-regular);
+  }
+}
+
+.banner-metrics {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.banner-metric-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--el-text-color-regular);
+  strong {
+    font-size: 18px;
+    font-variant-numeric: tabular-nums;
+    color: var(--el-text-color-primary);
+  }
+}
+
+.metric-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  &--primary {
+    background: var(--el-color-primary);
+  }
+  &--success {
+    background: var(--el-color-success);
+  }
+}
+
+.run-template-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.config-section-card {
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
   overflow: hidden;
 }
 
-.params-header {
-  background: var(--el-bg-color-page);
+.section-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--el-border-color-light);
-  font-size: 14px;
+  background: var(--el-fill-color-blank);
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
 
-  i {
-    margin-right: 4px;
-    color: var(--el-text-color-secondary);
-  }
+.section-card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
 
-  strong {
-    font-size: 16px;
+  h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
     color: var(--el-text-color-primary);
-    margin-left: 4px;
   }
 
-  .ml-4 {
-    margin-left: 24px;
+  p {
+    margin: 2px 0 0;
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
   }
 }
 
-.params-body {
-  padding: 16px;
+.section-step-badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.section-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  i {
+    margin-right: 5px;
+  }
+}
+
+.config-count-pill {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  background: var(--el-fill-color-light);
+  padding: 3px 10px;
+  border-radius: 999px;
+  strong {
+    color: var(--el-color-primary);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.section-card-body {
+  padding: 14px 16px;
+}
+
+.form-row-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.mb-0 {
+  margin-bottom: 0 !important;
 }
 
 .script-selector {
   width: 100%;
 }
 
-.empty-placeholder {
-  background: var(--el-bg-color-page);
-  padding: 40px;
-  text-align: center;
-  border-radius: 4px;
+.script-empty-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px dashed var(--el-border-color);
+  border-radius: 6px;
+  background: var(--el-fill-color-lighter);
   cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
 
-  .empty-icon {
-    font-size: 48px;
-    color: var(--el-text-color-placeholder);
-    display: block;
-    margin-bottom: 12px;
+  &:hover {
+    border-color: var(--el-color-primary);
+    background: var(--el-color-primary-light-9);
+  }
+}
+
+.script-empty-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-lighter);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--el-color-primary);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.script-empty-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  span {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--el-text-color-primary);
+  }
+  small {
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
   }
 }
 
 .selected-scripts {
-  .script-header {
-    margin-bottom: 8px;
-  }
-
   .script-table {
-    border: 1px solid var(--el-border-color-light);
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 6px;
+    overflow: hidden;
   }
 }
 
-.host-selector {
-  width: 100%;
-}
-
-.empty-host {
-  .el-button {
-    i {
-      margin-right: 4px;
-    }
-  }
-}
-
-.selected-hosts {
-  .host-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
-
-    .host-search {
-      width: 150px;
-      margin-left: auto;
-    }
-  }
-
-  .host-list {
-    max-height: 120px;
-    overflow-y: auto;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+.script-path-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--el-font-family-mono, monospace);
+  font-size: 12px;
+  color: var(--el-text-color-primary);
+  i {
+    color: var(--el-color-primary);
   }
 }
 </style>

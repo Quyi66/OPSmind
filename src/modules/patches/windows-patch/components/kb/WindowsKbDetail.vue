@@ -184,7 +184,11 @@
               </el-table-column>
               <el-table-column label="CVSS" width="90">
                 <template #default="{ row }">
-                  {{ row.cvss3Score ? Number(row.cvss3Score).toFixed(1) : '-' }}
+                  {{
+                    formatCvssScore(row.cvss3Score) === '未评分'
+                      ? '-'
+                      : formatCvssScore(row.cvss3Score)
+                  }}
                 </template>
               </el-table-column>
               <el-table-column prop="title" label="标题" min-width="220" show-overflow-tooltip />
@@ -242,6 +246,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import { formatCvssScore } from '@/utils/workspacePresentation'
 import { winKbApi } from '../../../api'
 import CveLinkList from '../../../components/common/CveLinkList.vue'
 import {

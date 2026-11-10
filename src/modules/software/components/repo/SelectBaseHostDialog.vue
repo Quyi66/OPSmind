@@ -1,158 +1,61 @@
 <template>
-  <el-dialog
+  <AcmDeviceSelectorDialog
     v-model="visible"
-    title="选择基准主机"
-    width="600px"
-    :close-on-click-modal="false"
-    destroy-on-close
-    @close="handleClose"
-    :close-on-press-escape="false"
-  >
-    <div class="select-base-host-dialog">
-      <!-- 选择按钮 -->
-      <div class="selector-row">
-        <el-button plain @click="openHostSelector">
-          <i class="fa fa-list" />
-          选择
-        </el-button>
-        <span v-if="selectedHosts.length > 0" class="selected-text">
-          已选择 {{ selectedHosts.length }} 台主机
-        </span>
-      </div>
-
-      <!-- 操作按钮 -->
-      <div class="action-buttons">
-        <el-button
-          type="primary"
-          :loading="submitting"
-          :disabled="selectedHosts.length === 0"
-          @click="handleSubmit"
-        >
-          <i class="far fa-play-circle" />
-          将所选主机设为基准仓库
-        </el-button>
-      </div>
-    </div>
-
-    <!-- 复用主机选择器弹窗 -->
-    <AcmDeviceSelectorDialog
-      v-model="hostSelectorVisible"
-      ci-types="[auto]"
-      :initial-selection="selectedHosts"
-      :options="{
-        selectMode: 'host,group,tag,input,recently',
-        selector: 'multiple'
-      }"
-      @confirm="handleHostsConfirm"
-    />
-  </el-dialog>
+    ci-types="[auto]"
+    :options="selectorOptions"
+    title="选择设备 · 设置基准仓库主机"
+    confirm-text="设为基准仓库主机"
+    description="点击“设为基准仓库主机”后，将立即为所选主机设置基准仓库。"
+    :allow-empty="false"
+    :close-on-confirm="false"
+    :submitting="submitting"
+    @confirm="handleSubmit"
+  />
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { computed, ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import { repoApi } from '../../api'
 import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
 import { normalizeAcmDeviceJobHosts } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
 
-const props = defineProps({
-  modelValue: {
-    type: Boolean,
-    default: false
-  }
-})
-
+const props = defineProps({ modelValue: { type: Boolean, default: false } })
 const emit = defineEmits(['update:modelValue', 'success'])
-
-const visible = ref(false)
-const submitting = ref(false)
-
-// 主机选择器弹窗
-const hostSelectorVisible = ref(false)
-const selectedHosts = ref([])
-
-// 监听 modelValue
-watch(
-  () => props.modelValue,
-  val => {
-    visible.value = val
-  }
-)
-
-// 监听 visible
-watch(visible, val => {
-  emit('update:modelValue', val)
+const visible = computed({
+  get: () => props.modelValue,
+  set: value => emit('update:modelValue', value)
 })
-
-function openHostSelector() {
-  hostSelectorVisible.value = true
+const submitting = ref(false)
+const selectorOptions = {
+  selectMode: 'host,group,tag,input,recently',
+  selector: 'multiple'
 }
 
-function handleHostsConfirm(hosts) {
-  selectedHosts.value = hosts
-}
-
-async function handleSubmit() {
-  if (selectedHosts.value.length === 0) {
+async function handleSubmit(selection) {
+  if (submitting.value) return
+  const hosts = normalizeAcmDeviceJobHosts(selection, 'linux')
+  if (!hosts.length) {
     ElMessage.warning('请选择主机')
     return
   }
-
+  submitting.value = true
   try {
-    await ElMessageBox.confirm('确定将选中的主机设置为基准仓库主机吗？', '执行运维工具', {
-      closeOnClickModal: false,
-      closeOnPressEscape: false,
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      type: 'info'
-    })
-
-    submitting.value = true
-
-    // 构建 hosts 参数 [{key, value, assetType}] 格式
-    const hostsArray = normalizeAcmDeviceJobHosts(selectedHosts.value, 'linux')
-
-    await repoApi.setBaseRepoHosts({
-      hosts: hostsArray
-    })
-
-    ElMessage.success('设置成功')
-    emit('success')
-    handleClose()
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('Failed to set base repo hosts:', error)
-      ElMessage.error('设置失败')
+    const response = await repoApi.setBaseRepoHosts({ hosts })
+    const data = response?.data || response
+    const result = Array.isArray(data) ? data[0] : data
+    if (['FAILED', 'ERROR'].includes(result?.status)) {
+      ElMessage.error(result.error || '设置失败')
+      return
     }
+    ElMessage.success('设置任务已提交')
+    emit('success')
+    visible.value = false
+  } catch (error) {
+    console.error('Failed to set base repo hosts:', error)
+    ElMessage.error('设置失败')
   } finally {
     submitting.value = false
   }
 }
-
-function handleClose() {
-  visible.value = false
-  selectedHosts.value = []
-}
 </script>
-
-<style scoped lang="scss">
-.select-base-host-dialog {
-  padding: 16px;
-
-  .selector-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 16px;
-
-    .selected-text {
-      color: #606266;
-      font-size: 14px;
-    }
-  }
-
-  .action-buttons {
-    margin-top: 8px;
-  }
-}
-</style>

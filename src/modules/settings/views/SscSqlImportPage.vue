@@ -11,7 +11,7 @@
           </div>
 
           <div class="ops-section__content">
-            <el-form label-position="top" class="yum-sql-import-panel__form">
+            <el-form label-position="top" class="yum-sql-import-panel__form" @submit.prevent>
               <!-- 第一区块：文件配置 -->
               <div class="yum-sql-import-panel__form-section">
                 <div class="form-section-title">
@@ -83,7 +83,8 @@
                 </el-button>
                 <div class="yum-sql-import-panel__secondary-actions">
                   <el-button
-                    :disabled="!currentJobId"
+                    :disabled="!currentJobId || submitting"
+                    :loading="refreshing"
                     @click="refreshCurrentJob"
                     class="action-btn"
                   >
@@ -115,6 +116,17 @@
           </div>
 
           <div class="ops-section__content result-content-wrapper">
+            <el-alert v-if="readError" :title="readError" type="error" :closable="false" show-icon>
+              <el-button
+                link
+                type="primary"
+                :disabled="submitting"
+                :loading="refreshing"
+                @click="refreshCurrentJob"
+              >
+                重试查询
+              </el-button>
+            </el-alert>
             <div v-if="!jobResult" class="yum-sql-import-panel__empty-state">
               <el-empty description="执行后可在这里查看进度与结果" />
             </div>
@@ -125,7 +137,7 @@
                   {{ getSqlImportStatusLabel(jobResult) }}
                 </el-tag>
                 <span
-                  v-if="isSqlImportRunning(jobResult)"
+                  v-if="isSqlImportRunning(jobResult) && !readError"
                   class="yum-sql-import-panel__running-hint"
                 >
                   <el-icon class="is-loading"><Loading /></el-icon>
@@ -155,7 +167,11 @@
                 <el-descriptions-item label="失败语句数">
                   <span
                     :class="
-                      jobResult.failedStatements > 0 ? 'text-danger text-bold' : 'text-success'
+                      jobResult.failedStatements > 0
+                        ? 'text-danger text-bold'
+                        : jobResult.failedStatements === 0
+                          ? 'text-success'
+                          : ''
                     "
                   >
                     {{ formatNumber(jobResult.failedStatements) }}
@@ -242,6 +258,7 @@
                     :total="jobResult.errors.length"
                     layout="total, sizes, prev, pager, next, jumper"
                     background
+                    @size-change="errorPagination.page = 1"
                   />
                 </div>
               </div>
@@ -264,7 +281,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onActivated, onDeactivated, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   Document,
@@ -288,6 +305,8 @@ import { authService } from '@/core/auth'
 
 const isAdmin = computed(() => authService.hasPermission('admin'))
 const submitting = ref(false)
+const refreshing = ref(false)
+const readError = ref('')
 const currentJobId = ref('')
 const jobResult = ref(null)
 
@@ -313,6 +332,9 @@ const paginatedErrors = computed(() => {
 })
 
 let pollTimer = 0
+let active = true
+let disposed = false
+let readRequestId = 0
 
 const submitDisabled = computed(() => {
   return !String(form.serverFile || '').trim()
@@ -328,7 +350,14 @@ function stopPolling() {
 function schedulePolling(jobId = currentJobId.value) {
   stopPolling()
 
-  if (!jobId || !isSqlImportRunning(jobResult.value)) {
+  if (
+    !active ||
+    disposed ||
+    submitting.value ||
+    !jobId ||
+    jobId !== currentJobId.value ||
+    !isSqlImportRunning(jobResult.value)
+  ) {
     return
   }
 
@@ -347,11 +376,27 @@ function buildExecuteOptions() {
 
 function applyJobResponse(responseData, options = {}) {
   const result = normalizeSqlImportJobResult(responseData)
+  for (const field of ['elapsedMs', 'totalStatements', 'failedStatements']) {
+    const value = responseData?.[field]
+    if (
+      value == null ||
+      String(value).trim() === '' ||
+      !['number', 'string'].includes(typeof value)
+    )
+      result[field] = null
+  }
+  const sameJob = currentJobId.value === result.jobId
   jobResult.value = result
   currentJobId.value = result.jobId
+  readError.value = ''
 
-  // 重置失败明细页码
-  errorPagination.value.page = 1
+  // 同一任务刷新保留正在阅读的错误页，新任务回首页；缩量约束到有效页。
+  errorPagination.value.page = sameJob
+    ? Math.min(
+        errorPagination.value.page,
+        Math.max(1, Math.ceil(result.errors.length / errorPagination.value.pageSize))
+      )
+    : 1
 
   if (isSqlImportRunning(result)) {
     schedulePolling(result.jobId)
@@ -359,9 +404,16 @@ function applyJobResponse(responseData, options = {}) {
     stopPolling()
   }
 
-  const message = result.message || options.fallbackMessage || ''
-  if (options.notify !== false && message) {
-    ElMessage.info(message)
+  const failed = result.status === 'FAILED'
+  const fallback = failed
+    ? 'SQL 执行失败'
+    : result.status === 'SUCCESS'
+      ? 'SQL 执行完成'
+      : options.fallbackMessage || ''
+  const message = result.message || fallback
+  if (active && options.notify !== false && message) {
+    if (failed) ElMessage.error(message)
+    else ElMessage.info(message)
   }
 }
 
@@ -370,7 +422,7 @@ function clearFileSelection() {
 }
 
 async function handleSubmit() {
-  if (submitDisabled.value) {
+  if (disposed || !active || !isAdmin.value || submitting.value || submitDisabled.value) {
     return
   }
 
@@ -378,35 +430,63 @@ async function handleSubmit() {
 }
 
 async function submitServerFile() {
+  stopPolling()
+  readRequestId += 1
+  refreshing.value = false
   submitting.value = true
   try {
     const response = await yumRepoApi.runSqlServerFile({
       file: form.serverFile,
       ...buildExecuteOptions()
     })
+    if (disposed) return
     applyJobResponse(unwrapResponse(response), {
       fallbackMessage: form.async ? '任务已受理，开始查询执行进度' : 'SQL 执行完成'
     })
   } catch (error) {
+    if (disposed) return
     console.error('执行服务器 SQL 文件失败:', error)
-    ElMessage.error(resolveRequestError(error, '执行服务器 SQL 文件失败'))
+    if (active) ElMessage.error(resolveRequestError(error, '执行服务器 SQL 文件失败'))
   } finally {
-    submitting.value = false
+    if (!disposed) {
+      submitting.value = false
+      schedulePolling()
+    }
   }
 }
 
 async function refreshJobResult(jobId = currentJobId.value, options = {}) {
-  const normalizedJobId = String(jobId || '').trim()
-  if (!normalizedJobId) {
+  const normalizedJobId = String(jobId ?? '').trim()
+  if (
+    !active ||
+    disposed ||
+    !isAdmin.value ||
+    submitting.value ||
+    !normalizedJobId ||
+    normalizedJobId !== currentJobId.value
+  ) {
     return
   }
 
+  stopPolling()
+  const request = ++readRequestId
+  refreshing.value = true
   try {
     const response = await yumRepoApi.getSqlImportResult(normalizedJobId)
+    if (!active || disposed || request !== readRequestId || normalizedJobId !== currentJobId.value)
+      return
     applyJobResponse(unwrapResponse(response), { notify: !options.silent })
   } catch (error) {
+    if (!active || disposed || request !== readRequestId || normalizedJobId !== currentJobId.value)
+      return
     const status = error?.response?.status
-    const isFatal = status === 404 || status === 403 || status === 401
+    const isFatal =
+      status === 404 ||
+      status === 403 ||
+      status === 401 ||
+      ['Authentication expired', 'Access denied'].includes(error?.message)
+    const retrying = options.silent && !isFatal && isSqlImportRunning(jobResult.value)
+    readError.value = `${resolveRequestError(error, '查询 SQL 导入结果失败')}；${retrying ? '将自动重试，也可手动查询' : '结果未更新，请重试查询'}`
 
     if (options.silent && !isFatal) {
       schedulePolling(normalizedJobId)
@@ -417,6 +497,8 @@ async function refreshJobResult(jobId = currentJobId.value, options = {}) {
       console.error('查询 SQL 导入结果失败:', error)
       ElMessage.error(resolveRequestError(error, '查询 SQL 导入结果失败'))
     }
+  } finally {
+    if (active && !disposed && request === readRequestId) refreshing.value = false
   }
 }
 
@@ -434,8 +516,9 @@ function resolveRequestError(error, fallback) {
 }
 
 function formatElapsed(value) {
-  const elapsedMs = Number(value || 0)
-  if (!elapsedMs) return '-'
+  if (value == null || String(value).trim() === '') return '-'
+  const elapsedMs = Number(value)
+  if (!Number.isFinite(elapsedMs) || elapsedMs < 0) return '-'
 
   if (elapsedMs < 1000) {
     return `${elapsedMs} ms`
@@ -458,12 +541,16 @@ function formatElapsed(value) {
 }
 
 function formatResultTime(value) {
-  if (!value) return '-'
-  return formatDateTime(value)
+  if (value == null || value === '' || Number.isNaN(new Date(value).getTime())) return '-'
+  return formatDateTime(new Date(value))
 }
 
 function formatNumber(value) {
-  return new Intl.NumberFormat('zh-CN').format(Number(value || 0))
+  if (value == null || String(value).trim() === '') return '-'
+  const number = Number(value)
+  return Number.isFinite(number) && number >= 0
+    ? new Intl.NumberFormat('zh-CN').format(number)
+    : '-'
 }
 
 function describeOptions(result) {
@@ -473,8 +560,23 @@ function describeOptions(result) {
   return labels.join(' / ')
 }
 
-onBeforeUnmount(() => {
+function pauseReading() {
+  active = false
+  readRequestId += 1
+  if (refreshing.value) readError.value = '查询已暂停，返回后将重新读取任务进度'
+  refreshing.value = false
   stopPolling()
+}
+onDeactivated(pauseReading)
+onActivated(() => {
+  if (active) return
+  active = true
+  if (currentJobId.value && !submitting.value)
+    refreshJobResult(currentJobId.value, { silent: true })
+})
+onBeforeUnmount(() => {
+  disposed = true
+  pauseReading()
 })
 </script>
 

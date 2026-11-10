@@ -39,29 +39,10 @@
               filterable
               allow-create
               default-first-option
-              style="width: 180px"
+              style="width: 130px"
               @change="handleHostFilter"
             >
               <el-option v-for="item in osDistroList" :key="item" :label="item" :value="item" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="系统版本">
-            <el-select
-              v-model="hostVersionFilter"
-              placeholder="全部"
-              clearable
-              filterable
-              allow-create
-              default-first-option
-              style="width: 180px"
-              @change="handleHostVersionChange"
-            >
-              <el-option
-                v-for="item in hostOsVersionOptions"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
-              />
             </el-select>
           </el-form-item>
           <el-form-item label="标签">
@@ -74,17 +55,36 @@
               clearable
               filterable
               :loading="hostTagLoading"
-              style="width: 180px"
+              style="width: 130px"
               @change="handleHostFilter"
             >
               <el-option v-for="tag in hostTagOptions" :key="tag" :label="tag" :value="tag" />
             </el-select>
           </el-form-item>
+          <el-form-item label="系统版本">
+            <el-select
+              v-model="hostVersionFilter"
+              placeholder="全部"
+              clearable
+              filterable
+              allow-create
+              default-first-option
+              style="width: 130px"
+              @change="handleHostVersionChange"
+            >
+              <el-option
+                v-for="item in hostOsVersionOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+          </el-form-item>
           <el-form-item label="关键词">
             <el-input
               v-model="hostFilters.keyword"
-              placeholder="主机名 / IP / 资产 ID"
-              style="width: 220px"
+              placeholder="主机名 / IP"
+              style="width: 160px"
               clearable
               @keyup.enter="handleHostFilter"
               @clear="handleHostFilter"
@@ -130,6 +130,7 @@
             重新扫描补丁 ({{ batchSelectedHosts.length }})
           </el-button>
         </slot>
+        <slot name="host-export-action" />
         <el-button
           size="small"
           :type="hostAllSelected ? 'default' : 'primary'"
@@ -251,7 +252,7 @@
           </el-table-column>
           <el-table-column label="重启要求" width="100">
             <template #default="{ row }">
-              {{ row.need_reboot === 1 ? '是' : row.need_reboot === 0 ? '否' : '未知' }}
+              {{ row.need_reboot === 1 ? '需重启' : row.need_reboot === 0 ? '无需重启' : '未知' }}
             </template>
           </el-table-column>
           <el-table-column prop="hostname" label="主机名" min-width="120" show-overflow-tooltip />
@@ -262,7 +263,8 @@
                   v-for="(tag, index) in row.tags"
                   :key="`${tag}-${index}`"
                   size="small"
-                  effect="plain"
+                  type="info"
+                  effect="light"
                 >
                   {{ tag }}
                 </el-tag>

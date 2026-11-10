@@ -10,15 +10,17 @@
             </div>
             <div class="flow-list-actions">
               <el-button
-                class="flow-header-btn"
-                plain
+                class="toolbar-icon-btn"
+                circle
+                size="small"
+                title="刷新流程"
+                aria-label="刷新流程"
                 :loading="flowsLoading"
                 @click="handleRefreshFlows"
               >
                 <el-icon v-show="!flowsLoading"><Refresh /></el-icon>
-                <span>刷新</span>
               </el-button>
-              <el-button type="primary" class="flow-create-btn" @click="handleCreateFlow">
+              <el-button type="primary" size="small" @click="handleCreateFlow">
                 <i class="fa fa-plus me-1" />
                 新建
               </el-button>
@@ -31,15 +33,23 @@
               placeholder="搜索流程"
               size="small"
               clearable
-              class="flow-search" @keyup.enter="handleRefreshFlows" @clear="handleRefreshFlows">
+              class="flow-search"
+              @keyup.enter="handleRefreshFlows"
+              @clear="handleRefreshFlows"
+            >
               <template #prefix>
                 <i class="fa fa-search" />
               </template>
             </el-input>
             <el-dropdown trigger="click" @command="handleOrderCommand">
-              <el-button class="flow-order-btn" plain>
+              <el-button
+                class="toolbar-icon-btn"
+                circle
+                size="small"
+                :title="`排序：${orderFieldLabel}`"
+                :aria-label="`排序：${orderFieldLabel}`"
+              >
                 <i class="fa fa-sort" />
-                <span>排序 · {{ orderFieldLabel }}</span>
               </el-button>
               <template #dropdown>
                 <el-dropdown-menu>
@@ -73,7 +83,10 @@
                 :key="flow.id"
                 class="flow-item"
                 :class="{ active: flow.id === activeFlowId }"
+                tabindex="0"
                 @click="handleSelectFlow(flow)"
+                @keydown.enter.self="handleSelectFlow(flow)"
+                @keydown.space.prevent.self="handleSelectFlow(flow)"
               >
                 <div class="flow-item__row">
                   <div class="flow-item__content">
@@ -87,12 +100,6 @@
                       >
                         当前
                       </el-tag>
-                    </div>
-                    <div class="flow-item__meta-line">
-                      <span class="flow-item__meta-label">更新时间</span>
-                      <span class="flow-item__meta">
-                        {{ formatDateTime(flow.updatedAt || flow.createdAt) }}
-                      </span>
                     </div>
                   </div>
 
@@ -122,6 +129,7 @@
                     <el-tooltip content="删除" placement="top">
                       <el-button
                         class="flow-item-action-btn"
+                        type="danger"
                         text
                         circle
                         size="small"
@@ -132,6 +140,9 @@
                     </el-tooltip>
                   </div>
                 </div>
+                <div class="flow-item__meta-line">
+                  <span>更新于 {{ formatDateTime(flow.updatedAt || flow.createdAt) }}</span>
+                </div>
               </div>
             </template>
             <div v-else-if="hasFlowSearch" class="flow-list-empty">
@@ -139,14 +150,14 @@
               <h4 class="flow-list-empty__title">没有匹配的流程</h4>
               <p class="flow-list-empty__desc">尝试更换关键词，或清空当前搜索条件。</p>
               <div class="flow-list-empty__actions">
-                <el-button @click="clearFlowFilter">清空搜索</el-button>
-                <el-button type="primary" @click="handleCreateFlow">
+                <el-button size="small" @click="clearFlowFilter">清空搜索</el-button>
+                <el-button type="primary" size="small" @click="handleCreateFlow">
                   <i class="fa fa-plus me-1" />
                   新建流程
                 </el-button>
               </div>
             </div>
-            <el-empty v-else description="暂无流程" :image-size="100">
+            <el-empty v-else description="暂无流程" :image-size="64">
               <el-button type="primary" size="small" @click="handleCreateFlow">
                 <i class="fa fa-plus me-1" />
                 新建流程
@@ -161,71 +172,61 @@
           <div class="flow-detail-stack">
             <section class="flow-detail-overview">
               <div v-loading="activeFlowDetailLoading" class="flow-detail-header">
-                <div class="flow-detail-header__main">
-                  <div class="flow-detail-heading">
-                    <div class="flow-detail-eyebrow">当前流程</div>
-                    <h2 class="flow-detail-title">{{ activeFlow.name }}</h2>
-                    <div class="flow-detail-meta">
-                      <span>更新时间 {{ activeFlowUpdatedText }}</span>
-                      <span>{{ instanceSummaryText }}</span>
-                      <span>当前页 {{ currentPage }}/{{ pageCount || 1 }}</span>
-                    </div>
-                    <p class="flow-detail-description">{{ activeFlowDescriptionText }}</p>
+                <div class="flow-detail-heading">
+                  <h2 class="flow-detail-title">{{ activeFlow.name }}</h2>
+                  <div class="flow-detail-meta">
+                    <span>更新时间 {{ activeFlowUpdatedText }}</span>
                   </div>
+                  <p class="flow-detail-description">{{ activeFlowDescriptionText }}</p>
+                </div>
 
-                  <div v-if="activeFlowStepPreview.length" class="flow-step-preview">
-                    <div class="flow-step-preview__header">
-                      <span class="flow-step-preview__label">步骤预览</span>
-                      <span v-if="activeFlowStepOverflow > 0" class="flow-step-preview__more">
-                        还有 {{ activeFlowStepOverflow }} 个步骤
-                      </span>
-                    </div>
-                    <div class="flow-step-preview__list">
-                      <div
-                        v-for="(stepName, index) in activeFlowStepPreview"
-                        :key="`${stepName}-${index}`"
-                        class="flow-step-card"
-                      >
-                        <span class="flow-step-card__index">步骤 {{ index + 1 }}</span>
-                        <span class="flow-step-card__name">{{ stepName }}</span>
-                      </div>
-                    </div>
+                <div v-if="activeFlowStepPreview.length" class="flow-step-preview">
+                  <div class="flow-step-preview__header">
+                    <span class="flow-step-preview__label">步骤预览</span>
+                    <span v-if="activeFlowStepOverflow > 0" class="flow-step-preview__more">
+                      还有 {{ activeFlowStepOverflow }} 个步骤
+                    </span>
                   </div>
-
-                  <div class="flow-detail-stats">
-                    <div class="detail-stat-card">
-                      <span class="detail-stat-card__label">目标主机</span>
-                      <strong class="detail-stat-card__value">{{ activeFlowHostCount }}</strong>
-                    </div>
-                    <div class="detail-stat-card">
-                      <span class="detail-stat-card__label">流程步骤</span>
-                      <strong class="detail-stat-card__value">{{ activeFlowStepCount }}</strong>
-                    </div>
-                    <div class="detail-stat-card">
-                      <span class="detail-stat-card__label">全局参数</span>
-                      <strong class="detail-stat-card__value">{{ activeFlowParamCount }}</strong>
-                    </div>
-                    <div class="detail-stat-card">
-                      <span class="detail-stat-card__label">实例总数</span>
-                      <strong class="detail-stat-card__value">{{ instanceRows.length }}</strong>
+                  <div class="flow-step-preview__list">
+                    <div
+                      v-for="(stepName, index) in activeFlowStepPreview"
+                      :key="`${stepName}-${index}`"
+                      class="flow-step-card"
+                    >
+                      <span class="flow-step-card__index">步骤 {{ index + 1 }}</span>
+                      <span class="flow-step-card__name" :title="stepName">{{ stepName }}</span>
                     </div>
                   </div>
                 </div>
 
+                <div class="flow-detail-stats">
+                  <div class="detail-stat-card">
+                    <span class="detail-stat-card__label">目标主机</span>
+                    <strong class="detail-stat-card__value">{{ activeFlowHostCount }}</strong>
+                  </div>
+                  <div class="detail-stat-card">
+                    <span class="detail-stat-card__label">流程步骤</span>
+                    <strong class="detail-stat-card__value">{{ activeFlowStepCount }}</strong>
+                  </div>
+                  <div class="detail-stat-card">
+                    <span class="detail-stat-card__label">全局参数</span>
+                    <strong class="detail-stat-card__value">{{ activeFlowParamCount }}</strong>
+                  </div>
+                  <div class="detail-stat-card">
+                    <span class="detail-stat-card__label">实例总数</span>
+                    <strong class="detail-stat-card__value">{{ instanceRows.length }}</strong>
+                  </div>
+                </div>
                 <div class="flow-detail-actions">
-                  <el-button
-                    type="primary"
-                    class="flow-primary-action"
-                    @click="handleRunFlow(activeFlow)"
-                  >
+                  <el-button type="primary" size="small" @click="handleRunFlow(activeFlow)">
                     <i class="fa fa-play me-1" />
                     执行流程
                   </el-button>
-                  <el-button class="flow-secondary-action" @click="handleEditFlow(activeFlow)">
+                  <el-button size="small" @click="handleEditFlow(activeFlow)">
                     <i class="fa fa-edit me-1" />
                     编辑
                   </el-button>
-                  <el-button class="flow-secondary-action" @click="handleDeleteFlow(activeFlow)">
+                  <el-button size="small" type="danger" plain @click="handleDeleteFlow(activeFlow)">
                     <i class="fa fa-trash-alt me-1" />
                     删除
                   </el-button>
@@ -235,6 +236,15 @@
 
             <section class="flow-instance-section">
               <div class="flow-instance-panel">
+                <div class="table-panel-header">
+                  <div class="table-panel-header__meta">
+                    <h3 class="table-panel-title">流程实例</h3>
+                    <span class="table-panel-summary">{{ instanceSummaryText }}</span>
+                  </div>
+                  <span v-if="filteredInstances.length" class="table-panel-summary">
+                    当前页 {{ currentPage }}/{{ pageCount }}
+                  </span>
+                </div>
                 <div class="flow-detail-toolbar">
                   <div class="flow-detail-toolbar__filters">
                     <el-input
@@ -242,7 +252,10 @@
                       placeholder="搜索流程实例"
                       size="small"
                       clearable
-                      class="instance-search" @keyup.enter="handleRefreshFlows" @clear="handleRefreshFlows">
+                      class="instance-search"
+                      @keyup.enter="handleRefreshFlows"
+                      @clear="handleRefreshFlows"
+                    >
                       <template #prefix>
                         <i class="fa fa-search" />
                       </template>
@@ -255,6 +268,7 @@
                         type="button"
                         class="instance-filter-chip"
                         :class="{ active: instanceStatusFilter === option.value }"
+                        :aria-pressed="instanceStatusFilter === option.value"
                         @click="instanceStatusFilter = option.value"
                       >
                         <span>{{ option.label }}</span>
@@ -264,29 +278,20 @@
                   </div>
 
                   <div class="flow-detail-toolbar__actions">
-                    <el-button
-                      v-if="hasInstanceFilters"
-                      class="flow-toolbar-clear-btn"
-                      plain
-                      @click="resetInstanceFilters"
-                    >
+                    <el-button v-if="hasInstanceFilters" size="small" @click="resetInstanceFilters">
                       清空筛选
                     </el-button>
                     <el-button
-                      class="flow-toolbar-refresh-btn"
-                      plain
+                      class="toolbar-icon-btn"
+                      circle
+                      size="small"
+                      title="刷新实例"
+                      aria-label="刷新实例"
                       :loading="instancesLoading"
                       @click="refreshInstances"
                     >
                       <el-icon v-show="!instancesLoading"><Refresh /></el-icon>
-                      <span>刷新</span>
                     </el-button>
-                  </div>
-                </div>
-
-                <div class="table-panel-header">
-                  <div class="table-panel-header__meta">
-                    <h3 class="table-panel-title">流程实例</h3>
                   </div>
                 </div>
 
@@ -353,22 +358,21 @@
                   </div>
                 </template>
 
-                <div v-else class="instance-empty">
-                  <i class="fa" :class="hasInstanceSearch ? 'fa-search' : 'fa-stream'" />
-                  <h4>{{ instanceEmptyTitle }}</h4>
-                  <p>
-                    {{ instanceEmptyDescription }}
-                  </p>
+                <el-empty v-else class="instance-empty" :image-size="80">
+                  <template #description>
+                    <h4>{{ instanceEmptyTitle }}</h4>
+                    <p>{{ instanceEmptyDescription }}</p>
+                  </template>
                   <div class="instance-empty__actions">
-                    <el-button v-if="hasInstanceFilters" @click="resetInstanceFilters">
+                    <el-button v-if="hasInstanceFilters" size="small" @click="resetInstanceFilters">
                       清空筛选
                     </el-button>
-                    <el-button type="primary" @click="handleRunFlow(activeFlow)">
+                    <el-button type="primary" size="small" @click="handleRunFlow(activeFlow)">
                       <i class="fa fa-play me-1" />
                       执行流程
                     </el-button>
                   </div>
-                </div>
+                </el-empty>
 
                 <div v-if="filteredInstances.length" class="ops-pagination-wrapper">
                   <el-pagination
@@ -384,14 +388,17 @@
             </section>
           </div>
         </template>
-        <div v-else class="detail-blank">
-          <i class="fa fa-inbox detail-blank__icon" />
-          <p>选择左侧流程以查看实例，或直接创建一个新流程。</p>
-          <el-button type="primary" @click="handleCreateFlow">
+        <el-empty
+          v-else
+          class="detail-blank"
+          :image-size="80"
+          description="选择左侧流程以查看实例，或直接创建一个新流程。"
+        >
+          <el-button type="primary" size="small" @click="handleCreateFlow">
             <i class="fa fa-plus me-1" />
             新建流程
           </el-button>
-        </div>
+        </el-empty>
       </section>
 
       <FlowEditor
@@ -968,517 +975,313 @@ function resolveResponseArray(response) {
   if (Array.isArray(response?.records)) return response.records
   return []
 }
-
-
 </script>
 
 <style scoped lang="scss">
-@use '@/styles/common.scss' as *;
-
 .schedule-page {
   flex: 1;
   width: 100%;
   min-width: 0;
-  min-height: 0;
-  gap: 0;
-  --schedule-surface-bg: var(--el-bg-color);
-  --schedule-side-bg: color-mix(in srgb, var(--el-fill-color-light) 55%, var(--el-bg-color));
-  --schedule-card-hover-border: #cfd8ec;
-  --schedule-card-hover-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-  --schedule-card-active-bg: color-mix(in srgb, var(--el-color-primary) 6%, var(--el-bg-color));
-  --schedule-card-active-shadow: 0 6px 18px rgba(64, 158, 255, 0.25);
-  --schedule-primary-shadow: 0 10px 22px rgba(64, 158, 255, 0.18);
-  --schedule-panel-shadow: 0 12px 28px rgba(15, 23, 42, 0.04);
-  --schedule-toolbar-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
-  --schedule-header-shadow: 0 10px 20px rgba(15, 23, 42, 0.05);
-  --schedule-empty-text: #9ca3af;
-  --schedule-empty-icon: #d1d5db;
+  font-size: 13px;
 }
 
 .schedule-shell {
   display: flex;
   flex: 1;
-  width: 100%;
+  gap: 20px;
   min-height: 0;
-  background: var(--schedule-surface-bg);
-  border-radius: 12px;
   overflow: hidden;
 }
 
 .flow-list-panel {
-  width: 320px;
-  min-width: 320px;
-  border-right: 1px solid var(--el-border-color-light);
   display: flex;
+  flex: 0 0 280px;
   flex-direction: column;
-  background: var(--schedule-side-bg);
+  min-width: 0;
+  padding-right: 16px;
+  border-right: 1px solid var(--el-border-color-light);
 }
 
 .flow-list-header {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 16px;
-  border-bottom: 1px solid var(--el-border-color-light);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
-.flow-list-header__top {
+.flow-list-header__top,
+.flow-list-actions,
+.flow-list-controls,
+.flow-item__row,
+.flow-item__name-row,
+.flow-detail-actions,
+.flow-detail-toolbar,
+.flow-detail-toolbar__filters,
+.flow-detail-toolbar__actions,
+.table-panel-header,
+.table-panel-header__meta {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
+  align-items: center;
+  gap: 8px;
 }
 
-.flow-list-header__meta {
+.flow-list-header__top,
+.flow-item__row,
+.table-panel-header {
+  justify-content: space-between;
+}
+
+.flow-list-header__meta,
+.flow-item__content,
+.flow-detail-heading {
   min-width: 0;
 }
 
-.flow-list-title {
+.flow-list-title,
+.table-panel-title {
   margin: 0;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 600;
+  line-height: 22px;
   color: var(--el-text-color-primary);
 }
 
 .flow-list-summary {
-  margin: 6px 0 0;
+  margin: 2px 0 0;
   font-size: 12px;
   color: var(--el-text-color-secondary);
 }
 
 .flow-list-actions,
-.flow-list-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.flow-list-actions {
+.flow-detail-actions,
+.flow-detail-toolbar__actions {
   flex-shrink: 0;
-}
-
-.flow-list-controls {
-  width: 100%;
-}
-
-.flow-header-btn,
-.flow-order-btn,
-.flow-create-btn,
-.flow-toolbar-refresh-btn {
-  min-height: 36px;
-  padding-inline: 12px;
-  border-radius: 10px;
-  font-size: 13px;
-}
-
-.flow-header-btn,
-.flow-order-btn,
-.flow-toolbar-refresh-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--el-bg-color);
-  border-color: var(--el-border-color);
-}
-
-.flow-order-btn {
-  flex-shrink: 0;
-}
-
-.flow-create-btn {
-  box-shadow: var(--schedule-primary-shadow);
 }
 
 .flow-search {
   flex: 1;
-}
-
-.flow-search :deep(.el-input__inner) {
-  border-radius: 999px;
+  min-width: 0;
 }
 
 .flow-list-body {
   flex: 1;
   min-height: 0;
+  padding-top: 8px;
 }
 
 .flow-list-scroll {
   height: 100%;
-  padding: 14px;
 }
 
-.flow-list-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  min-height: 220px;
-  padding: 24px 18px;
-  text-align: center;
-  border: 1px dashed var(--el-border-color);
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--el-fill-color-light) 70%, var(--el-bg-color));
-}
-
-.flow-list-empty__icon {
-  font-size: 32px;
-  color: var(--el-text-color-placeholder);
-}
-
-.flow-list-empty__title {
-  margin: 0;
-  font-size: 17px;
-  color: var(--el-text-color-primary);
-}
-
-.flow-list-empty__desc {
-  margin: 0;
-  font-size: 13px;
-  color: var(--el-text-color-secondary);
-}
-
-.flow-list-empty__actions {
-  display: flex;
-  gap: 8px;
+.flow-list-scroll :deep(.el-scrollbar__view) {
+  padding: 2px;
 }
 
 .flow-item {
   position: relative;
-  padding: 12px 14px;
-  margin-bottom: 8px;
-  border-radius: 10px;
-  border: 1px solid var(--el-border-color-lighter);
-  background: var(--el-bg-color);
+  margin-bottom: 4px;
+  padding: 10px;
+  border: 1px solid transparent;
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s;
 }
 
 .flow-item::before {
   content: '';
   position: absolute;
-  left: 0;
-  top: 12px;
-  bottom: 12px;
-  width: 4px;
-  border-radius: 999px;
+  inset: 8px auto 8px -1px;
+  width: 2px;
+  border-radius: 2px;
   background: transparent;
-  transition: background 0.2s ease;
-}
-
-.flow-item__row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.flow-item__content {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1;
-  min-width: 0;
-}
-
-.flow-item__name-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.flow-item__meta-line {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-}
-
-.flow-item__meta-label {
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-}
-
-.flow-item:last-child {
-  margin-bottom: 0;
 }
 
 .flow-item:hover {
-  border-color: var(--schedule-card-hover-border);
-  box-shadow: var(--schedule-card-hover-shadow);
+  background: var(--el-fill-color-light);
 }
 
 .flow-item.active {
-  border-color: var(--el-color-primary);
-  background: var(--schedule-card-active-bg);
-  box-shadow: var(--schedule-card-active-shadow);
+  border-color: var(--el-color-primary-light-7);
+  background: var(--el-color-primary-light-9);
 }
 
 .flow-item.active::before {
   background: var(--el-color-primary);
 }
 
-.flow-item__title {
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.flow-item:focus-visible,
+.instance-filter-chip:focus-visible {
+  outline: 2px solid var(--el-color-primary);
+  outline-offset: 1px;
 }
 
-.flow-item__meta {
+.flow-item__content {
+  flex: 1;
+}
+
+.flow-item__title {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 500;
+  color: var(--el-text-color-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flow-item__name-row :deep(.el-tag) {
+  flex-shrink: 0;
+}
+
+.flow-item__meta-line {
+  margin-top: 6px;
   font-size: 12px;
+  line-height: 18px;
   color: var(--el-text-color-secondary);
-  margin-top: 4px;
 }
 
 .flow-item__actions {
   display: flex;
+  flex-shrink: 0;
+  gap: 2px;
   opacity: 0;
   pointer-events: none;
-  transform: translateY(2px);
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
+  transition: opacity 0.2s;
 }
 
 .flow-item-action-btn {
-  width: 30px;
-  height: 30px;
-  border-radius: 10px;
-}
-
-.flow-item-action-btn:hover {
-  background: color-mix(in srgb, var(--el-color-primary) 10%, transparent);
+  width: 24px;
+  height: 24px;
+  padding: 0;
 }
 
 .flow-item:hover .flow-item__actions,
+.flow-item:focus-within .flow-item__actions,
 .flow-item.active .flow-item__actions {
   opacity: 1;
   pointer-events: auto;
-  transform: translateY(0);
+}
+
+.flow-list-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 8px;
+  text-align: center;
+}
+
+.flow-list-empty__icon {
+  font-size: 28px;
+  color: var(--el-text-color-placeholder);
+}
+
+.flow-list-empty__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--el-text-color-regular);
+}
+
+.flow-list-empty__desc {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--el-text-color-secondary);
+}
+
+.flow-detail-panel,
+.flow-detail-stack,
+.flow-instance-section,
+.flow-instance-panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
 }
 
 .flow-detail-panel {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 0;
-  min-width: 0;
   overflow: hidden;
-}
-
-.flow-detail-panel :deep(.flow-editor-panel) {
-  height: 100%;
 }
 
 .flow-detail-stack {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.flow-detail-overview,
-.flow-instance-section {
-  min-height: 0;
+  overflow: auto;
 }
 
 .flow-detail-overview {
   flex-shrink: 0;
-  padding: 16px 16px 10px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--el-border-color-light);
 }
 
 .flow-detail-header {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 12px;
-  position: relative;
-  margin: 0;
-  padding: 14px 16px;
-  border: 1px solid color-mix(in srgb, var(--el-color-primary) 18%, var(--el-border-color-light));
-  border-radius: 18px;
-  background:
-    linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--el-color-primary) 9%, var(--el-bg-color)) 0%,
-      var(--el-bg-color) 54%
-    ),
-    var(--el-bg-color);
-  box-shadow: var(--schedule-header-shadow);
-}
-
-.flow-detail-header__main {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
 }
 
 .flow-detail-heading {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding-right: 320px;
-}
-
-.flow-detail-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  width: fit-content;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--el-color-primary) 12%, var(--el-bg-color));
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--el-color-primary);
-  letter-spacing: 0.04em;
+  grid-column: 1;
+  grid-row: 1;
 }
 
 .flow-detail-title {
   margin: 0;
-  font-size: 22px;
-  line-height: 1.2;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 26px;
   color: var(--el-text-color-primary);
-}
-
-.flow-detail-description {
-  margin: 0;
-  max-width: 860px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--el-text-color-secondary);
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
+  overflow-wrap: anywhere;
 }
 
 .flow-detail-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  margin-top: 6px;
   font-size: 12px;
+  line-height: 18px;
   color: var(--el-text-color-secondary);
 }
 
-.flow-detail-meta span {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  padding: 0 9px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--el-fill-color-light) 82%, var(--el-bg-color));
-  border: 1px solid var(--el-border-color-lighter);
-}
-
-.flow-step-preview {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--el-fill-color-light) 84%, var(--el-bg-color));
-  border: 1px solid var(--el-border-color-lighter);
-}
-
-.flow-step-preview__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.flow-step-preview__label,
-.flow-step-preview__more {
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-}
-
-.flow-step-preview__label {
-  font-weight: 600;
-}
-
-.flow-step-preview__list {
-  display: grid;
-  grid-template-columns: repeat(10, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.flow-step-card {
-  --step-accent: var(--el-color-primary);
-  --step-surface: color-mix(in srgb, var(--el-color-primary) 10%, var(--el-bg-color));
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-  padding: 8px;
-  border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--step-accent) 22%, var(--el-border-color-light));
-  background: linear-gradient(180deg, var(--step-surface) 0%, var(--el-bg-color) 100%);
-}
-
-.flow-step-card:nth-child(4n + 2) {
-  --step-accent: #67c23a;
-  --step-surface: color-mix(in srgb, #67c23a 12%, var(--el-bg-color));
-}
-
-.flow-step-card:nth-child(4n + 3) {
-  --step-accent: #e6a23c;
-  --step-surface: color-mix(in srgb, #e6a23c 13%, var(--el-bg-color));
-}
-
-.flow-step-card:nth-child(4n + 4) {
-  --step-accent: #f56c6c;
-  --step-surface: color-mix(in srgb, #f56c6c 11%, var(--el-bg-color));
-}
-
-.flow-step-card__index {
-  display: inline-flex;
-  align-items: center;
-  width: fit-content;
-  min-height: 20px;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--step-accent) 14%, var(--el-bg-color));
-  color: var(--step-accent);
-  font-size: 10px;
-  font-weight: 600;
-}
-
-.flow-step-card__name {
-  min-width: 0;
-  font-size: 11px;
-  line-height: 1.35;
-  color: var(--el-text-color-primary);
+.flow-detail-description {
   display: -webkit-box;
+  margin: 6px 0 0;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--el-text-color-regular);
+  overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-  overflow: hidden;
-  word-break: break-word;
+}
+
+.flow-detail-actions {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+  padding-top: 1px;
 }
 
 .flow-detail-stats {
   display: grid;
+  grid-column: 1 / -1;
+  grid-row: 2;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  padding: 12px 0;
+  border-radius: 4px;
+  background: var(--el-fill-color-lighter);
 }
 
 .detail-stat-card {
   min-width: 0;
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--el-fill-color-light) 82%, var(--el-bg-color)) 0%,
-    var(--el-bg-color) 100%
-  );
-  border: 1px solid var(--el-border-color-lighter);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  padding: 0 16px;
+  border-right: 1px solid var(--el-border-color-light);
+}
+
+.detail-stat-card:last-child {
+  border-right: 0;
 }
 
 .detail-stat-card__label {
@@ -1489,38 +1292,191 @@ function resolveResponseArray(response) {
 
 .detail-stat-card__value {
   display: block;
-  margin-top: 4px;
+  margin-top: 6px;
   font-size: 20px;
-  line-height: 1;
+  font-weight: 600;
+  line-height: 24px;
   color: var(--el-text-color-primary);
 }
 
-.flow-detail-actions {
+.flow-step-preview {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  min-width: 0;
+}
+
+.flow-step-preview__header {
   display: flex;
-  flex-wrap: nowrap;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 8px;
-  position: absolute;
-  top: 14px;
-  right: 16px;
-  z-index: 1;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
 }
 
-.flow-primary-action,
-.flow-secondary-action {
-  min-height: 36px;
-  min-width: 92px;
-  padding-inline: 12px;
-  border-radius: 12px;
+.flow-step-preview__list {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.flow-step-card {
+  display: flex;
+  flex: 0 0 120px;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 4px;
+}
+
+.flow-step-card__index {
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--el-text-color-secondary);
+}
+
+.flow-step-card__name {
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--el-text-color-regular);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flow-instance-section {
+  min-height: 320px;
+}
+
+.table-panel-header {
+  flex-shrink: 0;
+  margin-bottom: 12px;
+}
+
+.table-panel-header__meta {
+  flex-wrap: wrap;
+}
+
+.table-panel-summary {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.flow-detail-toolbar {
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.flow-detail-toolbar__filters {
+  flex: 1;
+  flex-wrap: wrap;
+  min-width: 0;
+  gap: 12px;
+}
+
+.instance-search {
+  flex: 0 1 220px;
+  min-width: 160px;
+}
+
+.instance-filter-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.instance-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 3px 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--el-text-color-regular);
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+
+.instance-filter-chip em {
+  font-size: 11px;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  color: var(--el-text-color-secondary);
+}
+
+.instance-filter-chip:hover {
+  background: var(--el-fill-color-light);
+  color: var(--el-color-primary);
+}
+
+.instance-filter-chip.active {
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
+}
+
+.instance-filter-chip.active em {
+  color: inherit;
+}
+
+.flow-instance-table-wrap {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.instance-table {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.instance-table :deep(.el-table__row) {
+  cursor: pointer;
+}
+
+.instance-empty,
+.detail-blank {
+  flex: 1;
+  padding: 32px 16px;
+}
+
+.instance-empty :deep(.el-empty__description h4) {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  color: var(--el-text-color-regular);
+}
+
+.instance-empty :deep(.el-empty__description p) {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--el-text-color-secondary);
+}
+
+.flow-list-empty__actions,
+.instance-empty__actions {
+  display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-}
-
-.flow-primary-action {
-  box-shadow: var(--schedule-primary-shadow);
+  gap: 8px;
 }
 
 .flow-list-actions :deep(.el-button + .el-button),
+.flow-item__actions :deep(.el-button + .el-button),
 .flow-detail-actions :deep(.el-button + .el-button),
 .flow-detail-toolbar__actions :deep(.el-button + .el-button),
 .flow-list-empty__actions :deep(.el-button + .el-button),
@@ -1528,376 +1484,105 @@ function resolveResponseArray(response) {
   margin-left: 0;
 }
 
-.flow-detail-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 0;
-  padding: 10px 12px;
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--el-fill-color-light) 65%, var(--el-bg-color));
-  box-shadow: var(--schedule-toolbar-shadow);
-  flex-shrink: 0;
-}
-
-.flow-instance-section {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  padding: 0 16px 16px;
-  overflow: hidden;
-}
-
-.flow-detail-toolbar__filters {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-  min-width: 0;
-}
-
-.instance-search {
-  width: 280px;
-  max-width: 100%;
-}
-
-.instance-filter-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.instance-filter-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 32px;
-  padding: 0 12px;
-  border: 1px solid var(--el-border-color);
-  border-radius: 999px;
-  background: var(--el-bg-color);
-  color: var(--el-text-color-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.instance-filter-chip em {
-  font-style: normal;
-  font-size: 12px;
-  color: inherit;
-  opacity: 0.8;
-}
-
-.instance-filter-chip:hover {
-  border-color: var(--el-color-primary-light-5);
-  color: var(--el-color-primary);
-}
-
-.instance-filter-chip.active {
-  border-color: var(--el-color-primary);
-  background: color-mix(in srgb, var(--el-color-primary) 10%, var(--el-bg-color));
-  color: var(--el-color-primary);
-  box-shadow: var(--schedule-primary-shadow);
-}
-
-.flow-detail-toolbar__actions {
-  display: flex;
-  align-items: center;
-  flex-wrap: nowrap;
-  flex-shrink: 0;
-  gap: 12px;
-}
-
-.flow-toolbar-clear-btn {
-  min-height: 36px;
-  border-radius: 10px;
-}
-
-.flow-instance-panel {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 12px;
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 18px;
-  background: var(--schedule-surface-bg);
-  box-shadow: var(--schedule-panel-shadow);
-  overflow: hidden;
-}
-
-.flow-instance-table-wrap {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-}
-
-.table-panel-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 0 4px 12px;
-}
-
-.table-panel-header__meta {
-  min-width: 0;
-}
-
-.table-panel-title {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-}
-
 .ops-pagination-wrapper {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--el-border-color-lighter);
-}
-
-.instance-table {
-  flex: 1;
-  min-height: 0;
-}
-
-.instance-table :deep(.el-table) {
-  border-radius: 12px;
-}
-
-.instance-table :deep(.el-table th) {
-  background: color-mix(in srgb, var(--el-fill-color-light) 85%, var(--el-bg-color));
-}
-
-.instance-table :deep(.el-table__row) {
-  cursor: pointer;
-}
-
-.instance-table :deep(.el-table__row:hover > td) {
-  background: color-mix(in srgb, var(--el-color-primary) 5%, var(--el-bg-color));
-}
-
-.instance-empty {
-  flex: 1;
-  min-height: 0;
-  margin: 4px 0 0;
-  padding: 32px 24px;
-  border: 1px dashed var(--el-border-color);
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--el-fill-color-light) 72%, var(--el-bg-color));
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  text-align: center;
-  color: var(--el-text-color-secondary);
-}
-
-.instance-empty > i {
-  font-size: 42px;
-  color: var(--el-text-color-placeholder);
-}
-
-.instance-empty > h4 {
-  margin: 0;
-  font-size: 18px;
-  color: var(--el-text-color-primary);
-}
-
-.instance-empty > p {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.6;
-  max-width: 420px;
-}
-
-.instance-empty__actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 4px;
-  width: 100%;
-}
-
-.instance-empty__actions :deep(.el-button) {
-  min-width: 120px;
-}
-
-.detail-blank {
-  flex: 1;
-  margin: 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: var(--schedule-empty-text);
-  gap: 12px;
-  text-align: center;
-}
-
-.detail-blank__icon {
-  font-size: 64px;
-  color: var(--schedule-empty-icon);
+  overflow-x: auto;
 }
 
 .me-1 {
   margin-right: 4px;
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1280px) {
   .schedule-shell {
-    flex-direction: column;
+    gap: 16px;
   }
 
   .flow-list-panel {
-    width: 100%;
-    min-width: 0;
-    max-height: 320px;
+    flex-basis: 250px;
+  }
+}
+
+@media (max-width: 900px) {
+  .schedule-shell {
+    flex-direction: column;
+    overflow: auto;
+  }
+
+  .flow-list-panel {
+    flex: 0 0 220px;
+    padding-right: 0;
+    padding-bottom: 12px;
     border-right: 0;
     border-bottom: 1px solid var(--el-border-color-light);
   }
 
-  .flow-detail-actions {
-    position: static;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    padding-top: 6px;
-    border-top: 1px dashed
-      color-mix(in srgb, var(--el-color-primary) 18%, var(--el-border-color-light));
+  .flow-detail-panel {
+    flex: 1 0 auto;
+    overflow: visible;
   }
 
-  .flow-detail-actions :deep(.el-button) {
-    flex: 1;
+  .flow-detail-stack {
+    overflow: visible;
   }
 
-  .flow-detail-heading {
-    padding-right: 0;
+  .flow-instance-section {
+    min-height: 360px;
   }
 
-  .flow-step-preview__list,
-  .flow-detail-stats {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+  .flow-instance-table-wrap {
+    flex: none;
+    height: 320px;
   }
 
-  .flow-detail-toolbar__filters {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .instance-search {
-    width: 100%;
+  .detail-blank {
+    min-height: 280px;
   }
 }
 
-@media (max-width: 768px) {
-  .flow-list-header__top,
-  .flow-list-controls,
-  .flow-detail-toolbar {
-    flex-direction: column;
-    align-items: stretch;
+@media (max-width: 600px) {
+  .flow-detail-header {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
   }
 
-  .flow-list-actions {
-    width: 100%;
+  .flow-detail-actions {
+    grid-column: 1;
+    grid-row: 2;
+    flex-wrap: wrap;
+    padding-top: 0;
   }
 
-  .flow-header-btn,
-  .flow-order-btn,
-  .flow-create-btn,
-  .flow-toolbar-refresh-btn {
-    justify-content: center;
+  .flow-detail-stats {
+    grid-row: 3;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 16px;
+  }
+
+  .detail-stat-card:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .flow-step-preview {
+    grid-row: 4;
+  }
+
+  .instance-search {
+    flex-basis: 100%;
   }
 
   .flow-detail-toolbar__actions {
-    width: 100%;
-    justify-content: space-between;
-    flex-wrap: wrap;
-  }
-
-  .flow-detail-overview,
-  .flow-instance-section {
-    padding-inline: 12px;
-  }
-
-  .flow-detail-overview,
-  .flow-instance-section,
-  .detail-blank {
-    min-height: 0;
-  }
-
-  .flow-detail-overview {
-    padding-top: 12px;
-  }
-
-  .table-panel-header {
-    flex-direction: column;
-  }
-
-  .flow-list-empty__actions,
-  .instance-filter-strip {
-    width: 100%;
-  }
-
-  .instance-filter-chip {
-    justify-content: space-between;
-    flex: 1 1 calc(50% - 8px);
-  }
-
-  .flow-step-preview__list,
-  .flow-detail-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .flow-step-preview__header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .flow-detail-stats {
-    grid-template-columns: 1fr;
-  }
-
-  .instance-empty__actions {
-    width: 100%;
-    flex-direction: column;
+    margin-left: auto;
   }
 
   .ops-pagination-wrapper {
     justify-content: flex-start;
   }
+}
 
+@media (hover: none) {
   .flow-item__actions {
     opacity: 1;
     pointer-events: auto;
-    transform: none;
   }
-}
-</style>
-
-<style lang="scss">
-html.dark .schedule-page {
-  --schedule-surface-bg: rgba(15, 23, 42, 0.82);
-  --schedule-side-bg: linear-gradient(180deg, rgba(30, 41, 59, 0.82), rgba(15, 23, 42, 0.86));
-  --schedule-card-hover-border: rgba(96, 165, 250, 0.26);
-  --schedule-card-hover-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
-  --schedule-card-active-bg: color-mix(
-    in srgb,
-    var(--el-color-primary) 14%,
-    rgba(15, 23, 42, 0.92)
-  );
-  --schedule-card-active-shadow: 0 10px 24px rgba(59, 130, 246, 0.18);
-  --schedule-primary-shadow: 0 12px 24px rgba(59, 130, 246, 0.22);
-  --schedule-panel-shadow: 0 18px 36px rgba(0, 0, 0, 0.2);
-  --schedule-toolbar-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
-  --schedule-header-shadow: 0 16px 32px rgba(0, 0, 0, 0.2);
-  --schedule-empty-text: #94a3b8;
-  --schedule-empty-icon: #64748b;
 }
 </style>

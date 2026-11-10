@@ -12,29 +12,37 @@
       </el-tabs>
     </div>
 
-    <!-- 主体区域：左边常驻侧边栏，右边列表内容 -->
+    <!-- 主体区域：顶部筛选与列表内容 -->
     <div class="main-body-layout">
-      <!-- 左侧边栏 -->
-      <AssetSidebar
-        :group-tree-data="groupTreeData"
-        :tag-list="tagList"
-        :selected-group="selectedGroup"
-        :selected-tag="selectedTag"
-        @select-group="handleSelectGroup"
-        @select-tag="handleSelectTag"
-      />
-
-      <!-- 右侧内容区 -->
-      <div class="content-view-area">
+      <div class="content-view-area" style="padding: 16px 10px">
         <!-- 筛选区域 -->
         <div class="ops-filter-bar">
-          <el-form :inline="true" size="small">
+          <el-form :inline="true" size="small" @submit.prevent="handleSearch">
             <el-form-item label="在线状态">
               <el-select v-model="filters.status" style="width: 85px" @change="handleSearch">
                 <el-option label="全部" value="all" />
                 <el-option label="在线" value="1" />
                 <el-option label="下线" value="0" />
               </el-select>
+            </el-form-item>
+            <el-form-item label="分组">
+              <el-tree-select
+                v-model="selectedGroups"
+                :data="groupTreeData"
+                :props="treeProps"
+                node-key="path"
+                :default-expanded-keys="['/']"
+                placeholder="全部分组"
+                multiple
+                show-checkbox
+                check-strictly
+                collapse-tags
+                collapse-tags-tooltip
+                clearable
+                filterable
+                style="width: 160px"
+                @change="handleGroupChange"
+              />
             </el-form-item>
 
             <!-- [Agent 功能暂停]
@@ -56,8 +64,24 @@
             </el-form-item>
             -->
 
+            <el-form-item label="标签">
+              <el-select
+                v-model="selectedTags"
+                placeholder="全部标签"
+                multiple
+                collapse-tags
+                collapse-tags-tooltip
+                clearable
+                filterable
+                style="width: 140px"
+                @change="handleTagChange"
+              >
+                <el-option v-for="item in tagOptions" :key="item" :label="item" :value="item" />
+              </el-select>
+            </el-form-item>
+
             <el-form-item label="最近连通">
-              <el-select v-model="filters.connLatestStatus" style="width: 105px" @change="handleSearch">
+              <el-select v-model="filters.connLatestStatus" style="width: 95px" @change="handleSearch">
                 <el-option label="所有" value="all" />
                 <el-option label="连通成功" value="1" />
                 <el-option label="连通失败" value="0" />
@@ -65,7 +89,7 @@
               </el-select>
             </el-form-item>
 
-            <el-form-item label="系统版本">
+            <!-- <el-form-item label="系统版本">
               <el-select
                 v-model="filters.osVersion"
                 placeholder="所有"
@@ -81,14 +105,14 @@
                   :value="item.value"
                 />
               </el-select>
-            </el-form-item>
+            </el-form-item> -->
 
             <el-form-item label="关键词">
               <el-input
                 v-model="searchText"
-                placeholder="IP/主机名"
+                placeholder="IP/主机名/系统版本"
                 clearable
-                style="width: 180px"
+                style="width: 160px"
                 @keyup.enter="handleSearch"
                 @clear="handleSearch"
               />
@@ -602,7 +626,6 @@ import {
 import { assetApi, dataManageApi } from '../api'
 import { apiService } from '@/core/api'
 import { pollJobStatus } from '@/composables/useJobPolling'
-import AssetSidebar from '../components/asset-info/AssetSidebar.vue'
 import AssetDetailDialog from '../components/asset-info/AssetDetailDialog.vue'
 import AssetEditDialog from '../components/asset-info/AssetEditDialog.vue'
 import AssetHistoryDialog from '../components/asset-info/AssetHistoryDialog.vue'
@@ -643,12 +666,19 @@ const currentType = ref('')
 // 主机选择器数据
 const groupTreeData = ref([])
 const tagList = ref([])
-const selectedGroup = ref('all')
-const selectedGroupName = ref('全部设备')
-const selectedTag = ref('')
+const selectedGroups = ref([])
+const selectedTags = ref([])
+
+// 标签展示完整列表，不按标签名称区分业务类型
+const tagOptions = computed(() => {
+  const names = (tagList.value || [])
+    .map(item => (typeof item === 'string' ? item : item?.name))
+    .filter(Boolean)
+  return [...new Set(names)]
+})
 
 // 树形组件配置
-const _treeProps = {
+const treeProps = {
   label: 'name',
   children: 'children'
 }
@@ -1094,27 +1124,32 @@ const loadTagList = async () => {
   }
 }
 
-// 选择分组 (侧边栏触发)
-const handleSelectGroup = (groupId, groupName = '全部设备') => {
-  selectedGroup.value = groupId
-  selectedGroupName.value = groupId === 'all' ? '全部设备' : groupName
-  selectedTag.value = ''
-  if (groupId === 'all') {
-    filters.value.hostKeys = '@@'
+// 标签查询去重，分组与标签筛选保持互斥
+const applyHostSelection = () => {
+  const tags = [...new Set(selectedTags.value)]
+  if (selectedGroups.value.length > 0) {
+    filters.value.hostKeys = selectedGroups.value.join(',')
+  } else if (tags.length > 0) {
+    filters.value.hostKeys = `,${tags.map(name => `#${name}`).join(',')}`
   } else {
-    filters.value.hostKeys = groupId
+    filters.value.hostKeys = '@@'
   }
   currentPage.value = 1
   loadAssetList({ preserveSelection: true })
 }
 
-// 选择标签 (侧边栏触发)
-const handleSelectTag = tag => {
-  selectedTag.value = tag.name
-  selectedGroup.value = ''
-  filters.value.hostKeys = `,#${tag.name}`
-  currentPage.value = 1
-  loadAssetList({ preserveSelection: true })
+// TreeSelect 返回完整的已选路径，父子节点独立选择
+const handleGroupChange = values => {
+  selectedGroups.value = values || []
+  selectedTags.value = []
+  applyHostSelection()
+}
+
+// 标签支持多选和清空
+const handleTagChange = values => {
+  selectedGroups.value = []
+  selectedTags.value = values || []
+  applyHostSelection()
 }
 
 // 加载设备类型列表
@@ -1240,9 +1275,8 @@ const handleTypeChange = code => {
 // 监听类型变化
 watch(currentType, () => {
   currentPage.value = 1
-  selectedGroup.value = 'all'
-  selectedGroupName.value = '全部设备'
-  selectedTag.value = ''
+  selectedGroups.value = []
+  selectedTags.value = []
   filters.value.hostKeys = '@@'
   loadOsVersionOptions()
   loadGroupTree()
@@ -1262,9 +1296,8 @@ const handleSearch = () => {
 const handleReset = () => {
   filters.value = createDefaultFilters()
   searchText.value = ''
-  selectedGroup.value = 'all'
-  selectedGroupName.value = '全部设备'
-  selectedTag.value = ''
+  selectedGroups.value = []
+  selectedTags.value = []
   currentPage.value = 1
   loadAssetList({ preserveSelection: true })
 }
@@ -1561,15 +1594,14 @@ onMounted(() => {
 })
 
 // 监听路由参数变化进行联动搜索
-watch(
-  () => route.query,
-  query => {
-    if (query.ip) {
-      searchText.value = query.ip
-      loadAssetList()
-    }
+watch([() => route.path, () => route.query.ip], ([path, ip]) => {
+  if (path.replace(/\/$/, '') !== '/acm/info') return
+  if (ip) {
+    searchText.value = ip
+    currentPage.value = 1
+    loadAssetList()
   }
-)
+})
 </script>
 <style scoped lang="scss">
 // 页面级操作栏

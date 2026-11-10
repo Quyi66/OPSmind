@@ -10,6 +10,7 @@
           <button
             class="filter-tab"
             :class="{ active: activeTab === 'type' }"
+            :aria-pressed="activeTab === 'type'"
             @click.stop="activeTab = 'type'"
           >
             按类型
@@ -17,6 +18,7 @@
           <button
             class="filter-tab"
             :class="{ active: activeTab === 'system' }"
+            :aria-pressed="activeTab === 'system'"
             @click.stop="activeTab = 'system'"
           >
             按系统
@@ -30,8 +32,23 @@
     </div>
 
     <!-- ECharts横向柱状图 -->
-    <div class="chart-container clickable-area">
+    <div
+      class="chart-container clickable-area"
+      v-loading="dashboardStore.loading"
+      element-loading-text="正在加载资产数据..."
+      @click="navigateToAssetOverview"
+    >
+      <div v-if="dashboardStore.error" class="chart-empty-overlay error-state" @click.stop>
+        <i class="fas fa-exclamation-circle error-icon"></i>
+        <span>资产数据加载失败</span>
+        <el-button size="small" type="primary" link @click="dashboardStore.loadDashboardData">重新加载</el-button>
+      </div>
+      <div v-else-if="!hasAssetOverview" class="chart-empty-overlay">
+        <i class="fas fa-server empty-icon"></i>
+        <span>暂无资产数据</span>
+      </div>
       <v-chart
+        v-else
         class="chart"
         :option="chartOption"
         autoresize
@@ -95,6 +112,10 @@ const navigateToAssetInfoByType = assetType => {
 }
 
 // 资产数据（来自 API 数据）
+const hasAssetOverview = computed(() => {
+  return Boolean(dashboardStore.dashboardFullData?.assetOverview)
+})
+
 const assetData = computed(() => {
   const a = dashboardStore.dashboardFullData?.assetOverview
   const values = [a?.windowsServers ?? 0, a?.unixServers ?? 0, a?.linuxServers ?? 0]
@@ -125,9 +146,9 @@ const chartOption = computed(() => ({
   },
   grid: {
     left: '2%',
-    right: '6%',
-    top: '8%',
-    bottom: '12%',
+    right: '8%',
+    top: 8,
+    bottom: 8,
     containLabel: true
   },
   xAxis: {
@@ -135,18 +156,22 @@ const chartOption = computed(() => ({
     min: 0,
     axisLine: {
       show: true,
-      lineStyle: {}
+      lineStyle: {
+        color: isDark.value ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)'
+      }
     },
     axisTick: {
       show: true
     },
     axisLabel: {
-      fontSize: 12
+      fontSize: 12,
+      color: isDark.value ? '#a3a6ad' : '#909399'
     },
     splitLine: {
       show: true,
       lineStyle: {
-        type: 'dashed'
+        type: 'dashed',
+        color: isDark.value ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)'
       }
     }
   },
@@ -155,14 +180,17 @@ const chartOption = computed(() => ({
     data: assetData.value.categories,
     axisLine: {
       show: true,
-      lineStyle: {}
+      lineStyle: {
+        color: isDark.value ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)'
+      }
     },
     axisTick: {
       show: false
     },
     axisLabel: {
       fontSize: 12,
-      margin: 10
+      margin: 10,
+      color: isDark.value ? '#cfd3dc' : '#606266'
     }
   },
   series: [
@@ -170,27 +198,17 @@ const chartOption = computed(() => ({
       type: 'bar',
       data: assetData.value.values,
       itemStyle: {
-        color: {
-          type: 'linear',
-          x: 0,
-          y: 0,
-          x2: 1,
-          y2: 0,
-          colorStops: [
-            { offset: 0, color: '#2563eb' },
-            { offset: 1, color: '#3b82f6' }
-          ]
-        },
-        borderRadius: [0, 6, 6, 0]
+        color: '#3B82F6',
+        borderRadius: [0, 4, 4, 0]
       },
-      barWidth: '30%',
+      barWidth: 14,
       label: {
         show: true,
         position: 'right',
-        color: '#1890ff',
+        color: '#3B82F6',
         fontSize: 12,
-        fontWeight: 'bold',
-        distance: 5
+        fontWeight: 600,
+        distance: 6
       }
     }
   ]
@@ -198,6 +216,8 @@ const chartOption = computed(() => ({
 </script>
 
 <style scoped lang="scss">
+@use '../styles/overview-tabs';
+
 .asset-overview {
   height: 100%;
   display: flex;
@@ -241,46 +261,6 @@ const chartOption = computed(() => ({
 .header-actions {
   display: flex;
   align-items: center;
-}
-
-.filter-tabs {
-  display: flex;
-  gap: 8px;
-}
-
-.filter-tab {
-  padding: 6px 12px;
-  border: 1px solid transparent;
-  background: transparent;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--el-text-color-regular);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-
-  &:hover {
-    background: var(--el-fill-color-light);
-  }
-
-  &.active {
-    border-color: transparent;
-    background: transparent;
-    color: #3b82f6;
-
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 60%;
-      height: 2px;
-      background: #3b82f6;
-      border-radius: 1px;
-    }
-  }
 }
 
 .filter-tab:disabled,
@@ -328,13 +308,46 @@ const chartOption = computed(() => ({
 // 图表容器样式
 .chart-container {
   flex: 1;
-  padding: 16px;
-  min-height: 200px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  min-height: 184px;
+}
+
+.chart-empty-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--el-text-color-placeholder);
+  font-size: 12px;
+  z-index: 2;
+
+  .empty-icon {
+    font-size: 28px;
+    opacity: 0.25;
+  }
+
+  &.error-state {
+    color: var(--el-color-danger);
+
+    .error-icon {
+      font-size: 26px;
+      color: var(--el-color-danger);
+    }
+  }
 }
 
 .chart {
   width: 100%;
   height: 100%;
+  min-height: 160px;
+  max-height: 220px;
 }
 
 
@@ -354,17 +367,6 @@ const chartOption = computed(() => ({
   gap: 12px;
 }
 
-.chart-container {
-  flex: 1;
-  min-height: 220px;
-}
-
-.chart {
-  width: 100%;
-  height: 100%;
-  min-height: 220px;
-}
-
 // 响应式设计
 @media (max-width: 768px) {
   .asset-overview {
@@ -382,8 +384,5 @@ const chartOption = computed(() => ({
     justify-content: space-between;
   }
 
-  .chart-container {
-    min-height: 250px;
-  }
 }
 </style>

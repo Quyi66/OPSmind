@@ -166,7 +166,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh, RefreshRight, Search } from '@element-plus/icons-vue'
 import { rpmInfoApi } from '../api'
@@ -193,6 +193,18 @@ const {
 const detailVisible = ref(false)
 const detailLoading = ref(false)
 const detailData = ref({})
+let detailRequestId = 0
+
+watch(detailVisible, visible => {
+  if (!visible) {
+    detailRequestId += 1
+    detailLoading.value = false
+  }
+})
+
+onBeforeUnmount(() => {
+  detailRequestId += 1
+})
 
 function getSourceLabel(source) {
   if (source === 'kylin') return '麒麟'
@@ -220,6 +232,7 @@ async function handleViewDetail(row) {
     return
   }
 
+  const requestId = ++detailRequestId
   detailVisible.value = true
   detailLoading.value = true
   detailData.value = {}
@@ -233,6 +246,7 @@ async function handleViewDetail(row) {
           arch: row?.architecture || row?.arch
         })
 
+    if (requestId !== detailRequestId || !detailVisible.value) return
     const responseData = response?.data || response || {}
     detailData.value = {
       ...responseData,
@@ -256,11 +270,12 @@ async function handleViewDetail(row) {
         row?.currentPackage || row?.completePackageName || responseData.currentPackage || ''
     }
   } catch (error) {
+    if (requestId !== detailRequestId || !detailVisible.value) return
     console.error('Failed to load rpm package detail:', error)
     ElMessage.error('获取 RPM 包详情失败')
     detailVisible.value = false
   } finally {
-    detailLoading.value = false
+    if (requestId === detailRequestId) detailLoading.value = false
   }
 }
 

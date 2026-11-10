@@ -84,6 +84,7 @@ describe('软件和补丁日志真实翻译消费者', () => {
               'el-empty',
               'el-scrollbar',
               'el-tag',
+              'el-alert',
               'el-form',
               'el-form-item',
               'el-input',

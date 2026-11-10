@@ -79,12 +79,18 @@
           placeholder="搜索命令、主机、创建人..."
           style="width: 300px"
           clearable
+          @input="historyCurrentPage = 1"
           @clear="historyCurrentPage = 1"
           @keyup.enter="historyCurrentPage = 1"
         />
       </div>
 
-      <el-table :data="paginatedHistoryData" max-height="calc(100vh - 450px)">
+      <el-table
+        :data="paginatedHistoryData"
+        max-height="calc(100vh - 450px)"
+        :default-sort="historySort"
+        @sort-change="handleHistorySortChange"
+      >
         <el-table-column prop="cmd" label="命令" show-overflow-tooltip>
           <template #default="{ row }">
             <span class="text-ellipsis">{{ row.cmd }}</span>
@@ -96,10 +102,10 @@
             <span class="text-ellipsis">{{ row.hostname?.join(',') }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="180" sortable />
+        <el-table-column prop="createdAt" label="创建时间" width="180" sortable="custom" />
         <el-table-column prop="createdBy" label="创建人" width="100" />
-        <el-table-column prop="lastRunTime" label="最后执行时间" width="180" sortable />
-        <el-table-column prop="runNumber" label="执行次数" width="110" sortable />
+        <el-table-column prop="lastRunTime" label="最后执行时间" width="180" sortable="custom" />
+        <el-table-column prop="runNumber" label="执行次数" width="110" sortable="custom" />
         <el-table-column label="操作" width="100" fixed="right" align="left">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="handleUseHistory(row)">
@@ -171,6 +177,7 @@ import { ref, computed, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useApi } from '@/core/api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import { sortCommandRows } from '@/modules/automation/utils/commandListSort'
 
 const emit = defineEmits(['back'])
 
@@ -187,6 +194,7 @@ const historyData = ref([])
 const historyCurrentPage = ref(1)
 const historyPageSize = ref(10)
 const historySearchKeyword = ref('')
+const historySort = ref({ prop: null, order: null })
 
 // 日志查看器
 const logViewerVisible = ref(false)
@@ -198,10 +206,10 @@ let websocket = null
 
 // 过滤后的历史数据
 const filteredHistoryData = computed(() => {
-  if (!historySearchKeyword.value) {
+  const keyword = historySearchKeyword.value.trim().toLowerCase()
+  if (!keyword) {
     return historyData.value
   }
-  const keyword = historySearchKeyword.value.toLowerCase()
   return historyData.value.filter(
     item =>
       (item.cmd && item.cmd.toLowerCase().includes(keyword)) ||
@@ -211,12 +219,20 @@ const filteredHistoryData = computed(() => {
   )
 })
 
-// 分页后的历史数据
+// 先排序全部匹配记录，再分页
+const sortedHistoryData = computed(() =>
+  sortCommandRows(filteredHistoryData.value, historySort.value)
+)
 const paginatedHistoryData = computed(() => {
   const start = (historyCurrentPage.value - 1) * historyPageSize.value
   const end = start + historyPageSize.value
-  return filteredHistoryData.value.slice(start, end)
+  return sortedHistoryData.value.slice(start, end)
 })
+
+function handleHistorySortChange({ prop, order }) {
+  historySort.value = { prop, order }
+  historyCurrentPage.value = 1
+}
 
 // 更新行号
 function updateLineCount() {

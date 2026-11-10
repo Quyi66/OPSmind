@@ -76,16 +76,6 @@
         </el-descriptions-item>
       </el-descriptions>
 
-      <el-collapse v-if="taskDetail" class="win-patch-task-technical">
-        <el-collapse-item title="技术信息" name="technical">
-          <el-descriptions :column="1" border size="small">
-            <el-descriptions-item label="运行标识">
-              <span style="overflow-wrap: anywhere">{{ taskRunId || '-' }}</span>
-            </el-descriptions-item>
-          </el-descriptions>
-        </el-collapse-item>
-      </el-collapse>
-
       <div v-if="availableExecuteRuns.length" class="win-patch-task-runs">
         <div class="win-patch-task-runs__title">执行结果</div>
         <div class="win-patch-task-runs__actions">
@@ -154,8 +144,46 @@
       </div>
 
       <div class="win-patch-section-title">主机执行状态</div>
+      <div class="ops-filter-bar">
+        <el-form :inline="true" size="small" @submit.prevent>
+          <el-form-item label="关键字">
+            <el-input
+              v-model="hostKeyword"
+              placeholder="主机标识或错误原因"
+              clearable
+              style="width: 220px"
+            />
+          </el-form-item>
+          <el-form-item label="状态">
+            <el-select v-model="hostStatus" style="width: 140px" aria-label="主机执行状态筛选">
+              <el-option label="全部" value="all" />
+              <el-option
+                v-for="option in hostStatusOptions"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button @click="resetHostFilters">重置</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+      <div role="status" aria-live="polite">
+        显示 {{ filteredTaskHosts.length }} / 已加载 {{ taskHosts.length }} 条主机记录
+      </div>
       <div class="ops-table-wrapper win-patch-task-detail__table">
-        <el-table :data="taskHosts" v-loading="loading" max-height="420">
+        <el-table
+          :data="filteredTaskHosts"
+          v-loading="loading"
+          max-height="420"
+          :empty-text="
+            taskHosts.length && hasHostFilters
+              ? '未匹配到主机或错误原因，请调整或重置筛选'
+              : '暂无数据'
+          "
+        >
           <el-table-column label="主机" width="140" show-overflow-tooltip>
             <template #default="{ row }">
               {{ pickValue(row, ['hostKey', 'host_key'], '-') }}
@@ -244,6 +272,8 @@ const loading = ref(false)
 const autoPollingEnabled = ref(true)
 const taskDetail = ref(null)
 const taskHosts = ref([])
+const hostKeyword = ref('')
+const hostStatus = ref('all')
 const taskAuditSteps = ref([])
 const taskAuditLogs = ref([])
 const stepSubmitting = ref(false)
@@ -261,6 +291,31 @@ const showStepActions = computed(() => isStepControlledTask(taskDetail.value))
 const isExecutePhase = computed(() =>
   ['EXECUTE', 'INSTALL', 'ROLLBACK'].includes(currentStepValue.value)
 )
+
+const hostSearchTerm = computed(() => hostKeyword.value.trim().toLowerCase())
+const hasHostFilters = computed(() => Boolean(hostSearchTerm.value) || hostStatus.value !== 'all')
+const hostStatusOptions = computed(() => {
+  const statuses = new Set(taskHosts.value.map(row => getTaskStatusValue(row)))
+  // 刷新后所选状态可能已无匹配项，保留选项以明确当前查看条件。
+  if (hostStatus.value !== 'all') statuses.add(hostStatus.value)
+  return [...statuses].map(status => ({ value: status, label: getTaskStatusLabel(status) }))
+})
+const filteredTaskHosts = computed(() =>
+  taskHosts.value.filter(
+    row =>
+      (hostStatus.value === 'all' || getTaskStatusValue(row) === hostStatus.value) &&
+      (!hostSearchTerm.value ||
+        [
+          pickValue(row, ['hostKey', 'host_key'], ''),
+          pickValue(row, ['errorMessage', 'error_message'], '')
+        ].some(value => String(value).toLowerCase().includes(hostSearchTerm.value)))
+  )
+)
+
+function resetHostFilters() {
+  hostKeyword.value = ''
+  hostStatus.value = 'all'
+}
 
 function getAuditStepKey(step) {
   return normalizeUpper(step?.step)
@@ -457,8 +512,14 @@ const stepActionHint = computed(() => {
   }
 
   if (
-    ['FAILED', 'ERROR', 'PRE_CHECK_FAILED', 'INSTALL_FAILED', 'ROLLBACK_FAILED', 'VALIDATE_FAILED']
-      .includes(currentTaskStatusValue.value)
+    [
+      'FAILED',
+      'ERROR',
+      'PRE_CHECK_FAILED',
+      'INSTALL_FAILED',
+      'ROLLBACK_FAILED',
+      'VALIDATE_FAILED'
+    ].includes(currentTaskStatusValue.value)
   ) {
     return '任务执行失败，请结合错误信息确认是否需要重试。'
   }
@@ -626,6 +687,7 @@ watch(
   [() => props.modelValue, currentTaskId],
   async ([open, taskId]) => {
     stop()
+    resetHostFilters()
 
     if (!open || !taskId) {
       stepSubmitting.value = false
@@ -699,10 +761,6 @@ watch(
 .win-patch-task-detail__actions {
   margin-bottom: 0;
   padding-right: 4px;
-}
-
-.win-patch-task-technical {
-  flex-shrink: 0;
 }
 
 .win-patch-descriptions {

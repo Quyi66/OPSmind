@@ -102,7 +102,7 @@
           type="primary"
           size="small"
           :disabled="loading || installableSelection.length === 0"
-          @click="installWizardVisible = true"
+          @click="openInstallWizard"
         >
           安装选中补丁
         </el-button>
@@ -229,7 +229,7 @@
 
       <WinPatchInstallWizard
         v-model="installWizardVisible"
-        :selected-rows="installableSelection"
+        :selected-rows="wizardRows"
         :host-summary="hostSummary"
         @submitted="handleInstallTaskCreated"
         @success="handleInstallSuccess"
@@ -296,6 +296,7 @@ let loadRequestId = 0
 const patchList = ref([])
 const selectedRows = ref([])
 const installWizardVisible = ref(false)
+const wizardRows = ref([])
 const kbDetailDialogVisible = ref(false)
 const selectedKbNumber = ref('')
 
@@ -317,6 +318,14 @@ const installableSelection = computed(() =>
 
 function isPatchActionable(row) {
   return isPatchInstallable(row)
+}
+
+function openInstallWizard() {
+  if (loading.value || !installableSelection.value.length) return
+
+  // 与批量安装保持一致，列表刷新不应改变本次任务的补丁摘要。
+  wizardRows.value = [...installableSelection.value]
+  installWizardVisible.value = true
 }
 
 function resolveCveIds(row) {
@@ -475,6 +484,8 @@ function openKbDetail(kbNumber) {
 watch(
   [() => props.modelValue, () => props.hostSummary, () => props.initialFilters],
   ([open, host]) => {
+    installWizardVisible.value = false
+    wizardRows.value = []
     if (!open || !resolveHostId(host)) {
       loadRequestId += 1
       loading.value = false

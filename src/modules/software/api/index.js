@@ -392,7 +392,16 @@ export const repoApi = {
         repoName: params.repoName,
         repoFile: params.repoFile,
         repoDesc: params.repoDesc,
-        repoUrl: params.repoUrl
+        repoUrl: params.repoUrl || '',
+        // channels 必须是 JSON 字符串，不能直接传数组（workflow 会对 $basearch 做正则替换）
+        ...(params.channels !== undefined
+          ? {
+              channels:
+                typeof params.channels === 'string'
+                  ? params.channels
+                  : JSON.stringify(params.channels)
+            }
+          : {})
       }
     })
   },

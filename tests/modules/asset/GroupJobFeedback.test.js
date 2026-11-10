@@ -33,7 +33,7 @@ vi.mock('@/modules/asset/api', () => ({
   }
 }))
 vi.mock('vue-router', () => ({
-  useRoute: () => ({ query: {} }),
+  useRoute: () => ({ path: '/acm/data', query: {} }),
   useRouter: () => ({ replace: vi.fn() })
 }))
 const Form = defineComponent({

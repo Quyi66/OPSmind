@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
-import { ElTable, ElTableColumn } from 'element-plus'
+import { ElTable, ElTableColumn, ElSelect } from 'element-plus'
 import Overview from '@/modules/patches/views/LinuxPatchScanPage.vue'
 import Workbench from '@/modules/patches/components/LinuxPatchInstallWorkbench.vue'
-import DeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import DeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
+import DeviceActionConfirmDialog from '@/modules/automation/components/job/schedule/components/DeviceActionConfirmDialog.vue'
 
 const api = vi.hoisted(() => ({
   hosts: vi.fn(),
@@ -12,6 +13,7 @@ const api = vi.hoisted(() => ({
   affectedHosts: vi.fn(),
   stats: vi.fn(),
   vulnerabilities: vi.fn(),
+  tags: vi.fn(),
   execute: vi.fn(),
   route: { name: 'patches-machineScan', query: {} },
   push: vi.fn(),
@@ -45,7 +47,7 @@ vi.mock('@/modules/asset/api', () => ({
   assetApi: {
     getAssetList: vi.fn().mockResolvedValue({ records: [{ IP: '192.0.2.1', needReboot: 1 }] })
   },
-  dataManageApi: { getAllTags: vi.fn().mockResolvedValue({ records: [] }) }
+  dataManageApi: { getAllTags: api.tags }
 }))
 vi.mock('@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue', () => ({
   default: { name: 'AcmDeviceSelector', props: ['modelValue', 'disabled'], template: '<div />' }
@@ -98,7 +100,7 @@ const state = () => workbench().vm.$.setupState
 async function open(component = Overview) {
   wrapper = mount(component, {
     global: {
-      components: { ElTable, ElTableColumn },
+      components: { ElTable, ElTableColumn, ElSelect },
       stubs: {
         'el-table': ElTable,
         'el-table-column': ElTableColumn,
@@ -118,7 +120,6 @@ async function open(component = Overview) {
         ),
         ...Object.fromEntries(
           [
-            'ElSelect',
             'ElInput',
             'ElOption',
             'ElPagination',
@@ -129,7 +130,8 @@ async function open(component = Overview) {
             'CveLinkList',
             'ElPopover',
             'ElTooltip',
-            'ElBadge'
+            'ElBadge',
+            'AcmDeviceSelectorDialog'
           ].map(name => [name, true])
         )
       },
@@ -157,6 +159,7 @@ beforeEach(() => {
     .mockResolvedValue({ data: { records: [{ hostId: 'host/A', hostKey: '192.0.2.1' }] } })
   api.stats.mockResolvedValue({ data: { records: [] } })
   api.vulnerabilities.mockResolvedValue({ data: { content: [] } })
+  api.tags.mockReset().mockResolvedValue({ records: [] })
 })
 afterEach(() => {
   wrapper?.unmount()
@@ -164,6 +167,27 @@ afterEach(() => {
 })
 
 describe('Linux 默认概览直接安装', () => {
+  it('通用标签保留全部名称并支持多选查询与重置，不提供集群专属筛选', async () => {
+    api.tags.mockResolvedValue({ records: ['production', { name: '集群 A' }] })
+    await open()
+    const tagFilters = workbench()
+      .findAllComponents(ElSelect)
+      .filter(select => select.props('multiple'))
+    expect(tagFilters).toHaveLength(1)
+    const tagFilter = tagFilters[0]
+    expect(tagFilter.props('placeholder')).toBe('全部标签')
+    expect(state().hostTagOptions).toEqual(expect.arrayContaining(['production', '集群 A']))
+    tagFilter.vm.$emit('update:modelValue', ['production', '集群 A'])
+    tagFilter.vm.$emit('change', ['production', '集群 A'])
+    await flushPromises()
+    expect(api.hosts).toHaveBeenLastCalledWith(
+      expect.objectContaining({ page: 0, tags: ['production', '集群 A'] })
+    )
+    state().handleHostReset()
+    await flushPromises()
+    expect(api.hosts).toHaveBeenLastCalledWith(expect.objectContaining({ tags: [] }))
+  })
+
   it('单台安装直接打开原抽屉并传原主机，不导航也不提交任务', async () => {
     await open()
     expect(wrapper.text()).not.toContain('前往安装补丁')
@@ -281,18 +305,22 @@ describe('Linux 默认概览直接安装', () => {
     await open()
     await button('一键全选').trigger('click')
     await button('扫描选中主机 (2)').trigger('click')
-    const selector = wrapper.findComponent(DeviceSelector)
-    expect(selector.props('modelValue').map(host => [host.key, host.value])).toEqual([
+    const confirmation = wrapper.findComponent(DeviceActionConfirmDialog)
+    expect(confirmation.props('modelValue')).toBe(true)
+    expect(wrapper.findComponent(DeviceSelectorDialog).props('modelValue')).toBe(false)
+    expect(confirmation.props('selection').map(host => [host.key, host.value])).toEqual([
       ['host/A', '192.0.2.1'],
       ['host/B', '192.0.2.2']
     ])
     expect(api.execute).not.toHaveBeenCalled()
     await button('取消').trigger('click')
+    await nextTick()
     expect(state().batchSelectedHosts).toHaveLength(2)
     await button('清空选择').trigger('click')
     await button('扫描补丁').trigger('click')
-    expect(wrapper.findComponent(DeviceSelector).props('modelValue')).toEqual([])
-    expect(button('开始扫描').attributes('disabled')).toBeDefined()
+    expect(wrapper.findComponent(DeviceSelectorDialog).props('initialSelection')).toEqual([])
+    expect(wrapper.findComponent(DeviceSelectorDialog).props('modelValue')).toBe(true)
+    expect(wrapper.findComponent(DeviceSelectorDialog).props('allowEmpty')).toBe(false)
     expect(api.execute).not.toHaveBeenCalled()
   })
 
@@ -303,9 +331,12 @@ describe('Linux 默认概览直接安装', () => {
       .findAll('button')
       .filter(item => item.text() === '扫描')[1]
       .trigger('click')
-    const selector = wrapper.findComponent(DeviceSelector)
-    expect(selector.props('modelValue')).toHaveLength(1)
-    expect(selector.props('modelValue')[0]).toMatchObject({ key: 'host/B', value: '192.0.2.2' })
+    const confirmation = wrapper.findComponent(DeviceActionConfirmDialog)
+    expect(confirmation.props('selection')).toHaveLength(1)
+    expect(confirmation.props('selection')[0]).toMatchObject({
+      key: 'host/B',
+      value: '192.0.2.2'
+    })
     expect(api.execute).not.toHaveBeenCalled()
     await button('开始扫描').trigger('click')
     await flushPromises()
@@ -333,7 +364,9 @@ describe('Linux 默认概览直接安装', () => {
       'host/A',
       'host/B'
     ])
-    expect(wrapper.findComponent(DeviceSelector).props('disabled')).toBe(true)
+    expect(wrapper.findComponent(DeviceActionConfirmDialog).props('submitting')).toBe(true)
+    expect(button('更改设备').attributes('disabled')).toBeDefined()
+    expect(button('取消').attributes('disabled')).toBeDefined()
     expect(button('扫描选中主机 (2)').attributes('disabled')).toBeDefined()
     expect(
       wrapper
@@ -344,10 +377,51 @@ describe('Linux 默认概览直接安装', () => {
     const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {})
     rejectScan(new Error('offline'))
     await flushPromises()
-    expect(button('开始扫描').exists()).toBe(true)
-    expect(wrapper.findComponent(DeviceSelector).props('modelValue')).toHaveLength(2)
-    expect(wrapper.findComponent(DeviceSelector).props('disabled')).toBe(false)
+    expect(wrapper.findComponent(DeviceActionConfirmDialog).props('modelValue')).toBe(true)
+    expect(wrapper.findComponent(DeviceActionConfirmDialog).props('selection')).toHaveLength(2)
+    expect(wrapper.findComponent(DeviceActionConfirmDialog).props('submitting')).toBe(false)
+    await button('开始扫描').trigger('click')
+    await flushPromises()
+    expect(api.execute).toHaveBeenCalledTimes(2)
+    expect(wrapper.findComponent(DeviceActionConfirmDialog).props('modelValue')).toBe(false)
     errorLog.mockRestore()
+  })
+
+  it('确认中更改设备时保留预选，选择完成后仅提交一次', async () => {
+    await open()
+    await button('一键全选').trigger('click')
+    await button('扫描选中主机 (2)').trigger('click')
+    await button('更改设备').trigger('click')
+    expect(wrapper.findComponent(DeviceActionConfirmDialog).props('modelValue')).toBe(false)
+    const selector = wrapper.findComponent(DeviceSelectorDialog)
+    expect(selector.props('modelValue')).toBe(true)
+    expect(selector.props('initialSelection')).toHaveLength(2)
+    expect(api.execute).not.toHaveBeenCalled()
+    selector.vm.$emit('confirm', [selector.props('initialSelection')[1]])
+    await flushPromises()
+    expect(api.execute).toHaveBeenCalledExactlyOnceWith({
+      jobId: '0g3GfW',
+      params: { hosts: [{ key: 'host/B', value: '192.0.2.2', assetType: 'linux' }] }
+    })
+    expect(selector.props('modelValue')).toBe(false)
+  })
+
+  it('明确业务失败即使带运行 ID 也保留扫描确认，不当作提交成功', async () => {
+    await open()
+    await button('一键全选').trigger('click')
+    await button('扫描选中主机 (2)').trigger('click')
+    api.execute.mockResolvedValueOnce({
+      data: [{ status: 'FAILED', runId: 'failed/run', error: '原始原因 X9' }]
+    })
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+    await button('开始扫描').trigger('click')
+    await flushPromises()
+    const confirmation = wrapper.findComponent(DeviceActionConfirmDialog)
+    expect(confirmation.props('modelValue')).toBe(true)
+    expect(confirmation.props('submitting')).toBe(false)
+    expect(confirmation.props('selection')).toHaveLength(2)
+    expect(log.mock.calls[0][1].message).toBe('原始原因 X9')
+    log.mockRestore()
   })
 
   it('关闭后的旧失败不覆盖新查看；卸载后的请求不再写回', async () => {
