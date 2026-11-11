@@ -350,9 +350,16 @@ describe('Windows 主机概览列表交互', () => {
 
   it('有效选择沿真实 ID 传给扫描/批量安装/报告；旧行引用不能打开新操作', async () => {
     await open()
+    expect(page().text()).not.toContain('扫描选中主机')
+    expect(button('创建扫描任务').element.disabled).toBe(false)
+    await button('创建扫描任务').trigger('click')
+    expect(child('WinPatchScanDialog').props('modelValue')).toBe(true)
+    expect(child('WinPatchScanDialog').props('preselectedHosts')).toEqual([])
+    state().scanDialogVisible = false
+    await flushPromises()
     const current = state().hostList[0]
     await selectHosts()
-    await button('扫描选中主机').trigger('click')
+    await button('创建扫描任务').trigger('click')
     await button('安装补丁').trigger('click')
     await button('导出报告').trigger('click')
     expect(child('WinPatchScanDialog').props('preselectedHosts')[0].hostId).toBe(host.hostId)
@@ -372,6 +379,46 @@ describe('Windows 主机概览列表交互', () => {
     await selectHosts([current])
     expect(state().selectedHostRows).toEqual([])
     expect(host.hostId).toBe('real-host/a')
+  })
+
+  it('缓存页面切换保留主机选择，返回后可直接扫描和安装，取消选择后扫描无预选且安装禁用', async () => {
+    await open()
+    await selectHosts()
+    const selected = state().selectedHostRows[0]
+    const overviewState = state()
+    const reads = api.getHosts.mock.calls.length
+    expect(button('创建扫描任务').element.disabled).toBe(false)
+    expect(button('安装补丁').element.disabled).toBe(false)
+
+    for (let index = 0; index < 2; index += 1) {
+      await router.push('/other')
+      await flushPromises()
+      await router.push('/overview')
+      await flushPromises()
+      expect(state()).toBe(overviewState)
+      expect(state().selectedHostRows).toEqual([selected])
+      expect(page().text()).toContain('已选 1 台主机')
+      expect(button('创建扫描任务').element.disabled).toBe(false)
+      expect(button('安装补丁').element.disabled).toBe(false)
+    }
+
+    expect(api.getHosts).toHaveBeenCalledTimes(reads)
+    await button('创建扫描任务').trigger('click')
+    expect(child('WinPatchScanDialog').props('modelValue')).toBe(true)
+    expect(child('WinPatchScanDialog').props('preselectedHosts')).toEqual([selected])
+    await button('安装补丁').trigger('click')
+    expect(child('WinPatchBatchInstallDrawer').props('modelValue')).toBe(true)
+    expect(child('WinPatchBatchInstallDrawer').props('hostSummaries')).toEqual([selected])
+
+    await selectHosts([])
+    expect(button('创建扫描任务').element.disabled).toBe(false)
+    expect(button('安装补丁').element.disabled).toBe(true)
+    expect(page().text()).toContain('已选 0 台主机')
+    state().scanDialogVisible = false
+    await flushPromises()
+    await button('创建扫描任务').trigger('click')
+    expect(child('WinPatchScanDialog').props('modelValue')).toBe(true)
+    expect(child('WinPatchScanDialog').props('preselectedHosts')).toEqual([])
   })
 
   it('缓存失活隔离在途请求，返回后手动恢复；卸载后不接纳结果', async () => {

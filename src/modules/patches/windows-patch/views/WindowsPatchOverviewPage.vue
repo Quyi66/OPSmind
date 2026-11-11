@@ -78,13 +78,8 @@
     </div>
 
     <div class="ops-action-bar">
-      <el-button type="primary" size="small" @click="openScanDialog()">创建扫描任务</el-button>
-      <el-button
-        size="small"
-        :disabled="!canUseHostRows || selectedHostRows.length === 0"
-        @click="openScanDialog(selectedHostRows)"
-      >
-        扫描选中主机
+      <el-button type="primary" size="small" @click="openScanDialog(selectedHostRows)">
+        创建扫描任务
       </el-button>
       <el-button
         type="success"
@@ -783,7 +778,6 @@ onActivated(() => {
 function invalidateHostRequest() {
   pageActive.value = false
   loadRequestId += 1
-  selectedHostRows.value = []
   if (loading.value) loadError.value = '主机列表加载已中断，请重试'
   loading.value = false
 }
