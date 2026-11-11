@@ -156,7 +156,8 @@ describe('巡检名单操作保留查看上下文', () => {
       if (method === 'handleAddToWhitelist') {
         expect(ElMessageBox.confirm).toHaveBeenCalledWith(
           '确定要将此检查项添加到黑名单吗？',
-          '确认'
+          '确认',
+          { closeOnClickModal: false, closeOnPressEscape: false }
         )
         expect(whitelistApi.saveWhitelist).toHaveBeenCalledExactlyOnceWith({
           templateId: 'template-A',
@@ -169,7 +170,8 @@ describe('巡检名单操作保留查看上下文', () => {
       } else {
         expect(ElMessageBox.confirm).toHaveBeenCalledWith(
           '确定要将此检查项从黑名单移除吗？',
-          '确认'
+          '确认',
+          { closeOnClickModal: false, closeOnPressEscape: false }
         )
         expect(whitelistApi.deleteWhitelist).toHaveBeenCalledExactlyOnceWith('real-id')
       }

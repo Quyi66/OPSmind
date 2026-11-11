@@ -1,19 +1,48 @@
 <template>
   <div class="configured-repo-tab">
     <!-- 状态筛选 -->
-    <div class="filter-bar">
-      <el-checkbox-group v-model="repoStatus" @change="loadData">
-        <el-checkbox value="enabled">
-          <el-tag type="success" size="small">启用</el-tag>
-        </el-checkbox>
-        <el-checkbox value="disabled">
-          <el-tag type="warning" size="small">未启用</el-tag>
-        </el-checkbox>
-      </el-checkbox-group>
+    <div class="ops-filter-bar">
+      <el-form :inline="true" size="small">
+        <el-form-item label="状态">
+          <el-checkbox-group v-model="repoStatus" @change="loadData">
+            <el-checkbox value="enabled">
+              <el-tag type="success" size="small">启用</el-tag>
+            </el-checkbox>
+            <el-checkbox value="disabled">
+              <el-tag type="warning" size="small">未启用</el-tag>
+            </el-checkbox>
+          </el-checkbox-group>
+        </el-form-item>
+      </el-form>
     </div>
 
+    <!-- 操作栏 -->
+    <div class="ops-action-bar">
+      <div class="action-right">
+        <el-button
+          class="toolbar-icon-btn"
+          circle
+          size="small"
+          :loading="loading"
+          :disabled="!!readError && !canRetry"
+          @click="refresh"
+          :title="readError ? '重试读取' : '刷新'"
+          :aria-label="readError ? '重试读取已配置仓库' : '刷新已配置仓库'"
+        >
+          <el-icon v-show="!loading"><Refresh /></el-icon>
+        </el-button>
+      </div>
+    </div>
+
+    <el-alert v-if="readError" type="warning" :closable="false" show-icon style="flex-shrink: 0">
+      <template #title>
+        {{ readErrorMessage }}
+        <span v-if="hasResult">刷新成功前，旧仓库数据仅供查看。</span>
+      </template>
+    </el-alert>
+
     <div class="ops-table-wrapper">
-      <el-table v-loading="loading" :data="tableData" height="100%">
+      <el-table v-loading="loading" :data="tableData" :empty-text="emptyText" height="100%">
         <el-table-column prop="refid" label="仓库ID" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
             <el-link
@@ -29,21 +58,7 @@
         <el-table-column prop="repo_id" label="仓库" min-width="120" show-overflow-tooltip />
         <el-table-column prop="repo_name" label="名称" min-width="150" show-overflow-tooltip />
         <el-table-column prop="repo_file" label="配置文件" min-width="150" show-overflow-tooltip />
-        <el-table-column prop="repo_baseurl" label="地址" min-width="250" show-overflow-tooltip>
-          <!-- <template #default="{ row }">
-          <div class="baseurl-tags">
-            <div
-              v-for="(url, index) in parseBaseUrl(row.repo_baseurl)"
-              :key="index"
-              type="info"
-              size="small"
-              class="url-tag"
-            >
-              {{ url }}
-            </div>
-          </div>
-        </template> -->
-        </el-table-column>
+        <el-table-column prop="repo_baseurl" label="地址" min-width="250" show-overflow-tooltip />
         <el-table-column prop="repo_pkgs" label="软件包数量" width="100">
           <template #default="{ row }">
             {{ formatPkgCount(row.repo_pkgs) }}
@@ -70,7 +85,7 @@
       </el-table>
     </div>
 
-    <div class="ops-pagination-wrapper">
+    <div v-if="hasResult" class="ops-pagination-wrapper">
       <el-pagination
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
@@ -95,15 +110,26 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { Refresh } from '@element-plus/icons-vue'
 import { repoApi } from '../../api'
 import RepoDetailDialog from './RepoDetailDialog.vue'
+import { useSoftwareListRead } from '../../composables/useSoftwareListRead'
 
-const loading = ref(false)
-const tableData = ref([])
 const currentPage = ref(1)
 const pageSize = ref(10)
-const total = ref(0)
 const repoStatus = ref(['enabled'])
+const {
+  rows: tableData,
+  total,
+  loading,
+  hasResult,
+  error: readError,
+  errorMessage: readErrorMessage,
+  emptyText,
+  canRetry,
+  load,
+  retry
+} = useSoftwareListRead(params => repoApi.getConfiguredRepoList(params))
 
 // 弹窗相关
 const detailDialogVisible = ref(false)
@@ -120,29 +146,16 @@ function formatPkgCount(count) {
   return String(count).replace('.0', '')
 }
 
-function parseBaseUrl(baseurl) {
-  if (!baseurl) return []
-  return baseurl.split(',').filter(url => url.trim())
+function loadData() {
+  return load({
+    page: currentPage.value,
+    size: pageSize.value,
+    repoStatus: repoStatus.value.join(',')
+  })
 }
 
-async function loadData() {
-  loading.value = true
-  try {
-    const response = await repoApi.getConfiguredRepoList({
-      page: currentPage.value,
-      size: pageSize.value,
-      repoStatus: repoStatus.value.join(',')
-    })
-    const data = response?.data || response
-    tableData.value = data?.records || []
-    total.value = data?.total || 0
-  } catch (error) {
-    console.error('Failed to load configured repos:', error)
-    tableData.value = []
-    total.value = 0
-  } finally {
-    loading.value = false
-  }
+function refresh() {
+  return readError.value ? retry() : loadData()
 }
 
 function handleViewDetail(row) {

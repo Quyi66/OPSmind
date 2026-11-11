@@ -10,7 +10,8 @@ vi.mock(
   () => ({
     default: {
       name: 'WinPatchInstallWizard',
-      props: ['modelValue', 'selectedRows'],
+      props: ['modelValue', 'selectedRows', 'hostSummary'],
+      emits: ['update:modelValue', 'submitted', 'success'],
       template: '<div />'
     }
   })
@@ -215,5 +216,62 @@ describe('Windows 主机补丁详情筛选联动', () => {
     pending.resolve(response([patch]))
     await flushPromises()
     expect(previousState.patchList).toEqual([])
+  })
+
+  it('安装成功刷新列表时保留向导的本次补丁，下一次打开使用新选择', async () => {
+    api.getHostPatches.mockResolvedValueOnce(response([patch]))
+    await open()
+    state().selectedRows = [patch]
+    await flushPromises()
+    await installButton().trigger('click')
+    const wizard = wrapper.findComponent({ name: 'WinPatchInstallWizard' })
+    expect(wizard.props('modelValue')).toBe(true)
+    expect(wizard.props('selectedRows')).toEqual([patch])
+    expect(wizard.props('hostSummary')).toEqual({ hostId: 'host-a' })
+
+    const refresh = deferred()
+    api.getHostPatches.mockReturnValueOnce(refresh.promise)
+    wizard.vm.$emit('success')
+    await flushPromises()
+    expect(state().selectedRows).toEqual([])
+    expect(installButton().element.disabled).toBe(true)
+    expect(wizard.props('modelValue')).toBe(true)
+    expect(wizard.props('selectedRows')).toEqual([patch])
+
+    const nextPatch = { id: 'patch-next', patchStatus: 'no_repair' }
+    refresh.resolve(response([nextPatch]))
+    await flushPromises()
+    expect(state().patchList).toEqual([nextPatch])
+    expect(wizard.props('selectedRows')).toEqual([patch])
+
+    wizard.vm.$emit('update:modelValue', false)
+    state().selectedRows = [nextPatch]
+    await flushPromises()
+    await installButton().trigger('click')
+    expect(wizard.props('selectedRows')).toEqual([nextPatch])
+    expect(api.getHostPatches).toHaveBeenCalledTimes(2)
+  })
+
+  it('关闭或切换主机清理旧安装向导，不把旧补丁带给新主机', async () => {
+    await open()
+    state().selectedRows = [patch]
+    await flushPromises()
+    await installButton().trigger('click')
+    const wizard = wrapper.findComponent({ name: 'WinPatchInstallWizard' })
+    await wrapper.setProps({ modelValue: false })
+    expect(wizard.props('modelValue')).toBe(false)
+    expect(wizard.props('selectedRows')).toEqual([])
+
+    await wrapper.setProps({ modelValue: true })
+    await flushPromises()
+    state().selectedRows = [patch]
+    await flushPromises()
+    await installButton().trigger('click')
+    await wrapper.setProps({ hostSummary: { hostId: 'host-b' } })
+    await flushPromises()
+    expect(wizard.props('modelValue')).toBe(false)
+    expect(wizard.props('selectedRows')).toEqual([])
+    expect(installButton().element.disabled).toBe(true)
+    expect(api.getHostPatches.mock.calls.at(-1)[0]).toBe('host-b')
   })
 })

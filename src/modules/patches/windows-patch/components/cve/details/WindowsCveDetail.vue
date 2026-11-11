@@ -76,7 +76,11 @@
                   <span class="label">CVSS 评分</span>
                   <div class="value">
                     <span :class="cveDetail.cvss3Score ? 'text-danger fw-bold' : 'text-muted'">
-                      {{ cveDetail.cvss3Score ? Number(cveDetail.cvss3Score).toFixed(1) : '-' }}
+                      {{
+                        formatCvssScore(cveDetail.cvss3Score) === '未评分'
+                          ? '-'
+                          : formatCvssScore(cveDetail.cvss3Score)
+                      }}
                     </span>
                     <span v-if="cveDetail.cvss3Vector" class="text-muted ms-2 code-font">
                       ({{ cveDetail.cvss3Vector }})
@@ -303,6 +307,7 @@
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import * as echarts from 'echarts'
 import { formatDateTime as formatDateTimeGlobal } from '@/utils/date'
+import { formatCvssScore } from '@/utils/workspacePresentation'
 import { useTheme } from '@/composables/useTheme'
 import { TopRight, TrendCharts, Warning, Check } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'

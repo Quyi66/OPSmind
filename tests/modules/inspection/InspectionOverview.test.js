@@ -558,6 +558,8 @@ describe('总览原操作与必要确认', () => {
       '确定要删除模板「Display one」吗？',
       '删除确认',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         confirmButtonText: '删除',
         cancelButtonText: '取消',
         type: 'warning'

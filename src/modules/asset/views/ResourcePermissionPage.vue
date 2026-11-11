@@ -3,7 +3,7 @@
     <div class="content-view-area">
       <!-- 筛选区域 -->
       <div class="ops-filter-bar">
-        <el-form :inline="true" size="small">
+        <el-form :inline="true" size="small" @submit.prevent>
           <el-form-item label="关键词">
             <el-input
               v-model="searchKeyword"
@@ -98,6 +98,8 @@
           v-loading="loading"
           height="100%"
           :row-class-name="getRowClassName"
+          :default-sort="sortState"
+          @sort-change="handleSortChange"
         >
           <!-- 1. 资源信息 -->
           <el-table-column
@@ -105,7 +107,7 @@
             label="资源分组路径"
             min-width="260"
             show-overflow-tooltip
-            sortable
+            sortable="custom"
           >
             <template #default="{ row }">
               <span class="resource-info-bold">
@@ -121,7 +123,7 @@
             label="适用资产类型"
             min-width="150"
             align="left"
-            sortable
+            sortable="custom"
           >
             <template #default="{ row }">
               <el-tag size="small" type="info" effect="plain" class="asset-type-badge">
@@ -248,6 +250,7 @@ function isTeamDirty(rowId, teamName) {
 // 分页
 const currentPage = ref(1)
 const pageSize = ref(10)
+const sortState = ref({ prop: '', order: null })
 
 // 过滤后的数据
 const filteredData = computed(() => {
@@ -255,10 +258,12 @@ const filteredData = computed(() => {
 
   if (appliedSearch.value) {
     const keyword = appliedSearch.value.toLowerCase()
-    data = data.filter(
-      item =>
-        item.groupInfo?.toLowerCase().includes(keyword) ||
-        item.assets_type?.toLowerCase().includes(keyword)
+    data = data.filter(item =>
+      [item.groupInfo, item.assets_type, getAssetTypeLabel(item.assets_type)].some(value =>
+        String(value ?? '')
+          .toLowerCase()
+          .includes(keyword)
+      )
     )
   }
 
@@ -267,10 +272,32 @@ const filteredData = computed(() => {
 
 const total = computed(() => filteredData.value.length)
 
+const sortedData = computed(() => {
+  const rows = [...filteredData.value]
+  const { prop, order } = sortState.value
+  if (!['groupInfo', 'assets_type'].includes(prop)) return rows
+  if (!['ascending', 'descending'].includes(order)) return rows
+  const value = row =>
+    String(prop === 'assets_type' ? getAssetTypeLabel(row[prop]) : (row[prop] ?? '')).trim()
+  return rows.sort((left, right) => {
+    const a = value(left),
+      b = value(right)
+    if (!a) return b ? 1 : 0
+    if (!b) return -1
+    const result = a.localeCompare(b, 'zh-CN', { numeric: true, sensitivity: 'base' })
+    return order === 'ascending' ? result : -result
+  })
+})
+
 const paginatedData = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
-  return filteredData.value.slice(start, start + pageSize.value)
+  return sortedData.value.slice(start, start + pageSize.value)
 })
+
+function handleSortChange({ prop, order }) {
+  sortState.value = { prop, order }
+  currentPage.value = 1
+}
 
 const changedRowCount = computed(() => changedRowIds.value.length)
 
@@ -475,7 +502,7 @@ async function handleRefresh() {
 
 // 搜索
 const handleSearch = () => {
-  appliedSearch.value = searchKeyword.value
+  appliedSearch.value = searchKeyword.value.trim()
   currentPage.value = 1
 }
 

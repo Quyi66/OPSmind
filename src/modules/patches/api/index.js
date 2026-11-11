@@ -2309,3 +2309,4 @@ export default {
 }
 
 export * from './agent'
+export * from './hostHealth'

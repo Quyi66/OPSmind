@@ -1,13 +1,14 @@
 <template>
   <div class="table-container">
     <el-table
+      ref="tableRef"
       v-loading="loading"
-      :data="pagedData"
+      :data="unavailable ? [] : pagedData"
       max-height="calc(100vh - 274px)"
       :default-sort="{ prop: 'id', order: 'descending' }"
       @selection-change="$emit('selection-change', $event)"
     >
-      <el-table-column type="selection" width="50" align="left" />
+      <el-table-column type="selection" width="50" align="left" :selectable="() => !unavailable" />
 
       <el-table-column prop="jobDesc" label="任务名称" min-width="180" show-overflow-tooltip>
         <template #default="{ row }">
@@ -37,7 +38,13 @@
             :type="row.triggerStatus === '1' ? 'success' : 'danger'"
             size="small"
             style="cursor: pointer"
-            @click="$emit('toggle-status', row)"
+            role="button"
+            :tabindex="unavailable || row._switching ? -1 : 0"
+            :aria-disabled="unavailable || row._switching"
+            :aria-label="`${getCronTaskConfirmation(row)}：${row.triggerStatus === '1' ? '已启用' : '已停用'}，切换启停`"
+            @click="!unavailable && !row._switching && $emit('toggle-status', row)"
+            @keydown.enter.prevent="!unavailable && !row._switching && $emit('toggle-status', row)"
+            @keydown.space.prevent="!unavailable && !row._switching && $emit('toggle-status', row)"
           >
             {{ row.triggerStatus === '1' ? '已启用' : '已停用' }}
           </el-tag>
@@ -61,25 +68,61 @@
 
       <el-table-column label="操作" width="260" align="left" fixed="right">
         <template #default="{ row }">
-          <el-button text type="primary" size="small" @click="$emit('execute', row)">
+          <el-button
+            text
+            type="primary"
+            size="small"
+            :disabled="unavailable"
+            @click="$emit('execute', row)"
+          >
             执行
           </el-button>
-          <el-button text type="primary" size="small" @click="$emit('edit', row)">编辑</el-button>
-          <el-button text type="primary" size="small" @click="$emit('copy', row)">复制</el-button>
+          <el-button
+            text
+            type="primary"
+            size="small"
+            :disabled="unavailable"
+            @click="$emit('edit', row)"
+          >
+            编辑
+          </el-button>
+          <el-button
+            text
+            type="primary"
+            size="small"
+            :disabled="unavailable"
+            @click="$emit('copy', row)"
+          >
+            复制
+          </el-button>
           <el-button
             type="primary"
             size="small"
             text
             title="查询下次执行时间"
+            :disabled="unavailable"
             @click="$emit('query-next-time', row)"
           >
             下次执行时间
           </el-button>
-          <el-button text type="danger" size="small" @click="$emit('delete', row)">删除</el-button>
+          <el-button
+            text
+            type="danger"
+            size="small"
+            :disabled="unavailable"
+            @click="$emit('delete', row)"
+          >
+            删除
+          </el-button>
         </template>
       </el-table-column>
+      <template #empty>
+        <span v-if="loading">正在读取定时任务…</span>
+        <span v-else-if="unavailable">读取失败，请重试</span>
+        <span v-else>{{ identityData?.length ? '没有匹配的定时任务' : '暂无定时任务' }}</span>
+      </template>
     </el-table>
-    <div class="table-pagination">
+    <div v-if="!unavailable || loading" class="table-pagination">
       <el-pagination
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
@@ -87,6 +130,8 @@
         :total="data.length"
         layout="total, sizes, prev, pager, next, jumper"
         background
+        :disabled="unavailable"
+        @size-change="handleSizeChange"
       />
     </div>
   </div>
@@ -94,7 +139,7 @@
 
 <script setup>
 import { Edit, Delete, CopyDocument, VideoPlay, Clock } from '@element-plus/icons-vue'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import {
   getCronTaskConfirmation,
   getCronTaskDisplayName,
@@ -111,6 +156,8 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  unavailable: { type: Boolean, default: false },
+  filterKey: { type: Number, default: 0 },
   appletMap: {
     type: Object,
     default: () => ({})
@@ -129,6 +176,34 @@ defineEmits([
 
 const currentPage = ref(1)
 const pageSize = ref(10)
+const tableRef = ref(null)
+
+function handleSizeChange() {
+  currentPage.value = 1
+}
+watch(
+  () => props.filterKey,
+  () => {
+    currentPage.value = 1
+    tableRef.value?.clearSelection()
+  }
+)
+watch(
+  () => props.unavailable,
+  value => {
+    if (value) tableRef.value?.clearSelection()
+  }
+)
+watch(
+  () => [props.data.length, props.loading],
+  ([, loading]) => {
+    if (!loading)
+      currentPage.value = Math.min(
+        currentPage.value,
+        Math.max(1, Math.ceil(props.data.length / pageSize.value))
+      )
+  }
+)
 
 const pagedData = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value

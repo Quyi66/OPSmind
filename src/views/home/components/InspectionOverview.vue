@@ -32,23 +32,33 @@
       <h4 class="chart-title">近10天巡检结果情况</h4>
       <div class="chart-legend">
         <div class="legend-item">
-          <div class="legend-color" style="background: #10b981"></div>
+          <div class="legend-color" style="background: #10B981"></div>
           <span>正常</span>
         </div>
         <div class="legend-item">
-          <div class="legend-color" style="background: #fbbf24"></div>
+          <div class="legend-color" style="background: #EF4444"></div>
           <span>异常</span>
         </div>
       </div>
     </div>
 
     <!-- ECharts图表容器 -->
-    <div class="chart-container clickable-area" @click="navigateToInspectionOverview">
-      <div v-if="!hasData" class="chart-empty-overlay">
+    <div
+      class="chart-container clickable-area"
+      v-loading="dashboardStore.loading"
+      element-loading-text="正在加载巡检数据..."
+      @click="navigateToInspectionOverview"
+    >
+      <div v-if="dashboardStore.error" class="chart-empty-overlay error-state" @click.stop>
+        <i class="fas fa-exclamation-circle error-icon"></i>
+        <span>巡检数据加载失败</span>
+        <el-button size="small" type="primary" link @click="dashboardStore.loadDashboardData">重新加载</el-button>
+      </div>
+      <div v-else-if="!hasData" class="chart-empty-overlay">
         <i class="fas fa-chart-line empty-icon"></i>
         <span>暂无近10天巡检数据</span>
       </div>
-      <v-chart class="chart" :option="chartOption" autoresize :theme="isDark ? 'dark' : ''" />
+      <v-chart v-else class="chart" :option="chartOption" autoresize :theme="isDark ? 'dark' : ''" />
     </div>
   </div>
 </template>
@@ -140,11 +150,9 @@ const chartData = computed(() => {
   }
 })
 
-// Y 轴最大值与刻度：
-// - 刻度始终为 5 段，间隔为 5 的倍数
-// - 最小 yMax = 25（即 0,5,10,15,20,25）
-// - 根据数据最大值 +10% 余量，计算最小需要的步长，再向上取整到 5 的倍数
-const yMax = computed(() => {
+// Y 轴最大值与刻度动态自适应：
+// - 根据实际数据量动态计算最大值与步长，不要固定写死为 5，避免空旷网格
+const yAxisConfig = computed(() => {
   const d = chartData.value
   const all = [
     ...(Array.isArray(d.normal) ? d.normal : []),
@@ -152,17 +160,18 @@ const yMax = computed(() => {
   ].map(v => (typeof v === 'number' && isFinite(v) ? v : Number(v) || 0))
 
   const rawMax = Math.max(0, ...all)
-  const minYMax = 25
-
-  if (rawMax <= 0) return minYMax
-
-  // 加 10% 余量
-  const withMargin = rawMax + Math.ceil(rawMax * 0.1)
-  // 计算最小步长（5 段），并向上取整到 5 的倍数，使 interval 始终是 5 的倍数
-  const minStep = Math.ceil(withMargin / 5)
-  const step = Math.max(5, Math.ceil(minStep / 5) * 5) // 步长为 5 的倍数，且至少为 5
-  const yMaxVal = step * 5
-  return Math.max(minYMax, yMaxVal)
+  if (rawMax <= 2) {
+    return { max: Math.max(2, rawMax + 1), interval: 1 }
+  }
+  if (rawMax <= 5) {
+    return { max: rawMax + 1, interval: 1 }
+  }
+  if (rawMax <= 10) {
+    const max = Math.ceil((rawMax + 1) / 2) * 2
+    return { max, interval: 2 }
+  }
+  const step = Math.max(5, Math.ceil((rawMax * 1.15) / 5))
+  return { max: step * 5, interval: step }
 })
 
 // ECharts 配置
@@ -177,20 +186,23 @@ const chartOption = computed(() => ({
     }
   },
   grid: {
-    left: 50,
-    right: 20,
-    bottom: 50,
+    left: 36,
+    right: 16,
+    bottom: 36,
     top: 20
   },
   xAxis: {
     type: 'category',
     data: chartData.value.dates,
     axisLine: {
-      lineStyle: {}
+      lineStyle: {
+        color: isDark.value ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)'
+      }
     },
     axisLabel: {
-      fontSize: 12,
-      margin: 10,
+      fontSize: 11,
+      color: isDark.value ? '#a3a6ad' : '#909399',
+      margin: 8,
       hideOverlap: true
     },
     axisTick: {
@@ -200,9 +212,9 @@ const chartOption = computed(() => ({
   yAxis: {
     type: 'value',
     min: 0,
-    max: yMax.value,
-    interval: Math.max(1, yMax.value / 5), // 此处将为 5 的倍数
-    splitNumber: 5,
+    max: yAxisConfig.value.max,
+    interval: yAxisConfig.value.interval,
+    minInterval: 1,
     axisLine: {
       show: false
     },
@@ -210,11 +222,14 @@ const chartOption = computed(() => ({
       show: false
     },
     axisLabel: {
-      fontSize: 12
+      fontSize: 11,
+      color: isDark.value ? '#a3a6ad' : '#909399'
     },
     splitLine: {
+      show: true,
       lineStyle: {
-        type: 'dashed'
+        type: 'dashed',
+        color: isDark.value ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)'
       }
     }
   },
@@ -224,21 +239,21 @@ const chartOption = computed(() => ({
       type: 'bar',
       data: chartData.value.normal,
       itemStyle: {
-        color: '#10b981',
+        color: '#10B981',
         borderRadius: [2, 2, 0, 0]
       },
-      barWidth: '22%',
-      barGap: '20%'
+      barWidth: 12,
+      barGap: '35%'
     },
     {
       name: '异常',
       type: 'bar',
       data: chartData.value.abnormal,
       itemStyle: {
-        color: '#fbbf24',
+        color: '#EF4444',
         borderRadius: [2, 2, 0, 0]
       },
-      barWidth: '22%'
+      barWidth: 12
     }
   ]
 }))
@@ -361,13 +376,19 @@ const chartOption = computed(() => ({
   gap: 12px; /* 收紧卡片间距 */
   align-items: center;
   padding: 8px 12px; /* 压缩内边距 */
-  background: linear-gradient(135deg, var(--el-fill-color-light) 0%, rgba(219, 234, 254, 0.15) 100%);
+  background: transparent;
 
   /* 深度重写 TypeCountCard 尺寸，以适应紧凑高度 */
   :deep(.type-count-card) {
     height: 48px;
     padding: 6px 12px;
     gap: 8px;
+    border-left: 1px solid var(--el-border-color-lighter);
+
+    &:hover {
+      border-color: var(--el-color-primary-light-5);
+      background: var(--el-fill-color-light);
+    }
   }
 
   :deep(.icon-container) {
@@ -449,12 +470,21 @@ const chartOption = computed(() => ({
   gap: 8px;
   color: var(--el-text-color-placeholder);
   font-size: 12px;
-  pointer-events: none;
   z-index: 2;
 
   .empty-icon {
     font-size: 28px;
     opacity: 0.25;
+  }
+
+  &.error-state {
+    color: var(--el-color-danger);
+    pointer-events: auto;
+
+    .error-icon {
+      font-size: 26px;
+      color: var(--el-color-danger);
+    }
   }
 }
 

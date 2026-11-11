@@ -17,9 +17,9 @@ export const CAC_ROUTE_DEFS = [
     key: 'templates',
     path: 'templates',
     name: 'cac-templates',
-    title: '巡检模板',
-    navLabel: '巡检模板',
-    icon: 'fad fa-fw fa-list-alt',
+    title: '模板管理',
+    navLabel: '模板管理',
+    icon: 'fad fa-fw fa-layer-group',
     component: () => import('./views/TemplateListPage.vue')
   },
   {
@@ -28,21 +28,21 @@ export const CAC_ROUTE_DEFS = [
     name: 'cac-results',
     title: '执行记录',
     navLabel: '执行记录',
-    icon: 'fad fa-fw fa-history',
+    icon: 'fad fa-fw fa-clipboard-list',
     component: () => import('./views/ResultListPage.vue')
   },
   {
     key: 'resultDetail',
     path: 'results/:jobId',
     name: 'cac-result-detail',
-    title: '结果详情',
+    title: '巡检报告',
     component: () => import('./views/ResultDetailPage.vue')
   },
   {
     key: 'structuralDiagram',
     path: 'structural-diagram/:jobId',
     name: 'cac-structural-diagram',
-    title: '架构图',
+    title: '业务拓扑分析',
     component: () => import('./views/StructuralDiagramPage.vue')
   },
   {

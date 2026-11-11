@@ -847,8 +847,9 @@ onMounted(() => {
 
 // 监听路由参数变化进行联动搜索
 watch(
-  () => route.query,
-  query => {
+  () => [route.path, route.query],
+  ([path, query]) => {
+    if (path.replace(/\/$/, '') !== '/acm/automation') return
     if (query.ip) {
       filters.value.ip = query.ip
       activeTab.value = 'automation'

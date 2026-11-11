@@ -108,6 +108,16 @@
             height="100%"
             @selection-change="handleBaseRepoSelectionChange"
           >
+            <template #empty>
+              <el-empty
+                v-if="hasBaseRepoResult && !baseRepoLoading && !baseRepoError"
+                description="暂无基准仓库"
+              >
+                <p>配置到主机前，需要已有基准主机及其采集的仓库数据。</p>
+                <el-button @click="activeTab = 'baseHost'">查看基准主机</el-button>
+              </el-empty>
+              <span v-else>{{ baseRepoEmptyText }}</span>
+            </template>
             <el-table-column type="selection" width="50" :selectable="() => canUseBaseRepos" />
             <el-table-column prop="repo_id" label="仓库ID" min-width="120" show-overflow-tooltip>
               <template #default="{ row }">

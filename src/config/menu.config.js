@@ -34,8 +34,7 @@ export const MENU_CONFIG = {
         'cmd',
         'task-scheduler',
         'run-records',
-        'review-center',
-        'flow'
+        'review-center'
       ]
     },
     {

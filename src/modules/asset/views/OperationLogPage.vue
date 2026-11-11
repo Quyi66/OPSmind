@@ -3,7 +3,7 @@
     <div class="content-view-area">
       <!-- 筛选区 -->
       <div class="ops-filter-bar">
-        <el-form :inline="true" size="small">
+        <el-form :inline="true" size="small" @submit.prevent>
           <el-form-item label="时间范围">
             <el-select v-model="filters.day" style="width: 95px" @change="handleFilterChange">
               <el-option label="今天" :value="1" />
@@ -42,7 +42,8 @@
               clearable
               style="width: 170px"
               @keyup.enter="handleFilterChange"
-            @clear="handleFilterChange" />
+              @input="handleSearchInput"
+            />
           </el-form-item>
 
           <el-form-item class="filter-actions">
@@ -73,6 +74,10 @@
         </el-button>
       </div>
 
+      <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
+        <el-button link type="primary" @click="loadData">重试</el-button>
+      </el-alert>
+
       <!-- 表格区域 -->
       <div class="ops-table-wrapper card-table">
         <el-table
@@ -81,6 +86,7 @@
           height="100%"
           row-key="run_id"
           row-class-name="modern-table-row"
+          :empty-text="loading ? '正在读取操作日志…' : loadError || '暂无符合条件的操作日志'"
         >
           <!-- 1. 开始时间 -->
           <el-table-column prop="start_time" label="开始执行时间" width="180" sortable>
@@ -178,6 +184,7 @@
       <!-- 分页 -->
       <div class="ops-pagination-wrapper">
         <el-pagination
+          v-if="!loadError"
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
           :page-sizes="[10, 20, 50, 100]"
@@ -200,7 +207,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onBeforeUnmount, onDeactivated } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
@@ -228,6 +235,8 @@ const searchKeyword = ref('')
 // 表格数据
 const loading = ref(false)
 const tableData = ref([])
+const loadError = ref('')
+let logRequest = 0
 
 useActiveTaskListPolling({
   records: tableData,
@@ -303,6 +312,7 @@ function syncRouteQuery() {
 }
 
 function applyRouteQuery(query) {
+  clearSearchDebounce()
   filters.value = {
     ...filters.value,
     day: normalizeDay(query.day),
@@ -327,7 +337,14 @@ function openRunResultByQuery(query) {
 
 // 加载数据
 async function loadData() {
+  if (route.path.replace(/\/$/, '') !== '/acm/log') return
+  const request = ++logRequest
+  const routePath = route.fullPath
+  const isCurrent = () => request === logRequest && routePath === route.fullPath
   loading.value = true
+  loadError.value = ''
+  tableData.value = []
+  ataNodes.value = []
   try {
     const response = await operationLogApi.getOperationLogs(
       {
@@ -342,6 +359,7 @@ async function loadData() {
         filter: searchKeyword.value.trim() ? `executor_node:*${searchKeyword.value.trim()}*` : undefined
       }
     )
+    if (!isCurrent()) return
 
     const data = response?.records || []
     tableData.value = data
@@ -357,25 +375,41 @@ async function loadData() {
 
     total.value = response?.total || 0
   } catch (error) {
+    if (!isCurrent()) return
+    loadError.value = '加载操作记录失败，请重试'
     console.error('加载操作记录失败:', error)
     ElMessage.error('加载操作记录失败')
   } finally {
-    loading.value = false
+    if (isCurrent()) loading.value = false
   }
 }
 
+function invalidateLogRead() {
+  logRequest += 1
+  if (loading.value) loadError.value = '操作日志读取已中断，请刷新重试'
+  loading.value = false
+  runResultDialogVisible.value = false
+  currentRunId.value = ''
+}
+onBeforeUnmount(invalidateLogRead)
+onDeactivated(invalidateLogRead)
+
 // 筛选变化
 function handleFilterChange() {
+  clearSearchDebounce()
   currentPage.value = 1
   syncRouteQuery()
 }
 
 // 搜索输入防抖
 let searchDebounceTimer = null
-watch(searchKeyword, newVal => {
-  if (searchDebounceTimer) {
-    clearTimeout(searchDebounceTimer)
-  }
+function clearSearchDebounce() {
+  clearTimeout(searchDebounceTimer)
+  searchDebounceTimer = null
+}
+
+function handleSearchInput(newVal) {
+  clearSearchDebounce()
   if (!newVal) {
     handleFilterChange()
   } else {
@@ -383,10 +417,14 @@ watch(searchKeyword, newVal => {
       handleFilterChange()
     }, 300)
   }
-})
+}
+
+onBeforeUnmount(clearSearchDebounce)
+onDeactivated(clearSearchDebounce)
 
 // 重置
 function handleReset() {
+  clearSearchDebounce()
   filters.value = {
     day: 1,
     ataNode: 'all',
@@ -408,9 +446,14 @@ function handlePageSizeChange() {
   loadData()
 }
 
+// 缓存页面只响应自身路由，避免在其他资产页面操作时读取日志。
 watch(
-  () => route.query,
-  query => {
+  () => [route.path, route.query],
+  ([path, query]) => {
+    if (path.replace(/\/$/, '') !== '/acm/log') {
+      invalidateLogRead()
+      return
+    }
     applyRouteQuery(query)
     openRunResultByQuery(query)
   },
@@ -501,7 +544,7 @@ function calculateDuration(startTime, endTime) {
   const end = new Date(endTime).getTime()
   const diff = Math.floor((end - start) / 1000)
 
-  if (diff < 0) return '-'
+  if (!Number.isFinite(diff) || diff < 0) return '-'
 
   const hours = Math.floor(diff / 3600)
   const minutes = Math.floor((diff % 3600) / 60)

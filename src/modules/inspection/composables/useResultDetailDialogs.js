@@ -1,11 +1,48 @@
 /**
  * 弹窗管理 Composable
  */
-import { ref } from 'vue'
+import { onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { dtsApi, whitelistApi } from '../api'
 
-export function useResultDetailDialogs(jobId, jobInfo) {
+export function useResultDetailDialogs(jobId, jobInfo, contextKey = () => '') {
+  // 每个只读窗口独立跟踪本次读取；关闭、换报告后不接纳旧结果。
+  const readWindows = []
+  function createReadGuard(visible, loading, clear) {
+    let version = 0
+    const invalidate = () => {
+      version += 1
+      if (loading) loading.value = false
+      clear()
+    }
+    watch(
+      visible,
+      open => {
+        if (!open) invalidate()
+      },
+      { flush: 'sync' }
+    )
+    readWindows.push(() => {
+      visible.value = false
+      invalidate()
+    })
+    return () => {
+      const request = ++version
+      const reportId = jobId.value
+      const templateId = jobInfo.value?.templateId
+      const context = contextKey()
+      return () =>
+        visible.value &&
+        request === version &&
+        reportId === jobId.value &&
+        templateId === jobInfo.value?.templateId &&
+        context === contextKey()
+    }
+  }
+  const closeReadWindows = () => readWindows.forEach(close => close())
+  watch([jobId, () => jobInfo.value?.templateId, contextKey], closeReadWindows, { flush: 'sync' })
+  onBeforeUnmount(closeReadWindows)
+
   // ===== 主机详情弹窗 =====
   const hostDetailVisible = ref(false)
   const hostCheckItemsLoading = ref(false)
@@ -13,6 +50,12 @@ export function useResultDetailDialogs(jobId, jobInfo) {
   const currentHost = ref(null)
   const hostMachineInfo = ref({})
   const hostCheckItems = ref([])
+  const beginHostInfoRead = createReadGuard(hostDetailVisible, null, () => {
+    hostMachineInfo.value = {}
+  })
+  const beginHostItemsRead = createReadGuard(hostDetailVisible, hostCheckItemsLoading, () => {
+    hostCheckItems.value = []
+  })
 
   async function showHostDetail(row) {
     currentHost.value = row
@@ -33,36 +76,45 @@ export function useResultDetailDialogs(jobId, jobInfo) {
   }
 
   async function loadHostMachineInfo(hostId) {
+    const isCurrent = beginHostInfoRead()
     try {
       const res = await dtsApi.getMachineInfo(hostId)
+      if (!isCurrent()) return
       const data = res?.data || res || {}
       const records = data.records || []
       if (records.length > 0) {
         hostMachineInfo.value = records[0]
       }
     } catch (error) {
+      if (!isCurrent()) return
       console.error('加载主机信息失败:', error)
     }
   }
 
   async function loadHostCheckItems() {
-    if (!currentHost.value) return
+    if (!hostDetailVisible.value || !currentHost.value) return
+    const isCurrent = beginHostItemsRead()
     hostCheckItemsLoading.value = true
     hostCheckItems.value = []
 
     try {
-      const res = await dtsApi.getCheckItemMachineDetail({
-        host_key: currentHost.value.host_key,
-        job_id: jobId.value,
-        status: hostDetailStatusFilter.value
-      }, { size: 100, page: 1 })
+      const res = await dtsApi.getCheckItemMachineDetail(
+        {
+          host_key: currentHost.value.host_key,
+          job_id: jobId.value,
+          status: hostDetailStatusFilter.value
+        },
+        { size: 100, page: 1 }
+      )
+      if (!isCurrent()) return
       const data = res?.data || res || {}
       hostCheckItems.value = data.records || []
     } catch (error) {
+      if (!isCurrent()) return
       console.error('加载检查项列表失败:', error)
       ElMessage.error('加载检查项失败')
     } finally {
-      hostCheckItemsLoading.value = false
+      if (isCurrent()) hostCheckItemsLoading.value = false
     }
   }
 
@@ -71,6 +123,9 @@ export function useResultDetailDialogs(jobId, jobInfo) {
   const kpiDialogTitle = ref('')
   const kpiDialogData = ref([])
   const kpiDialogLoading = ref(false)
+  const beginKpiRead = createReadGuard(kpiDialogVisible, kpiDialogLoading, () => {
+    kpiDialogData.value = []
+  })
 
   async function showKpiDialog(status) {
     const titleMap = {
@@ -85,16 +140,19 @@ export function useResultDetailDialogs(jobId, jobInfo) {
     kpiDialogVisible.value = true
     kpiDialogLoading.value = true
     kpiDialogData.value = []
+    const isCurrent = beginKpiRead()
 
     try {
       const res = await dtsApi.getCheckItemByStatus(jobId.value, status)
+      if (!isCurrent()) return
       const data = res?.data || res || {}
       kpiDialogData.value = data.records || []
     } catch (error) {
+      if (!isCurrent()) return
       console.error('获取 KPI 详情失败:', error)
       ElMessage.error('获取详情失败')
     } finally {
-      kpiDialogLoading.value = false
+      if (isCurrent()) kpiDialogLoading.value = false
     }
   }
 
@@ -102,15 +160,20 @@ export function useResultDetailDialogs(jobId, jobInfo) {
   const checkItemDetailVisible = ref(false)
   const checkItemDetailLoading = ref(false)
   const currentCheckItem = ref(null)
+  const beginCheckItemRead = createReadGuard(checkItemDetailVisible, checkItemDetailLoading, () => {
+    currentCheckItem.value = null
+  })
 
   async function showCheckItemDetail(row) {
     currentCheckItem.value = { ...row }
     checkItemDetailVisible.value = true
     checkItemDetailLoading.value = true
+    const isCurrent = beginCheckItemRead()
 
     try {
       if (row.id) {
         const res = await dtsApi.getCheckItemInfo(row.id)
+        if (!isCurrent()) return
         const data = res?.data || res || {}
         const records = data.records || []
         if (records.length > 0) {
@@ -119,7 +182,7 @@ export function useResultDetailDialogs(jobId, jobInfo) {
             ...row,
             status: record.status,
             name: record.name,
-            output: record.output || '',
+            output: record.output ?? '',
             host_key: record.host_key,
             host_id: record.host_id,
             job_id: record.job_id
@@ -127,9 +190,10 @@ export function useResultDetailDialogs(jobId, jobInfo) {
         }
       }
     } catch (error) {
+      if (!isCurrent()) return
       console.error('获取检查项详情失败:', error)
     } finally {
-      checkItemDetailLoading.value = false
+      if (isCurrent()) checkItemDetailLoading.value = false
     }
   }
 
@@ -139,6 +203,13 @@ export function useResultDetailDialogs(jobId, jobInfo) {
   const checkItemHostsData = ref([])
   const currentCheckItemName = ref('')
   const checkItemHostsStatusFilter = ref('all')
+  const beginCheckItemHostsRead = createReadGuard(
+    checkItemHostsVisible,
+    checkItemHostsLoading,
+    () => {
+      checkItemHostsData.value = []
+    }
+  )
 
   async function showCheckItemHostsDialog(row) {
     currentCheckItemName.value = row.name
@@ -148,22 +219,29 @@ export function useResultDetailDialogs(jobId, jobInfo) {
   }
 
   async function loadCheckItemHosts() {
+    if (!checkItemHostsVisible.value) return
+    const isCurrent = beginCheckItemHostsRead()
     checkItemHostsLoading.value = true
     checkItemHostsData.value = []
 
     try {
-      const res = await dtsApi.getCheckItemDetail({
-        job_id: jobId.value,
-        name: currentCheckItemName.value,
-        status: checkItemHostsStatusFilter.value
-      }, { size: 100, page: 1 })
+      const res = await dtsApi.getCheckItemDetail(
+        {
+          job_id: jobId.value,
+          name: currentCheckItemName.value,
+          status: checkItemHostsStatusFilter.value
+        },
+        { size: 100, page: 1 }
+      )
+      if (!isCurrent()) return
       const data = res?.data || res || {}
       checkItemHostsData.value = data.records || []
     } catch (error) {
+      if (!isCurrent()) return
       console.error('获取检查项关联主机失败:', error)
       ElMessage.error('获取关联主机失败')
     } finally {
-      checkItemHostsLoading.value = false
+      if (isCurrent()) checkItemHostsLoading.value = false
     }
   }
 

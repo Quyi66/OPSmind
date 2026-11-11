@@ -82,7 +82,8 @@ function mount(component, props = {}) {
         'el-select': Slot,
         'el-option': true,
         'el-icon': Slot,
-        'el-tag': Slot
+        'el-tag': Slot,
+        'el-alert': Slot
       }
     }
   })

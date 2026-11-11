@@ -1,8 +1,8 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="选择文件"
-    width="800px"
+    title="选择巡检脚本"
+    width="820px"
     :close-on-click-modal="false"
     append-to-body
     :close-on-press-escape="false"
@@ -11,30 +11,42 @@
       <!-- 顶部工具栏：面包屑导航 + 搜索框 -->
       <div class="toolbar-header">
         <div class="breadcrumb-nav">
+          <i class="fas fa-folder-tree breadcrumb-root-icon" aria-hidden="true"></i>
           <span v-for="(crumb, index) in breadcrumbs" :key="index" class="breadcrumb-item">
             <a
               v-if="index < breadcrumbs.length - 1"
               href="javascript:void(0)"
               @click="navigateTo(index)"
             >
-              {{ crumb || '~' }}
+              {{ crumb === '~' ? '脚本库根目录' : crumb }}
             </a>
-            <span v-else class="current">{{ crumb || '~' }}</span>
-            <span v-if="index < breadcrumbs.length - 1" class="separator">›</span>
+            <span v-else class="current">{{ crumb === '~' ? '脚本库根目录' : crumb }}</span>
+            <span v-if="index < breadcrumbs.length - 1" class="separator">/</span>
           </span>
         </div>
         <el-input
           v-model="searchKeyword"
-          placeholder="搜索文件名..."
+          placeholder="搜索脚本或目录名称..."
           clearable
+          size="small"
           :prefix-icon="Search"
           class="search-input"
         />
       </div>
 
-      <div v-if="loadFailed" role="alert">
-        文件列表加载失败，请重试后确认。
+      <div v-if="loadFailed" class="script-load-alert" role="alert">
+        <span>文件列表加载失败，请重试后确认。</span>
         <el-button link type="primary" @click="loadFiles">重试</el-button>
+      </div>
+
+      <!-- 已选状态提示栏 -->
+      <div class="selection-status-bar">
+        <span class="selection-label">当前已选脚本：</span>
+        <span v-if="selectedFiles.length > 0" class="selection-value">
+          <i class="fas fa-check-circle" aria-hidden="true"></i>
+          {{ selectedFiles[0].scriptPath || selectedFiles[0].path }}
+        </span>
+        <span v-else class="selection-empty">尚未选择脚本文件（单击文件行即可选中，双击文件夹进入下级）</span>
       </div>
 
       <!-- 文件列表表格 -->
@@ -42,11 +54,11 @@
         <table class="file-table" v-loading="loading">
           <thead>
             <tr>
-              <th style="width: 40px"></th>
-              <th class="name-col">名称</th>
+              <th style="width: 44px">选择</th>
+              <th class="name-col">文件 / 目录名称</th>
               <th style="width: 100px">大小</th>
-              <th style="width: 120px">修改日期</th>
-              <th style="width: 80px">状态</th>
+              <th style="width: 120px">更新日期</th>
+              <th style="width: 90px">发布状态</th>
             </tr>
           </thead>
           <tbody>
@@ -55,7 +67,7 @@
               <td></td>
               <td class="name-cell">
                 <i class="fa fa-level-up-alt text-muted" />
-                <span class="file-name">..</span>
+                <span class="file-name">..（返回上一级目录）</span>
               </td>
               <td></td>
               <td></td>
@@ -83,7 +95,7 @@
                 <i :class="getFileIcon(file)" class="file-icon" />
                 <span class="file-name">{{ file.name }}</span>
               </td>
-              <td class="size-cell">{{ file.isDirectory ? '' : formatSize(file.size) }}</td>
+              <td class="size-cell">{{ file.isDirectory ? '目录' : formatSize(file.size) }}</td>
               <td class="date-cell">{{ formatDate(file.lastModified) }}</td>
               <td class="status-cell">
                 <el-tag v-if="file.statusText" :type="file.statusType" size="small">
@@ -95,7 +107,8 @@
         </table>
         <el-empty
           v-if="!loading && filteredFiles.length === 0 && !currentPath"
-          description="暂无文件"
+          description="当前目录暂无可用脚本文件"
+          :image-size="72"
         />
       </div>
 
@@ -107,6 +120,7 @@
           :page-sizes="[10, 20, 50, 100]"
           layout="total, sizes, prev, pager, next, jumper"
           :total="filteredFiles.length"
+          background
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
         />
@@ -458,12 +472,21 @@ onBeforeUnmount(() => {
   }
 }
 
-// 面包屑导航
 .breadcrumb-nav {
-  padding: 8px 12px;
-  background: var(--el-bg-color-page);
-  border-radius: 4px;
-  font-size: 14px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px 12px;
+  background: var(--el-fill-color-lighter);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 6px;
+  font-size: 13px;
+
+  .breadcrumb-root-icon {
+    color: var(--el-color-primary);
+    margin-right: 4px;
+  }
 
   .breadcrumb-item {
     a {
@@ -477,14 +500,57 @@ onBeforeUnmount(() => {
     }
 
     .current {
-      color: var(--el-text-color-regular);
-      font-weight: 500;
+      color: var(--el-text-color-primary);
+      font-weight: 600;
     }
 
     .separator {
-      margin: 0 8px;
+      margin: 0 6px;
       color: var(--el-text-color-secondary);
     }
+  }
+}
+
+.script-load-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  background: var(--el-color-warning-light-9);
+  border: 1px solid var(--el-color-warning-light-7);
+  color: var(--el-color-warning-dark-2);
+  font-size: 13px;
+}
+
+.selection-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  background: var(--el-fill-color-blank);
+  border: 1px solid var(--el-border-color-lighter);
+  font-size: 12px;
+
+  .selection-label {
+    color: var(--el-text-color-secondary);
+    flex-shrink: 0;
+  }
+
+  .selection-value {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--el-color-primary);
+    font-weight: 600;
+    font-family: var(--el-font-family-mono, monospace);
+  }
+
+  .selection-empty {
+    color: var(--el-text-color-placeholder);
   }
 }
 

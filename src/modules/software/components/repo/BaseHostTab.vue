@@ -3,31 +3,54 @@
     <!-- 操作按钮 -->
     <div class="ops-action-bar">
       <div class="action-left">
-        <el-button type="primary" @click="handleChooseBaseHost">
+        <el-button type="primary" size="small" @click="handleChooseBaseHost">
           <i class="fa fa-mouse-pointer" />
           选择基准主机
         </el-button>
         <el-button
           type="danger"
           plain
-          :disabled="selectedRows.length === 0"
+          size="small"
+          :disabled="selectedRows.length === 0 || !canUseRows"
           @click="handleBatchDelete"
         >
           <i class="fa fa-trash-alt" />
           批量删除
         </el-button>
       </div>
+      <div class="action-right">
+        <el-button
+          class="toolbar-icon-btn"
+          circle
+          size="small"
+          :loading="loading"
+          :disabled="!!readError && !canRetry"
+          @click="refresh"
+          :title="readError ? '重试读取' : '刷新'"
+          :aria-label="readError ? '重试读取基准主机' : '刷新基准主机'"
+        >
+          <el-icon v-show="!loading"><Refresh /></el-icon>
+        </el-button>
+      </div>
     </div>
+
+    <el-alert v-if="readError" type="warning" :closable="false" show-icon style="flex-shrink: 0">
+      <template #title>
+        {{ readErrorMessage }}
+        <span v-if="hasResult">刷新成功前，旧主机数据仅供查看，暂不可删除。</span>
+      </template>
+    </el-alert>
 
     <div class="ops-table-wrapper">
       <el-table
         v-loading="loading"
         :data="tableData"
+        :empty-text="emptyText"
         height="100%"
         style="width: 100%"
         @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="50" />
+        <el-table-column type="selection" width="50" :selectable="() => canUseRows" />
         <el-table-column prop="host_key" label="主机" min-width="200" show-overflow-tooltip />
         <el-table-column prop="os_distro" label="OS" width="120" show-overflow-tooltip />
         <el-table-column prop="os_version" label="OS版本" width="120" show-overflow-tooltip />
@@ -39,14 +62,22 @@
         <el-table-column label="操作" width="80" fixed="right">
           <template #default="{ row }">
             <div class="software-row-actions">
-              <el-button text type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+              <el-button
+                text
+                type="danger"
+                size="small"
+                :disabled="!canUseRows"
+                @click="handleDelete(row)"
+              >
+                删除
+              </el-button>
             </div>
           </template>
         </el-table-column>
       </el-table>
     </div>
 
-    <div class="ops-pagination-wrapper">
+    <div v-if="hasResult" class="ops-pagination-wrapper">
       <el-pagination
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
@@ -67,15 +98,31 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Refresh } from '@element-plus/icons-vue'
 import { repoApi } from '../../api'
 import SelectBaseHostDialog from './SelectBaseHostDialog.vue'
+import { useSoftwareListRead } from '../../composables/useSoftwareListRead'
 
-const loading = ref(false)
-const tableData = ref([])
 const currentPage = ref(1)
 const pageSize = ref(10)
-const total = ref(0)
 const selectedRows = ref([])
+const {
+  rows: tableData,
+  total,
+  loading,
+  hasResult,
+  error: readError,
+  errorMessage: readErrorMessage,
+  emptyText,
+  canUseRows,
+  canRetry,
+  load,
+  retry
+} = useSoftwareListRead(params => repoApi.getBaseHostList(params), {
+  onDiscard: () => {
+    selectedRows.value = []
+  }
+})
 
 // 弹窗相关
 const selectHostDialogVisible = ref(false)
@@ -85,23 +132,12 @@ function formatDate(timestamp) {
   return new Date(timestamp).toLocaleString('zh-CN')
 }
 
-async function loadData() {
-  loading.value = true
-  try {
-    const response = await repoApi.getBaseHostList({
-      page: currentPage.value,
-      size: pageSize.value
-    })
-    const data = response?.data || response
-    tableData.value = data?.records || []
-    total.value = data?.total || 0
-  } catch (error) {
-    console.error('Failed to load base hosts:', error)
-    tableData.value = []
-    total.value = 0
-  } finally {
-    loading.value = false
-  }
+function loadData() {
+  return load({ page: currentPage.value, size: pageSize.value })
+}
+
+function refresh() {
+  return readError.value ? retry() : loadData()
 }
 
 function handleSelectionChange(selection) {

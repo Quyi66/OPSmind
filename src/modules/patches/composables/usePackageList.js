@@ -70,6 +70,10 @@ export function usePackageList(hostId) {
       .toLowerCase()
   }
 
+  function normalizeInstalledPkgKey(value) {
+    return normalizePkgKey(value).replace(/\.rpm$/, '')
+  }
+
   function buildPackageToken(pkgName, updatePkg, patchId) {
     if (!pkgName && !updatePkg && !patchId) return ''
     return [pkgName, updatePkg, patchId].map(value => String(value || '').trim()).join('#')
@@ -182,8 +186,16 @@ export function usePackageList(hostId) {
         normalizedItem.patchId
       )
 
-      pushToMap(byInstalledPkg, normalizePkgKey(normalizedItem.installedPkg), normalizedItem)
-      pushToMap(byPkgName, normalizePkgKey(normalizedItem.pkgName), normalizedItem)
+      if (normalizedItem.installedPkg) {
+        pushToMap(
+          byInstalledPkg,
+          normalizeInstalledPkgKey(normalizedItem.installedPkg),
+          normalizedItem
+        )
+      } else {
+        // 只有未指定安装版本的旧映射才允许按包名匹配。
+        pushToMap(byPkgName, normalizePkgKey(normalizedItem.pkgName), normalizedItem)
+      }
     })
 
     return {
@@ -193,7 +205,7 @@ export function usePackageList(hostId) {
   }
 
   function getAffectedPackageMatches(baseRow, affectedLookup) {
-    const installedPkgKey = normalizePkgKey(baseRow.installedPkg)
+    const installedPkgKey = normalizeInstalledPkgKey(baseRow.installedPkg)
     const pkgNameKey = normalizePkgKey(baseRow.pkgName)
 
     const directMatches = installedPkgKey
@@ -226,10 +238,7 @@ export function usePackageList(hostId) {
 
       return {
         ...baseRow,
-        pkgName: match.pkgName || baseRow.pkgName,
-        installedPkg: match.installedPkg || baseRow.installedPkg,
-        currentPackage: match.installedPkg || baseRow.currentPackage,
-        pkgId: match.installedPkg || baseRow.pkgId,
+        // 扫描结果是安装版本的来源，补丁映射仅补充更新信息。
         updatePkg: match.updatePkg || null,
         severity: match.severity || '',
         patchId: match.patchId || '',

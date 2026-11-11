@@ -19,9 +19,6 @@
           <i class="fa fa-download" style="margin-right: 4px"></i>
           下载资产信息导入模板
         </el-button>
-        <div class="el-upload__tip">
-          可在模板的「网段区域」sheet 中填写网段与网络区域，导入后按主机 IP 自动划分区域。
-        </div>
       </div>
 
       <!-- 第二步：上传文件 -->

@@ -111,6 +111,12 @@
             {{ hosts.length ? `扫描选中主机 (${hosts.length})` : '扫描补丁' }}
           </el-button>
         </template>
+        <template #host-export-action>
+          <el-button size="small" @click="handleVulnExport">
+            <i class="fa fa-download" />
+            导出漏洞报表
+          </el-button>
+        </template>
       </LinuxPatchInstallWorkbench>
 
       <!-- 漏洞明细保留独立修复流程，不进入常规安装主路径。 -->
@@ -520,55 +526,52 @@
       </div>
     </div>
 
-    <!-- 重新扫描对话框 -->
-    <el-dialog
-      v-model="rescanDialogVisible"
-      title="重新扫描补丁"
-      width="600px"
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
+    <DeviceActionConfirmDialog
+      v-model="rescanConfirmVisible"
+      title="确认补丁扫描"
+      description="将对以下目标提交补丁扫描任务，可在运行记录中查看进度。"
+      :selection="selectedHosts"
+      :submitting="rescanLoading"
+      :confirm-disabled="selectedScanAgentLoading || selectedScanCapabilityIssues.length > 0"
+      @confirm="executeRescan"
+      @change-devices="changeRescanDevices"
     >
-      <el-form ref="rescanFormRef" :model="rescanForm" label-width="100px">
-        <el-form-item label="选择主机">
-          <AcmDeviceSelector
-            v-model="selectedHosts"
-            ci-types="linux"
-            :disabled="rescanLoading"
-            :options="{
-              selectMode: 'host',
-              selector: 'multiple',
-              label: '选择主机'
-            }"
-          />
-          <div v-if="selectedScanAgentLoading" class="text-muted mt-2">
-            正在校验 Agent 实时状态…
-          </div>
-          <el-alert
-            v-else-if="selectedScanCapabilityHint"
-            class="mt-2"
-            :type="selectedScanCapabilityIssues.length ? 'warning' : 'info'"
-            :closable="false"
-            show-icon
-            :title="selectedScanCapabilityHint"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="rescanDialogVisible = false">取消</el-button>
-        <el-button
-          type="primary"
-          :loading="rescanLoading"
-          :disabled="
-            selectedHosts.length === 0 ||
-            selectedScanAgentLoading ||
-            selectedScanCapabilityIssues.length > 0
-          "
-          @click="executeRescan"
-        >
-          开始扫描
-        </el-button>
+      <template #context>
+        <el-alert
+          v-if="selectedScanAgentLoading || selectedScanCapabilityHint"
+          :title="selectedScanAgentLoading ? '正在校验 Agent 实时状态…' : selectedScanCapabilityHint"
+          :type="selectedScanCapabilityIssues.length ? 'warning' : 'info'"
+          :closable="false"
+          show-icon
+        />
       </template>
-    </el-dialog>
+    </DeviceActionConfirmDialog>
+    <!-- 未指定目标或更改目标时打开设备选择器 -->
+    <AcmDeviceSelectorDialog
+      v-model="rescanDialogVisible"
+      ci-types="linux"
+      :initial-selection="selectedHosts"
+      :options="{ selectMode: 'host', selector: 'multiple' }"
+      title="选择设备 · 重新扫描补丁"
+      confirm-text="开始扫描"
+      description="点击“开始扫描”后将立即提交补丁扫描任务，可在运行记录中查看进度。"
+      :allow-empty="false"
+      :close-on-confirm="false"
+      :submitting="rescanLoading"
+      :confirm-disabled="selectedScanAgentLoading || selectedScanCapabilityIssues.length > 0"
+      @selection-change="selectedHosts = $event"
+      @confirm="executeRescan"
+    >
+      <template #context>
+        <el-alert
+          v-if="selectedScanAgentLoading || selectedScanCapabilityHint"
+          :title="selectedScanAgentLoading ? '正在校验 Agent 实时状态…' : selectedScanCapabilityHint"
+          :type="selectedScanCapabilityIssues.length ? 'warning' : 'info'"
+          :closable="false"
+          show-icon
+        />
+      </template>
+    </AcmDeviceSelectorDialog>
 
     <!-- 作业运行结果对话框 -->
     <ExecuteResultDialog
@@ -767,7 +770,8 @@ import {
   getRebootStatusTooltip,
   hasAffectedPackageDetail
 } from '../utils/vulnerabilityPackages'
-import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
+import DeviceActionConfirmDialog from '@/modules/automation/components/job/schedule/components/DeviceActionConfirmDialog.vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import ExecuteHistoryDialog from '@/modules/automation/components/job/JobListView/ExecuteHistoryDialog.vue'
 import OperationLogsDialog from '../components/logs/OperationLogsDialog.vue'
@@ -953,20 +957,21 @@ const vulnSelectedCount = computed(() => {
 
 // 重新扫描对话框
 const rescanDialogVisible = ref(false)
+const rescanConfirmVisible = ref(false)
 const rescanLoading = ref(false)
 let scanSubmitVersion = 0
-watch(rescanDialogVisible, () => scanSubmitVersion++, { flush: 'sync' })
+watch([rescanDialogVisible, rescanConfirmVisible], () => scanSubmitVersion++, { flush: 'sync' })
 onBeforeUnmount(() => scanSubmitVersion++)
-const rescanFormRef = ref(null)
-const rescanForm = reactive({
-  hostsInput: ''
-})
 const selectedHosts = ref([])
 const {
   checking: selectedScanAgentLoading,
   issues: selectedScanCapabilityIssues,
   summary: selectedScanCapabilityHint
-} = useAgentCapabilitySelection(selectedHosts, 'scan', rescanDialogVisible)
+} = useAgentCapabilitySelection(
+  selectedHosts,
+  'scan',
+  () => rescanDialogVisible.value || rescanConfirmVisible.value
+)
 
 // 作业运行结果对话框
 const runResultDialogVisible = ref(false)
@@ -1961,13 +1966,19 @@ async function handleConfirmFix() {
 
 function handleRescan(hosts = []) {
   if (rescanLoading.value) return
-  rescanForm.hostsInput = ''
   selectedHosts.value = (Array.isArray(hosts) ? hosts : []).map(host => ({
     ...host,
     key: host.host_id || host.hostId || host.id || host.key || '',
     value: host.host_key || host.hostKey || host.value || host.hostname || '',
     assetType: host.assetType || host.asset_type || 'linux'
   }))
+  rescanConfirmVisible.value = selectedHosts.value.length > 0
+  rescanDialogVisible.value = !rescanConfirmVisible.value
+}
+
+function changeRescanDevices() {
+  if (rescanLoading.value) return
+  rescanConfirmVisible.value = false
   rescanDialogVisible.value = true
 }
 
@@ -2008,8 +2019,14 @@ async function submitRescan(hosts, { closeDialog = false } = {}) {
       jobId: '0g3GfW',
       params: { hosts: normalizedHosts }
     })
+    if (version !== scanSubmitVersion) return false
 
-    const runId = response?.data?.[0]?.runId || response?.[0]?.runId
+    const data = response?.data || response
+    const runResult = Array.isArray(data) ? data[0] : data
+    if (['FAILED', 'ERROR'].includes(runResult?.status)) {
+      throw new Error(runResult.error || '扫描任务提交失败')
+    }
+    const runId = runResult?.runId
     if (!runId) {
       ElMessage.error('扫描任务提交失败：未返回运行ID')
       return false
@@ -2019,6 +2036,7 @@ async function submitRescan(hosts, { closeDialog = false } = {}) {
     trackScan(runId)
     if (closeDialog) {
       rescanDialogVisible.value = false
+      rescanConfirmVisible.value = false
     }
 
     lastSubmittedRunId.value = String(runId)
@@ -2036,39 +2054,10 @@ async function submitRescan(hosts, { closeDialog = false } = {}) {
   }
 }
 
-function updateHostsInput() {
-  // 从选中的主机中提取主机名
-  const hostList = selectedHosts.value
-    .map(h => {
-      if (typeof h === 'object') {
-        return h.value || h.hostname || h.name || h.host_key || ''
-      }
-      return String(h)
-    })
-    .filter(Boolean)
-  rescanForm.hostsInput = hostList.join('\n')
-}
-
-async function executeRescan() {
-  // 先更新主机输入框（处理通过选择器选择的主机）
-  if (selectedHosts.value.length > 0) {
-    updateHostsInput()
-  }
-
-  // 准备主机参数
-  let hosts = []
-  if (selectedHosts.value.length > 0) {
-    hosts = selectedHosts.value
-  } else {
-    const hostLines = rescanForm.hostsInput.split('\n').filter(line => line.trim())
-    if (hostLines.length === 0) {
-      ElMessage.warning('请输入或选择至少一个主机')
-      return
-    }
-    hosts = hostLines.map(line => line.trim())
-  }
-
-  await submitRescan(hosts, { closeDialog: true })
+async function executeRescan(selection = selectedHosts.value) {
+  if (rescanLoading.value) return
+  selectedHosts.value = selection
+  await submitRescan(selection, { closeDialog: true })
 }
 
 function handleWorkbenchInstalled() {
@@ -2104,15 +2093,6 @@ watch(fixDialogVisible, visible => {
     resetFixDialogData()
   }
 })
-
-// 监听主机选择变化，自动更新输入框
-watch(
-  selectedHosts,
-  () => {
-    updateHostsInput()
-  },
-  { deep: true }
-)
 
 onMounted(() => {
   syncStateFromRoute()

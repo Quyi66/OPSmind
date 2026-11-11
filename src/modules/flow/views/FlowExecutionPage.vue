@@ -139,8 +139,7 @@
             :page-sizes="[10, 20, 50]"
             layout="total, sizes, prev, pager, next, jumper"
             background
-            @size-change="handlePageChange"
-            @current-change="handlePageChange"
+            @size-change="handleSizeChange"
           />
         </div>
       </div>
@@ -149,7 +148,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, CircleClose, VideoPause, Delete, Refresh } from '@element-plus/icons-vue'
 import * as flowApi from '@/modules/flow/api'
@@ -164,6 +163,8 @@ const activeProcessId = ref('')
 const searchKeyword = ref('')
 const currentPage = ref(1)
 const pageSize = ref(10)
+let executionRequestId = 0
+let disposed = false
 
 const filteredProcessList = computed(() => {
   if (!searchKeyword.value) return processList.value
@@ -187,13 +188,14 @@ const paginatedList = computed(() => {
   return executionList.value.slice(start, end)
 })
 
-function handlePageChange() {
-  // 分页变化时自动更新显示
+function handleSizeChange() {
+  currentPage.value = 1
 }
 
 async function loadProcessList() {
   try {
     const response = await flowApi.getFlowList()
+    if (disposed) return
     const data = response?.data || response
     processList.value = Array.isArray(data) ? data : []
 
@@ -202,6 +204,7 @@ async function loadProcessList() {
       handleSelectProcess(processList.value[0])
     }
   } catch (error) {
+    if (disposed) return
     console.error('Failed to load process list:', error)
     ElMessage.error('加载流程列表失败')
   }
@@ -210,23 +213,32 @@ async function loadProcessList() {
 async function loadExecutionList() {
   if (!activeProcessId.value) return
 
+  const requestId = ++executionRequestId
+  const processId = activeProcessId.value
   loading.value = true
-  currentPage.value = 1
   try {
-    const response = await flowApi.getExecutionList({ processId: activeProcessId.value })
+    const response = await flowApi.getExecutionList({ processId })
+    if (requestId !== executionRequestId) return
     const data = response?.data || response
     executionList.value = Array.isArray(data) ? data : []
     selectedRows.value = []
+    const lastPage = Math.max(1, Math.ceil(executionList.value.length / pageSize.value))
+    currentPage.value = Math.min(currentPage.value, lastPage)
   } catch (error) {
+    if (requestId !== executionRequestId) return
     console.error('Failed to load execution list:', error)
     ElMessage.error('加载执行记录失败')
   } finally {
-    loading.value = false
+    if (requestId === executionRequestId) loading.value = false
   }
 }
 
 function handleSelectProcess(process) {
+  if (activeProcessId.value === process.id) return
   activeProcessId.value = process.id
+  executionList.value = []
+  selectedRows.value = []
+  currentPage.value = 1
   loadExecutionList()
 }
 
@@ -358,6 +370,11 @@ async function handleTerminateAll() {
 
 onMounted(() => {
   loadProcessList()
+})
+
+onBeforeUnmount(() => {
+  disposed = true
+  executionRequestId += 1
 })
 </script>
 

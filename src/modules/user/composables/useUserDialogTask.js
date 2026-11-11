@@ -157,6 +157,7 @@ export function useUserDialogTask({
     taskType,
     taskMessage,
     taskDescription,
+    reason,
     runId,
     reset,
     captureReady,

@@ -227,7 +227,11 @@ import {
   getTaskStatusTagType,
   toDisplayArray
 } from '../utils/patchProcessLogs'
-import { isPackageInstallFinished, isTaskExecutionBlocked } from '../utils/patchInstallSchedule'
+import {
+  isFutureSchedule,
+  isPackageInstallFinished,
+  isTaskExecutionBlocked
+} from '../utils/patchInstallSchedule'
 
 const props = defineProps({
   visible: Boolean,
@@ -379,7 +383,13 @@ async function retryLoadTask() {
 function startPolling() {
   stopPolling()
   pollingTimer = setInterval(() => {
-    if (dialogVisible.value && !requestPending.value && !loadError.value && !actionLoading.value)
+    if (
+      dialogVisible.value &&
+      !requestPending.value &&
+      !loadError.value &&
+      !actionLoading.value &&
+      !isFutureSchedule(taskDetail.value?.scheduledTime)
+    )
       loadTask({ silent: true })
   }, 5000)
 }

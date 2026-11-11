@@ -163,7 +163,7 @@ export const overviewApi = {
  */
 export const assetApi = {
   /**
-   * 下载当前租户的资产导入模板（含网段区域 sheet）
+   * 下载当前租户的资产导入模板
    * GET /cmdb/api/cmdb/cit/template2/{tenantId}
    */
   downloadImportTemplate(tenantId) {

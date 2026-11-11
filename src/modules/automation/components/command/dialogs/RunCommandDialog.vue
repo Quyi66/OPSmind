@@ -1,5 +1,24 @@
 <template>
+  <AcmDeviceSelectorDialog
+    v-if="!isCreateJobMode"
+    v-model="dialogVisible"
+    ci-types="linux"
+    :initial-selection="formData.hosts"
+    :options="{ selectMode: 'host,group,tag,input,recently', selector: 'multiple' }"
+    title="选择设备 · 执行命令"
+    confirm-text="执行命令"
+    :description="executionDescription"
+    :allow-empty="false"
+    :close-on-confirm="false"
+    :submitting="submitting"
+    @confirm="handleRunCommand"
+  >
+    <template #context>
+      <CommandExecutionPreview :commands="commandList" />
+    </template>
+  </AcmDeviceSelectorDialog>
   <el-dialog
+    v-else
     v-model="dialogVisible"
     :title="dialogTitle"
     width="700px"
@@ -64,15 +83,6 @@
       >
         保存运维工具
       </el-button>
-      <el-button
-        v-else
-        type="primary"
-        :loading="submitting"
-        :disabled="formData.hosts.length === 0"
-        @click="handleRunCommand"
-      >
-        执行命令
-      </el-button>
     </template>
   </el-dialog>
 </template>
@@ -82,6 +92,8 @@ import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { runJobByRequest, saveJob } from '@/modules/automation/api/command'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
+import CommandExecutionPreview from './CommandExecutionPreview.vue'
 import {
   buildCommandJobConfig,
   buildDynamicCommandRunRequest
@@ -111,9 +123,6 @@ const dialogVisible = computed({
   set: val => emit('update:visible', val)
 })
 
-// 设备选择器可见性
-const deviceSelectorVisible = ref(false)
-
 // 是否创建作业模式
 const isCreateJobMode = computed(() => props.mode === 'createJob')
 
@@ -127,6 +136,11 @@ const commandList = computed(() => {
   if (!props.command) return []
   return Array.isArray(props.command) ? props.command : [props.command]
 })
+
+const executionDescription = computed(
+  () =>
+    `即将在所选主机上执行命令：${commandList.value.map(cmd => cmd.name).join('、')}。点击“执行命令”后立即执行。`
+)
 
 // 表单引用
 const formRef = ref(null)
@@ -190,22 +204,12 @@ function resetForm() {
   formRef.value?.clearValidate()
 }
 
-// 移除主机
-function removeHost(index) {
-  formData.hosts.splice(index, 1)
-}
-
-// 处理设备选择器确认
-function handleDeviceSelected(selectedHosts) {
-  // 使用选中的主机替换当前列表
-  formData.hosts = [...selectedHosts]
-}
-
 // 执行命令
-async function handleRunCommand() {
-  try {
-    await formRef.value.validate()
-  } catch {
+async function handleRunCommand(selection = formData.hosts) {
+  if (submitting.value) return
+  formData.hosts = [...selection]
+  if (!formData.hosts.length) {
+    ElMessage.warning('请至少选择一个目标主机')
     return
   }
 
@@ -215,6 +219,11 @@ async function handleRunCommand() {
       buildDynamicCommandRunRequest(commandList.value, formData.hosts, 'linux')
     )
     const result = response.data || response
+    const runResult = Array.isArray(result) ? result[0] : result
+    if (['FAILED', 'ERROR'].includes(runResult?.status)) {
+      ElMessage.error(runResult.error || '执行命令失败')
+      return
+    }
 
     ElMessage.success('命令已提交执行，可在运行记录中查看')
     emit('success', result)

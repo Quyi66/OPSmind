@@ -1,7 +1,7 @@
 <template>
   <div class="ops-page-layout linux-yum-manage-page">
     <div class="ops-filter-bar">
-      <el-form :model="hostFilters" inline size="small">
+      <el-form :model="hostFilters" inline size="small" @submit.prevent>
         <el-form-item label="关键词">
           <el-input
             v-model="hostFilterText"
@@ -9,6 +9,7 @@
             style="width: 200px"
             clearable
             maxlength="50"
+            @input="hostPagination.page = 1"
           >
             <template #prefix>
               <el-icon>
@@ -37,6 +38,12 @@
       </el-button>
     </div>
 
+    <el-alert v-if="latestScanRunId" type="info" :closable="false" show-icon class="mb-3">
+      <template #title>
+        最近提交的 YUM 源扫描任务
+        <el-button link type="primary" @click="scanResultVisible = true">查看进度与结果</el-button>
+      </template>
+    </el-alert>
     <div class="ops-table-wrapper">
       <el-table v-loading="hostLoading" :data="paginatedHostTableData" height="100%">
         <el-table-column prop="$data_owner" label="主机" min-width="150">
@@ -65,36 +72,24 @@
       />
     </div>
 
-    <el-dialog
+    <ExecuteResultDialog
+      v-if="latestScanRunId"
+      v-model:visible="scanResultVisible"
+      :run-id="latestScanRunId"
+      job-title="YUM 源扫描"
+    />
+    <AcmDeviceSelectorDialog
       v-model="selectHostDialogVisible"
-      title="选择目标主机"
-      width="500px"
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-    >
-      <div class="select-host-dialog-content">
-        <AcmDeviceSelector
-          v-model="selectedDevices"
-          ci-types="[auto]"
-          :options="{
-            selectMode: 'host,group,tag,input,recently',
-            selector: 'multiple',
-            label: '选择设备'
-          }"
-        />
-      </div>
-      <template #footer>
-        <el-button @click="selectHostDialogVisible = false">取消</el-button>
-        <el-button
-          type="primary"
-          :loading="jobExecuting"
-          :disabled="selectedDevices.length === 0"
-          @click="executeScanJob"
-        >
-          开始扫描
-        </el-button>
-      </template>
-    </el-dialog>
+      ci-types="[auto]"
+      :options="{ selectMode: 'host,group,tag,input,recently', selector: 'multiple' }"
+      title="选择设备 · 扫描 YUM 源"
+      confirm-text="开始扫描"
+      description="点击“开始扫描”后将立即采集所选主机的 YUM 源配置。"
+      :allow-empty="false"
+      :close-on-confirm="false"
+      :submitting="jobExecuting"
+      @confirm="executeScanJob"
+    />
 
     <el-dialog
       v-model="hostDetailDialogVisible"
@@ -104,9 +99,14 @@
     >
       <div class="host-detail-dialog-content">
         <div class="ops-filter-bar">
-          <el-form inline size="small">
+          <el-form inline size="small" @submit.prevent>
             <el-form-item label="状态">
-              <el-select v-model="detailRepoStatus" placeholder="请选择" style="width: 120px">
+              <el-select
+                v-model="detailRepoStatus"
+                placeholder="请选择"
+                style="width: 120px"
+                @change="handleDetailStatusChange"
+              >
                 <el-option value="enabled" label="启用" />
                 <el-option value="disabled" label="禁用" />
               </el-select>
@@ -117,6 +117,7 @@
                 placeholder="搜索名称、地址..."
                 style="width: 220px"
                 clearable
+                @input="handleDetailFilterChange"
               >
                 <template #prefix>
                   <el-icon><Search /></el-icon>
@@ -228,15 +229,17 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { yumManageApi } from '../api'
-import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
+import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
+import { normalizeAcmDeviceJobHosts } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
 import { runJob } from '@/modules/automation/api/command'
-import { useJobPolling } from '@/composables/useJobPolling'
+import { usePatchScanCompletion } from '../composables/usePatchScanCompletion'
 
-const { startPolling } = useJobPolling()
+const { trackScan } = usePatchScanCompletion(loadHostData)
 const YUM_JOB_ID = 'IxL8nr'
 
 const hostLoading = ref(false)
@@ -253,6 +256,8 @@ const hostPagination = reactive({
 const selectHostDialogVisible = ref(false)
 const selectedDevices = ref([])
 const jobExecuting = ref(false)
+const latestScanRunId = ref('')
+const scanResultVisible = ref(false)
 
 const hostDetailDialogVisible = ref(false)
 const hostDetailLoading = ref(false)
@@ -265,10 +270,22 @@ const detailPagination = reactive({
   pageSize: 20,
   total: 0
 })
+let detailRequestId = 0
+
+watch(hostDetailDialogVisible, visible => {
+  if (!visible) {
+    detailRequestId += 1
+    hostDetailLoading.value = false
+  }
+})
+
+onBeforeUnmount(() => {
+  detailRequestId += 1
+})
 
 const filteredHostTableData = computed(() => {
-  if (!hostFilterText.value) return hostTableData.value
-  const keyword = hostFilterText.value.toLowerCase()
+  const keyword = hostFilterText.value.trim().toLowerCase()
+  if (!keyword) return hostTableData.value
   return hostTableData.value.filter(item => {
     return (
       item.$data_owner?.toLowerCase().includes(keyword) ||
@@ -285,8 +302,8 @@ const paginatedHostTableData = computed(() => {
 })
 
 const filteredRepoDetailData = computed(() => {
-  if (!detailFilterText.value) return hostRepoDetailData.value
-  const keyword = detailFilterText.value.toLowerCase()
+  const keyword = detailFilterText.value.trim().toLowerCase()
+  if (!keyword) return hostRepoDetailData.value
   return hostRepoDetailData.value.filter(row => {
     return (
       row['repo-name']?.toLowerCase().includes(keyword) ||
@@ -330,11 +347,14 @@ function handleHostPageChange(page) {
 }
 
 function handleScanRepoList() {
+  if (jobExecuting.value) return
   selectedDevices.value = []
   selectHostDialogVisible.value = true
 }
 
-async function executeScanJob() {
+async function executeScanJob(selection = selectedDevices.value) {
+  if (jobExecuting.value) return
+  selectedDevices.value = selection
   if (selectedDevices.value.length === 0) {
     ElMessage.warning('请选择至少一台主机')
     return
@@ -342,11 +362,7 @@ async function executeScanJob() {
 
   jobExecuting.value = true
   try {
-    const hosts = selectedDevices.value.map(host => ({
-      key: host.key || host.id,
-      value: host.value || host.hostname || host.$data_owner,
-      assetType: host.ci_type || host.assetType || 'linux'
-    }))
+    const hosts = normalizeAcmDeviceJobHosts(selectedDevices.value, 'linux')
 
     const response = await runJob(YUM_JOB_ID, {
       params: {
@@ -354,7 +370,12 @@ async function executeScanJob() {
         func: 'yum-list'
       }
     })
-    const runResult = (response?.data || response || [])[0]
+    const data = response?.data || response
+    const runResult = Array.isArray(data) ? data[0] : data
+
+    if (['FAILED', 'ERROR'].includes(runResult?.status)) {
+      throw new Error(runResult.error || '扫描任务提交失败')
+    }
 
     if (!runResult?.runId) {
       throw new Error('未获取到任务运行ID')
@@ -362,26 +383,20 @@ async function executeScanJob() {
 
     ElMessage.success('扫描任务已提交')
     selectHostDialogVisible.value = false
+    latestScanRunId.value = String(runResult.runId)
 
-    startPolling(runResult.runId, {
-      successMessage: '任务执行成功',
-      errorMessage: '任务执行失败',
-      onSuccess: () => {
-        loadHostData()
-      },
-      onComplete: () => {
-        jobExecuting.value = false
-      }
-    })
+    trackScan(runResult.runId)
   } catch (error) {
     console.error('Job execution failed:', error)
     ElMessage.error(`任务执行失败: ${error.message || '未知错误'}`)
+  } finally {
     jobExecuting.value = false
   }
 }
 
 function handleViewHostDetail(row) {
   currentHostDetail.value = row
+  hostRepoDetailData.value = []
   detailRepoStatus.value = 'enabled'
   detailFilterText.value = ''
   detailPagination.page = 1
@@ -393,28 +408,39 @@ function handleDetailFilterChange() {
   detailPagination.page = 1
 }
 
+function handleDetailStatusChange() {
+  handleDetailFilterChange()
+  hostRepoDetailData.value = []
+  loadHostRepoDetail()
+}
+
 function handleDetailReset() {
+  const statusChanged = detailRepoStatus.value !== 'enabled'
   detailFilterText.value = ''
   detailRepoStatus.value = 'enabled'
-  handleDetailFilterChange()
+  if (statusChanged) handleDetailStatusChange()
+  else handleDetailFilterChange()
 }
 
 async function loadHostRepoDetail() {
-  if (!currentHostDetail.value) return
+  if (!currentHostDetail.value || !hostDetailDialogVisible.value) return
 
+  const requestId = ++detailRequestId
   hostDetailLoading.value = true
   try {
     const response = await yumManageApi.getHostRepoDetail({
       data_owner: currentHostDetail.value.$data_owner,
       repo_status: detailRepoStatus.value
     })
+    if (requestId !== detailRequestId || !hostDetailDialogVisible.value) return
     hostRepoDetailData.value = response?.data?.records || response?.data || []
     detailPagination.page = 1
   } catch (error) {
+    if (requestId !== detailRequestId || !hostDetailDialogVisible.value) return
     console.error('Failed to load host repo detail:', error)
     hostRepoDetailData.value = []
   } finally {
-    hostDetailLoading.value = false
+    if (requestId === detailRequestId) hostDetailLoading.value = false
   }
 }
 

@@ -2,36 +2,40 @@
   <el-dialog
     :model-value="visible"
     :title="title"
-    width="800px"
+    width="860px"
     destroy-on-close
     @close="$emit('close')"
     :close-on-click-modal="true"
   >
-    <div class="kpi-filter-bar" style="margin-bottom: 12px">
+    <div class="kpi-filter-bar">
       <el-input
         v-model="filterText"
-        placeholder="搜索 主机 或 检查项..."
+        placeholder="搜索主机或检查项名称..."
         clearable
-        style="width: 300px"
+        size="small"
+        style="width: 280px"
       >
         <template #prefix>
           <el-icon><Search /></el-icon>
         </template>
       </el-input>
+      <span class="kpi-count-badge">
+        匹配 {{ filteredData.length }} / 共 {{ (data || []).length }} 条
+      </span>
     </div>
 
     <el-table v-loading="loading" :data="filteredData" max-height="calc(100vh - 300px)">
-      <el-table-column prop="host_key" label="主机" min-width="120" />
-      <el-table-column prop="name" label="检查项" min-width="200" />
-      <el-table-column label="检查状态" width="120">
+      <el-table-column prop="host_key" label="目标主机" min-width="140" />
+      <el-table-column prop="name" label="检查项名称" min-width="220" show-overflow-tooltip />
+      <el-table-column label="检查状态" width="130">
         <template #default="{ row }">
-          <el-tag :type="getKpiStatusTagType(row.status)" effect="dark" round>
+          <el-tag :type="getKpiStatusTagType(row.status)" effect="light" round size="small">
             <i :class="['fa', getKpiStatusIcon(row.status)]" style="margin-right: 5px"></i>
             {{ getKpiStatusLabel(row.status) }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="70" fixed="right">
+      <el-table-column label="操作" width="80" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" text size="small" @click="$emit('show-detail', row)">
             详情
@@ -58,9 +62,6 @@ defineEmits(['close', 'show-detail'])
 
 const filterText = ref('')
 
-/**
- * 前端筛选后的数据
- */
 const filteredData = computed(() => {
   const list = props.data || []
   if (!filterText.value) return list
@@ -73,9 +74,6 @@ const filteredData = computed(() => {
   })
 })
 
-/**
- * 监听弹窗显示状态，关闭时重置筛选
- */
 watch(
   () => props.visible,
   val => {
@@ -85,3 +83,23 @@ watch(
   }
 )
 </script>
+
+<style scoped lang="scss">
+.kpi-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  background: var(--el-fill-color-lighter);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+
+  .kpi-count-badge {
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+}
+</style>

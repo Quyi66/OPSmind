@@ -4,14 +4,16 @@
     :title="dialogTitle"
     width="1000px"
     @update:model-value="emit('update:modelValue', $event)"
-    @open="loadHistory"
     @closed="handleClosed"
     :close-on-click-modal="true"
   >
     <div v-loading="loading" class="history-container">
+      <el-alert v-if="loadError" :title="loadError" type="error" show-icon :closable="false">
+        <el-button link type="primary" @click="retryRead">重试</el-button>
+      </el-alert>
       <!-- 单个文件的审批历史 (singleFile) -->
       <template v-if="viewMode === 'singleFile'">
-        <el-table :data="historyList" height="400">
+        <el-table :data="historyList" height="400" :empty-text="emptyText">
           <el-table-column label="时间" prop="actionDate" width="160" />
           <el-table-column label="备注" prop="comment" show-overflow-tooltip />
           <el-table-column label="审批结果" width="150">
@@ -24,12 +26,12 @@
 
       <!-- 全部审批历史列表 (all) -->
       <template v-else-if="viewMode === 'all'">
-        <el-table :data="historyList" height="400">
+        <el-table :data="historyList" height="400" :empty-text="emptyText">
           <el-table-column label="时间" prop="actionDate" width="160" />
           <el-table-column label="文件数" width="100">
             <template #default="{ row }">
               <el-button type="primary" link @click="showApprovalDetail(row.id)">
-                {{ row.approvalFileCount || '-' }}
+                {{ row.approvalFileCount ?? '-' }}
               </el-button>
             </template>
           </el-table-column>
@@ -88,7 +90,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import { formatDateTime } from '@/modules/automation/utils/helpers'
 import * as gfsApi from '@/modules/automation/api/gfs'
@@ -125,6 +127,27 @@ const historyList = ref([])
 const viewMode = ref('all')
 const currentDetail = ref(null)
 const detailPaths = ref([])
+const loadError = ref('')
+const failedDetailId = ref('')
+let readVersion = 0
+const emptyText = computed(() =>
+  loading.value ? '正在读取审批历史…' : loadError.value || '暂无审批历史'
+)
+
+function readContext() {
+  return JSON.stringify([props.repoType, props.repo, props.mode, props.file?.path])
+}
+
+function beginRead() {
+  const version = ++readVersion
+  const context = readContext()
+  return () => props.modelValue && version === readVersion && context === readContext()
+}
+
+function invalidateRead() {
+  readVersion += 1
+  loading.value = false
+}
 
 // 弹窗标题
 const dialogTitle = computed(() => {
@@ -139,10 +162,14 @@ const dialogTitle = computed(() => {
 
 // 加载历史记录
 async function loadHistory() {
+  if (!props.modelValue) return
+  const isCurrent = beginRead()
   viewMode.value = props.mode
   historyList.value = []
   currentDetail.value = null
   detailPaths.value = []
+  loadError.value = ''
+  failedDetailId.value = ''
 
   loading.value = true
   try {
@@ -156,17 +183,21 @@ async function loadHistory() {
       // 接口示例: /gfs/api/gfs/v2/git/f/{repo}/history
       response = await gfsApi.getAllApproveHistory(props.repo)
     }
+    if (!isCurrent()) return
 
     // API 返回格式: { _status: "ok", result: [...] } 或 axios response
     const data = response?.data || response
     const list = data?.result || data || []
+    if (!Array.isArray(list)) throw new Error('审批历史响应不是列表，请重试')
 
     // 解析历史记录
-    historyList.value = parseHistories(Array.isArray(list) ? list : [])
+    historyList.value = parseHistories(list)
   } catch (error) {
+    if (!isCurrent()) return
+    loadError.value = error?.message || '加载审批历史失败，请重试'
     ElMessage.error(error?.message || '加载审批历史失败')
   } finally {
-    loading.value = false
+    if (isCurrent()) loading.value = false
   }
 }
 
@@ -206,12 +237,16 @@ function detectActionOfApprove(record) {
 
 // 显示审批详情 (与源代码 showApprovalDetail 逻辑一致)
 async function showApprovalDetail(approvalId) {
-  if (!approvalId) return
+  if (!approvalId || !props.modelValue) return
 
+  const isCurrent = beginRead()
   loading.value = true
+  loadError.value = ''
+  failedDetailId.value = ''
   try {
     // 接口示例: /gfs/api/gfs/v2/git/f/{repo}/history/{approvalId}
     const response = await gfsApi.getApprovalDetail(props.repo, approvalId)
+    if (!isCurrent()) return
     // API 返回格式: { _status: "ok", result: {...} }
     const data = response?.data || response
     if (data?._status === 'ok' || data?.result) {
@@ -219,16 +254,29 @@ async function showApprovalDetail(approvalId) {
       currentDetail.value = parseDetail(detail)
       detailPaths.value = normalizePaths(detail)
       viewMode.value = 'approvalDetail'
+    } else {
+      throw new Error('无法读取审批详情，请重试')
     }
   } catch (error) {
+    if (!isCurrent()) return
+    failedDetailId.value = approvalId
+    loadError.value = error?.message || '加载详情失败，请重试'
     ElMessage.error(error?.message || '加载详情失败')
   } finally {
-    loading.value = false
+    if (isCurrent()) loading.value = false
   }
+}
+
+function retryRead() {
+  if (failedDetailId.value) return showApprovalDetail(failedDetailId.value)
+  return loadHistory()
 }
 
 // 返回列表
 function backToList() {
+  invalidateRead()
+  loadError.value = ''
+  failedDetailId.value = ''
   viewMode.value = 'all'
   currentDetail.value = null
   detailPaths.value = []
@@ -263,6 +311,10 @@ function normalizePaths(detail) {
 
 // 弹窗关闭时重置状态
 function handleClosed() {
+  if (props.modelValue) return
+  invalidateRead()
+  loadError.value = ''
+  failedDetailId.value = ''
   viewMode.value = props.mode
   historyList.value = []
   currentDetail.value = null
@@ -270,13 +322,22 @@ function handleClosed() {
   emit('closed')
 }
 
-// 监听模式变化
+// 打开或切换仓库/文件时重读；不依赖延迟触发的对话框动画事件。
 watch(
-  () => props.mode,
-  val => {
-    viewMode.value = val
-  }
+  [() => props.modelValue, readContext],
+  () => {
+    if (props.modelValue) loadHistory()
+  },
+  { immediate: true }
 )
+watch(
+  () => props.modelValue,
+  open => {
+    if (!open) invalidateRead()
+  },
+  { flush: 'sync' }
+)
+onBeforeUnmount(invalidateRead)
 </script>
 
 <style scoped lang="scss">

@@ -2,7 +2,7 @@
   <div class="ops-page-layout">
     <!-- 筛选栏 -->
     <div class="ops-filter-bar">
-      <el-form :model="filters" inline size="small">
+      <el-form :model="filters" inline size="small" @submit.prevent>
         <el-form-item label="关键词">
           <el-input
             v-model="searchKeyword"
@@ -41,7 +41,7 @@
       <el-button type="primary" size="small" :icon="Plus" @click="handleCreate">新增任务</el-button>
       <el-button
         size="small"
-        :disabled="!selectedRows.length"
+        :disabled="loading || !!loadError || !selectedRows.length"
         @click="() => handleBatchToggle(selectedRows)"
       >
         <el-icon>
@@ -64,12 +64,18 @@
       </el-button>
     </div>
 
+    <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
+      <el-button link type="primary" @click="fetchData">重试</el-button>
+    </el-alert>
+
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
       <CronJobTable
         :data="filteredTableData"
         :identity-data="tableData"
         :loading="loading"
+        :unavailable="loading || !!loadError"
+        :filter-key="searchRevision"
         :applet-map="appletMap"
         @selection-change="handleSelectionChange"
         @edit="handleEdit"
@@ -118,6 +124,8 @@ const NextExecutionTimeDialog = defineAsyncComponent(
 // 使用列表管理 composable
 const {
   loading,
+  loadError,
+  searchRevision,
   tableData,
   searchKeyword,
   filteredTableData,

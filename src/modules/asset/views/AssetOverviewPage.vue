@@ -118,6 +118,7 @@
                 :key="item.code || item.title"
                 class="aw-asset-type-chip"
                 :class="{ 'is-active': selectedAssetTypeCode === (item.code || item.title) }"
+                :aria-pressed="selectedAssetTypeCode === (item.code || item.title)"
                 @click="switchCardType(item.code || item.title)"
               >
                 <span class="aw-asset-type-chip__name">{{ item.title }}</span>
@@ -155,9 +156,14 @@
               >
                 <div class="aw-asset-card__body">
                   <div class="aw-asset-card__head">
-                    <el-tag size="small" round :type="item.status === 1 || item.status === '1' ? 'success' : 'info'">
+                    <span
+                      class="aw-asset-card__agent-status"
+                      :class="{ 'is-online': item.status === 1 || item.status === '1' }"
+                      title="Agent 在线状态与连通巡检结果独立；Agent 在线不代表连通巡检通过。"
+                    >
+                      <span class="aw-asset-card__agent-dot" aria-hidden="true" />
                       {{ getAssetStatusText(item.status) }}
-                    </el-tag>
+                    </span>
                     <div class="aw-asset-card__head-actions">
                       <el-tag
                         v-if="item.needReboot == 1"
@@ -182,7 +188,9 @@
                     </div>
                   </div>
                   <div class="aw-asset-card__info">
-                    <strong class="aw-asset-card__name">{{ getAssetPrimaryText(item) }}</strong>
+                    <strong class="aw-asset-card__name" :title="getAssetPrimaryText(item)">
+                      {{ getAssetPrimaryText(item) }}
+                    </strong>
                     <span class="aw-asset-card__os" :title="getAssetOsText(item)">
                       <i :class="getOsIconClass(item.os_distro)" class="aw-asset-card__os-icon" />
                       <span class="aw-asset-card__os-distro">{{ getAssetOsText(item) }}</span>
@@ -198,6 +206,7 @@
                       { 'is-loading': checkingConnIds.includes(item.id) }
                     ]"
                     :disabled="checkingConnIds.includes(item.id)"
+                    title="最近一次连通巡检结果，与 Agent 在线状态独立。点击重新检查连通性。"
                     @click.stop="handleAssetCheckConn(item)"
                   >
                     <i v-if="checkingConnIds.includes(item.id)" class="fa fa-spinner fa-spin" />
@@ -279,9 +288,14 @@
             >
               <div class="aw-asset-card__body">
                 <div class="aw-asset-card__head">
-                  <el-tag size="small" round :type="item.status === 1 || item.status === '1' ? 'success' : 'info'">
+                  <span
+                    class="aw-asset-card__agent-status"
+                    :class="{ 'is-online': item.status === 1 || item.status === '1' }"
+                    title="Agent 在线状态与连通巡检结果独立；Agent 在线不代表连通巡检通过。"
+                  >
+                    <span class="aw-asset-card__agent-dot" aria-hidden="true" />
                     {{ getAssetStatusText(item.status) }}
-                  </el-tag>
+                  </span>
                   <div class="aw-asset-card__head-actions">
                     <el-tag
                       v-if="item.needReboot == 1"
@@ -305,7 +319,9 @@
                     </button>
                   </div>
                 </div>
-                <strong class="aw-asset-card__name">{{ getAssetPrimaryText(item) }}</strong>
+                <strong class="aw-asset-card__name" :title="getAssetPrimaryText(item)">
+                  {{ getAssetPrimaryText(item) }}
+                </strong>
                 <span class="aw-asset-card__os" :title="getAssetOsText(item)">
                   <i :class="getOsIconClass(item.os_distro)" class="aw-asset-card__os-icon" />
                   <span class="aw-asset-card__os-distro">
@@ -322,6 +338,7 @@
                     { 'is-loading': checkingConnIds.includes(item.id) }
                   ]"
                   :disabled="checkingConnIds.includes(item.id)"
+                  title="最近一次连通巡检结果，与 Agent 在线状态独立。点击重新检查连通性。"
                   @click.stop="handleAssetCheckConn(item)"
                 >
                   <i v-if="checkingConnIds.includes(item.id)" class="fa fa-spinner fa-spin" />
@@ -867,7 +884,7 @@ function getAssetOsText(item) {
   return version ? `${distro} ${version}` : distro
 }
 function getAssetStatusText(status) {
-  return status === 1 || status === '1' ? '在线' : '离线'
+  return status === 1 || status === '1' ? 'Agent 在线' : 'Agent 离线'
 }
 function getAssetStatusTagType(status) {
   return status === 1 || status === '1' ? 'success' : 'danger'
@@ -1703,13 +1720,10 @@ onUnmounted(() => {
   &__stat-badge {
     font-size: 12px;
     color: var(--aw-text-secondary);
-    background: var(--aw-bg);
-    padding: 2px 8px;
-    border-radius: 999px;
-    border: 1px solid var(--aw-panel-border);
+    padding: 2px 0;
 
     strong {
-      color: var(--aw-accent);
+      color: var(--aw-text-primary);
       font-weight: 700;
     }
   }
@@ -1755,14 +1769,23 @@ onUnmounted(() => {
   transition: all 0.15s;
 
   &:hover {
-    border-color: var(--aw-accent);
-    color: var(--aw-accent);
+    border-color: var(--el-color-primary-light-5);
+    color: var(--el-color-primary);
   }
 
   &.is-active {
-    border-color: var(--aw-accent);
-    background: rgba(13, 148, 136, 0.08);
-    color: var(--aw-accent);
+    border-color: var(--el-color-primary);
+    background: var(--el-color-primary-light-9);
+    color: var(--el-color-primary);
+
+    .aw-asset-type-chip__count {
+      color: inherit;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--el-color-primary);
+    outline-offset: 2px;
   }
 
   &__name {
@@ -1849,29 +1872,25 @@ onUnmounted(() => {
   --aw-asset-card-accent: var(--aw-accent);
   display: flex;
   position: relative;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
+  border: 1px solid var(--aw-panel-border, #e2e8f0);
+  border-radius: 10px;
   background: var(--aw-panel-bg);
   flex-direction: column;
-  min-height: 138px;
-  max-height: 150px;
+  min-height: 132px;
+  max-height: 148px;
   min-width: 0;
   overflow: hidden;
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.05),
-    0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
   transition:
-    transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-    border-color 0.25s,
-    box-shadow 0.25s;
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.2s,
+    box-shadow 0.2s;
   cursor: pointer;
 
   &:hover {
-    transform: translateY(-3px);
+    transform: translateY(-2px);
     border-color: var(--aw-asset-card-accent);
-    box-shadow:
-      0 10px 25px -5px rgba(0, 0, 0, 0.08),
-      0 8px 10px -6px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 6px 16px -4px rgba(0, 0, 0, 0.06);
   }
 
   &__body {
@@ -1880,8 +1899,8 @@ onUnmounted(() => {
     flex-direction: column;
     gap: 8px;
     min-width: 0;
-    padding: 12px 16px 14px;
-    background: linear-gradient(180deg, rgba(248, 250, 252, 0.8) 0%, rgba(255, 255, 255, 1) 100%);
+    padding: 12px 14px;
+    background: var(--aw-panel-bg);
   }
 
   &__head {
@@ -1895,6 +1914,30 @@ onUnmounted(() => {
       align-items: center;
       gap: 6px;
     }
+  }
+
+  &__agent-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 18px;
+    font-size: 10px;
+    font-weight: 400;
+    line-height: 18px;
+    color: var(--aw-text-secondary);
+    white-space: nowrap;
+  }
+
+  &__agent-dot {
+    width: 5px;
+    height: 5px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--aw-text-muted);
+  }
+
+  &__agent-status.is-online &__agent-dot {
+    background: var(--aw-success);
   }
 
   &__reboot-tag {
@@ -1941,12 +1984,14 @@ onUnmounted(() => {
 
   &__name {
     display: -webkit-box;
-    min-height: 1.45em;
-    font-size: 14px;
+    min-height: 1.35em;
+    font-size: 16px;
     font-weight: 700;
-    line-height: 1.45;
+    line-height: 1.35;
     color: var(--aw-text-primary);
-    word-break: break-word;
+    font-family: 'Courier New', Courier, monospace, var(--el-font-family);
+    letter-spacing: 0.2px;
+    word-break: break-all;
     overflow: hidden;
     text-overflow: ellipsis;
     -webkit-line-clamp: 1;
@@ -1957,7 +2002,7 @@ onUnmounted(() => {
   &__os {
     margin-top: auto;
     font-size: 11px;
-    font-weight: 500;
+    font-weight: 400;
     color: var(--aw-text-secondary);
     display: flex;
     align-items: center;
@@ -1985,7 +2030,7 @@ onUnmounted(() => {
 
   &__footer {
     display: flex;
-    border-top: 1px solid #cbd5e1;
+    border-top: 1px solid var(--aw-panel-border, #e2e8f0);
     background: #f8fafc;
   }
 

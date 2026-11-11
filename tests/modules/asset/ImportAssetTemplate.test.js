@@ -60,7 +60,6 @@ describe('CMDB asset import template download', () => {
       '资产信息导入模板.xlsx'
     )
     expect(window.open).not.toHaveBeenCalled()
-    expect(wrapper.text()).toContain('网段区域')
 
     await wrapper.setProps({ tenantId: 'tenant-2' })
     await downloadButton(wrapper).trigger('click')

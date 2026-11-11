@@ -96,7 +96,7 @@
       </div>
 
       <div class="ops-filter-bar">
-        <el-form :model="searchParams" inline>
+        <el-form :model="searchParams" inline @submit.prevent>
           <el-form-item label="关键字">
             <el-input
               v-model="searchParams.keyword"
@@ -198,7 +198,11 @@
           </el-table-column>
           <el-table-column label="最高 CVSS" width="110" align="center">
             <template #default="{ row }">
-              {{ row.maxCvss3Score ? Number(row.maxCvss3Score).toFixed(1) : '-' }}
+              {{
+                formatCvssScore(row.maxCvss3Score) === '未评分'
+                  ? '-'
+                  : formatCvssScore(row.maxCvss3Score)
+              }}
             </template>
           </el-table-column>
           <el-table-column label="大小" width="110">
@@ -232,9 +236,10 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { formatCvssScore } from '@/utils/workspacePresentation'
 import { InfoFilled, Refresh, RefreshRight, Search } from '@element-plus/icons-vue'
 import { winKbApi } from '../../api'
 import { formatNumber, getSeverityLabel } from '../utils'
@@ -249,6 +254,7 @@ const selectedKbNumber = ref('')
 const kbList = ref([])
 const loading = ref(false)
 const statisticsLoading = ref(false)
+let listRequestId = 0
 
 const statistics = reactive({
   totalKbs: 0,
@@ -433,9 +439,13 @@ async function loadStatistics() {
 }
 
 async function loadData() {
+  if (!validateDateRange()) return
+  const requestId = ++listRequestId
+  const params = { ...searchParams }
   loading.value = true
   try {
-    const response = await winKbApi.getKbList(searchParams)
+    const response = await winKbApi.getKbList(params)
+    if (requestId !== listRequestId) return
     const result = response?.data || response || {}
 
     kbList.value = Array.isArray(result.content) ? result.content : []
@@ -443,16 +453,30 @@ async function loadData() {
     pagination.totalPages = Number(result.totalPages ?? 0)
     pagination.currentPage = Number(result.number ?? 0)
   } catch (error) {
+    if (requestId !== listRequestId) return
     console.error('Failed to load Windows KB list:', error)
     ElMessage.error('查询 KB 知识库失败，请稍后重试')
     kbList.value = []
     pagination.totalElements = 0
   } finally {
-    loading.value = false
+    if (requestId === listRequestId) loading.value = false
   }
 }
 
+function validateDateRange() {
+  if (
+    searchParams.startDate &&
+    searchParams.endDate &&
+    searchParams.startDate > searchParams.endDate
+  ) {
+    ElMessage.warning('开始日期不能晚于结束日期')
+    return false
+  }
+  return true
+}
+
 function search() {
+  if (!validateDateRange()) return
   searchParams.page = 0
   loadData()
 }
@@ -516,9 +540,14 @@ onMounted(() => {
   loadData()
 })
 
+onBeforeUnmount(() => {
+  listRequestId += 1
+})
+
 watch(
-  () => route.query,
+  () => (route.name === 'patches-windowsKbList' ? route.query : null),
   query => {
+    if (!query) return
     if (query.view === 'detail' && query.kbNumber) {
       selectedKbNumber.value = String(query.kbNumber)
       currentView.value = 'detail'

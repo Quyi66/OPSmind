@@ -184,7 +184,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Download, InfoFilled, Refresh, RefreshRight, Search } from '@element-plus/icons-vue'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
@@ -217,6 +217,18 @@ const {
 const detailVisible = ref(false)
 const detailLoading = ref(false)
 const detailData = ref({})
+let detailRequestId = 0
+
+watch(detailVisible, visible => {
+  if (!visible) {
+    detailRequestId += 1
+    detailLoading.value = false
+  }
+})
+
+onBeforeUnmount(() => {
+  detailRequestId += 1
+})
 
 function getServiceDisplay(services) {
   return getServicePreview(services, 3)
@@ -235,6 +247,7 @@ async function handleViewDetail(row) {
     return
   }
 
+  const requestId = ++detailRequestId
   detailVisible.value = true
   detailLoading.value = true
   detailData.value = {}
@@ -250,6 +263,7 @@ async function handleViewDetail(row) {
       osArch: row?.osArch || row?.os_arch || ''
     })
 
+    if (requestId !== detailRequestId || !detailVisible.value) return
     const responseData = response?.data || response || {}
     detailData.value = {
       ...responseData,
@@ -272,11 +286,12 @@ async function handleViewDetail(row) {
       currentPackage: currentPackage || responseData.currentPackage || ''
     }
   } catch (error) {
+    if (requestId !== detailRequestId || !detailVisible.value) return
     console.error('Failed to load installed package detail:', error)
     ElMessage.error('获取软件包详情失败')
     detailVisible.value = false
   } finally {
-    detailLoading.value = false
+    if (requestId === detailRequestId) detailLoading.value = false
   }
 }
 

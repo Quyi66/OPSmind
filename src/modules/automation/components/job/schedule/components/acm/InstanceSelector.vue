@@ -74,6 +74,7 @@
         v-if="!isSingleSelector"
         class="select-all-btn"
         :type="allSelected ? 'default' : 'primary'"
+        plain
         size="small"
         :loading="selectAllLoading"
         @click="handleToggleSelectAll"

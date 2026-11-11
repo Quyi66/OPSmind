@@ -2,13 +2,17 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <el-form :model="filters" inline size="small">
+      <el-form :model="filters" inline size="small" @submit.prevent>
         <el-form-item label="关键词">
           <el-input
             v-model="filters.keyword"
             placeholder="搜索名称、描述或命令内容"
             clearable
-            style="width: 240px" @keyup.enter="handleSearch" @clear="handleSearch">
+            style="width: 240px"
+            @input="handleSearch"
+            @keyup.enter="handleSearch"
+            @clear="handleSearch"
+          >
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
@@ -67,10 +71,11 @@
         :data="pagedCommands"
         max-height="calc(100vh - 264px)"
         @selection-change="handleSelectionChange"
+        @sort-change="handleSortChange"
       >
         <el-table-column type="selection" width="45" :selectable="checkSelectable" />
 
-        <el-table-column prop="name" label="名称" min-width="180" sortable>
+        <el-table-column prop="name" label="名称" min-width="180" sortable="custom">
           <template #default="{ row }">
             <el-button text type="primary" @click="handleView(row)">
               {{ row.name }}
@@ -88,29 +93,47 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="type" label="类型" width="100" align="left" sortable />
+        <el-table-column prop="type" label="类型" width="100" align="left" sortable="custom" />
 
-        <el-table-column prop="createdAt" label="创建时间" width="180" align="left" sortable>
+        <el-table-column
+          prop="createdAt"
+          label="创建时间"
+          width="180"
+          align="left"
+          sortable="custom"
+        >
           <template #default="{ row }">
             {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
 
-        <el-table-column prop="updatedAt" label="修改时间" width="180" align="left" sortable>
+        <el-table-column
+          prop="updatedAt"
+          label="修改时间"
+          width="180"
+          align="left"
+          sortable="custom"
+        >
           <template #default="{ row }">
             {{ formatDate(row.updatedAt) }}
           </template>
         </el-table-column>
 
-        <el-table-column prop="createdBy" label="创建人" width="100" align="left" sortable />
+        <el-table-column
+          prop="createdBy"
+          label="创建人"
+          width="100"
+          align="left"
+          sortable="custom"
+        />
 
-        <el-table-column prop="checkBy" label="审核人" width="100" align="left" sortable>
+        <el-table-column prop="checkBy" label="审核人" width="100" align="left" sortable="custom">
           <template #default="{ row }">
             {{ row.checkBy || '' }}
           </template>
         </el-table-column>
 
-        <el-table-column prop="status" label="状态" width="100" align="left" sortable>
+        <el-table-column prop="status" label="状态" width="100" align="left" sortable="custom">
           <template #default="{ row }">
             <el-tag
               :type="getStatusTagType(row.status)"
@@ -193,6 +216,7 @@ import { ref, reactive, computed, onMounted, inject, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search } from '@element-plus/icons-vue'
 import { formatDateTime } from '../../utils/helpers'
+import { sortCommandRows } from '../../utils/commandListSort'
 const formatDate = formatDateTime
 import {
   findByTenantIdAndCreatedBy,
@@ -219,6 +243,7 @@ const filters = reactive({
 const tableRef = ref(null)
 const currentPage = ref(1)
 const pageSize = ref(10)
+const sortState = ref({ prop: '', order: null })
 
 // 编辑对话框状态
 const editDialogVisible = ref(false)
@@ -230,22 +255,29 @@ const approveInfoDialogVisible = ref(false)
 
 // 过滤后的命令列表
 const filteredCommands = computed(() => {
-  if (!filters.keyword) {
+  const keyword = filters.keyword.trim().toLowerCase()
+  if (!keyword) {
     return commands.value
   }
-  const keyword = filters.keyword.toLowerCase()
   return commands.value.filter(
     cmd =>
       (cmd.name && cmd.name.toLowerCase().includes(keyword)) ||
       (cmd.description && cmd.description.toLowerCase().includes(keyword)) ||
-      (cmd.command && cmd.command.toLowerCase().includes(keyword))
+      (getDisplayCommand(cmd) || '').toLowerCase().includes(keyword)
   )
 })
 
+const sortedCommands = computed(() => sortCommandRows(filteredCommands.value, sortState.value))
 const pagedCommands = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
-  return filteredCommands.value.slice(start, start + pageSize.value)
+  return sortedCommands.value.slice(start, start + pageSize.value)
 })
+
+function handleSortChange({ prop, order }) {
+  sortState.value = { prop, order }
+  currentPage.value = 1
+  clearSelection()
+}
 
 // 分页信息
 const paginationInfo = computed(() => {

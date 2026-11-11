@@ -15,8 +15,24 @@
             <el-icon v-show="!contentLoading"><RefreshRight /></el-icon>
           </el-button>
         </div>
+        <el-alert v-if="statsError" :title="statsError" type="error" :closable="false" show-icon>
+          <el-button link type="primary" :loading="statsLoading" @click="fetchStats">
+            重试趋势
+          </el-button>
+        </el-alert>
+        <el-alert
+          v-else-if="invalidTrendCount"
+          title="部分趋势记录的次数或日期无效，图表中留空或不计入。"
+          type="warning"
+          :closable="false"
+          show-icon
+        />
         <div v-loading="statsLoading" class="card-body">
-          <el-empty v-if="!statsLoading && !recentTrendRows.length" description="暂无统计数据" />
+          <el-empty v-if="statsError" description="趋势读取失败，请重试" />
+          <el-empty
+            v-else-if="!statsLoading && !recentTrendRows.length"
+            description="暂无统计数据"
+          />
           <VChart
             v-else-if="recentTrendRows.length"
             autoresize
@@ -41,8 +57,30 @@
             </template>
           </el-input>
         </div>
+        <el-alert
+          v-if="summaryError"
+          :title="summaryError"
+          type="error"
+          :closable="false"
+          show-icon
+        >
+          <el-button link type="primary" :loading="summaryLoading" @click="fetchRunCounts">
+            重试排行
+          </el-button>
+        </el-alert>
+        <el-alert
+          v-else-if="invalidSummaryCount"
+          title="部分运行次数无效，图表中留空，未按零次处理。"
+          type="warning"
+          :closable="false"
+          show-icon
+        />
         <div v-loading="summaryLoading" class="card-body">
-          <el-empty v-if="!summaryLoading && !filteredSummary.length" description="暂无统计数据" />
+          <el-empty v-if="summaryError" description="排行读取失败，请重试" />
+          <el-empty
+            v-else-if="!summaryLoading && !filteredSummary.length"
+            :description="summaryRows.length ? '没有匹配的运维工具' : '暂无统计数据'"
+          />
           <VChart
             v-else-if="filteredSummary.length"
             autoresize
@@ -56,7 +94,16 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  onActivated,
+  onDeactivated,
+  ref,
+  watch
+} from 'vue'
 import { ElMessage } from 'element-plus'
 import { RefreshRight, Search } from '@element-plus/icons-vue'
 import VChart from 'vue-echarts'
@@ -70,8 +117,16 @@ import { useTheme } from '@/composables/useTheme'
 
 use([CanvasRenderer, BarChart, LineChart, DataZoomComponent, GridComponent, TooltipComponent])
 
+const props = defineProps({ active: { type: Boolean, default: true } })
+const canRead = () => componentActive && props.active
+
 const statsLoading = ref(false)
 const summaryLoading = ref(false)
+const statsError = ref('')
+const summaryError = ref('')
+let componentActive = true
+let statsRequestId = 0
+let summaryRequestId = 0
 const rawData = ref([])
 const summaryRows = ref([])
 const summaryQuery = ref('')
@@ -102,6 +157,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  pauseReading()
   window.removeEventListener('resize', handleResize)
   if (resizeObserver) {
     resizeObserver.disconnect()
@@ -133,32 +189,48 @@ function updateChartSectionHeight() {
 }
 
 async function fetchStats() {
+  if (!canRead()) return
+  const request = ++statsRequestId
   statsLoading.value = true
+  statsError.value = ''
   try {
     const response = await jaoApi.fetchJobStats()
+    if (!canRead() || request !== statsRequestId) return
     const data = response?.data || response
-    rawData.value = data.records || []
+    if (data?.records != null && !Array.isArray(data.records)) throw new Error('统计记录格式无效')
+    if (data?.records?.some(row => !row || typeof row !== 'object'))
+      throw new Error('统计记录格式无效')
+    rawData.value = data?.records || []
   } catch (error) {
+    if (!canRead() || request !== statsRequestId) return
+    statsError.value = '获取执行趋势失败，请重试'
     ElMessage.error(error?.message || '获取统计数据失败')
   } finally {
-    statsLoading.value = false
+    if (canRead() && request === statsRequestId) statsLoading.value = false
   }
 }
 
 async function fetchRunCounts() {
+  if (!canRead()) return
+  const request = ++summaryRequestId
   summaryLoading.value = true
+  summaryError.value = ''
   try {
     const response = await jaoApi.fetchJobRunCounts()
+    if (!canRead() || request !== summaryRequestId) return
     const data = response?.data || response
-    summaryRows.value = (data.records || []).map(item => ({
+    if (data?.records != null && !Array.isArray(data.records)) throw new Error('排行记录格式无效')
+    summaryRows.value = (data?.records || []).map(item => ({
       job_id: item.job_id,
       job_title: item.job_title || '未命名运维工具',
-      run_count: Number(item.run_count) || 0
+      run_count: normalizeCount(item.run_count)
     }))
   } catch (error) {
+    if (!canRead() || request !== summaryRequestId) return
+    summaryError.value = '获取运行次数排行失败，请重试'
     ElMessage.error(error?.message || '获取运行次数失败')
   } finally {
-    summaryLoading.value = false
+    if (canRead() && request === summaryRequestId) summaryLoading.value = false
   }
 }
 
@@ -181,18 +253,44 @@ const recentTrendRows = computed(() => {
   const byDate = new Map()
 
   rawData.value.forEach(item => {
-    if (!item.start_date) return
-    const dateStr = item.start_date.includes('T')
-      ? item.start_date.split('T')[0]
-      : item.start_date.slice(0, 10)
-    const count = Number(item.run_count) || 0
-    byDate.set(dateStr, (byDate.get(dateStr) || 0) + count)
+    const dateStr = normalizeTrendDate(item.start_date)
+    if (!dateStr) return
+    const count = normalizeCount(item.run_count)
+    const previous = byDate.get(dateStr)
+    byDate.set(
+      dateStr,
+      count == null || previous === null ? null : normalizeCount((previous || 0) + count)
+    )
   })
 
   return Array.from(byDate.entries())
     .sort((a, b) => String(a[0]).localeCompare(String(b[0])))
     .map(([date, count]) => ({ date, count }))
 })
+
+function normalizeCount(value) {
+  if (!['number', 'string'].includes(typeof value) || String(value).trim() === '') return null
+  const number = Number(value)
+  return Number.isFinite(number) && number >= 0 ? number : null
+}
+
+function normalizeTrendDate(value) {
+  if (typeof value !== 'string') return ''
+  const date = value.slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return ''
+  const parsed = new Date(`${date}T00:00:00Z`)
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === date ? date : ''
+}
+
+const invalidTrendCount = computed(
+  () =>
+    rawData.value.filter(
+      row => !normalizeTrendDate(row.start_date) || normalizeCount(row.run_count) == null
+    ).length + recentTrendRows.value.filter(row => row.count == null).length
+)
+const invalidSummaryCount = computed(
+  () => summaryRows.value.filter(row => row.run_count == null).length
+)
 
 const translatedSummaryRows = computed(() =>
   summaryRows.value.map(row => ({
@@ -207,7 +305,33 @@ const filteredSummary = computed(() => {
     ? translatedSummaryRows.value.filter(row => row.translatedTitle.toLowerCase().includes(keyword))
     : translatedSummaryRows.value
 
-  return [...baseRows].sort((a, b) => b.run_count - a.run_count)
+  return [...baseRows].sort((a, b) => (b.run_count ?? -1) - (a.run_count ?? -1))
+})
+
+function invalidateRead() {
+  statsRequestId += 1
+  summaryRequestId += 1
+  if (statsLoading.value) statsError.value = '趋势读取已中断，请刷新重试'
+  if (summaryLoading.value) summaryError.value = '排行读取已中断，请刷新重试'
+  statsLoading.value = false
+  summaryLoading.value = false
+}
+function pauseReading() {
+  componentActive = false
+  invalidateRead()
+}
+watch(
+  () => props.active,
+  value => {
+    if (!value) invalidateRead()
+    else if (componentActive) handleRefresh()
+  }
+)
+onDeactivated(pauseReading)
+onActivated(() => {
+  if (componentActive) return
+  componentActive = true
+  if (props.active) handleRefresh()
 })
 
 const chartTheme = computed(() =>
@@ -296,7 +420,7 @@ const recentTrendOption = computed(() => ({
         position: 'top',
         color: chartTheme.value.trendLabel,
         fontSize: 11,
-        formatter: ({ value }) => value > 0 ? `${value}` : ''
+        formatter: ({ value }) => (value > 0 ? `${value}` : '')
       },
       data: recentTrendRows.value.map(item => item.count),
       areaStyle: {
@@ -307,8 +431,14 @@ const recentTrendOption = computed(() => ({
           x2: 0,
           y2: 1,
           colorStops: [
-            { offset: 0, color: isDark.value ? 'rgba(96, 165, 250, 0.22)' : 'rgba(37, 99, 235, 0.18)' },
-            { offset: 1, color: isDark.value ? 'rgba(96, 165, 250, 0.00)' : 'rgba(37, 99, 235, 0.00)' }
+            {
+              offset: 0,
+              color: isDark.value ? 'rgba(96, 165, 250, 0.22)' : 'rgba(37, 99, 235, 0.18)'
+            },
+            {
+              offset: 1,
+              color: isDark.value ? 'rgba(96, 165, 250, 0.00)' : 'rgba(37, 99, 235, 0.00)'
+            }
           ]
         }
       },

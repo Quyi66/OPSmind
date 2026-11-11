@@ -29,18 +29,7 @@
         <div class="content-view-area">
           <!-- 筛选区 -->
           <div class="ops-filter-bar">
-            <el-form :inline="true" size="small">
-              <el-form-item label="类型">
-                <el-select v-model="groupFilter.ciType" style="width: 140px" @change="handleGroupSearch">
-                  <el-option label="全部" value="sjxy_all" />
-                  <el-option
-                    v-for="item in resourceTypes"
-                    :key="item.code"
-                    :label="item.title"
-                    :value="item.code"
-                  />
-                </el-select>
-              </el-form-item>
+            <el-form :inline="true" size="small" @submit.prevent>
               <el-form-item label="关键词">
                 <el-input
                   v-model="groupFilter.keyword"
@@ -89,8 +78,10 @@
               :data="groupList"
               height="100%"
               row-class-name="modern-table-row"
+              :default-sort="groupSort"
+              @sort-change="handleGroupSortChange"
             >
-              <el-table-column prop="path" label="分组路径" min-width="220" sortable>
+              <el-table-column prop="path" label="分组路径" min-width="220" sortable="custom">
                 <template #default="{ row }">
                   <el-link
                     type="primary"
@@ -103,12 +94,18 @@
                   </el-link>
                 </template>
               </el-table-column>
-              <el-table-column prop="ci_type" label="适用资产类型" width="160" sortable>
+              <el-table-column prop="ci_type" label="适用资产类型" width="160" sortable="custom">
                 <template #default="{ row }">
                   <span class="cit-display">{{ row.ci_type || '-' }}</span>
                 </template>
               </el-table-column>
-              <el-table-column prop="total" label="已绑主机数" width="120" align="left" sortable>
+              <el-table-column
+                prop="total"
+                label="已绑主机数"
+                width="120"
+                align="left"
+                sortable="custom"
+              >
                 <template #default="{ row }">
                   <el-tag size="small" type="info" round class="count-tag-badge">
                     {{ row.total }} 台
@@ -151,9 +148,13 @@
         <div class="content-view-area">
           <!-- 筛选区 -->
           <div class="ops-filter-bar">
-            <el-form :inline="true" size="small">
+            <el-form :inline="true" size="small" @submit.prevent>
               <el-form-item label="类型">
-                <el-select v-model="tagFilter.ciType" style="width: 140px">
+                <el-select
+                  v-model="tagFilter.ciType"
+                  style="width: 140px"
+                  @change="handleTagSearch"
+                >
                   <el-option label="全部" value="sjxy_all" />
                   <el-option
                     v-for="item in resourceTypes"
@@ -170,6 +171,7 @@
                   style="width: 200px"
                   clearable
                   @keyup.enter="handleTagSearch"
+                  @clear="handleTagSearch"
                 />
               </el-form-item>
               <el-form-item class="filter-actions">
@@ -211,8 +213,10 @@
               :data="tagList"
               height="100%"
               row-class-name="modern-table-row"
+              :default-sort="tagSort"
+              @sort-change="handleTagSortChange"
             >
-              <el-table-column prop="name" label="标签名称" min-width="220" sortable>
+              <el-table-column prop="name" label="标签名称" min-width="220" sortable="custom">
                 <template #default="{ row }">
                   <el-link
                     type="primary"
@@ -227,12 +231,18 @@
                   </el-link>
                 </template>
               </el-table-column>
-              <el-table-column prop="ci_type" label="适用资产类型" width="160" sortable>
+              <el-table-column prop="ci_type" label="适用资产类型" width="160" sortable="custom">
                 <template #default="{ row }">
                   <span class="cit-display">{{ row.ci_type || '-' }}</span>
                 </template>
               </el-table-column>
-              <el-table-column prop="total" label="已绑主机数" width="120" align="left" sortable>
+              <el-table-column
+                prop="total"
+                label="已绑主机数"
+                width="120"
+                align="left"
+                sortable="custom"
+              >
                 <template #default="{ row }">
                   <el-tag size="small" type="info" round class="count-tag-badge">
                     {{ row.total }} 台
@@ -289,12 +299,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { dataManageApi } from '../api'
 import { throwIfWorkflowFailed } from '@/utils/workflowResult'
+import { toKnownNumber } from '@/utils/workspacePresentation'
 import DataAddGroupDialog from '../components/data/DataAddGroupDialog.vue'
 import DataAddTagDialog from '../components/data/DataAddTagDialog.vue'
 import DataEditGroupDialog from '../components/data/DataEditGroupDialog.vue'
@@ -312,16 +323,53 @@ const activeTab = ref('group')
 const resourceTypes = ref([])
 
 // 分组相关
-const groupFilter = ref({ ciType: 'sjxy_all', keyword: '' })
+const groupFilter = ref({ keyword: '' })
 const groupList = ref([])
 const groupLoading = ref(false)
 const groupPagination = ref({ page: 1, size: 10, total: 0 })
+const groupSort = ref({ prop: '', order: null })
+let groupRequestId = 0
 
 // 标签相关
 const tagFilter = ref({ ciType: 'sjxy_all', keyword: '' })
 const tagList = ref([])
 const tagLoading = ref(false)
 const tagPagination = ref({ page: 1, size: 10, total: 0 })
+const tagSort = ref({ prop: '', order: null })
+let tagRequestId = 0
+
+const sortFields = new Set(['path', 'name', 'ci_type', 'total'])
+function sortRecords(records, { prop, order }) {
+  const result = [...records]
+  if (!sortFields.has(prop) || !['ascending', 'descending'].includes(order)) return result
+  const valueOf = row => {
+    if (prop === 'total') return toKnownNumber(row.total, { integer: true })
+    return row[prop] == null || String(row[prop]).trim() === '' ? null : String(row[prop])
+  }
+  return result.sort((a, b) => {
+    const left = valueOf(a),
+      right = valueOf(b)
+    if (left === null) return right === null ? 0 : 1
+    if (right === null) return -1
+    const compared =
+      prop === 'total'
+        ? left - right
+        : left.localeCompare(right, 'zh-CN', { numeric: true, sensitivity: 'base' })
+    return order === 'ascending' ? compared : -compared
+  })
+}
+
+function handleGroupSortChange({ prop, order }) {
+  groupSort.value = { prop, order }
+  groupPagination.value.page = 1
+  loadGroupList()
+}
+
+function handleTagSortChange({ prop, order }) {
+  tagSort.value = { prop, order }
+  tagPagination.value.page = 1
+  loadTagList()
+}
 
 // 弹窗状态
 const addGroupDialogVisible = ref(false)
@@ -342,7 +390,7 @@ const buildRouteQuery = tab => {
   const currentFilter = currentTab === 'group' ? groupFilter.value : tagFilter.value
   const query = { tab: currentTab }
 
-  if (currentFilter.ciType && currentFilter.ciType !== 'sjxy_all') {
+  if (currentTab === 'tag' && currentFilter.ciType && currentFilter.ciType !== 'sjxy_all') {
     query.ciType = currentFilter.ciType
   }
 
@@ -376,7 +424,7 @@ const applyRouteQuery = query => {
   activeTab.value = currentTab
 
   if (currentTab === 'group') {
-    groupFilter.value = { ciType, keyword }
+    groupFilter.value = { keyword }
     groupPagination.value.page = 1
     loadGroupList()
     return
@@ -399,57 +447,72 @@ const loadResourceTypes = async () => {
 
 // 加载分组列表
 const loadGroupList = async () => {
+  const requestId = ++groupRequestId
+  const filter = { ...groupFilter.value }
+  const pagination = { ...groupPagination.value }
+  const sort = { ...groupSort.value }
   groupLoading.value = true
   try {
-    const res = await dataManageApi.getAllGroups(groupFilter.value.ciType)
+    // 分组不支持类型筛选；空串让原API封装省略ciType参数。
+    const res = await dataManageApi.getAllGroups('')
+    if (requestId !== groupRequestId) return
     let records = res?.records || []
     // 关键字筛选
-    if (groupFilter.value.keyword) {
-      const keyword = groupFilter.value.keyword.toLowerCase()
+    if (filter.keyword) {
+      const keyword = filter.keyword.toLowerCase()
       records = records.filter(
         item =>
           item.path?.toLowerCase().includes(keyword) ||
           item.ci_type?.toLowerCase().includes(keyword)
       )
     }
+    records = sortRecords(records, sort)
     groupPagination.value.total = records.length
     // 前端分页
-    const start = (groupPagination.value.page - 1) * groupPagination.value.size
-    const end = start + groupPagination.value.size
+    const start = (pagination.page - 1) * pagination.size
+    const end = start + pagination.size
     groupList.value = records.slice(start, end)
   } catch (error) {
+    if (requestId !== groupRequestId) return
     console.error('加载分组列表失败:', error)
     ElMessage.error('加载分组列表失败')
   } finally {
-    groupLoading.value = false
+    if (requestId === groupRequestId) groupLoading.value = false
   }
 }
 
 // 加载标签列表
 const loadTagList = async () => {
+  const requestId = ++tagRequestId
+  const filter = { ...tagFilter.value }
+  const pagination = { ...tagPagination.value }
+  const sort = { ...tagSort.value }
   tagLoading.value = true
   try {
-    const res = await dataManageApi.getAllTags(tagFilter.value.ciType)
+    const res = await dataManageApi.getAllTags(filter.ciType)
+    if (requestId !== tagRequestId) return
     let records = res?.records || []
     // 关键字筛选
-    if (tagFilter.value.keyword) {
-      const keyword = tagFilter.value.keyword.toLowerCase()
+    if (filter.keyword) {
+      const keyword = filter.keyword.toLowerCase()
       records = records.filter(
         item =>
           item.name?.toLowerCase().includes(keyword) ||
           item.ci_type?.toLowerCase().includes(keyword)
       )
     }
+    records = sortRecords(records, sort)
     tagPagination.value.total = records.length
     // 前端分页
-    const start = (tagPagination.value.page - 1) * tagPagination.value.size
-    const end = start + tagPagination.value.size
+    const start = (pagination.page - 1) * pagination.size
+    const end = start + pagination.size
     tagList.value = records.slice(start, end)
   } catch (error) {
+    if (requestId !== tagRequestId) return
     console.error('加载标签列表失败:', error)
     ElMessage.error('加载标签列表失败')
   } finally {
-    tagLoading.value = false
+    if (requestId === tagRequestId) tagLoading.value = false
   }
 }
 
@@ -473,7 +536,7 @@ const handleGroupSearch = () => {
 
 // 分组重置
 const handleGroupReset = () => {
-  groupFilter.value = { ciType: 'sjxy_all', keyword: '' }
+  groupFilter.value = { keyword: '' }
   groupPagination.value.page = 1
   syncRouteQuery('group')
 }
@@ -594,9 +657,16 @@ onMounted(() => {
   loadResourceTypes()
 })
 
+onBeforeUnmount(() => {
+  groupRequestId += 1
+  tagRequestId += 1
+})
+
+// 缓存页面只响应自身路由，避免其他页面搜索触发列表读取。
 watch(
-  () => route.query,
-  query => {
+  () => [route.path, route.query],
+  ([path, query]) => {
+    if (path.replace(/\/$/, '') !== '/acm/data') return
     applyRouteQuery(query)
   },
   { immediate: true }

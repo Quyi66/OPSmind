@@ -222,19 +222,18 @@ function isPackageSelectable(row) {
 }
 
 // 全选逻辑
-const {
-  allSelected,
-  isAllSelected,
-  handleToggleAllSelection,
-  handleTableSelect,
-  resetAllSelected
-} = useTableSelectAll(packageTableRef, {
-  tableData: packageTableData,
-  filteredData: packageFilteredData,
-  selectedItems: selectedPackages,
-  matchFn: (f, row) => f.pkgName === row.pkgName && f.patchId === row.patchId,
-  selectableFn: isPackageSelectable
-})
+const { isAllSelected, handleToggleAllSelection, handleTableSelect, resetAllSelected } =
+  useTableSelectAll(packageTableRef, {
+    tableData: packageTableData,
+    filteredData: packageFilteredData,
+    selectedItems: selectedPackages,
+    matchFn: (f, row) =>
+      f.pkgName === row.pkgName &&
+      f.patchId === row.patchId &&
+      String(f.installedPkg || '').replace(/\.rpm$/i, '') ===
+        String(row.installedPkg || '').replace(/\.rpm$/i, ''),
+    selectableFn: isPackageSelectable
+  })
 
 // 可选中的软件包（用于控制"一键全选"按钮禁用状态）
 const selectablePackages = computed(() => {
@@ -318,7 +317,8 @@ async function handleViewPackageDetail(row) {
         row?.osSpVersion ||
         row?.os_sp_version ||
         props.osSpVersion,
-      osArch: responseData.osArch || responseData.os_arch || row?.osArch || row?.os_arch || props.osArch,
+      osArch:
+        responseData.osArch || responseData.os_arch || row?.osArch || row?.os_arch || props.osArch,
       currentPackage: currentPackage || responseData.currentPackage || ''
     }
   } catch (error) {

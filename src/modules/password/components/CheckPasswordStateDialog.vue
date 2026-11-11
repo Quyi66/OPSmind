@@ -29,6 +29,7 @@
 import { ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { apiService } from '@/core/api'
+import { throwIfWorkflowFailed } from '@/utils/workflowResult'
 
 const props = defineProps({
   modelValue: {
@@ -57,9 +58,11 @@ async function handleCheck() {
   submitting.value = true
   try {
     // 调用作业 v0KKtQ
-    await apiService.post(`/workflow/api/workflow/jobs/v0KKtQ/run?cacheBuster=${Date.now()}`, {
-      params: {}
-    })
+    const response = await apiService.post(
+      `/workflow/api/workflow/jobs/v0KKtQ/run?cacheBuster=${Date.now()}`,
+      { params: {} }
+    )
+    throwIfWorkflowFailed(response, '检查密码状态失败')
 
     ElMessage.success('密码状态检查任务已提交')
     emit('success')

@@ -7,7 +7,7 @@
     :close-on-click-modal="false"
     :close-on-press-escape="false"
   >
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
+    <el-form ref="formRef" :model="form" :rules="rules" label-width="110px" @submit.prevent>
       <el-form-item label="WSUS 地址" prop="wsusUrl">
         <el-input v-model="form.wsusUrl" placeholder="请输入 WSUS 地址" clearable />
       </el-form-item>
@@ -45,7 +45,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { winPatchApi } from '../../api'
-import { pickValue, unwrapResponse } from '../../utils'
+import { normalizeBoolean, pickValue, unwrapResponse } from '../../utils'
 
 const props = defineProps({
   modelValue: {
@@ -84,7 +84,7 @@ function resetForm(data = null) {
   form.id = pickValue(data, ['id'], '')
   form.wsusUrl = pickValue(data, ['wsusUrl', 'wsus_url'], '')
   form.wsusPort = Number(pickValue(data, ['wsusPort', 'wsus_port'], 8530)) || 8530
-  form.useSsl = Boolean(pickValue(data, ['useSsl', 'use_ssl'], false))
+  form.useSsl = normalizeBoolean(pickValue(data, ['useSsl', 'use_ssl'], false))
   form.description = pickValue(data, ['description'], '')
 }
 

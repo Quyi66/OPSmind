@@ -30,6 +30,9 @@ vi.mock('@/composables/useJobPolling', () => ({
 vi.mock('@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue', () => ({
   default: { name: 'AcmDeviceSelector', props: ['modelValue', 'disabled'], template: '<div />' }
 }))
+vi.mock('@/modules/automation/api/jao', () => ({
+  getAcmCiTypes: vi.fn().mockResolvedValue({ linux: { title: 'Linux' } })
+}))
 const Slot = { template: '<div><slot /></div>' }
 const Form = defineComponent({
   name: 'ElForm',
@@ -68,6 +71,20 @@ const stubs = {
   ElRadioGroup: Slot,
   ElRadio: Slot,
   ElDatePicker: true,
+  ElBadge: true,
+  ElTag: true,
+  ElTabs: Slot,
+  ElTabPane: Slot,
+  InstanceSelector: true,
+  GroupSelector: true,
+  TagSelector: true,
+  InputFilter: true,
+  RecentlySelector: true,
+  ExecuteResultDialog: {
+    name: 'ExecuteResultDialog',
+    props: ['visible', 'runId'],
+    template: '<div />'
+  },
   ElDescriptions: Slot,
   ElDescriptionsItem: Slot,
   ElAlert: {
@@ -107,7 +124,7 @@ async function open(component, props = {}, extra = {}) {
   const wrapper = mount(component, {
     props: {
       visible: true,
-      user: { ...account },
+      ...(component === ScanHostDialog ? {} : { user: { ...account } }),
       'onUpdate:visible': value => wrapper.setProps({ visible: value }),
       ...props
     },
@@ -533,6 +550,32 @@ function expectCloseDraft(wrapper, name) {
   if (name === '删除组') expect(setup.groupName).toBe('new-window')
   if (name === '扫描') expect(setup.selectedHosts).toEqual(hosts)
 }
+describe('主机用户扫描的进度入口', () => {
+  it('显示目标和后端状态，查看结果不重复提交，也不解除未知结果的保护', async () => {
+    api.post.mockResolvedValueOnce({ data: { status: 'WAITING', runId: 'run/scan-identity' } })
+    const wrapper = await open(ScanHostDialog)
+    await submit(wrapper, '扫描')
+    expect(wrapper.text()).toContain('已选 1 个分组')
+    expect(wrapper.text()).toContain('192.0.2.17')
+    expect(wrapper.get('[role="alert"]').text()).toContain('等待执行')
+    expect(wrapper.get('[role="alert"]').text()).not.toContain('run/scan-identity')
+    expect(wrapper.get('details code').text()).toBe('run/scan-identity')
+    await button(wrapper, '查看进度与结果').trigger('click')
+    const result = wrapper.findComponent({ name: 'ExecuteResultDialog' })
+    expect(result.props()).toMatchObject({ visible: true, runId: 'run/scan-identity' })
+    result.vm.$emit('update:visible', false)
+    api.start.mock.lastCall[1].onTimeout({ status: 'RUNNING' })
+    await flushPromises()
+    expect(wrapper.text()).toContain('等待结果超时')
+    state(wrapper).handleExecute(hosts)
+    await flushPromises()
+    expect(api.post).toHaveBeenCalledTimes(1)
+    expect(result.props('visible')).toBe(false)
+    await button(wrapper, '查看进度与结果').trigger('click')
+    expect(result.props('visible')).toBe(true)
+  })
+})
+
 describe.each(closeCases)('$name真实Dialog关闭边界', testCase => {
   it('取消仅请求关闭一次，重开后旧动画通知不得关闭或清空新草稿', async () => {
     const wrapper = await open(testCase.component, {}, { 'el-dialog': ElDialog, teleport: true })

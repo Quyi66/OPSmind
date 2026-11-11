@@ -1,52 +1,94 @@
 <template>
-  <div class="ops-page-layout">
-    <!-- 操作区 -->
+  <div class="ops-page-layout email-config-page">
+    <!-- 筛选区 -->
+    <div class="ops-filter-bar">
+      <el-form inline size="small" @submit.prevent="handleSearch">
+        <el-form-item label="模板名称">
+          <el-input
+            v-model="searchKeyword"
+            placeholder="搜索模板名称"
+            clearable
+            size="small"
+            style="width: 220px"
+            maxlength="50"
+            @keyup.enter="handleSearch"
+            @clear="handleSearch"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" size="small" :loading="loading" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+
+    <!-- 操作栏 -->
     <div class="ops-action-bar">
-      <div>
+      <div class="email-switch-group">
         <el-switch
           v-model="emailEnabled"
           :loading="switchLoading"
           active-text="启用邮件通知"
           @change="handleSwitchChange"
         />
-      </div>
-      <div class="search-box">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="搜索模板名称"
-          clearable
-          size="small"
-          style="width: 200px"
-          maxlength="50"
-          @keyup.enter="handleSearch"
-          @clear="handleSearch"
+        <span
+          class="global-status-pill"
+          :class="emailEnabled ? 'global-status-pill--active' : 'global-status-pill--muted'"
         >
-          <template #prefix>
-            <i class="fa fa-search"></i>
-          </template>
-        </el-input>
-        <el-button type="primary" size="small" @click="handleSearch">搜索</el-button>
+          <span class="status-dot"></span>
+          {{ emailEnabled ? '全局邮件通知已开启' : '全局邮件通知已关闭' }}
+        </span>
       </div>
+      <span class="email-template-count">共 {{ templateList.length }} 个模板</span>
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        title="刷新"
+        @click="loadTemplates"
+      >
+        <el-icon v-show="!loading"><Refresh /></el-icon>
+      </el-button>
     </div>
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <el-table v-loading="loading" :data="pagedTemplates" max-height="calc(100vh - 214px)">
+      <el-table v-loading="loading" :data="pagedTemplates" height="100%">
         <el-table-column
           prop="template_name"
           label="模板名称"
-          min-width="200"
+          min-width="220"
           show-overflow-tooltip
         />
-        <el-table-column prop="executed_at" label="最后执行时间" width="180">
+        <el-table-column prop="executed_at" label="上次检查时间" width="200">
           <template #default="{ row }">
-            {{ formatDateTime(row.executed_at) }}
+            <span class="time-text">{{ formatDateTime(row.executed_at) || '—' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="邮件通知状态" width="150">
+          <template #default>
+            <span
+              class="channel-pill"
+              :class="emailEnabled ? 'channel-pill--active' : 'channel-pill--paused'"
+            >
+              {{ emailEnabled ? '已启用通知' : '随总开关暂停' }}
+            </span>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="220" align="left" fixed="right">
           <template #default="{ row }">
-            <el-button text type="primary" @click="showRecipientDialog(row)">收件人列表</el-button>
-            <el-button text type="primary" @click="showCustomContentDialog(row)">
+            <el-button text type="primary" size="small" @click="showRecipientDialog(row)">
+              收件人列表
+            </el-button>
+            <el-button text type="primary" size="small" @click="showCustomContentDialog(row)">
               自定义内容
             </el-button>
           </template>
@@ -72,35 +114,67 @@
     <el-dialog
       :model-value="recipientDialogVisible"
       title="收件人列表"
-      width="800px"
+      width="840px"
       destroy-on-close
       @close="recipientDialogVisible = false"
       :close-on-click-modal="true"
     >
       <div v-loading="recipientLoading" class="recipient-dialog">
-        <div class="dialog-header">
-          <div class="template-info">
-            <span class="label">模板名称：</span>
-            <span class="value">{{ currentTemplate?.template_name }}</span>
+        <div class="template-banner-card">
+          <div class="banner-left">
+            <div class="banner-icon">
+              <i class="fa fa-users"></i>
+            </div>
+            <div class="banner-text">
+              <span class="banner-label">当前配置巡检模板</span>
+              <strong class="banner-value">{{ currentTemplate?.template_name || '-' }}</strong>
+            </div>
           </div>
-          <el-button type="primary" size="small" @click="showAddRecipientDialog">
-            <i class="fa fa-plus"></i>
-            新增
-          </el-button>
+          <div class="banner-stats">
+            <span class="stat-pill">
+              收件人数 <strong>{{ recipientTableData.length }}</strong>
+            </span>
+          </div>
+        </div>
+
+        <div class="dialog-toolbar">
+          <div class="toolbar-search">
+            <el-input
+              v-model="recipientSearchKeyword"
+              placeholder="搜索姓名、邮箱或备注..."
+              clearable
+              size="small"
+              style="width: 240px"
+            >
+              <template #prefix>
+                <i class="fa fa-search"></i>
+              </template>
+            </el-input>
+          </div>
+          <div class="toolbar-actions">
+            <el-button size="small" @click="loadRecipientList">
+              <i class="fa fa-sync-alt" style="margin-right: 4px"></i>
+              刷新
+            </el-button>
+            <el-button type="primary" size="small" @click="showAddRecipientDialog">
+              <i class="fa fa-plus" style="margin-right: 4px"></i>
+              新增收件人
+            </el-button>
+          </div>
         </div>
 
         <!-- 收件人表格 -->
-        <el-table :data="recipientTableData" max-height="400">
+        <el-table :data="filteredRecipientTableData" max-height="400" border>
           <el-table-column prop="name" label="姓名" min-width="120" />
-          <el-table-column prop="email" label="邮箱" min-width="180" />
+          <el-table-column prop="email" label="邮箱" min-width="200" />
           <el-table-column prop="status" label="状态" width="100" align="left">
             <template #default="{ row }">
               <el-tag v-if="row.status === '0'" type="success" size="small">启用</el-tag>
               <el-tag v-else type="danger" size="small">禁用</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="remarks" label="备注" min-width="150" />
-          <el-table-column label="操作" width="100" align="left" fixed="right">
+          <el-table-column prop="remarks" label="备注" min-width="160" show-overflow-tooltip />
+          <el-table-column label="操作" width="120" align="left" fixed="right">
             <template #default="{ row }">
               <el-button text type="primary" size="small" @click="editRecipient(row)">
                 编辑
@@ -169,24 +243,31 @@
     <!-- 自定义内容弹窗 -->
     <el-dialog
       :model-value="customContentDialogVisible"
-      title="自定义内容"
-      width="600px"
+      title="自定义邮件内容"
+      width="620px"
       destroy-on-close
       @close="customContentDialogVisible = false"
       :close-on-press-escape="false"
       :close-on-click-modal="false"
     >
       <div v-loading="customContentLoading" class="custom-content-dialog">
-        <div class="template-info">
-          <span class="label">模板名称：</span>
-          <span class="value">{{ currentTemplate?.template_name }}</span>
+        <div class="template-banner-card">
+          <div class="banner-left">
+            <div class="banner-icon">
+              <i class="fa fa-envelope-open-text"></i>
+            </div>
+            <div class="banner-text">
+              <span class="banner-label">当前配置巡检模板</span>
+              <strong class="banner-value">{{ currentTemplate?.template_name || '-' }}</strong>
+            </div>
+          </div>
         </div>
 
-        <el-form label-width="100px">
+        <el-form label-position="top" class="custom-content-form">
           <el-form-item label="自定义标题">
             <el-input
               v-model="customContentData.title"
-              placeholder="请输入自定义邮件标题"
+              placeholder="请输入自定义邮件标题（留空则使用系统默认标题）"
               clearable
             />
           </el-form-item>
@@ -220,6 +301,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Search, Refresh } from '@element-plus/icons-vue'
 import { emailConfigApi } from '../api'
 import { formatDateTime } from '../utils/helpers'
 import { authService } from '@/core/auth'
@@ -240,6 +322,18 @@ const recipientLoading = ref(false)
 const recipientTableData = ref([])
 const allRecipientData = ref([])
 const currentTemplate = ref(null)
+const recipientSearchKeyword = ref('')
+
+const filteredRecipientTableData = computed(() => {
+  const kw = recipientSearchKeyword.value.trim().toLowerCase()
+  if (!kw) return recipientTableData.value
+  return recipientTableData.value.filter(
+    row =>
+      String(row.name || '').toLowerCase().includes(kw) ||
+      String(row.email || '').toLowerCase().includes(kw) ||
+      String(row.remarks || '').toLowerCase().includes(kw)
+  )
+})
 
 // 收件人表单弹窗
 const recipientFormVisible = ref(false)
@@ -421,6 +515,7 @@ function filterRecipientsByTemplate() {
  */
 async function showRecipientDialog(template) {
   currentTemplate.value = template
+  recipientSearchKeyword.value = ''
   recipientDialogVisible.value = true
   await loadRecipientList()
 }
@@ -596,54 +691,150 @@ watch(templateList, () => {
 </script>
 
 <style scoped lang="scss">
+.email-config-page {
+  min-width: 0;
+  gap: 12px;
+}
+
 .ops-action-bar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 12px;
 }
 
-.search-box {
+.email-switch-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.email-template-count {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.global-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+  }
+
+  &--active {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    .status-dot {
+      background: #10b981;
+    }
+  }
+
+  &--muted {
+    background: var(--el-fill-color);
+    color: var(--el-text-color-secondary);
+    .status-dot {
+      background: #94a3b8;
+    }
+  }
+}
+
+.time-text {
+  color: var(--el-text-color-regular);
+  font-variant-numeric: tabular-nums;
+}
+
+.channel-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+
+  &--active {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+  }
+
+  &--paused {
+    background: var(--el-fill-color);
+    color: var(--el-text-color-secondary);
+  }
+}
+
+.template-banner-card {
   display: flex;
   align-items: center;
-  gap: 8px;
-}
+  justify-content: space-between;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.06), rgba(37, 99, 235, 0.02));
+  border: 1px solid rgba(37, 99, 235, 0.14);
+  border-radius: 10px;
 
-.template-name {
-  font-weight: 500;
-  color: var(--el-text-color-primary);
-}
-
-.recipient-dialog {
-  .dialog-header {
+  .banner-left {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    gap: 12px;
+  }
+
+  .banner-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    background: rgba(37, 99, 235, 0.12);
+    color: #2563eb;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+  }
+
+  .banner-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .banner-label {
+    font-size: 11px;
+    color: var(--el-text-color-secondary);
+  }
+
+  .banner-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--el-text-color-primary);
+  }
+
+  .stat-pill {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--el-bg-color);
+    border: 1px solid var(--el-border-color-lighter);
+    font-size: 12px;
+    color: var(--el-text-color-regular);
   }
 }
 
-.recipient-dialog,
-.custom-content-dialog {
-  .template-info {
-    padding: 12px 16px;
-    background: var(--el-bg-color-page);
-    border-radius: 4px;
+.dialog-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
 
-    .label {
-      color: var(--el-text-color-secondary);
-      margin-right: 8px;
-    }
-
-    .value {
-      font-weight: 500;
-      color: var(--el-text-color-primary);
-    }
-  }
-}
-
-.custom-content-dialog {
-  .template-info {
-    margin-bottom: 20px;
+  .toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 }
 </style>

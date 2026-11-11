@@ -119,6 +119,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import * as pmsApi from '@/modules/password/api'
+import { throwIfWorkflowFailed } from '@/utils/workflowResult'
 
 const loading = ref(false)
 const saving = ref(false)
@@ -211,13 +212,14 @@ async function handleSave() {
 
   saving.value = true
   try {
-    await pmsApi.saveSystemParam(editForm.value)
+    const response = await pmsApi.saveSystemParam(editForm.value)
+    throwIfWorkflowFailed(response, '保存失败')
     ElMessage.success('保存成功')
     editDialogVisible.value = false
     loadData()
   } catch (error) {
     console.error('Failed to save:', error)
-    ElMessage.error('保存失败')
+    ElMessage.error(error?.message || '保存失败')
   } finally {
     saving.value = false
   }

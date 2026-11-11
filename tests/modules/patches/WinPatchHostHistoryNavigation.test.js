@@ -124,6 +124,7 @@ async function open(target = { name: 'patches-windowsRollback' }) {
             'ElDescriptions',
             'ElDescriptionsItem',
             'ElTag',
+            'ElLink',
             'ElTooltip',
             'ElPopover'
           ].map(name => [name, true])

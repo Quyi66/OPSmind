@@ -98,7 +98,7 @@ describe.each([
     vi.useRealTimers()
   })
 
-  function createWizard({ reboot = true, validate = false } = {}) {
+  function createWizard({ reboot = true, preCheck = false, validate = false } = {}) {
     let wizard
     wrapper = mount(
       defineComponent({
@@ -112,8 +112,9 @@ describe.each([
       })
     )
     wizard[updateOptions]({ reboot, rescanAfter: false })
-    wizard.skippedSteps.value['pre-check'] = true
+    wizard.skippedSteps.value['pre-check'] = !preCheck
     wizard.skippedSteps.value.validate = !validate
+    if (preCheck) wizard.updatePreScriptConfig({ content: 'Write-Output pre-check' })
     if (validate) wizard.updateValidateScriptConfig({ content: 'Write-Output ok' })
     return wizard
   }
@@ -339,7 +340,8 @@ describe.each([
     const execution = wizard.startExecution()
     await vi.advanceTimersByTimeAsync(0)
 
-    expect(stepCalls(apiMocks.executeTaskStep, 'RESTART')).toHaveLength(1)
+    expect(stepCalls(apiMocks.executeTaskStep, 'RESTART')).toHaveLength(0)
+    expect(stepCalls(apiMocks.skipTaskStep, 'RESTART')).toHaveLength(0)
     expectNoValidate()
 
     // 即使 host-1 已经是 SUCCESS，因为 host-2 还在 RUNNING，RESTART 步骤 UI 必须为 running
@@ -386,7 +388,7 @@ describe.each([
       }
     }))
 
-    const wizard = createWizard({ validate: true })
+    const wizard = createWizard({ preCheck: true, validate: true })
     wizard.startExecution()
     await vi.advanceTimersByTimeAsync(0)
 
@@ -418,7 +420,7 @@ describe.each([
       }
     }))
 
-    const wizard = createWizard({ validate: true })
+    const wizard = createWizard({ preCheck: true, validate: true })
     wizard.startExecution()
     await vi.advanceTimersByTimeAsync(0)
 

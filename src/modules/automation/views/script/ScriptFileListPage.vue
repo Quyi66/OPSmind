@@ -123,7 +123,9 @@
           v-model="searchText"
           clearable
           :placeholder="searchPlaceholder"
-          @keyup.enter="handleSearch" @clear="handleSearch">
+          @keyup.enter="handleSearch"
+          @clear="handleSearch"
+        >
           <template #prefix>
             <i class="fa fa-search" />
           </template>
@@ -176,6 +178,10 @@
       </div>
     </div>
 
+    <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
+      <el-button link type="primary" @click="loadFiles">重试</el-button>
+    </el-alert>
+
     <div
       class="file-table-container"
       :class="{ 'is-empty': !loading && filteredFiles.length === 0 }"
@@ -185,7 +191,7 @@
           <i :class="repoMeta.emptyIcon" />
           <h3>{{ emptyStateTitle }}</h3>
           <p>{{ emptyStateDescription }}</p>
-          <div v-if="repoType !== 'stage'" class="empty-state__actions">
+          <div v-if="!loadError && repoType !== 'stage'" class="empty-state__actions">
             <el-button type="primary" @click="handleAddFolder">新建文件夹</el-button>
             <el-button @click="uploadDialogVisible = true">上传文件</el-button>
           </div>
@@ -199,11 +205,18 @@
         ref="fileTableRef"
         height="100%"
         row-key="_key"
+        :default-sort="sortState"
+        @sort-change="handleSortChange"
         @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="40" :selectable="isSelectable" :reserve-selection="true" />
+        <el-table-column
+          type="selection"
+          width="40"
+          :selectable="isSelectable"
+          :reserve-selection="true"
+        />
 
-        <el-table-column label="名称" min-width="300" sortable prop="name">
+        <el-table-column label="名称" min-width="300" sortable="custom" prop="name">
           <template #default="{ row }">
             <div class="file-name-cell">
               <i :class="getFileIcon(row)" class="file-icon" />
@@ -279,13 +292,13 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="大小" prop="size" width="100" sortable>
+        <el-table-column label="大小" prop="size" width="100" sortable="custom">
           <template #default="{ row }">
             {{ formatFileSize(row) }}
           </template>
         </el-table-column>
 
-        <el-table-column label="修改日期" prop="lastModified" width="120" sortable>
+        <el-table-column label="修改日期" prop="lastModified" width="120" sortable="custom">
           <template #default="{ row }">
             <a
               v-if="row.lastModified && !row.directory && !row._isParentDir && repoType === 'git'"
@@ -316,7 +329,7 @@
         </el-table-column>
       </el-table>
     </div>
- 
+
     <!-- 分页组件 -->
     <div class="pagination-container" v-if="filteredFiles.length > 0">
       <el-pagination
@@ -426,9 +439,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, onDeactivated, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import * as gfsApi from '@/modules/automation/api/gfs'
+import { sortScriptFiles } from '@/modules/automation/utils/scriptFileSort'
+import { toKnownNumber } from '@/utils/workspacePresentation'
 import {
   AddScriptDialog,
   AddFolderDialog,
@@ -462,6 +477,10 @@ const emit = defineEmits(['dir-change', 'navigate-to-script-library'])
 
 // 状态
 const loading = ref(false)
+const loadError = ref('')
+let fileRequest = 0
+let repoRequest = 0
+let mounted = false
 const currentDir = ref('')
 const fileList = ref([])
 const selectedFiles = ref([])
@@ -469,6 +488,7 @@ const searchText = ref('')
 const fileTableRef = ref(null)
 const currentPage = ref(1)
 const pageSize = ref(20)
+const sortState = ref({ prop: '', order: null })
 const clipboard = ref([])
 const clipboardDir = ref('')
 const hideOplus = ref(true) // 是否隐藏内置应用脚本目录(oplus)
@@ -542,38 +562,53 @@ const selectionBannerDescription = computed(() => {
 })
 
 const emptyStateTitle = computed(() => {
+  if (loadError.value) return '文件列表读取失败'
   if (searchText.value) return '没有找到匹配内容'
   if (props.repoType === 'stage') return '当前没有待审核文件'
   return currentDir.value ? '当前目录为空' : '当前仓库暂无文件'
 })
 
 const emptyStateDescription = computed(() => {
+  if (loadError.value) return '请重试读取当前目录。'
   if (searchText.value) return '可以尝试调整关键词，或切换到其他目录继续查看。'
   if (props.repoType === 'stage') return '待有新版本提交后，这里会出现可审核的文件。'
   return '可以在当前目录新建文件夹、上传文件，或同步远程内容到这里。'
 })
 
 async function resolveRepoId() {
-  if (props.repo !== '$tnt') {
-    currentRepo.value = props.repo
+  const request = ++repoRequest
+  const repo = props.repo
+  if (repo !== '$tnt') {
+    currentRepo.value = repo
     return
   }
 
   // Try to load current repo info
   try {
     const res = await gfsApi.loadCurrentRepo('git', '$tnt')
+    if (request !== repoRequest || props.repo !== repo) return
     const repoInfo = res?.data || res
     if (repoInfo?.id) {
       currentRepo.value = repoInfo.id
       return
     }
   } catch (e) {
+    if (request !== repoRequest || props.repo !== repo) return
     // If failed, just use $tnt as default
     console.warn('Failed to resolve repo id, using $tnt as default', e)
   }
 }
 
-watch(() => props.repo, resolveRepoId, { immediate: true })
+watch(
+  () => [props.repo, props.repoType],
+  () => {
+    currentRepo.value = props.repo
+    currentPage.value = 1
+    resolveRepoId()
+    if (mounted) loadFiles()
+  },
+  { immediate: true }
+)
 
 const breadcrumbs = computed(() => {
   const crumbs = [{ name: '~', path: '' }]
@@ -601,8 +636,8 @@ const filteredFiles = computed(() => {
   }
 
   // 搜索过滤
-  if (searchText.value) {
-    const search = searchText.value.toLowerCase()
+  const search = searchText.value.trim().toLowerCase()
+  if (search) {
     list = list.filter(
       f =>
         f.name.toLowerCase().includes(search) ||
@@ -610,7 +645,7 @@ const filteredFiles = computed(() => {
     )
   }
 
-  return list
+  return sortScriptFiles(list, sortState.value)
 })
 
 // 分页过滤后的文件列表
@@ -628,8 +663,13 @@ function handleSizeChange() {
   currentPage.value = 1
 }
 
+function handleSortChange({ prop, order }) {
+  sortState.value = { prop, order }
+  currentPage.value = 1
+}
+
 function handleCurrentChange() {
-  const tableBody = document.querySelector('.file-table-container .el-table__body-wrapper')
+  const tableBody = fileTableRef.value?.$el?.querySelector('.el-table__body-wrapper')
   if (tableBody) {
     tableBody.scrollTop = 0
   }
@@ -641,12 +681,16 @@ const hasSelection = computed(() => selectedFiles.value.length > 0)
 // 是否可以粘贴
 const canPaste = computed(() => {
   if (!clipboard.value.length) return false
-  const isPasteInCut = clipboard.value.some(f => currentDir.value.startsWith(f.path))
+  const isPasteInCut = clipboard.value.some(f => {
+    const path = typeof f.path === 'string' ? f.path.replace(/\/+$/, '') : ''
+    return !path || currentDir.value === path || currentDir.value.startsWith(`${path}/`)
+  })
   return !isPasteInCut && clipboardDir.value !== currentDir.value
 })
 
 // 初始化
 onMounted(() => {
+  mounted = true
   currentDir.value = props.initialDir
   loadFiles()
 })
@@ -658,9 +702,23 @@ watch(currentDir, newDir => {
 
 // 加载文件列表
 async function loadFiles() {
+  const request = ++fileRequest
+  const dir = currentDir.value
+  const repo = props.repo
+  const repoType = props.repoType
+  const isCurrent = () =>
+    request === fileRequest &&
+    dir === currentDir.value &&
+    repo === props.repo &&
+    repoType === props.repoType
   loading.value = true
+  loadError.value = ''
+  fileList.value = []
+  selectedFiles.value = []
+  fileTableRef.value?.clearSelection()
   try {
-    const files = await gfsApi.listFiles(currentRepo.value, currentDir.value, props.repoType)
+    const files = await gfsApi.listFiles(currentRepo.value, dir, repoType)
+    if (!isCurrent()) return false
 
     // Attempt to extract real repo ID from the file list if we are using $tnt
     if (
@@ -685,8 +743,8 @@ async function loadFiles() {
       return a.name.localeCompare(b.name)
     })
 
-    if (currentDir.value) {
-      const parentDir = currentDir.value.split('/').slice(0, -1).join('/')
+    if (dir) {
+      const parentDir = dir.split('/').slice(0, -1).join('/')
       processed.unshift({
         name: '..',
         directory: true,
@@ -697,21 +755,36 @@ async function loadFiles() {
     }
 
     fileList.value = processed
-    currentPage.value = 1
+    currentPage.value = Math.min(
+      currentPage.value,
+      Math.max(1, Math.ceil(filteredFiles.value.length / pageSize.value))
+    )
     if (fileTableRef.value) {
       fileTableRef.value.clearSelection()
     }
+    return true
   } catch (error) {
+    if (!isCurrent()) return false
+    loadError.value = '获取文件列表失败，请重试'
     ElMessage.error(error?.message || '获取文件列表失败')
+    return false
   } finally {
-    loading.value = false
+    if (isCurrent()) loading.value = false
   }
 }
 
+function invalidateFileRead() {
+  fileRequest += 1
+  repoRequest += 1
+  if (loading.value) loadError.value = '文件列表读取已中断，请重试'
+  loading.value = false
+}
+onBeforeUnmount(invalidateFileRead)
+onDeactivated(invalidateFileRead)
+
 // 刷新
-function refresh() {
-  loadFiles()
-  ElMessage.success('刷新成功')
+async function refresh() {
+  if (await loadFiles()) ElMessage.success('刷新成功')
 }
 
 function handleUtilityCommand(command) {
@@ -749,6 +822,7 @@ function handleUtilityCommand(command) {
 // 进入目录
 function goDir(dir) {
   currentDir.value = dir
+  currentPage.value = 1
   loadFiles()
 }
 
@@ -792,8 +866,7 @@ function handleRevisionFileOpen(payload) {
 // 进入内置应用脚本目录
 function goBaseRepo() {
   hideOplus.value = false // 显示 oplus 目录
-  currentDir.value = 'oplus'
-  loadFiles()
+  goDir('oplus')
 }
 
 // 文件点击
@@ -1021,7 +1094,8 @@ function getFileIcon(file) {
 
 function formatFileSize(file) {
   if (file.directory || file._isParentDir) return '-'
-  const size = file.size || 0
+  const size = toKnownNumber(file.size)
+  if (size === null) return '-'
   if (size < 1024) return `${size} B`
   if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
   if (size < 1024 * 1024 * 1024) return `${(size / 1024 / 1024).toFixed(1)} MB`

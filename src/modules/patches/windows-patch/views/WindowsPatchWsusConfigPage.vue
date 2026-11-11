@@ -14,6 +14,10 @@
       </el-button>
     </div>
 
+    <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
+      <el-button link type="primary" @click="loadConfigs()">重试</el-button>
+    </el-alert>
+
     <div class="ops-table-wrapper">
       <el-table v-loading="loading" :data="configList" max-height="calc(100vh - 254px)">
         <el-table-column label="WSUS 地址" min-width="260" show-overflow-tooltip>
@@ -60,6 +64,9 @@
             <el-button text type="danger" size="small" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
+        <template #empty>
+          {{ loading ? '正在读取 WSUS 配置…' : loadError || '暂无 WSUS 配置' }}
+        </template>
       </el-table>
     </div>
 
@@ -72,7 +79,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import WinPatchWsusConfigDialog from '../components/wsus/WinPatchWsusConfigDialog.vue'
@@ -80,20 +87,29 @@ import { winPatchApi } from '../api'
 import { formatDateTime, normalizeBoolean, pickValue } from '../utils'
 
 const loading = ref(false)
+const loadError = ref('')
+let loadRequestId = 0
 const configList = ref([])
 const dialogVisible = ref(false)
 const editingConfig = ref(null)
 
 async function loadConfigs() {
+  const requestId = ++loadRequestId
   loading.value = true
+  loadError.value = ''
+  configList.value = []
   try {
     const response = await winPatchApi.getWsusConfigs()
-    configList.value = Array.isArray(response?.data) ? response.data : []
+    if (requestId !== loadRequestId) return
+    if (!Array.isArray(response?.data)) throw new Error('WSUS 配置响应不是列表')
+    configList.value = response.data
   } catch (error) {
+    if (requestId !== loadRequestId) return
+    loadError.value = '加载 WSUS 配置失败，请重试'
     console.error('加载 WSUS 配置失败:', error)
     ElMessage.error('加载 WSUS 配置失败')
   } finally {
-    loading.value = false
+    if (requestId === loadRequestId) loading.value = false
   }
 }
 
@@ -130,6 +146,9 @@ async function handleDelete(row) {
 
 onMounted(() => {
   loadConfigs()
+})
+onBeforeUnmount(() => {
+  loadRequestId += 1
 })
 </script>
 

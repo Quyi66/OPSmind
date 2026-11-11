@@ -1,13 +1,15 @@
 <template>
   <div class="ops-page-layout">
     <div class="ops-filter-bar">
-      <el-form :model="filters" inline size="small">
+      <el-form :model="filters" inline size="small" @submit.prevent>
         <el-form-item label="任务类型">
           <el-select
             v-model="filters.taskType"
             clearable
             placeholder="全部"
-            class="task-type-filter" @change="handleSearch">
+            class="task-type-filter"
+            @change="handleSearch"
+          >
             <el-option label="全部" value="" />
             <el-option label="补丁安装" value="install" />
             <el-option label="变更回滚" value="rollback" />
@@ -21,7 +23,9 @@
             placeholder="请输入"
             clearable
             class="operator-filter"
-          @keyup.enter="handleSearch" @clear="handleSearch" />
+            @keyup.enter="handleSearch"
+            @clear="handleSearch"
+          />
         </el-form-item>
         <el-form-item label="时间范围">
           <el-date-picker
@@ -62,8 +66,17 @@
       </el-button>
     </div>
 
+    <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
+      <el-button link type="primary" @click="loadData">重试</el-button>
+    </el-alert>
+
     <div class="ops-table-wrapper">
-      <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 314px)">
+      <el-table
+        v-loading="loading"
+        :data="visibleRows"
+        max-height="calc(100vh - 314px)"
+        :empty-text="loading ? '正在读取流程操作记录…' : loadError || '暂无符合条件的流程操作记录'"
+      >
         <el-table-column prop="createdTime" label="记录时间" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.createdTime) }}
@@ -89,7 +102,11 @@
               size="small"
               @click="openDetail(row)"
             >
-              {{ row.status === 'CREATED' && row.scheduledTime ? '等待定时执行' : formatTaskStatus(row.status) }}
+              {{
+                row.status === 'CREATED' && row.scheduledTime
+                  ? '等待定时执行'
+                  : formatTaskStatus(row.status)
+              }}
             </RunLogStatusTag>
           </template>
         </el-table-column>
@@ -124,7 +141,7 @@
       </el-table>
     </div>
 
-    <div class="ops-pagination-wrapper">
+    <div class="ops-pagination-wrapper" v-if="!loadError">
       <el-pagination
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.pageSize"
@@ -132,6 +149,7 @@
         :total="pagination.total"
         layout="total, sizes, prev, pager, next, jumper"
         background
+        :disabled="loading"
         @size-change="handleSizeChange"
         @current-change="handlePageChange"
       />
@@ -143,7 +161,15 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import {
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  onActivated,
+  onDeactivated,
+  reactive,
+  ref
+} from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh, RefreshRight, Search } from '@element-plus/icons-vue'
 import { patchLogsApi } from '../api'
@@ -151,6 +177,7 @@ import PatchProcessLogDetailDialog from '../components/logs/PatchProcessLogDetai
 import PatchTaskFailedHostsDialog from '../components/patch-task/dialogs/PatchTaskFailedHostsDialog.vue'
 import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
 import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
+import { toKnownNumber } from '@/utils/workspacePresentation'
 import {
   formatDateTime,
   formatJsonArray,
@@ -167,7 +194,12 @@ const DEFAULT_PAGE_SIZE = 20
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100]
 
 const loading = ref(false)
+const loadError = ref('')
+const active = ref(true)
+let listRequest = 0
+let lastQueryKey = ''
 const tableData = ref([])
+const visibleRows = computed(() => (loading.value || loadError.value ? [] : tableData.value))
 const detailVisible = ref(false)
 const selectedTask = ref(null)
 const failedHostsVisible = ref(false)
@@ -180,11 +212,21 @@ function openFailedHosts(task) {
 
 useActiveTaskListPolling({
   records: tableData,
+  enabled: () => active.value && !loadError.value,
   refresh: loadData,
-  activeStatuses: ['PENDING_APPROVAL', 'CREATED', 'PRE_CHECKING', 'INSTALLING', 'ROLLING_BACK', 'RESTARTING', 'VALIDATING']
+  activeStatuses: [
+    'PENDING_APPROVAL',
+    'CREATED',
+    'PRE_CHECKING',
+    'INSTALLING',
+    'ROLLING_BACK',
+    'RESTARTING',
+    'VALIDATING'
+  ]
 })
 
 const filters = reactive(createDefaultFilters())
+const appliedFilters = reactive(createDefaultFilters())
 const pagination = reactive({
   page: 1,
   pageSize: DEFAULT_PAGE_SIZE,
@@ -192,40 +234,64 @@ const pagination = reactive({
 })
 
 async function loadData() {
+  if (!active.value) return
+  const request = ++listRequest
+  const params = buildQueryParams()
+  lastQueryKey = JSON.stringify(params)
+  const isCurrent = () => active.value && request === listRequest
   loading.value = true
+  loadError.value = ''
   try {
-    const response = await patchLogsApi.getAuditLogs(buildQueryParams())
-    const data = response?.data || response || {}
+    let response = await patchLogsApi.getAuditLogs(params)
+    if (!isCurrent()) return
+    let data = response?.data || response || {}
+    const total = toKnownNumber(data.totalElements, { integer: true })
+    if (total !== null) {
+      const lastPage = Math.max(1, Math.ceil(total / params.size))
+      if (params.page + 1 > lastPage) {
+        pagination.page = lastPage
+        const correctedParams = { ...params, page: lastPage - 1 }
+        lastQueryKey = JSON.stringify(correctedParams)
+        response = await patchLogsApi.getAuditLogs(correctedParams)
+        if (!isCurrent()) return
+        data = response?.data || response || {}
+      }
+    }
     tableData.value = data.content || []
     pagination.total = data.totalElements || 0
   } catch (error) {
+    if (!isCurrent()) return
+    loadError.value = '加载流程操作记录失败，请重试'
     console.error('Failed to load process logs:', error)
     ElMessage.error('加载流程操作记录失败')
-    tableData.value = []
-    pagination.total = 0
   } finally {
-    loading.value = false
+    if (isCurrent()) loading.value = false
   }
 }
 
 function buildQueryParams() {
   return {
-    taskType: filters.taskType || undefined,
-    operator: filters.operator.trim() || undefined,
-    startTime: buildDateRangeBoundary(filters.timeRange?.[0], 'start'),
-    endTime: buildDateRangeBoundary(filters.timeRange?.[1], 'end'),
+    taskType: appliedFilters.taskType || undefined,
+    operator: appliedFilters.operator || undefined,
+    startTime: buildDateRangeBoundary(appliedFilters.timeRange?.[0], 'start'),
+    endTime: buildDateRangeBoundary(appliedFilters.timeRange?.[1], 'end'),
     page: pagination.page - 1,
     size: pagination.pageSize
   }
 }
 
 function handleSearch() {
+  Object.assign(appliedFilters, filters, {
+    operator: filters.operator.trim(),
+    timeRange: [...(filters.timeRange || [])]
+  })
   pagination.page = 1
   loadData()
 }
 
 function handleReset() {
   Object.assign(filters, createDefaultFilters())
+  Object.assign(appliedFilters, createDefaultFilters())
   pagination.page = 1
   pagination.pageSize = DEFAULT_PAGE_SIZE
   loadData()
@@ -233,6 +299,7 @@ function handleReset() {
 
 function handlePageChange(page) {
   pagination.page = page
+  if (JSON.stringify(buildQueryParams()) === lastQueryKey) return
   loadData()
 }
 
@@ -261,6 +328,22 @@ function buildDateRangeBoundary(dateValue, boundary) {
 }
 
 onMounted(loadData)
+
+function invalidateListRead() {
+  active.value = false
+  listRequest += 1
+  if (loading.value) loadError.value = '流程操作记录读取已中断，请刷新重试'
+  loading.value = false
+  detailVisible.value = false
+  failedHostsVisible.value = false
+}
+onBeforeUnmount(invalidateListRead)
+onDeactivated(invalidateListRead)
+onActivated(() => {
+  if (active.value) return
+  active.value = true
+  loadData()
+})
 </script>
 
 <style scoped lang="scss">

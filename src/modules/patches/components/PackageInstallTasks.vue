@@ -67,7 +67,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import { patchInstallApi } from '../api'
 import { formatDateTime, formatJsonArray, formatTaskStatus, getTaskStatusTagType, getTaskStatusTagStyle } from '../utils/patchProcessLogs'
-import { isFutureSchedule } from '../utils/patchInstallSchedule'
+import { isFutureSchedule, isPackageInstallFinished } from '../utils/patchInstallSchedule'
 import PatchTaskFailedHostsDialog from './patch-task/dialogs/PatchTaskFailedHostsDialog.vue'
 
 const props = defineProps({ isAdmin: Boolean })
@@ -144,7 +144,10 @@ async function approve(task, approved) {
 onMounted(() => {
   load()
   timer = setInterval(() => {
-    if (!loading.value && !approving.value) load()
+    const hasDueTask = rows.value.some(task =>
+      !isPackageInstallFinished(task.status) && !isFutureSchedule(task.scheduledTime)
+    )
+    if (!loading.value && !approving.value && hasDueTask) load()
   }, 15000)
 })
 onUnmounted(() => {

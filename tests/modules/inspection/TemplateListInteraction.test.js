@@ -458,6 +458,8 @@ describe('巡检模板列表交互', () => {
       '确定要删除模板「template 0」吗？',
       '删除确认',
       {
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
         confirmButtonText: '删除',
         cancelButtonText: '取消',
         type: 'warning'

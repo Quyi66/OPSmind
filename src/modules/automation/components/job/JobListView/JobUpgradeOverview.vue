@@ -38,9 +38,9 @@
             <i class="fa fa-server" />
             <span>目标主机 ({{ patchOverviewInfo.hosts.length }})</span>
           </div>
-          <div class="subcard-body">
+          <div class="subcard-body" @scroll.passive="handleHostScroll">
             <div
-              v-for="host in patchOverviewInfo.hosts"
+              v-for="host in visibleHosts"
               :key="host.name"
               class="overview-item"
             >
@@ -57,7 +57,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 const props = defineProps({
   ansibleContents: {
@@ -231,6 +231,24 @@ const patchOverviewInfo = computed(() => {
 
   return { hosts, packages, patches }
 })
+
+// 目标主机数量较大时分批渲染，滚动到底部再追加，避免一次性渲染上千节点导致卡顿
+const HOST_PAGE_SIZE = 200
+const hostRenderLimit = ref(HOST_PAGE_SIZE)
+
+const visibleHosts = computed(() => {
+  const hosts = patchOverviewInfo.value?.hosts || []
+  return hosts.length > hostRenderLimit.value ? hosts.slice(0, hostRenderLimit.value) : hosts
+})
+
+function handleHostScroll(event) {
+  const el = event.target
+  const total = patchOverviewInfo.value?.hosts?.length || 0
+  if (hostRenderLimit.value >= total) return
+  if (el.scrollHeight - el.scrollTop - el.clientHeight < 300) {
+    hostRenderLimit.value = Math.min(hostRenderLimit.value + HOST_PAGE_SIZE, total)
+  }
+}
 
 const gridClass = computed(() => {
   let count = 0

@@ -34,7 +34,7 @@
           <div class="tree-container">
             <div
               class="tree-node-item all-item"
-              :class="{ active: selectedGroup === 'all' && !selectedTag }"
+              :class="{ active: selectedGroups.length === 0 && selectedTags.length === 0 }"
               @click="handleSelectGroup('all', '全部设备')"
             >
               <i class="fa fa-server all-icon"></i>
@@ -52,7 +52,7 @@
               class="custom-tree"
             >
               <template #default="{ node, data }">
-                <div class="custom-tree-node" :class="{ active: selectedGroup === data.path }">
+                <div class="custom-tree-node" :class="{ active: selectedGroups.includes(data.path) }">
                   <i class="fa fa-folder node-folder-icon"></i>
                   <span class="node-label-text">{{ node.label }}</span>
                 </div>
@@ -74,7 +74,7 @@
           <div class="tag-container">
             <div
               class="tag-node-item all-item"
-              :class="{ active: !selectedTag && selectedGroup === 'all' }"
+              :class="{ active: selectedGroups.length === 0 && selectedTags.length === 0 }"
               @click="handleSelectGroup('all', '全部设备')"
             >
               <i class="fa fa-server all-icon"></i>
@@ -86,7 +86,7 @@
                 v-for="tag in filteredTags"
                 :key="tag.name"
                 class="tag-item-row"
-                :class="{ active: selectedTag === tag.name }"
+                :class="{ active: selectedTags.includes(tag.name) }"
                 @click="handleSelectTag(tag)"
               >
                 <div class="tag-item-inner">
@@ -121,13 +121,13 @@ const props = defineProps({
     type: Array,
     default: () => []
   },
-  selectedGroup: {
-    type: String,
-    default: 'all'
+  selectedGroups: {
+    type: Array,
+    default: () => []
   },
-  selectedTag: {
-    type: String,
-    default: ''
+  selectedTags: {
+    type: Array,
+    default: () => []
   }
 })
 

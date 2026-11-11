@@ -2,13 +2,17 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <el-form :model="filters" inline size="small">
+      <el-form :model="filters" inline size="small" @submit.prevent>
         <el-form-item label="关键词">
           <el-input
             v-model="filters.keyword"
             placeholder="搜索运维工具名称"
             clearable
-            style="width: 240px" @keyup.enter="handleSearch" @clear="handleSearch">
+            style="width: 240px"
+            @input="handleSearch"
+            @keyup.enter="handleSearch"
+            @clear="handleSearch"
+          >
             <template #prefix>
               <el-icon>
                 <Search />
@@ -17,7 +21,14 @@
           </el-input>
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="filters.status" placeholder="状态筛选" clearable style="width: 140px" @change="handleSearch">
+          <el-select
+            v-model="filters.status"
+            placeholder="状态筛选"
+            clearable
+            value-on-clear=""
+            style="width: 140px"
+            @change="handleSearch"
+          >
             <el-option label="全部状态" value="" />
             <el-option label="审批中" :value="0" />
             <el-option label="审批通过" :value="1" />
@@ -186,8 +197,8 @@ const filteredData = computed(() => {
   let data = tableData.value
 
   // 文本筛选
-  if (filters.keyword) {
-    const keyword = filters.keyword.toLowerCase()
+  const keyword = filters.keyword.trim().toLowerCase()
+  if (keyword) {
     data = data.filter(
       item =>
         item.jobName?.toLowerCase().includes(keyword) ||

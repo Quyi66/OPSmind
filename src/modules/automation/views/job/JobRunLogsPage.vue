@@ -4,7 +4,7 @@
       <el-tab-pane label="运行记录" name="logs">
         <div class="run-logs-tab-content">
           <div class="ops-filter-bar">
-            <el-form :model="filters" inline size="small">
+            <el-form :model="filters" inline size="small" @submit.prevent>
               <el-form-item label="时间范围">
                 <el-select v-model="filters.day" style="width: 140px" @change="handleSearch">
                   <el-option label="全部" value="3650" />
@@ -15,7 +15,12 @@
                 </el-select>
               </el-form-item>
               <el-form-item label="状态">
-                <el-select v-model="filters.status" placeholder="状态筛选" style="width: 140px" @change="handleSearch">
+                <el-select
+                  v-model="filters.status"
+                  placeholder="状态筛选"
+                  style="width: 140px"
+                  @change="handleSearch"
+                >
                   <el-option label="全部状态" value="all" />
                   <el-option label="等待中" value="WAITING" />
                   <el-option label="正在运行" value="RUNNING" />
@@ -27,7 +32,12 @@
                 </el-select>
               </el-form-item>
               <el-form-item label="类型">
-                <el-select v-model="filters.type" placeholder="类型筛选" style="width: 140px" @change="handleSearch">
+                <el-select
+                  v-model="filters.type"
+                  placeholder="类型筛选"
+                  style="width: 140px"
+                  @change="handleSearch"
+                >
                   <el-option
                     v-for="option in jobTypeOptions"
                     :key="option.value || 'all'"
@@ -74,13 +84,29 @@
             </el-button>
           </div>
 
+          <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
+            <el-button link type="primary" :loading="loading" @click="handleRefresh">
+              重试
+            </el-button>
+          </el-alert>
           <div class="ops-table-wrapper">
-            <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 324px)">
-              <el-table-column label="开始时间" width="180" sortable>
+            <el-table
+              v-loading="loading"
+              :data="loading || loadError ? [] : tableData"
+              max-height="calc(100vh - 324px)"
+              :default-sort="{ prop: 'start_time', order: 'descending' }"
+              @sort-change="handleSortChange"
+            >
+              <el-table-column prop="start_time" label="开始时间" width="180" sortable="custom">
                 <template #default="{ row }">
                   {{ formatDateTime(row.start_time) }}
                 </template>
               </el-table-column>
+              <template #empty>
+                <span v-if="loading">正在读取运行记录…</span>
+                <span v-else-if="loadError">读取失败，请重试</span>
+                <span v-else>暂无符合条件的运行记录</span>
+              </template>
 
               <el-table-column label="任务" show-overflow-tooltip min-width="200">
                 <template #default="{ row }">
@@ -112,7 +138,7 @@
                 </template>
               </el-table-column>
 
-              <el-table-column label="结束时间" width="180" sortable>
+              <el-table-column prop="end_time" label="结束时间" width="180" sortable="custom">
                 <template #default="{ row }">
                   {{ formatDateTime(row.end_time) }}
                 </template>
@@ -163,7 +189,7 @@
             </el-table>
           </div>
 
-          <div class="ops-pagination-wrapper">
+          <div v-if="!loadError" class="ops-pagination-wrapper">
             <el-pagination
               v-model:current-page="pagination.page"
               v-model:page-size="pagination.size"
@@ -171,6 +197,7 @@
               :page-sizes="[10, 20, 50, 100]"
               layout="total, sizes, prev, pager, next, jumper"
               background
+              :disabled="loading || Boolean(loadError)"
               @size-change="handlePageSizeChange"
               @current-change="handlePageChange"
             />
@@ -180,7 +207,14 @@
 
       <el-tab-pane label="统计分析" name="statistics">
         <div class="stats-tab-wrapper">
-          <JobStatisticsPage v-if="activeTab === 'statistics'" />
+          <JobStatisticsPage
+            v-if="activeTab === 'statistics'"
+            :active="
+              pageActive &&
+              isRunRecordsRoute() &&
+              normalizeSingleQueryValue(route.query.tab) === 'statistics'
+            "
+          />
         </div>
       </el-tab-pane>
     </el-tabs>
@@ -195,7 +229,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, onActivated, onDeactivated, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
@@ -205,6 +239,7 @@ import ExecuteResultDialog from '../../components/job/JobListView/ExecuteResultD
 import JobStatisticsPage from './JobStatisticsPage.vue'
 import { getAutomationRunTitle } from '../../utils/resourcePresentation'
 import { formatDateTime } from '../../utils/helpers'
+import { getRunLogOrderBy } from '../../utils/runLogSort'
 import {
   RUN_LOG_STATUS_MAP,
   getRunLogStatusLabel,
@@ -215,6 +250,10 @@ import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
 import { throwIfWorkflowFailed } from '@/utils/workflowResult'
 
 const loading = ref(false)
+const loadError = ref('')
+const pageActive = ref(true)
+const orderBy = ref('start_time desc')
+let listRequestId = 0
 const tableData = ref([])
 const filters = ref({
   day: '0',
@@ -238,6 +277,7 @@ const activeTab = ref(
 )
 
 let searchTimeout = null
+let lastOwnRouteState = ''
 const jobTypeOptions = JOB_TYPE_OPTIONS
 const validJobTypes = new Set(JOB_TYPE_OPTIONS.map(option => option.value).filter(Boolean))
 const statusMap = RUN_LOG_STATUS_MAP
@@ -245,50 +285,46 @@ const statusMap = RUN_LOG_STATUS_MAP
 useActiveTaskListPolling({
   records: tableData,
   refresh: fetchData,
-  enabled: () => activeTab.value === 'logs'
+  enabled: () =>
+    pageActive.value && activeTab.value === 'logs' && !loading.value && !loadError.value
 })
 
 onMounted(() => {
   syncFiltersFromRoute()
+  lastOwnRouteState = routeStateKey()
   if (activeTab.value === 'logs') {
     fetchData()
   }
 })
 
 watch(
-  () => route.query,
-  (query, previousQuery) => {
-    const prevTab = normalizeSingleQueryValue(previousQuery?.tab)
-    const nextTab = normalizeSingleQueryValue(query?.tab)
-    const prevDay = previousQuery?.day ?? ''
-    const prevStatus = previousQuery?.status ?? ''
-    const prevType = previousQuery?.type ?? ''
-    const prevKeyword = previousQuery?.keyword ?? ''
-    const nextDay = query?.day ?? ''
-    const nextStatus = query?.status ?? ''
-    const nextType = query?.type ?? ''
-    const nextKeyword = query?.keyword ?? ''
-
+  () => (isRunRecordsRoute() ? routeStateKey() : null),
+  state => {
+    if (state == null || state === lastOwnRouteState) return
+    lastOwnRouteState = state
     syncTabFromRoute()
-
-    if (
-      prevTab === nextTab &&
-      prevDay === nextDay &&
-      prevStatus === nextStatus &&
-      prevType === nextType &&
-      prevKeyword === nextKeyword
-    ) {
-      return
-    }
-
     syncFiltersFromRoute()
 
     if (activeTab.value === 'logs') {
       pagination.value.page = 1
       fetchData()
+    } else {
+      invalidateRead()
     }
   }
 )
+
+function isRunRecordsRoute() {
+  return route.name === 'run-records-logs' || route.path?.replace(/\/$/, '') === '/run-records/logs'
+}
+
+function routeStateKey() {
+  return JSON.stringify(
+    ['tab', 'day', 'status', 'type', 'keyword'].map(key =>
+      normalizeSingleQueryValue(route.query[key])
+    )
+  )
+}
 
 function syncTabFromRoute() {
   const routeTab = normalizeSingleQueryValue(route.query.tab)
@@ -325,7 +361,10 @@ function handleTabChange(tab) {
 }
 
 async function fetchData() {
+  if (!pageActive.value || activeTab.value !== 'logs') return
+  const requestId = ++listRequestId
   loading.value = true
+  loadError.value = ''
   try {
     const payload = {
       params: {
@@ -337,22 +376,49 @@ async function fetchData() {
       },
       size: pagination.value.size,
       page: pagination.value.page,
-      orderBy: 'start_time desc',
+      orderBy: orderBy.value,
       filter: filters.value.search
         ? `start_time|username|executor_url:*${filters.value.search}*`
         : undefined
     }
 
     const response = await jaoApi.fetchJobRunLogs(payload)
+    if (!pageActive.value || requestId !== listRequestId) return
     const data = response?.data || response
     tableData.value = data.records || []
     pagination.value.total = data.total || 0
   } catch (error) {
+    if (!pageActive.value || requestId !== listRequestId) return
+    loadError.value = '获取运行记录失败，请重试'
     ElMessage.error(error?.message || '获取运行记录失败')
   } finally {
-    loading.value = false
+    if (requestId === listRequestId) loading.value = false
   }
 }
+
+function handleSortChange(sort) {
+  orderBy.value = getRunLogOrderBy(sort)
+  pagination.value.page = 1
+  fetchData()
+}
+
+function invalidateRead() {
+  listRequestId += 1
+  clearTimeout(searchTimeout)
+  if (loading.value) loadError.value = '运行记录读取已中断，请刷新重试'
+  loading.value = false
+}
+function pauseReading() {
+  pageActive.value = false
+  invalidateRead()
+}
+onBeforeUnmount(pauseReading)
+onDeactivated(pauseReading)
+onActivated(() => {
+  if (pageActive.value) return
+  pageActive.value = true
+  if (activeTab.value === 'logs') fetchData()
+})
 
 function handleSearch() {
   pagination.value.page = 1
@@ -445,14 +511,14 @@ function getStatusType(status) {
   return getRunLogStatusType(status)
 }
 
-
 function calculateDuration(startTime, endTime) {
-  if (!startTime || !endTime) return '-'
+  if (startTime == null || startTime === '' || endTime == null || endTime === '') return '-'
   const start = new Date(startTime)
   const end = new Date(endTime)
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return '-'
 
-  const diff = Math.abs(end - start) / 1000
+  const diff = (end - start) / 1000
+  if (diff < 0) return '-'
   const hours = Math.floor(diff / 3600)
   const minutes = Math.floor((diff % 3600) / 60)
   const seconds = Math.floor(diff % 60)
@@ -476,10 +542,17 @@ function formatStats(statsJson) {
   try {
     const stats = JSON.parse(statsJson)
     const parts = []
-    if (stats.totalHosts) parts.push(`总数:${stats.totalHosts}`)
-    if (stats.okHosts) parts.push(`成功:${stats.okHosts}`)
-    if (stats.failedHosts) parts.push(`失败:${stats.failedHosts}`)
-    if (stats.unreachableHosts) parts.push(`不可达:${stats.unreachableHosts}`)
+    for (const [field, label] of [
+      ['totalHosts', '总数'],
+      ['okHosts', '成功'],
+      ['failedHosts', '失败'],
+      ['unreachableHosts', '不可达']
+    ]) {
+      const value = stats[field]
+      if (!['number', 'string'].includes(typeof value) || String(value).trim() === '') continue
+      const count = Number(value)
+      if (Number.isFinite(count) && count >= 0) parts.push(`${label}:${count}`)
+    }
     return parts.join(' | ') || '-'
   } catch {
     return '-'

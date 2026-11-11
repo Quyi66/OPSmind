@@ -1,5 +1,16 @@
 <template>
-  <div class="ops-page-layout">
+  <div class="ops-page-layout ops-page-layout--page-scroll">
+    <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
+      <el-button
+        link
+        type="primary"
+        :loading="loading"
+        :disabled="saving || sending"
+        @click="loadConfig"
+      >
+        重试读取
+      </el-button>
+    </el-alert>
     <el-card class="config-card">
       <el-form
         ref="formRef"
@@ -8,6 +19,8 @@
         label-width="120px"
         label-position="top"
         v-loading="loading"
+        :disabled="loading || saving || sending || !configReady"
+        @submit.prevent
       >
         <el-form-item label="用户名" prop="username">
           <el-input
@@ -115,13 +128,27 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import {
+  ref,
+  reactive,
+  onMounted,
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onActivated,
+  onDeactivated
+} from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { apiService } from '@/core/api'
 
 const formRef = ref(null)
 const loading = ref(false)
 const saving = ref(false)
+const loadError = ref('')
+const configReady = ref(false)
+let active = true
+let readRequestId = 0
+let interrupted = false
 
 // 表单数据
 const form = reactive({
@@ -182,24 +209,32 @@ const sending = ref(false)
 
 // 加载配置
 async function loadConfig() {
+  if (!active) return
+  const request = ++readRequestId
   loading.value = true
+  configReady.value = false
+  loadError.value = ''
   try {
     const response = await apiService.get('/api/email-config')
+    if (!active || request !== readRequestId) return
     const data = response?.data || response
 
     if (data) {
       Object.assign(form, data)
-      originalData.value = { ...data }
+      originalData.value = { ...form }
       // 清除初始验证状态
-      setTimeout(() => {
-        formRef.value?.clearValidate()
-      }, 0)
+      await nextTick()
+      if (!active || request !== readRequestId) return
+      formRef.value?.clearValidate()
     }
+    configReady.value = true
   } catch (error) {
+    if (!active || request !== readRequestId) return
     console.error('Failed to load email config:', error)
+    loadError.value = '邮件配置读取失败，暂不可保存或测试，请重试读取'
     ElMessage.error('加载邮件配置失败')
   } finally {
-    loading.value = false
+    if (active && request === readRequestId) loading.value = false
   }
 }
 
@@ -210,6 +245,7 @@ function hasUnsavedChanges() {
 
 // 保存配置
 async function handleSave() {
+  if (!active || !configReady.value || loading.value || saving.value || sending.value) return
   if (!formRef.value) return
 
   try {
@@ -250,6 +286,7 @@ async function handleSave() {
 
 // 打开测试对话框
 function handleTest() {
+  if (!active || !configReady.value || loading.value || saving.value || sending.value) return
   if (hasUnsavedChanges()) {
     ElMessage.warning('请先保存配置后再进行测试')
     return
@@ -261,6 +298,7 @@ function handleTest() {
 
 // 发送测试邮件
 async function handleSendTest() {
+  if (!active || !configReady.value || loading.value || saving.value || sending.value) return
   if (!testRecipient.value) {
     ElMessage.warning('请输入收件人邮箱')
     return
@@ -288,6 +326,24 @@ async function handleSendTest() {
 
 onMounted(() => {
   loadConfig()
+})
+
+function pauseReading() {
+  active = false
+  interrupted = loading.value
+  readRequestId += 1
+  if (loading.value) loadError.value = '邮件配置读取已中断，返回后将重新读取'
+  loading.value = false
+}
+onDeactivated(pauseReading)
+onBeforeUnmount(pauseReading)
+onActivated(() => {
+  if (active) return
+  active = true
+  if (interrupted) {
+    interrupted = false
+    loadConfig()
+  }
 })
 </script>
 
