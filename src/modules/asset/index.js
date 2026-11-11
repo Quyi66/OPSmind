@@ -7,6 +7,6 @@ export const acmModule = {
   icon: 'fas fa-server',
   description: 'IT基础设施资产管理',
   permissions: ['applet:acm'],
-  defaultRoute: '/acm/hostHealthCheck',
+  defaultRoute: '/acm/overview',
   routes: ACM_ROUTE_DEFS
 }
