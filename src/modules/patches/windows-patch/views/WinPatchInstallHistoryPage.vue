@@ -59,13 +59,9 @@
             {{ pickValue(row, ['hosts', 'hostKey', 'host_key'], '-') }}
           </template>
         </el-table-column>
-        <el-table-column label="KB 编号" min-width="160">
+        <el-table-column label="KB 编号" min-width="160" show-overflow-tooltip>
           <template #default="{ row }">
-            <WindowsKbLinkList
-              :kb-numbers="resolveKbNumbers(row)"
-              dialog-title="关联 KB"
-              @select-kb="openKbDetail"
-            />
+            {{ resolveKbNumbers(row).join(', ') || '-' }}
           </template>
         </el-table-column>
         <el-table-column label="更新时间" min-width="190" class-name="win-patch-table__time-column">
@@ -122,8 +118,6 @@
       :run-id="currentRunId"
       :job-title="currentRunTitle"
     />
-
-    <WindowsKbDetailDialog v-model="kbDetailDialogVisible" :kb-number="selectedKbNumber" />
   </div>
 </template>
 
@@ -133,8 +127,6 @@ import { useRoute } from 'vue-router'
 import { Refresh } from '@element-plus/icons-vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import WinPatchRollbackDialog from '../components/tasks/WinPatchRollbackDialog.vue'
-import WindowsKbDetailDialog from '../components/kb/WindowsKbDetailDialog.vue'
-import WindowsKbLinkList from '../components/kb/WindowsKbLinkList.vue'
 import { winPatchApi } from '../api'
 import { WIN_PATCH_PAGE_SIZE_OPTIONS } from '../constants'
 import { formatDateTime, isRollbackSelectable, parsePageResponse, pickValue } from '../utils'
@@ -150,8 +142,6 @@ const rollbackDialogVisible = ref(false)
 const runResultDialogVisible = ref(false)
 const currentRunId = ref('')
 const currentRunTitle = ref('')
-const kbDetailDialogVisible = ref(false)
-const selectedKbNumber = ref('')
 
 const filters = reactive({
   hostId: ''
@@ -282,25 +272,14 @@ function handleRollbackSuccess() {
   loadLogs()
 }
 
-function openKbDetail(kbNumber) {
-  selectedKbNumber.value = normalizeKbNumber(kbNumber)
-  kbDetailDialogVisible.value = Boolean(selectedKbNumber.value)
-}
-
 function resolveKbNumbers(row) {
   const raw = pickValue(
     row,
     ['updateKbNumbers', 'update_kb_numbers', 'kbNumber', 'kb_number', 'kbArticle', 'kb_article'],
     ''
   )
-  if (Array.isArray(raw)) {
-    return raw.map(normalizeKbNumber).filter(Boolean)
-  }
-
-  return String(raw)
-    .split(/[,，;；\s]+/)
-    .map(normalizeKbNumber)
-    .filter(Boolean)
+  const values = Array.isArray(raw) ? raw : String(raw).split(/[,，;；\s]+/)
+  return Array.from(new Set(values.map(normalizeKbNumber).filter(Boolean)))
 }
 
 function normalizeKbNumber(value) {
@@ -328,7 +307,6 @@ watch(
     selectedRows.value = []
     rollbackDialogVisible.value = false
     runResultDialogVisible.value = false
-    kbDetailDialogVisible.value = false
     if (name !== 'patches-windowsRollback') return
 
     const value = Array.isArray(hostId) ? hostId[0] : hostId
