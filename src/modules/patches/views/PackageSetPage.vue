@@ -461,9 +461,12 @@ async function submitEditForm() {
 // 一键分批安装表单
 // ============================================================
 const selectedHosts = ref([])
-const scheduleDate = ref('')
-const scheduleHour = ref('')
-const scheduleMinute = ref('')
+const today = new Date()
+const scheduleDate = ref(
+  `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+)
+const scheduleHour = ref('20')
+const scheduleMinute = ref('00')
 const scheduleHours = Array.from({ length: 24 }, (_, hour) => String(hour).padStart(2, '0'))
 const scheduleMinutes = Array.from({ length: 12 }, (_, index) => String(index * 5).padStart(2, '0'))
 const installForm = reactive({
@@ -476,7 +479,7 @@ const installForm = reactive({
 
 watch([scheduleDate, scheduleHour, scheduleMinute], ([date, hour, minute]) => {
   installForm.scheduledTime = date && hour && minute ? `${date} ${hour}:${minute}` : ''
-})
+}, { immediate: true })
 
 const selectedPackageSet = computed(() => {
   if (installForm.useCustomPackages || !installForm.packageSetId) return null
