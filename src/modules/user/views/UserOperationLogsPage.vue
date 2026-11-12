@@ -3,35 +3,35 @@
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small" @submit.prevent>
-        <el-form-item label="状态">
+        <el-form-item :label="t('common.status')">
           <el-select
             v-model="filters.status"
-            placeholder="全部"
+            :placeholder="t('common.all')"
             style="width: 180px"
             multiple
             collapse-tags
             collapse-tags-tooltip
             @change="handleFilterChange"
           >
-            <el-option label="已完成" value="COMPLETED" />
-            <el-option label="运行失败" value="FAILED" />
-            <el-option label="运行中" value="RUNNING" />
-            <el-option label="运行错误" value="ERROR" />
+            <el-option :label="t('hostUser.completed')" value="COMPLETED" />
+            <el-option :label="t('hostUser.failed')" value="FAILED" />
+            <el-option :label="t('hostUser.running')" value="RUNNING" />
+            <el-option :label="t('hostUser.executionError')" value="ERROR" />
           </el-select>
         </el-form-item>
-        <el-form-item label="时间范围">
+        <el-form-item :label="t('hostUser.timeRange')">
           <el-select v-model="filters.day" style="width: 120px" @change="handleFilterChange">
-            <el-option label="全部" value="3650" />
-            <el-option label="今天" value="1" />
-            <el-option label="最近一周" value="7" />
-            <el-option label="最近一月" value="30" />
-            <el-option label="最近一年" value="365" />
+            <el-option :label="t('common.all')" value="3650" />
+            <el-option :label="t('hostUser.today')" value="1" />
+            <el-option :label="t('hostUser.lastWeek')" value="7" />
+            <el-option :label="t('hostUser.lastMonth')" value="30" />
+            <el-option :label="t('hostUser.lastYear')" value="365" />
           </el-select>
         </el-form-item>
-        <el-form-item label="关键词">
+        <el-form-item :label="t('hostUser.keyword')">
           <el-input
             v-model="filters.keyword"
-            placeholder="用户名、执行节点、结果"
+            :placeholder="t('hostUser.usernameExecutionNodeResult')"
             clearable
             style="width: 220px"
             @keyup.enter="handleSearch"
@@ -45,11 +45,11 @@
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleSearch">
             <el-icon><Search /></el-icon>
-            搜索
+            {{ t('common.search') }}
           </el-button>
           <el-button @click="handleReset">
             <el-icon><RefreshRight /></el-icon>
-            重置
+            {{ t('common.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -58,13 +58,13 @@
     <div v-if="readError" class="read-feedback" role="status">
       <el-alert :title="readError" type="warning" :closable="false" show-icon />
       <el-button v-if="!authError" size="small" :loading="loading" @click="loadData">
-        重试读取
+        {{ t('hostUser.retryReading') }}
       </el-button>
     </div>
     <el-alert v-if="routeError" :title="routeError" type="warning" :closable="false" />
     <el-alert
       v-if="!loading && !readError && !totalKnown"
-      title="未返回可确认的总数，暂不提供翻页。"
+      :title="t('hostUser.noConfirmedTotalWasReturnedPaginationIsUnavailable')"
       type="info"
       :closable="false"
     />
@@ -78,7 +78,7 @@
         size="small"
         :loading="loading"
         @click="loadData"
-        title="刷新"
+        :title="t('common.refresh')"
       >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
@@ -93,17 +93,22 @@
         height="100%"
         :empty-text="emptyText"
       >
-        <el-table-column prop="start_time" label="开始时间" width="180">
+        <el-table-column prop="start_time" :label="t('hostUser.startedAt')" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.start_time) }}
           </template>
         </el-table-column>
-        <el-table-column prop="action" label="操作" min-width="200" show-overflow-tooltip>
+        <el-table-column
+          prop="action"
+          :label="t('common.actions')"
+          min-width="200"
+          show-overflow-tooltip
+        >
           <template #default="{ row }">
             {{ translateAction(row.action) }}
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="status" :label="t('common.status')" width="100">
           <template #default="{ row }">
             <RunLogStatusTag
               :type="getStatusType(row.status)"
@@ -117,22 +122,32 @@
         </el-table-column>
         <el-table-column
           prop="executor_node"
-          label="执行节点"
+          :label="t('hostUser.executionNode')"
           min-width="140"
           show-overflow-tooltip
         />
-        <el-table-column prop="message" label="结果" min-width="200" show-overflow-tooltip>
+        <el-table-column
+          prop="message"
+          :label="t('hostUser.result')"
+          min-width="200"
+          show-overflow-tooltip
+        >
           <template #default="{ row }">
             {{ row.message || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="username" label="用户" min-width="100" show-overflow-tooltip />
-        <el-table-column prop="end_time" label="结束时间" width="180">
+        <el-table-column
+          prop="username"
+          :label="t('common.user')"
+          min-width="100"
+          show-overflow-tooltip
+        />
+        <el-table-column prop="end_time" :label="t('hostUser.endedAt')" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.end_time) }}
           </template>
         </el-table-column>
-        <el-table-column label="耗时" width="100">
+        <el-table-column :label="t('hostUser.duration')" width="100">
           <template #default="{ row }">
             {{ calcDuration(row.start_time, row.end_time) }}
           </template>
@@ -161,6 +176,10 @@
 </template>
 
 <script setup>
+import { message, messageRef } from '@/core/i18n/feedback'
+
+import { t } from '@/core/i18n'
+
 import { ref, computed, watch, onMounted, onActivated, onDeactivated, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
@@ -200,8 +219,8 @@ const appliedFilters = ref({ ...filters.value, status: [...filters.value.status]
 
 const loading = ref(false)
 const tableData = ref([])
-const readError = ref('')
-const routeError = ref('')
+const readError = messageRef('')
+const routeError = messageRef('')
 const authError = ref(false)
 const active = ref(true)
 let requestVersion = 0
@@ -211,7 +230,7 @@ let pendingRouteRead = false
 let resetRouteSignature = null
 const totalKnown = ref(false)
 const emptyText = computed(() =>
-  loading.value ? '正在读取…' : readError.value || '暂无符合条件的操作日志'
+  loading.value ? t('hostUser.reading') : readError.value || t('hostUser.noMatchingOperationLogs')
 )
 
 useActiveTaskListPolling({
@@ -277,11 +296,11 @@ function getStatusType(status) {
 
 function getStatusLabel(status) {
   const labels = {
-    SUCCESS: '运行成功',
-    COMPLETED: '已完成',
-    FAILED: '运行失败',
-    RUNNING: '运行中',
-    ERROR: '运行错误'
+    SUCCESS: t('hostUser.succeeded'),
+    COMPLETED: t('hostUser.completed'),
+    FAILED: t('hostUser.failed'),
+    RUNNING: t('hostUser.running'),
+    ERROR: t('hostUser.executionError')
   }
   return labels[status] || status
 }
@@ -374,12 +393,12 @@ async function readQuery(snapshot, canCorrectPage = true) {
       currentRunId.value = ''
     }
     readError.value = authError.value
-      ? '读取失败：登录已失效或无权访问，请重新登录或联系管理员。'
+      ? message('hostUser.unableToReadYourSessionHasExpiredOr')
       : successfulQuery === key
-        ? '刷新失败，当前显示上次成功结果，可能已过期；请重试。'
+        ? message('hostUser.refreshFailedPreviousResultsMayBeOutdatedPlease')
         : totalKnown.value
-          ? '操作日志读取失败，分页总数沿上次同条件结果；请重试。'
-          : '操作日志读取失败，请重试。'
+          ? message('hostUser.unableToReadLogsTheTotalIsFrom')
+          : message('hostUser.unableToReadOperationLogsPleaseRetry')
   } finally {
     if (isCurrent()) loading.value = false
   }
@@ -438,7 +457,7 @@ function handleReset() {
     router.replace({ query, hash: route.hash }).catch(() => {
       resetRouteSignature = null
       if (active.value && version === requestVersion)
-        routeError.value = '筛选已重置，但地址条件清理失败；重新打开页面前请核对地址。'
+        routeError.value = message('hostUser.filtersWereResetButUrlConditionsCouldNot')
     })
   }
 }
@@ -474,7 +493,8 @@ onActivated(() => {
 function suspendRead() {
   active.value = false
   requestVersion += 1
-  if (loading.value) readError.value = '操作日志读取已中断，请重试。'
+  if (loading.value)
+    readError.value = message('hostUser.readingOperationLogsWasInterruptedPleaseRetry')
   loading.value = false
   showRunResultDialog.value = false
   currentRunId.value = ''

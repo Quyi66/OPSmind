@@ -36,6 +36,8 @@ const buildModuleChildren = (defs, moduleCode, menuCodeOverride) =>
       component: def.component,
       meta: {
         title: def.title,
+        titleKey:
+          def.titleKey || (def.key ? `navigation.pages.${moduleCode}.${def.key}` : undefined),
         moduleCode,
         menuCode: def.menuCode || menuCodeOverride || moduleCode,
         ...(def.meta || {})
@@ -88,6 +90,7 @@ export const baseRoutes = [
     component: () => import('@/views/aiops/AiOpsAssistantPage.vue'),
     meta: {
       title: 'OPS智能助手',
+      titleKey: 'navigation.standalone.aiops',
       requiresAuth: true
     }
   },
@@ -97,6 +100,7 @@ export const baseRoutes = [
     component: () => import('@/views/auth/LoginPage.vue'),
     meta: {
       title: '登录 - KoreOPS',
+      titleKey: 'navigation.standalone.login',
       requiresGuest: true,
       layout: 'auth'
     }
@@ -123,11 +127,12 @@ export const baseRoutes = [
         path: '',
         name: 'home-index',
         component: () => import('@/views/home/HomePage.vue'),
-        meta: { title: '首页' }
+        meta: { title: '首页', titleKey: 'navigation.standalone.home' }
       }
     ],
     meta: {
       title: 'KoreOPS 仪表盘',
+      titleKey: 'navigation.standalone.dashboard',
       requiresAuth: true,
       moduleType: 'vue-native',
       moduleCode: 'dashboard'
@@ -140,6 +145,7 @@ export const baseRoutes = [
     component: MainLayout,
     meta: {
       title: '个人资料 - KoreOPS',
+      titleKey: 'navigation.standalone.profilePage',
       requiresAuth: true
     },
     children: [
@@ -147,7 +153,7 @@ export const baseRoutes = [
         path: '',
         name: 'settings-index',
         component: () => import('@/views/settings/ProfileSettingsPage.vue'),
-        meta: { title: '个人资料' }
+        meta: { title: '个人资料', titleKey: 'navigation.standalone.profile' }
       }
     ]
   },
@@ -156,7 +162,8 @@ export const baseRoutes = [
     name: 'about',
     component: () => import('@/views/about/AboutPage.vue'),
     meta: {
-      title: '关于 - KoreOPS'
+      title: '关于 - KoreOPS',
+      titleKey: 'navigation.standalone.about'
     }
   },
   // 管理后台
@@ -166,6 +173,7 @@ export const baseRoutes = [
     component: () => import('@/layouts/AdminLayout.vue'),
     meta: {
       title: '管理后台',
+      titleKey: 'navigation.standalone.admin',
       requiresAuth: true
     }
   },
@@ -175,7 +183,8 @@ export const baseRoutes = [
     name: 'error-404',
     component: () => import('@/views/error/Error404Page.vue'),
     meta: {
-      title: '未找到页面'
+      title: '未找到页面',
+      titleKey: 'navigation.standalone.notFound'
     }
   },
   {
@@ -184,6 +193,7 @@ export const baseRoutes = [
     component: () => import('@/views/home/HomePage.vue'),
     meta: {
       title: '迁移管理 - KoreOPS',
+      titleKey: 'navigation.standalone.migration',
       requiresAuth: true,
       requiresPermission: 'admin'
     }

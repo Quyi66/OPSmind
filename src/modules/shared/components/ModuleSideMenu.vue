@@ -14,7 +14,7 @@
       <!-- 首页（可选） -->
       <el-menu-item v-if="showHome" index="home" @click="handleHomeClick">
         <el-icon><i class="fas fa-home" /></el-icon>
-        <template #title>首页</template>
+        <template #title>{{ t('common.home') }}</template>
       </el-menu-item>
 
       <!-- 单一分组模式：直接展示子菜单作为一级菜单 -->
@@ -111,6 +111,7 @@ import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import { useMenuStore } from '@/stores/menu.js'
+import { t } from '@/core/i18n'
 
 const props = defineProps({
   // 菜单组数据
@@ -164,7 +165,7 @@ function matchesItemPath(currentPath, item) {
 const menuStore = useMenuStore()
 const isCollapsed = computed({
   get: () => menuStore.sideMenuCollapsed,
-  set: (val) => menuStore.setSideMenuCollapsed(val)
+  set: val => menuStore.setSideMenuCollapsed(val)
 })
 
 // 判断是否只有一个分组
@@ -280,7 +281,7 @@ function getGroupBadgeCount(group) {
 
 <style scoped lang="scss">
 :global(:root) {
-  --nested-menu-bg: #F9F9FC;
+  --nested-menu-bg: #f9f9fc;
 }
 
 :global(html.dark) {
@@ -425,11 +426,11 @@ function getGroupBadgeCount(group) {
 
   // 特别针对三级菜单嵌套容器的背景设置
   :deep(.el-sub-menu .el-sub-menu .el-menu) {
-    background-color: var(--nested-menu-bg) !important; // 独立调色的灰色，避免与页面分割背景色相同导致视觉融合
+    background-color: var(
+      --nested-menu-bg
+    ) !important; // 独立调色的灰色，避免与页面分割背景色相同导致视觉融合
     padding: 4px 0;
   }
-
-
 
   // 激活的子菜单标题
   :deep(.el-sub-menu.is-active > .el-sub-menu__title) {
@@ -466,11 +467,11 @@ function getGroupBadgeCount(group) {
   // 新增：第三层级子菜单项样式，增加左侧内边距区分层级
   :deep(.el-sub-menu .el-sub-menu .el-menu-item) {
     padding-left: 72px !important; // 标准 20px 缩进
-    font-size: 13px;              // 字号微调为 13px，区分主次
-    height: 34px;                 // 收紧高度以增强紧凑感
-    line-height: 34px;            // 同步调整行高
+    font-size: 13px; // 字号微调为 13px，区分主次
+    height: 34px; // 收紧高度以增强紧凑感
+    line-height: 34px; // 同步调整行高
     color: var(--el-text-color-regular);
-    margin: 1px 0;                // 缩减上下微小间距
+    margin: 1px 0; // 缩减上下微小间距
 
     &:hover {
       color: #409eff;
@@ -478,8 +479,10 @@ function getGroupBadgeCount(group) {
     }
 
     &.is-active {
-      background-color: var(--el-color-primary-light-9) !important; // 恢复与二级菜单一致的背景高亮色
-      color: var(--el-color-primary) !important;                  // 统一使用主题主色调
+      background-color: var(
+        --el-color-primary-light-9
+      ) !important; // 恢复与二级菜单一致的背景高亮色
+      color: var(--el-color-primary) !important; // 统一使用主题主色调
       border-right: 3px solid var(--el-color-primary) !important; // 恢复右侧高亮边框以保持视觉统一
       font-weight: 600;
     }

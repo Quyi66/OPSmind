@@ -1,0 +1,177 @@
+{
+  "groups": {
+    "asset-management": "資產管理",
+    "automation": "自動化管理",
+    "patch-testing": "修補程式與弱點",
+    "system-inspection": "系統巡檢",
+    "flow-management": "主機使用者管理",
+    "user-management": "平台使用者管理",
+    "security-management": "安全中心",
+    "system-settings": "系統設定"
+  },
+  "modules": {
+    "acm": "資產",
+    "auto-workbench": "工作台",
+    "jao": "維運工具箱",
+    "gfs": "指令碼中心",
+    "cmd": "命令執行",
+    "task-scheduler": "定時工作",
+    "run-records": "執行記錄",
+    "review-center": "審核中心",
+    "flow": "流程中心",
+    "patches": "修補程式管理(linux)",
+    "windows-patches": "修補程式管理(win)",
+    "patch-logs": "變更記錄查詢",
+    "patch-process-logs": "流程操作記錄",
+    "middleware-cve": "中介軟體 CVE",
+    "yum-repo": "Yum 套件庫管理",
+    "cac": "巡檢中心",
+    "users": "主機使用者管理",
+    "sudo": "Sudo 權限",
+    "password": "密碼管理",
+    "uam": "使用者管理",
+    "ssc": "系統設定"
+  },
+  "pages": {
+    "acm": {
+      "hostHealthCheck": "系統健康度",
+      "overview": "資產總覽",
+      "info": "裝置清單",
+      "exception": "連線巡檢",
+      "data": "群組與標籤",
+      "automation": "連線憑證",
+      "log": "操作記錄",
+      "permission": "存取控制",
+      "model": "資產類型"
+    },
+    "auto-workbench": {
+      "overview": "工作台"
+    },
+    "jao": {
+      "jobs": "維運工具清單",
+      "schedule": "流程編排",
+      "taskScheduler": "定時工作",
+      "runLogs": "執行記錄",
+      "statistics": "資料統計",
+      "requests": "我的申請",
+      "approvals": "維運工具審核",
+      "localInstall": "套件安裝"
+    },
+    "run-records": {
+      "logs": "執行記錄",
+      "statistics": "資料統計"
+    },
+    "gfs": {
+      "scriptLibrary": "指令碼庫",
+      "fileLibrary": "檔案庫",
+      "scriptReview": "指令碼審核"
+    },
+    "cmd": {
+      "list": "命令與維運工具",
+      "job": "命令維運工具",
+      "review": "命令審核",
+      "console": "主控台"
+    },
+    "patches": {
+      "machineScan": "主機概覽",
+      "hostDetail": "主機詳細資料",
+      "patchInstall": "修補程式安裝",
+      "changeRollback": "變更回復",
+      "linuxYumManage": "Linux YUM 管理",
+      "patchLibrary": "修補程式庫",
+      "cveList": "弱點詳細資料",
+      "linuxMachinePackageList": "主機套件清單",
+      "rpmPackageList": "套件查詢",
+      "middlewareCveList": "中介軟體 CVE",
+      "packageSet": "套件集安裝",
+      "installTasks": "安裝申請",
+      "localInstall": "套件安裝",
+      "windowsVulnerability": "Windows 修補程式概覽",
+      "windowsWsus": "WSUS 設定",
+      "windowsYumRepo": "客戶 Yum 套件庫管理",
+      "windowsRollback": "變更回復",
+      "windowsCveList": "弱點詳細資料",
+      "windowsKbList": "Windows KB 知識庫",
+      "logs": "變更記錄查詢",
+      "processLogs": "流程操作記錄"
+    },
+    "yum-repo": {
+      "yumRepo": "套件庫管理",
+      "localInstall": "套件安裝",
+      "yumManage": "Yum 來源清單",
+      "repos": "設定派送",
+      "packages": "軟體概覽",
+      "installed": "已安裝套件",
+      "logs": "操作記錄"
+    },
+    "cac": {
+      "overview": "巡檢總覽",
+      "templates": "範本管理",
+      "results": "執行記錄",
+      "resultDetail": "巡檢報告",
+      "structuralDiagram": "業務拓撲分析",
+      "email": "郵件設定"
+    },
+    "users": {
+      "users": "使用者清單",
+      "groups": "使用者群組",
+      "logs": "操作記錄",
+      "overview": "使用者總覽"
+    },
+    "uam": {
+      "user": "使用者清單",
+      "patch-assignment": "修補程式分配",
+      "team": "團隊管理"
+    },
+    "ssc": {
+      "param": "參數設定",
+      "sql-import": "SQL 匯入",
+      "email": "郵件設定",
+      "engine": "引擎管理",
+      "scheduler": "排程工作"
+    },
+    "flow": {
+      "list": "流程清單",
+      "execution": "執行記錄"
+    },
+    "sudo": {
+      "permission": "sudo 清單",
+      "apply": "權限申請",
+      "templates": "範本管理",
+      "password": "密碼管理",
+      "log": "操作記錄"
+    },
+    "password": {
+      "application": "申請審核",
+      "settings": "參數設定",
+      "logs": "操作記錄"
+    }
+  },
+  "extras": {
+    "installManage": "安裝與回復",
+    "vulnManage": "弱點管理",
+    "repoManage": "軟體與套件庫",
+    "yumRepoManage": "Yum 套件庫",
+    "workspace": "命令與維運工具",
+    "homeDescription": "系統儀表板"
+  },
+  "standalone": {
+    "home": "首頁",
+    "aiops": "OPS 智慧助理",
+    "login": "登入 - KoreOPS",
+    "dashboard": "KoreOPS 儀表板",
+    "profile": "個人資料",
+    "profilePage": "個人資料 - KoreOPS",
+    "about": "關於 - KoreOPS",
+    "admin": "管理後台",
+    "notFound": "找不到頁面",
+    "migration": "移轉管理 - KoreOPS"
+  },
+  "navOverrides": {
+    "patches": {
+      "windowsVulnerability": "主機概覽",
+      "windowsKbList": "KB 知識庫",
+      "windowsYumRepo": "Yum 套件庫管理"
+    }
+  }
+}

@@ -1,5 +1,5 @@
 <template>
-  <el-config-provider :locale="zhCn">
+  <el-config-provider :locale="elementLocale">
     <div id="app" class="opsmind-app">
       <router-view />
     </div>
@@ -7,17 +7,12 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
 import { ElConfigProvider } from 'element-plus'
-import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
+import { elementLocale } from '@/core/i18n/element-locale'
 import { useUpdateChecker } from '@/composables/useUpdateChecker'
 
 // 启动前端版本更新检测（生产环境生效）
 useUpdateChecker()
-
-onMounted(() => {
-  // 初始化应用
-})
 </script>
 
 <style scoped>

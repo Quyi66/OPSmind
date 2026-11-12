@@ -1,19 +1,19 @@
 <template>
   <div class="ops-page-layout overview-page">
     <div class="overview-toolbar">
-      <span>用户与操作统计</span>
+      <span>{{ t('hostUser.userAndOperationStatistics') }}</span>
       <el-button size="small" :loading="statsLoading || chartLoading" @click="refreshOverview">
-        刷新
+        {{ t('common.refresh') }}
       </el-button>
     </div>
     <div v-if="statsError" class="read-feedback" role="status">
       <el-alert :title="statsError" type="warning" :closable="false" />
       <el-button v-if="!statsAuthError" size="small" :loading="statsLoading" @click="loadStats">
-        重试用户统计
+        {{ t('hostUser.retryUserStatistics') }}
       </el-button>
     </div>
     <p v-else-if="statsLoading || statsNotice" class="read-note">
-      {{ statsLoading ? '正在读取用户统计…' : statsNotice }}
+      {{ statsLoading ? t('hostUser.readingUserStatistics') : statsNotice }}
     </p>
     <!-- 统计卡片 (KPI) -->
     <div class="stat-cards">
@@ -26,7 +26,9 @@
         :tabindex="stat.linkView && !statsAuthError ? 0 : undefined"
         :aria-disabled="stat.linkView ? statsAuthError : undefined"
         :title="
-          stat.key === 'errorUserTotal' ? '当前用户列表未提供异常用户明细筛选' : '查看相关列表'
+          stat.key === 'errorUserTotal'
+            ? t('hostUser.filteringUsersWithIssuesIsUnavailableInThe')
+            : t('hostUser.viewTheRelatedList')
         "
         @click="handleCardClick(stat)"
         @keydown.enter="handleCardClick(stat)"
@@ -44,8 +46,8 @@
 
     <!-- 十五天内操作统计 (Line Chart) -->
     <div class="chart-section chart-section--flex">
-      <div class="chart-section__title">十五天内操作统计</div>
-      <p class="read-note">按返回的统计日期展示，未返回日期或计数不补零。</p>
+      <div class="chart-section__title">{{ t('hostUser.operationsInTheLast15Days') }}</div>
+      <p class="read-note">{{ t('hostUser.displaysReportedDatesAndCountsMissingValuesAre') }}</p>
       <div class="chart-section__content chart-section__content--flex">
         <div v-if="chartError" class="read-feedback" role="status">
           <el-alert :title="chartError" type="warning" :closable="false" />
@@ -55,26 +57,26 @@
             :loading="chartLoading"
             @click="loadChartData"
           >
-            重试操作统计
+            {{ t('hostUser.retryOperationStatistics') }}
           </el-button>
         </div>
         <p v-else-if="chartNotice" class="read-note">{{ chartNotice }}</p>
         <div class="chart-legend">
           <span class="legend-item">
             <span class="dot dot--total"></span>
-            总数
+            {{ t('hostUser.total') }}
           </span>
           <span class="legend-item">
             <span class="dot dot--success"></span>
-            已完成
+            {{ t('hostUser.completed') }}
           </span>
           <span class="legend-item">
             <span class="dot dot--failed"></span>
-            失败
+            {{ t('hostUser.failed2') }}
           </span>
           <span class="legend-item">
             <span class="dot dot--running"></span>
-            正在运行
+            {{ t('hostUser.running2') }}
           </span>
         </div>
         <div class="chart-frame" v-loading="chartLoading">
@@ -86,10 +88,10 @@
           <div v-if="!chartReady" class="chart-empty">
             {{
               chartLoading
-                ? '正在读取操作统计…'
+                ? t('hostUser.readingOperationStatistics')
                 : chartError
-                  ? '操作统计读取失败'
-                  : '近十五天暂无可显示的操作统计'
+                  ? t('hostUser.unableToReadOperationStatistics')
+                  : t('hostUser.noOperationStatisticsAvailableForTheLast15')
             }}
           </div>
         </div>
@@ -99,6 +101,10 @@
 </template>
 
 <script setup>
+import { message, messageRef } from '@/core/i18n/feedback'
+
+import { t, currentLocale } from '@/core/i18n'
+
 import {
   ref,
   onMounted,
@@ -122,7 +128,9 @@ const handleNavigate = inject('handleNavigate', null)
 const statCards = ref([
   {
     key: 'hostTotal',
-    label: '主机',
+    get label() {
+      return t('hostUser.hosts')
+    },
     value: null,
     icon: 'fab fa-linux',
     color: 'blue',
@@ -131,7 +139,9 @@ const statCards = ref([
   },
   {
     key: 'userTotal',
-    label: '用户',
+    get label() {
+      return t('common.user')
+    },
     value: null,
     icon: 'fa fa-user-alt',
     color: 'gray',
@@ -140,7 +150,9 @@ const statCards = ref([
   },
   {
     key: 'errorUserTotal',
-    label: '异常用户',
+    get label() {
+      return t('hostUser.usersWithIssues')
+    },
     value: null,
     icon: 'fa fa-user-slash',
     color: 'orange',
@@ -149,7 +161,9 @@ const statCards = ref([
   },
   {
     key: 'groupTotal',
-    label: '用户组',
+    get label() {
+      return t('hostUser.userGroups')
+    },
     value: null,
     icon: 'fa fa-user-friends',
     color: 'gray',
@@ -158,7 +172,9 @@ const statCards = ref([
   },
   {
     key: 'oneMonthTotal',
-    label: '近一月操作',
+    get label() {
+      return t('hostUser.operationsInTheLastMonth')
+    },
     value: null,
     icon: 'fa fa-running',
     color: 'gray',
@@ -167,7 +183,9 @@ const statCards = ref([
   },
   {
     key: 'failedTotal',
-    label: '操作失败数',
+    get label() {
+      return t('hostUser.failedOperations')
+    },
     value: null,
     icon: 'fa fa-exclamation-triangle',
     color: 'red',
@@ -188,11 +206,11 @@ const chartRef = ref(null)
 const chartData = ref([])
 const chartLoading = ref(false)
 const statsLoading = ref(false)
-const statsError = ref('')
-const statsNotice = ref('')
+const statsError = messageRef('')
+const statsNotice = messageRef('')
 const statsAuthError = ref(false)
-const chartError = ref('')
-const chartNotice = ref('')
+const chartError = messageRef('')
+const chartNotice = messageRef('')
 const chartAuthError = ref(false)
 const chartReady = ref(false)
 let active = true
@@ -250,9 +268,9 @@ async function loadStats() {
     statsError.value = ''
     statsAuthError.value = false
     statsNotice.value = !records.length
-      ? '暂无用户统计。'
+      ? message('hostUser.noUserStatisticsAvailable')
       : statCards.value.some(stat => stat.value === null)
-        ? '部分统计未返回有效计数，以“—”显示。'
+        ? message('hostUser.someCountsAreUnavailableAndAreShownAs')
         : ''
   } catch (error) {
     if (!isCurrent()) return
@@ -265,10 +283,10 @@ async function loadStats() {
       statsLoaded = false
     }
     statsError.value = statsAuthError.value
-      ? '用户统计读取失败：登录已失效或无权访问。'
+      ? message('hostUser.unableToReadUserStatisticsSessionExpiredOr')
       : statsLoaded
-        ? '用户统计刷新失败，当前显示上次成功结果，可能已过期。'
-        : '用户统计读取失败，请重试。'
+        ? message('hostUser.userStatisticsCouldNotBeRefreshedPreviousResults')
+        : message('hostUser.unableToReadUserStatisticsPleaseRetry')
   } finally {
     if (isCurrent()) statsLoading.value = false
   }
@@ -296,7 +314,7 @@ async function loadChartData() {
         field => countValue(item[field]) === null
       )
     )
-      ? '部分日期计数缺失，以图表缺口显示。'
+      ? message('hostUser.someDailyCountsAreMissingAndAppearAs')
       : ''
     chartReady.value = !!chartData.value.length
     await nextTick()
@@ -307,8 +325,8 @@ async function loadChartData() {
     console.error('Failed to load chart data:', error)
     chartAuthError.value = isAuthError(error)
     chartError.value = chartAuthError.value
-      ? '操作统计读取失败：登录已失效或无权访问。'
-      : '操作统计读取失败，请重试。'
+      ? message('hostUser.unableToReadOperationStatisticsSessionExpiredOr')
+      : message('hostUser.unableToReadOperationStatisticsPleaseRetry')
     chartData.value = []
     chartReady.value = false
     chartNotice.value = ''
@@ -393,7 +411,7 @@ function initChart() {
     },
     series: [
       {
-        name: '总数',
+        name: t('hostUser.total'),
         type: 'line',
         data: totalData,
         smooth: true,
@@ -408,7 +426,7 @@ function initChart() {
         }
       },
       {
-        name: '已完成',
+        name: t('hostUser.completed'),
         type: 'line',
         data: completedData,
         smooth: true,
@@ -417,7 +435,7 @@ function initChart() {
         itemStyle: { color: '#10b981' }
       },
       {
-        name: '失败',
+        name: t('hostUser.failed2'),
         type: 'line',
         data: failedData,
         smooth: true,
@@ -426,7 +444,7 @@ function initChart() {
         itemStyle: { color: '#ef4444' }
       },
       {
-        name: '正在运行',
+        name: t('hostUser.running2'),
         type: 'line',
         data: runningData,
         smooth: true,
@@ -459,7 +477,7 @@ onMounted(() => {
   }
 })
 
-watch(isDark, () => {
+watch([isDark, currentLocale], () => {
   nextTick(() => {
     if (!active) return
     initChart()
@@ -473,9 +491,10 @@ function suspendRead() {
   active = false
   statsVersion += 1
   chartVersion += 1
-  if (statsLoading.value) statsError.value = '用户统计读取已中断，请重试。'
+  if (statsLoading.value)
+    statsError.value = message('hostUser.readingUserStatisticsWasInterruptedPleaseRetry')
   if (chartLoading.value) {
-    chartError.value = '操作统计读取已中断，请重试。'
+    chartError.value = message('hostUser.readingOperationStatisticsWasInterruptedPleaseRetry')
     chartData.value = []
     chartReady.value = false
   }

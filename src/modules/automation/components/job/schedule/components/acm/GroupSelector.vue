@@ -4,10 +4,10 @@
     <el-dropdown v-if="options.showAs === 'dropdown'" trigger="click" @command="handleSelect">
       <el-button>
         <span v-if="!selectedGroup">
-          {{ options.dropdownText || '选择分组' }}
+          {{ options.dropdownText || t('selection.selectGroup') }}
         </span>
         <span v-else>
-          分组:
+          {{ t('selection.groupPrefix') }}
           <strong class="text-primary">{{ selectedGroup }}</strong>
         </span>
       </el-button>
@@ -34,7 +34,7 @@
         @click="toggleAllSelection()"
       >
         <el-checkbox :model-value="isAllSelected" @change="toggleAllSelection" @click.stop>
-          所有
+          {{ t('selection.all') }}
         </el-checkbox>
       </div>
 
@@ -72,6 +72,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, watch, computed, nextTick } from 'vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 

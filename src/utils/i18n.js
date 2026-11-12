@@ -1,88 +1,13 @@
-/**
- * 集中式 i18n 翻译工具
- * 处理 #{key} 格式的翻译字符串
- *
- * 翻译文件位于 public/i18n/zh-cn/ 目录下
- */
+/** Compatibility adapter for the existing #{key} API. Raw backend text stays unchanged. */
+import {
+  loadTranslations,
+  getLegacyTranslation,
+  addLegacyTranslations
+} from '@/core/i18n/legacy-resources'
 
-// 翻译缓存
-let translationsCache = null
-let loadingPromise = null
-let isLoaded = false
-
-/**
- * 加载所有翻译资源
- */
-async function loadTranslations() {
-  if (translationsCache && isLoaded) {
-    return translationsCache
-  }
-
-  if (loadingPromise) {
-    return loadingPromise
-  }
-
-  loadingPromise = (async () => {
-    const translations = {}
-
-    // 需要加载的翻译文件列表
-    const modules = [
-      'acm',
-      'adm',
-      'app',
-      'app_pms',
-      'app_spm',
-      'app_sudo',
-      'app_uim',
-      'app_vap',
-      'app_vcm',
-      'cac',
-      'cmd',
-      'common',
-      'dts',
-      'flow',
-      'gfs',
-      'jao',
-      'ssc',
-      'udp',
-      'global'
-    ]
-
-    try {
-      // 从 public/i18n/zh-cn/ 目录加载翻译文件
-      const importPromises = modules.map(async module => {
-        try {
-          // 使用 import.meta.env.BASE_URL 自动适应不同的 base 路径
-          const basePath = import.meta.env.BASE_URL || '/'
-          const response = await fetch(`${basePath}i18n/zh-cn/${module}.json`)
-          if (response.ok) {
-            const data = await response.json()
-            Object.assign(translations, data)
-          }
-        } catch (e) {
-          // 静默失败，使用硬编码的备用翻译
-        }
-      })
-
-      await Promise.all(importPromises)
-    } catch (error) {
-      console.warn('Failed to load i18n translations, using static translations')
-    }
-
-    translationsCache = translations
-    isLoaded = true
-    return translations
-  })()
-
-  return loadingPromise
-}
-
-// 模块加载时自动触发翻译资源的预加载
+// Preserve eager preloading for existing consumers; failed modules remain retryable.
 loadTranslations()
 
-/**
- * 硬编码的常用翻译映射（备用，用于翻译文件加载失败时）
- */
 const STATIC_TRANSLATIONS = {
   // 应用标题
   'cac.index.square': '系统巡检',
@@ -208,27 +133,8 @@ export function formatDateTime(dateStr) {
  */
 export function translateI18nKey(text) {
   if (!text) return ''
-
-  // 检查是否是 #{...} 格式
-  if (!text.startsWith('#{') || !text.endsWith('}')) {
-    return text
-  }
-
-  const key = text.slice(2, -1) // 移除 #{ 和 }
-
-  // 首先从缓存中查找
-  if (translationsCache && translationsCache[key]) {
-    return translationsCache[key]
-  }
-
-  // 然后从静态映射中查找
-  if (STATIC_TRANSLATIONS[key]) {
-    return STATIC_TRANSLATIONS[key]
-  }
-
-  // 如果没找到，提取 key 的最后一部分作为显示文本
-  const parts = key.split('.')
-  return parts[parts.length - 1] || text
+  if (!text.startsWith('#{') || !text.endsWith('}')) return text
+  return resolveKey(text.slice(2, -1), text)
 }
 
 /**
@@ -238,24 +144,16 @@ export function translateI18nKey(text) {
  */
 export function translateText(text) {
   if (!text) return ''
+  return text.replace(/#\{([^}]+)\}/g, (match, key) => resolveKey(key, match))
+}
 
-  // 使用正则替换所有 #{...} 格式
-  // 匹配 #{key} 格式，key 可以包含字母、数字、点和下划线
-  return text.replace(/#\{([^}]+)\}/g, (match, key) => {
-    // 首先从缓存中查找
-    if (translationsCache && translationsCache[key]) {
-      return translationsCache[key]
-    }
-
-    // 然后从静态映射中查找
-    if (STATIC_TRANSLATIONS[key]) {
-      return STATIC_TRANSLATIONS[key]
-    }
-
-    // 如果没找到，提取 key 的最后一部分作为显示文本
-    const parts = key.split('.')
-    return parts[parts.length - 1] || match
-  })
+function resolveKey(key, fallback) {
+  return (
+    getLegacyTranslation(key) ||
+    (Object.hasOwn(STATIC_TRANSLATIONS, key) ? STATIC_TRANSLATIONS[key] : undefined) ||
+    key.split('.').pop() ||
+    fallback
+  )
 }
 
 /**
@@ -295,11 +193,8 @@ export async function initTranslations() {
  * 添加自定义翻译
  * @param {Object} translations 翻译键值对
  */
-export function addTranslations(translations) {
-  if (!translationsCache) {
-    translationsCache = {}
-  }
-  Object.assign(translationsCache, translations)
+export function addTranslations(translations, locale) {
+  addLegacyTranslations(translations, locale)
 }
 
 export default {

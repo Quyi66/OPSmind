@@ -19,7 +19,7 @@
               :class="{ 'nav-item-active': activeGroup === 'home' }"
               @click.prevent="handleHomeClick"
             >
-              <img :src="iconHome" alt="首页" class="nav-icon nav-icon-home" />
+              <img :src="iconHome" :alt="t('common.home')" class="nav-icon nav-icon-home" />
               <span class="nav-text">{{ homeMenu.name }}</span>
             </a>
 
@@ -72,6 +72,7 @@
 
         <!-- Right Side User Area -->
         <div class="nav-right">
+          <LanguageSwitcher />
           <!-- AI OPS Button -->
           <el-tooltip
             content="AI OPS"
@@ -90,12 +91,12 @@
           >
             <div class="notification-wrapper">
               <el-tooltip
-                content="通知"
+                :content="t('common.notifications')"
                 placement="bottom"
                 :disabled="notificationPopoverVisible"
                 :popper-options="headerTooltipPopperOptions"
               >
-                <button class="notification-btn" aria-label="通知">
+                <button class="notification-btn" :aria-label="t('common.notifications')">
                   <svg class="notification-icon" fill="currentColor" viewBox="0 0 20 20">
                     <path
                       d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"
@@ -128,19 +129,19 @@
                   <el-icon>
                     <User />
                   </el-icon>
-                  个人资料
+                  {{ t('common.profile') }}
                 </el-dropdown-item>
                 <!-- <el-dropdown-item command="admin">
                   <el-icon>
                     <Setting />
                   </el-icon>
-                  管理后台
+                  {{ t('common.admin') }}
                 </el-dropdown-item> -->
                 <el-dropdown-item divided command="logout">
                   <el-icon>
                     <SwitchButton />
                   </el-icon>
-                  退出登录
+                  {{ t('common.logout') }}
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -148,7 +149,7 @@
 
           <!-- Theme Switch Button -->
           <el-tooltip
-            :content="isDark ? '切换日间模式' : '切换夜间模式'"
+            :content="isDark ? t('common.lightMode') : t('common.darkMode')"
             placement="bottom"
             :popper-options="headerTooltipPopperOptions"
           >
@@ -180,42 +181,6 @@
               </el-dropdown-menu>
             </template>
           </el-dropdown> -->
-
-          <!-- Language Dropdown: 三个选项，全部置灰禁用 -->
-          <!-- <el-dropdown trigger="hover" class="language-dropdown">
-            <button class="menu-action-btn" aria-label="语言">
-              <el-icon>
-                <svg
-                  class="language-icon"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <circle cx="12" cy="12" r="9" />
-                  <path d="M3 12h18" />
-                  <path d="M12 3c3 3.5 3 14.5 0 18" />
-                  <path d="M12 3c-3 3.5-3 14.5 0 18" />
-                </svg>
-              </el-icon>
-            </button>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item disabled>
-                  <span style="color:#9ca3af">中文简体</span>
-                </el-dropdown-item>
-                <el-dropdown-item disabled>
-                  <span style="color:#9ca3af">中文繁体</span>
-                </el-dropdown-item>
-                <el-dropdown-item disabled>
-                  <span style="color:#9ca3af">English</span>
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown> -->
         </div>
       </div>
 
@@ -229,7 +194,11 @@
             :class="{ 'mobile-nav-item-active': activeGroup === 'home' }"
             @click.prevent="handleHomeClick"
           >
-            <img :src="iconHome" alt="首页" class="mobile-nav-icon mobile-nav-icon-home" />
+            <img
+              :src="iconHome"
+              :alt="t('common.home')"
+              class="mobile-nav-icon mobile-nav-icon-home"
+            />
             <span class="mobile-nav-text">{{ homeMenu.name }}</span>
           </a>
 
@@ -268,27 +237,29 @@
     <!-- About 对话框 -->
     <el-dialog
       v-model="versionDialogVisible"
-      title="About"
+      :title="t('common.about')"
       width="800px"
       append-to-body
       class="about-dialog"
       :close-on-click-modal="true"
     >
       <el-tabs v-model="aboutActiveTab" class="about-tabs">
-        <el-tab-pane label="版本信息" name="versions">
+        <el-tab-pane :label="t('common.versionInfo')" name="versions">
           <div v-loading="versionLoading">
             <el-table :data="versionRows" size="small" class="about-table">
-              <el-table-column prop="name" label="名称" width="180" />
-              <el-table-column prop="version" label="版本" width="140" />
-              <el-table-column prop="build" label="打包时间" />
-              <el-table-column prop="code" label="代码版本" width="220" />
+              <el-table-column prop="name" :label="t('common.name')" width="180" />
+              <el-table-column prop="version" :label="t('common.version')" width="140" />
+              <el-table-column prop="build" :label="t('common.buildTime')" />
+              <el-table-column prop="code" :label="t('common.codeVersion')" width="220" />
             </el-table>
           </div>
         </el-tab-pane>
       </el-tabs>
 
       <template #footer>
-        <el-button type="primary" @click="versionDialogVisible = false">关闭</el-button>
+        <el-button type="primary" @click="versionDialogVisible = false">
+          {{ t('common.close') }}
+        </el-button>
       </template>
     </el-dialog>
   </div>
@@ -316,6 +287,8 @@ import {
 } from '@element-plus/icons-vue'
 import NotificationPopover from '@/components/layout/NotificationPopover.vue'
 import { useTheme } from '@/composables/useTheme'
+import LanguageSwitcher from '@/components/shared/LanguageSwitcher.vue'
+import { t } from '@/core/i18n'
 import { toggleAiOpsPanel, prewarmAiOpsPanel, disposeAiOpsPanel } from '@/utils/ai-ops-panel'
 
 // 导入菜单图标
@@ -357,8 +330,8 @@ const userAvatarUrl = ref('')
 const displayUserName = computed(() => {
   if (accountFullName.value) return accountFullName.value
   const user = props.user || authService.getCurrentUser() || null
-  if (!user) return '未登录'
-  return user.fullName || user.firstName || user.name || user.login || '用户'
+  if (!user) return t('common.notLoggedIn')
+  return user.fullName || user.firstName || user.name || user.login || t('common.user')
 })
 
 const displayAvatarUrl = computed(() => {
@@ -394,7 +367,6 @@ const handleNotificationCountChange = count => {
 }
 
 const showMobileMenu = ref(false)
-const currentLanguage = ref('zh-cn')
 
 async function loadAccountInfo(forceRefresh = false) {
   try {
@@ -494,14 +466,14 @@ const handleUserCommand = command => {
 
 const handleLogout = async () => {
   try {
-    ElMessage.success('正在安全登出...')
+    ElMessage.success(t('common.signingOut'))
     try {
       accountService.clear()
     } catch {}
     await authService.logout()
   } catch (error) {
     console.error('Logout error:', error)
-    ElMessage.error('登出失败')
+    ElMessage.error(t('common.logoutFailed'))
   }
 }
 
@@ -531,7 +503,7 @@ const aboutActiveTab = ref('versions')
 const handleAboutCommand = async command => {
   switch (command) {
     case 'help':
-      ElMessage.info('帮助开发中...')
+      ElMessage.info(t('common.development'))
       break
     case 'about':
       await openVersionDialog()
@@ -582,14 +554,10 @@ async function openVersionDialog() {
     }))
   } catch (error) {
     console.error('加载版本信息失败:', error)
-    ElMessage.error('版本信息加载失败')
+    ElMessage.error(t('common.versionLoadFailed'))
   } finally {
     versionLoading.value = false
   }
-}
-
-const handleLanguageCommand = _language => {
-  ElMessage.info('语言功能开发中...')
 }
 
 watch(

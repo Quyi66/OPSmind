@@ -10,7 +10,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 // Element Plus - 按需导入命令式组件和样式
 import { ElDialog, ElMessage, ElMessageBox, ElLoading, ElNotification } from 'element-plus'
-import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
+import { setupI18n, t } from '@/core/i18n'
 // Element Plus 核心样式（按需导入，减少未使用 CSS）
 import 'element-plus/es/components/message/style/css'
 import 'element-plus/es/components/message-box/style/css'
@@ -53,12 +53,12 @@ function maybeReloadForUpdatedAssets() {
     const lastRefreshAt = Number(sessionStorage.getItem(ASSET_REFRESH_MARKER_KEY) || '0')
 
     if (lastRefreshAt && now - lastRefreshAt < ASSET_REFRESH_WINDOW_MS) {
-      ElMessage.error('检测到页面资源版本不一致，请手动刷新页面')
+      ElMessage.error(t('common.resourceMismatch'))
       return false
     }
 
     sessionStorage.setItem(ASSET_REFRESH_MARKER_KEY, String(now))
-    ElMessage.warning('检测到前端已更新，正在刷新页面以加载最新资源')
+    ElMessage.warning(t('common.resourceUpdated'))
     window.setTimeout(() => window.location.reload(), 150)
     return true
   } catch {
@@ -97,6 +97,7 @@ const app = createApp(App)
 
 // 设置错误处理
 setupErrorHandler(app)
+await setupI18n(app)
 
 // 开发环境调试工具
 if (import.meta.env.DEV) {
@@ -162,9 +163,6 @@ app.config.globalProperties.$message = ElMessage
 app.config.globalProperties.$msgbox = ElMessageBox
 app.config.globalProperties.$loading = ElLoading
 app.config.globalProperties.$notify = ElNotification
-
-// 配置 Element Plus 语言
-app.provide('elLocale', zhCn)
 
 // 规范化基础路径：将 /ops 重写为 /ops/（保留查询与 hash）
 function normalizeBaseTrailingSlash() {

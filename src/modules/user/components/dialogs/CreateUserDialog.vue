@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="visible"
-    title="创建用户"
+    :title="t('hostUser.createUser')"
     width="800px"
     :close-on-click-modal="false"
     :before-close="handleClose"
@@ -11,12 +11,12 @@
       ref="formRef"
       :model="formData"
       :rules="formRules"
-      label-width="120px"
+      :label-width="currentLocale === 'en-US' ? '160px' : '120px'"
       class="create-user-form"
       :disabled="attempted || validating"
     >
       <!-- 选择主机 -->
-      <el-form-item label="选择主机">
+      <el-form-item :label="t('hostUser.selectHosts')">
         <AcmDeviceSelector
           v-model="selectedHosts"
           :disabled="attempted || validating"
@@ -24,63 +24,83 @@
           :options="{
             selectMode: 'host,group,tag,input,recently',
             selector: 'multiple',
-            label: '选择设备'
+            label: t('hostUser.selectDevices')
           }"
         />
       </el-form-item>
 
       <!-- 用户名 -->
-      <el-form-item label="用户名" prop="username" required>
-        <el-input v-model="formData.username" placeholder="在主机上创建的用户名称" maxlength="32" />
+      <el-form-item :label="t('common.username')" prop="username" required>
+        <el-input
+          v-model="formData.username"
+          :placeholder="t('hostUser.usernameToCreateOnTheHost')"
+          maxlength="32"
+        />
       </el-form-item>
 
       <!-- 密码 -->
-      <el-form-item label="密码" prop="password" required>
+      <el-form-item :label="t('common.password')" prop="password" required>
         <el-input
           v-model="formData.password"
           type="password"
           show-password
-          placeholder="密码复杂度需满足功能配置中的规则"
+          :placeholder="t('hostUser.passwordMustMeetTheConfiguredComplexityRules')"
           autocomplete="new-password"
           maxlength="32"
         />
       </el-form-item>
 
       <!-- 主用户组 -->
-      <el-form-item label="主用户组" prop="group">
-        <el-input v-model="formData.group" placeholder="选填，默认与用户名同名" maxlength="32" />
+      <el-form-item :label="t('hostUser.primaryGroup')" prop="group">
+        <el-input
+          v-model="formData.group"
+          :placeholder="t('hostUser.optionalDefaultsToTheUsername')"
+          maxlength="32"
+        />
       </el-form-item>
 
       <!-- 附加用户组 -->
-      <el-form-item label="附加用户组" prop="groups">
+      <el-form-item :label="t('hostUser.additionalGroups')" prop="groups">
         <el-input
           v-model="formData.groups"
-          placeholder="选填，多个组名用逗号隔开"
+          :placeholder="t('hostUser.optionalSeparateGroupNamesWithCommas')"
           maxlength="100"
         />
       </el-form-item>
 
       <!-- 主目录 -->
-      <el-form-item label="主目录" prop="home">
-        <el-input v-model="formData.home" placeholder="选填，一般情况无需指定" maxlength="256" />
+      <el-form-item :label="t('hostUser.homeDirectory')" prop="home">
+        <el-input
+          v-model="formData.home"
+          :placeholder="t('hostUser.optionalUsuallyNotRequired')"
+          maxlength="256"
+        />
       </el-form-item>
 
       <!-- Shell -->
       <el-form-item label="Shell" prop="shell">
-        <el-input v-model="formData.shell" placeholder="选填，一般情况无需指定" maxlength="100" />
+        <el-input
+          v-model="formData.shell"
+          :placeholder="t('hostUser.optionalUsuallyNotRequired')"
+          maxlength="100"
+        />
       </el-form-item>
 
       <!-- 备注 -->
-      <el-form-item label="备注" prop="comment">
-        <el-input v-model="formData.comment" placeholder="选填，用户注释信息" maxlength="200" />
+      <el-form-item :label="t('hostUser.notes')" prop="comment">
+        <el-input
+          v-model="formData.comment"
+          :placeholder="t('hostUser.optionalUserComment')"
+          maxlength="200"
+        />
       </el-form-item>
 
       <!-- 过期时间 -->
-      <el-form-item label="过期时间" prop="expiredDate">
+      <el-form-item :label="t('hostUser.expiryDate')" prop="expiredDate">
         <el-date-picker
           v-model="formData.expiredDate"
           type="date"
-          placeholder="选填，默认永不失效"
+          :placeholder="t('hostUser.optionalNeverExpiresByDefault')"
           format="YYYY-MM-DD"
           value-format="YYYY-MM-DD"
           style="width: 100%"
@@ -88,10 +108,10 @@
       </el-form-item>
 
       <!-- sudo模板 -->
-      <el-form-item label="sudo模板" prop="templateId">
+      <el-form-item :label="t('hostUser.sudoTemplate')" prop="templateId">
         <el-select
           v-model="formData.templateId"
-          placeholder="选填，设置用户sudo权限"
+          :placeholder="t('hostUser.optionalConfigureUserSudoPermissions')"
           style="width: 100%"
           :loading="templatesLoading"
         >
@@ -100,24 +120,38 @@
         </el-select>
       </el-form-item>
 
-      <el-form-item v-if="templatesError" label="sudo模板">
+      <el-form-item v-if="templatesError" :label="t('hostUser.sudoTemplate')">
         <el-alert :title="templatesError" type="warning" :closable="false" />
-        <el-button @click="loadSudoTemplates">重试模板读取</el-button>
+        <el-button @click="loadSudoTemplates">{{ t('hostUser.retryTemplates') }}</el-button>
       </el-form-item>
-      <el-form-item v-if="formData.templateId !== 'N/A'" label="sudo读取">
-        <span v-if="commandsLoading">正在读取模板命令…</span>
+      <el-form-item v-if="formData.templateId !== 'N/A'" :label="t('hostUser.sudoLoading')">
+        <span v-if="commandsLoading">{{ t('hostUser.readingTemplateCommands') }}</span>
         <template v-else-if="commandsError">
           <el-alert :title="commandsError" type="warning" :closable="false" />
-          <el-button @click="loadSudoCommands">重试命令读取</el-button>
+          <el-button @click="loadSudoCommands">{{ t('hostUser.retryCommands') }}</el-button>
         </template>
-        <span v-else-if="!canSubmitSudo">模板尚未确认完整，请先完成模板读取。</span>
-        <span v-else>将提交本模板的全部 {{ sudoCommands.length }} 条命令。</span>
+        <span v-else-if="!canSubmitSudo">
+          {{ t('hostUser.theTemplateIsNotConfirmedCompleteLoadThe') }}
+        </span>
+        <span v-else>
+          {{ t('hostUser.submitAllTemplateCommands', { count: sudoCommands.length }) }}
+        </span>
       </el-form-item>
       <!-- sudo命令列表 -->
-      <el-form-item v-if="sudoCommands.length" label="sudo命令">
+      <el-form-item v-if="sudoCommands.length" :label="t('hostUser.sudoCommands')">
         <el-table :data="sudoCommands" size="small" max-height="200">
-          <el-table-column prop="command" label="命令" min-width="200" show-overflow-tooltip />
-          <el-table-column prop="description" label="描述" width="150" show-overflow-tooltip />
+          <el-table-column
+            prop="command"
+            :label="t('hostUser.command')"
+            min-width="200"
+            show-overflow-tooltip
+          />
+          <el-table-column
+            prop="description"
+            :label="t('hostUser.description')"
+            width="150"
+            show-overflow-tooltip
+          />
         </el-table>
       </el-form-item>
     </el-form>
@@ -130,11 +164,13 @@
       :closable="false"
       show-icon
     />
-    <p v-if="attempted">关闭窗口不会取消已提交的后台任务；结果未知时请先核实，勿重复操作。</p>
+    <p v-if="attempted">{{ t('hostUser.closingThisWindowDoesNotCancelSubmittedTasks') }}</p>
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose">{{ attempted ? '关闭窗口' : '取消' }}</el-button>
+        <el-button @click="handleClose">
+          {{ attempted ? t('hostUser.closeWindow') : t('common.cancel') }}
+        </el-button>
         <el-button
           type="primary"
           :loading="busy || validating"
@@ -149,6 +185,8 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
@@ -174,14 +212,30 @@ const defaults = () => ({
 })
 const formData = reactive(defaults())
 const formRules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
+  username: [
+    {
+      required: true,
+      get message() {
+        return t('auth.usernamePlaceholder')
+      },
+      trigger: 'blur'
+    }
+  ],
+  password: [
+    {
+      required: true,
+      get message() {
+        return t('auth.passwordPlaceholder')
+      },
+      trigger: 'blur'
+    }
+  ]
 }
 const task = useUserDialogTask({
   visible: () => props.visible,
   emit,
   onSuccess: handleClose,
-  successMessage: '用户创建成功',
+  successMessage: () => t('hostUser.userCreated'),
   maxAttempts: 120
 })
 const { attempted, busy, taskType, taskMessage, taskDescription } = task
@@ -201,7 +255,11 @@ const {
   loadSudoCommands
 } = sudoRead
 const buttonText = computed(() =>
-  busy.value ? '正在处理…' : attempted.value ? '请先核实结果' : '确认创建'
+  busy.value
+    ? t('hostUser.processing')
+    : attempted.value
+      ? t('hostUser.verifyTheResultFirst')
+      : t('hostUser.confirmCreation')
 )
 watch(
   () => props.visible,
@@ -215,7 +273,7 @@ watch(
 async function handleSubmit() {
   if (validating.value || attempted.value || !canSubmitSudo.value) return
   if (!selectedHosts.value.length) {
-    ElMessage.warning('请先选择主机')
+    ElMessage.warning(t('hostUser.selectHostsFirst'))
     return
   }
   const ready = task.captureReady()
@@ -231,7 +289,7 @@ async function handleSubmit() {
   if (!ready() || !canSubmitSudo.value) return
   const hosts = normalizeAcmDeviceJobHosts(selectedHosts.value, 'linux')
   if (!hosts.length) {
-    ElMessage.warning('请先选择主机')
+    ElMessage.warning(t('hostUser.selectHostsFirst'))
     return
   }
   const request = task.run('6snZO9', {

@@ -34,7 +34,7 @@
           @click.middle="!isAffix(tag) ? closeSelectedTag(tag) : ''"
           @contextmenu.prevent="openMenu(tag, $event)"
         >
-          {{ tag.title }}
+          {{ getViewTitle(tag, router) }}
           <el-icon
             v-if="!isAffix(tag)"
             class="icon-close"
@@ -67,32 +67,32 @@
         <el-dropdown-menu class="tags-dropdown-menu">
           <el-dropdown-item v-if="!isAffix(selectedDropdownTag)" command="close">
             <el-icon><Close /></el-icon>
-            关闭当前
+            {{ t('common.closeCurrent') }}
           </el-dropdown-item>
           <el-dropdown-item command="closeOthers">
             <el-icon><CircleClose /></el-icon>
-            关闭其他
+            {{ t('common.closeOthers') }}
           </el-dropdown-item>
           <el-dropdown-item command="closeLeft" :disabled="isFirstView()">
             <el-icon><Back /></el-icon>
-            关闭左侧
+            {{ t('common.closeLeft') }}
           </el-dropdown-item>
           <el-dropdown-item command="closeRight" :disabled="isLastView()">
             <el-icon><Right /></el-icon>
-            关闭右侧
+            {{ t('common.closeRight') }}
           </el-dropdown-item>
           <el-dropdown-item command="closeAll">
             <el-icon><CircleClose /></el-icon>
-            全部关闭
+            {{ t('common.closeAll') }}
           </el-dropdown-item>
           <el-dropdown-item command="fullscreen" divided>
             <template v-if="!isFullscreen">
               <el-icon><FullScreen /></el-icon>
-              全屏显示
+              {{ t('common.fullscreen') }}
             </template>
             <template v-else>
               <el-icon><Close /></el-icon>
-              退出全屏
+              {{ t('common.exitFullscreen') }}
             </template>
           </el-dropdown-item>
         </el-dropdown-menu>
@@ -101,37 +101,37 @@
 
     <span
       class="tags-action-btn tags-refresh-btn"
-      title="刷新页面"
+      :title="t('common.refreshPage')"
       @click="refreshSelectedTag(selectedDropdownTag)"
     >
       <el-icon><RefreshRight /></el-icon>
-      <span class="refresh-text">刷新</span>
+      <span class="refresh-text">{{ t('common.refresh') }}</span>
     </span>
 
     <ul v-show="visible" :style="{ left: `${left}px`, top: `${top}px` }" class="contextmenu">
       <li @click="refreshSelectedTag(selectedTag)">
         <el-icon><RefreshRight /></el-icon>
-        刷新页面
+        {{ t('common.refreshPage') }}
       </li>
       <li v-if="!isAffix(selectedTag)" @click="closeSelectedTag(selectedTag)">
         <el-icon><Close /></el-icon>
-        关闭当前
+        {{ t('common.closeCurrent') }}
       </li>
       <li @click="closeOthersTags">
         <el-icon><CircleClose /></el-icon>
-        关闭其他
+        {{ t('common.closeOthers') }}
       </li>
       <li v-if="!isFirstView()" @click="closeLeftTags">
         <el-icon><Back /></el-icon>
-        关闭左侧
+        {{ t('common.closeLeft') }}
       </li>
       <li v-if="!isLastView()" @click="closeRightTags">
         <el-icon><Right /></el-icon>
-        关闭右侧
+        {{ t('common.closeRight') }}
       </li>
       <li @click="closeAllTags">
         <el-icon><CircleClose /></el-icon>
-        全部关闭
+        {{ t('common.closeAll') }}
       </li>
     </ul>
   </div>
@@ -154,6 +154,8 @@ import {
 } from '@element-plus/icons-vue'
 import { useTagsViewStore } from '@/stores/tagsView'
 import ScrollPane from './ScrollPane.vue'
+import { t, currentLocale } from '@/core/i18n'
+import { getViewTitle } from '@/core/i18n/navigation'
 
 const tagsViewStore = useTagsViewStore()
 const { visitedViews, isFullscreen } = storeToRefs(tagsViewStore)
@@ -205,6 +207,8 @@ watch(route, () => {
   addTags()
   moveToCurrentTag()
 })
+
+watch(currentLocale, () => nextTick(updateArrowState))
 
 watch(visible, value => {
   if (value) {

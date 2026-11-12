@@ -7,6 +7,7 @@ import { ElSelect, ElOption } from 'element-plus/es/components/select/index.mjs'
 import ElTag from 'element-plus/es/components/tag/index.mjs'
 import UserListPage from '@/modules/user/views/UserListPage.vue'
 import LoginErrorDialog from '@/modules/user/components/dialogs/LoginErrorDialog.vue'
+import { setLocale } from '@/core/i18n'
 
 const api = vi.hoisted(() => ({ users: vi.fn(), login: vi.fn() }))
 vi.mock('@/modules/user/api', () => ({
@@ -160,14 +161,35 @@ beforeEach(() => {
   api.login.mockReset().mockResolvedValue(result([{ message: 'account-1 error' }]))
   vi.spyOn(console, 'error').mockImplementation(() => {})
 })
-afterEach(() => {
+afterEach(async () => {
   wrappers.splice(0).forEach(wrapper => wrapper.unmount())
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
   document.body.innerHTML = ''
+  await setLocale('zh-CN', { persist: false })
 })
 
 describe('主机用户列表查询与原操作入口', () => {
+  it('中英文切换保留搜索草稿、账号身份和协议参数，不重新读取列表', async () => {
+    const wrapper = await openPage()
+    await wrapper.find('input').setValue('未提交的查询')
+    api.users.mockClear()
+    await setLocale('en-US', { persist: false })
+    await flushPromises()
+    expect(wrapper.text()).toContain('Create user')
+    expect(wrapper.find('[data-column="Username"] [role="button"]').text()).toBe(record().username)
+    expect(wrapper.find('input').element.value).toBe('未提交的查询')
+    expect(api.users).not.toHaveBeenCalled()
+    await button(wrapper, 'Modify').trigger('click')
+    expect(state(wrapper).editingUser.id).toBe('account-1')
+    await setLocale('zh-CN', { persist: false })
+    await flushPromises()
+    expect(wrapper.text()).toContain('创建用户')
+    expect(wrapper.find('[data-column="用户名"] [role="button"]').text()).toBe(record().username)
+    expect(api.users).not.toHaveBeenCalled()
+    await button(wrapper, '搜索').trigger('click')
+    expect(api.users.mock.lastCall[0]).toMatchObject({ types: '0,1', lockStatus: '1,2' })
+  })
   it('首载与完整重置同条件，重置只读一次并恢复首页/10条', async () => {
     const wrapper = await openPage()
     expect(api.users).toHaveBeenLastCalledWith(defaults)

@@ -4,7 +4,7 @@
     <div class="search-toolbar">
       <el-input
         v-model="searchKeyword"
-        placeholder="搜索运维工具名称"
+        :placeholder="t('selection.searchTools')"
         clearable
         :prefix-icon="Search"
         @input="handleSearch"
@@ -25,16 +25,26 @@
         <el-table-column type="selection" width="50" reserve-selection />
         <el-table-column
           prop="jobTitle"
-          label="运维工具"
+          :label="t('selection.tool')"
           min-width="280"
           show-overflow-tooltip
           sortable
         >
           <template #default="{ row }">
-            {{ getAutomationRunTitle({ job_title: row.jobTitle, job_id: row.jobId || row.job_id }, '-') }}
+            {{
+              getAutomationRunTitle(
+                { job_title: row.jobTitle, job_id: row.jobId || row.job_id },
+                '-'
+              )
+            }}
           </template>
         </el-table-column>
-        <el-table-column label="执行主机" width="120" show-overflow-tooltip sortable>
+        <el-table-column
+          :label="t('selection.executionHost')"
+          width="120"
+          show-overflow-tooltip
+          sortable
+        >
           <template #default="{ row }">
             <span v-if="row.run_result_hosts?.length">
               {{ row.run_result_hosts[0]?.value || '-' }}
@@ -42,17 +52,23 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="jobType" label="类型" width="80" align="left" sortable>
+        <el-table-column
+          prop="jobType"
+          :label="t('selection.type')"
+          width="80"
+          align="left"
+          sortable
+        >
           <template #default="{ row }">
             {{ getJobTypeLabel(row.jobType) }}
           </template>
         </el-table-column>
-        <el-table-column label="结束时间" width="180" sortable>
+        <el-table-column :label="t('hostUser.endedAt')" width="180" sortable>
           <template #default="{ row }">
             {{ formatDateTime(row.endTime || row.startTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="执行节点" width="150" align="left">
+        <el-table-column :label="t('hostUser.executionNode')" width="150" align="left">
           <template #default="{ row }">
             <el-tag v-if="getAnsibleNodeLabel(row.executor_node)" type="primary" size="small">
               {{ getAnsibleNodeLabel(row.executor_node) }}
@@ -60,7 +76,7 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="90" align="left" sortable>
+        <el-table-column :label="t('common.status')" width="90" align="left" sortable>
           <template #default="{ row }">
             <RunLogStatusTag
               :type="getStatusStyle(row.status)"
@@ -71,7 +87,7 @@
             </RunLogStatusTag>
           </template>
         </el-table-column>
-        <el-table-column label="详情" width="60" align="left">
+        <el-table-column :label="t('hostUser.details')" width="60" align="left">
           <template #default="{ row }">
             <span class="detail-count" v-if="row.statsJson" @click="handleViewResult(row)">
               {{ getHostCount(row.statsJson) }}
@@ -107,6 +123,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, watch, computed, nextTick } from 'vue'
 import { Search, Refresh } from '@element-plus/icons-vue'
 import { formatDateTime } from '@/modules/automation/utils/helpers'
@@ -152,7 +170,11 @@ const isSingleSelector = computed(() => props.options.selector === 'single')
 const filteredData = computed(() => {
   if (!searchKeyword.value) return tableData.value
   const keyword = searchKeyword.value.toLowerCase()
-  return tableData.value.filter(item => getAutomationRunTitle({ job_title: item.jobTitle, job_id: item.jobId || item.job_id }, '').toLowerCase().includes(keyword))
+  return tableData.value.filter(item =>
+    getAutomationRunTitle({ job_title: item.jobTitle, job_id: item.jobId || item.job_id }, '')
+      .toLowerCase()
+      .includes(keyword)
+  )
 })
 
 const pagedData = computed(() => {
@@ -294,8 +316,6 @@ function handleViewResult(row) {
   resultDialogVisible.value = true
 }
 
-
-
 function getAnsibleNodeLabel(nodeValue) {
   if (!nodeValue) return ''
   try {
@@ -318,12 +338,12 @@ function getStatusLabel(status) {
   if (!status) return '-'
   const statusUpper = status.toUpperCase()
   const labels = {
-    SUCCESS: '完成',
-    COMPLETED: '完成',
-    FAILED: '运行失败',
-    ERROR: '运行错误',
-    RUNNING: '执行中',
-    PENDING: '等待中'
+    SUCCESS: t('selection.completed'),
+    COMPLETED: t('selection.completed'),
+    FAILED: t('hostUser.failed'),
+    ERROR: t('hostUser.executionError'),
+    RUNNING: t('selection.running'),
+    PENDING: t('selection.waiting')
   }
   return labels[statusUpper] || status
 }
@@ -450,5 +470,4 @@ function handlePageSizeChange() {
 .detail-count:hover {
   text-decoration: underline;
 }
-
 </style>

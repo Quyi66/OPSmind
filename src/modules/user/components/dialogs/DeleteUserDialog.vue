@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="visible"
-    title="删除用户"
+    :title="t('hostUser.deleteUser')"
     width="520px"
     :close-on-click-modal="false"
     :before-close="handleClose"
@@ -19,21 +19,25 @@
         </p>
       </div>
 
-      <el-form :model="formData" :disabled="attempted" label-width="120px">
-        <el-form-item label="用户名">
+      <el-form
+        :model="formData"
+        :disabled="attempted"
+        :label-width="currentLocale === 'en-US' ? '160px' : '120px'"
+      >
+        <el-form-item :label="t('common.username')">
           <el-input v-model="formData.username" disabled />
         </el-form-item>
 
-        <el-form-item label="是否删除主目录">
+        <el-form-item :label="t('hostUser.deleteHomeDirectory')">
           <el-radio-group v-model="formData.user_remove_home">
-            <el-radio value="yes">是</el-radio>
-            <el-radio value="no">否</el-radio>
+            <el-radio value="yes">{{ t('hostUser.yes') }}</el-radio>
+            <el-radio value="no">{{ t('hostUser.no') }}</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>
 
       <el-alert
-        title="删除用户后不可恢复，请确认用户名和主机信息无误后再执行。"
+        :title="t('hostUser.deletingAUserCannotBeUndoneVerifyThe')"
         type="warning"
         :closable="false"
         show-icon
@@ -48,11 +52,13 @@
       :closable="false"
       show-icon
     />
-    <p v-if="attempted">关闭窗口不会取消已提交的后台任务；结果未知时请先核实，勿重复操作。</p>
+    <p v-if="attempted">{{ t('hostUser.closingThisWindowDoesNotCancelSubmittedTasks') }}</p>
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose">{{ attempted ? '关闭窗口' : '取消' }}</el-button>
+        <el-button @click="handleClose">
+          {{ attempted ? t('hostUser.closeWindow') : t('common.cancel') }}
+        </el-button>
         <el-button type="danger" :loading="busy" :disabled="attempted" @click="handleSubmit">
           {{ getSubmitButtonText() }}
         </el-button>
@@ -62,6 +68,8 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useUserDialogTask } from '@/modules/user/composables/useUserDialogTask'
@@ -78,7 +86,7 @@ const task = useUserDialogTask({
   context: () => props.user,
   emit,
   onSuccess: handleClose,
-  successMessage: '删除成功'
+  successMessage: () => t('hostUser.deletedSuccessfully')
 })
 const { attempted, busy, taskType, taskMessage, taskDescription } = task
 watch(
@@ -92,13 +100,17 @@ watch(
   { immediate: true, flush: 'sync' }
 )
 function getSubmitButtonText() {
-  return busy.value ? '正在处理…' : attempted.value ? '请先核实结果' : '删除用户'
+  return busy.value
+    ? t('hostUser.processing')
+    : attempted.value
+      ? t('hostUser.verifyTheResultFirst')
+      : t('hostUser.deleteUser')
 }
 function handleSubmit() {
   if (attempted.value) return
   const hostId = userData.value.host_id || userData.value.id
   if (!hostId || !formData.username) {
-    ElMessage.warning('缺少用户信息，无法执行删除')
+    ElMessage.warning(t('hostUser.userDetailsAreRequiredForDeletion'))
     return
   }
   return task.run('5XLCC1', {

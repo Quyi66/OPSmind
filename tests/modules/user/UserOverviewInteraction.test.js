@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, KeepAlive, ref } from 'vue'
 import Overview from '@/modules/user/views/UserOverviewPage.vue'
+import { setLocale } from '@/core/i18n'
 const api = vi.hoisted(() => ({ stats: vi.fn(), chart: vi.fn(), init: vi.fn(), navigate: vi.fn() }))
 const isDark = ref(false)
 vi.mock('@/modules/user/api', () => ({ getOverviewStats: api.stats, getAuditLogStats: api.chart }))
@@ -73,13 +74,35 @@ beforeEach(() => {
   )
   vi.spyOn(console, 'error').mockImplementation(() => {})
 })
-afterEach(() => {
+afterEach(async () => {
   wrappers.splice(0).forEach(wrapper => wrapper.unmount())
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
   vi.useRealTimers()
+  await setLocale('zh-CN', { persist: false })
 })
 describe('主机用户总览读取与日期', () => {
+  it('切换语言更新统计标签及图表系列，保留原数据且不重新请求', async () => {
+    const { wrapper } = await open()
+    api.stats.mockClear()
+    api.chart.mockClear()
+    await setLocale('en-US', { persist: false })
+    await flushPromises()
+    expect(wrapper.find('.stat-card__label').text()).toBe('Hosts')
+    expect(wrapper.find('.stat-card__value').text()).toBe('1')
+    expect(instances.at(-1).setOption.mock.lastCall[0].series.map(item => item.name)).toEqual([
+      'Total',
+      'Completed',
+      'Failed',
+      'Running'
+    ])
+    await setLocale('zh-CN', { persist: false })
+    await flushPromises()
+    expect(wrapper.find('.stat-card__label').text()).toBe('主机')
+    expect(instances.at(-1).setOption.mock.lastCall[0].series[3].name).toBe('正在运行')
+    expect(api.stats).not.toHaveBeenCalled()
+    expect(api.chart).not.toHaveBeenCalled()
+  })
   it('加载与缺失不用0冒充，显式0及有效数值字符串保留', async () => {
     const pending = deferred()
     api.stats.mockReturnValueOnce(pending.promise)

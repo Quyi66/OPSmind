@@ -1,10 +1,15 @@
 <template>
-  <el-dialog v-model="visible" title="登录错误信息" width="1000px" :close-on-click-modal="true">
+  <el-dialog
+    v-model="visible"
+    :title="t('hostUser.signInErrorInformation')"
+    width="1000px"
+    :close-on-click-modal="true"
+  >
     <div class="login-error-dialog" v-loading="loading">
       <div v-if="readError" class="read-feedback" role="status">
         <el-alert :title="readError" type="warning" :closable="false" show-icon />
         <el-button v-if="!authError && userId" :loading="loading" @click="loadData">
-          重试读取
+          {{ t('hostUser.retryReading') }}
         </el-button>
       </div>
       <div v-else-if="errorMessages.length" class="error-list">
@@ -12,16 +17,22 @@
           <pre class="error-message">{{ item.message }}</pre>
         </div>
       </div>
-      <div v-else class="empty-tip">{{ loading ? '正在读取…' : '暂无登录错误信息' }}</div>
+      <div v-else class="empty-tip">
+        {{ loading ? t('hostUser.reading') : t('hostUser.noSignInErrors') }}
+      </div>
     </div>
 
     <template #footer>
-      <el-button @click="visible = false">关闭</el-button>
+      <el-button @click="visible = false">{{ t('common.close') }}</el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { message, messageRef } from '@/core/i18n/feedback'
+
+import { t } from '@/core/i18n'
+
 import { ref, computed, watch, onActivated, onDeactivated, onBeforeUnmount } from 'vue'
 import { getUserLoginFailMessage } from '@/modules/user/api'
 
@@ -45,7 +56,7 @@ const visible = computed({
 
 const loading = ref(false)
 const errorMessages = ref([])
-const readError = ref('')
+const readError = messageRef('')
 const authError = ref(false)
 let requestVersion = 0
 let active = true
@@ -75,7 +86,7 @@ function suspendRead() {
   requestVersion += 1
   if (loading.value) {
     errorMessages.value = []
-    readError.value = '登录错误信息读取已中断，请重试。'
+    readError.value = message('hostUser.readingSignInErrorsWasInterruptedPleaseRetry')
   }
   loading.value = false
 }
@@ -93,7 +104,7 @@ async function loadData() {
   readError.value = ''
   authError.value = false
   if (!props.userId) {
-    readError.value = '缺少账号记录标识，无法读取登录错误信息。'
+    readError.value = message('hostUser.anAccountRecordIdIsRequiredToRead')
     return
   }
 
@@ -113,8 +124,8 @@ async function loadData() {
       status === 403 ||
       ['Authentication expired', 'Access denied'].includes(error?.message)
     readError.value = authError.value
-      ? '读取失败：登录已失效或无权访问，请重新登录或联系管理员。'
-      : '登录错误信息读取失败，请重试。'
+      ? message('hostUser.unableToReadYourSessionHasExpiredOr')
+      : message('hostUser.unableToReadSignInErrorsPleaseRetry')
   } finally {
     if (isCurrent()) loading.value = false
   }

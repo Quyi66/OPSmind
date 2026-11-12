@@ -1,5 +1,6 @@
 import { authService } from '@/core/auth'
 import { getModuleDefinition } from '@/modules/registry'
+import { t } from '@/core/i18n'
 
 export const MENU_CONFIG = {
   // 特殊菜单项（首页）
@@ -42,13 +43,7 @@ export const MENU_CONFIG = {
       name: '补丁漏洞',
       icon: 'fas fa-shield-virus',
       description: '补丁测试和漏洞管理',
-      children: [
-        'patches',
-        'windows-patches',
-        'patch-logs',
-        'patch-process-logs',
-        'middleware-cve'
-      ]
+      children: ['patches', 'windows-patches', 'patch-logs', 'patch-process-logs', 'middleware-cve']
     },
     {
       code: 'system-inspection',
@@ -109,7 +104,12 @@ const ALIAS_TO_GROUP = Object.fromEntries(Object.entries(GROUP_ALIAS_MAP).map(([
  * 获取首页菜单项
  */
 export function getHomeMenu() {
-  return MENU_CONFIG.homeMenu
+  return {
+    ...MENU_CONFIG.homeMenu,
+    nameKey: 'common.home',
+    name: t('common.home'),
+    description: t('navigation.extras.homeDescription')
+  }
 }
 
 let cachedResolvedGroups = null
@@ -149,13 +149,21 @@ export function getMenuGroups() {
   return resolved
     .filter(group => !group.hidden)
     .map(group => {
-      const children = group.children.filter(child => {
-        const permissions = getMenuPermissions(child.code)
-        if (!permissions.length) return true
-        return permissions.some(permission => authService.hasPermission(permission))
-      })
+      const children = group.children
+        .filter(child => {
+          const permissions = getMenuPermissions(child.code)
+          if (!permissions.length) return true
+          return permissions.some(permission => authService.hasPermission(permission))
+        })
+        .map(child => ({
+          ...child,
+          nameKey: `navigation.modules.${child.code}`,
+          name: t(`navigation.modules.${child.code}`, {}, child.name)
+        }))
       return {
         ...group,
+        nameKey: `navigation.groups.${group.code}`,
+        name: t(`navigation.groups.${group.code}`, {}, group.name),
         children
       }
     })

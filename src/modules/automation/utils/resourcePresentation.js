@@ -1,4 +1,5 @@
 import { translateText } from '@/utils/i18n'
+import { t } from '@/core/i18n'
 
 // Only aliases backed by existing execution call sites. Match both identity and
 // original title so renamed/custom resources and historical names remain intact.
@@ -21,12 +22,18 @@ const BUILTIN_TOOL_LABELS = {
   QJb6B8: { title: '【VAP2】补丁安装（基于主机维度）', label: '补丁安装（基于主机维度）' },
   s1r8Hp: { title: '【VAP2】补丁安装（基于漏洞概览）', label: '补丁安装（基于漏洞概览）' },
   Uu3eb1: { title: '【VAP2】补丁回退（基于补丁安装记录）', label: '补丁回退（基于补丁安装记录）' },
-  '3Fl7CJ': { title: '【VAP2】Linux删除历史更新记录（成功安装补丁）', label: 'Linux删除历史更新记录（成功安装补丁）' },
+  '3Fl7CJ': {
+    title: '【VAP2】Linux删除历史更新记录（成功安装补丁）',
+    label: 'Linux删除历史更新记录（成功安装补丁）'
+  },
   Fteqeo: { title: '【VAP2】Windows补丁扫描', label: 'Windows补丁扫描' },
   EAsxlK: { title: '【VAP2】Windows补丁安装', label: 'Windows补丁安装' },
   S9eC0m: { title: '【VAP2】Windows补丁回滚', label: 'Windows补丁回滚' },
   HiuT3F: { title: '【VAP2】Windows补丁回滚', label: 'Windows补丁回滚' },
-  aJlha6: { title: '【VAP2】Windows删除历史更新记录（成功安装补丁）', label: 'Windows删除历史更新记录（成功安装补丁）' },
+  aJlha6: {
+    title: '【VAP2】Windows删除历史更新记录（成功安装补丁）',
+    label: 'Windows删除历史更新记录（成功安装补丁）'
+  },
   IxL8nr: { title: '【VAP2】YUM源配置', label: 'YUM源配置' },
   CoKLZM: { title: '【ACM】批量更新资产信息', label: '批量更新资产信息' },
   QqUnBG: { title: '【ACM】资产上下线', label: '资产上下线' },
@@ -86,7 +93,7 @@ const BUILTIN_TOOL_LABELS = {
   u160sB: { title: '【PMS2】批量修改密码', label: '批量修改密码' }
 }
 
-export function getAutomationToolTitle(record, fallback = '未命名运维工具') {
+export function getAutomationToolTitle(record, fallback = t('execution.ui.unnamedTool')) {
   const raw = [
     record?.title,
     record?.job_title,
@@ -100,17 +107,19 @@ export function getAutomationToolTitle(record, fallback = '未命名运维工具
   const title = translateText(raw) || raw
   const id = record?.job_id ?? record?.jobId ?? record?.id
   const alias = BUILTIN_TOOL_LABELS[id]
-  return alias && title.replace(/\s/g, '') === alias.title ? alias.label : title
+  return alias && title.replace(/\s/g, '') === alias.title
+    ? t(`execution.tools.${id}`, {}, alias.label)
+    : title
 }
 
-export function getAutomationRunTitle(record, fallback = '未命名运行') {
+export function getAutomationRunTitle(record, fallback = t('execution.ui.unnamedRun')) {
   // In run records, id identifies the run, not the tool. Only explicit job IDs
   // may select an alias; missing identity must preserve the original name.
   const title = getAutomationToolTitle({ ...record, id: undefined }, fallback)
   // Some historical script runs have only a path, without a tool name.
   // Keep the real path on the record for diagnostics; show the file in the list.
   const scriptPath = title.match(/^\[script\](.+[/\\])([^/\\]+)$/i)
-  return scriptPath ? `脚本执行：${scriptPath[2]}` : title
+  return scriptPath ? t('execution.ui.scriptRun', { file: scriptPath[2] }) : title
 }
 
 export function getAutomationToolDescription(record) {
@@ -127,6 +136,6 @@ export function getAutomationToolDescription(record) {
 
 export function getAutomationExecutionPresentation(payload, fallback = {}) {
   const jobId = payload?.jobId || fallback.id || ''
-  const rawJobTitle = payload?.jobTitle || fallback.title || '运维工具执行'
+  const rawJobTitle = payload?.jobTitle || fallback.title || t('execution.ui.toolExecution')
   return { jobId, jobTitle: getAutomationRunTitle({ job_id: jobId, job_title: rawJobTitle }) }
 }

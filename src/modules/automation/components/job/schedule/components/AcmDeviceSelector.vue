@@ -9,7 +9,7 @@
           role="button"
           :tabindex="disabled ? -1 : 0"
           :aria-disabled="disabled"
-          aria-label="重新选择设备"
+          :aria-label="t('selection.reselect')"
           @click="handleOpenSelector"
           @keydown.enter.prevent="handleOpenSelector"
           @keydown.space.prevent="handleOpenSelector"
@@ -17,22 +17,20 @@
           <span
             v-if="!disabled"
             class="op-hover-to-show clear-btn"
-            title="清空全部"
+            :title="t('selection.clearAll')"
             @click.stop="handleClearAll"
           >
             <i class="fa fa-times" />
           </span>
           <span>
-            共
-            <strong>{{ devices.length }}</strong>
-            项
+            {{ t('selection.selectedCount', { count: devices.length }) }}
           </span>
         </div>
         <el-input
           v-if="displayDevices.length > 10"
           v-model="filterText"
           class="device-filter"
-          placeholder="搜索已选设备..."
+          :placeholder="t('selection.searchDevices')"
           clearable
           size="small"
         >
@@ -68,13 +66,16 @@
         class="text-muted text-center py-2"
         style="font-size: 13px"
       >
-        未匹配到相关设备
+        {{ t('selection.noDevicesMatch') }}
       </div>
       <div v-if="showTagList && hasMoreOutsideDevices" style="margin-top: 8px; text-align: left">
         <el-button link type="primary" size="small" @click="loadMoreOutsideDevices">
-          加载更多已选设备 (已显示 {{ displayedOutsideDevices.length }}/{{
-            filteredDevices.length
-          }})
+          {{
+            t('selection.loadMoreDevices', {
+              shown: displayedOutsideDevices.length,
+              total: filteredDevices.length
+            })
+          }}
         </el-button>
       </div>
     </div>
@@ -83,7 +84,7 @@
     <div v-else class="empty-state">
       <el-button size="small" :disabled="disabled" @click="handleOpenSelector">
         <i class="fal fa-server me-1" />
-        {{ options.label || '选择设备' }}
+        {{ options.label || t('hostUser.selectDevices') }}
       </el-button>
     </div>
 
@@ -99,6 +100,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed, nextTick, watch } from 'vue'
 import AcmDeviceSelectorDialog from './AcmDeviceSelectorDialog.vue'
 
@@ -136,7 +139,7 @@ const displayDevices = computed(() => {
   return devices.value.map((device, index) => {
     if (typeof device === 'object' && device !== null) {
       return {
-        display: device.value || device.key || `设备${index + 1}`,
+        display: device.value || device.key || t('selection.deviceFallback', { p0: index + 1 }),
         runType: device.runType || '',
         totalHosts: device.total_hosts || device.totalHosts || 0,
         original: device,

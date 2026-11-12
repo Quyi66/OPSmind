@@ -1,0 +1,177 @@
+{
+  "groups": {
+    "asset-management": "Asset management",
+    "automation": "Automation",
+    "patch-testing": "Patches & vulnerabilities",
+    "system-inspection": "System inspection",
+    "flow-management": "Host accounts",
+    "user-management": "Platform users",
+    "security-management": "Security",
+    "system-settings": "System settings"
+  },
+  "modules": {
+    "acm": "Assets",
+    "auto-workbench": "Workbench",
+    "jao": "Operations toolbox",
+    "gfs": "Script center",
+    "cmd": "Commands",
+    "task-scheduler": "Scheduled tasks",
+    "run-records": "Run history",
+    "review-center": "Approvals",
+    "flow": "Workflows",
+    "patches": "Linux patches",
+    "windows-patches": "Windows patches",
+    "patch-logs": "Change logs",
+    "patch-process-logs": "Process logs",
+    "middleware-cve": "Middleware CVEs",
+    "yum-repo": "Yum repositories",
+    "cac": "Inspection center",
+    "users": "Host accounts",
+    "sudo": "Sudo permissions",
+    "password": "Passwords",
+    "uam": "Users",
+    "ssc": "System settings"
+  },
+  "pages": {
+    "acm": {
+      "hostHealthCheck": "System health",
+      "overview": "Asset overview",
+      "info": "Device inventory",
+      "exception": "Connectivity inspection",
+      "data": "Groups & tags",
+      "automation": "Connection credentials",
+      "log": "Operation logs",
+      "permission": "Access control",
+      "model": "Asset types"
+    },
+    "auto-workbench": {
+      "overview": "Workbench"
+    },
+    "jao": {
+      "jobs": "Operations tools",
+      "schedule": "Workflow orchestration",
+      "taskScheduler": "Scheduled tasks",
+      "runLogs": "Run history",
+      "statistics": "Statistics",
+      "requests": "My requests",
+      "approvals": "Tool approvals",
+      "localInstall": "Package installation"
+    },
+    "run-records": {
+      "logs": "Run history",
+      "statistics": "Statistics"
+    },
+    "gfs": {
+      "scriptLibrary": "Script library",
+      "fileLibrary": "File library",
+      "scriptReview": "Script review"
+    },
+    "cmd": {
+      "list": "Commands & tools",
+      "job": "Command tools",
+      "review": "Command review",
+      "console": "Console"
+    },
+    "patches": {
+      "machineScan": "Host overview",
+      "hostDetail": "Host details",
+      "patchInstall": "Patch installation",
+      "changeRollback": "Change rollback",
+      "linuxYumManage": "Linux YUM management",
+      "patchLibrary": "Patch repository",
+      "cveList": "Vulnerability details",
+      "linuxMachinePackageList": "Host packages",
+      "rpmPackageList": "Package search",
+      "middlewareCveList": "Middleware CVEs",
+      "packageSet": "Package set installation",
+      "installTasks": "Installation requests",
+      "localInstall": "Package installation",
+      "windowsVulnerability": "Windows patch overview",
+      "windowsWsus": "WSUS configuration",
+      "windowsYumRepo": "Customer Yum repositories",
+      "windowsRollback": "Change rollback",
+      "windowsCveList": "Vulnerability details",
+      "windowsKbList": "Windows KB knowledge base",
+      "logs": "Change logs",
+      "processLogs": "Process logs"
+    },
+    "yum-repo": {
+      "yumRepo": "Repositories",
+      "localInstall": "Package installation",
+      "yumManage": "Yum sources",
+      "repos": "Configuration deployment",
+      "packages": "Software overview",
+      "installed": "Installed packages",
+      "logs": "Operation logs"
+    },
+    "cac": {
+      "overview": "Inspection overview",
+      "templates": "Templates",
+      "results": "Execution history",
+      "resultDetail": "Inspection report",
+      "structuralDiagram": "Business topology",
+      "email": "Email configuration"
+    },
+    "users": {
+      "users": "User list",
+      "groups": "User groups",
+      "logs": "Operation logs",
+      "overview": "User overview"
+    },
+    "uam": {
+      "user": "User list",
+      "patch-assignment": "Patch assignment",
+      "team": "Teams"
+    },
+    "ssc": {
+      "param": "Parameters",
+      "sql-import": "SQL import",
+      "email": "Email settings",
+      "engine": "Engines",
+      "scheduler": "Scheduled jobs"
+    },
+    "flow": {
+      "list": "Workflow list",
+      "execution": "Execution history"
+    },
+    "sudo": {
+      "permission": "Sudo list",
+      "apply": "Permission requests",
+      "templates": "Templates",
+      "password": "Passwords",
+      "log": "Operation logs"
+    },
+    "password": {
+      "application": "Requests & approvals",
+      "settings": "Parameters",
+      "logs": "Operation logs"
+    }
+  },
+  "extras": {
+    "installManage": "Installation & rollback",
+    "vulnManage": "Vulnerabilities",
+    "repoManage": "Software & repositories",
+    "yumRepoManage": "Yum repositories",
+    "workspace": "Commands & tools",
+    "homeDescription": "System dashboard"
+  },
+  "standalone": {
+    "home": "Home",
+    "aiops": "OPS AI assistant",
+    "login": "Sign in - KoreOPS",
+    "dashboard": "KoreOPS dashboard",
+    "profile": "Profile",
+    "profilePage": "Profile - KoreOPS",
+    "about": "About - KoreOPS",
+    "admin": "Administration",
+    "notFound": "Page not found",
+    "migration": "Migration - KoreOPS"
+  },
+  "navOverrides": {
+    "patches": {
+      "windowsVulnerability": "Host overview",
+      "windowsKbList": "KB knowledge base",
+      "windowsYumRepo": "Yum repositories"
+    }
+  }
+}

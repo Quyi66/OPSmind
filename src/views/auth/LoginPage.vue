@@ -2,6 +2,7 @@
   <div
     class="login-page relative w-full h-screen min-h-[580px] overflow-hidden flex items-center justify-center select-none bg-slate-50"
   >
+    <div class="login-language"><LanguageSwitcher /></div>
     <!-- 全屏 3D 背景图 -->
     <div class="absolute inset-0 z-0">
       <img
@@ -39,9 +40,16 @@
 
 <script setup>
 import LoginForm from '@/components/auth/LoginForm.vue'
+import LanguageSwitcher from '@/components/shared/LanguageSwitcher.vue'
 </script>
 
 <style scoped>
+.login-language {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  z-index: 30;
+}
 .login-page {
   min-height: 100vh;
   min-height: 100dvh;

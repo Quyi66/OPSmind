@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import Selector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import { setLocale } from '@/core/i18n'
 
 vi.mock(
   '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue',
@@ -18,9 +19,29 @@ const devices = [
 ]
 let wrapper
 const dialog = () => wrapper.findComponent({ name: 'AcmDeviceSelectorDialog' })
-afterEach(() => wrapper?.unmount())
+afterEach(async () => {
+  wrapper?.unmount()
+  await setLocale('zh-CN', { persist: false })
+})
 
 describe('已有设备时键盘重开选择器', () => {
+  it('中英文切换不改变已选设备、真实主机标识和选择器状态', async () => {
+    wrapper = mount(Selector, {
+      props: { modelValue: devices },
+      global: { stubs: { 'el-tag': true } }
+    })
+    await wrapper.get('[role="button"]').trigger('click')
+    await setLocale('en-US', { persist: false })
+    await flushPromises()
+    expect(wrapper.get('[role="button"]').attributes('aria-label')).toBe('Reselect devices')
+    expect(dialog().props('modelValue')).toBe(true)
+    expect(dialog().props('initialSelection')).toEqual(devices)
+    await setLocale('zh-CN', { persist: false })
+    await flushPromises()
+    expect(wrapper.get('[role="button"]').attributes('aria-label')).toBe('重新选择设备')
+    expect(dialog().props('initialSelection')[0].key).toBe('real-host-id')
+    expect(wrapper.emitted('update:modelValue')).toBeUndefined()
+  })
   it('摘要可聚焦，Enter和空格均打开原选择器并保留真实选择，空格阻止页面滚动', async () => {
     wrapper = mount(Selector, {
       props: { modelValue: devices },

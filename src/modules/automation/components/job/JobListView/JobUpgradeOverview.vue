@@ -6,10 +6,16 @@
         <div v-if="patchOverviewInfo.patches.length" class="overview-subcard">
           <div class="subcard-header">
             <i class="fa fa-lock" />
-            <span>更新补丁 ({{ patchOverviewInfo.patches.length }})</span>
+            <span>
+              {{ t('execution.ui.updatedPatches', { count: patchOverviewInfo.patches.length }) }}
+            </span>
           </div>
           <div class="subcard-body">
-            <div v-for="patch in patchOverviewInfo.patches" :key="patch" class="patch-item-text font-mono">
+            <div
+              v-for="patch in patchOverviewInfo.patches"
+              :key="patch"
+              class="patch-item-text font-mono"
+            >
               {{ patch }}
             </div>
           </div>
@@ -19,10 +25,16 @@
         <div v-if="patchOverviewInfo.packages.length" class="overview-subcard">
           <div class="subcard-header">
             <i class="fa fa-cube" />
-            <span>更新软件包 ({{ patchOverviewInfo.packages.length }})</span>
+            <span>
+              {{ t('execution.ui.updatedPackages', { count: patchOverviewInfo.packages.length }) }}
+            </span>
           </div>
           <div class="subcard-body">
-            <div v-for="pkg in patchOverviewInfo.packages" :key="pkg" class="package-item font-mono">
+            <div
+              v-for="pkg in patchOverviewInfo.packages"
+              :key="pkg"
+              class="package-item font-mono"
+            >
               {{ pkg }}
             </div>
           </div>
@@ -36,14 +48,12 @@
         >
           <div class="subcard-header">
             <i class="fa fa-server" />
-            <span>目标主机 ({{ patchOverviewInfo.hosts.length }})</span>
+            <span>
+              {{ t('execution.ui.targetHosts', { count: patchOverviewInfo.hosts.length }) }}
+            </span>
           </div>
           <div class="subcard-body" @scroll.passive="handleHostScroll">
-            <div
-              v-for="host in visibleHosts"
-              :key="host.name"
-              class="overview-item"
-            >
+            <div v-for="host in visibleHosts" :key="host.name" class="overview-item">
               <span class="host-name" :title="host.name">{{ host.name }}</span>
               <el-tag size="small" :type="taskStatusTag(host.status)">
                 {{ taskStatusLabel(host.status) }}
@@ -58,6 +68,8 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { t } from '@/core/i18n'
+import { TASK_STATUS_LABELS } from '@/modules/automation/constants/jobStatus'
 
 const props = defineProps({
   ansibleContents: {
@@ -65,17 +77,6 @@ const props = defineProps({
     default: () => []
   }
 })
-
-const TASK_STATUS_LABELS = {
-  ok: '成功',
-  changed: '成功',
-  failed: '失败',
-  unreachable: '不可达',
-  ignored: '忽略',
-  skipped: '跳过',
-  running: '运行中',
-  unknown: '未知'
-}
 
 const TASK_STATUS_TAGS = {
   ok: 'success',
@@ -166,8 +167,6 @@ function extractStringOrArrayItems(val) {
   }
   return []
 }
-
-
 
 function parsePkgs(raw) {
   return extractStringOrArrayItems(raw)
@@ -261,9 +260,7 @@ const gridClass = computed(() => {
 const isHostsOnly = computed(() => {
   const overview = patchOverviewInfo.value
   return Boolean(
-    overview?.hosts?.length &&
-    overview.patches.length === 0 &&
-    overview.packages.length === 0
+    overview?.hosts?.length && overview.patches.length === 0 && overview.packages.length === 0
   )
 })
 </script>

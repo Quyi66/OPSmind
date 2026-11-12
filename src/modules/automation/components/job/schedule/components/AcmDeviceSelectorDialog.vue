@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="visible"
-    :title="title"
+    :title="title || t('hostUser.selectDevices')"
     width="1200px"
     :close-on-click-modal="false"
     :z-index="5000"
@@ -25,7 +25,7 @@
       <div v-if="ciTypeDefs.length > 1" class="ci-type-selector mb-3">
         <el-select
           v-model="activeCiType"
-          placeholder="请选择CI类型"
+          :placeholder="t('selection.selectCiType')"
           class="w-100"
           popper-style="z-index: 10000"
         >
@@ -48,20 +48,20 @@
             >
               <span>
                 <i class="fa fa-briefcase-medical text-muted me-2" />
-                已选项
+                {{ t('selection.selectedItems') }}
                 <el-badge :value="selectedHostsByCiType.length" type="danger" class="ms-2" />
               </span>
               <div style="display: flex; gap: 8px; align-items: center">
                 <el-input
                   v-if="selectedHostsByCiType.length > 10"
                   v-model="searchSelectedQuery"
-                  placeholder="搜索已选项..."
+                  :placeholder="t('selection.searchSelected')"
                   size="small"
                   clearable
                   style="width: 180px"
                 />
                 <el-button text size="small" @click="toggleShowHosts">
-                  {{ showHosts ? '收起' : '展开' }}
+                  {{ showHosts ? t('selection.collapse') : t('selection.expand') }}
                 </el-button>
                 <el-button
                   v-if="selectedHostsByCiType.length > 0"
@@ -70,7 +70,7 @@
                   size="small"
                   @click="clearAllSelected"
                 >
-                  清空
+                  {{ t('selection.clear') }}
                 </el-button>
               </div>
             </div>
@@ -97,13 +97,16 @@
               class="text-muted text-center py-2"
               style="font-size: 13px"
             >
-              未匹配到相关主机
+              {{ t('selection.noHostsMatch') }}
             </div>
             <div v-if="hasMoreSelectedTags" style="text-align: center; margin-top: 8px">
               <el-button link type="primary" size="small" @click="loadMoreSelectedTags">
-                加载更多 (已显示 {{ displayedSelectedTags.length }}/{{
-                  filteredSelectedTags.length
-                }})
+                {{
+                  t('selection.loadMore', {
+                    shown: displayedSelectedTags.length,
+                    total: filteredSelectedTags.length
+                  })
+                }}
               </el-button>
             </div>
           </div>
@@ -185,14 +188,16 @@
       <div class="selector-footer">
         <DeviceSelectionSummary class="selection-summary" :selection="allSelectedHosts" />
         <div>
-          <el-button :disabled="submitting" @click="handleCancel">取消</el-button>
+          <el-button :disabled="submitting" @click="handleCancel">
+            {{ t('common.cancel') }}
+          </el-button>
           <el-button
             type="primary"
             :loading="submitting"
             :disabled="submitting || (!allowEmpty && allSelectedHosts.length === 0)"
             @click="handleConfirm"
           >
-            {{ confirmText }}
+            {{ confirmText || t('selection.confirm') }}
           </el-button>
         </div>
       </div>
@@ -201,6 +206,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed, watch } from 'vue'
 import InstanceSelector from './acm/InstanceSelector.vue'
 import GroupSelector from './acm/GroupSelector.vue'
@@ -214,8 +221,8 @@ const props = defineProps({
   modelValue: { type: Boolean, default: false },
   ciTypes: { type: [String, Array], default: 'linux' },
   initialSelection: { type: Array, default: () => [] },
-  title: { type: String, default: '选择设备' },
-  confirmText: { type: String, default: '确定' },
+  title: { type: String, default: '' },
+  confirmText: { type: String, default: '' },
   description: { type: String, default: '' },
   submitting: { type: Boolean, default: false },
   // 表单选择默认立即关闭且允许清空；直接执行时由业务页面在提交成功后关闭。
@@ -238,11 +245,36 @@ const visible = computed({
 })
 
 const selectModeDefaults = {
-  host: { title: '设备', icon: 'fa-server' },
-  group: { title: '分组', icon: 'fa-sitemap' },
-  tag: { title: '标签', icon: 'fa-tag' },
-  input: { title: '输入', icon: 'fa-keyboard' },
-  recently: { title: '最近使用', icon: 'fa-history' }
+  host: {
+    get title() {
+      return t('selection.devices')
+    },
+    icon: 'fa-server'
+  },
+  group: {
+    get title() {
+      return t('selection.groups')
+    },
+    icon: 'fa-sitemap'
+  },
+  tag: {
+    get title() {
+      return t('selection.tags')
+    },
+    icon: 'fa-tag'
+  },
+  input: {
+    get title() {
+      return t('selection.input')
+    },
+    icon: 'fa-keyboard'
+  },
+  recently: {
+    get title() {
+      return t('selection.recent')
+    },
+    icon: 'fa-history'
+  }
 }
 
 const ciTypeDefs = ref([])

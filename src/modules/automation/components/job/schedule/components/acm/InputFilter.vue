@@ -3,24 +3,24 @@
     <!-- 输入表单 -->
     <div v-if="!showResult" class="filter-form">
       <el-form label-width="120px">
-        <el-form-item label="匹配属性">
-          <el-select v-model="attrCode" placeholder="请选择属性">
+        <el-form-item :label="t('selection.matchAttribute')">
+          <el-select v-model="attrCode" :placeholder="t('selection.selectAttribute')">
             <el-option label="IP" value="IP" />
-            <el-option label="主机名" value="name" />
+            <el-option :label="t('hostUser.hostname')" value="name" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="匹配数据">
+        <el-form-item :label="t('selection.matchData')">
           <el-input
             v-model="searchText"
             type="textarea"
             :rows="10"
-            placeholder="请输入要匹配的数据，每行一个"
+            :placeholder="t('selection.matchPlaceholder')"
           />
-          <div class="form-text text-muted mt-2">支持多行输入，可使用逗号、分号、换行符等分隔</div>
+          <div class="form-text text-muted mt-2">{{ t('selection.separatorsHelp') }}</div>
         </el-form-item>
 
-        <el-form-item label="其他分隔符">
+        <el-form-item :label="t('selection.otherSeparators')">
           <el-checkbox-group v-model="searchDelims">
             <el-checkbox v-for="delim in delimDefs" :key="delim.value" :label="delim.value">
               {{ delim.label }}
@@ -31,7 +31,7 @@
         <el-form-item>
           <el-button type="primary" :disabled="!searchText" @click="doSearch">
             <i class="fa fa-search me-1" />
-            查找
+            {{ t('selection.find') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -40,7 +40,7 @@
     <!-- 搜索结果 -->
     <div v-else class="search-result">
       <el-alert v-if="notFounds.length > 0" type="error" :closable="false" class="mb-3">
-        <template #title>未找到以下数据:</template>
+        <template #title>{{ t('selection.notFound') }}</template>
         <ul class="mb-0">
           <li v-for="item in notFounds" :key="item">{{ item }}</li>
         </ul>
@@ -55,16 +55,20 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="IP" label="IP地址" min-width="150" />
-        <el-table-column prop="name" label="主机名" min-width="150" />
+        <el-table-column prop="IP" :label="t('selection.ipAddress')" min-width="150" />
+        <el-table-column prop="name" :label="t('hostUser.hostname')" min-width="150" />
       </el-table>
 
-      <el-button type="primary" plain class="mt-3" @click="showResult = false">重新输入</el-button>
+      <el-button type="primary" plain class="mt-3" @click="showResult = false">
+        {{ t('selection.enterAgain') }}
+      </el-button>
     </div>
   </div>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { computed, nextTick, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as jaoApi from '@/modules/automation/api/jao'
@@ -89,10 +93,30 @@ let isInternalUpdate = false
 const isSingleSelector = computed(() => props.options.selector === 'single')
 
 const delimDefs = [
-  { label: '逗号 (,)', value: ',' },
-  { label: '分号 (;)', value: ';' },
-  { label: '空格', value: ' ' },
-  { label: '制表符', value: '\t' }
+  {
+    get label() {
+      return t('selection.comma')
+    },
+    value: ','
+  },
+  {
+    get label() {
+      return t('selection.semicolon')
+    },
+    value: ';'
+  },
+  {
+    get label() {
+      return t('selection.space')
+    },
+    value: ' '
+  },
+  {
+    get label() {
+      return t('selection.tab')
+    },
+    value: '\t'
+  }
 ]
 
 async function doSearch() {
@@ -148,7 +172,7 @@ async function doSearch() {
     syncSelectionFromModelValue()
   } catch (error) {
     console.error('Failed to search ACM by attr:', error)
-    ElMessage.error('搜索失败，请重试')
+    ElMessage.error(t('selection.searchFailed'))
     searchResult.value = []
     notFounds.value = keywords
     showResult.value = true

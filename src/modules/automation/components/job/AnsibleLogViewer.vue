@@ -4,7 +4,7 @@
     <div class="log-toolbar">
       <div class="log-toolbar-left">
         <!-- 自动滚动切换 -->
-        <el-tooltip content="自动滚动到底部" placement="top">
+        <el-tooltip :content="t('execution.ui.autoScroll')" placement="top">
           <el-button
             size="small"
             :type="autoScroll ? 'primary' : 'default'"
@@ -14,7 +14,7 @@
           </el-button>
         </el-tooltip>
         <!-- 下载按钮 -->
-        <el-tooltip content="下载原始输出" placement="top">
+        <el-tooltip :content="t('execution.ui.downloadRaw')" placement="top">
           <el-button size="small" :disabled="!logContent" @click="handleDownload">
             <i class="fa fa-file-download" />
           </el-button>
@@ -37,7 +37,7 @@
         <el-input
           v-model="searchKeyword"
           size="small"
-          placeholder="搜索目标 (Enter搜索)"
+          :placeholder="t('execution.ui.searchLog')"
           clearable
           class="log-search-input"
           @keyup.enter="handleSearch"
@@ -84,21 +84,23 @@
     <div v-if="wsStatus !== 'closed'" class="log-status">
       <span v-if="wsStatus === 'connecting'" class="status-connecting">
         <i class="fa fa-spinner fa-spin" />
-        连接中...
+        {{ t('execution.ui.connecting') }}
       </span>
       <span v-else-if="wsStatus === 'connected'" class="status-connected">
         <i class="fa fa-circle" />
-        实时日志
+        {{ t('execution.ui.liveLog') }}
       </span>
       <span v-else-if="wsStatus === 'error'" class="status-error">
         <i class="fa fa-exclamation-triangle" />
-        连接失败
+        {{ t('execution.ui.connectionFailed') }}
       </span>
     </div>
   </div>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as jaoApi from '@/modules/automation/api/jao'
@@ -145,12 +147,14 @@ let websocket = null
 let isManualClose = false
 const historicalLogRunId = ref('')
 const historicalLogLoading = ref(false)
+const missingHistoricalLog = ref(false)
 
 // 计算日志内容
 const logContent = computed(() => {
   if (props.content) {
     return props.content
   }
+  if (missingHistoricalLog.value) return t('execution.ui.historyMissing')
   const batch = batchData.value[activeBatch.value]
   return batch?.content || ''
 })
@@ -190,6 +194,7 @@ function isTerminalRunStatus(status) {
 }
 
 function applyLogContent(content) {
+  missingHistoricalLog.value = false
   batchData.value = {
     default: {
       content: content || ''
@@ -224,12 +229,11 @@ async function loadHistoricalLog(force = false) {
     emit('loaded')
   } catch (error) {
     if (error?.response?.status === 404) {
-      const text =
-        typeof error.response?.data === 'string'
-          ? error.response.data
-          : '未找到该任务的历史日志，可能任务不存在、尚未产生输出或日志已过期被清除'
+      const hasServerMessage = typeof error.response?.data === 'string'
+      const text = hasServerMessage ? error.response.data : ''
       historicalLogRunId.value = props.runId
       applyLogContent(text)
+      missingHistoricalLog.value = !hasServerMessage
       wsStatus.value = 'closed'
       return
     }
@@ -262,6 +266,7 @@ function connectWebsocket() {
     }
 
     websocket.onmessage = event => {
+      missingHistoricalLog.value = false
       try {
         const data = JSON.parse(event.data)
         const batchId = data.batchId || 'default'
@@ -400,10 +405,10 @@ async function handleDownload() {
     link.click()
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
-    ElMessage.success('下载成功')
+    ElMessage.success(t('execution.ui.downloadSuccess'))
   } catch (error) {
     console.error('下载失败:', error)
-    ElMessage.error('下载失败')
+    ElMessage.error(t('execution.ui.downloadFailed'))
   }
 }
 
@@ -541,6 +546,7 @@ watch(
       batchList.value = []
       activeBatch.value = 'default'
       historicalLogRunId.value = ''
+      missingHistoricalLog.value = false
       closeWebsocket()
       // 只有在激活状态时才连接
       if (props.active) {

@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="visible"
-    title="修改用户"
+    :title="t('hostUser.editUser')"
     width="600px"
     :close-on-click-modal="false"
     :before-close="handleClose"
@@ -21,44 +21,49 @@
       </div>
 
       <!-- 操作类型选择 -->
-      <el-form :model="formData" :disabled="attempted" label-width="120px" class="edit-form">
-        <el-form-item label="操作类型">
+      <el-form
+        :model="formData"
+        :disabled="attempted"
+        :label-width="currentLocale === 'en-US' ? '160px' : '120px'"
+        class="edit-form"
+      >
+        <el-form-item :label="t('hostUser.operationType')">
           <el-radio-group v-model="formData.operate" @change="handleOperateChange">
-            <el-radio value="modify_base">修改基本信息</el-radio>
-            <el-radio value="lock">锁定/解锁</el-radio>
-            <el-radio value="ssh">SSH登录</el-radio>
-            <el-radio value="modify_password">修改密码</el-radio>
-            <el-radio value="sudo">sudo权限</el-radio>
+            <el-radio value="modify_base">{{ t('hostUser.editBasicInformation') }}</el-radio>
+            <el-radio value="lock">{{ t('hostUser.lockUnlock') }}</el-radio>
+            <el-radio value="ssh">{{ t('hostUser.sshSignIn') }}</el-radio>
+            <el-radio value="modify_password">{{ t('hostUser.changePassword') }}</el-radio>
+            <el-radio value="sudo">{{ t('hostUser.sudoPermissions') }}</el-radio>
           </el-radio-group>
         </el-form-item>
 
-        <el-form-item label="用户名">
+        <el-form-item :label="t('common.username')">
           <el-input v-model="formData.username" disabled />
         </el-form-item>
 
         <!-- 修改基本信息 -->
         <template v-if="formData.operate === 'modify_base'">
-          <el-form-item label="附加用户组">
+          <el-form-item :label="t('hostUser.additionalGroups')">
             <el-input
               v-model="formData.user_groups"
-              placeholder="多个组名用逗号隔开"
+              :placeholder="t('hostUser.separateGroupNamesWithCommas')"
               maxlength="100"
             />
           </el-form-item>
-          <el-form-item label="主目录">
+          <el-form-item :label="t('hostUser.homeDirectory')">
             <el-input v-model="formData.user_home" maxlength="256" />
           </el-form-item>
           <el-form-item label="Shell">
             <el-input v-model="formData.user_shell" maxlength="100" />
           </el-form-item>
-          <el-form-item label="备注">
+          <el-form-item :label="t('hostUser.notes')">
             <el-input v-model="formData.user_comment" maxlength="200" />
           </el-form-item>
-          <el-form-item label="过期时间">
+          <el-form-item :label="t('hostUser.expiryDate')">
             <el-date-picker
               v-model="formData.user_expires"
               type="date"
-              placeholder="选填"
+              :placeholder="t('hostUser.optional')"
               format="YYYY-MM-DD"
               value-format="YYYY-MM-DD"
               style="width: 100%"
@@ -68,34 +73,34 @@
 
         <!-- 锁定/解锁 -->
         <template v-if="formData.operate === 'lock'">
-          <el-form-item label="列表锁定状态">{{ lockStatusText }}</el-form-item>
-          <el-form-item label="是否锁定用户">
+          <el-form-item :label="t('hostUser.listedLockStatus')">{{ lockStatusText }}</el-form-item>
+          <el-form-item :label="t('hostUser.lockTheUser')">
             <el-radio-group v-model="formData.user_lock">
-              <el-radio value="yes">锁定</el-radio>
-              <el-radio value="no">解锁</el-radio>
+              <el-radio value="yes">{{ t('hostUser.locked') }}</el-radio>
+              <el-radio value="no">{{ t('hostUser.unlock') }}</el-radio>
             </el-radio-group>
           </el-form-item>
         </template>
 
         <!-- SSH登录 -->
         <template v-if="formData.operate === 'ssh'">
-          <p>请选择本次目标动作；以下选项不表示已读取主机当前的SSH配置。</p>
-          <el-form-item label="允许SSH登录">
+          <p>{{ t('hostUser.selectTheTargetActionTheseOptionsDoNot') }}</p>
+          <el-form-item :label="t('hostUser.allowSshSignIn')">
             <el-radio-group v-model="formData.user_login">
-              <el-radio value="yes">是</el-radio>
-              <el-radio value="no">否</el-radio>
+              <el-radio value="yes">{{ t('hostUser.yes') }}</el-radio>
+              <el-radio value="no">{{ t('hostUser.no') }}</el-radio>
             </el-radio-group>
           </el-form-item>
         </template>
 
         <!-- 修改密码 -->
         <template v-if="formData.operate === 'modify_password'">
-          <el-form-item label="新密码" required>
+          <el-form-item :label="t('hostUser.newPassword')" required>
             <el-input
               v-model="formData.user_password"
               type="password"
               show-password
-              placeholder="请输入新密码"
+              :placeholder="t('hostUser.enterANewPassword')"
               autocomplete="new-password"
               maxlength="32"
             />
@@ -104,10 +109,10 @@
 
         <!-- sudo权限 -->
         <template v-if="formData.operate === 'sudo'">
-          <el-form-item label="sudo模板">
+          <el-form-item :label="t('hostUser.sudoTemplate')">
             <el-select
               v-model="formData.templateId"
-              placeholder="选择sudo模板"
+              :placeholder="t('hostUser.selectASudoTemplate')"
               style="width: 100%"
               :loading="templatesLoading"
             >
@@ -120,23 +125,37 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item v-if="templatesError" label="sudo模板">
+          <el-form-item v-if="templatesError" :label="t('hostUser.sudoTemplate')">
             <el-alert :title="templatesError" type="warning" :closable="false" />
-            <el-button @click="loadSudoTemplates">重试模板读取</el-button>
+            <el-button @click="loadSudoTemplates">{{ t('hostUser.retryTemplates') }}</el-button>
           </el-form-item>
-          <el-form-item v-if="formData.templateId !== 'N/A'" label="sudo读取">
-            <span v-if="commandsLoading">正在读取模板命令…</span>
+          <el-form-item v-if="formData.templateId !== 'N/A'" :label="t('hostUser.sudoLoading')">
+            <span v-if="commandsLoading">{{ t('hostUser.readingTemplateCommands') }}</span>
             <template v-else-if="commandsError">
               <el-alert :title="commandsError" type="warning" :closable="false" />
-              <el-button @click="loadSudoCommands">重试命令读取</el-button>
+              <el-button @click="loadSudoCommands">{{ t('hostUser.retryCommands') }}</el-button>
             </template>
-            <span v-else-if="!canSubmitSudo">模板尚未确认完整，请先完成模板读取。</span>
-            <span v-else>将提交本模板的全部 {{ sudoCommands.length }} 条命令。</span>
+            <span v-else-if="!canSubmitSudo">
+              {{ t('hostUser.theTemplateIsNotConfirmedCompleteLoadThe') }}
+            </span>
+            <span v-else>
+              {{ t('hostUser.submitAllTemplateCommands', { count: sudoCommands.length }) }}
+            </span>
           </el-form-item>
-          <el-form-item v-if="sudoCommands.length" label="sudo命令">
+          <el-form-item v-if="sudoCommands.length" :label="t('hostUser.sudoCommands')">
             <el-table :data="sudoCommands" size="small" max-height="200">
-              <el-table-column prop="command" label="命令" min-width="200" show-overflow-tooltip />
-              <el-table-column prop="description" label="描述" width="150" show-overflow-tooltip />
+              <el-table-column
+                prop="command"
+                :label="t('hostUser.command')"
+                min-width="200"
+                show-overflow-tooltip
+              />
+              <el-table-column
+                prop="description"
+                :label="t('hostUser.description')"
+                width="150"
+                show-overflow-tooltip
+              />
             </el-table>
           </el-form-item>
         </template>
@@ -151,11 +170,13 @@
       :closable="false"
       show-icon
     />
-    <p v-if="attempted">关闭窗口不会取消已提交的后台任务；结果未知时请先核实，勿重复操作。</p>
+    <p v-if="attempted">{{ t('hostUser.closingThisWindowDoesNotCancelSubmittedTasks') }}</p>
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose">{{ attempted ? '关闭窗口' : '取消' }}</el-button>
+        <el-button @click="handleClose">
+          {{ attempted ? t('hostUser.closeWindow') : t('common.cancel') }}
+        </el-button>
         <el-button
           type="primary"
           :loading="busy"
@@ -170,6 +191,8 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useUserSudoRead } from '@/modules/user/composables/useUserSudoRead'
@@ -208,7 +231,7 @@ const task = useUserDialogTask({
   context: () => props.user,
   emit,
   onSuccess: handleClose,
-  successMessage: '操作成功'
+  successMessage: () => t('hostUser.operationCompleted')
 })
 const { attempted, busy, taskType, taskMessage, taskDescription } = task
 const sudoRead = useUserSudoRead({
@@ -228,7 +251,9 @@ const {
   loadSudoCommands
 } = sudoRead
 const lockStatusText = computed(
-  () => ({ 1: '锁定', 2: '未锁定' })[userData.value.lock_status] || '未知'
+  () =>
+    ({ 1: t('hostUser.locked'), 2: t('hostUser.unlocked') })[userData.value.lock_status] ||
+    t('hostUser.unknown')
 )
 watch(
   [() => props.visible, () => props.user],
@@ -263,26 +288,26 @@ function handleOperateChange() {
   formData.user_password = ''
 }
 function getSubmitButtonText() {
-  if (busy.value) return '正在处理…'
-  if (attempted.value) return '请先核实结果'
+  if (busy.value) return t('hostUser.processing')
+  if (attempted.value) return t('hostUser.verifyTheResultFirst')
   return (
     {
-      modify_base: '保存',
+      modify_base: t('common.save'),
       lock:
         formData.user_lock === 'yes'
-          ? '锁定用户'
+          ? t('hostUser.lockUser')
           : formData.user_lock === 'no'
-            ? '解锁用户'
-            : '请选择锁定动作',
+            ? t('hostUser.unlockUser')
+            : t('hostUser.selectALockAction'),
       ssh:
         formData.user_login === 'yes'
-          ? '允许SSH登录'
+          ? t('hostUser.allowSshSignIn')
           : formData.user_login === 'no'
-            ? '禁止SSH登录'
-            : '请选择SSH动作',
-      modify_password: '修改密码',
-      sudo: '保存sudo权限'
-    }[formData.operate] || '确认'
+            ? t('hostUser.denySshSignIn')
+            : t('hostUser.selectAnSshAction'),
+      modify_password: t('hostUser.changePassword'),
+      sudo: t('hostUser.saveSudoPermissions')
+    }[formData.operate] || t('common.confirm')
   )
 }
 const missingAction = computed(() =>
@@ -301,11 +326,11 @@ function handleSubmit() {
     return
   const hostId = userData.value.host_id || userData.value.id
   if (!hostId || !formData.username) {
-    ElMessage.warning('缺少用户信息，无法执行操作')
+    ElMessage.warning(t('hostUser.userDetailsAreRequiredForThisOperation'))
     return
   }
   if (formData.operate === 'modify_password' && !formData.user_password) {
-    ElMessage.warning('请输入新密码')
+    ElMessage.warning(t('hostUser.enterANewPassword'))
     return
   }
   const jobId = jobIdMap[formData.operate]

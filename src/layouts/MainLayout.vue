@@ -21,7 +21,11 @@
 
           <div v-if="moduleToolbarTitle" class="module-toolbar">
             <div class="module-toolbar-title">{{ moduleToolbarTitle }}</div>
-            <button class="module-toolbar-close" @click="handleCloseModule" aria-label="关闭">
+            <button
+              class="module-toolbar-close"
+              @click="handleCloseModule"
+              :aria-label="t('common.close')"
+            >
               ×
             </button>
           </div>
@@ -52,6 +56,7 @@ import { useDashboardStore } from '@/stores/dashboard'
 import { useMenuStore } from '@/stores/menu.js'
 import { useTagsViewStore } from '@/stores/tagsView'
 import { storeToRefs } from 'pinia'
+import { t } from '@/core/i18n'
 
 const dashboardStore = useDashboardStore()
 const router = useRouter()
@@ -86,7 +91,7 @@ const showModuleToolbar = computed(() => activeMenuItem.value === 'settings')
 
 // 标题文本：settings -> 个人资料
 const moduleTitleText = computed(() => {
-  if (activeMenuItem.value === 'settings') return '个人资料'
+  if (activeMenuItem.value === 'settings') return t('common.profile')
   return ''
 })
 
@@ -312,7 +317,9 @@ $tags-bar-height: 34px;
   :deep(.tags-view-container) {
     margin-left: $side-menu-width;
     width: calc(100% - #{$side-menu-width});
-    transition: margin-left 0.3s ease, width 0.3s ease;
+    transition:
+      margin-left 0.3s ease,
+      width 0.3s ease;
   }
 
   &.side-menu-collapsed {

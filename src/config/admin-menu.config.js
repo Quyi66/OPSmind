@@ -6,8 +6,16 @@ export const ADMIN_MENU_CONFIG = [
   {
     code: 'assets',
     name: '资产管理',
+    nameKey: 'navigation.groups.asset-management',
     icon: 'fas fa-server',
-    children: [{ code: 'auto-config', name: '连接凭据', icon: 'fas fa-cogs' }]
+    children: [
+      {
+        code: 'auto-config',
+        name: '连接凭据',
+        nameKey: 'navigation.pages.acm.automation',
+        icon: 'fas fa-cogs'
+      }
+    ]
   }
 ]
 

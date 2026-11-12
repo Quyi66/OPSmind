@@ -1,3 +1,5 @@
+import { message, messageRef } from '@/core/i18n/feedback'
+
 import { computed, onActivated, onBeforeUnmount, onDeactivated, ref, watch } from 'vue'
 import { getSudoTemplates, getSudoCommandsByTemplate } from '@/modules/user/api'
 
@@ -29,8 +31,8 @@ export function useUserSudoRead({ visible, templateId, context = () => null }) {
   const sudoCommands = ref([])
   const templatesLoading = ref(false)
   const commandsLoading = ref(false)
-  const templatesError = ref('')
-  const commandsError = ref('')
+  const templatesError = messageRef('')
+  const commandsError = messageRef('')
   const templatesReady = ref(false)
   const loadedTemplate = ref(null)
   const active = ref(true)
@@ -71,7 +73,7 @@ export function useUserSudoRead({ visible, templateId, context = () => null }) {
       sudoTemplates.value = records
       templatesReady.value = true
     } catch {
-      if (isCurrent()) templatesError.value = 'sudo模板读取失败或不完整，请重试。'
+      if (isCurrent()) templatesError.value = message('hostUser.sudoTemplatesReadFailed')
     } finally {
       if (isCurrent()) templatesLoading.value = false
     }
@@ -98,7 +100,7 @@ export function useUserSudoRead({ visible, templateId, context = () => null }) {
       sudoCommands.value = records
       loadedTemplate.value = id
     } catch {
-      if (isCurrent()) commandsError.value = 'sudo命令读取失败或不完整，请重试后再提交。'
+      if (isCurrent()) commandsError.value = message('hostUser.sudoCommandsReadFailed')
     } finally {
       if (isCurrent()) commandsLoading.value = false
     }
@@ -136,8 +138,8 @@ export function useUserSudoRead({ visible, templateId, context = () => null }) {
     if (active.value) return
     active.value = true
     if (visible()) {
-      templatesError.value = 'sudo模板读取已中断，请重试。'
-      if (selected()) commandsError.value = 'sudo命令读取已中断，请重试。'
+      templatesError.value = message('hostUser.sudoTemplatesInterrupted')
+      if (selected()) commandsError.value = message('hostUser.sudoCommandsInterrupted')
     }
   })
   onBeforeUnmount(() => {

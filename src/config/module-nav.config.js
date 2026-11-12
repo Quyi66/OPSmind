@@ -6,6 +6,8 @@
 import { authService } from '@/core/auth'
 import { canAccessMenuCode } from '@/core/auth/permission-policy'
 import { registeredModules, getModuleDefinition } from '@/modules/registry'
+import { t } from '@/core/i18n'
+import { localizeNavItem } from '@/core/i18n/navigation'
 
 // 辅助函数：根据路由定义自动派生默认的侧边导航栏项
 function buildDefaultNavItems(routes, basePath) {
@@ -54,7 +56,7 @@ if (patchesDef && patchesDef.navItems) {
  * @returns {Array} 页面导航配置数组
  */
 export function getModuleNav(moduleCode) {
-  return MODULE_NAV_CONFIG[moduleCode] || []
+  return (MODULE_NAV_CONFIG[moduleCode] || []).map(localizeNavItem)
 }
 
 /**
@@ -76,7 +78,7 @@ export function getGroupMenuConfig(groupCode, MENU_CONFIG) {
       if (!moduleDef) return null
       return {
         code: moduleDef.code,
-        name: moduleDef.name,
+        name: t(`navigation.modules.${moduleDef.code}`, {}, moduleDef.name),
         icon: moduleDef.icon,
         description: moduleDef.description
       }
@@ -87,7 +89,7 @@ export function getGroupMenuConfig(groupCode, MENU_CONFIG) {
       code: module.code,
       name: module.name,
       icon: module.icon,
-      children: (MODULE_NAV_CONFIG[module.code] || []).filter(item =>
+      children: getModuleNav(module.code).filter(item =>
         canAccessMenuCode(checkPermission, item.accessCode || module.code)
       )
     }))

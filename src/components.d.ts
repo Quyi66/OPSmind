@@ -72,6 +72,7 @@ declare module 'vue' {
     ElTreeSelect: typeof import('element-plus/es')['ElTreeSelect']
     ElUpload: typeof import('element-plus/es')['ElUpload']
     IconPicker: typeof import('./components/shared/IconPicker.vue')['default']
+    LanguageSwitcher: typeof import('./components/shared/LanguageSwitcher.vue')['default']
     LoginForm: typeof import('./components/auth/LoginForm.vue')['default']
     NotificationPopover: typeof import('./components/layout/NotificationPopover.vue')['default']
     RouteLoadingFallback: typeof import('./components/common/RouteLoadingFallback.vue')['default']

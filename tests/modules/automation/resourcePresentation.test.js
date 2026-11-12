@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { setLocale } from '@/core/i18n'
 import {
   getAutomationToolTitle,
   getAutomationToolDescription,
@@ -7,8 +8,27 @@ import {
 } from '@/modules/automation/utils/resourcePresentation'
 
 vi.mock('@/utils/i18n', () => ({ translateText: value => value || '' }))
+afterEach(() => setLocale('zh-CN', { persist: false }))
 
 describe('资源名称只影响展示', () => {
+  it('translates confirmed built-ins and fallbacks while preserving custom titles, descriptions and identities', async () => {
+    await setLocale('en-US', { persist: false })
+    const record = Object.freeze({ id: 'M1x855', title: '【ACM】设备连通性检测' })
+    expect(getAutomationToolTitle(record)).toBe('Device connectivity check')
+    expect(record.title).toBe('【ACM】设备连通性检测')
+    expect(getAutomationToolTitle({ ...record, title: '自定义中文标题' })).toBe('自定义中文标题')
+    expect(getAutomationToolDescription({ ...record, description: '中文自定义说明' })).toBe(
+      '中文自定义说明'
+    )
+    expect(getAutomationRunTitle({ id: 'M1x855', job_title: record.title })).toBe(record.title)
+    expect(getAutomationRunTitle({ job_id: record.id, job_title: record.title })).toBe(
+      'Device connectivity check'
+    )
+    expect(getAutomationRunTitle({ job_title: '[script]/目录/脚本.yml' })).toBe(
+      'Script execution: 脚本.yml'
+    )
+    expect(getAutomationToolTitle({ id: 'internal-id' })).toBe('Unnamed operations tool')
+  })
   it('重复内置名称的说明沿用身份匹配，自定义说明和原始值保留', () => {
     const record = Object.freeze({ id: 'eGfsxb', description: '【ACM】设备纳管' })
     expect(getAutomationToolDescription(record)).toBe('设备纳管')
@@ -27,18 +47,30 @@ describe('资源名称只影响展示', () => {
     ['0MKtcJ', '【ACM】主机录入', '主机录入']
   ])('只清理已由旧页面及固定调用核实的资源 %s', (id, title, label) => {
     expect(getAutomationToolTitle({ id, title })).toBe(label)
-    expect(getAutomationToolTitle({ id, title: '【ACM】用户自定义名称' })).toBe('【ACM】用户自定义名称')
+    expect(getAutomationToolTitle({ id, title: '【ACM】用户自定义名称' })).toBe(
+      '【ACM】用户自定义名称'
+    )
     expect(getAutomationToolTitle({ id: 'custom', title })).toBe(title)
   })
   it('执行回调保留工具身份，展示别名不覆盖原始参数', () => {
-    const payload = Object.freeze({ runId: 'run-1', jobId: 'M1x855', jobTitle: '【ACM】设备连通性检测' })
+    const payload = Object.freeze({
+      runId: 'run-1',
+      jobId: 'M1x855',
+      jobTitle: '【ACM】设备连通性检测'
+    })
     expect(getAutomationExecutionPresentation(payload)).toEqual({
       jobId: 'M1x855',
       jobTitle: '设备连通性检测'
     })
-    expect(getAutomationExecutionPresentation({ ...payload, jobId: 'custom' }).jobTitle).toBe(payload.jobTitle)
-    expect(getAutomationExecutionPresentation({ ...payload, jobTitle: '自定义检测' }).jobTitle).toBe('自定义检测')
-    expect(getAutomationExecutionPresentation({}, { id: 'M1x855', title: '设备连通性检测' }).jobTitle).toBe('设备连通性检测')
+    expect(getAutomationExecutionPresentation({ ...payload, jobId: 'custom' }).jobTitle).toBe(
+      payload.jobTitle
+    )
+    expect(
+      getAutomationExecutionPresentation({ ...payload, jobTitle: '自定义检测' }).jobTitle
+    ).toBe('自定义检测')
+    expect(
+      getAutomationExecutionPresentation({}, { id: 'M1x855', title: '设备连通性检测' }).jobTitle
+    ).toBe('设备连通性检测')
   })
   it('只给已确认 ID 和原名称同时匹配的内置工具使用业务名称', () => {
     const record = Object.freeze({
@@ -59,9 +91,9 @@ describe('资源名称只影响展示', () => {
   })
 
   it('运行记录使用工具标识匹配，不能使用运行标识误匹配', () => {
-    expect(
-      getAutomationRunTitle({ id: 'M1x855', job_title: '【ACM】设备连通性检测' })
-    ).toBe('【ACM】设备连通性检测')
+    expect(getAutomationRunTitle({ id: 'M1x855', job_title: '【ACM】设备连通性检测' })).toBe(
+      '【ACM】设备连通性检测'
+    )
     expect(
       getAutomationRunTitle({ id: 'run-1', job_id: '0g3GfW', job_title: '【VAP2】 补丁扫描' })
     ).toBe('补丁扫描')

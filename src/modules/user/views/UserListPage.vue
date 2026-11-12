@@ -3,34 +3,34 @@
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small" @submit.prevent>
-        <el-form-item label="用户类型">
+        <el-form-item :label="t('hostUser.userType')">
           <el-select
             v-model="filters.types"
             multiple
-            placeholder="请选择"
+            :placeholder="t('hostUser.select')"
             style="width: 200px"
             @change="handleFilterChange"
           >
-            <el-option label="系统用户" value="0" />
-            <el-option label="普通用户" value="1" />
+            <el-option :label="t('hostUser.systemUser')" value="0" />
+            <el-option :label="t('hostUser.regularUser')" value="1" />
           </el-select>
         </el-form-item>
-        <el-form-item label="锁定状态">
+        <el-form-item :label="t('hostUser.lockStatus')">
           <el-select
             v-model="filters.lockStatus"
             multiple
-            placeholder="请选择"
+            :placeholder="t('hostUser.select')"
             style="width: 200px"
             @change="handleFilterChange"
           >
-            <el-option label="锁定" value="1" />
-            <el-option label="未锁定" value="2" />
+            <el-option :label="t('hostUser.locked')" value="1" />
+            <el-option :label="t('hostUser.unlocked')" value="2" />
           </el-select>
         </el-form-item>
-        <el-form-item label="关键词">
+        <el-form-item :label="t('hostUser.keyword')">
           <el-input
             v-model="filters.keyword"
-            placeholder="主机/IP/用户名/用户组"
+            :placeholder="t('hostUser.hostIpUsernameUserGroup')"
             clearable
             style="width: 220px"
             @keyup.enter="handleSearch"
@@ -42,13 +42,13 @@
             <el-icon>
               <Search />
             </el-icon>
-            搜索
+            {{ t('common.search') }}
           </el-button>
           <el-button @click="handleReset">
             <el-icon>
               <RefreshRight />
             </el-icon>
-            重置
+            {{ t('common.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -58,11 +58,11 @@
     <div class="ops-action-bar">
       <el-button type="primary" size="small" @click="handleScanHost">
         <i class="fa fa-redo-alt"></i>
-        扫描主机
+        {{ t('hostUser.scanHosts') }}
       </el-button>
       <el-button type="default" size="small" @click="handleCreateUser">
         <i class="fa fa-user-plus"></i>
-        创建用户
+        {{ t('hostUser.createUser') }}
       </el-button>
       <span style="flex: 1"></span>
       <el-button
@@ -71,7 +71,7 @@
         size="small"
         :loading="loading"
         @click="loadData"
-        title="刷新"
+        :title="t('common.refresh')"
       >
         <el-icon v-show="!loading">
           <Refresh />
@@ -82,7 +82,7 @@
     <div v-if="readError" class="read-feedback" role="status">
       <el-alert :title="readError" type="warning" :closable="false" show-icon />
       <el-button v-if="!authError" size="small" :loading="loading" @click="loadData">
-        重试读取
+        {{ t('hostUser.retryReading') }}
       </el-button>
     </div>
 
@@ -91,9 +91,19 @@
       <el-table :data="paginatedData" v-loading="loading" height="100%" :empty-text="emptyText">
         <el-table-column prop="host_key" label="IP" min-width="140" show-overflow-tooltip />
 
-        <el-table-column prop="hostname" label="主机名" min-width="140" show-overflow-tooltip />
+        <el-table-column
+          prop="hostname"
+          :label="t('hostUser.hostname')"
+          min-width="140"
+          show-overflow-tooltip
+        />
 
-        <el-table-column prop="username" label="用户名" min-width="160" show-overflow-tooltip>
+        <el-table-column
+          prop="username"
+          :label="t('common.username')"
+          min-width="160"
+          show-overflow-tooltip
+        >
           <template #default="{ row }">
             <el-tag
               :type="getUserBadgeType(row.uid)"
@@ -114,14 +124,14 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="锁定状态" width="100">
+        <el-table-column :label="t('hostUser.lockStatus')" width="100">
           <template #default="{ row }">
             <el-tag
               :type="getLockStatusType(row.lock_status)"
               size="small"
               class="clickable-tag"
               :class="{ 'is-disabled': !canUseRows }"
-              title="修改锁定状态，需确认后执行"
+              :title="t('hostUser.changeLockStatusAfterConfirmation')"
               role="button"
               :tabindex="canUseRows ? 0 : -1"
               :aria-disabled="!canUseRows"
@@ -135,24 +145,29 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="primary_group" label="主用户组" width="140" show-overflow-tooltip />
+        <el-table-column
+          prop="primary_group"
+          :label="t('hostUser.primaryGroup')"
+          width="140"
+          show-overflow-tooltip
+        />
 
         <el-table-column
           prop="secondary_group"
-          label="附加用户组"
+          :label="t('hostUser.additionalGroups')"
           min-width="180"
           show-overflow-tooltip
         />
 
         <el-table-column prop="shell" label="Shell" width="130" show-overflow-tooltip />
 
-        <el-table-column prop="last_login_time" label="最后登录" width="180">
+        <el-table-column prop="last_login_time" :label="t('hostUser.lastSignIn')" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.last_login_time) }}
           </template>
         </el-table-column>
 
-        <el-table-column label="登录错误" width="90">
+        <el-table-column :label="t('hostUser.signInErrors')" width="90">
           <template #default="{ row }">
             <el-tag
               v-if="row.login_fail_message"
@@ -168,19 +183,19 @@
               @keydown.space.prevent="handleLoginErrorDetail(row)"
             >
               <i class="fa fa-list-alt"></i>
-              详情
+              {{ t('hostUser.details') }}
             </el-tag>
             <span v-else>-</span>
           </template>
         </el-table-column>
 
-        <el-table-column prop="updated_at" label="更新时间" width="180">
+        <el-table-column prop="updated_at" :label="t('hostUser.updatedAt')" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.updated_at) }}
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="120" align="left" fixed="right">
+        <el-table-column :label="t('common.actions')" width="120" align="left" fixed="right">
           <template #default="{ row }">
             <div class="row-actions">
               <el-button
@@ -190,7 +205,7 @@
                 :disabled="!canUseRows"
                 @click="handleEditUser(row)"
               >
-                修改
+                {{ t('hostUser.modify') }}
               </el-button>
               <el-button
                 text
@@ -199,7 +214,7 @@
                 :disabled="!canUseRows"
                 @click="handleDeleteUser(row)"
               >
-                删除
+                {{ t('common.delete') }}
               </el-button>
             </div>
           </template>
@@ -245,6 +260,10 @@
 </template>
 
 <script setup>
+import { message, messageRef } from '@/core/i18n/feedback'
+
+import { t } from '@/core/i18n'
+
 import { ref, computed, onMounted, onActivated, onDeactivated, onBeforeUnmount } from 'vue'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import * as userApi from '@/modules/user/api'
@@ -266,7 +285,7 @@ const appliedFilters = ref(defaultFilters())
 
 const loading = ref(false)
 const filteredData = ref([])
-const readError = ref('')
+const readError = messageRef('')
 const authError = ref(false)
 const active = ref(true)
 let requestVersion = 0
@@ -275,7 +294,7 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const canUseRows = computed(() => active.value && !loading.value && !readError.value)
 const emptyText = computed(() =>
-  loading.value ? '正在读取…' : readError.value || '暂无符合条件的用户'
+  loading.value ? t('hostUser.reading') : readError.value || t('hostUser.noMatchingUsers')
 )
 
 // 总条数：基于筛选后的数据计算
@@ -321,7 +340,7 @@ function getLockStatusIcon(status) {
 }
 
 function getLockStatusText(status) {
-  const texts = { 0: '未知', 1: '锁定', 2: '未锁定' }
+  const texts = { 0: t('hostUser.unknown'), 1: t('hostUser.locked'), 2: t('hostUser.unlocked') }
   return texts[status] || ''
 }
 
@@ -417,10 +436,10 @@ async function loadData() {
       successfulQuery = null
     }
     readError.value = authError.value
-      ? '读取失败：登录已失效或无权访问，请重新登录或联系管理员。'
+      ? message('hostUser.unableToReadYourSessionHasExpiredOr')
       : filteredData.value.length
-        ? '刷新失败，当前显示上次成功结果，可能已过期；请重试后再修改或删除。'
-        : '用户列表读取失败，请重试。'
+        ? message('hostUser.refreshFailedPreviousResultsMayBeOutdatedRetry2')
+        : message('hostUser.unableToReadUsersPleaseRetry')
   } finally {
     if (isCurrent()) loading.value = false
   }
@@ -500,8 +519,8 @@ function invalidateRead() {
   requestVersion += 1
   if (loading.value) {
     readError.value = filteredData.value.length
-      ? '读取已中断，当前显示上次成功结果，可能已过期；请刷新后再修改或删除。'
-      : '用户列表读取已中断，请重试。'
+      ? message('hostUser.readingWasInterruptedPreviousResultsMayBeOutdated2')
+      : message('hostUser.readingUsersWasInterruptedPleaseRetry')
   }
   loading.value = false
 }

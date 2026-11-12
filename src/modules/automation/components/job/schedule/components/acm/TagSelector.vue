@@ -4,14 +4,14 @@
     <el-dropdown v-if="options.view === 'dropdown'" trigger="click" @command="handleTagClick">
       <el-button>
         <i class="fa fa-tag me-1" />
-        <span v-if="!selectedTag">选择标签</span>
+        <span v-if="!selectedTag">{{ t('selection.selectTags') }}</span>
         <span v-else>{{ selectedTag }}</span>
       </el-button>
       <template #dropdown>
         <el-scrollbar max-height="300px">
           <el-dropdown-menu>
             <el-dropdown-item command="">
-              <span class="text-muted">清除标签</span>
+              <span class="text-muted">{{ t('selection.clearTags') }}</span>
             </el-dropdown-item>
             <el-dropdown-item v-for="tag in tags" :key="tag.name" :command="tag.name">
               {{ tag.name }}
@@ -35,13 +35,15 @@
           {{ tag.name }}
           <span class="tag-count">({{ tag.hostCount || 0 }})</span>
         </el-check-tag>
-        <div v-if="tags.length === 0" class="no-tags">暂无标签数据</div>
+        <div v-if="tags.length === 0" class="no-tags">{{ t('selection.noTags') }}</div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, watch, computed } from 'vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 

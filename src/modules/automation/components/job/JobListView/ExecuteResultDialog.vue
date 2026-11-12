@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    :title="`运维工具运行结果${jobTitle ? ` · ${getAutomationRunTitle({ job_title: jobTitle, job_id: jobId || result?.job_id || result?.jobId })}` : ''}`"
+    :title="dialogTitle"
     width="1260px"
     :z-index="zIndex"
     append-to-body
@@ -13,10 +13,16 @@
     <div class="result-dialog" v-loading="loading && !isLiveRefreshing">
       <div v-if="isLiveRefreshing" class="live-refresh-banner">
         <span class="live-dot" />
-        <span>任务运行中，数据每 3 秒自动刷新</span>
+        <span>{{ t('execution.ui.liveRefresh') }}</span>
       </div>
       <el-tabs v-model="activeTab">
-        <el-tab-pane v-for="tab in visibleTabs" :key="tab.name" :label="tab.label" :name="tab.name" lazy>
+        <el-tab-pane
+          v-for="tab in visibleTabs"
+          :key="tab.name"
+          :label="tab.label"
+          :name="tab.name"
+          lazy
+        >
           <template v-if="tab.name === 'overview'">
             <el-scrollbar class="overview-scroll">
               <template v-if="result">
@@ -32,22 +38,30 @@
                   </div>
                   <div class="overview-meta">
                     <div class="meta-item">
-                      <span class="meta-label">执行通道</span>
+                      <span class="meta-label">{{ t('execution.ui.executionChannel') }}</span>
                       <span class="meta-value">
                         <el-tag
                           size="small"
-                          :type="summary.connectionType === 'mixed' ? 'warning' : (summary.isAgentConnection ? 'success' : summary.connectionType === 'ssh' ? 'info' : 'warning')"
+                          :type="
+                            summary.connectionType === 'mixed'
+                              ? 'warning'
+                              : summary.isAgentConnection
+                                ? 'success'
+                                : summary.connectionType === 'ssh'
+                                  ? 'info'
+                                  : 'warning'
+                          "
                         >
                           {{ summary.connectionTypeLabel }}
                         </el-tag>
                       </span>
                     </div>
                     <div v-if="summary.agentVersion" class="meta-item">
-                      <span class="meta-label">Agent 版本</span>
+                      <span class="meta-label">{{ t('execution.ui.agentVersion') }}</span>
                       <span class="meta-value">{{ summary.agentVersion }}</span>
                     </div>
                     <div class="meta-item">
-                      <span class="meta-label">执行人</span>
+                      <span class="meta-label">{{ t('execution.ui.operator') }}</span>
                       <span class="meta-value">{{ summary.username }}</span>
                     </div>
                   </div>
@@ -72,12 +86,14 @@
                       <span class="error-text">{{ err }}</span>
                     </div>
                   </div>
-                  <pre v-if="summary.errorDetails" class="error-details">{{ summary.errorDetails }}</pre>
+                  <pre v-if="summary.errorDetails" class="error-details">{{
+                    summary.errorDetails
+                  }}</pre>
                 </div>
 
                 <div v-if="batches.length && !hasHostInfo" class="result-section">
                   <div class="section-header">
-                    <span>批次状态</span>
+                    <span>{{ t('execution.ui.batchStatus') }}</span>
                   </div>
                   <div class="batch-list">
                     <div v-for="batch in batches" :key="batch.batch" class="batch-card">
@@ -88,7 +104,9 @@
                             {{ statusLabel(batch.status) }}
                           </span>
                         </div>
-                        <span class="batch-meta">主机数：{{ batch.machineCount ?? 0 }}</span>
+                        <span class="batch-meta">
+                          {{ t('execution.ui.hostCount', { count: batch.machineCount ?? 0 }) }}
+                        </span>
                       </div>
                       <div v-if="batch.steps && batch.steps.length" class="batch-steps">
                         <div v-for="step in batch.steps" :key="step.name" class="batch-step">
@@ -101,19 +119,19 @@
                           <p class="batch-step__message">{{ step.message }}</p>
                         </div>
                       </div>
-                      <div v-else class="batch-step__message">无步骤信息</div>
+                      <div v-else class="batch-step__message">{{ t('execution.ui.noSteps') }}</div>
                     </div>
                   </div>
                 </div>
               </template>
-              <el-empty v-else description="暂无执行数据" />
+              <el-empty v-else :description="t('execution.ui.noExecution')" />
             </el-scrollbar>
           </template>
 
           <template v-else-if="tab.name === 'process'">
             <div v-if="processModelPretty" class="process-tab">
               <el-alert
-                title="流程图渲染尚未接入，先展示配置 JSON"
+                :title="t('execution.ui.processPlaceholder')"
                 type="info"
                 :closable="false"
                 class="mb-3"
@@ -122,14 +140,19 @@
                 <pre class="process-json">{{ processModelPretty }}</pre>
               </el-scrollbar>
             </div>
-            <el-empty v-else description="暂无流程配置" />
+            <el-empty v-else :description="t('execution.ui.noProcess')" />
           </template>
 
           <template v-else-if="tab.name === 'hosts'">
             <div v-if="ansibleTreeData.length" class="hosts-pane">
               <div class="hosts-tree-panel">
                 <div class="tree-toolbar">
-                  <el-input v-model="hostFilterText" size="small" placeholder="搜索主机" clearable>
+                  <el-input
+                    v-model="hostFilterText"
+                    size="small"
+                    :placeholder="t('execution.ui.searchHosts')"
+                    clearable
+                  >
                     <template #prefix>
                       <i class="fa fa-search" />
                     </template>
@@ -141,14 +164,18 @@
                     <template #dropdown>
                       <el-dropdown-menu>
                         <el-dropdown-item command="export" :disabled="!ansibleContents.length">
-                          <span>导出输出</span>
+                          <span>{{ t('execution.ui.exportOutput') }}</span>
                         </el-dropdown-item>
                         <el-dropdown-item divided command="merge">
-                          <span>批次合并模式</span>
+                          <span>{{ t('execution.ui.mergeBatches') }}</span>
                           <i v-if="mergeBatches" class="fa fa-check dropdown-check" />
                         </el-dropdown-item>
                         <el-dropdown-item command="expand">
-                          {{ treeExpandAll ? '全部收起' : '全部展开' }}
+                          {{
+                            treeExpandAll
+                              ? t('execution.ui.collapseAll')
+                              : t('execution.ui.expandAll')
+                          }}
                         </el-dropdown-item>
                       </el-dropdown-menu>
                     </template>
@@ -210,7 +237,7 @@
                     <el-input
                       v-model="hostTaskSearch"
                       size="small"
-                      placeholder="搜索任务或输出"
+                      :placeholder="t('execution.ui.searchTasks')"
                       clearable
                       class="host-task-search"
                     >
@@ -244,7 +271,7 @@
                             <span v-if="task.delegateHost" class="delegate-badge">
                               {{ task.delegateHost }}
                             </span>
-                            <span class="task-name">{{ task.name }}</span>
+                            <span class="task-name">{{ taskTitle(task) }}</span>
                           </div>
                           <el-tag size="small" :type="taskStatusTag(task.status)">
                             {{ taskStatusLabel(task.status) }}
@@ -255,13 +282,13 @@
                         }}</pre>
                       </div>
                     </template>
-                    <el-empty v-else description="暂无任务" />
+                    <el-empty v-else :description="t('execution.ui.noTasks')" />
                   </el-scrollbar>
                 </template>
-                <el-empty v-else description="请选择左侧主机" />
+                <el-empty v-else :description="t('execution.ui.selectHost')" />
               </div>
             </div>
-            <el-empty v-else description="暂无主机输出" />
+            <el-empty v-else :description="t('execution.ui.noHostOutput')" />
           </template>
 
           <template v-else-if="tab.name === 'list'">
@@ -278,10 +305,10 @@
             >
               <div class="ops-filter-bar">
                 <el-form :inline="true" size="small">
-                  <el-form-item label="剧本" v-if="listPlayOptions.length">
+                  <el-form-item :label="t('execution.ui.play')" v-if="listPlayOptions.length">
                     <el-select
                       v-model="selectedPlayFilter"
-                      placeholder="全部剧本"
+                      :placeholder="t('execution.ui.allPlays')"
                       clearable
                       style="width: 180px"
                     >
@@ -293,10 +320,10 @@
                       />
                     </el-select>
                   </el-form-item>
-                  <el-form-item label="目标主机" v-if="listHostOptions.length">
+                  <el-form-item :label="t('execution.ui.targetHost')" v-if="listHostOptions.length">
                     <el-select
                       v-model="selectedHostFilter"
-                      placeholder="全部主机"
+                      :placeholder="t('execution.ui.allHosts')"
                       clearable
                       style="width: 180px"
                     >
@@ -311,7 +338,7 @@
                   <el-form-item>
                     <el-input
                       v-model="listKeyword"
-                      placeholder="搜索主机 / 任务 / 输出"
+                      :placeholder="t('execution.ui.searchRows')"
                       clearable
                       style="width: 240px"
                     >
@@ -322,24 +349,50 @@
                   </el-form-item>
                 </el-form>
               </div>
-              <el-table :data="paginatedListRows" :height="'calc(100vh - 350px)'" class="result-table">
-                <el-table-column prop="host" label="主机" width="180" show-overflow-tooltip />
+              <el-table
+                :data="paginatedListRows"
+                :height="'calc(100vh - 350px)'"
+                class="result-table"
+              >
+                <el-table-column
+                  prop="host"
+                  :label="t('execution.ui.host')"
+                  width="180"
+                  show-overflow-tooltip
+                />
                 <el-table-column
                   prop="executorUrl"
-                  label="执行主机"
+                  :label="t('execution.ui.executor')"
                   width="220"
                   show-overflow-tooltip
                 />
-                <el-table-column prop="task" label="任务" min-width="220" show-overflow-tooltip />
-                <el-table-column prop="play" label="剧本" width="200" show-overflow-tooltip />
-                <el-table-column label="状态" width="100">
+                <el-table-column
+                  prop="task"
+                  :label="t('execution.ui.task')"
+                  min-width="220"
+                  show-overflow-tooltip
+                >
+                  <template #default="{ row }">{{ taskTitle(row) }}</template>
+                </el-table-column>
+                <el-table-column
+                  prop="play"
+                  :label="t('execution.ui.play')"
+                  width="200"
+                  show-overflow-tooltip
+                />
+                <el-table-column :label="t('common.status')" width="100">
                   <template #default="{ row }">
                     <el-tag size="small" :type="taskStatusTag(row.status)">
                       {{ taskStatusLabel(row.status) }}
                     </el-tag>
                   </template>
                 </el-table-column>
-                <el-table-column prop="output" label="输出" min-width="240" show-overflow-tooltip />
+                <el-table-column
+                  prop="output"
+                  :label="t('execution.ui.output')"
+                  min-width="240"
+                  show-overflow-tooltip
+                />
               </el-table>
               <div
                 class="pagination-wrapper"
@@ -354,7 +407,7 @@
                 />
               </div>
             </div>
-            <el-empty v-else description="暂无任务数据" />
+            <el-empty v-else :description="t('execution.ui.noTaskData')" />
           </template>
 
           <template v-else-if="tab.name === 'raw'">
@@ -368,7 +421,7 @@
                   @click="openDownload"
                 >
                   <i class="fa fa-file-export mr-1" />
-                  下载 Ansible 原始输出
+                  {{ t('execution.ui.downloadAnsible') }}
                 </el-button>
               </div>
               <el-scrollbar max-height="calc(100vh - 260px)" class="raw-scroll">
@@ -389,17 +442,21 @@
                 >
                   <el-button type="primary" plain @click="showFullRawOutput = true">
                     <i class="fa fa-download mr-1" />
-                    加载全部内容（{{ (ansibleRawOutput.length / 1024).toFixed(0) }} KB）
+                    {{
+                      t('execution.ui.loadAll', {
+                        size: (ansibleRawOutput.length / 1024).toFixed(0)
+                      })
+                    }}
                   </el-button>
                   <p
                     style="font-size: 14px; color: var(--el-text-color-secondary); margin-top: 8px"
                   >
-                    数据量较大，加载全部可能导致短暂卡顿
+                    {{ t('execution.ui.largeOutput') }}
                   </p>
                 </div>
               </el-scrollbar>
             </div>
-            <el-empty v-else description="暂无原始输出" />
+            <el-empty v-else :description="t('execution.ui.noRawOutput')" />
           </template>
 
           <template v-else-if="tab.name === 'output'">
@@ -416,7 +473,7 @@
             <div class="rest-tab">
               <div class="rest-meta">
                 <div class="rest-meta__item">
-                  <span class="rest-meta__label">状态码</span>
+                  <span class="rest-meta__label">{{ t('execution.ui.statusCode') }}</span>
                   <el-tag :type="statusTagType(result ? result.status : '')">
                     {{ restDetail.statusCode }}
                   </el-tag>
@@ -443,7 +500,11 @@ import { computed, ref, shallowRef, watch, nextTick, onBeforeUnmount } from 'vue
 import { ElMessage } from 'element-plus'
 import { formatDateTime } from '@/modules/automation/utils/helpers'
 import * as jaoApi from '@/modules/automation/api/jao'
-import { JOB_STATUS_LABELS, JOB_STATUS_TAG_TYPES } from '@/modules/automation/constants/jobStatus'
+import {
+  JOB_STATUS_LABELS,
+  JOB_STATUS_TAG_TYPES,
+  TASK_STATUS_LABELS
+} from '@/modules/automation/constants/jobStatus'
 import { isActiveRunStatus, isSuccessfulRunStatus, normalizeRunStatus } from '@/utils/taskStatus'
 import { AGENT_ERROR_MESSAGES, agentApi } from '@/modules/asset/api'
 import { authService } from '@/core/auth'
@@ -451,18 +512,9 @@ import { translateText } from '@/utils/i18n'
 import { getAutomationRunTitle } from '@/modules/automation/utils/resourcePresentation'
 import AnsibleLogViewer from '../AnsibleLogViewer.vue'
 import JobUpgradeOverview from './JobUpgradeOverview.vue'
+import { t } from '@/core/i18n'
 
 const ANSIBLE_JOB_TYPES = ['script', 'command', 'process']
-const TASK_STATUS_LABELS = {
-  ok: '成功',
-  changed: '成功',
-  failed: '失败',
-  unreachable: '不可达',
-  ignored: '忽略',
-  skipped: '跳过',
-  running: '运行中',
-  unknown: '未知'
-}
 const TASK_STATUS_TAGS = {
   ok: 'success',
   changed: 'success',
@@ -504,6 +556,16 @@ const activeTab = ref('overview')
 const loading = ref(false)
 // result 体量很大（数千台主机），使用 shallowRef 避免深层响应式代理带来的初始化开销
 const result = shallowRef(null)
+const dialogTitle = computed(() =>
+  props.jobTitle
+    ? t('execution.ui.titleWithName', {
+        name: getAutomationRunTitle({
+          job_title: props.jobTitle,
+          job_id: props.jobId || result.value?.job_id || result.value?.jobId
+        })
+      })
+    : t('execution.ui.title')
+)
 // 仅在对应标签页被访问后才计算其重型数据
 const visitedTabs = ref({ overview: true })
 const executionChannelInfo = ref({})
@@ -562,8 +624,6 @@ const hasHostInfo = computed(() => {
   })
 })
 
-
-
 const hostTaskStats = computed(() => computeStatusStats(selectedHost.value?.tasks || []))
 const hostStatusChips = computed(() => buildStatusChips(hostTaskStats.value))
 const filteredHostTasks = computed(() =>
@@ -593,7 +653,7 @@ const truncatedAnsibleRawOutput = computed(() => {
   if (showFullRawOutput.value) return ansibleRawOutput.value
   const MAX_LEN = 500000
   return ansibleRawOutput.value.length > MAX_LEN
-    ? `${ansibleRawOutput.value.slice(0, MAX_LEN)}\n\n... (截断)`
+    ? t('execution.ui.truncated', { content: ansibleRawOutput.value.slice(0, MAX_LEN) })
     : ansibleRawOutput.value
 })
 
@@ -615,20 +675,20 @@ const downloadUrl = computed(() =>
   props.runId ? `/sjxy-console/workflow/api/workflow/runlogs/ansible/${props.runId}` : ''
 )
 const visibleTabs = computed(() => {
-  const tabs = [{ name: 'overview', label: '概要' }]
+  const tabs = [{ name: 'overview', label: t('execution.ui.overview') }]
   if (isProcessJob.value) {
-    tabs.push({ name: 'process', label: '流程图' })
+    tabs.push({ name: 'process', label: t('execution.ui.process') })
   }
   if (isAnsibleJob.value) {
     tabs.push(
-      { name: 'hosts', label: '按主机查看' },
-      { name: 'list', label: '按列表查看' },
-      { name: 'raw', label: '原始输出' },
+      { name: 'hosts', label: t('execution.ui.hostsTab') },
+      { name: 'list', label: t('execution.ui.listTab') },
+      { name: 'raw', label: t('execution.ui.rawTab') },
       { name: 'output', label: 'Output' }
     )
   }
   if (isRestJob.value) {
-    tabs.push({ name: 'rest', label: 'API 输出' })
+    tabs.push({ name: 'rest', label: t('execution.ui.apiTab') })
   }
   return tabs
 })
@@ -782,7 +842,7 @@ async function fetchResult() {
     syncResultPolling(result.value)
   } catch (error) {
     stopResultPolling()
-    ElMessage.error(error?.message || '获取执行结果失败')
+    ElMessage.error(error?.message || t('execution.ui.fetchFailed'))
   } finally {
     loading.value = false
   }
@@ -822,12 +882,12 @@ function stopResultPolling() {
 }
 
 const KNOWN_MSG_MAP = {
-  'app_secops.log.exec_script_fail': '脚本执行失败',
-  'app_secops.log.exec_install_fail': '安装/升级任务执行失败',
-  'app_secops.log.exec_scan_fail': '漏洞/补丁扫描失败',
-  'app_secops.log.exec_rollback_fail': '补丁回滚任务失败',
-  'acm.common.log.conn_failed': '主机连通性检测失败',
-  'acm.common.log.collect_failed': '资产采集失败'
+  'app_secops.log.exec_script_fail': 'execution.ui.scriptFailed',
+  'app_secops.log.exec_install_fail': 'execution.ui.installFailed',
+  'app_secops.log.exec_scan_fail': 'execution.ui.scanFailed',
+  'app_secops.log.exec_rollback_fail': 'execution.ui.rollbackFailed',
+  'acm.common.log.conn_failed': 'execution.ui.connectivityFailed',
+  'acm.common.log.collect_failed': 'execution.ui.collectionFailed'
 }
 
 function translateAgentErrorText(value) {
@@ -835,8 +895,14 @@ function translateAgentErrorText(value) {
   if (!text) return text
   const matchedCode = Object.keys(AGENT_ERROR_MESSAGES).find(code => text.includes(code))
   if (!matchedCode) return text
-  const translated = AGENT_ERROR_MESSAGES[matchedCode]
-  return text === matchedCode ? translated : `${translated}（${text}）`
+  const translated = t(
+    `execution.agentErrors.${matchedCode}`,
+    {},
+    AGENT_ERROR_MESSAGES[matchedCode]
+  )
+  return text === matchedCode
+    ? translated
+    : t('execution.ui.agentDetails', { message: translated, details: text })
 }
 
 function isIgnorableDebugMsg(msgStr) {
@@ -935,7 +1001,8 @@ function extractMsgsFromAnsibleContents(contents) {
         const hosts = Array.isArray(task?.hosts) ? task.hosts : []
         hosts.forEach(h => {
           // 必须包含失败/不可达/非零退出码标示才判定为错误节点
-          const isFailedHost = h.failed || h.unreachable || (h.rc !== undefined && h.rc !== 0 && h.rc !== 0.0)
+          const isFailedHost =
+            h.failed || h.unreachable || (h.rc !== undefined && h.rc !== 0 && h.rc !== 0.0)
           if (isFailedHost) {
             const msgVal = h.msg || h.message || h.stderr || h.stdout
             if (typeof msgVal === 'string' && msgVal.trim()) {
@@ -969,7 +1036,10 @@ function parseJobExecutionError(errorRaw, ansibleContents = [], jobStatus = '') 
     return { title: '', list: [], details: '' }
   }
 
-  const lines = String(errorRaw || '').split('\n').map(l => l.trim()).filter(Boolean)
+  const lines = String(errorRaw || '')
+    .split('\n')
+    .map(l => l.trim())
+    .filter(Boolean)
   let failedTaskCount = null
   const messagesList = []
   let isJsonFormatted = false
@@ -995,7 +1065,7 @@ function parseJobExecutionError(errorRaw, ansibleContents = [], jobStatus = '') 
 
       if (obj.msg_id) {
         const msgId = obj.msg_id
-        let translated = KNOWN_MSG_MAP[msgId]
+        let translated = Object.hasOwn(KNOWN_MSG_MAP, msgId) ? t(KNOWN_MSG_MAP[msgId]) : ''
         if (!translated) {
           const i18nVal = translateText(`#{${msgId}}`)
           translated = i18nVal && i18nVal !== msgId && !i18nVal.includes('#{') ? i18nVal : msgId
@@ -1036,13 +1106,13 @@ function parseJobExecutionError(errorRaw, ansibleContents = [], jobStatus = '') 
   }
 
   if (isJsonFormatted || ansibleMsgs.length > 0 || isStatusFailed) {
-    let title = '执行失败'
-    if (failedTaskCount !== null) {
-      title += `（${failedTaskCount} 个任务失败）`
-    }
+    const title =
+      failedTaskCount !== null
+        ? t('execution.ui.failureCount', { count: failedTaskCount })
+        : t('execution.ui.executionFailed')
 
     if (messagesList.length === 0 && isStatusFailed) {
-      messagesList.push('检测到运行异常，但未提取到具体报错消息')
+      messagesList.push(t('execution.ui.noErrorDetails'))
     }
 
     return {
@@ -1054,7 +1124,7 @@ function parseJobExecutionError(errorRaw, ansibleContents = [], jobStatus = '') 
 
   const [firstLine = '', ...rest] = lines
   return {
-    title: translateAgentErrorText(firstLine) || '执行报错',
+    title: translateAgentErrorText(firstLine) || t('execution.ui.executionError'),
     list: [],
     details: rest.join('\n')
   }
@@ -1076,12 +1146,14 @@ function firstDefined(...values) {
 
 function joinDisplayValues(value) {
   const values = Array.isArray(value) ? value : value ? [value] : []
-  return [...new Set(
-    values
-      .flatMap(item => String(item).split(','))
-      .map(item => item.trim())
-      .filter(Boolean)
-  )].join(', ')
+  return [
+    ...new Set(
+      values
+        .flatMap(item => String(item).split(','))
+        .map(item => item.trim())
+        .filter(Boolean)
+    )
+  ].join(', ')
 }
 
 function getDirectExecutionChannelInfo(data) {
@@ -1166,15 +1238,15 @@ async function refreshExecutionChannelInfo(data) {
     const returnedHostIds = new Set(infos.map(info => String(info?.hostId || '')).filter(Boolean))
     if (returnedHostIds.size !== hostIds.length) return
 
-    const channels = [...new Set(
-      infos.map(info => normalizeConnectionType(info?.connectionType)).filter(Boolean)
-    )]
+    const channels = [
+      ...new Set(infos.map(info => normalizeConnectionType(info?.connectionType)).filter(Boolean))
+    ]
     executionChannelInfo.value = {
       ...directInfo,
       connectionType: channels.length > 1 ? 'mixed' : channels[0] || directInfo.connectionType,
-      agentVersion: joinDisplayValues(
-        infos.map(info => info?.agentVersion).filter(Boolean)
-      ) || directInfo.agentVersion
+      agentVersion:
+        joinDisplayValues(infos.map(info => info?.agentVersion).filter(Boolean)) ||
+        directInfo.agentVersion
     }
   } catch (error) {
     if (sequence === executionChannelRequestSequence) {
@@ -1200,13 +1272,14 @@ const summary = computed(() => {
     username: data.username || '-',
     connectionType,
     isAgentConnection,
-    connectionTypeLabel: connectionType === 'mixed'
-      ? '混合通道（Agent / SSH）'
-      : isAgentConnection
-        ? 'Agent (koreops_agent)'
-        : connectionType === 'ssh'
-          ? 'SSH'
-          : '未知',
+    connectionTypeLabel:
+      connectionType === 'mixed'
+        ? t('execution.ui.mixedChannel')
+        : isAgentConnection
+          ? 'Agent (koreops_agent)'
+          : connectionType === 'ssh'
+            ? 'SSH'
+            : t('execution.taskStatus.unknown'),
     agentVersion: executionChannelInfo.value.agentVersion || '',
     errorTitle: parsedError.title,
     errorList: parsedError.list,
@@ -1253,7 +1326,7 @@ async function openDownload() {
       headers: authHeaders
     })
 
-    if (!response.ok) throw new Error('下载失败')
+    if (!response.ok) throw new Error(t('execution.ui.downloadFailed'))
 
     const blob = await response.blob()
     const blobUrl = window.URL.createObjectURL(blob)
@@ -1265,10 +1338,10 @@ async function openDownload() {
     document.body.removeChild(link)
     window.URL.revokeObjectURL(blobUrl)
 
-    ElMessage.success('下载成功')
+    ElMessage.success(t('execution.ui.downloadSuccess'))
   } catch (error) {
     console.error('下载失败:', error)
-    ElMessage.error('下载失败')
+    ElMessage.error(t('execution.ui.downloadFailed'))
   }
 }
 
@@ -1290,7 +1363,7 @@ function handleHostAction(command) {
 
 function exportHostView() {
   if (!ansibleRawOutput.value) {
-    ElMessage.warning('暂无可导出的数据')
+    ElMessage.warning(t('execution.ui.noExportData'))
     return
   }
   const blob = new Blob([ansibleRawOutput.value], { type: 'application/json;charset=utf-8' })
@@ -1355,8 +1428,7 @@ function findHostNode(nodes, hostId = '') {
 
 function syncHostSelection(tree) {
   const previousHostId = selectedHost.value?.id || ''
-  const hostNode =
-    (previousHostId && findHostNode(tree, previousHostId)) || findHostNode(tree)
+  const hostNode = (previousHostId && findHostNode(tree, previousHostId)) || findHostNode(tree)
 
   if (!hostNode) {
     resetHostSelection()
@@ -1409,8 +1481,6 @@ function parseStepMessage(message) {
     return String(message)
   }
 }
-
-
 
 function formatDuration(start, end) {
   const startDate = start ? new Date(start) : null
@@ -1475,7 +1545,7 @@ function summarizeHostRows(contents) {
       const playName = play?.play?.name || play?.name || `Play ${contentIndex + 1}-${playIndex + 1}`
       const tasks = Array.isArray(play?.tasks) ? play.tasks : []
       tasks.forEach(task => {
-        const taskName = task?.task?.name || '未命名任务'
+        const taskName = task?.task?.name || ''
         const hosts = Array.isArray(task?.hosts) ? task.hosts : []
         hosts.forEach((host, hostIndex) => {
           const hostKey = host?.hostKey ?? host?.host ?? host?.name ?? `host-${hostIndex}`
@@ -1487,6 +1557,7 @@ function summarizeHostRows(contents) {
             executorUrl: executorUrl || '',
             play: playName,
             task: taskName,
+            taskNameKey: taskName ? '' : 'execution.ui.unnamedTask',
             status: detectHostStatus(host),
             output: formatHostOutput(host)
           })
@@ -1574,7 +1645,7 @@ function collectHostsFromPlay(play, meta) {
   const hostMap = new Map()
   const tasks = Array.isArray(play?.tasks) ? play.tasks : []
   tasks.forEach((task, taskIndex) => {
-    const taskName = task?.task?.name || `任务 ${taskIndex + 1}`
+    const taskName = task?.task?.name || ''
     const hosts = Array.isArray(task?.hosts) ? task.hosts : []
     hosts.forEach((host, hostIndex) => {
       const hostKey = host?.hostKey ?? host?.host ?? host?.name ?? `host-${taskIndex}-${hostIndex}`
@@ -1596,6 +1667,8 @@ function collectHostsFromPlay(play, meta) {
       hostEntry.tasks.push({
         id: `${mapKey}-task-${hostEntry.tasks.length}`,
         name: taskName,
+        taskNameKey: taskName ? '' : 'execution.ui.taskNumber',
+        taskNameParams: { number: taskIndex + 1 },
         status: taskStatus,
         output: formatHostOutput(host),
         delegateHost: parsedHost.delegateHost
@@ -1640,6 +1713,14 @@ function buildStatusChips(stats) {
   return chips
 }
 
+function taskTitle(task) {
+  return (
+    task.name ||
+    task.task ||
+    t(task.taskNameKey || 'execution.ui.unnamedTask', task.taskNameParams || {})
+  )
+}
+
 function filterHostTasks(host, statusFilter, keyword) {
   if (!host) return []
   const term = keyword.trim().toLowerCase()
@@ -1648,7 +1729,7 @@ function filterHostTasks(host, statusFilter, keyword) {
     if (!statusMatch) return false
     if (!term) return true
     const output = task.output ? task.output.toLowerCase() : ''
-    const taskName = task.name ? task.name.toLowerCase() : ''
+    const taskName = taskTitle(task).toLowerCase()
     return taskName.includes(term) || output.includes(term)
   })
 }
@@ -1681,7 +1762,7 @@ function filterListRows(rows, filters) {
     if (host && row.host !== host) return false
     if (!term) return true
     const output = row.output ? row.output.toLowerCase() : ''
-    const task = row.task ? row.task.toLowerCase() : ''
+    const task = taskTitle(row).toLowerCase()
     const rowHost = row.host ? row.host.toLowerCase() : ''
     const delegate = row.delegateHost ? row.delegateHost.toLowerCase() : ''
     const executorUrl = row.executorUrl ? row.executorUrl.toLowerCase() : ''
@@ -1739,7 +1820,7 @@ function buildRestDetail(data) {
 }
 
 function formatJsonPayload(value) {
-  if (value == null || value === '') return '空'
+  if (value == null || value === '') return t('execution.ui.empty')
   if (typeof value === 'string') {
     const parsed = safeJsonParse(value, null)
     return parsed ? JSON.stringify(parsed, null, 2) : value
@@ -2375,8 +2456,6 @@ onBeforeUnmount(() => {
 .mr-1 {
   margin-right: 4px;
 }
-
-
 </style>
 
 <style>

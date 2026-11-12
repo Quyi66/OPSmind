@@ -4,9 +4,9 @@
     ci-types="linux"
     :initial-selection="selectedHosts"
     :options="{ selectMode: 'host,group,tag,input,recently', selector: 'multiple' }"
-    title="选择设备 · 扫描主机用户"
-    confirm-text="开始扫描"
-    description="点击“开始扫描”后，将采集所选主机的系统用户、用户组、home 目录大小、sudo 权限及定时任务信息。"
+    :title="t('hostUser.selectDevicesScanHostUsers')"
+    :confirm-text="t('hostUser.startScan')"
+    :description="t('hostUser.startScanCollectsSystemUsersGroupsHomeDirectory')"
     :allow-empty="false"
     :close-on-confirm="false"
     @update:model-value="handleSelectorVisibleChange"
@@ -15,7 +15,7 @@
   <!-- 提交后展示任务结果，保留原有轮询及结果未知时禁止重复提交的机制 -->
   <el-dialog
     :model-value="visible && attempted"
-    title="扫描主机"
+    :title="t('hostUser.scanHosts')"
     width="900px"
     :close-on-click-modal="false"
     :before-close="handleClose"
@@ -30,14 +30,16 @@
       :closable="false"
       show-icon
     />
-    <p>关闭窗口不会取消已提交的后台任务；结果未知时请先核实，勿重复操作。</p>
+    <p>{{ t('hostUser.closingThisWindowDoesNotCancelSubmittedTasks') }}</p>
     <details v-if="runId">
-      <summary>执行记录</summary>
+      <summary>{{ t('hostUser.executionRecord') }}</summary>
       <code>{{ runId }}</code>
     </details>
     <template #footer>
-      <el-button @click="handleClose">关闭窗口</el-button>
-      <el-button v-if="runId" type="primary" plain @click="viewResult">查看进度与结果</el-button>
+      <el-button @click="handleClose">{{ t('hostUser.closeWindow') }}</el-button>
+      <el-button v-if="runId" type="primary" plain @click="viewResult">
+        {{ t('hostUser.viewProgressAndResults') }}
+      </el-button>
       <el-button type="primary" :loading="busy" disabled>{{ buttonText }}</el-button>
     </template>
   </el-dialog>
@@ -45,11 +47,13 @@
     v-if="resultRunId"
     v-model:visible="resultVisible"
     :run-id="resultRunId"
-    job-title="扫描主机用户"
+    :job-title="t('hostUser.scanHostUsers')"
   />
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
@@ -65,7 +69,7 @@ const task = useUserDialogTask({
   visible: () => props.visible,
   emit,
   onSuccess: handleClose,
-  successMessage: '扫描完成',
+  successMessage: () => t('hostUser.scanCompleted'),
   maxAttempts: 120
 })
 const { attempted, busy, taskType, taskMessage, reason, runId } = task
@@ -76,7 +80,11 @@ function viewResult() {
   resultVisible.value = true
 }
 const buttonText = computed(() =>
-  busy.value ? '正在处理…' : attempted.value ? '请先核实结果' : '开始扫描'
+  busy.value
+    ? t('hostUser.processing')
+    : attempted.value
+      ? t('hostUser.verifyTheResultFirst')
+      : t('hostUser.startScan')
 )
 watch(
   () => props.visible,
@@ -90,7 +98,7 @@ function handleExecute(selection = selectedHosts.value) {
   selectedHosts.value = selection
   const hosts = normalizeAcmDeviceJobHosts(selectedHosts.value, 'linux')
   if (!hosts.length) {
-    ElMessage.warning('请先选择要扫描的主机')
+    ElMessage.warning(t('hostUser.selectHostsToScanFirst'))
     return
   }
   return task.run('hTzJfM', { hosts })

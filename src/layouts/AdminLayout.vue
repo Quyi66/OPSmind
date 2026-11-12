@@ -33,15 +33,18 @@
       <!-- 顶部（右侧）工具栏：Logo / 搜索 / 通知 / 用户菜单 -->
       <header class="admin-header">
         <div class="admin-header-right">
+          <LanguageSwitcher />
           <!-- 搜索框 -->
           <div class="search-wrapper">
             <el-input
               v-model="adminSearch"
-              placeholder="搜索..."
+              :placeholder="t('common.search')"
               clearable
               size="small"
               class="nav-search"
-              @keyup.enter="handleAdminSearch" @clear="handleAdminSearch">
+              @keyup.enter="handleAdminSearch"
+              @clear="handleAdminSearch"
+            >
               <template #suffix>
                 <el-icon class="search-icon"><Search /></el-icon>
               </template>
@@ -50,8 +53,12 @@
 
           <!-- 通知 -->
           <div class="notification-wrapper">
-            <el-tooltip content="通知" placement="bottom">
-              <button @click="handleNotificationClick" class="notification-btn" aria-label="通知">
+            <el-tooltip :content="t('common.notifications')" placement="bottom">
+              <button
+                @click="handleNotificationClick"
+                class="notification-btn"
+                :aria-label="t('common.notifications')"
+              >
                 <svg class="notification-icon" fill="currentColor" viewBox="0 0 20 20">
                   <path
                     d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"
@@ -89,19 +96,19 @@
                   <el-icon>
                     <User />
                   </el-icon>
-                  个人资料
+                  {{ t('common.profile') }}
                 </el-dropdown-item>
                 <el-dropdown-item command="admin">
                   <el-icon>
                     <User />
                   </el-icon>
-                  管理后台
+                  {{ t('common.admin') }}
                 </el-dropdown-item>
                 <el-dropdown-item divided command="logout">
                   <el-icon>
                     <SwitchButton />
                   </el-icon>
-                  退出登录
+                  {{ t('common.logout') }}
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -128,10 +135,18 @@ import { authService } from '@/core/auth'
 import { accountService } from '@/core/account'
 import logoImage from '@/assets/icons/logo.png'
 import avatarImage from '@/assets/icons/avatar@2x.png'
+import LanguageSwitcher from '@/components/shared/LanguageSwitcher.vue'
+import { t } from '@/core/i18n'
 import { Search, User, SwitchButton } from '@element-plus/icons-vue'
 
 // 基本菜单
-const menu = ADMIN_MENU_CONFIG
+const menu = computed(() =>
+  ADMIN_MENU_CONFIG.map(group => ({
+    ...group,
+    name: t(group.nameKey, {}, group.name),
+    children: group.children.map(item => ({ ...item, name: t(item.nameKey, {}, item.name) }))
+  }))
+)
 
 const router = useRouter()
 const route = useRoute()
@@ -141,18 +156,18 @@ const adminSearch = ref('')
 const handleAdminSearch = () => {
   const q = (adminSearch.value || '').trim()
   if (!q) return
-  ElMessage.info(`搜索功能开发中：${q}`)
+  ElMessage.info(t('common.searchDevelopment', { query: q }))
 }
 
 const notificationCount = ref(0)
 const handleNotificationClick = () => {
-  ElMessage.info('通知功能开发中...')
+  ElMessage.info(t('common.development'))
 }
 
 const displayUserName = computed(() => {
   const u = authService.getCurrentUser()
-  if (!u) return '未登录'
-  return u.fullName || u.firstName || u.name || u.login || '用户'
+  if (!u) return t('common.notLoggedIn')
+  return u.fullName || u.firstName || u.name || u.login || t('common.user')
 })
 
 const userAvatarUrl = ref('')
@@ -208,7 +223,7 @@ const defaultOpeneds = computed(() => (activeGroup.value ? [activeGroup.value] :
 
 // 当前二级菜单名称（用于更新浏览器 Tab 标题）
 const currentSubTitle = computed(() => {
-  const g = menu.find(m => m.code === activeGroup.value)
+  const g = menu.value.find(m => m.code === activeGroup.value)
   if (!g) return ''
   const c = (g.children || []).find(it => it.code === activePage.value)
   return c?.name || ''
@@ -228,7 +243,7 @@ function syncFromRoute() {
 function normalizeOrRedirect() {
   // 若路由缺少参数或非法，跳转到默认
   const ok = syncFromRoute()
-  const valid = menu.some(
+  const valid = menu.value.some(
     g => g.code === activeGroup.value && g.children?.some(c => c.code === activePage.value)
   )
   if (!ok || !valid) {
@@ -267,7 +282,7 @@ function updateDocumentTitle() {
 const onMenuSelect = index => {
   // index 为 pageCode，找到其上级 group
   let foundGroup = activeGroup.value
-  for (const g of menu) {
+  for (const g of menu.value) {
     if (g.children?.some(c => c.code === index)) {
       foundGroup = g.code
       break
@@ -290,7 +305,8 @@ import AutoConfig from '@/views/admin/AutoConfig.vue'
 // 兜底占位
 const AdminPlaceholder = {
   name: 'AdminPlaceholder',
-  template: '<div style="padding:16px;color:#666">请选择左侧菜单</div>'
+  setup: () => ({ t }),
+  template: '<div style="padding:16px;color:#666">{{ t("common.selectPage") }}</div>'
 }
 </script>
 

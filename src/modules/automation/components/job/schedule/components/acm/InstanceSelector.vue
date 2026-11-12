@@ -2,20 +2,20 @@
   <div class="instance-selector">
     <!-- 筛选工具栏 -->
     <div class="filter-toolbar">
-      <strong class="filter-label">筛选</strong>
+      <strong class="filter-label">{{ t('selection.filter') }}</strong>
       <!-- 分组树形选择器 -->
       <el-popover placement="bottom-start" :width="300" trigger="click" :teleported="false">
         <template #reference>
           <el-button class="group-select-btn">
             <i class="fa fa-sitemap me-1" />
-            {{ selectedGroupName || '选择分组' }}
+            {{ selectedGroupName || t('selection.selectGroup') }}
             <i class="fa fa-caret-down ms-2" />
           </el-button>
         </template>
         <div class="group-tree-dropdown">
           <div class="tree-item all-item" @click="selectGroup('@@', '所有')">
             <i class="fa fa-globe me-1" />
-            所有
+            {{ t('selection.all') }}
           </div>
           <el-tree
             ref="groupTreeRef"
@@ -38,14 +38,14 @@
       <!-- 标签选择器 -->
       <el-select
         v-model="tagFilter"
-        placeholder="全部标签"
+        :placeholder="t('selection.allTags')"
         clearable
         size="small"
         :loading="tagLoading"
         :teleported="false"
         @change="handleTagFilter"
       >
-        <el-option label="全部标签" value="@@" />
+        <el-option :label="t('selection.allTags')" value="@@" />
         <el-option
           v-for="tag in tagList"
           :key="tag.name"
@@ -57,7 +57,7 @@
       <!-- 文本筛选 -->
       <el-input
         v-model="searchQuery"
-        placeholder="请输入 IP/主机名/操作系统/系统版本"
+        :placeholder="t('selection.searchHosts')"
         clearable
         size="small"
         style="width: 280px"
@@ -80,7 +80,7 @@
         @click="handleToggleSelectAll"
       >
         <i :class="`fa fa-${allSelected ? 'times' : 'check-double'} me-1`" />
-        {{ allSelected ? '一键取消' : '一键全选' }}
+        {{ allSelected ? t('selection.deselectAll') : t('selection.selectAll') }}
       </el-button>
     </div>
 
@@ -96,11 +96,31 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" reserve-selection />
-        <el-table-column prop="IP" label="IP地址" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="hostname" label="主机名" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="os_distro" label="操作系统" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="os_version" label="系统版本" width="120" show-overflow-tooltip />
-        <el-table-column label="连通状态" width="120" align="left">
+        <el-table-column
+          prop="IP"
+          :label="t('selection.ipAddress')"
+          min-width="120"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="hostname"
+          :label="t('hostUser.hostname')"
+          min-width="120"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="os_distro"
+          :label="t('selection.operatingSystem')"
+          min-width="120"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="os_version"
+          :label="t('selection.osVersion')"
+          width="120"
+          show-overflow-tooltip
+        />
+        <el-table-column :label="t('selection.connectivity')" width="120" align="left">
           <template #default="{ row }">
             <el-tag
               :type="
@@ -114,15 +134,20 @@
             >
               {{
                 [1, '1'].includes(row.CONN_LATEST_STATUS)
-                  ? '正常'
+                  ? t('selection.connected')
                   : [0, '0'].includes(row.CONN_LATEST_STATUS)
-                    ? '失联'
-                    : '未知'
+                    ? t('selection.disconnected')
+                    : t('hostUser.unknown')
               }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="CONN_RATE" label="连通率" width="100" align="left">
+        <el-table-column
+          prop="CONN_RATE"
+          :label="t('selection.connectionRate')"
+          width="100"
+          align="left"
+        >
           <template #default="{ row }">
             {{ row.CONN_RATE ? `${row.CONN_RATE}%` : '-' }}
           </template>
@@ -147,6 +172,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, watch, nextTick, computed, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as jaoApi from '@/modules/automation/api/jao'
@@ -254,8 +281,16 @@ async function fetchGroupList() {
     // 将分组路径转换为可用的选项
     if (Array.isArray(data)) {
       groupList.value = data.map(path => {
-        const name = path === '/' ? '根目录' : path.split('/').filter(Boolean).pop() || path
-        return { path, name: `${name} (${path})` }
+        return {
+          path,
+          get name() {
+            const name =
+              path === '/'
+                ? t('selection.rootDirectory')
+                : path.split('/').filter(Boolean).pop() || path
+            return `${name} (${path})`
+          }
+        }
       })
       // 构建树形结构
       groupTreeData.value = buildGroupTree(data)
@@ -448,15 +483,18 @@ function handleSelectionChange(selection) {
 
   if (isSingleSelector.value && effectiveSelection.length > 1) {
     ElMessage.warning({
-      message: '当前为单选模式，仅支持选择单台主机',
+      get message() {
+        return t('selection.singleModeHint')
+      },
       customClass: 'high-z-index-message'
     })
     // el-table 的 selection 数组按表格行顺序排列，而非用户点击顺序。
     // 以当前 v-model 中已选主机为基准，保留本次新加入的那一行，避免用户
     // 从靠后的主机切换到靠前主机时又被错误地保留为旧选择。
     const previousSelectedKey = props.modelValue?.[0]?.key
-    const latestRow = effectiveSelection.find(row => row.id !== previousSelectedKey)
-      || effectiveSelection[effectiveSelection.length - 1]
+    const latestRow =
+      effectiveSelection.find(row => row.id !== previousSelectedKey) ||
+      effectiveSelection[effectiveSelection.length - 1]
     effectiveSelection = latestRow ? [latestRow] : []
 
     isInternalUpdate = true
@@ -558,7 +596,9 @@ async function handleToggleSelectAll() {
 
     if (!records.length) {
       ElMessage.info({
-        message: '没有可选的设备',
+        get message() {
+          return t('selection.noDevices')
+        },
         customClass: 'high-z-index-message'
       })
       return
@@ -590,7 +630,7 @@ async function handleToggleSelectAll() {
     isInternalUpdate = false
   } catch (error) {
     console.error('Failed to select all devices:', error)
-    ElMessage.error('全选失败，请重试')
+    ElMessage.error(t('selection.selectAllFailed'))
   } finally {
     selectAllLoading.value = false
   }

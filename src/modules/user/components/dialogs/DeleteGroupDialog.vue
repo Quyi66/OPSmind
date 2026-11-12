@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="visible"
-    title="删除用户组"
+    :title="t('hostUser.deleteUserGroup')"
     width="600px"
     :close-on-click-modal="false"
     :before-close="handleClose"
@@ -9,23 +9,35 @@
   >
     <div class="delete-group-dialog">
       <el-alert type="warning" :closable="false" show-icon class="mb-4">
-        <template #title>警告：删除用户组操作不可逆，请谨慎操作！</template>
+        <template #title>
+          {{ t('hostUser.warningDeletingUserGroupsCannotBeUndoneProceed') }}
+        </template>
       </el-alert>
 
       <!-- 单个删除 -->
       <template v-if="groupData">
         <el-descriptions :column="1" border>
-          <el-descriptions-item label="主机IP">{{ groupData.host_key }}</el-descriptions-item>
-          <el-descriptions-item label="主机名">{{ groupData.hostname }}</el-descriptions-item>
-          <el-descriptions-item label="组名">{{ groupData.group_name }}</el-descriptions-item>
+          <el-descriptions-item :label="t('hostUser.hostIp')">
+            {{ groupData.host_key }}
+          </el-descriptions-item>
+          <el-descriptions-item :label="t('hostUser.hostname')">
+            {{ groupData.hostname }}
+          </el-descriptions-item>
+          <el-descriptions-item :label="t('hostUser.groupName')">
+            {{ groupData.group_name }}
+          </el-descriptions-item>
         </el-descriptions>
       </template>
 
       <!-- 批量删除 -->
       <template v-else>
-        <p>请选择要操作的主机并输入同一个组名；此处不使用列表行选择。</p>
-        <el-form :disabled="attempted" label-width="100px" @submit.prevent>
-          <el-form-item label="选择主机">
+        <p>{{ t('hostUser.selectTargetHostsAndEnterOneGroupName') }}</p>
+        <el-form
+          :disabled="attempted"
+          :label-width="currentLocale === 'en-US' ? '160px' : '100px'"
+          @submit.prevent
+        >
+          <el-form-item :label="t('hostUser.selectHosts')">
             <AcmDeviceSelector
               v-model="selectedHosts"
               :disabled="attempted"
@@ -33,13 +45,17 @@
               :options="{
                 selectMode: 'host,group,tag,input,recently',
                 selector: 'multiple',
-                label: '选择设备'
+                label: t('hostUser.selectDevices')
               }"
             />
           </el-form-item>
 
-          <el-form-item label="组名" required>
-            <el-input v-model="groupName" placeholder="输入要删除的用户组名称" maxlength="32" />
+          <el-form-item :label="t('hostUser.groupName')" required>
+            <el-input
+              v-model="groupName"
+              :placeholder="t('hostUser.enterTheUserGroupNameToDelete')"
+              maxlength="32"
+            />
           </el-form-item>
         </el-form>
       </template>
@@ -53,11 +69,13 @@
       :closable="false"
       show-icon
     />
-    <p v-if="attempted">关闭窗口不会取消已提交的后台任务；结果未知时请先核实，勿重复操作。</p>
+    <p v-if="attempted">{{ t('hostUser.closingThisWindowDoesNotCancelSubmittedTasks') }}</p>
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose">{{ attempted ? '关闭窗口' : '取消' }}</el-button>
+        <el-button @click="handleClose">
+          {{ attempted ? t('hostUser.closeWindow') : t('common.cancel') }}
+        </el-button>
         <el-button type="danger" :loading="busy" :disabled="attempted" @click="handleSubmit">
           {{ buttonText }}
         </el-button>
@@ -67,6 +85,8 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
@@ -84,11 +104,15 @@ const task = useUserDialogTask({
   context: () => props.groupData,
   emit,
   onSuccess: handleClose,
-  successMessage: '用户组删除成功'
+  successMessage: () => t('hostUser.userGroupDeleted')
 })
 const { attempted, busy, taskType, taskMessage, taskDescription } = task
 const buttonText = computed(() =>
-  busy.value ? '正在处理…' : attempted.value ? '请先核实结果' : '确认删除用户组'
+  busy.value
+    ? t('hostUser.processing')
+    : attempted.value
+      ? t('hostUser.verifyTheResultFirst')
+      : t('hostUser.confirmGroupDeletion')
 )
 watch(
   [() => props.visible, () => props.groupData],
@@ -105,21 +129,21 @@ function handleSubmit() {
     hostId = props.groupData.hostId || props.groupData.host_id
     name = props.groupData.group_name
     if (!hostId || !name) {
-      ElMessage.warning('缺少主机标识或组名，无法执行删除')
+      ElMessage.warning(t('hostUser.aHostIdAndGroupNameAreRequired'))
       return
     }
   } else {
     if (!selectedHosts.value.length) {
-      ElMessage.warning('请先选择主机')
+      ElMessage.warning(t('hostUser.selectHostsFirst'))
       return
     }
     if (!groupName.value) {
-      ElMessage.warning('请输入组名')
+      ElMessage.warning(t('hostUser.enterAGroupName'))
       return
     }
     const ids = selectedHosts.value.map(host => host.key || host.id)
     if (ids.some(id => !id)) {
-      ElMessage.warning('所选主机缺少标识，请重新选择')
+      ElMessage.warning(t('hostUser.theSelectedHostsHaveNoIdsSelectThem'))
       return
     }
     hostId = ids.join(',')

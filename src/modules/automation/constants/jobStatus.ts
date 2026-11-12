@@ -1,15 +1,34 @@
-export const JOB_STATUS_LABELS: Record<string, string> = {
-  WAITING: '等待中',
-  RUNNING: '正在运行',
-  CALLBACK: '回调',
-  ERROR: '运行错误',
-  FAILED: '运行失败',
-  COMPLETED: '完成',
-  INTERRUPTED: '运行终止',
-  SUCCESS: '执行成功',
-  PARTIAL_SUCCESS: '部分成功',
-  CANCELLED: '已取消'
+import { t } from '@/core/i18n'
+
+function createStatusLabels(statuses: string[], namespace: string): Record<string, string> {
+  return Object.defineProperties(
+    {},
+    Object.fromEntries(
+      statuses.map(status => [status, { enumerable: true, get: () => t(`${namespace}.${status}`) }])
+    )
+  )
 }
+
+export const JOB_STATUS_LABELS = createStatusLabels(
+  [
+    'WAITING',
+    'RUNNING',
+    'CALLBACK',
+    'ERROR',
+    'FAILED',
+    'COMPLETED',
+    'INTERRUPTED',
+    'SUCCESS',
+    'PARTIAL_SUCCESS',
+    'CANCELLED'
+  ],
+  'execution.jobStatus'
+)
+
+export const TASK_STATUS_LABELS = createStatusLabels(
+  ['ok', 'changed', 'failed', 'unreachable', 'ignored', 'skipped', 'running', 'unknown'],
+  'execution.taskStatus'
+)
 
 export const JOB_STATUS_CLASS_MAP: Record<string, string> = {
   WAITING: 'is-waiting',
@@ -24,29 +43,35 @@ export const JOB_STATUS_CLASS_MAP: Record<string, string> = {
   CANCELLED: 'is-info'
 }
 
-export const JOB_STATUS_TAG_TYPES: Record<string, '' | 'success' | 'info' | 'warning' | 'danger'> = {
-  WAITING: 'info',
-  RUNNING: 'info',
-  CALLBACK: 'warning',
-  ERROR: 'danger',
-  FAILED: 'danger',
-  COMPLETED: 'success',
-  INTERRUPTED: 'info',
-  SUCCESS: 'success',
-  PARTIAL_SUCCESS: 'warning',
-  CANCELLED: 'info'
-}
+export const JOB_STATUS_TAG_TYPES: Record<string, '' | 'success' | 'info' | 'warning' | 'danger'> =
+  {
+    WAITING: 'info',
+    RUNNING: 'info',
+    CALLBACK: 'warning',
+    ERROR: 'danger',
+    FAILED: 'danger',
+    COMPLETED: 'success',
+    INTERRUPTED: 'info',
+    SUCCESS: 'success',
+    PARTIAL_SUCCESS: 'warning',
+    CANCELLED: 'info'
+  }
 
 export const JOB_HISTORY_STATUS_OPTIONS = [
-  { label: '全部', value: 'all' },
-  { label: '等待中', value: 'WAITING' },
-  { label: '正在运行', value: 'RUNNING' },
-  { label: '回调', value: 'CALLBACK' },
-  { label: '运行错误', value: 'ERROR' },
-  { label: '运行失败', value: 'FAILED' },
-  { label: '完成', value: 'COMPLETED' },
-  { label: '运行终止', value: 'INTERRUPTED' }
-]
+  'all',
+  'WAITING',
+  'RUNNING',
+  'CALLBACK',
+  'ERROR',
+  'FAILED',
+  'COMPLETED',
+  'INTERRUPTED'
+].map(value => ({
+  value,
+  get label() {
+    return value === 'all' ? t('common.all') : JOB_STATUS_LABELS[value]
+  }
+}))
 
 export function getJobStatusLabel(status?: string): string {
   if (!status) return ''

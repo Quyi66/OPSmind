@@ -7,8 +7,8 @@
     :class="{ 'run-log-status-tag--clickable': clickable }"
     :role="clickable ? 'button' : undefined"
     :tabindex="clickable ? 0 : undefined"
-    :title="clickable ? tooltip : undefined"
-    :aria-label="clickable ? tooltip : undefined"
+    :title="clickable ? tooltip || t('selection.viewExecution') : undefined"
+    :aria-label="clickable ? tooltip || t('selection.viewExecution') : undefined"
     @click="handleClick"
     @keydown.enter="handleKeyboardActivate"
     @keydown.space.prevent="handleKeyboardActivate"
@@ -22,6 +22,7 @@
 
 <script setup>
 import { View } from '@element-plus/icons-vue'
+import { t } from '@/core/i18n'
 
 const props = defineProps({
   type: {
@@ -46,7 +47,7 @@ const props = defineProps({
   },
   tooltip: {
     type: String,
-    default: '点击查看运行详情'
+    default: ''
   }
 })
 

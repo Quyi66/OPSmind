@@ -1,3 +1,6 @@
+import { message, messageRef } from '@/core/i18n/feedback'
+
+import { t } from '@/core/i18n'
 import { computed, onActivated, onBeforeUnmount, onDeactivated, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { apiService } from '@/core/api'
@@ -18,7 +21,7 @@ export function useUserDialogTask({
   const phase = ref('idle')
   const currentStatus = ref('')
   const runId = ref('')
-  const reason = ref('')
+  const reason = messageRef('')
   let version = 0
   let active = true
   const available = () => active && visible()
@@ -29,14 +32,19 @@ export function useUserDialogTask({
     () =>
       ({
         idle: '',
-        submitting: '正在提交任务…',
-        running: currentStatus.value === 'WAITING' ? '任务已提交，等待执行。' : '任务正在执行。',
-        failed: '任务执行失败。',
-        unknown: '任务结果尚未确定，请核实后再操作。'
+        submitting: t('hostUser.submittingTask'),
+        running:
+          currentStatus.value === 'WAITING'
+            ? t('hostUser.taskSubmittedAndAwaitingExecution')
+            : t('hostUser.taskIsRunning'),
+        failed: t('hostUser.taskFailed'),
+        unknown: t('hostUser.taskResultIsUnknownVerifyItBeforeTaking')
       })[phase.value]
   )
   const taskDescription = computed(() =>
-    [reason.value, runId.value ? `执行记录：${runId.value}` : ''].filter(Boolean).join(' ')
+    [reason.value, runId.value ? t('hostUser.executionRecordValue', { p0: runId.value }) : '']
+      .filter(Boolean)
+      .join(' ')
   )
 
   function reset() {
@@ -80,7 +88,7 @@ export function useUserDialogTask({
       busy.value = false
       currentStatus.value = result?.status || ''
       if (['SUCCESS', 'COMPLETED'].includes(result?.status) && !fallback) {
-        ElMessage.success(successMessage)
+        ElMessage.success(typeof successMessage === 'function' ? successMessage() : successMessage)
         notify()
         onSuccess()
         return
@@ -90,7 +98,9 @@ export function useUserDialogTask({
         fallback ||
         result?.error ||
         result?.message ||
-        (phase.value === 'failed' ? '请核对本次目标及结果。' : '未返回可确认的完成状态。')
+        (phase.value === 'failed'
+          ? message('hostUser.checkTheTargetsAndResultsOfThisOperation')
+          : message('hostUser.noConfirmedCompletionStatusWasReturned'))
       notify()
     }
     try {
@@ -104,7 +114,7 @@ export function useUserDialogTask({
       runId.value = result?.runId || ''
       if (['WAITING', 'RUNNING'].includes(result?.status)) {
         if (!runId.value) {
-          finish(result, '任务返回运行状态，但缺少执行记录标识，无法确认后续结果。')
+          finish(result, message('hostUser.theTaskIsRunningButNoExecutionRecord'))
           return
         }
         phase.value = 'running'
@@ -121,17 +131,19 @@ export function useUserDialogTask({
               result,
               ['FAILED', 'ERROR'].includes(result?.status)
                 ? ''
-                : '结果读取失败，后台任务是否完成尚未确定。'
+                : message('hostUser.unableToReadResultsCompletionOfTheBackground')
             ),
           onTimeout: result =>
-            finish(result, '等待结果超时，不代表任务执行失败，请勿直接重复提交。')
+            finish(result, message('hostUser.waitingForResultsTimedOutThisDoesNot'))
         })
       } else finish(result)
     } catch (error) {
       if (!isCurrent()) return
       busy.value = false
       phase.value = 'unknown'
-      reason.value = `提交结果未确认：${error?.message || '请求异常'}。请先核实任务是否已下发，勿重复提交。`
+      reason.value = message('hostUser.submissionCouldNotBeConfirmedValueCheckWhether', () => ({
+        p0: error?.message || t('hostUser.requestError')
+      }))
     }
   }
 
@@ -145,7 +157,7 @@ export function useUserDialogTask({
     if (busy.value) {
       busy.value = false
       phase.value = 'unknown'
-      reason.value = '窗口已离开，任务结果尚未确定；关闭窗口不会取消已提交的后台任务。'
+      reason.value = message('hostUser.theWindowWasLeftAndTheTaskResult')
     }
   }
   onDeactivated(suspend)

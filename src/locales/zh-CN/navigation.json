@@ -1,0 +1,177 @@
+{
+  "groups": {
+    "asset-management": "资产管理",
+    "automation": "自动化管理",
+    "patch-testing": "补丁漏洞",
+    "system-inspection": "系统巡检",
+    "flow-management": "主机用户管理",
+    "user-management": "平台用户管理",
+    "security-management": "安全中心",
+    "system-settings": "系统设置"
+  },
+  "modules": {
+    "acm": "资产",
+    "auto-workbench": "工作台",
+    "jao": "运维工具箱",
+    "gfs": "脚本中心",
+    "cmd": "命令执行",
+    "task-scheduler": "定时任务",
+    "run-records": "运行记录",
+    "review-center": "审批中心",
+    "flow": "流程中心",
+    "patches": "补丁管理(linux)",
+    "windows-patches": "补丁管理(win)",
+    "patch-logs": "变更日志查询",
+    "patch-process-logs": "流程操作记录",
+    "middleware-cve": "中间件CVE",
+    "yum-repo": "Yum仓库管理",
+    "cac": "巡检中心",
+    "users": "主机用户管理",
+    "sudo": "Sudo权限",
+    "password": "密码管理",
+    "uam": "用户管理",
+    "ssc": "系统设置"
+  },
+  "pages": {
+    "acm": {
+      "hostHealthCheck": "系统健康度",
+      "overview": "资产总览",
+      "info": "设备清单",
+      "exception": "连通巡检",
+      "data": "分组与标签",
+      "automation": "连接凭据",
+      "log": "操作日志",
+      "permission": "访问控制",
+      "model": "资产类型"
+    },
+    "auto-workbench": {
+      "overview": "工作台"
+    },
+    "jao": {
+      "jobs": "运维工具列表",
+      "schedule": "流程编排",
+      "taskScheduler": "定时任务",
+      "runLogs": "运行记录",
+      "statistics": "数据统计",
+      "requests": "我的申请",
+      "approvals": "运维工具审批",
+      "localInstall": "软件包安装"
+    },
+    "run-records": {
+      "logs": "运行记录",
+      "statistics": "数据统计"
+    },
+    "gfs": {
+      "scriptLibrary": "脚本库",
+      "fileLibrary": "文件库",
+      "scriptReview": "脚本审核"
+    },
+    "cmd": {
+      "list": "命令与运维工具",
+      "job": "命令运维工具",
+      "review": "命令审核",
+      "console": "控制台"
+    },
+    "patches": {
+      "machineScan": "主机概览",
+      "hostDetail": "主机详情",
+      "patchInstall": "补丁安装",
+      "changeRollback": "变更回滚",
+      "linuxYumManage": "Linux YUM管理",
+      "patchLibrary": "补丁仓库",
+      "cveList": "漏洞详情",
+      "linuxMachinePackageList": "机器包清单",
+      "rpmPackageList": "软件包查询",
+      "middlewareCveList": "中间件CVE",
+      "packageSet": "包集安装",
+      "installTasks": "安装申请",
+      "localInstall": "软件包安装",
+      "windowsVulnerability": "Windows 补丁概览",
+      "windowsWsus": "WSUS 配置",
+      "windowsYumRepo": "客户 Yum 仓库管理",
+      "windowsRollback": "变更回滚",
+      "windowsCveList": "漏洞详情",
+      "windowsKbList": "Windows KB知识库",
+      "logs": "变更日志查询",
+      "processLogs": "流程操作记录"
+    },
+    "yum-repo": {
+      "yumRepo": "仓库管理",
+      "localInstall": "软件包安装",
+      "yumManage": "Yum源清单",
+      "repos": "配置下发",
+      "packages": "软件概览",
+      "installed": "已安装软件包",
+      "logs": "操作日志"
+    },
+    "cac": {
+      "overview": "巡检总览",
+      "templates": "模板管理",
+      "results": "执行记录",
+      "resultDetail": "巡检报告",
+      "structuralDiagram": "业务拓扑分析",
+      "email": "邮件配置"
+    },
+    "users": {
+      "users": "用户列表",
+      "groups": "用户组",
+      "logs": "操作日志",
+      "overview": "用户总览"
+    },
+    "uam": {
+      "user": "用户列表",
+      "patch-assignment": "补丁分配",
+      "team": "团队管理"
+    },
+    "ssc": {
+      "param": "参数配置",
+      "sql-import": "SQL导入",
+      "email": "邮件设置",
+      "engine": "引擎管理",
+      "scheduler": "计划任务"
+    },
+    "flow": {
+      "list": "流程列表",
+      "execution": "执行记录"
+    },
+    "sudo": {
+      "permission": "sudo列表",
+      "apply": "权限申请",
+      "templates": "模板管理",
+      "password": "密码管理",
+      "log": "操作日志"
+    },
+    "password": {
+      "application": "申请审批",
+      "settings": "参数配置",
+      "logs": "操作日志"
+    }
+  },
+  "extras": {
+    "installManage": "安装与回滚",
+    "vulnManage": "漏洞管理",
+    "repoManage": "软件与仓库",
+    "yumRepoManage": "Yum仓库",
+    "workspace": "命令与运维工具",
+    "homeDescription": "系统仪表盘"
+  },
+  "standalone": {
+    "home": "首页",
+    "aiops": "OPS智能助手",
+    "login": "登录 - KoreOPS",
+    "dashboard": "KoreOPS 仪表盘",
+    "profile": "个人资料",
+    "profilePage": "个人资料 - KoreOPS",
+    "about": "关于 - KoreOPS",
+    "admin": "管理后台",
+    "notFound": "未找到页面",
+    "migration": "迁移管理 - KoreOPS"
+  },
+  "navOverrides": {
+    "patches": {
+      "windowsVulnerability": "主机概览",
+      "windowsKbList": "KB知识库",
+      "windowsYumRepo": "Yum 仓库管理"
+    }
+  }
+}

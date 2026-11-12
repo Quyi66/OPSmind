@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="visible"
-    title="创建用户组"
+    :title="t('hostUser.createUserGroup')"
     width="700px"
     :close-on-click-modal="false"
     :before-close="handleClose"
@@ -12,11 +12,11 @@
       :model="formData"
       :rules="formRules"
       :disabled="attempted || validating"
-      label-width="100px"
+      :label-width="currentLocale === 'en-US' ? '160px' : '100px'"
       @submit.prevent
     >
       <!-- 选择主机 -->
-      <el-form-item label="选择主机" required>
+      <el-form-item :label="t('hostUser.selectHosts')" required>
         <AcmDeviceSelector
           v-model="selectedHosts"
           :disabled="attempted || validating"
@@ -24,14 +24,18 @@
           :options="{
             selectMode: 'host,group,tag,input,recently',
             selector: 'multiple',
-            label: '选择设备'
+            label: t('hostUser.selectDevices')
           }"
         />
       </el-form-item>
 
       <!-- 组名 -->
-      <el-form-item label="组名" prop="group_name" required>
-        <el-input v-model="formData.group_name" placeholder="输入用户组名称" maxlength="32" />
+      <el-form-item :label="t('hostUser.groupName')" prop="group_name" required>
+        <el-input
+          v-model="formData.group_name"
+          :placeholder="t('hostUser.enterTheUserGroupName')"
+          maxlength="32"
+        />
       </el-form-item>
     </el-form>
 
@@ -43,11 +47,13 @@
       :closable="false"
       show-icon
     />
-    <p v-if="attempted">关闭窗口不会取消已提交的后台任务；结果未知时请先核实，勿重复操作。</p>
+    <p v-if="attempted">{{ t('hostUser.closingThisWindowDoesNotCancelSubmittedTasks') }}</p>
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose">{{ attempted ? '关闭窗口' : '取消' }}</el-button>
+        <el-button @click="handleClose">
+          {{ attempted ? t('hostUser.closeWindow') : t('common.cancel') }}
+        </el-button>
         <el-button
           type="primary"
           :loading="busy || validating"
@@ -62,6 +68,8 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
@@ -74,16 +82,30 @@ const formRef = ref(null)
 const selectedHosts = ref([])
 const validating = ref(false)
 const formData = reactive({ group_name: '' })
-const formRules = { group_name: [{ required: true, message: '请输入组名', trigger: 'blur' }] }
+const formRules = {
+  group_name: [
+    {
+      required: true,
+      get message() {
+        return t('hostUser.enterAGroupName')
+      },
+      trigger: 'blur'
+    }
+  ]
+}
 const task = useUserDialogTask({
   visible: () => props.visible,
   emit,
   onSuccess: handleClose,
-  successMessage: '用户组创建成功'
+  successMessage: () => t('hostUser.userGroupCreated')
 })
 const { attempted, busy, taskType, taskMessage, taskDescription } = task
 const buttonText = computed(() =>
-  busy.value ? '正在处理…' : attempted.value ? '请先核实结果' : '确认创建用户组'
+  busy.value
+    ? t('hostUser.processing')
+    : attempted.value
+      ? t('hostUser.verifyTheResultFirst')
+      : t('hostUser.confirmGroupCreation')
 )
 watch(
   () => props.visible,
@@ -97,7 +119,7 @@ watch(
 async function handleSubmit() {
   if (attempted.value || validating.value) return
   if (!selectedHosts.value.length) {
-    ElMessage.warning('请先选择主机')
+    ElMessage.warning(t('hostUser.selectHostsFirst'))
     return
   }
   const ready = task.captureReady()
@@ -113,7 +135,7 @@ async function handleSubmit() {
   if (!ready()) return
   const hosts = normalizeAcmDeviceJobHosts(selectedHosts.value, 'linux')
   if (!hosts.length || !formData.group_name) {
-    ElMessage.warning('请选择主机并输入组名')
+    ElMessage.warning(t('hostUser.selectHostsAndEnterAGroupName'))
     return
   }
   return task.run('zrYK7K', { hosts, group_name: formData.group_name })

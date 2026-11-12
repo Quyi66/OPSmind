@@ -3,10 +3,10 @@
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small" @submit.prevent>
-        <el-form-item label="关键词">
+        <el-form-item :label="t('hostUser.keyword')">
           <el-input
             v-model="filters.hostname"
-            placeholder="主机名/IP/用户组"
+            :placeholder="t('hostUser.hostnameIpUserGroup')"
             clearable
             style="width: 220px"
             @keyup.enter="handleSearch"
@@ -16,11 +16,11 @@
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleSearch">
             <el-icon><Search /></el-icon>
-            搜索
+            {{ t('common.search') }}
           </el-button>
           <el-button @click="handleReset">
             <el-icon><RefreshRight /></el-icon>
-            重置
+            {{ t('common.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -30,15 +30,15 @@
     <div class="ops-action-bar">
       <el-button type="primary" size="small" @click="handleCreateGroup">
         <el-icon><Plus /></el-icon>
-        创建用户组
+        {{ t('hostUser.createUserGroup') }}
       </el-button>
       <el-button
         size="small"
-        title="另选主机并输入组名，不使用列表行选择"
+        :title="t('hostUser.selectHostsAndEnterAGroupNameTable')"
         @click="handleDeleteGroup"
       >
         <i class="fa fa-user-minus"></i>
-        按主机批量删除
+        {{ t('hostUser.deleteGroupsOnHosts') }}
       </el-button>
       <span style="flex: 1"></span>
       <el-button
@@ -47,7 +47,7 @@
         size="small"
         :loading="loading"
         @click="loadData"
-        title="刷新"
+        :title="t('common.refresh')"
       >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
@@ -56,26 +56,50 @@
     <div v-if="readError" class="read-feedback" role="status">
       <el-alert :title="readError" type="warning" :closable="false" show-icon />
       <el-button v-if="!authError" size="small" :loading="loading" @click="loadData">
-        重试读取
+        {{ t('hostUser.retryReading') }}
       </el-button>
     </div>
     <div v-else-if="!loading && !totalKnown" class="read-feedback" role="status">
-      <el-alert title="未返回可确认的用户组总数，暂不可翻页。" type="info" :closable="false" />
+      <el-alert
+        :title="t('hostUser.noConfirmedGroupTotalWasReturnedPaginationIs')"
+        type="info"
+        :closable="false"
+      />
     </div>
     <!-- 用户组列表表格 -->
     <div class="ops-table-wrapper">
       <el-table :data="tableData" v-loading="loading" height="100%" :empty-text="emptyText">
         <el-table-column prop="host_key" label="IP" min-width="140" show-overflow-tooltip />
-        <el-table-column prop="hostname" label="主机名" min-width="160" show-overflow-tooltip />
-        <el-table-column prop="group_name" label="组名" min-width="180" show-overflow-tooltip />
+        <el-table-column
+          prop="hostname"
+          :label="t('hostUser.hostname')"
+          min-width="160"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="group_name"
+          :label="t('hostUser.groupName')"
+          min-width="180"
+          show-overflow-tooltip
+        />
         <el-table-column prop="gid" label="GID" width="90" />
-        <el-table-column prop="users" label="用户" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="created_at" label="创建时间" width="180" show-overflow-tooltip>
+        <el-table-column
+          prop="users"
+          :label="t('common.user')"
+          min-width="200"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="created_at"
+          :label="t('hostUser.createdAt')"
+          width="180"
+          show-overflow-tooltip
+        >
           <template #default="{ row }">
             {{ formatDateTime(row.created_at) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="80" align="left" fixed="right">
+        <el-table-column :label="t('common.actions')" width="80" align="left" fixed="right">
           <template #default="{ row }">
             <el-button
               text
@@ -84,12 +108,12 @@
               :disabled="!canDeleteRow(row)"
               :title="
                 !row.host_id || !row.group_name
-                  ? '缺少主机标识或组名，无法删除'
-                  : '核对主机和组名后删除'
+                  ? t('hostUser.cannotDeleteWithoutAHostIdAndGroup')
+                  : t('hostUser.verifyTheHostAndGroupNameBeforeDeleting')
               "
               @click="handleDeleteSingleGroup(row)"
             >
-              删除
+              {{ t('common.delete') }}
             </el-button>
           </template>
         </el-table-column>
@@ -125,6 +149,10 @@
 </template>
 
 <script setup>
+import { message, messageRef } from '@/core/i18n/feedback'
+
+import { t } from '@/core/i18n'
+
 import { ref, computed, onMounted, onActivated, onDeactivated, onBeforeUnmount } from 'vue'
 import { Refresh, Search, RefreshRight, Plus } from '@element-plus/icons-vue'
 import * as userApi from '@/modules/user/api'
@@ -138,7 +166,7 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 const totalKnown = ref(false)
-const readError = ref('')
+const readError = messageRef('')
 const authError = ref(false)
 const active = ref(true)
 let requestVersion = 0
@@ -149,7 +177,7 @@ const showDeleteGroupDialog = ref(false)
 const currentGroupData = ref(null)
 const canUseRows = computed(() => active.value && !loading.value && !readError.value)
 const emptyText = computed(() =>
-  loading.value ? '正在读取…' : readError.value || '暂无符合条件的用户组'
+  loading.value ? t('hostUser.reading') : readError.value || t('hostUser.noMatchingUserGroups')
 )
 function formatDateTime(value) {
   if (!value) return '-'
@@ -221,12 +249,12 @@ async function readQuery(snapshot, canCorrectPage = true) {
       successfulQuery = null
     }
     readError.value = authError.value
-      ? '读取失败：登录已失效或无权访问，请重新登录或联系管理员。'
+      ? message('hostUser.unableToReadYourSessionHasExpiredOr')
       : tableData.value.length
-        ? '刷新失败，当前显示上次成功结果，可能已过期；请重试后再删除。'
+        ? message('hostUser.refreshFailedPreviousResultsMayBeOutdatedRetry')
         : totalKnown.value
-          ? '用户组读取失败，分页总数沿上次同条件结果；请重试。'
-          : '用户组读取失败，请重试。'
+          ? message('hostUser.unableToReadGroupsTheTotalIsFrom')
+          : message('hostUser.unableToReadUserGroupsPleaseRetry')
   } finally {
     if (isCurrent()) loading.value = false
   }
@@ -290,8 +318,8 @@ function invalidateRead() {
   requestVersion += 1
   if (loading.value)
     readError.value = tableData.value.length
-      ? '读取已中断，当前显示上次成功结果，可能已过期；请重试后再删除。'
-      : '用户组读取已中断，请重试。'
+      ? message('hostUser.readingWasInterruptedPreviousResultsMayBeOutdated')
+      : message('hostUser.readingUserGroupsWasInterruptedPleaseRetry')
   loading.value = false
 }
 onDeactivated(invalidateRead)

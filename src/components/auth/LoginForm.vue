@@ -29,13 +29,13 @@
 
       <!-- 用户名框 -->
       <div class="login-field login-field--username">
-        <label for="username">用户名</label>
+        <label for="username">{{ t('common.username') }}</label>
         <input
           id="username"
           name="username"
           v-model="loginForm.username"
           type="text"
-          placeholder="请输入用户名"
+          :placeholder="t('auth.usernamePlaceholder')"
           autocomplete="username"
           spellcheck="false"
           class="login-text-input login-text-input--username"
@@ -50,14 +50,14 @@
 
       <!-- 密码框 -->
       <div class="login-field login-field--password">
-        <label for="password">密码</label>
+        <label for="password">{{ t('common.password') }}</label>
         <div class="login-password-control">
           <input
             id="password"
             name="password"
             v-model="loginForm.password"
             :type="showPassword ? 'text' : 'password'"
-            placeholder="请输入密码"
+            :placeholder="t('auth.passwordPlaceholder')"
             autocomplete="current-password"
             spellcheck="false"
             class="login-text-input login-text-input--password"
@@ -73,7 +73,7 @@
             type="button"
             class="password-visibility-button"
             :disabled="loading"
-            :aria-label="showPassword ? '隐藏密码' : '显示密码'"
+            :aria-label="showPassword ? t('auth.hidePassword') : t('auth.showPassword')"
             :aria-pressed="showPassword"
             @click="showPassword = !showPassword"
           >
@@ -90,17 +90,17 @@
             </svg>
           </button>
         </div>
-        <p v-if="capsLockOn" id="capslock-hint" class="caps-lock-hint">大写锁定已开启</p>
+        <p v-if="capsLockOn" id="capslock-hint" class="caps-lock-hint">{{ t('auth.capsLock') }}</p>
       </div>
 
       <!-- OTP Field (if enabled) -->
       <div v-if="showOTP" class="login-field login-field--otp">
-        <label for="otp">动态验证码</label>
+        <label for="otp">{{ t('auth.otp') }}</label>
         <input
           id="otp"
           v-model="loginForm.otpCode"
           type="text"
-          placeholder="请输入 6 位动态验证码"
+          :placeholder="t('auth.otpPlaceholder')"
           autocomplete="one-time-code"
           spellcheck="false"
           inputmode="numeric"
@@ -120,7 +120,7 @@
             name="rememberMe"
             :disabled="loading"
           />
-          <span>保持登录状态</span>
+          <span>{{ t('auth.remember') }}</span>
         </label>
       </div>
 
@@ -131,7 +131,7 @@
           class="login-submit-button"
           :class="{ 'login-submit-button--loading': loading }"
           :disabled="loading || !loginForm.username || !loginForm.password"
-          :aria-label="loading ? '登录中，请稍候' : '登录'"
+          :aria-label="loading ? t('auth.loggingInLabel') : t('auth.login')"
         >
           <span v-if="loading" class="login-loading">
             <svg aria-hidden="true" class="animate-spin" fill="none" viewBox="0 0 24 24">
@@ -149,9 +149,9 @@
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               ></path>
             </svg>
-            <span>登录中...</span>
+            <span>{{ t('auth.loggingIn') }}</span>
           </span>
-          <span v-else>登录</span>
+          <span v-else>{{ t('auth.login') }}</span>
         </button>
       </div>
     </form>
@@ -164,6 +164,8 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { authService } from '@/core/auth'
 import { accountService } from '@/core/account'
+import { t } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
 
 const router = useRouter()
 
@@ -180,7 +182,7 @@ const loginForm = reactive({
 
 const loading = ref(false)
 const authError = ref(false)
-const errorMessage = ref('')
+const errorMessage = messageRef('')
 const showOTP = ref(false)
 const initializing = ref(true)
 const tenants = ref([])
@@ -204,7 +206,7 @@ const handleLogin = async () => {
     // 简单的表单验证
     if (!loginForm.username || !loginForm.password) {
       authError.value = true
-      errorMessage.value = '请输入用户名和密码'
+      errorMessage.value = message('auth.required')
       return
     }
 
@@ -219,10 +221,10 @@ const handleLogin = async () => {
     })
 
     if (result.success !== true) {
-      ElMessage.error('用户名或密码错误')
+      ElMessage.error(t('auth.invalid'))
       return
     }
-    ElMessage.success('登录成功')
+    ElMessage.success(t('auth.success'))
 
     // 确保认证状态已更新，然后跳转到仪表盘
     await new Promise(resolve => setTimeout(resolve, 100))
@@ -265,13 +267,13 @@ const handleLogin = async () => {
     authError.value = true
 
     if (error.code === 'UnknownAccount') {
-      errorMessage.value = '用户不存在'
+      errorMessage.value = message('auth.unknownAccount')
     } else if (error.code === 'IncorrectCredentials') {
-      errorMessage.value = '用户名或密码错误'
+      errorMessage.value = message('auth.invalid')
     } else if (error.code === 'UnknownTenantAccount') {
-      errorMessage.value = '用户未注册到当前租户'
+      errorMessage.value = message('auth.unknownTenant')
     } else {
-      errorMessage.value = error.message || '登录失败，请检查用户名和密码'
+      errorMessage.value = error.message || message('auth.failed')
     }
   } finally {
     loading.value = false
