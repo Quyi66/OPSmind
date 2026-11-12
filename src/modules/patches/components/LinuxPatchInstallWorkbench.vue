@@ -178,15 +178,15 @@
       </div>
 
       <el-alert
-        v-if="batchInstallCapabilityHint"
+        v-if="batchInstallCapabilityIssues.length > 0"
         :title="'安装：' + batchInstallCapabilityHint"
-        :type="batchInstallCapabilityIssues.length ? 'warning' : 'info'"
+        type="warning"
         :closable="false"
       />
       <el-alert
-        v-if="batchScanCapabilityHint"
+        v-if="batchScanCapabilityIssues.length > 0"
         :title="'扫描：' + batchScanCapabilityHint"
-        :type="batchScanCapabilityIssues.length ? 'warning' : 'info'"
+        type="warning"
         :closable="false"
       />
       <!-- 主机表格 -->
