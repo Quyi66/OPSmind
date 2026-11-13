@@ -1,15 +1,17 @@
+import { t } from '@/core/i18n'
+
 export const RUN_LOG_STATUS_MAP = Object.freeze({
-  WAITING: { label: '等待中', type: 'info' },
-  RUNNING: { label: '正在运行', type: 'primary' },
-  CALLBACK: { label: '回调', type: 'primary' },
-  ERROR: { label: '运行错误', type: 'warning' },
-  FAILED: { label: '运行失败', type: 'danger' },
-  FAILURE: { label: '运行失败', type: 'danger' },
-  COMPLETED: { label: '完成', type: 'success' },
-  SUCCESS: { label: '完成', type: 'success' },
-  FINISH: { label: '完成', type: 'success' },
-  INTERRUPTED: { label: '运行终止', type: 'info' },
-  TIMEOUT: { label: '超时', type: 'warning' }
+  WAITING: { get label() { return t('execution.jobStatus.WAITING') }, type: 'info' },
+  RUNNING: { get label() { return t('execution.jobStatus.RUNNING') }, type: 'primary' },
+  CALLBACK: { get label() { return t('execution.jobStatus.CALLBACK') }, type: 'primary' },
+  ERROR: { get label() { return t('execution.jobStatus.ERROR') }, type: 'warning' },
+  FAILED: { get label() { return t('execution.jobStatus.FAILED') }, type: 'danger' },
+  FAILURE: { get label() { return t('execution.jobStatus.FAILED') }, type: 'danger' },
+  COMPLETED: { get label() { return t('execution.jobStatus.COMPLETED') }, type: 'success' },
+  SUCCESS: { get label() { return t('execution.jobStatus.COMPLETED') }, type: 'success' },
+  FINISH: { get label() { return t('execution.jobStatus.COMPLETED') }, type: 'success' },
+  INTERRUPTED: { get label() { return t('execution.jobStatus.INTERRUPTED') }, type: 'info' },
+  TIMEOUT: { get label() { return t('execution.jobStatus.TIMEOUT') }, type: 'warning' }
 })
 
 export function getRunLogStatusLabel(status) {

@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="选择脚本文件"
+    :title="t('automation.file.selectScript')"
     width="900px"
     destroy-on-close
     :close-on-click-modal="false"
@@ -22,7 +22,7 @@
         </el-breadcrumb-item>
       </el-breadcrumb>
       <div class="breadcrumb-actions">
-        <el-button class="toolbar-icon-btn" circle :loading="loading" @click="refresh" title="刷新">
+        <el-button class="toolbar-icon-btn" circle :loading="loading" @click="refresh" :title="t('common.refresh')">
           <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
       </div>
@@ -55,7 +55,7 @@
             />
           </template>
         </el-table-column>
-        <el-table-column label="名称" min-width="280">
+        <el-table-column :label="t('common.name')" min-width="280">
           <template #default="{ row }">
             <div class="file-name" :class="{ 'is-excluded': row._excluded }">
               <i :class="getFileIcon(row)" class="file-icon"></i>
@@ -63,54 +63,54 @@
               <i
                 v-if="row._stageExists && !row._stageIsThis"
                 class="fa fa-circle text-primary stage-indicator"
-                title="有新版本，等待审核"
+                :title="t('automation.file.newVersionPending')"
               ></i>
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="说明" min-width="180">
+        <el-table-column :label="t('automation.file.notes')" min-width="180">
           <template #default="{ row }">
             <span class="file-desc" :title="row.description">{{ row.description || '-' }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="大小" width="90">
+        <el-table-column :label="t('automation.file.size')" width="90">
           <template #default="{ row }">
             {{ row.directory ? '-' : formatFileSize(row.size) }}
           </template>
         </el-table-column>
-        <el-table-column label="修改日期" width="160">
+        <el-table-column :label="t('automation.file.modifiedDate')" width="160">
           <template #default="{ row }">
             {{ formatDate(row.lastModified || row.updatedAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="80">
+        <el-table-column :label="t('common.status')" width="80">
           <template #default="{ row }">
             <template v-if="!row.directory && !row._isParentDir">
               <span
                 v-if="row._stageExists"
                 :class="'text-' + (row._stageStatusColor || 'primary')"
                 class="status-dot"
-                :title="row._stageStatusText || '待审核'"
+                :title="getFileStatusText(row, true)"
               ></span>
               <span
                 v-else-if="row._statusText"
                 :class="'text-' + (row._statusCss || 'success')"
                 class="status-dot"
-                :title="row._statusText"
+                :title="getFileStatusText(row)"
               ></span>
             </template>
           </template>
         </el-table-column>
       </el-table>
 
-      <el-empty v-if="!loading && fileList.length === 0" description="没有文件" />
+      <el-empty v-if="!loading && fileList.length === 0" :description="t('automation.file.noFiles')" />
     </div>
 
     <!-- 已选文件 -->
     <div v-if="selectedFiles.length > 0" class="selected-files">
       <div class="selected-header">
-        <span>已选择 {{ selectedFiles.length }} 个文件</span>
-        <el-button type="primary" link size="small" @click="clearSelection">清空</el-button>
+        <span>{{ t('automation.job.selectedFileCount', { count: selectedFiles.length }) }}</span>
+        <el-button type="primary" link size="small" @click="clearSelection">{{ t('automation.file.clear') }}</el-button>
       </div>
       <div class="selected-list">
         <el-tag
@@ -126,13 +126,13 @@
     </div>
 
     <template #footer>
-      <el-button @click="visible = false">取消</el-button>
+      <el-button @click="visible = false">{{ t('common.cancel') }}</el-button>
       <el-button
         type="primary"
         @click="handleConfirm"
         :disabled="selectedFiles.length === 0 && !selectedFile"
       >
-        确定
+        {{ t('automation.file.confirm') }}
       </el-button>
     </template>
   </el-dialog>
@@ -140,7 +140,7 @@
   <!-- 文件内容预览弹窗 -->
   <el-dialog
     v-model="previewVisible"
-    :title="previewFile?.path || '文件预览'"
+    :title="previewFile?.path || t('automation.file.preview')"
     width="900px"
     destroy-on-close
     :close-on-click-modal="true"
@@ -156,12 +156,15 @@
       height="450px"
     />
     <template #footer>
-      <el-button @click="closeFilePreview">关闭</el-button>
+      <el-button @click="closeFilePreview">{{ t('common.close') }}</el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { getFileStatusText } from '@/modules/automation/utils/filePresentation'
+
 import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
@@ -276,7 +279,7 @@ async function loadFiles() {
     if (isCurrent()) restoreSelection(isCurrent)
   } catch (error) {
     if (!isCurrent()) return
-    ElMessage.error(`加载文件列表失败: ${error.message || '未知错误'}`)
+    ElMessage.error(t('automation.file.loadFilesFailed', { message: error.message || t('automation.file.unknownError') }))
   } finally {
     if (isCurrent()) loading.value = false
   }

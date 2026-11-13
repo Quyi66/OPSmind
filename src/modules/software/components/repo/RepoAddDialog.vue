@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    :title="isEdit ? '编辑仓库' : '添加仓库'"
+    :title="isEdit ? t('yumRepo.software.editRepo') : t('yumRepo.software.addRepo')"
     width="860px"
     top="4vh"
     destroy-on-close
@@ -10,46 +10,46 @@
     :close-on-click-modal="false"
   >
     <div class="repo-add-dialog">
-      <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
-        <el-form-item label="仓库名称" prop="repoName">
-          <el-input v-model="formData.repoName" placeholder="只能英文字母、数字、. _ -" maxlength="64" />
+      <el-form ref="formRef" :model="formData" :rules="formRules" :validate-on-rule-change="false" :label-width="currentLocale === 'en-US' ? '170px' : '100px'">
+        <el-form-item :label="t('yumRepo.repoName')" prop="repoName">
+          <el-input v-model="formData.repoName" :placeholder="t('yumRepo.software.namePlaceholder')" maxlength="64" />
         </el-form-item>
-        <el-form-item label="配置文件" prop="repoFile">
+        <el-form-item :label="t('yumRepo.software.configFile')" prop="repoFile">
           <el-input
             v-model="formData.repoFile"
-            placeholder="只能英文，不带 .repo 后缀，如 ky-local"
+            :placeholder="t('yumRepo.software.filePlaceholder')"
             maxlength="64"
           />
         </el-form-item>
-        <el-form-item label="仓库描述" prop="repoDesc">
+        <el-form-item :label="t('yumRepo.software.repoDescription')" prop="repoDesc">
           <el-input
             v-model="formData.repoDesc"
             type="textarea"
             :rows="2"
-            placeholder="请输入仓库描述"
+            :placeholder="t('yumRepo.software.descriptionPlaceholder')"
           />
         </el-form-item>
 
-        <el-form-item label="频道列表">
+        <el-form-item :label="t('yumRepo.software.channelList')">
           <div class="channel-toolbar">
-            <el-button size="small" type="primary" plain @click="addChannel">添加频道</el-button>
-            <el-button size="small" @click="openImport">从 repo 文件导入</el-button>
+            <el-button size="small" type="primary" plain @click="addChannel">{{ t('yumRepo.software.addChannel') }}</el-button>
+            <el-button size="small" @click="openImport">{{ t('yumRepo.software.importRepoFile') }}</el-button>
           </div>
         </el-form-item>
 
         <div class="channel-actions">
-          <el-button link type="primary" @click="toggleAll(true)">全部展开</el-button>
-          <el-button link type="primary" @click="toggleAll(false)">全部折叠</el-button>
+          <el-button link type="primary" @click="toggleAll(true)">{{ t('yumRepo.software.expandAll') }}</el-button>
+          <el-button link type="primary" @click="toggleAll(false)">{{ t('yumRepo.software.collapseAll') }}</el-button>
         </div>
         <el-collapse v-model="activeKeys" class="channel-collapse">
         <el-collapse-item v-for="(ch, idx) in channels" :key="ch._key" :name="ch._key">
           <template #title>
             <div class="channel-header">
               <span class="channel-title">
-                频道 {{ idx + 1 }}：{{ ch.name || '(未填写名称)' }}
+                {{ t('yumRepo.software.channel') }} {{ idx + 1 }}：{{ ch.name || t('yumRepo.software.unnamed') }}
               </span>
               <el-tag size="small" :type="ch.enabled ? 'success' : 'info'">
-                {{ ch.enabled ? '启用' : '停用' }}
+                {{ ch.enabled ? t('yumRepo.enable') : t('automation.workbench.disable') }}
               </el-tag>
               <span class="channel-summary">
                 {{ ch.baseurls.find(u => u && u.trim()) || '' }}
@@ -61,24 +61,24 @@
                 link
                 @click.stop="removeChannel(idx)"
               >
-                删除
+                {{ t('common.delete') }}
               </el-button>
             </div>
           </template>
-          <el-form-item label="名称" required>
-            <el-input v-model="ch.name" maxlength="64" placeholder="频道名称，如 os / updates，只能英文字母、数字及 . _ : -" />
+          <el-form-item :label="t('common.name')" required>
+            <el-input v-model="ch.name" maxlength="64" :placeholder="t('yumRepo.software.channelNameHint')" />
           </el-form-item>
-          <el-form-item label="仓库地址" required>
+          <el-form-item :label="t('yumRepo.repoUrl')" required>
             <div class="list-wrap">
               <div v-for="(_, i) in ch.baseurls" :key="i" class="list-row">
-                <el-input v-model="ch.baseurls[i]" placeholder="http(s)/ftp/file:// 开头，可含 $basearch" />
+                <el-input v-model="ch.baseurls[i]" :placeholder="t('yumRepo.software.baseurlHint')" />
                 <el-button
                   :disabled="ch.baseurls.length <= 1"
                   link
                   type="danger"
                   @click="ch.baseurls.splice(i, 1)"
                 >
-                  删除
+                  {{ t('common.delete') }}
                 </el-button>
               </div>
               <el-button
@@ -88,11 +88,11 @@
                 :disabled="ch.baseurls.length >= 20"
                 @click="ch.baseurls.push('')"
               >
-                + 添加地址
+                {{ t('yumRepo.software.addUrl') }}
               </el-button>
             </div>
           </el-form-item>
-          <el-form-item label="启用">
+          <el-form-item :label="t('yumRepo.enable')">
             <el-switch v-model="ch.enabled" />
           </el-form-item>
           <el-form-item label="gpgcheck">
@@ -103,12 +103,12 @@
               <div v-for="(_, i) in ch.gpgkeys" :key="i" class="list-row">
                 <el-input
                   v-model="ch.gpgkeys[i]"
-                  placeholder="如 file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kylin"
+                  :placeholder="t('yumRepo.software.gpgkeyExample')"
                 />
-                <el-button link type="danger" @click="ch.gpgkeys.splice(i, 1)">删除</el-button>
+                <el-button link type="danger" @click="ch.gpgkeys.splice(i, 1)">{{ t('common.delete') }}</el-button>
               </div>
               <el-button size="small" link type="primary" @click="ch.gpgkeys.push('')">
-                + 添加 gpgkey
+                {{ t('yumRepo.software.addGpgkey') }}
               </el-button>
             </div>
           </el-form-item>
@@ -117,21 +117,21 @@
           </el-form-item>
           <template v-if="ch.sslverify">
             <el-form-item label="sslcacert">
-              <el-input v-model="ch.sslcacert" placeholder="目标主机上的 CA 证书绝对路径" />
+              <el-input v-model="ch.sslcacert" :placeholder="t('yumRepo.software.caPath')" />
             </el-form-item>
             <el-form-item label="sslclientcert">
-              <el-input v-model="ch.sslclientcert" placeholder="客户端证书绝对路径" />
+              <el-input v-model="ch.sslclientcert" :placeholder="t('yumRepo.software.certPath')" />
             </el-form-item>
             <el-form-item label="sslclientkey">
-              <el-input v-model="ch.sslclientkey" placeholder="客户端私钥绝对路径" />
+              <el-input v-model="ch.sslclientkey" :placeholder="t('yumRepo.software.keyPath')" />
             </el-form-item>
           </template>
-          <el-form-item label="高级选项">
+          <el-form-item :label="t('yumRepo.software.advancedOptions')">
             <div class="list-wrap">
               <div v-for="(opt, i) in ch.extraList" :key="i" class="list-row">
-                <el-input v-model="opt.key" placeholder="key，如 priority" style="width: 40%" />
+                <el-input v-model="opt.key" :placeholder="t('yumRepo.software.optionKeyHint')" style="width: 40%" />
                 <el-input v-model="opt.value" placeholder="value" />
-                <el-button link type="danger" @click="ch.extraList.splice(i, 1)">删除</el-button>
+                <el-button link type="danger" @click="ch.extraList.splice(i, 1)">{{ t('common.delete') }}</el-button>
               </div>
               <el-button
                 size="small"
@@ -139,7 +139,7 @@
                 type="primary"
                 @click="ch.extraList.push({ key: '', value: '' })"
               >
-                + 添加选项
+                {{ t('yumRepo.software.addOption') }}
               </el-button>
             </div>
           </el-form-item>
@@ -150,27 +150,30 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose">取消</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleSubmit">确定</el-button>
+        <el-button @click="handleClose">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="submitting" @click="handleSubmit">{{ t('yumRepo.confirm') }}</el-button>
       </div>
     </template>
 
-    <el-dialog v-model="importVisible" title="从 repo 文件导入" width="560px" append-to-body>
+    <el-dialog v-model="importVisible" :title="t('yumRepo.software.importRepoFile')" width="560px" append-to-body>
       <el-input
         v-model="importText"
         type="textarea"
         :rows="12"
-        placeholder="粘贴 .repo 文件内容，由后端解析为多频道"
+        :placeholder="t('yumRepo.software.pasteRepoHint')"
       />
       <template #footer>
-        <el-button @click="importVisible = false">取消</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleImport">导入并保存</el-button>
+        <el-button @click="importVisible = false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="submitting" @click="handleImport">{{ t('yumRepo.software.importSave') }}</el-button>
       </template>
     </el-dialog>
   </el-dialog>
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+import { useLocalizedValidation } from '@/core/i18n/validation'
+
 import { ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { repoApi } from '../../api'
@@ -191,6 +194,7 @@ const emit = defineEmits(['update:modelValue', 'success'])
 const visible = ref(false)
 const submitting = ref(false)
 const formRef = ref(null)
+useLocalizedValidation(formRef)
 const importVisible = ref(false)
 const importText = ref('')
 
@@ -250,24 +254,24 @@ function toggleAll(expand) {
   activeKeys.value = expand ? channels.value.map(c => c._key) : []
 }
 
-const formRules = {
+const formRules = computed(() => ({
   repoName: [
-    { required: true, message: '请输入仓库名称', trigger: 'blur' },
+    { required: true, message: t('yumRepo.software.repoNameRequired'), trigger: 'blur' },
     {
       pattern: NAME_RE,
-      message: '只能英文字母、数字、. _ -，字母或数字开头，最长 64',
+      message: t('yumRepo.software.nameFormat'),
       trigger: 'blur'
     }
   ],
   repoFile: [
-    { required: true, message: '请输入配置文件名', trigger: 'blur' },
+    { required: true, message: t('yumRepo.software.repoFileRequired'), trigger: 'blur' },
     {
       pattern: NAME_RE,
-      message: '只能英文字母、数字、. _ -，字母或数字开头，最长 64（不带 .repo）',
+      message: t('yumRepo.software.fileNameFormat'),
       trigger: 'blur'
     }
   ]
-}
+}))
 
 const isEdit = computed(() => !!formData.value.id)
 
@@ -320,7 +324,7 @@ watch(visible, val => {
 
 function addChannel() {
   if (channels.value.length >= 50) {
-    ElMessage.warning('最多 50 个频道')
+    ElMessage.warning(t('yumRepo.software.maxChannels'))
     return
   }
   const ch = newChannel()
@@ -350,25 +354,25 @@ function buildChannels() {
   const result = []
   for (let i = 0; i < channels.value.length; i++) {
     const ch = channels.value[i]
-    const label = `频道 ${i + 1}`
+    const label = t('yumRepo.software.channelNumber', { index: i + 1 })
     const repoId = ch.name.trim()
     const name = repoId
     if (!repoId || !REPOID_RE.test(repoId)) {
-      ElMessage.error(`${label}：名称必填，只能字母数字及 . _ : -，且以字母或数字开头`)
+      ElMessage.error(t('yumRepo.software.channelNameInvalid', { channel: label }))
       return null
     }
     if (seen.has(repoId)) {
-      ElMessage.error(`${label}：名称 "${repoId}" 重复`)
+      ElMessage.error(t('yumRepo.software.duplicateChannel', { channel: label, name: repoId }))
       return null
     }
     seen.add(repoId)
     const baseurls = ch.baseurls.map(s => s.trim()).filter(Boolean)
     if (!baseurls.length || baseurls.length > 20) {
-      ElMessage.error(`${label}：仓库地址至少 1 个，最多 20 个`)
+      ElMessage.error(t('yumRepo.software.channelUrlCount', { channel: label }))
       return null
     }
     if (baseurls.some(u => !URL_RE.test(u))) {
-      ElMessage.error(`${label}：仓库地址需以 http/https/ftp/file:// 开头`)
+      ElMessage.error(t('yumRepo.software.channelUrlProtocol', { channel: label }))
       return null
     }
     const gpgkeys = ch.gpgcheck ? ch.gpgkeys.map(s => s.trim()).filter(Boolean) : []
@@ -377,7 +381,7 @@ function buildChannels() {
       const k = key.trim()
       if (!k && !String(value).trim()) continue
       if (!EXTRA_KEY_RE.test(k) || RESERVED_KEYS.includes(k)) {
-        ElMessage.error(`${label}：高级选项 key "${k}" 不合法（小写字母数字下划线，且不能与已有字段重名）`)
+        ElMessage.error(t('yumRepo.software.invalidExtraKey', { channel: label, key: k }))
         return null
       }
       extraOptions[k] = String(value).trim()
@@ -387,7 +391,7 @@ function buildChannels() {
     const sslclientkey = ch.sslverify ? ch.sslclientkey.trim() : ''
 
     if (hasForbidden(repoId, name, baseurls, gpgkeys, sslcacert, sslclientcert, sslclientkey, Object.entries(extraOptions))) {
-      ElMessage.error(`${label}：内容不能包含英文单引号 ' 以及 {{、{%、{#`)
+      ElMessage.error(t('yumRepo.software.channelForbidden', { channel: label, tokens: '{{, {%, {#' }))
       return null
     }
 
@@ -413,7 +417,7 @@ function checkResult(res) {
   const payload = res?.data ?? res
   const r = Array.isArray(payload) ? payload[0] : null
   if (r?.status !== 'COMPLETED') {
-    let msg = isEdit.value ? '仓库更新失败' : '仓库添加失败'
+    let msg = isEdit.value ? t('yumRepo.software.repoUpdateFailed') : t('yumRepo.software.repoAddFailed')
     try {
       msg = JSON.parse(r.error).message || msg
     } catch (e) {
@@ -434,7 +438,7 @@ async function doSave(extra) {
     ...extra
   })
   if (!checkResult(res)) return false
-  ElMessage.success(isEdit.value ? '仓库更新成功' : '仓库添加成功')
+  ElMessage.success(isEdit.value ? t('yumRepo.software.repoUpdated') : t('yumRepo.software.repoAdded'))
   emit('success')
   importVisible.value = false
   handleClose()
@@ -449,7 +453,7 @@ async function validateBase() {
     return false
   }
   if (hasForbidden(formData.value.repoDesc)) {
-    ElMessage.error("仓库描述不能包含英文单引号 ' 以及 {{、{%、{#")
+    ElMessage.error(t('yumRepo.software.descriptionForbidden', { tokens: '{{, {%, {#' }))
     return false
   }
   return true
@@ -465,7 +469,7 @@ async function handleSubmit() {
     await doSave({ repoUrl: '', channels: JSON.stringify(list) })
   } catch (error) {
     console.error('Failed to save repo:', error)
-    ElMessage.error(isEdit.value ? '仓库更新失败' : '仓库添加失败')
+    ElMessage.error(isEdit.value ? t('yumRepo.software.repoUpdateFailed') : t('yumRepo.software.repoAddFailed'))
   } finally {
     submitting.value = false
   }
@@ -474,11 +478,11 @@ async function handleSubmit() {
 async function handleImport() {
   const text = importText.value.trim()
   if (!text) {
-    ElMessage.warning('请粘贴 repo 文件内容')
+    ElMessage.warning(t('yumRepo.software.repoContentRequired'))
     return
   }
   if (hasForbidden(text)) {
-    ElMessage.error("内容不能包含英文单引号 ' 以及 {{、{%、{#")
+    ElMessage.error(t('yumRepo.software.contentForbidden', { tokens: '{{, {%, {#' }))
     return
   }
   if (!(await validateBase())) return
@@ -489,7 +493,7 @@ async function handleImport() {
     await doSave({ repoUrl: text })
   } catch (error) {
     console.error('Failed to import repo:', error)
-    ElMessage.error('导入失败')
+    ElMessage.error(t('yumRepo.software.importFailed'))
   } finally {
     submitting.value = false
   }

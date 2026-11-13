@@ -1,4 +1,7 @@
 <script setup>
+import { t } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
+
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { appTableList } from '@/modules/automation/api/jao'
 import {
@@ -8,7 +11,7 @@ import {
 import { formatDateTime as formatDateTimeGlobal } from '../../utils/helpers'
 
 const props = defineProps({
-  title: { type: String, default: '运维工具列表' },
+  title: { type: String, default: '' },
   filterType: { type: String, default: '' },
   reloadVersion: { type: Number, default: 0 }
 })
@@ -17,8 +20,9 @@ const emit = defineEmits(['navigate', 'execute', 'edit', 'copy', 'history', 'del
 const visible = defineModel('visible', { default: false })
 
 const loading = ref(false)
-const loadError = ref('')
+const loadError = messageRef('')
 const jobs = ref([])
+const searchLabels = ref(new Map())
 let loadRequestId = 0
 const filters = reactive({
   jobType: 'all',
@@ -29,7 +33,7 @@ const appliedFilters = reactive({
   keyword: ''
 })
 
-const TYPE_LABELS = { rest: 'REST', script: '脚本', command: '命令' }
+const TYPE_LABELS = { rest: 'REST', get script() { return t('automation.workbench.script') }, get command() { return t('automation.workbench.command') } }
 const TYPE_TAGS = { rest: 'primary', script: 'success', command: 'warning' }
 const filteredJobs = computed(() => {
   const keyword = appliedFilters.keyword.trim().toLowerCase()
@@ -41,7 +45,7 @@ const filteredJobs = computed(() => {
 
     if (!keyword) return true
 
-    return [job.title, jobTitle(job), jobDescription(job), job.updatedBy, job.createdBy]
+    return [job.title, searchLabels.value.get(job), job.updatedBy, job.createdBy]
       .filter(Boolean)
       .some(value => String(value).toLowerCase().includes(keyword))
   })
@@ -54,7 +58,7 @@ const hasActiveFilters = computed(
 )
 
 const emptyText = computed(() =>
-  jobs.value.length ? '没有符合筛选条件的运维工具' : '暂无运维工具'
+  jobs.value.length ? t('automation.workbench.noMatchingTools') : t('automation.workbench.noTools')
 )
 
 function typeLabel(type) {
@@ -90,8 +94,13 @@ function syncFilters(resetKeyword = true) {
 }
 
 function handleSearch() {
+  captureSearchLabels()
   appliedFilters.jobType = filters.jobType
   appliedFilters.keyword = filters.keyword.trim()
+}
+
+function captureSearchLabels() {
+  searchLabels.value = new Map(jobs.value.map(job => [job, `${jobTitle(job)} ${jobDescription(job)}`]))
 }
 
 function handleReset() {
@@ -108,13 +117,15 @@ async function loadJobs() {
   loading.value = true
   loadError.value = ''
   jobs.value = []
+  searchLabels.value = new Map()
   try {
     const res = await appTableList({ appletCode: '' })
     if (currentId !== loadRequestId || !visible.value) return
     jobs.value = Array.isArray(res?.data) ? res.data : []
+    captureSearchLabels()
   } catch {
     if (currentId !== loadRequestId) return
-    loadError.value = '运维工具加载失败，请重试。'
+    loadError.value = message('automation.workbench.toolLoadFailedRetry')
     jobs.value = []
   } finally {
     if (currentId === loadRequestId) loading.value = false
@@ -158,7 +169,7 @@ onBeforeUnmount(() => { loadRequestId += 1 })
 <template>
   <el-drawer
     v-model="visible"
-    :title="title"
+    :title="title || t('automation.workbench.toolList')"
     size="76%"
     destroy-on-close
     class="wb-workbench-drawer"
@@ -166,27 +177,27 @@ onBeforeUnmount(() => { loadRequestId += 1 })
   >
     <template #footer>
       <div class="wb-drawer-footer">
-        <span class="wb-drawer-footer__total">共 {{ filteredJobs.length }} 个</span>
+        <span class="wb-drawer-footer__total">{{ t('automation.workbench.drawerToolCount', { count: filteredJobs.length }) }}</span>
         <el-button link size="small" @click="emit('navigate', '/jao/jobs')">
-          在运维工具箱管理
+          {{ t('automation.workbench.manageInLibrary') }}
         </el-button>
       </div>
     </template>
 
     <div class="wb-drawer-body" v-loading="loading">
       <el-alert v-if="loadError" :title="loadError" type="error" show-icon :closable="false">
-        <el-button link type="primary" @click="loadJobs">重试</el-button>
+        <el-button link type="primary" @click="loadJobs">{{ t('common.retry') }}</el-button>
       </el-alert>
       <div class="wb-job-filter-panel">
         <el-form :model="filters" inline size="small" class="wb-job-filter-form" @submit.prevent>
-          <el-form-item label="类型">
+          <el-form-item :label="t('automation.workbench.type')">
             <el-select
               v-model="filters.jobType"
-              placeholder="全部类型"
+              :placeholder="t('automation.workbench.allTypes')"
               style="width: 140px"
               @change="handleSearch"
             >
-              <el-option label="全部类型" value="all" />
+              <el-option :label="t('automation.workbench.allTypes')" value="all" />
               <el-option
                 v-for="(label, value) in TYPE_LABELS"
                 :key="value"
@@ -195,10 +206,10 @@ onBeforeUnmount(() => { loadRequestId += 1 })
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="关键词">
+          <el-form-item :label="t('automation.workbench.keyword')">
             <el-input
               v-model="filters.keyword"
-              placeholder="搜索工具名称、描述或更新人"
+              :placeholder="t('automation.workbench.searchTool')"
               clearable
               style="width: 220px"
               @keyup.enter="handleSearch"
@@ -206,15 +217,15 @@ onBeforeUnmount(() => { loadRequestId += 1 })
             />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="handleSearch">搜索</el-button>
-            <el-button @click="handleReset">重置</el-button>
+            <el-button type="primary" @click="handleSearch">{{ t('common.search') }}</el-button>
+            <el-button @click="handleReset">{{ t('common.reset') }}</el-button>
           </el-form-item>
         </el-form>
 
         <div class="wb-job-filter-panel__summary">
-          <span>筛选结果 {{ filteredJobs.length }} / {{ jobs.length }}</span>
+          <span>{{ t('automation.workbench.filterCount', { filtered: filteredJobs.length, total: jobs.length }) }}</span>
           <el-button v-if="hasActiveFilters" link type="primary" size="small" @click="handleReset">
-            清空筛选
+            {{ t('automation.workbench.clearFilters') }}
           </el-button>
         </div>
       </div>
@@ -237,7 +248,7 @@ onBeforeUnmount(() => { loadRequestId += 1 })
             </div>
             <span class="wb-job-card__name" :title="jobTitle(job)">{{ jobTitle(job) }}</span>
             <div class="wb-job-card__meta">
-              <span>更新人：{{ job.updatedBy || job.createdBy || '未提供' }}</span>
+              <span>{{ t('automation.workbench.updatedBy', { name: job.updatedBy || job.createdBy || t('automation.workbench.notProvided') }) }}</span>
             </div>
             <span v-if="job.description" class="wb-job-card__description" :title="jobDescription(job)">{{ jobDescription(job) }}</span>
           </div>
@@ -245,11 +256,11 @@ onBeforeUnmount(() => { loadRequestId += 1 })
           <div class="wb-job-card__actions">
             <button type="button" class="wb-job-card__action" @click.stop="emit('execute', job)">
               <i class="fa fa-play" />
-              <span>执行</span>
+              <span>{{ t('automation.workbench.execute') }}</span>
             </button>
             <button type="button" class="wb-job-card__action" @click.stop="emit('edit', job)">
               <i class="fa fa-cog" />
-              <span>编辑</span>
+              <span>{{ t('automation.workbench.edit') }}</span>
             </button>
             <button
               type="button"
@@ -257,7 +268,7 @@ onBeforeUnmount(() => { loadRequestId += 1 })
               @click.stop="emit('delete', job)"
             >
               <i class="fa fa-trash" />
-              <span>删除</span>
+              <span>{{ t('common.delete') }}</span>
             </button>
             <el-dropdown
               trigger="hover"
@@ -275,11 +286,11 @@ onBeforeUnmount(() => { loadRequestId += 1 })
                 <el-dropdown-menu>
                   <el-dropdown-item command="copy">
                     <i class="fa fa-copy wb-job-card__menu-icon" />
-                    <span>复制</span>
+                    <span>{{ t('automation.workbench.copy') }}</span>
                   </el-dropdown-item>
                   <el-dropdown-item command="history">
                     <i class="fa fa-history wb-job-card__menu-icon" />
-                    <span>历史</span>
+                    <span>{{ t('automation.workbench.history') }}</span>
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </template>

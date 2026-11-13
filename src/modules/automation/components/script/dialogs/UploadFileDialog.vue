@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="添加文件"
+    :title="t('automation.library.addFiles')"
     width="600px"
     :close-on-click-modal="false"
     @closed="handleClosed"
@@ -10,7 +10,7 @@
     <div class="upload-form">
       <!-- 文件路径显示 -->
       <div class="form-group">
-        <div class="file-path-label">文件路径：</div>
+        <div class="file-path-label">{{ t('automation.library.filePathLabel') }}</div>
       </div>
       <div v-if="form.fileList.length" class="form-group">
         <div v-for="(file, index) in form.fileList" :key="index" class="file-path-item">
@@ -33,15 +33,13 @@
           >
             <el-button type="primary">
               <i class="fa fa-folder-open me-1" />
-              选择文件
+              {{ t('automation.library.selectFiles') }}
             </el-button>
           </el-upload>
           <p class="help-text">
-            文件大小不能超过
-            <strong>100MB</strong>
-            。同名的文件会被覆盖，但文件信息将保留。
+            {{ t('automation.library.uploadLimitHint', { limit: '100MB' }) }}
             <br />
-            支持文件多选上传（不能包含文件夹）
+            {{ t('automation.library.multipleUploadHint') }}
           </p>
         </div>
       </div>
@@ -50,22 +48,22 @@
       <div v-if="hasZipFile" class="form-group">
         <div class="alert-info-box">
           <p class="help-block">
-            <strong class="d-block">说明:</strong>
-            <strong class="d-block">不解压：不进行解压操作，压缩文件保留其原始状态。</strong>
+            <strong class="d-block">{{ t('automation.library.descriptionLabel') }}</strong>
+            <strong class="d-block">{{ t('automation.library.keepArchiveHint') }}</strong>
             <strong class="d-block">
-              解压到当前目录：直接将压缩文件的内容解压到当前目录，不会创建新的子目录。
+              {{ t('automation.library.extractHereHint') }}
             </strong>
             <strong class="d-block">
-              解压到子目录：解压时会在当前目录中创建一个新目录（通常以压缩文件名命名），然后将压缩文件的内容解压到这个新目录中。
+              {{ t('automation.library.extractSubdirHint') }}
             </strong>
           </p>
         </div>
-        <label class="control-label">压缩文件选项</label>
+        <label class="control-label">{{ t('automation.library.archiveOptions') }}</label>
         <div class="form-control-wrapper">
           <el-radio-group v-model="form.unzipMode">
-            <el-radio value="ExtractToDir">解压到子目录</el-radio>
-            <el-radio value="ExtractWithoutDir">解压到当前目录</el-radio>
-            <el-radio value="">不解压</el-radio>
+            <el-radio value="ExtractToDir">{{ t('automation.library.extractSubdir') }}</el-radio>
+            <el-radio value="ExtractWithoutDir">{{ t('automation.library.extractHere') }}</el-radio>
+            <el-radio value="">{{ t('automation.library.keepArchive') }}</el-radio>
           </el-radio-group>
         </div>
       </div>
@@ -73,9 +71,9 @@
       <!-- 参数配置（仅git） -->
       <div v-if="repoType === 'git'" class="form-group">
         <label class="control-label">
-          参数配置
+          {{ t('automation.library.parameterConfig') }}
           <el-tooltip
-            content="如果文件支持配置（例如命令行执行参数），可以在这里填写"
+            :content="t('automation.library.parameterConfigHint')"
             placement="top"
           >
             <i class="fa fa-info-circle text-muted" />
@@ -89,9 +87,9 @@
       <!-- 说明（仅git） -->
       <div v-if="repoType === 'git'" class="form-group">
         <label class="control-label">
-          说明
+          {{ t('automation.library.description') }}
           <el-tooltip
-            content="可以在这里填写文件的用途、目的、使用方法等描述信息，便于使用者理解这个文件"
+            :content="t('automation.library.descriptionHint')"
             placement="top"
           >
             <i class="fa fa-info-circle text-muted" />
@@ -110,17 +108,19 @@
         @click="handleSubmit"
       >
         <i class="fa fa-check me-1" />
-        确定
+        {{ t('automation.file.confirm') }}
       </el-button>
       <el-button @click="visible = false">
         <i class="fa fa-reply me-1" />
-        取消
+        {{ t('common.cancel') }}
       </el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as gfsApi from '@/modules/automation/api/gfs'
@@ -178,7 +178,7 @@ function handleFileRemove(file, fileList) {
 // 提交上传
 async function handleSubmit() {
   if (!form.value.fileList.length) {
-    ElMessage.warning('请选择要上传的文件')
+    ElMessage.warning(t('automation.library.selectUploadFiles'))
     return
   }
 
@@ -193,11 +193,11 @@ async function handleSubmit() {
         unzipMode: form.value.unzipMode
       })
     }
-    ElMessage.success('上传成功')
+    ElMessage.success(t('automation.library.uploaded'))
     visible.value = false
     emit('success')
   } catch (error) {
-    ElMessage.error(error?.message || '上传失败')
+    ElMessage.error(error?.message || t('automation.library.uploadFailed'))
   } finally {
     uploading.value = false
   }

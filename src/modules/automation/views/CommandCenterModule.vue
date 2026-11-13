@@ -51,6 +51,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { computed, ref, provide, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import RunCommandDialog from '@/modules/automation/components/command/dialogs/RunCommandDialog.vue'
@@ -64,14 +66,14 @@ const route = useRoute()
 const workspaceTabs = [
   {
     name: 'list',
-    label: '命令列表',
+    get label() { return t('automation.command.list') },
     to: {
       path: '/cmd/list'
     }
   },
   {
     name: 'job',
-    label: '命令运维工具',
+    get label() { return t('automation.types.command') },
     to: {
       path: '/cmd/list',
       query: {
@@ -168,9 +170,10 @@ function handleRunSuccess(result) {
   if (runCommandMode.value === 'run') {
     const runId = extractRunId(result)
     if (runId) {
+      const command = selectedCommand.value
       commandResultMeta.value = {
         runId,
-        jobTitle: resolveCommandRunTitle()
+        get jobTitle() { return resolveCommandRunTitle(command) }
       }
       commandResultDialogVisible.value = true
       return
@@ -184,15 +187,15 @@ function extractRunId(source) {
   return data?.runId || data?.run_id || data?.id || data?.logId || ''
 }
 
-function resolveCommandRunTitle() {
-  if (Array.isArray(selectedCommand.value)) {
-    if (selectedCommand.value.length === 1) {
-      return selectedCommand.value[0]?.name || '命令执行'
+function resolveCommandRunTitle(command = selectedCommand.value) {
+  if (Array.isArray(command)) {
+    if (command.length === 1) {
+      return command[0]?.name || t('automation.command.execution')
     }
-    return `批量命令 (${selectedCommand.value.length})`
+    return t('automation.command.batchTitle', { count: command.length })
   }
 
-  return selectedCommand.value?.name || '命令执行'
+  return command?.name || t('automation.command.execution')
 }
 
 // 提供给子组件使用

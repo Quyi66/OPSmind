@@ -3,10 +3,10 @@
     <!-- 筛选栏 -->
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small" @submit.prevent>
-        <el-form-item label="关键词">
+        <el-form-item :label="t('automation.workbench.keyword')">
           <el-input
             v-model="searchKeyword"
-            placeholder="名称、表达式、作者或 ID:编号"
+            :placeholder="t('automation.list.cronSearch')"
             clearable
             style="width: 240px"
             @keyup.enter="handleSearch"
@@ -38,7 +38,7 @@
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button type="primary" size="small" :icon="Plus" @click="handleCreate">新增任务</el-button>
+      <el-button type="primary" size="small" :icon="Plus" @click="handleCreate">{{ t('automation.list.newTask') }}</el-button>
       <el-button
         size="small"
         :disabled="loading || !!loadError || !selectedRows.length"
@@ -47,7 +47,7 @@
         <el-icon>
           <Grid />
         </el-icon>
-        批量启停
+        {{ t('automation.list.batchToggle') }}
       </el-button>
       <span style="flex: 1"></span>
       <el-button
@@ -56,7 +56,7 @@
         size="small"
         :loading="loading"
         @click="handleRefresh"
-        title="刷新"
+        :title="t('common.refresh')"
       >
         <el-icon v-show="!loading">
           <Refresh />
@@ -65,7 +65,7 @@
     </div>
 
     <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
-      <el-button link type="primary" @click="fetchData">重试</el-button>
+      <el-button link type="primary" @click="fetchData">{{ t('common.retry') }}</el-button>
     </el-alert>
 
     <!-- 表格区域 -->
@@ -106,6 +106,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, reactive, defineAsyncComponent } from 'vue'
 import { Plus, Refresh, Grid, Search, RefreshRight } from '@element-plus/icons-vue'
 import CronJobTable from '../../components/job/components/CronJobTable.vue'

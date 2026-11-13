@@ -8,14 +8,14 @@
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small" @submit.prevent>
-        <el-form-item label="设备类型">
+        <el-form-item :label="t('asset.deviceType')">
           <el-select
             v-model="filters.cit"
-            placeholder="全部"
-            style="width: 140px"
+            :placeholder="t('common.all')"
+            :style="{ width: currentLocale === 'en-US' ? '200px' : '140px' }"
             @change="handleSearch"
           >
-            <el-option label="全部" value="sjxy_all" />
+            <el-option :label="t('common.all')" value="sjxy_all" />
             <el-option
               v-for="item in resourceTypes"
               :key="item.code"
@@ -24,10 +24,10 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="状态筛选">
+        <el-form-item :label="t('asset.statusFilter')">
           <el-select
             v-model="filters.conditions"
-            placeholder="筛选条件"
+            :placeholder="t('asset.filterCondition')"
             style="width: 240px"
             @change="handleSearch"
           >
@@ -39,10 +39,10 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="设备 IP">
+        <el-form-item :label="t('asset.deviceIp')">
           <el-input
             v-model="filters.ip"
-            placeholder="搜索设备 IP..."
+            :placeholder="t('asset.searchDeviceIp')"
             clearable
             style="width: 200px"
             @keyup.enter="handleSearch"
@@ -56,11 +56,11 @@
         <el-form-item class="filter-actions">
           <el-button type="primary" :loading="tableLoading" @click="handleSearch">
             <el-icon><Search /></el-icon>
-            搜索
+            {{ t('common.search') }}
           </el-button>
           <el-button @click="handleReset">
             <el-icon><RefreshRight /></el-icon>
-            重置
+            {{ t('common.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -75,7 +75,7 @@
         @click="openActionDialog('checkConnectivity')"
       >
         <i class="fa fa-plug" style="margin-right: 4px"></i>
-        连通性检测
+        {{ t('asset.connectivityTest') }}
       </el-button>
       <el-button
         size="small"
@@ -86,7 +86,7 @@
         @click="handleCheckSelected"
       >
         <i v-if="!quickCheckLoading" class="fa fa-bolt" style="margin-right: 4px"></i>
-        检测选中设备
+        {{ t('asset.checkSelected') }}
         <span v-if="selectedExceptionRows.length">（{{ selectedExceptionRows.length }}）</span>
       </el-button>
       <el-button
@@ -95,13 +95,13 @@
         @click="openActionDialog('collectInfo')"
       >
         <i class="fa fa-download" style="margin-right: 4px"></i>
-        信息数据采集
+        {{ t('asset.collectInfo') }}
       </el-button>
       <el-button size="small" @click="openOperationLog('checkConnectivity')" plain>
-        连通性历史日志
+        {{ t('asset.connectivityHistory') }}
       </el-button>
       <el-button size="small" @click="openOperationLog('collectInfo')" plain>
-        采集历史日志
+        {{ t('asset.collectionHistory') }}
       </el-button>
       <span style="flex: 1"></span>
       <el-button
@@ -110,14 +110,14 @@
         size="small"
         :loading="loading"
         @click="handleRefresh"
-        title="刷新"
+        :title="t('common.refresh')"
       >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
 
     <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
-      <el-button link type="primary" @click="loadTableData">重试</el-button>
+      <el-button link type="primary" @click="loadTableData">{{ t('common.retry') }}</el-button>
     </el-alert>
 
     <!-- 表格区域 -->
@@ -129,7 +129,7 @@
         :row-key="getRowKey"
         class="natural-height-table"
         row-class-name="modern-table-row"
-        :empty-text="tableLoading ? '正在读取设备…' : loadError || '暂无符合条件的设备'"
+        :empty-text="tableLoading ? t('asset.devicesLoading') : loadError || t('asset.noMatchingDevices')"
         @selection-change="handleSelectionChange"
       >
         <el-table-column
@@ -141,7 +141,7 @@
         />
 
         <!-- 1. 资产标识复合列 -->
-        <el-table-column label="设备标识 (IP & 类型)" min-width="180">
+        <el-table-column :label="t('asset.deviceIpType')" min-width="180">
           <template #default="{ row }">
             <div class="composite-ip-cell">
               <span>{{ row.IP || '-' }}</span>
@@ -153,10 +153,10 @@
         </el-table-column>
 
         <!-- 2. 健康巡检复合列 -->
-        <el-table-column label="连通健康度" min-width="220" align="left">
+        <el-table-column :label="t('asset.connectivityHealth')" min-width="220" align="left">
           <template #default="{ row }">
             <div class="health-cell">
-              <el-tooltip content="点击发起连通性诊断" placement="top" :enterable="false">
+              <el-tooltip :content="t('asset.clickConnectivity')" placement="top" :enterable="false">
                 <el-tag
                   :type="
                     row.CONN_LATEST_STATUS === '1'
@@ -190,12 +190,12 @@
                   <span style="margin-left: 4px">
                     {{
                       checkingConnIds.includes(row.id || row.key)
-                        ? '诊断中...'
+                        ? t('asset.diagnosing')
                         : row.CONN_LATEST_STATUS === '1'
-                          ? '正常'
+                          ? t('asset.normal')
                           : row.CONN_LATEST_STATUS === '0'
-                            ? '失联'
-                            : '未知'
+                            ? t('asset.disconnected')
+                            : t('common.unknown')
                     }}
                   </span>
                 </el-tag>
@@ -228,17 +228,17 @@
         </el-table-column> -->
 
         <!-- 4. 更新时间 -->
-        <el-table-column label="最后同步时间" min-width="160">
+        <el-table-column :label="t('asset.lastSync')" min-width="160">
           <template #default="{ row }">
             <span>{{ formatDateTime(row.updated_at) }}</span>
           </template>
         </el-table-column>
 
         <!-- 5. 操作 -->
-        <el-table-column label="操作" width="100" align="center" fixed="right">
+        <el-table-column :label="t('common.actions')" width="100" align="center" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="viewCredentials(row)">
-              查看凭据
+              {{ t('asset.viewCredentials') }}
             </el-button>
           </template>
         </el-table-column>
@@ -264,7 +264,7 @@
       v-model="actionDialogVisible"
       ci-types="[auto]"
       :options="actionSelectorOptions"
-      :title="`选择设备 · ${currentActionMeta.title}`"
+      :title="t('asset.selectActionDevices', { action: currentActionMeta.title })"
       :confirm-text="currentActionMeta.confirmButtonText"
       :description="currentActionMeta.confirmMessage"
       :submitting="actionLoading"
@@ -285,6 +285,9 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
+
 import { ref, reactive, computed, onMounted, onBeforeUnmount, onDeactivated, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
@@ -307,26 +310,25 @@ const router = useRouter()
 
 const ACTION_CONFIG = {
   checkConnectivity: {
-    title: '检查连通性',
-    confirmButtonText: '立即检查连通性',
-    confirmMessage: '连通性检查将花费数分钟至半小时不等，点击“立即检查连通性”后将立即开始执行。',
-    pendingMessage: '连通性检查任务已发起，可在连通性历史日志中查看',
-    successMessage: '连通性检查完成',
-    failureMessage: '连通性检查失败',
-    startErrorMessage: '启动检查任务失败',
-    resultTitle: '连通性检测',
+    get title() { return t('asset.checkConnectivity') },
+    get confirmButtonText() { return t('asset.checkConnectivityNow') },
+    get confirmMessage() { return t('asset.connectivityConfirm') },
+    get pendingMessage() { return t('asset.connectivityPending') },
+    get successMessage() { return t('asset.connectivityDone') },
+    get failureMessage() { return t('asset.connectivityFailed') },
+    get startErrorMessage() { return t('asset.startCheckFailed') },
+    get resultTitle() { return t('asset.connectivityTest') },
     jobId: 'M1x855'
   },
   collectInfo: {
-    title: '采集信息',
-    confirmButtonText: '立即采集资产数据',
-    confirmMessage:
-      '资产数据采集将花费数分钟至半小时不等，点击“立即采集资产数据”后将立即开始执行。',
-    pendingMessage: '信息采集任务已发起，可在采集历史日志中查看',
-    successMessage: '信息采集完成',
-    failureMessage: '信息采集失败',
-    startErrorMessage: '启动采集任务失败',
-    resultTitle: '信息数据采集',
+    get title() { return t('asset.collectAction') },
+    get confirmButtonText() { return t('asset.collectNow') },
+    get confirmMessage() { return t('asset.collectConfirm') },
+    get pendingMessage() { return t('asset.collectPending') },
+    get successMessage() { return t('asset.collectDone') },
+    get failureMessage() { return t('asset.collectFailed') },
+    get startErrorMessage() { return t('asset.startCollectFailed') },
+    get resultTitle() { return t('asset.collectInfo') },
     jobId: 'mjedwe'
   }
 }
@@ -334,7 +336,7 @@ const ACTION_CONFIG = {
 const actionSelectorOptions = {
   selectMode: 'host,group,tag,input,recently',
   selector: 'multiple',
-  label: '选择设备'
+  get label() { return t('asset.chooseDevice') }
 }
 
 // KPI 数据
@@ -355,7 +357,7 @@ const appliedFilters = reactive({ ...filters })
 // 表格数据
 const tableData = ref([])
 const tableLoading = ref(false)
-const loadError = ref('')
+const loadError = messageRef('')
 let tableRequest = 0
 const total = ref(0)
 const currentPage = ref(1)
@@ -374,7 +376,8 @@ const currentActionMeta = computed(() => ACTION_CONFIG[currentActionKey.value])
 // 作业运行结果弹窗
 const runResultDialogVisible = ref(false)
 const currentRunId = ref('')
-const currentRunTitle = ref('')
+const currentRunActionKey = ref('checkConnectivity')
+const currentRunTitle = computed(() => ACTION_CONFIG[currentRunActionKey.value].resultTitle)
 
 // 加载 KPI 数据
 const loadKpiData = async () => {
@@ -426,7 +429,7 @@ const loadTableData = async () => {
   } catch (error) {
     if (!isCurrent()) return
     clearTableSelection()
-    loadError.value = '加载连通巡检设备失败，请重试'
+    loadError.value = message('asset.exceptionLoadFailed')
     console.error('加载表格数据失败:', error)
   } finally {
     if (isCurrent()) tableLoading.value = false
@@ -435,7 +438,7 @@ const loadTableData = async () => {
 
 const invalidateTableRead = () => {
   tableRequest += 1
-  if (tableLoading.value) loadError.value = '设备读取已中断，请刷新重试'
+  if (tableLoading.value) loadError.value = message('asset.deviceReadInterrupted')
   tableLoading.value = false
 }
 onBeforeUnmount(invalidateTableRead)
@@ -544,10 +547,10 @@ const refreshExceptionData = () => {
   loadKpiData()
 }
 
-const openRunResultDialog = (runId, jobTitle = '') => {
+const openRunResultDialog = (runId, actionKey = 'checkConnectivity') => {
   if (!runId) return
   currentRunId.value = String(runId)
-  currentRunTitle.value = jobTitle
+  currentRunActionKey.value = actionKey
   runResultDialogVisible.value = true
 }
 
@@ -574,7 +577,7 @@ const confirmAction = async ({
 } = {}) => {
   if (actionLoading.value) return false
   if (selection.length === 0) {
-    ElMessage.warning('请先选择设备')
+    ElMessage.warning(t('asset.selectDeviceFirst'))
     return false
   }
 
@@ -585,11 +588,11 @@ const confirmAction = async ({
   try {
     if (requireConfirmation) {
       try {
-        await ElMessageBox.confirm(confirmMessage || actionMeta.confirmMessage, '执行运维工具', {
+        await ElMessageBox.confirm(confirmMessage || actionMeta.confirmMessage, t('asset.executeTool'), {
           closeOnClickModal: false,
           closeOnPressEscape: false,
-          confirmButtonText: '确认',
-          cancelButtonText: '取消',
+          confirmButtonText: t('common.confirm'),
+          cancelButtonText: t('common.cancel'),
           type: 'warning'
         })
       } catch {
@@ -599,7 +602,7 @@ const confirmAction = async ({
 
     const hosts = normalizeAcmDeviceJobHosts(selection, 'linux')
     if (hosts.length === 0) {
-      ElMessage.warning('没有可执行操作的有效设备')
+      ElMessage.warning(t('asset.noValidDevice'))
       return false
     }
     const cacheBuster = Date.now()
@@ -616,7 +619,7 @@ const confirmAction = async ({
       if (closeDialogOnSubmit) {
         closeActionDialog()
       }
-      openRunResultDialog(result.runId, actionMeta.resultTitle || actionMeta.title)
+      openRunResultDialog(result.runId, actionKey)
       if (isJobSuccess(result)) {
         refreshExceptionData()
       }
@@ -665,7 +668,7 @@ const handleCheckSelected = async () => {
   if (quickCheckLoading.value || actionLoading.value) return
   const rows = [...selectedExceptionRows.value]
   if (rows.length === 0) {
-    ElMessage.warning('请先勾选需要检测的设备')
+    ElMessage.warning(t('asset.checkSelectionFirst'))
     return
   }
 
@@ -680,7 +683,7 @@ const handleCheckSelected = async () => {
     const submitted = await confirmAction({
       selection,
       actionKey: 'checkConnectivity',
-      confirmMessage: `即将对已选中的 ${rows.length} 台设备执行连通性检测，任务可能需要数分钟，是否继续？`,
+      confirmMessage: t('asset.checkSelectedConfirm', { count: rows.length }),
       closeDialogOnSubmit: false
     })
     if (submitted) {
@@ -704,11 +707,11 @@ const removeCheckingId = id => {
 const handleCheckSingleConn = async row => {
   const ip = row.IP || row.ip
   try {
-    await ElMessageBox.confirm(`是否重新检查主机 ${ip} 的连通性？`, '提示', {
+    await ElMessageBox.confirm(t('asset.checkHostConfirm', { ip }), t('asset.prompt'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+      get confirmButtonText() { return t('asset.ok') },
+      cancelButtonText: t('common.cancel'),
       type: 'warning'
     })
   } catch {
@@ -737,16 +740,16 @@ const handleCheckSingleConn = async row => {
 
     if (result?.runId) {
       removeCheckingId(targetId)
-      openRunResultDialog(result.runId, ACTION_CONFIG.checkConnectivity.resultTitle)
+      openRunResultDialog(result.runId, 'checkConnectivity')
       return
     }
 
     const finishCheck = (success = true, errorMsg = '') => {
       removeCheckingId(targetId)
       if (success) {
-        ElMessage.success('连通性检查完成')
+        ElMessage.success(t('asset.connectivityDone'))
       } else {
-        ElMessage.error(errorMsg || '连通性检查失败')
+        ElMessage.error(errorMsg || t('asset.connectivityFailed'))
       }
       refreshExceptionData()
     }
@@ -762,11 +765,11 @@ const handleCheckSingleConn = async row => {
     }
 
     removeCheckingId(targetId)
-    ElMessage.warning('连通性检测任务未返回运行 ID，请稍后在历史日志中查看')
+    ElMessage.warning(t('asset.connectivityNoRunId'))
   } catch (error) {
     removeCheckingId(targetId)
     console.error('检查连通性失败:', error)
-    ElMessage.error(`检查连通性失败: ${error.response?.data?.message || error.message}`)
+    ElMessage.error(t('asset.checkFailedReason', { message: error.response?.data?.message || error.message }))
   }
 }
 

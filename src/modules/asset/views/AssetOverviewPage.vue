@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout asset-workbench">
+  <div class="ops-page-layout asset-workbench" :class="{ 'asset-workbench--english': currentLocale === 'en-US' }">
     <!-- ══════════ 头部：标题 + 快捷操作 ══════════ -->
     <section class="aw-header">
       <!-- ── 数据指标条 ── -->
@@ -8,10 +8,10 @@
           class="aw-metric-item"
           @click="openAssetListDrawer(selectedAssetTypeCode)"
         >
-          <span class="aw-metric-item__label">资产总量</span>
+          <span class="aw-metric-item__label">{{ t('asset.totalAssets') }}</span>
           <div class="aw-metric-item__value-group">
             <WbFlipNumber class="aw-metric-item__value" :value="totalAssets" />
-            <span class="aw-metric-item__sub">{{ assetTypeCount }}类资产</span>
+            <span class="aw-metric-item__sub">{{ t('asset.assetTypeCount', { count: assetTypeCount }) }}</span>
           </div>
         </button>
 
@@ -19,10 +19,10 @@
           class="aw-metric-item"
           @click="openExceptionDrawer"
         >
-          <span class="aw-metric-item__label">连通巡检</span>
+          <span class="aw-metric-item__label">{{ t('asset.connectivityInspection') }}</span>
           <div class="aw-metric-item__value-group" :class="{ 'is-danger': exceptionDeviceTotal > 0 }">
             <WbFlipNumber class="aw-metric-item__value" :value="exceptionDeviceTotal" />
-            <span class="aw-metric-item__sub">台巡检失败</span>
+            <span class="aw-metric-item__sub">{{ t('asset.inspectionFailuresUnit') }}</span>
           </div>
         </button>
 
@@ -30,14 +30,13 @@
           class="aw-metric-item"
           @click="openAssetListDrawer(selectedAssetTypeCode)"
         >
-          <span class="aw-metric-item__label">连通率</span>
+          <span class="aw-metric-item__label">{{ t('asset.connectionRate') }}</span>
           <div class="aw-metric-item__value-group">
             <span class="aw-metric-item__value-text">
               {{ connectionStats.totalConnection ? `${connectionStats.successRate}%` : '--' }}
             </span>
             <span class="aw-metric-item__sub">
-              {{ formatCount(connectionStats.successCount) }}正常 /
-              {{ formatCount(connectionStats.failureCount) }}异常
+              {{ t('asset.connectionSummary', { success: formatCount(connectionStats.successCount), failure: formatCount(connectionStats.failureCount) }) }}
             </span>
           </div>
         </button>
@@ -46,26 +45,26 @@
           class="aw-metric-item"
           @click="openFailedLogDrawer"
         >
-          <span class="aw-metric-item__label">失败日志</span>
+          <span class="aw-metric-item__label">{{ t('asset.failedLogs') }}</span>
           <div class="aw-metric-item__value-group" :class="{ 'is-warning': failedLogTotal > 0 }">
             <WbFlipNumber class="aw-metric-item__value" :value="failedLogTotal" />
-            <span class="aw-metric-item__sub">近7天</span>
+            <span class="aw-metric-item__sub">{{ t('asset.lastSevenDays') }}</span>
           </div>
         </button>
 
         <button class="aw-metric-item" @click="openGovernanceDrawer">
-          <span class="aw-metric-item__label">分组 / 标签</span>
+          <span class="aw-metric-item__label">{{ t('asset.groupsAndTags') }}</span>
           <div class="aw-metric-item__value-group">
             <span class="aw-metric-item__value-text">{{ groupCount }} / {{ tagTotal }}</span>
-            <span class="aw-metric-item__sub">{{ governanceStats.permissionTeamCount }}个团队</span>
+            <span class="aw-metric-item__sub">{{ t('asset.teamCount', { count: governanceStats.permissionTeamCount }) }}</span>
           </div>
         </button>
 
         <button class="aw-metric-item" @click="openRecentLogsDrawer">
-          <span class="aw-metric-item__label">操作记录</span>
+          <span class="aw-metric-item__label">{{ t('asset.operationRecords') }}</span>
           <div class="aw-metric-item__value-group">
             <WbFlipNumber class="aw-metric-item__value" :value="recentOperationTotal" />
-            <span class="aw-metric-item__sub">近7天</span>
+            <span class="aw-metric-item__sub">{{ t('asset.lastSevenDays') }}</span>
           </div>
         </button>
       </div>
@@ -77,9 +76,9 @@
       <section class="aw-panel aw-panel--actions">
         <div class="aw-panel__header">
           <div class="aw-panel__title-group">
-            <h3 class="aw-panel__title">资产操作</h3>
+            <h3 class="aw-panel__title">{{ t('asset.assetActions') }}</h3>
             <span class="aw-panel__stat-badge">
-              今日新增
+              {{ t('asset.addedToday') }}
               <strong>{{ latestTrendPoint ? getTrendValue(latestTrendPoint) : 0 }}</strong>
             </span>
           </div>
@@ -92,7 +91,7 @@
               @click="autoEntryDialogVisible = true"
             >
               <i class="fa fa-plus" />
-              录入
+              {{ t('asset.enroll') }}
             </el-button>
             <el-button
               class="aw-inline-action"
@@ -102,7 +101,7 @@
               @click="importDialogVisible = true"
             >
               <i class="fa fa-file-import" />
-              导入
+              {{ t('asset.import') }}
             </el-button>
 
           </div>
@@ -112,7 +111,7 @@
         <div class="aw-recent-assets">
           <div class="aw-recent-assets__header">
             <div class="aw-recent-assets__type-strip">
-              <span class="aw-recent-assets__title">类型：</span>
+              <span class="aw-recent-assets__title">{{ t('asset.typePrefix') }}</span>
               <button
                 v-for="item in topAssetTypes"
                 :key="item.code || item.title"
@@ -132,7 +131,7 @@
               size="small"
               @click="openAssetListDrawer(selectedAssetTypeCode)"
             >
-              查看全部
+              {{ t('asset.viewAll') }}
             </el-button>
           </div>
 
@@ -159,7 +158,7 @@
                     <span
                       class="aw-asset-card__agent-status"
                       :class="{ 'is-online': item.status === 1 || item.status === '1' }"
-                      title="Agent 在线状态与连通巡检结果独立；Agent 在线不代表连通巡检通过。"
+                      :title="t('asset.agentStatusHint')"
                     >
                       <span class="aw-asset-card__agent-dot" aria-hidden="true" />
                       {{ getAssetStatusText(item.status) }}
@@ -171,14 +170,14 @@
                         round
                         type="warning"
                         class="aw-asset-card__reboot-tag"
-                        title="系统需重启"
+                        :title="t('asset.systemRebootRequired')"
                       >
-                        <i class="fa fa-sync-alt" /> 需重启
+                        <i class="fa fa-sync-alt" /> {{ t('asset.needsReboot') }}
                       </el-tag>
                       <button
                         type="button"
                         class="aw-asset-card__edit-btn"
-                        title="编辑"
+                        :title="t('common.edit')"
                         @click.stop="handleViewAssetDetail(item)"
                       >
                         <el-icon>
@@ -206,7 +205,7 @@
                       { 'is-loading': checkingConnIds.includes(item.id) }
                     ]"
                     :disabled="checkingConnIds.includes(item.id)"
-                    title="最近一次连通巡检结果，与 Agent 在线状态独立。点击重新检查连通性。"
+                    :title="t('asset.connectivityStatusHint')"
                     @click.stop="handleAssetCheckConn(item)"
                   >
                     <i v-if="checkingConnIds.includes(item.id)" class="fa fa-spinner fa-spin" />
@@ -218,7 +217,7 @@
                 </div>
               </article>
             </transition-group>
-            <el-empty v-else description="暂无资产数据" :image-size="40" />
+            <el-empty v-else :description="t('asset.noAssetData')" :image-size="40" />
           </div>
         </div>
       </section>
@@ -268,7 +267,7 @@
       <div class="aw-drawer__toolbar">
         <el-input
           v-model="assetListDrawer.keyword"
-          placeholder="搜索 IP / 主机名"
+          :placeholder="t('asset.searchIpHostname')"
           size="small"
           clearable
           @keyup.enter="openAssetListDrawer(assetListDrawer.filterType, true)"
@@ -291,7 +290,7 @@
                   <span
                     class="aw-asset-card__agent-status"
                     :class="{ 'is-online': item.status === 1 || item.status === '1' }"
-                    title="Agent 在线状态与连通巡检结果独立；Agent 在线不代表连通巡检通过。"
+                    :title="t('asset.agentStatusHint')"
                   >
                     <span class="aw-asset-card__agent-dot" aria-hidden="true" />
                     {{ getAssetStatusText(item.status) }}
@@ -303,14 +302,14 @@
                       round
                       type="warning"
                       class="aw-asset-card__reboot-tag"
-                      title="系统需重启"
+                      :title="t('asset.systemRebootRequired')"
                     >
-                      <i class="fa fa-sync-alt" /> 需重启
+                      <i class="fa fa-sync-alt" /> {{ t('asset.needsReboot') }}
                     </el-tag>
                     <button
                       type="button"
                       class="aw-asset-card__edit-btn"
-                      title="编辑"
+                      :title="t('common.edit')"
                       @click.stop="handleViewAssetDetail(item)"
                     >
                       <el-icon>
@@ -338,7 +337,7 @@
                     { 'is-loading': checkingConnIds.includes(item.id) }
                   ]"
                   :disabled="checkingConnIds.includes(item.id)"
-                  title="最近一次连通巡检结果，与 Agent 在线状态独立。点击重新检查连通性。"
+                  :title="t('asset.connectivityStatusHint')"
                   @click.stop="handleAssetCheckConn(item)"
                 >
                   <i v-if="checkingConnIds.includes(item.id)" class="fa fa-spinner fa-spin" />
@@ -350,7 +349,7 @@
               </div>
             </article>
           </div>
-          <el-empty v-else description="暂无资产" :image-size="60" />
+          <el-empty v-else :description="t('asset.noAssets')" :image-size="60" />
         </template>
         <div v-if="assetListDrawer.total > 0" class="aw-drawer__pagination">
           <el-pagination
@@ -377,7 +376,7 @@
     >
       <template #header>
         <div class="aw-drawer-header">
-          <span class="aw-drawer-header__title">连通巡检</span>
+          <span class="aw-drawer-header__title">{{ t('asset.connectivityInspection') }}</span>
           <div class="aw-drawer-header__actions">
             <el-button
               class="aw-inline-action"
@@ -388,7 +387,7 @@
               @click="handleExceptionBulkCheckConn"
             >
               <i class="fa fa-plug" />
-              全设备连通性检查
+              {{ t('asset.allDevicesCheck') }}
             </el-button>
             <el-button
               class="aw-inline-action"
@@ -399,7 +398,7 @@
               @click="handleExceptionBulkCollect"
             >
               <i class="fa fa-download" />
-              全设备采集信息
+              {{ t('asset.allDevicesCollect') }}
             </el-button>
           </div>
         </div>
@@ -419,25 +418,25 @@
                 class="aw-drawer-row__badge"
                 :class="'is-' + getConnRateBadgeType(item.raw.CONN_RATE)"
               >
-                连通率: {{ item.badge }}
+                {{ t('asset.connectionRateValue', { rate: item.badge }) }}
               </span>
               <span class="aw-drawer-row__desc">{{ item.desc }}</span>
               <span class="aw-drawer-row__meta">{{ item.meta }}</span>
               <span class="aw-drawer-row__actions">
                 <i
                   class="fa fa-plug aw-exception-row__action"
-                  title="检查连通性"
+                  :title="t('asset.checkConnectivity')"
                   @click.stop="handleExceptionCheckConn(item.raw || item)"
                 />
                 <i
                   class="fa fa-download aw-exception-row__action"
-                  title="采集信息"
+                  :title="t('asset.collectInformation')"
                   @click.stop="handleExceptionCollectInfo(item.raw || item)"
                 />
               </span>
             </button>
           </div>
-          <el-empty v-else description="暂无连通异常设备" :image-size="60" />
+          <el-empty v-else :description="t('asset.noExceptionDevices')" :image-size="60" />
         </template>
         <div v-if="exceptionDrawer.total > 0" class="aw-drawer__pagination">
           <el-pagination
@@ -464,7 +463,7 @@
     >
       <template #header>
         <div class="aw-drawer-header">
-          <span class="aw-drawer-header__title">失败日志</span>
+          <span class="aw-drawer-header__title">{{ t('asset.failedLogs') }}</span>
         </div>
       </template>
       <div v-loading="failedLogDrawer.loading" class="aw-drawer__body">
@@ -483,7 +482,7 @@
               <span class="aw-drawer-row__meta">{{ item.meta }}</span>
             </button>
           </div>
-          <el-empty v-else description="暂无失败日志" :image-size="60" />
+          <el-empty v-else :description="t('asset.noFailedLogs')" :image-size="60" />
         </template>
       </div>
     </el-drawer>
@@ -496,7 +495,7 @@
     >
       <template #header>
         <div class="aw-drawer-header">
-          <span class="aw-drawer-header__title">近7天操作记录</span>
+          <span class="aw-drawer-header__title">{{ t('asset.recentOperationRecords') }}</span>
         </div>
       </template>
       <div v-loading="recentLogsDrawer.loading" class="aw-drawer__body">
@@ -524,7 +523,7 @@
             </button>
           </div>
           <div v-else class="aw-drawer-empty">
-            <el-empty description="暂无操作记录" :image-size="60" />
+            <el-empty :description="t('asset.noOperationRecords')" :image-size="60" />
           </div>
         </template>
         <div
@@ -555,14 +554,14 @@
     >
       <template #header>
         <div class="aw-drawer-header">
-          <span class="aw-drawer-header__title">分组与标签概览</span>
+          <span class="aw-drawer-header__title">{{ t('asset.governanceOverview') }}</span>
         </div>
       </template>
       <div v-loading="governanceDrawer.loading" class="aw-drawer__body">
         <template v-if="!governanceDrawer.loading">
           <div class="aw-drawer-section">
             <div class="aw-drawer-section__header">
-              <h4 class="aw-drawer-section__title">分组 ({{ groupRows.length }})</h4>
+              <h4 class="aw-drawer-section__title">{{ t('asset.groupsCount', { count: groupRows.length }) }}</h4>
               <el-button
                 class="aw-inline-action"
                 link
@@ -571,7 +570,7 @@
                 @click="addGroupDialogVisible = true"
               >
                 <i class="fa fa-plus" />
-                新增
+                {{ t('asset.add') }}
               </el-button>
             </div>
             <div class="aw-drawer-list">
@@ -600,7 +599,7 @@
           </div>
           <div class="aw-drawer-section">
             <div class="aw-drawer-section__header">
-              <h4 class="aw-drawer-section__title">标签 ({{ tagRows.length }})</h4>
+              <h4 class="aw-drawer-section__title">{{ t('asset.tagsCount', { count: tagRows.length }) }}</h4>
               <el-button
                 class="aw-inline-action"
                 link
@@ -609,7 +608,7 @@
                 @click="addTagDialogVisible = true"
               >
                 <i class="fa fa-plus" />
-                新增
+                {{ t('asset.add') }}
               </el-button>
             </div>
             <div class="aw-drawer-tags">
@@ -637,12 +636,9 @@
             </div>
           </div>
           <div v-if="governanceStats.permissionTeamCount" class="aw-drawer-section">
-            <h4 class="aw-drawer-section__title">权限概览</h4>
+            <h4 class="aw-drawer-section__title">{{ t('asset.permissionOverview') }}</h4>
             <p class="aw-drawer-section__desc">
-              {{ governanceStats.permissionResourceCount }} 项资源，{{
-                governanceStats.permissionTeamCount
-              }}
-              个团队
+              {{ t('asset.permissionSummary', { resources: governanceStats.permissionResourceCount, teams: governanceStats.permissionTeamCount }) }}
             </p>
           </div>
         </template>
@@ -665,6 +661,8 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+
 import { computed, onActivated, onDeactivated, onMounted, onUnmounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { apiService } from '@/core/api'
@@ -856,12 +854,12 @@ function toNumber(v) {
   return Number.isFinite(n) ? n : 0
 }
 function formatCount(v) {
-  return toNumber(v).toLocaleString('zh-CN')
+  return toNumber(v).toLocaleString(currentLocale.value)
 }
 function getConnStatusText(s) {
-  if (s === '1' || s === 1) return '已联通'
-  if (s === '0' || s === 0) return '未联通'
-  return '未知'
+  if (s === '1' || s === 1) return t('asset.connectedLatest')
+  if (s === '0' || s === 0) return t('asset.notConnected')
+  return t('common.unknown')
 }
 function getConnToneClass(s) {
   if (s == 1) return 'is-success'
@@ -880,11 +878,11 @@ function normalizeAssetOsField(value) {
 function getAssetOsText(item) {
   const distro = normalizeAssetOsField(item.os_distro)
   const version = normalizeAssetOsField(item.os_version)
-  if (!distro) return version ? `系统版本 ${version}` : '系统信息暂缺'
+  if (!distro) return version ? t('asset.systemVersion', { version }) : t('asset.systemInfoMissing')
   return version ? `${distro} ${version}` : distro
 }
 function getAssetStatusText(status) {
-  return status === 1 || status === '1' ? 'Agent 在线' : 'Agent 离线'
+  return status === 1 || status === '1' ? t('asset.agentOnline') : t('asset.agentOffline')
 }
 function getAssetStatusTagType(status) {
   return status === 1 || status === '1' ? 'success' : 'danger'
@@ -928,9 +926,11 @@ function getConnRateBadgeType(rate) {
   return 'danger'
 }
 function getOperationActionLabel(a) {
-  if (!a) return '未知操作'
+  if (!a) return t('asset.unknownOperation')
   const actionLabelMap = {
-    asset_import: '资产导入'
+    asset_import: t('asset.assetImportJob'),
+    '#{acm.job.check_conn}': t('asset.connectivityCheckAction'),
+    '#{acm.job.collect_assert_info}': t('asset.collectInformation')
   }
   if (actionLabelMap[a]) return actionLabelMap[a]
   return translateI18nKey(a)
@@ -961,7 +961,7 @@ const sortedAssetTypes = computed(() =>
 const sortedGroups = computed(() =>
   [...groupAssetData.value]
     .map(i => ({
-      name: i?.groupName || i?.name || i?.path || '未命名分组',
+      name: i?.groupName || i?.name || i?.path || t('asset.unnamedGroup'),
       count: toNumber(i?.count ?? i?.total)
     }))
     .sort((a, b) => b.count - a.count)
@@ -977,11 +977,11 @@ function removeCheckingId(id) {
 async function handleAssetCheckConn(item) {
   const ip = item.IP || item.ip
   try {
-    await ElMessageBox.confirm(`是否重新检查主机${ip}的连通性？`, '提示', {
+    await ElMessageBox.confirm(t('asset.checkHostConnectivity', { ip }), t('asset.prompt'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+      confirmButtonText: t('asset.ok'),
+      cancelButtonText: t('common.cancel'),
       type: 'warning'
     })
   } catch {
@@ -1000,12 +1000,12 @@ async function handleAssetCheckConn(item) {
     )
     const result = Array.isArray(data) ? data[0] : data
     if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
-      ElMessage.success('检查连通性任务已发起')
+      ElMessage.success(t('asset.connectivitySubmitted'))
       handleOperationRunTriggered(result)
       pollJobStatus(result.runId, {
         interval: 5000,
-        successMessage: '连通性检查完成',
-        errorMessage: '连通性检查失败',
+        successMessage: () => t('asset.connectivityDone'),
+        errorMessage: () => t('asset.connectivityFailed'),
         onSuccess: () => {
           removeCheckingId(item.id)
           switchCardType(selectedAssetTypeCode.value)
@@ -1021,22 +1021,22 @@ async function handleAssetCheckConn(item) {
         }
       })
     } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
-      ElMessage.success('连通性检查完成')
+      ElMessage.success(t('asset.connectivityDone'))
       removeCheckingId(item.id)
       switchCardType(selectedAssetTypeCode.value)
       handleOperationRunTriggered(result)
     } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
       removeCheckingId(item.id)
-      ElMessage.error(result?.error || '连通性检查失败')
+      ElMessage.error(result?.error || t('asset.connectivityFailed'))
       handleOperationRunTriggered(result)
     } else {
-      ElMessage.success('检查连通性任务已启动')
+      ElMessage.success(t('asset.connectivityStarted'))
       removeCheckingId(item.id)
       handleOperationRunTriggered(result)
     }
   } catch (error) {
     removeCheckingId(item.id)
-    ElMessage.error(`连通性检查失败: ${error.response?.data?.message || error.message}`)
+    ElMessage.error(t('asset.connectivityFailedReason', { message: error.response?.data?.message || error.message }))
   }
 }
 
@@ -1091,13 +1091,13 @@ async function handleExceptionCollectInfo(item) {
   const ip = item.IP || item.ip
   try {
     await ElMessageBox.confirm(
-      `信息采集将花费几分钟到半小时不等的时间，是否对主机 ${ip} 进行采集？`,
-      '采集信息',
+      t('asset.collectHostConfirm', { ip }),
+      t('asset.collectInformation'),
       {
         closeOnClickModal: false,
         closeOnPressEscape: false,
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('asset.ok'),
+        cancelButtonText: t('common.cancel'),
         type: 'warning'
       }
     )
@@ -1115,24 +1115,24 @@ async function handleExceptionCollectInfo(item) {
       { params: { hosts: [host] } }
     )
     const result = Array.isArray(data) ? data[0] : data
-    ElMessage.success('采集信息任务已发起')
+    ElMessage.success(t('asset.collectSubmitted'))
     handleOperationRunTriggered(result)
     if (exceptionDrawer.visible) {
       void openExceptionDrawer(exceptionDrawer.page)
     }
   } catch (error) {
-    ElMessage.error(`采集信息启动失败: ${error.response?.data?.message || error.message}`)
+    ElMessage.error(t('asset.collectStartFailedReason', { message: error.response?.data?.message || error.message }))
   }
 }
 
 async function handleExceptionCheckConn(item) {
   const ip = item.IP || item.ip
   try {
-    await ElMessageBox.confirm(`是否重新检查主机 ${ip} 的连通性？`, '提示', {
+    await ElMessageBox.confirm(t('asset.checkHostConnectivity', { ip }), t('asset.prompt'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+      confirmButtonText: t('asset.ok'),
+      cancelButtonText: t('common.cancel'),
       type: 'warning'
     })
   } catch {
@@ -1149,33 +1149,33 @@ async function handleExceptionCheckConn(item) {
       { params: { hosts: [host] } }
     )
     const result = Array.isArray(data) ? data[0] : data
-    ElMessage.success('检查连通性任务已发起')
+    ElMessage.success(t('asset.connectivitySubmitted'))
     handleOperationRunTriggered(result)
     void Promise.allSettled([
       selectedAssetTypeCode.value ? switchCardType(selectedAssetTypeCode.value) : Promise.resolve(),
       exceptionDrawer.visible ? openExceptionDrawer(exceptionDrawer.page) : Promise.resolve()
     ])
   } catch (error) {
-    ElMessage.error(`检查连通性失败: ${error.response?.data?.message || error.message}`)
+    ElMessage.error(t('asset.checkFailedReason', { message: error.response?.data?.message || error.message }))
   }
 }
 
 // ── 连通巡检设备批量操作 ──
-async function runExceptionBulkAction(jobId, actionName) {
+async function runExceptionBulkAction(jobId, actionKey) {
   const total = ensurePositiveInteger(exceptionDrawer.total, 0)
   if (!total) {
-    ElMessage.warning('没有异常巡检设备可操作')
+    ElMessage.warning(t('asset.noExceptionActionTargets'))
     return
   }
   try {
     await ElMessageBox.confirm(
-      `将对全部 ${total} 台连通异常设备${actionName}，此操作可能需要一段时间。`,
-      '确认操作',
+      t('asset.bulkExceptionConfirm', { count: total, action: t(actionKey) }),
+      t('asset.confirmOperation'),
       {
         closeOnClickModal: false,
         closeOnPressEscape: false,
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('asset.ok'),
+        cancelButtonText: t('common.cancel'),
         type: 'warning'
       }
     )
@@ -1219,25 +1219,25 @@ async function runExceptionBulkAction(jobId, actionName) {
     }
 
     if (!batchCount) {
-      ElMessage.warning('没有异常巡检设备可操作')
+      ElMessage.warning(t('asset.noExceptionActionTargets'))
       return
     }
 
-    ElMessage.success(`已分 ${batchCount} 批发起 ${handledHostCount} 台设备的${actionName}任务`)
+    ElMessage.success(t('asset.bulkActionSubmitted', { batches: batchCount, count: handledHostCount, action: t(actionKey) }))
     handleOperationRunTriggered(triggerResult)
   } catch (error) {
-    ElMessage.error(`${actionName}失败: ${error.response?.data?.message || error.message}`)
+    ElMessage.error(t('asset.actionFailedReason', { action: t(actionKey), message: error.response?.data?.message || error.message }))
   } finally {
     exceptionDrawer.actionLoading = false
   }
 }
 
 async function handleExceptionBulkCheckConn() {
-  await runExceptionBulkAction('M1x855', '连通性检查')
+  await runExceptionBulkAction('M1x855', 'asset.connectivityCheckAction')
 }
 
 async function handleExceptionBulkCollect() {
-  await runExceptionBulkAction('mjedwe', '采集信息')
+  await runExceptionBulkAction('mjedwe', 'asset.collectInformation')
 }
 
 async function loadFailedLogPreview() {
@@ -1614,6 +1614,11 @@ onUnmounted(() => {
     color: var(--aw-text-muted);
     white-space: nowrap;
   }
+}
+
+.asset-workbench--english .aw-metric-item__sub {
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 @keyframes aw-stat-pulse-glow {

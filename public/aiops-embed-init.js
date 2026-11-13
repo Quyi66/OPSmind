@@ -1,4 +1,21 @@
 ;(function () {
+  const localeRuntime = window.opsAiI18n
+  let statusKey = ''
+  let statusFallback = ''
+  let statusParams = {}
+  function renderStatus() {
+    const element = document.getElementById('status')
+    if (element && statusKey) element.textContent = localeRuntime
+      ? localeRuntime.t(statusKey, statusParams)
+      : statusFallback
+  }
+  function setStatus(key, fallback, params = {}) {
+    statusKey = key
+    statusFallback = fallback
+    statusParams = params
+    renderStatus()
+  }
+  localeRuntime?.subscribe(renderStatus)
   try {
     const qs = new URLSearchParams(location.search || '')
     const rt = (function () {
@@ -35,10 +52,9 @@
     const autoOpen = autoFlag || mode !== 'bubble'
 
     const statusEl = document.getElementById('status')
+    setStatus('loading', '正在加载 OPS 智能助手...')
     if (!token) {
-      if (statusEl)
-        statusEl.textContent =
-          '缺少 token：请通过 URL 传入 ?token=...，或通过运行时配置设置 DIFY_TOKEN。'
+      setStatus('missingToken', '缺少 token：请通过 URL 传入 ?token=...，或通过运行时配置设置 DIFY_TOKEN。')
       return
     }
 
@@ -65,7 +81,7 @@
         waitAndOpen()
       }
       script.onerror = function () {
-        if (statusEl) statusEl.textContent = '脚本加载失败：请检查本地 embed 路径或网络。'
+        setStatus('scriptFailed', '脚本加载失败：请检查本地 embed 路径或网络。')
       }
       document.body.appendChild(script)
     }
@@ -102,7 +118,7 @@
 
         if (attempts > maxAttempts) {
           clearInterval(timer)
-          if (statusEl) statusEl.textContent = '加载失败：请检查脚本或 CSP 配置。'
+          setStatus('embedFailed', '加载失败：请检查脚本或 CSP 配置。')
         }
       }, interval)
     }
@@ -124,7 +140,7 @@
       //console.log(e)
     }
   } catch (e) {
-    const status = document.getElementById('status')
-    if (status) status.textContent = `初始化失败：${e && e.message ? e.message : e}`
+    const message = String(e && e.message ? e.message : e)
+    setStatus('initError', `初始化失败：${message}`, { message })
   }
 })()

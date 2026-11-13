@@ -2,7 +2,7 @@
   <div class="ops-page-layout">
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
-        <el-form-item label="目标主机">
+        <el-form-item :label="t('automation.command.targetHosts')">
           <div class="host-selector-field">
             <AcmDeviceSelector
               v-model="selectedHosts"
@@ -13,44 +13,44 @@
             />
           </div>
         </el-form-item>
-        <el-form-item label="主机IP">
+        <el-form-item :label="t('patches.catalog.hostIp')">
           <el-input
             v-model="filters.hostKey"
             clearable
-            placeholder="输入主机IP"
+            :placeholder="t('patches.catalog.hostIpPlaceholder')"
             style="width: 150px"
             @keyup.enter="handleSearch"
           @clear="handleSearch" />
         </el-form-item>
-        <el-form-item label="关键词">
+        <el-form-item :label="t('yumRepo.keyword')">
           <el-input
             v-model="filters.keyword"
             clearable
-            placeholder="完整包名或包名"
+            :placeholder="t('patches.catalog.packageSearch')"
             style="width: 150px"
             @keyup.enter="handleSearch"
           @clear="handleSearch" />
         </el-form-item>
-        <el-form-item label="操作系统">
+        <el-form-item :label="t('yumRepo.os')">
           <el-select
             v-model="filters.osDistro"
             clearable
-            placeholder="全部"
+            :placeholder="t('common.all')"
             style="width: 120px"
             @change="handleSearch"
           >
-            <el-option label="全部" value="" />
-            <el-option label="麒麟" value="kylin" />
+            <el-option :label="t('common.all')" value="" />
+            <el-option :label="t('common.kylin')" value="kylin" />
             <el-option label="Oracle" value="oracle" />
             <el-option label="Red Hat" value="redhat" />
             <el-option label="ubuntu" value="ubuntu" />
           </el-select>
         </el-form-item>
-        <el-form-item label="系统版本">
+        <el-form-item :label="t('yumRepo.software.systemVersion')">
           <el-input
             v-model="filters.osVersion"
             clearable
-            placeholder="如 V10"
+            :placeholder="t('patches.catalog.osVersionExample')"
             style="width: 120px"
             @keyup.enter="handleSearch"
           @clear="handleSearch" />
@@ -58,11 +58,11 @@
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleSearch">
             <el-icon><Search /></el-icon>
-            搜索
+            {{ t('common.search') }}
           </el-button>
           <el-button @click="handleReset">
             <el-icon><RefreshRight /></el-icon>
-            重置
+            {{ t('common.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -72,9 +72,9 @@
       <div class="action-group">
         <el-button size="small" :loading="exporting" @click="handleExport">
           <el-icon><Download /></el-icon>
-          导出
+          {{ t('patches.catalog.export') }}
         </el-button>
-        <el-tooltip content="导出内容会跟随当前筛选条件和上方选择的目标主机" placement="top">
+        <el-tooltip :content="t('patches.catalog.exportHint')" placement="top">
           <el-icon class="action-tip-icon"><InfoFilled /></el-icon>
         </el-tooltip>
       </div>
@@ -84,7 +84,7 @@
         circle
         size="small"
         :loading="loading"
-        title="刷新"
+        :title="t('common.refresh')"
         @click="loadData"
       >
         <el-icon v-show="!loading"><Refresh /></el-icon>
@@ -93,14 +93,14 @@
 
     <div class="ops-table-wrapper">
       <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 294px)">
-        <el-table-column prop="hostKey" label="主机IP" width="130" show-overflow-tooltip />
-        <el-table-column prop="osDistro" label="操作系统" width="140" show-overflow-tooltip />
-        <el-table-column prop="osVersion" label="系统版本" width="100" show-overflow-tooltip />
-        <el-table-column prop="osSpVersion" label="SP版本" width="100" show-overflow-tooltip />
-        <el-table-column prop="osArch" label="系统架构" width="120" />
+        <el-table-column prop="hostKey" :label="t('patches.catalog.hostIp')" width="130" show-overflow-tooltip />
+        <el-table-column prop="osDistro" :label="t('yumRepo.os')" width="140" show-overflow-tooltip />
+        <el-table-column prop="osVersion" :label="t('yumRepo.software.systemVersion')" width="100" show-overflow-tooltip />
+        <el-table-column prop="osSpVersion" :label="t('patches.catalog.spVersion')" width="100" show-overflow-tooltip />
+        <el-table-column prop="osArch" :label="t('patches.catalog.osArchitecture')" width="120" />
         <el-table-column
           prop="currentPackage"
-          label="完整包名"
+          :label="t('yumRepo.fullPackageName')"
           min-width="350"
           show-overflow-tooltip
         >
@@ -110,15 +110,15 @@
             </el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="pkgName" label="包名" min-width="160" show-overflow-tooltip />
+        <el-table-column prop="pkgName" :label="t('yumRepo.packageName')" min-width="160" show-overflow-tooltip />
         <el-table-column
           prop="pkgVersion"
-          label="包版本/Release"
+          :label="t('patches.catalog.packageVersionRelease')"
           min-width="160"
           show-overflow-tooltip
         />
-        <el-table-column prop="pkgArch" label="包架构" width="120" />
-        <el-table-column label="受影响服务" min-width="320">
+        <el-table-column prop="pkgArch" :label="t('patches.catalog.packageArchitecture')" width="120" />
+        <el-table-column :label="t('patches.catalog.affectedServices')" min-width="320">
           <template #default="{ row }">
             <div class="service-cell">
               <div
@@ -137,7 +137,7 @@
               >
                 <template #reference>
                   <span class="more-link">
-                    +{{ getServiceDisplay(row.affectedServices).restCount }} 更多
+                    +{{ getServiceDisplay(row.affectedServices).restCount }} {{ t('yumRepo.more') }}
                   </span>
                 </template>
                 <div class="services-popover">
@@ -184,6 +184,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Download, InfoFilled, Refresh, RefreshRight, Search } from '@element-plus/icons-vue'
@@ -196,7 +198,7 @@ import RpmPackageDetailDialog from '../components/rpm/RpmPackageDetailDialog.vue
 const selectorOptions = {
   selectMode: 'host,input,recently',
   selector: 'multiple',
-  label: '选择主机'
+  get label() { return t('patches.catalog.selectHosts') }
 }
 
 const {
@@ -243,7 +245,7 @@ async function handleViewDetail(row) {
     row?.currentPackage || row?.pkgId || row?.installedPkg || row?.completePackageName || ''
   ).trim()
   if (!version || !pkgName || !source || !arch) {
-    ElMessage.warning('当前行缺少详情接口必传参数，无法查看详情')
+    ElMessage.warning(t('patches.catalog.detailParamsMissing'))
     return
   }
 
@@ -288,7 +290,7 @@ async function handleViewDetail(row) {
   } catch (error) {
     if (requestId !== detailRequestId || !detailVisible.value) return
     console.error('Failed to load installed package detail:', error)
-    ElMessage.error('获取软件包详情失败')
+    ElMessage.error(t('patches.catalog.packageDetailFailed'))
     detailVisible.value = false
   } finally {
     if (requestId === detailRequestId) detailLoading.value = false

@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="Git库"
+    :title="t('automation.library.gitRepos')"
     width="900px"
     :close-on-click-modal="selectedRepos.length === 0"
     @closed="handleClosed"
@@ -13,7 +13,7 @@
       <div class="ops-filter-bar">
         <el-input
           v-model="searchText"
-          placeholder="搜索"
+          :placeholder="t('common.search')"
           clearable
           size="small"
           style="width: 240px"
@@ -28,15 +28,15 @@
       <div class="ops-action-bar">
         <el-button type="danger" size="small" @click="handleReset">
           <i class="fa fa-fw fa-undo" />
-          初始化
+          {{ t('automation.library.initialize') }}
         </el-button>
         <el-button type="primary" size="small" @click="handleAddRepo">
           <i class="fa fa-cogs" />
-          新增
+          {{ t('automation.library.add') }}
         </el-button>
         <el-button size="small" :disabled="!selectedRepos.length" @click="handleBatchDelete">
           <i class="fa fa-trash" />
-          删除
+          {{ t('common.delete') }}
         </el-button>
       </div>
 
@@ -49,7 +49,7 @@
             circle
             :loading="loading"
             @click="loadRepoList"
-            title="刷新"
+            :title="t('common.refresh')"
           >
             <i class="fa fa-sync-alt" />
           </el-button>
@@ -61,7 +61,7 @@
           max-height="400px"
         >
           <el-table-column type="selection" width="48" />
-          <el-table-column label="仓库类型" prop="repoType" width="130">
+          <el-table-column :label="t('automation.library.repoType')" prop="repoType" width="130">
             <template #default="{ row }">
               <span
                 v-if="row.externalRepo"
@@ -69,35 +69,35 @@
                 @click="handleGoRepo(row.repoName)"
               >
                 <i class="fab fa-gitlab" />
-                外部Git库
+                {{ t('automation.library.externalRepo') }}
               </span>
               <span v-else class="repo-type-badge builtin" @click="handleGoRepo('')">
                 <i class="fa fa-code-branch" />
-                内置Git库
+                {{ t('automation.library.builtinRepo') }}
               </span>
             </template>
           </el-table-column>
-          <el-table-column label="仓库名" prop="repoName" min-width="100" show-overflow-tooltip>
+          <el-table-column :label="t('automation.library.repoName')" prop="repoName" min-width="100" show-overflow-tooltip>
             <template #default="{ row }">
               <span class="repo-name">{{ row.repoName || '-' }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="仓库地址" prop="repoUrl" min-width="200" show-overflow-tooltip>
+          <el-table-column :label="t('automation.library.repoAddress')" prop="repoUrl" min-width="200" show-overflow-tooltip>
             <template #default="{ row }">
               <span class="repo-url">{{ row.repoUrl || '-' }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="修改人" prop="updatedBy" width="100">
+          <el-table-column :label="t('automation.list.updatedBy')" prop="updatedBy" width="100">
             <template #default="{ row }">
               {{ row.updatedBy || '-' }}
             </template>
           </el-table-column>
-          <el-table-column label="修改时间" prop="updatedAt" width="120">
+          <el-table-column :label="t('automation.list.modifiedAt')" prop="updatedAt" width="120">
             <template #default="{ row }">
               {{ formatDate(row.updatedAt) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="110" fixed="right">
+          <el-table-column :label="t('common.actions')" width="110" fixed="right">
             <template #default="{ row }">
               <el-button
                 v-if="row.externalRepo"
@@ -106,7 +106,7 @@
                 size="small"
                 @click="handleEditRepo(row)"
               >
-                编辑
+                {{ t('automation.workbench.edit') }}
               </el-button>
               <el-button
                 v-if="row.externalRepo"
@@ -115,7 +115,7 @@
                 size="small"
                 @click="handleDeleteRepo(row)"
               >
-                删除
+                {{ t('common.delete') }}
               </el-button>
             </template>
           </el-table-column>
@@ -148,6 +148,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import * as gfsApi from '@/modules/automation/api/gfs'
@@ -228,7 +230,7 @@ async function loadRepoList() {
     repoList.value = Array.isArray(data) ? data : []
   } catch (error) {
     console.error('获取Git库列表失败:', error)
-    ElMessage.error(error?.message || '获取Git库列表失败')
+    ElMessage.error(error?.message || t('automation.library.reposFailed'))
     repoList.value = []
   } finally {
     loading.value = false
@@ -255,17 +257,17 @@ function handleEditRepo(row) {
 // 删除单个仓库
 async function handleDeleteRepo(row) {
   try {
-    await ElMessageBox.confirm(`确定删除仓库 "${row.repoName}" 吗？`, '删除确认', {
+    await ElMessageBox.confirm(t('automation.library.deleteRepoConfirm', { name: row.repoName }), t('automation.library.deleteTitle'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning'
     })
     await gfsApi.delExternalRepo(props.repoType, props.repo, row.repoName)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('automation.workbench.deleted'))
     loadRepoList()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error(error?.message || '删除失败')
+      ElMessage.error(error?.message || t('automation.workbench.deleteFailed'))
     }
   }
 }
@@ -275,8 +277,8 @@ async function handleBatchDelete() {
   if (!selectedRepos.value.length) return
   try {
     await ElMessageBox.confirm(
-      `确定删除选中的 ${selectedRepos.value.length} 个仓库吗？`,
-      '批量删除确认',
+      t('automation.library.deleteReposConfirm', { count: selectedRepos.value.length }),
+      t('automation.library.batchDeleteTitle'),
       {
         closeOnClickModal: false,
         closeOnPressEscape: false,
@@ -285,12 +287,12 @@ async function handleBatchDelete() {
     )
     const repoIds = selectedRepos.value.map(r => r.id)
     await gfsApi.delBatchExternalRepo(props.repoType, props.repo, repoIds)
-    ElMessage.success('批量删除成功')
+    ElMessage.success(t('automation.library.batchDeleted'))
     selectedRepos.value = []
     loadRepoList()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error(error?.message || '批量删除失败')
+      ElMessage.error(error?.message || t('automation.library.batchDeleteFailed'))
     }
   }
 }
@@ -299,17 +301,17 @@ async function handleBatchDelete() {
 async function handleReset() {
   try {
     await ElMessageBox.confirm(
-      '确认初始化当前脚本库为KoreOPS内置脚本库？该操作会清空当前脚本库中所有内容！',
-      '初始化Git库确认',
+      t('automation.library.builtinInitConfirm'),
+      t('automation.library.initTitle'),
       { closeOnClickModal: false, closeOnPressEscape: false, type: 'warning' }
     )
     await gfsApi.initCurrentGitRepo(props.repo)
-    ElMessage.success('初始化KoreOPS内置脚本库成功')
+    ElMessage.success(t('automation.library.builtinInitialized'))
     loadRepoList()
     emit('success')
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error(error?.message || '初始化KoreOPS内置脚本库失败')
+      ElMessage.error(error?.message || t('automation.library.builtinInitFailed'))
     }
   }
 }

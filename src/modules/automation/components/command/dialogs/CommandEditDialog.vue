@@ -12,26 +12,27 @@
       ref="formRef"
       :model="formData"
       :rules="formRules"
+      :validate-on-rule-change="false"
       :disabled="isViewMode"
-      label-width="100px"
+      :label-width="currentLocale === 'en-US' ? '160px' : '100px'"
       label-position="left"
     >
-      <el-form-item label="命令名称" prop="name">
+      <el-form-item :label="t('automation.command.name')" prop="name">
         <el-input
           v-model="formData.name"
-          placeholder="请输入命令名称"
+          :placeholder="t('automation.command.nameRequired')"
           maxlength="50"
           show-word-limit
         />
       </el-form-item>
 
-      <el-form-item label="语法类型" prop="type">
-        <el-select v-model="formData.type" placeholder="请选择语法类型" style="width: 100%">
+      <el-form-item :label="t('automation.command.syntaxType')" prop="type">
+        <el-select v-model="formData.type" :placeholder="t('automation.command.syntaxTypeRequired')" style="width: 100%">
           <el-option v-for="type in commandTypes" :key="type" :label="type" :value="type" />
         </el-select>
       </el-form-item>
 
-      <el-form-item label="命令内容" prop="command">
+      <el-form-item :label="t('automation.command.content')" prop="command">
         <div class="code-editor-wrapper">
           <div class="code-editor">
             <div class="line-numbers">
@@ -41,31 +42,31 @@
               v-model="formData.command"
               class="code-textarea"
               :disabled="isViewMode"
-              placeholder="请输入命令内容"
+              :placeholder="t('automation.command.contentRequired')"
               @input="updateLineNumbers"
             />
           </div>
         </div>
       </el-form-item>
 
-      <el-form-item label="描述" prop="description">
+      <el-form-item :label="t('automation.job.description')" prop="description">
         <el-input
           v-model="formData.description"
           type="textarea"
           :rows="3"
-          placeholder="请输入命令描述（可选）"
+          :placeholder="t('automation.command.descriptionOptional')"
           maxlength="1000"
           show-word-limit
         />
       </el-form-item>
 
       <!-- 仅查看模式显示审核原因 -->
-      <el-form-item v-if="isViewMode && formData.unapprovedReason" label="审核原因">
+      <el-form-item v-if="isViewMode && formData.unapprovedReason" :label="t('automation.command.reviewReason')">
         <el-input v-model="formData.unapprovedReason" type="textarea" :rows="2" disabled />
       </el-form-item>
 
       <!-- 显示命令状态 -->
-      <el-form-item v-if="isViewMode || isEditMode" label="状态">
+      <el-form-item v-if="isViewMode || isEditMode" :label="t('automation.workbench.status')">
         <el-tag :type="getStatusType(formData.status)" size="default">
           {{ getStatusText(formData.status) }}
         </el-tag>
@@ -77,15 +78,15 @@
         <div v-if="isViewMode" class="footer-left">
           <el-button type="primary" @click="handleEdit">
             <i class="fas fa-edit"></i>
-            编辑命令
+            {{ t('automation.command.edit') }}
           </el-button>
         </div>
         <div class="footer-right">
           <el-button @click="handleClose">
-            {{ isViewMode ? '关闭' : '取消' }}
+            {{ isViewMode ? t('common.close') : t('common.cancel') }}
           </el-button>
           <el-button v-if="!isViewMode" type="primary" :loading="saving" @click="handleSave">
-            保存
+            {{ t('common.save') }}
           </el-button>
         </div>
       </div>
@@ -94,6 +95,9 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+import { useLocalizedValidation } from '@/core/i18n/validation'
+
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
@@ -137,13 +141,13 @@ const isCreateMode = computed(() => currentMode.value === 'create')
 const dialogTitle = computed(() => {
   switch (currentMode.value) {
     case 'create':
-      return '新建命令'
+      return t('automation.command.new')
     case 'edit':
-      return '编辑命令'
+      return t('automation.command.edit')
     case 'view':
-      return '命令详情'
+      return t('automation.command.details')
     default:
-      return '命令'
+      return t('automation.command.commands')
   }
 })
 
@@ -163,6 +167,7 @@ const commandTypes = COMMAND_TYPES
 
 // 表单引用
 const formRef = ref(null)
+useLocalizedValidation(formRef)
 
 // 表单数据
 const formData = ref({
@@ -177,14 +182,14 @@ const formData = ref({
 })
 
 // 表单验证规则
-const formRules = {
+const formRules = computed(() => ({
   name: [
-    { required: true, message: '请输入命令名称', trigger: 'blur' },
-    { min: 1, max: 50, message: '命令名称长度在 1 到 50 个字符', trigger: 'blur' }
+    { required: true, message: t('automation.command.nameRequired'), trigger: 'blur' },
+    { min: 1, max: 50, message: t('automation.command.nameLength'), trigger: 'blur' }
   ],
-  type: [{ required: true, message: '请选择语法类型', trigger: 'change' }],
-  command: [{ required: true, message: '请输入命令内容', trigger: 'blur' }]
-}
+  type: [{ required: true, message: t('automation.command.syntaxTypeRequired'), trigger: 'change' }],
+  command: [{ required: true, message: t('automation.command.contentRequired'), trigger: 'blur' }]
+}))
 
 // 保存状态
 const saving = ref(false)
@@ -225,7 +230,7 @@ async function loadCommandData() {
     Object.assign(formData.value, data)
   } catch (error) {
     console.error('加载命令详情失败:', error)
-    ElMessage.error('加载命令详情失败')
+    ElMessage.error(t('automation.command.detailFailed'))
     // 使用传入的数据
     Object.assign(formData.value, props.command)
   }
@@ -277,12 +282,12 @@ async function handleSave() {
     }
 
     await saveCommand(command)
-    ElMessage.success(isCreateMode.value ? '命令创建成功，等待审核' : '命令更新成功，等待审核')
+    ElMessage.success(isCreateMode.value ? t('automation.command.createdForReview') : t('automation.command.updatedForReview'))
     emit('success')
     handleClose()
   } catch (error) {
     console.error('保存命令失败:', error)
-    ElMessage.error('保存命令失败')
+    ElMessage.error(t('automation.command.saveFailed'))
   } finally {
     saving.value = false
   }

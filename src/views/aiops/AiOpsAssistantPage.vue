@@ -2,12 +2,15 @@
   <div class="aiops-assistant-fullscreen">
     <div class="fallback" v-if="!ready">
       <div>{{ statusText }}</div>
-      <button class="retry-btn" @click="retryOpen">手动打开</button>
+      <button class="retry-btn" @click="retryOpen">{{ t('ai.manualOpen') }}</button>
     </div>
   </div>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
+
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 
 const AI_ICON = new URL('@/assets/icons/aiOPS2@2x.png', import.meta.url).href
@@ -33,7 +36,7 @@ const TOKEN =
 // Embed 地址：仅本地加载（public/dify/embed.min.js），统一策略
 const EMBED_SRC = `${import.meta.env.BASE_URL || '/'}dify/embed.min.js`
 const ready = ref(false)
-const statusText = ref('正在加载 OPS 智能助手...')
+const statusText = messageRef(message('ai.loading'))
 const DEFAULT_ASK = (() => {
   try {
     return new URLSearchParams(location.search).get('q') || ''
@@ -45,7 +48,7 @@ const DEFAULT_ASK = (() => {
 onMounted(() => {
   try {
     if (!TOKEN) {
-      statusText.value = '缺少 token：请通过 URL 传入 ?token=...，或通过运行时配置设置 DIFY_TOKEN。'
+      statusText.value = message('ai.missingToken')
       return
     }
     // 设置浏览器标签页 favicon 为智能助手图标
@@ -122,7 +125,7 @@ onMounted(() => {
           // 即使未检测到窗口，也不一直显示loading，避免空白页卡住
           if (!ready.value) {
             statusText.value =
-              '加载失败：未检测到 Dify 窗口。请点击“手动打开”，或检查脚本加载与网络/CSP。'
+              message('ai.windowMissing')
           }
         }
       }, 250)
@@ -130,7 +133,7 @@ onMounted(() => {
     document.body.appendChild(script)
   } catch (e) {
     console.error('Failed to init OPS Assistant:', e)
-    statusText.value = '初始化失败：请检查控制台错误信息。'
+    statusText.value = message('ai.initFailed')
   }
 })
 
@@ -239,7 +242,7 @@ function retryOpen() {
           ready.value = true
           return
         }
-        statusText.value = '仍未打开，请检查脚本或网络。'
+        statusText.value = message('ai.stillClosed')
       }, 300)
       return
     }
@@ -252,15 +255,15 @@ function retryOpen() {
           if (btn) btn.style.display = 'none'
           ready.value = true
         } else {
-          statusText.value = '仍未打开，请检查脚本或网络。'
+          statusText.value = message('ai.stillClosed')
         }
       }, 300)
     } else {
-      statusText.value = '未检测到 Dify 按钮或对象，请检查脚本路径是否正确。'
+      statusText.value = message('ai.controlMissing')
     }
   } catch (e) {
     console.error('Retry open failed:', e)
-    statusText.value = '手动打开失败，查看控制台错误。'
+    statusText.value = message('ai.retryFailed')
   }
 }
 

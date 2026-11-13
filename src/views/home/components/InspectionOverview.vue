@@ -3,12 +3,12 @@
     <!-- 标题 -->
     <div class="section-header">
       <h3 class="section-title">
-        <img :src="inspectionHeaderIcon" alt="巡检概览" class="section-icon" />
-        巡检概览
+        <img :src="inspectionHeaderIcon" :alt="t('home.inspectionTitle')" class="section-icon" />
+        {{ t('home.inspectionTitle') }}
       </h3>
       <div class="header-actions">
-        <button class="more-btn" @click="navigateToInspectionOverview" title="查看全部">
-          <span>查看全部</span>
+        <button class="more-btn" @click="navigateToInspectionOverview" :title="t('common.viewAll')">
+          <span>{{ t('common.viewAll') }}</span>
           <i class="fas fa-chevron-right more-arrow"></i>
         </button>
       </div>
@@ -29,15 +29,15 @@
 
     <!-- 图表标题和图例 -->
     <div class="chart-header clickable-area" @click="navigateToInspectionOverview">
-      <h4 class="chart-title">近10天巡检结果情况</h4>
+      <h4 class="chart-title">{{ t('home.inspectionRecent') }}</h4>
       <div class="chart-legend">
         <div class="legend-item">
           <div class="legend-color" style="background: #10B981"></div>
-          <span>正常</span>
+          <span>{{ t('home.normal') }}</span>
         </div>
         <div class="legend-item">
           <div class="legend-color" style="background: #EF4444"></div>
-          <span>异常</span>
+          <span>{{ t('home.abnormal') }}</span>
         </div>
       </div>
     </div>
@@ -46,17 +46,17 @@
     <div
       class="chart-container clickable-area"
       v-loading="dashboardStore.loading"
-      element-loading-text="正在加载巡检数据..."
+      :element-loading-text="t('home.inspectionLoading')"
       @click="navigateToInspectionOverview"
     >
       <div v-if="dashboardStore.error" class="chart-empty-overlay error-state" @click.stop>
         <i class="fas fa-exclamation-circle error-icon"></i>
-        <span>巡检数据加载失败</span>
-        <el-button size="small" type="primary" link @click="dashboardStore.loadDashboardData">重新加载</el-button>
+        <span>{{ t('home.inspectionFailed') }}</span>
+        <el-button size="small" type="primary" link @click="dashboardStore.loadDashboardData">{{ t('common.reload') }}</el-button>
       </div>
       <div v-else-if="!hasData" class="chart-empty-overlay">
         <i class="fas fa-chart-line empty-icon"></i>
-        <span>暂无近10天巡检数据</span>
+        <span>{{ t('home.inspectionEmpty') }}</span>
       </div>
       <v-chart v-else class="chart" :option="chartOption" autoresize :theme="isDark ? 'dark' : ''" />
     </div>
@@ -64,6 +64,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { use } from 'echarts/core'
@@ -107,21 +109,21 @@ const inspectionStats = computed(() => {
   return [
     {
       id: 'total-inspections',
-      label: '本月巡检次数',
+      label: t('home.monthlyInspections'),
       value: m?.monthlyInspections ?? 0,
       icon: new URL('@/assets/icons/dashboard/icon-gfs-curentmonth@2x.png', import.meta.url).href,
       iconType: 'image'
     },
     {
       id: 'normal-inspections',
-      label: '正常',
+      label: t('home.normal'),
       value: m?.normalInspections ?? 0,
       icon: new URL('@/assets/icons/dashboard/icon-gfs-normal@2x.png', import.meta.url).href,
       iconType: 'image'
     },
     {
       id: 'abnormal-inspections',
-      label: '异常',
+      label: t('home.abnormal'),
       value: m?.abnormalInspections ?? 0,
       icon: new URL('@/assets/icons/dashboard/icon-gfs-except@2x.png', import.meta.url).href,
       iconType: 'image'
@@ -235,7 +237,7 @@ const chartOption = computed(() => ({
   },
   series: [
     {
-      name: '正常',
+      name: t('home.normal'),
       type: 'bar',
       data: chartData.value.normal,
       itemStyle: {
@@ -246,7 +248,7 @@ const chartOption = computed(() => ({
       barGap: '35%'
     },
     {
-      name: '异常',
+      name: t('home.abnormal'),
       type: 'bar',
       data: chartData.value.abnormal,
       itemStyle: {

@@ -5,7 +5,7 @@
         <header class="flow-list-header">
           <div class="flow-list-header__top">
             <div class="flow-list-header__meta">
-              <h3 class="flow-list-title">流程列表</h3>
+              <h3 class="flow-list-title">{{ t('automation.flow.list') }}</h3>
               <p class="flow-list-summary">{{ flowSummaryText }}</p>
             </div>
             <div class="flow-list-actions">
@@ -13,8 +13,8 @@
                 class="toolbar-icon-btn"
                 circle
                 size="small"
-                title="刷新流程"
-                aria-label="刷新流程"
+                :title="t('automation.flow.refreshFlows')"
+                :aria-label="t('automation.flow.refreshFlows')"
                 :loading="flowsLoading"
                 @click="handleRefreshFlows"
               >
@@ -22,7 +22,7 @@
               </el-button>
               <el-button type="primary" size="small" @click="handleCreateFlow">
                 <i class="fa fa-plus me-1" />
-                新建
+                {{ t('automation.library.addChange') }}
               </el-button>
             </div>
           </div>
@@ -30,7 +30,7 @@
           <div class="flow-list-controls">
             <el-input
               v-model="flowFilter"
-              placeholder="搜索流程"
+              :placeholder="t('automation.flow.searchFlows')"
               size="small"
               clearable
               class="flow-search"
@@ -46,15 +46,15 @@
                 class="toolbar-icon-btn"
                 circle
                 size="small"
-                :title="`排序：${orderFieldLabel}`"
-                :aria-label="`排序：${orderFieldLabel}`"
+                :title="t('automation.flow.sortAria', { field: orderFieldLabel })"
+                :aria-label="t('automation.flow.sortAria', { field: orderFieldLabel })"
               >
                 <i class="fa fa-sort" />
               </el-button>
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item command="name">
-                    名称
+                    {{ t('common.name') }}
                     <i
                       v-if="orderField === 'name'"
                       class="fa"
@@ -62,7 +62,7 @@
                     />
                   </el-dropdown-item>
                   <el-dropdown-item command="updatedAt">
-                    更新时间
+                    {{ t('automation.command.updatedAt') }}
                     <i
                       v-if="orderField === 'updatedAt'"
                       class="fa"
@@ -98,13 +98,13 @@
                         type="primary"
                         effect="light"
                       >
-                        当前
+                        {{ t('automation.flow.current') }}
                       </el-tag>
                     </div>
                   </div>
 
                   <div class="flow-item__actions">
-                    <el-tooltip content="执行" placement="top">
+                    <el-tooltip :content="t('automation.workbench.execute')" placement="top">
                       <el-button
                         class="flow-item-action-btn"
                         text
@@ -115,7 +115,7 @@
                         <i class="fa fa-play" />
                       </el-button>
                     </el-tooltip>
-                    <el-tooltip content="编辑" placement="top">
+                    <el-tooltip :content="t('automation.workbench.edit')" placement="top">
                       <el-button
                         class="flow-item-action-btn"
                         text
@@ -126,7 +126,7 @@
                         <i class="fa fa-edit" />
                       </el-button>
                     </el-tooltip>
-                    <el-tooltip content="删除" placement="top">
+                    <el-tooltip :content="t('common.delete')" placement="top">
                       <el-button
                         class="flow-item-action-btn"
                         type="danger"
@@ -141,26 +141,26 @@
                   </div>
                 </div>
                 <div class="flow-item__meta-line">
-                  <span>更新于 {{ formatDateTime(flow.updatedAt || flow.createdAt) }}</span>
+                  <span>{{ t('automation.flow.updatedAtLabel', { date: formatDateTime(flow.updatedAt || flow.createdAt) }) }}</span>
                 </div>
               </div>
             </template>
             <div v-else-if="hasFlowSearch" class="flow-list-empty">
               <i class="fa fa-search flow-list-empty__icon" />
-              <h4 class="flow-list-empty__title">没有匹配的流程</h4>
-              <p class="flow-list-empty__desc">尝试更换关键词，或清空当前搜索条件。</p>
+              <h4 class="flow-list-empty__title">{{ t('automation.flow.noMatchingFlows') }}</h4>
+              <p class="flow-list-empty__desc">{{ t('automation.flow.flowSearchHint') }}</p>
               <div class="flow-list-empty__actions">
-                <el-button size="small" @click="clearFlowFilter">清空搜索</el-button>
+                <el-button size="small" @click="clearFlowFilter">{{ t('automation.flow.clearSearch') }}</el-button>
                 <el-button type="primary" size="small" @click="handleCreateFlow">
                   <i class="fa fa-plus me-1" />
-                  新建流程
+                  {{ t('automation.flow.newFlow') }}
                 </el-button>
               </div>
             </div>
-            <el-empty v-else description="暂无流程" :image-size="64">
+            <el-empty v-else :description="t('automation.flow.noFlows')" :image-size="64">
               <el-button type="primary" size="small" @click="handleCreateFlow">
                 <i class="fa fa-plus me-1" />
-                新建流程
+                {{ t('automation.flow.newFlow') }}
               </el-button>
             </el-empty>
           </el-scrollbar>
@@ -175,16 +175,16 @@
                 <div class="flow-detail-heading">
                   <h2 class="flow-detail-title">{{ activeFlow.name }}</h2>
                   <div class="flow-detail-meta">
-                    <span>更新时间 {{ activeFlowUpdatedText }}</span>
+                    <span>{{ t('automation.command.updatedAt') }} {{ activeFlowUpdatedText }}</span>
                   </div>
                   <p class="flow-detail-description">{{ activeFlowDescriptionText }}</p>
                 </div>
 
                 <div v-if="activeFlowStepPreview.length" class="flow-step-preview">
                   <div class="flow-step-preview__header">
-                    <span class="flow-step-preview__label">步骤预览</span>
+                    <span class="flow-step-preview__label">{{ t('automation.flow.stepPreview') }}</span>
                     <span v-if="activeFlowStepOverflow > 0" class="flow-step-preview__more">
-                      还有 {{ activeFlowStepOverflow }} 个步骤
+                      {{ t('automation.flow.remainingSteps', { count: activeFlowStepOverflow }) }}
                     </span>
                   </div>
                   <div class="flow-step-preview__list">
@@ -193,7 +193,7 @@
                       :key="`${stepName}-${index}`"
                       class="flow-step-card"
                     >
-                      <span class="flow-step-card__index">步骤 {{ index + 1 }}</span>
+                      <span class="flow-step-card__index">{{ t('automation.flow.steps') }} {{ index + 1 }}</span>
                       <span class="flow-step-card__name" :title="stepName">{{ stepName }}</span>
                     </div>
                   </div>
@@ -201,34 +201,34 @@
 
                 <div class="flow-detail-stats">
                   <div class="detail-stat-card">
-                    <span class="detail-stat-card__label">目标主机</span>
+                    <span class="detail-stat-card__label">{{ t('automation.command.targetHosts') }}</span>
                     <strong class="detail-stat-card__value">{{ activeFlowHostCount }}</strong>
                   </div>
                   <div class="detail-stat-card">
-                    <span class="detail-stat-card__label">流程步骤</span>
+                    <span class="detail-stat-card__label">{{ t('automation.flow.flowSteps') }}</span>
                     <strong class="detail-stat-card__value">{{ activeFlowStepCount }}</strong>
                   </div>
                   <div class="detail-stat-card">
-                    <span class="detail-stat-card__label">全局参数</span>
+                    <span class="detail-stat-card__label">{{ t('automation.flow.globalParams') }}</span>
                     <strong class="detail-stat-card__value">{{ activeFlowParamCount }}</strong>
                   </div>
                   <div class="detail-stat-card">
-                    <span class="detail-stat-card__label">实例总数</span>
+                    <span class="detail-stat-card__label">{{ t('automation.flow.instanceCount') }}</span>
                     <strong class="detail-stat-card__value">{{ instanceRows.length }}</strong>
                   </div>
                 </div>
                 <div class="flow-detail-actions">
                   <el-button type="primary" size="small" @click="handleRunFlow(activeFlow)">
                     <i class="fa fa-play me-1" />
-                    执行流程
+                    {{ t('automation.flow.execute') }}
                   </el-button>
                   <el-button size="small" @click="handleEditFlow(activeFlow)">
                     <i class="fa fa-edit me-1" />
-                    编辑
+                    {{ t('automation.workbench.edit') }}
                   </el-button>
                   <el-button size="small" type="danger" plain @click="handleDeleteFlow(activeFlow)">
                     <i class="fa fa-trash-alt me-1" />
-                    删除
+                    {{ t('common.delete') }}
                   </el-button>
                 </div>
               </div>
@@ -238,18 +238,18 @@
               <div class="flow-instance-panel">
                 <div class="table-panel-header">
                   <div class="table-panel-header__meta">
-                    <h3 class="table-panel-title">流程实例</h3>
+                    <h3 class="table-panel-title">{{ t('automation.flow.instances') }}</h3>
                     <span class="table-panel-summary">{{ instanceSummaryText }}</span>
                   </div>
                   <span v-if="filteredInstances.length" class="table-panel-summary">
-                    当前页 {{ currentPage }}/{{ pageCount }}
+                    {{ t('automation.flow.currentPage', { current: currentPage, total: pageCount }) }}
                   </span>
                 </div>
                 <div class="flow-detail-toolbar">
                   <div class="flow-detail-toolbar__filters">
                     <el-input
                       v-model="instanceKeyword"
-                      placeholder="搜索流程实例"
+                      :placeholder="t('automation.flow.searchInstances')"
                       size="small"
                       clearable
                       class="instance-search"
@@ -279,14 +279,14 @@
 
                   <div class="flow-detail-toolbar__actions">
                     <el-button v-if="hasInstanceFilters" size="small" @click="resetInstanceFilters">
-                      清空筛选
+                      {{ t('automation.flow.clearFilters') }}
                     </el-button>
                     <el-button
                       class="toolbar-icon-btn"
                       circle
                       size="small"
-                      title="刷新实例"
-                      aria-label="刷新实例"
+                      :title="t('automation.flow.refreshInstances')"
+                      :aria-label="t('automation.flow.refreshInstances')"
                       :loading="instancesLoading"
                       @click="refreshInstances"
                     >
@@ -307,11 +307,11 @@
                     >
                       <el-table-column
                         prop="name"
-                        label="名称"
+                        :label="t('common.name')"
                         min-width="240"
                         show-overflow-tooltip
                       />
-                      <el-table-column label="状态" width="110" align="left">
+                      <el-table-column :label="t('automation.workbench.status')" width="110" align="left">
                         <template #default="{ row }">
                           <el-tag
                             v-if="row.status"
@@ -324,25 +324,25 @@
                           <span v-else>-</span>
                         </template>
                       </el-table-column>
-                      <el-table-column prop="hostCount" label="主机数" width="90" align="left" />
-                      <el-table-column prop="stepCount" label="步骤数" width="90" align="left" />
-                      <el-table-column label="流程开始时间" min-width="180">
+                      <el-table-column prop="hostCount" :label="t('automation.command.hostCount')" width="90" align="left" />
+                      <el-table-column prop="stepCount" :label="t('automation.flow.stepCount')" width="90" align="left" />
+                      <el-table-column :label="t('automation.flow.startedAt')" min-width="180">
                         <template #default="{ row }">
                           {{ formatDateTime(row.createdAt) }}
                         </template>
                       </el-table-column>
-                      <el-table-column label="最近更新时间" min-width="180">
+                      <el-table-column :label="t('automation.flow.updatedAt')" min-width="180">
                         <template #default="{ row }">
                           {{ formatDateTime(row.updatedAt) }}
                         </template>
                       </el-table-column>
                       <el-table-column
                         prop="createdBy"
-                        label="执行人"
+                        :label="t('automation.flow.executedBy')"
                         width="140"
                         show-overflow-tooltip
                       />
-                      <el-table-column label="操作" width="120" fixed="right" align="left">
+                      <el-table-column :label="t('common.actions')" width="120" fixed="right" align="left">
                         <template #default="{ row }">
                           <el-button
                             type="primary"
@@ -350,7 +350,7 @@
                             size="small"
                             @click.stop="handleViewInstance(row)"
                           >
-                            查看详情
+                            {{ t('automation.flow.details') }}
                           </el-button>
                         </template>
                       </el-table-column>
@@ -365,11 +365,11 @@
                   </template>
                   <div class="instance-empty__actions">
                     <el-button v-if="hasInstanceFilters" size="small" @click="resetInstanceFilters">
-                      清空筛选
+                      {{ t('automation.flow.clearFilters') }}
                     </el-button>
                     <el-button type="primary" size="small" @click="handleRunFlow(activeFlow)">
                       <i class="fa fa-play me-1" />
-                      执行流程
+                      {{ t('automation.flow.execute') }}
                     </el-button>
                   </div>
                 </el-empty>
@@ -392,11 +392,11 @@
           v-else
           class="detail-blank"
           :image-size="80"
-          description="选择左侧流程以查看实例，或直接创建一个新流程。"
+          :description="t('automation.flow.selectFlowHint')"
         >
           <el-button type="primary" size="small" @click="handleCreateFlow">
             <i class="fa fa-plus me-1" />
-            新建流程
+            {{ t('automation.flow.newFlow') }}
           </el-button>
         </el-empty>
       </section>
@@ -414,6 +414,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
@@ -453,25 +455,35 @@ useActiveTaskListPolling({
   activeStatuses: ['WAITING', 'PENDING', 'QUEUED', 'RUNNING', 'STARTED', 'PROCESSING']
 })
 
+// Capture applied display-name searches so locale changes do not remove results.
+const flowSearchNames = ref(new Map())
+const instanceSearchNames = ref(new Map())
+watch([flowList, flowFilter], () => {
+  flowSearchNames.value = new Map(flowList.value.map(flow => [flow.id, flow.name]))
+}, { flush: 'sync' })
+watch([instanceRows, instanceKeyword], () => {
+  instanceSearchNames.value = new Map(instanceRows.value.map(item => [item.id, item.name]))
+}, { flush: 'sync' })
+
 const visibleFlows = computed(() => {
   const term = flowFilter.value.trim().toLowerCase()
   const filtered = !term
     ? [...flowList.value]
-    : flowList.value.filter(flow => flow.name?.toLowerCase().includes(term))
+    : flowList.value.filter(flow => flowSearchNames.value.get(flow.id)?.toLowerCase().includes(term))
   return filtered.sort((a, b) => compareFlows(a, b))
 })
 
 const activeFlow = computed(
   () => flowList.value.find(flow => flow.id === activeFlowId.value) || null
 )
-const orderFieldLabel = computed(() => (orderField.value === 'name' ? '名称' : '更新时间'))
+const orderFieldLabel = computed(() => (orderField.value === 'name' ? t('common.name') : t('automation.command.updatedAt')))
 const flowSummaryText = computed(() => {
   const total = flowList.value.length
   const visible = visibleFlows.value.length
 
-  if (!total) return '暂无流程'
-  if (visible !== total) return `筛选后 ${visible} / ${total} 个流程`
-  return `共 ${total} 个流程`
+  if (!total) return t('automation.flow.noFlows')
+  if (visible !== total) return t('automation.flow.filteredFlowCount', { visible, total })
+  return t('automation.flow.flowCount', { count: total })
 })
 
 const sortedInstanceRows = computed(() => [...instanceRows.value].sort(compareInstanceRows))
@@ -499,11 +511,11 @@ const instanceStatusCountMap = computed(() => {
 })
 
 const instanceStatusFilterOptions = computed(() => [
-  { value: 'all', label: '全部', count: instanceStatusCountMap.value.all },
-  { value: 'running', label: '运行中', count: instanceStatusCountMap.value.running },
-  { value: 'success', label: '成功', count: instanceStatusCountMap.value.success },
-  { value: 'failed', label: '失败', count: instanceStatusCountMap.value.failed },
-  { value: 'waiting', label: '待执行', count: instanceStatusCountMap.value.waiting }
+  { value: 'all', label: t('common.all'), count: instanceStatusCountMap.value.all },
+  { value: 'running', label: t('automation.job.running'), count: instanceStatusCountMap.value.running },
+  { value: 'success', label: t('automation.stats.ok'), count: instanceStatusCountMap.value.success },
+  { value: 'failed', label: t('automation.stats.failed'), count: instanceStatusCountMap.value.failed },
+  { value: 'waiting', label: t('automation.flow.pending'), count: instanceStatusCountMap.value.waiting }
 ])
 
 const hasInstanceFilters = computed(
@@ -515,7 +527,7 @@ const filteredInstances = computed(() => {
   return sortedInstanceRows.value.filter(item => {
     const matchesKeyword =
       !term ||
-      item.name.toLowerCase().includes(term) ||
+      (instanceSearchNames.value.get(item.id) || '').toLowerCase().includes(term) ||
       (item.createdBy ? item.createdBy.toLowerCase().includes(term) : false)
 
     const matchesStatus =
@@ -540,9 +552,9 @@ const instanceSummaryText = computed(() => {
   const total = instanceRows.value.length
   const filtered = filteredInstances.value.length
 
-  if (!total) return '暂无实例'
-  if (filtered !== total) return `筛选后 ${filtered} / ${total} 个实例`
-  return `共 ${total} 个实例`
+  if (!total) return t('automation.flow.noInstances')
+  if (filtered !== total) return t('automation.flow.filteredInstanceCount', { visible: filtered, total })
+  return t('automation.flow.totalInstanceCount', { count: total })
 })
 
 const activeFlowUpdatedText = computed(() =>
@@ -552,7 +564,7 @@ const activeFlowUpdatedText = computed(() =>
 )
 
 const activeFlowDescriptionText = computed(
-  () => activeFlowDetail.value?.description?.trim() || '当前流程暂无描述'
+  () => activeFlowDetail.value?.description?.trim() || t('automation.flow.noDescription')
 )
 
 const activeFlowHostCount = computed(() => activeFlowDetail.value?.hosts?.length || 0)
@@ -561,22 +573,22 @@ const activeFlowParamCount = computed(() => activeFlowDetail.value?.globalParams
 const activeFlowStepPreview = computed(() =>
   (activeFlowDetail.value?.steps || [])
     .slice(0, FLOW_STEP_PREVIEW_LIMIT)
-    .map(step => step.name || '未命名步骤')
+    .map(step => step.name || t('automation.flow.unnamedStep'))
 )
 const activeFlowStepOverflow = computed(() =>
   Math.max(activeFlowStepCount.value - activeFlowStepPreview.value.length, 0)
 )
 
 const instanceEmptyTitle = computed(() => {
-  if (!instanceRows.value.length) return '当前流程还没有执行实例'
-  return '没有匹配的流程实例'
+  if (!instanceRows.value.length) return t('automation.flow.noExecutions')
+  return t('automation.flow.noMatchingInstances')
 })
 
 const instanceEmptyDescription = computed(() => {
   if (!instanceRows.value.length) {
-    return '可以先执行一次流程，实例会自动出现在这里。'
+    return t('automation.flow.executeHint')
   }
-  return '尝试调整搜索关键词或状态筛选，查看其它实例结果。'
+  return t('automation.flow.filterHint')
 })
 
 watch(flowList, list => {
@@ -631,7 +643,7 @@ async function fetchFlowList() {
     flowList.value = normalizeFlows(resolveResponseArray(response))
     return flowList.value
   } catch (error) {
-    ElMessage.error(error?.message || '获取流程列表失败')
+    ElMessage.error(error?.message || t('automation.flow.listFailed'))
     flowList.value = []
     return []
   } finally {
@@ -659,7 +671,7 @@ async function fetchFlowDetail(flowId) {
     activeFlowDetail.value = normalizeFlowDetail(response?.data ?? response ?? {})
   } catch (error) {
     if (requestId === flowDetailRequestId) {
-      ElMessage.error(error?.message || '获取流程详情失败')
+      ElMessage.error(error?.message || t('automation.flow.detailFailed'))
       activeFlowDetail.value = null
     }
   } finally {
@@ -681,7 +693,7 @@ async function fetchFlowInstances(flowId) {
     instanceRows.value = normalizeInstances(resolveResponseArray(response))
   } catch (error) {
     if (requestId === flowInstancesRequestId) {
-      ElMessage.error(error?.message || '获取流程实例失败')
+      ElMessage.error(error?.message || t('automation.flow.instancesFailed'))
       instanceRows.value = []
     }
   } finally {
@@ -742,25 +754,25 @@ function handleEditFlow(flow) {
 }
 
 function handleDeleteFlow(flow) {
-  ElMessageBox.confirm(`确定要删除流程「${flow.name}」吗？此操作不可恢复。`, '删除确认', {
+  ElMessageBox.confirm(t('automation.flow.deleteConfirm', { name: flow.name }), t('automation.library.deleteTitle'), {
     closeOnClickModal: false,
     closeOnPressEscape: false,
-    confirmButtonText: '删除',
-    cancelButtonText: '取消',
+    confirmButtonText: t('common.delete'),
+    cancelButtonText: t('common.cancel'),
     type: 'warning',
     confirmButtonClass: 'el-button--danger'
   })
     .then(async () => {
       try {
         await jaoApi.deleteFlow(flow.id)
-        ElMessage.success('删除成功')
+        ElMessage.success(t('automation.workbench.deleted'))
         // 如果删除的是当前选中的流程，清空选中
         if (activeFlowId.value === flow.id) {
           activeFlowId.value = ''
         }
         fetchFlowList()
       } catch (error) {
-        ElMessage.error(error?.message || '删除失败')
+        ElMessage.error(error?.message || t('automation.workbench.deleteFailed'))
       }
     })
     .catch(() => {
@@ -806,14 +818,14 @@ function compareFlows(a, b) {
   const field = orderField.value
   let diff = 0
   if (field === 'name') {
-    diff = collator.compare(a.name || '', b.name || '')
+    diff = collator.compare(a.sortName ?? a.name ?? '', b.sortName ?? b.name ?? '')
   } else {
     const aTime = Date.parse(a.updatedAt || a.createdAt || '') || 0
     const bTime = Date.parse(b.updatedAt || b.createdAt || '') || 0
     diff = aTime - bTime
   }
   if (diff === 0) {
-    diff = collator.compare(a.name || '', b.name || '')
+    diff = collator.compare(a.sortName ?? a.name ?? '', b.sortName ?? b.name ?? '')
   }
   return orderDesc.value ? -diff : diff
 }
@@ -850,7 +862,7 @@ function normalizeFlowDetail(data) {
   const globalParams = resolveGlobalParams(data)
   return {
     id: data.id ?? data.flowId ?? '',
-    name: data.name ?? activeFlow.value?.name ?? '未命名流程',
+    get name() { return data.name ?? activeFlow.value?.name ?? t('automation.workbench.unnamedFlow') },
     description: data.description ?? '',
     updatedAt: data.updatedAt ?? data.updated_at ?? data.modifiedAt ?? '',
     createdAt: data.createdAt ?? data.created_at ?? '',
@@ -883,7 +895,8 @@ function normalizeFlows(rows) {
   return rows
     .map(row => ({
       id: row.id ?? row.flowId ?? '',
-      name: row.name ?? row.flowName ?? '未命名流程',
+      sortName: row.name ?? row.flowName ?? '未命名流程',
+      get name() { return row.name ?? row.flowName ?? t('automation.workbench.unnamedFlow') },
       updatedAt: row.updatedAt ?? row.updated_at ?? row.modifiedAt ?? '',
       createdAt: row.createdAt ?? row.created_at ?? ''
     }))
@@ -898,7 +911,7 @@ function normalizeInstances(rows) {
       const steps = safeJsonArray(row.stepIds ?? row.steps ?? row.step_ids)
       return {
         id: row.id ?? row.instanceId ?? '',
-        name: row.name ?? row.instanceName ?? '未命名实例',
+        get name() { return row.name ?? row.instanceName ?? t('automation.flow.unnamedInstance') },
         status: normalizeInstanceStatus(
           row.status ?? row.instanceStatus ?? row.runStatus ?? row.state ?? ''
         ),
@@ -936,24 +949,24 @@ function getInstanceStatusType(status) {
 
 function getInstanceStatusLabel(status) {
   const statusLabelMap = {
-    SUCCESS: '成功',
-    COMPLETED: '已完成',
-    FINISHED: '已完成',
-    DONE: '已完成',
-    FAILED: '失败',
-    ERROR: '错误',
-    INTERRUPTED: '已中断',
-    ABORTED: '已终止',
-    CANCELLED: '已取消',
-    RUNNING: '运行中',
-    STARTED: '运行中',
-    PROCESSING: '处理中',
-    WAITING: '等待中',
-    PENDING: '待执行',
-    QUEUED: '排队中'
+    SUCCESS: t('automation.stats.ok'),
+    COMPLETED: t('automation.workbench.completed'),
+    FINISHED: t('automation.workbench.completed'),
+    DONE: t('automation.workbench.completed'),
+    FAILED: t('automation.stats.failed'),
+    ERROR: t('automation.flow.error'),
+    INTERRUPTED: t('automation.flow.interrupted'),
+    ABORTED: t('automation.flow.aborted'),
+    CANCELLED: t('automation.flow.cancelled'),
+    RUNNING: t('automation.job.running'),
+    STARTED: t('automation.job.running'),
+    PROCESSING: t('automation.flow.processing'),
+    WAITING: t('automation.workbench.waiting'),
+    PENDING: t('automation.flow.pending'),
+    QUEUED: t('automation.flow.queued')
   }
 
-  return statusLabelMap[status] || status || '未知'
+  return statusLabelMap[status] || status || t('automation.command.unknown')
 }
 
 function safeJsonArray(source) {

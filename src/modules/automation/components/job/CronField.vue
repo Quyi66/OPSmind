@@ -11,7 +11,7 @@
       <!-- 周期 -->
       <div class="field-option">
         <el-radio value="range">
-          周期 从
+          {{ t('automation.schedule.rangeFrom') }}
           <el-input-number
             v-model="rangeStart"
             :min="minValue"
@@ -21,7 +21,7 @@
             @change="handleRangeChange"
             :controls="false"
           />
-          到
+          {{ t('automation.schedule.to') }}
           <el-input-number
             v-model="rangeEnd"
             :min="minValue"
@@ -37,7 +37,7 @@
       <!-- 循环 -->
       <div class="field-option">
         <el-radio value="interval">
-          从
+          {{ t('automation.schedule.from') }}
           <el-input-number
             v-model="intervalStart"
             :min="minValue"
@@ -47,7 +47,7 @@
             @change="handleIntervalChange"
             :controls="false"
           />
-          开始，每
+          {{ t('automation.schedule.startEvery') }}
           <el-input-number
             v-model="intervalStep"
             :min="1"
@@ -57,13 +57,13 @@
             @change="handleIntervalChange"
             :controls="false"
           />
-          {{ getFieldUnit() }}执行一次
+          {{ getFieldUnit() }}{{ t('automation.schedule.runOnce') }}
         </el-radio>
       </div>
 
       <!-- 指定（不适用于日和周的冲突） -->
       <div v-if="!isSpecialField" class="field-option">
-        <el-radio value="specific">指定</el-radio>
+        <el-radio value="specific">{{ t('automation.schedule.specific') }}</el-radio>
       </div>
       <div v-if="!isSpecialField && selectedType === 'specific'" class="checkbox-group">
         <el-checkbox-group v-model="specificValues" @change="handleSpecificChange">
@@ -75,18 +75,20 @@
 
       <!-- 不指定（仅用于日和周） -->
       <div v-if="isSpecialField" class="field-option">
-        <el-radio value="unspecified">不指定</el-radio>
+        <el-radio value="unspecified">{{ t('automation.schedule.unspecified') }}</el-radio>
       </div>
 
       <!-- 年份可选项 -->
       <div v-if="fieldType === 'year' && optional" class="field-option">
-        <el-radio value="empty">不限制年份</el-radio>
+        <el-radio value="empty">{{ t('automation.schedule.unlimitedYears') }}</el-radio>
       </div>
     </el-radio-group>
   </div>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
@@ -162,27 +164,27 @@ function parseValue(value) {
 // 获取字段标签
 function getEveryLabel() {
   const labels = {
-    second: '每秒',
-    minute: '每分钟',
-    hour: '每小时',
-    day: '每日',
-    month: '每月',
-    week: '每周',
-    year: '每年'
+    second: t('automation.schedule.everySecond'),
+    minute: t('automation.schedule.everyMinute'),
+    hour: t('automation.schedule.everyHour'),
+    day: t('automation.schedule.everyDay'),
+    month: t('automation.schedule.everyMonth'),
+    week: t('automation.schedule.everyWeek'),
+    year: t('automation.schedule.everyYear')
   }
-  return labels[props.fieldType] || '每'
+  return labels[props.fieldType] || t('automation.schedule.every')
 }
 
 // 获取字段单位
 function getFieldUnit() {
   const units = {
-    second: '秒',
-    minute: '分钟',
-    hour: '小时',
-    day: '天',
-    month: '月',
-    week: '周',
-    year: '年'
+    second: t('automation.schedule.secondUnit'),
+    minute: t('automation.schedule.minuteUnit'),
+    hour: t('automation.schedule.hourUnit'),
+    day: t('automation.schedule.dayUnit'),
+    month: t('automation.schedule.monthUnit'),
+    week: t('automation.schedule.weekUnit'),
+    year: t('automation.schedule.yearUnit')
   }
   return units[props.fieldType] || ''
 }
@@ -199,11 +201,11 @@ function getValueRange() {
 // 格式化值显示
 function formatValue(val) {
   if (props.fieldType === 'week') {
-    const weekDays = ['', '周日', '周一', '周二', '周三', '周四', '周五', '周六']
+    const weekDays = ['', t('automation.schedule.sunday'), t('automation.schedule.monday'), t('automation.schedule.tuesday'), t('automation.schedule.wednesday'), t('automation.schedule.thursday'), t('automation.schedule.friday'), t('automation.schedule.saturday')]
     return weekDays[val] || val
   }
   if (props.fieldType === 'month') {
-    return `${val}月`
+    return t('automation.schedule.monthNumber', { month: val })
   }
   return val
 }

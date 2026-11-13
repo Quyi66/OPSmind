@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    :title="`运维工具运行记录${jobTitle ? ` · ${getAutomationToolTitle({ id: jobId, title: jobTitle })}` : ''}`"
+    :title="jobTitle ? t('automation.job.namedHistoryTitle', { name: getAutomationToolTitle({ id: jobId, title: jobTitle }) }) : t('automation.job.historyTitle')"
     width="1360px"
     destroy-on-close
     @close="handleClose"
@@ -11,7 +11,7 @@
       <!-- 筛选栏 -->
       <div class="ops-filter-bar">
         <el-form inline size="small">
-          <el-form-item label="时间范围">
+          <el-form-item :label="t('automation.workbench.timeRange')">
             <el-select v-model="timeRange" style="width: 120px" @change="handleFilterChange">
               <el-option
                 v-for="option in timeRangeOptions"
@@ -21,7 +21,7 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="状态">
+          <el-form-item :label="t('automation.workbench.status')">
             <el-select v-model="statusValue" style="width: 120px" @change="handleFilterChange">
               <el-option
                 v-for="option in statusOptions"
@@ -31,10 +31,10 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="关键词">
+          <el-form-item :label="t('automation.workbench.keyword')">
             <el-input
               v-model.trim="keyword"
-              placeholder="输入运维工具名称搜索"
+              :placeholder="t('automation.workbench.searchToolName')"
               clearable
               style="width: 200px"
               @keyup.enter="handleSearch"
@@ -51,13 +51,13 @@
               <el-icon>
                 <Search />
               </el-icon>
-              搜索
+              {{ t('common.search') }}
             </el-button>
             <el-button @click="handleReset">
               <el-icon>
                 <RefreshRight />
               </el-icon>
-              重置
+              {{ t('common.reset') }}
             </el-button>
           </el-form-item>
         </el-form>
@@ -78,32 +78,32 @@
           :data="tableData"
           max-height="calc(100vh - 400px)"
           @sort-change="handleSortChange"
-          :empty-text="tableLoading ? ' ' : '暂无数据'"
+          :empty-text="tableLoading ? ' ' : t('common.noData')"
         >
           <el-table-column
             prop="startTime"
-            label="开始时间"
+            :label="t('automation.workbench.startedAt')"
             width="180"
             sortable="custom"
             column-key="start_time"
           />
-          <el-table-column prop="jobTitle" label="运维工具" min-width="150" show-overflow-tooltip />
-          <el-table-column label="类型" width="80">
+          <el-table-column prop="jobTitle" :label="t('automation.workbench.tool')" min-width="150" show-overflow-tooltip />
+          <el-table-column :label="t('automation.workbench.type')" width="80">
             <template #default="{ row }">
               <span>{{ jobTypeLabel(row.jobTypeKey, row.jobType) }}</span>
             </template>
           </el-table-column>
           <!-- <el-table-column prop="username" label="执行人" width="100" /> -->
           <!-- <el-table-column prop="reviewUser" label="审核人" width="100" /> -->
-          <el-table-column prop="duration" label="耗时" width="100" />
+          <el-table-column prop="duration" :label="t('automation.workbench.duration')" width="100" />
           <el-table-column
             prop="endTime"
-            label="结束时间"
+            :label="t('automation.workbench.endedAt')"
             width="180"
             sortable="custom"
             column-key="end_time"
           />
-          <el-table-column label="执行节点" min-width="120">
+          <el-table-column :label="t('automation.workbench.executionNode')" min-width="120">
             <template #default="{ row }">
               <div v-if="row.executor_url" class="node-badges">
                 <el-tag
@@ -119,7 +119,7 @@
               <span v-else>-</span>
             </template>
           </el-table-column>
-          <el-table-column label="状态" width="120" sortable="custom" column-key="status">
+          <el-table-column :label="t('automation.workbench.status')" width="120" sortable="custom" column-key="status">
             <template #default="{ row }">
               <RunLogStatusTag
                 v-if="row.status"
@@ -133,7 +133,7 @@
               <span v-else>-</span>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="80" fixed="right">
+          <el-table-column :label="t('common.actions')" width="80" fixed="right">
             <template #default="{ row }">
               <el-button
                 v-if="canRerun(row)"
@@ -142,7 +142,7 @@
                 size="small"
                 @click="handleRerun(row)"
               >
-                重跑
+                {{ t('automation.workbench.rerunShort') }}
               </el-button>
               <span v-else>-</span>
             </template>
@@ -176,6 +176,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { getAutomationRunTitle, getAutomationToolTitle } from '@/modules/automation/utils/resourcePresentation'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -193,11 +195,11 @@ import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
 import { throwIfWorkflowFailed } from '@/utils/workflowResult'
 
 const timeRangeOptions = [
-  { label: '全部', value: 'all' },
-  { label: '今天', value: 'today' },
-  { label: '最近7天', value: 'last7' },
-  { label: '最近30天', value: 'last30' },
-  { label: '最近一年', value: 'lastYear' }
+  { label: t('common.all'), value: 'all' },
+  { label: t('automation.workbench.today'), value: 'today' },
+  { label: t('automation.workbench.last7Days'), value: 'last7' },
+  { label: t('automation.workbench.last30Days'), value: 'last30' },
+  { label: t('automation.workbench.lastYear'), value: 'lastYear' }
 ]
 
 const timeRangeMap = {
@@ -414,7 +416,7 @@ function handleStatusClick(row) {
   resultMeta.value = {
     runId: row.id,
     jobId: row.jobId,
-    jobTitle: row.jobTitle || props.jobTitle || ''
+    get jobTitle() { return row.jobTitle || props.jobTitle || '' }
   }
   resultDialogVisible.value = true
 }
@@ -430,28 +432,28 @@ async function handleRerun(row) {
   try {
     const effectiveRunId = String(row?.runId ?? row?.id ?? '')
     if (!effectiveRunId || effectiveRunId.startsWith('step_')) {
-      ElMessage.warning('聚合步骤视图不支持按运行 ID 重新执行，请切换到单个任务记录后重试')
+      ElMessage.warning(t('automation.workbench.aggregatedRerunUnsupported'))
       return
     }
 
-    await ElMessageBox.confirm(`确定要重新执行运维工具 "${row.jobTitle}" 吗？`, '重新执行', {
+    await ElMessageBox.confirm(t('automation.workbench.rerunConfirm', { name: row.jobTitle }), t('automation.workbench.rerun'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning',
-      confirmButtonText: '执行',
-      cancelButtonText: '取消'
+      confirmButtonText: t('automation.workbench.execute'),
+      cancelButtonText: t('common.cancel')
     })
 
     const response = await jaoApi.executeJob({
       jobId: 'OKPacN',
       params: { runId: effectiveRunId }
     })
-    throwIfWorkflowFailed(response, '执行失败')
-    ElMessage.success('运维工具已提交执行')
+    throwIfWorkflowFailed(response, t('automation.workbench.runFailed'))
+    ElMessage.success(t('automation.workbench.runSubmitted'))
     handleRefresh()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error(error?.message || '执行失败')
+      ElMessage.error(error?.message || t('automation.workbench.runFailed'))
     }
   }
 }
@@ -498,7 +500,7 @@ async function fetchRunLogs() {
     tableData.value = normalizedRecords
     total.value = Number(data.total ?? data.count ?? normalizedRecords.length) || 0
   } catch (error) {
-    if (isCurrent()) ElMessage.error(error?.message || '获取运行记录失败')
+    if (isCurrent()) ElMessage.error(error?.message || t('automation.workbench.loadRunsFailed'))
   } finally {
     if (isCurrent()) {
       tableLoading.value = false
@@ -519,7 +521,7 @@ function mapRunLogRecord(record = {}) {
     id: record.id ? String(record.id) : '',
     runId: String(record.runId ?? record.run_id ?? record.id ?? ''),
     jobId,
-    jobTitle: getAutomationRunTitle({ ...record, job_id: jobId }),
+    get jobTitle() { return getAutomationRunTitle({ ...record, job_id: jobId }) },
     jobType: jobTypeRaw || '-',
     jobTypeKey,
     username: record.username ?? record.user_name ?? '-',
@@ -568,11 +570,11 @@ function parseStats(value) {
 
 function jobTypeLabel(typeKey, fallback) {
   const map = {
-    script: '脚本',
-    command: '命令',
+    script: t('automation.workbench.script'),
+    command: t('automation.workbench.command'),
     rest: 'REST',
-    process: '流程',
-    workflow: '工作流'
+    process: t('automation.workbench.flow'),
+    workflow: t('automation.workbench.workflow')
   }
   return map[typeKey] || fallback || '-'
 }

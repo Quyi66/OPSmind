@@ -1,3 +1,4 @@
+import { t } from '@/core/i18n'
 import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { rpmInfoApi } from '../api'
@@ -62,7 +63,7 @@ export function useLinuxMachinePackageList() {
       pagination.total = Number(data.totalElements || 0)
     } catch (error) {
       console.error('Failed to load linux machine package list:', error)
-      ElMessage.error('获取机器包清单失败')
+      ElMessage.error(t('patches.catalog.machinePackagesFailed'))
       tableData.value = []
       pagination.total = 0
     } finally {
@@ -105,10 +106,10 @@ export function useLinuxMachinePackageList() {
         buildRequestPayload(filters, getSelectedHostIds())
       )
       downloadBlobResponse(response)
-      ElMessage.success('导出完成')
+      ElMessage.success(t('patches.catalog.exported'))
     } catch (error) {
       console.error('Failed to export linux machine package list:', error)
-      ElMessage.error('导出机器包清单失败')
+      ElMessage.error(t('patches.catalog.packageExportFailed'))
     } finally {
       exporting.value = false
     }

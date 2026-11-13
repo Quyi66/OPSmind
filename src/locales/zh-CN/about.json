@@ -1,0 +1,7 @@
+{
+  "title": "关于 KoreOPS",
+  "description": "KoreOPS 是一个现代化的运维管理平台，提供统一的运维工具和服务。 本仪表盘基于 Vue 3 构建，提供高效的运维管理体验。",
+  "techStack": "技术栈",
+  "back": "返回仪表盘",
+  "version": "版本 {version}"
+}

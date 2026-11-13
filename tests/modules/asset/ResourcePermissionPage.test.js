@@ -12,6 +12,7 @@ import {
   ElMessageBox
 } from 'element-plus'
 import ResourcePermissionPage from '@/modules/asset/views/ResourcePermissionPage.vue'
+import { setLocale } from '@/core/i18n'
 
 const api = vi.hoisted(() => ({ getTablePermission: vi.fn(), saveTablePermission: vi.fn() }))
 vi.mock('@/modules/asset/api', () => ({ permissionApi: api }))
@@ -106,6 +107,48 @@ const largeFixture = () =>
   }))
 
 describe('访问控制的完整记录排序和可见类型搜索', () => {
+  it('keeps applied translated type searches and sorting stable during language changes', async () => {
+    api.getTablePermission.mockResolvedValueOnce(largeFixture())
+    await openPage()
+    state().searchKeyword = 'Linux 服务器'
+    state().handleSearch()
+    state().handleSortChange({ prop: 'assets_type', order: 'descending' })
+    await flushPromises()
+    const ids = state().sortedData.map(row => row.id)
+    for (const locale of ['en-US', 'zh-CN', 'en-US']) {
+      await setLocale(locale, { persist: false }); await flushPromises()
+      expect(state().total).toBe(20)
+      expect(state().sortedData.map(row => row.id)).toEqual(ids)
+      expect(state().appliedSearch).toBe('Linux 服务器')
+      expect(api.getTablePermission).toHaveBeenCalledTimes(1)
+    }
+    state().searchKeyword = 'Windows host'
+    state().handleSearch(); await flushPromises()
+    expect(state().total).toBe(5)
+    await setLocale('zh-CN', { persist: false }); await flushPromises()
+    expect(state().total).toBe(5)
+  })
+  it('preserves dirty permission codes and metadata while translating summaries', async () => {
+    await openPage()
+    await change('执行', true)
+    const vm = state(), data = vm.permissionData, row = vm.tableData[0]
+    vm.pageSize = 1; vm.currentPage = 2; vm.searchKeyword = '未应用搜索'
+    const values = vm.permissionOptions.map(item => item.value)
+    await setLocale('en-US', { persist: false }); await flushPromises()
+    expect(wrapper.text()).toContain('Save permission changes')
+    expect(vm.getPermissionSummary(row, 'Administrators')).toBe('Pending save: View, Execute')
+    expect(vm.permissionOptions.map(item => item.value)).toEqual(values)
+    expect(vm.permissionData).toBe(data)
+    expect(vm.permissionData[0].teamInfo[0].permission).toEqual(['r', 'audit', 'x'])
+    expect(vm.changedRowIds).toEqual(['resource-a'])
+    expect(vm.currentPage).toBe(2); expect(vm.searchKeyword).toBe('未应用搜索')
+    expect(api.getTablePermission).toHaveBeenCalledTimes(1)
+    expect(api.saveTablePermission).not.toHaveBeenCalled()
+    await vm.handleSave()
+    expect(api.saveTablePermission).toHaveBeenCalledExactlyOnceWith('ACM', data)
+    expect(data[0].resourceMetadata).toEqual({ keep: 'original' })
+    expect(data[0].teamInfo[0].teamId).toBe('team-original')
+  })
   it('路径排序覆盖其他页，回首页并保持未保存草稿，取消恢复接口顺序', async () => {
     api.getTablePermission.mockResolvedValueOnce(largeFixture())
     await openPage()
@@ -176,7 +219,8 @@ describe('访问控制的完整记录排序和可见类型搜索', () => {
   })
 })
 
-afterEach(() => {
+afterEach(async () => {
+  await setLocale('zh-CN', { persist: false })
   wrapper?.unmount()
   wrapper = undefined
   vi.restoreAllMocks()

@@ -1,21 +1,21 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="运维工具审批"
+    :title="t('automation.workbench.toolApprovals')"
     width="600px"
     :close-on-click-modal="false"
     @close="handleClose"
     :close-on-press-escape="false"
   >
-    <el-form ref="formRef" :model="formData" label-width="120px" size="default">
-      <el-form-item label="运维工具名称">
+    <el-form ref="formRef" :model="formData" :label-width="currentLocale === 'en-US' ? '180px' : '120px'" size="default">
+      <el-form-item :label="t('automation.list.toolName')">
         <span>{{ getAutomationToolTitle({ id: jobId, title: jobTitle }) }}</span>
       </el-form-item>
 
-      <el-form-item label="审批模式" required>
+      <el-form-item :label="t('automation.list.approvalMode')" required>
         <el-radio-group v-model="formData.approveMode">
-          <el-radio value="noLimitParams">不限定参数执行</el-radio>
-          <el-radio value="limitParams" v-if="hasParams">限定参数执行</el-radio>
+          <el-radio value="noLimitParams">{{ t('automation.list.unrestrictedParams') }}</el-radio>
+          <el-radio value="limitParams" v-if="hasParams">{{ t('automation.list.restrictedParams') }}</el-radio>
         </el-radio-group>
 
         <div
@@ -32,7 +32,7 @@
         </div>
       </el-form-item>
 
-      <el-form-item label="脚本路径" v-if="scriptPaths.length > 0">
+      <el-form-item :label="t('automation.job.scriptPath')" v-if="scriptPaths.length > 0">
         <div v-for="(scriptPath, index) in scriptPaths" :key="index" style="margin-bottom: 8px">
           <el-button type="primary" link @click="handleViewScript(scriptPath)">
             <i class="fa fa-eye" />
@@ -41,7 +41,7 @@
         </div>
       </el-form-item>
 
-      <el-form-item label="有效时长" v-if="formData.approveMode !== 'limitParams'">
+      <el-form-item :label="t('automation.list.validDuration')" v-if="formData.approveMode !== 'limitParams'">
         <el-input-number
           v-model="formData.validHour"
           :min="1"
@@ -49,30 +49,32 @@
           :step="1"
           controls-position="right"
         />
-        <span style="margin-left: 8px">小时</span>
-        <el-tooltip content="审批通过后，在有效期内可以执行运维工具" placement="top">
+        <span style="margin-left: 8px">{{ t('automation.list.hours') }}</span>
+        <el-tooltip :content="t('automation.list.approvalValidityHint')" placement="top">
           <i class="fa fa-question-circle text-muted" style="margin-left: 8px; cursor: help" />
         </el-tooltip>
       </el-form-item>
 
-      <el-form-item label="申请说明">
+      <el-form-item :label="t('automation.list.requestDescription')">
         <el-input
           v-model="formData.description"
           type="textarea"
           :rows="3"
-          placeholder="请输入申请说明"
+          :placeholder="t('automation.list.requestDescriptionPlaceholder')"
         />
       </el-form-item>
     </el-form>
 
     <template #footer>
-      <el-button @click="handleClose">取消</el-button>
-      <el-button type="primary" :loading="submitting" @click="handleSubmit">提交申请</el-button>
+      <el-button @click="handleClose">{{ t('common.cancel') }}</el-button>
+      <el-button type="primary" :loading="submitting" @click="handleSubmit">{{ t('automation.list.submitRequest') }}</el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getAutomationToolTitle } from '@/modules/automation/utils/resourcePresentation'
@@ -151,12 +153,12 @@ function initForm() {
 }
 
 function handleViewScript(scriptPath) {
-  ElMessage.info('查看脚本功能开发中')
+  ElMessage.info(t('automation.list.viewScriptPending'))
 }
 
 async function handleSubmit() {
   if (!formData.approveMode) {
-    ElMessage.warning('请选择审批模式')
+    ElMessage.warning(t('automation.list.approvalModeRequired'))
     return
   }
 
@@ -181,7 +183,7 @@ async function handleSubmit() {
     emit('success')
     handleClose()
   } catch (error) {
-    ElMessage.error(error?.message || '提交失败')
+    ElMessage.error(error?.message || t('automation.list.submitFailed'))
   } finally {
     submitting.value = false
   }

@@ -5,7 +5,7 @@
         <!-- 左侧：个人信息卡片 -->
         <el-col :span="8">
           <div class="profile-card info-card">
-            <h3 class="card-title">个人信息</h3>
+            <h3 class="card-title">{{ t('profile.personalInfo') }}</h3>
 
             <!-- 头像 -->
             <div class="avatar-section">
@@ -29,39 +29,39 @@
               <div class="info-row">
                 <span class="info-label">
                   <el-icon><User /></el-icon>
-                  用户名称
+                  {{ t('profile.username') }}
                 </span>
                 <span class="info-value">{{ account.login }}</span>
               </div>
               <div class="info-row">
                 <span class="info-label">
                   <el-icon><Phone /></el-icon>
-                  手机号码
+                  {{ t('profile.mobile') }}
                 </span>
                 <span class="info-value">{{ originalData.mobile || '-' }}</span>
               </div>
               <div class="info-row">
                 <span class="info-label">
                   <el-icon><Message /></el-icon>
-                  用户邮箱
+                  {{ t('profile.userEmail') }}
                 </span>
                 <span class="info-value">{{ originalData.email || '-' }}</span>
               </div>
               <div class="info-row">
                 <span class="info-label">
                   <el-icon><OfficeBuilding /></el-icon>
-                  所属部门
+                  {{ t('profile.departmentInfo') }}
                 </span>
                 <span class="info-value">{{ originalData.department || '-' }}</span>
               </div>
               <div class="info-row">
                 <span class="info-label">
                   <el-icon><Medal /></el-icon>
-                  拥有角色
+                  {{ t('profile.roles') }}
                 </span>
                 <span class="info-value">
                   <template v-if="roleNames.length > 0">
-                    {{ roleNames.join('、') }}
+                    {{ roleNames.join(t('common.listSeparator')) }}
                   </template>
                   <template v-else>-</template>
                 </span>
@@ -69,7 +69,7 @@
               <div class="info-row">
                 <span class="info-label">
                   <el-icon><Calendar /></el-icon>
-                  创建日期
+                  {{ t('profile.createdAt') }}
                 </span>
                 <span class="info-value">{{ formatDate(account.createdDate) }}</span>
               </div>
@@ -80,33 +80,34 @@
         <!-- 右侧：Tab 切换区域 -->
         <el-col :span="16">
           <div class="profile-card form-card">
-            <h3 class="card-title">基本资料</h3>
+            <h3 class="card-title">{{ t('profile.basicInfo') }}</h3>
 
             <el-tabs v-model="activeTab" class="profile-tabs">
               <!-- 基本资料 Tab -->
-              <el-tab-pane label="基本资料" name="profile">
+              <el-tab-pane :label="t('profile.basicInfo')" name="profile">
                 <el-form
                   ref="formRef"
                   :model="form"
                   :rules="rules"
-                  label-width="100px"
+                  :validate-on-rule-change="false"
+                  :label-width="currentLocale === 'en-US' ? '140px' : '100px'"
                   label-position="left"
                   class="profile-form"
                 >
-                  <el-form-item label="用户昵称" prop="fullName">
-                    <el-input v-model="form.fullName" placeholder="请输入用户昵称" maxlength="50" />
+                  <el-form-item :label="t('profile.nickname')" prop="fullName">
+                    <el-input v-model="form.fullName" :placeholder="t('profile.nicknameRequired')" maxlength="50" />
                   </el-form-item>
 
-                  <el-form-item label="手机号码" prop="mobile">
-                    <el-input v-model="form.mobile" placeholder="请输入手机号码" maxlength="50" />
+                  <el-form-item :label="t('profile.mobile')" prop="mobile">
+                    <el-input v-model="form.mobile" :placeholder="t('profile.mobilePlaceholder')" maxlength="50" />
                   </el-form-item>
 
-                  <el-form-item label="邮箱" prop="email">
-                    <el-input v-model="form.email" placeholder="请输入邮箱" maxlength="100" />
+                  <el-form-item :label="t('profile.email')" prop="email">
+                    <el-input v-model="form.email" :placeholder="t('profile.emailPlaceholder')" maxlength="100" />
                   </el-form-item>
 
-                  <el-form-item label="部门" prop="department">
-                    <el-input v-model="form.department" placeholder="请输入部门" maxlength="500" />
+                  <el-form-item :label="t('profile.department')" prop="department">
+                    <el-input v-model="form.department" :placeholder="t('profile.departmentPlaceholder')" maxlength="500" />
                   </el-form-item>
 
                   <!-- <el-form-item label="语言" prop="langKey">
@@ -117,19 +118,20 @@
                   </el-form-item> -->
 
                   <el-form-item>
-                    <el-button type="primary" @click="handleSave" :loading="saving">保存</el-button>
-                    <el-button @click="handleReset">关闭</el-button>
+                    <el-button type="primary" @click="handleSave" :loading="saving">{{ t('common.save') }}</el-button>
+                    <el-button @click="handleReset">{{ t('common.close') }}</el-button>
                   </el-form-item>
                 </el-form>
               </el-tab-pane>
 
               <!-- 修改密码 Tab -->
-              <el-tab-pane label="修改密码" name="password" :disabled="authMode === 'AD'">
+              <el-tab-pane :label="t('profile.changePassword')" name="password" :disabled="authMode === 'AD'">
                 <el-form
                   ref="passwordFormRef"
                   :model="passwordForm"
                   :rules="passwordRules"
-                  label-width="100px"
+                  :validate-on-rule-change="false"
+                  :label-width="currentLocale === 'en-US' ? '140px' : '100px'"
                   label-position="left"
                   class="profile-form"
                 >
@@ -140,23 +142,23 @@
                     style="position: absolute; top: -9999px; left: -9999px; width: 0; height: 0; opacity: 0;"
                   />
 
-                  <el-form-item label="新密码" prop="password">
+                  <el-form-item :label="t('profile.newPassword')" prop="password">
                     <el-input
                       v-model="passwordForm.password"
                       type="password"
-                      placeholder="请输入新密码"
+                      :placeholder="t('profile.passwordRequired')"
                       show-password
                       maxlength="32"
                       autocomplete="new-password"
                     />
-                    <div class="form-hint">密码长度8-32位，建议包含大小写字母和数字</div>
+                    <div class="form-hint">{{ t('profile.passwordHint') }}</div>
                   </el-form-item>
 
-                  <el-form-item label="确认密码" prop="confirmPassword">
+                  <el-form-item :label="t('profile.confirmPassword')" prop="confirmPassword">
                     <el-input
                       v-model="passwordForm.confirmPassword"
                       type="password"
-                      placeholder="请再次输入新密码"
+                      :placeholder="t('profile.confirmRequired')"
                       show-password
                       maxlength="32"
                       autocomplete="new-password"
@@ -169,9 +171,9 @@
                       @click="handleChangePassword"
                       :loading="changingPassword"
                     >
-                      保存
+                      {{ t('common.save') }}
                     </el-button>
-                    <el-button @click="handleReset">关闭</el-button>
+                    <el-button @click="handleReset">{{ t('common.close') }}</el-button>
                   </el-form-item>
                 </el-form>
               </el-tab-pane>
@@ -200,7 +202,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { t, currentLocale } from '@/core/i18n'
+
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Phone, Message, OfficeBuilding, Medal, Calendar } from '@element-plus/icons-vue'
@@ -253,32 +257,46 @@ const roleNames = computed(() => {
   return account.roles.map(role => role.description || role.name)
 })
 
-const rules = {
+const rules = computed(() => ({
   fullName: [
-    { required: true, message: '请输入用户昵称', trigger: 'blur' },
-    { min: 1, max: 50, message: '用户昵称长度为1-50个字符', trigger: 'blur' }
+    { required: true, message: t('profile.nicknameRequired'), trigger: 'blur' },
+    { min: 1, max: 50, message: t('profile.nicknameLength'), trigger: 'blur' }
   ],
-  email: [{ type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }]
-}
+  email: [{ type: 'email', message: t('profile.emailInvalid'), trigger: 'blur' }]
+}))
 
 const validateConfirmPassword = (rule, value, callback) => {
   if (value !== passwordForm.password) {
-    callback(new Error('两次输入的密码不一致'))
+    callback(new Error(t('profile.passwordMismatch')))
   } else {
     callback()
   }
 }
 
-const passwordRules = {
+const passwordRules = computed(() => ({
   password: [
-    { required: true, message: '请输入新密码', trigger: 'blur' },
-    { min: 8, max: 32, message: '密码长度为8-32位', trigger: 'blur' }
+    { required: true, message: t('profile.passwordRequired'), trigger: 'blur' },
+    { min: 8, max: 32, message: t('profile.passwordLength'), trigger: 'blur' }
   ],
   confirmPassword: [
-    { required: true, message: '请再次输入新密码', trigger: 'blur' },
+    { required: true, message: t('profile.confirmRequired'), trigger: 'blur' },
     { validator: validateConfirmPassword, trigger: 'blur' }
   ]
-}
+}))
+
+// Refresh already-visible errors without validating untouched fields or changing drafts.
+watch(
+  currentLocale,
+  () => {
+    for (const instance of [formRef.value, passwordFormRef.value]) {
+      const invalid = instance?.fields
+        ?.filter(field => field.validateState === 'error')
+        .map(field => field.prop)
+      if (invalid?.length) void instance.validateField(invalid).catch(() => {})
+    }
+  },
+  { flush: 'post' }
+)
 
 function getUploadBaseUrl() {
   // 文件上传服务基础路径
@@ -289,7 +307,7 @@ function formatDate(dateStr) {
   if (!dateStr) return '-'
   try {
     const date = new Date(dateStr)
-    return date.toLocaleString('zh-CN', {
+    return date.toLocaleString(currentLocale.value, {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -338,7 +356,7 @@ async function loadAccount() {
     }
   } catch (error) {
     console.error('Failed to load account:', error)
-    ElMessage.error('加载用户信息失败')
+    ElMessage.error(t('profile.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -381,11 +399,11 @@ async function handleSave() {
     await accountService.getAccount({ forceRefresh: true }).catch(() => null)
     window.dispatchEvent(new CustomEvent('account-updated'))
 
-    ElMessage.success('保存成功')
+    ElMessage.success(t('profile.saved'))
     loadAccount()
   } catch (error) {
     console.error('Failed to save account:', error)
-    ElMessage.error('保存失败')
+    ElMessage.error(t('profile.saveFailed'))
   } finally {
     saving.value = false
   }
@@ -401,7 +419,7 @@ const tempAvatarPath = ref('')
 
 async function handleAvatarChange(file) {
   if (file.raw.size > 20 * 1024 * 1024) {
-    ElMessage.warning('图片大小不能超过20MB')
+    ElMessage.warning(t('profile.avatarSize'))
     return
   }
 
@@ -431,13 +449,13 @@ async function handleAvatarChange(file) {
       // 更新表单中的 imageUrl
       form.imageUrl = uploadedFile.path
 
-      ElMessage.success('头像上传成功，请点击保存按钮保存更改')
+      ElMessage.success(t('profile.avatarUploaded'))
     } else {
-      ElMessage.error(data.message || '头像上传失败')
+      ElMessage.error(data.message || t('profile.avatarFailed'))
     }
   } catch (error) {
     console.error('Failed to upload avatar:', error)
-    ElMessage.error('头像上传失败')
+    ElMessage.error(t('profile.avatarFailed'))
   } finally {
     uploadingAvatar.value = false
   }
@@ -458,11 +476,11 @@ async function handleChangePassword() {
       },
       transformRequest: [data => data]
     })
-    ElMessage.success('密码修改成功')
+    ElMessage.success(t('profile.passwordChanged'))
     resetPasswordForm()
   } catch (error) {
     console.error('Failed to change password:', error)
-    ElMessage.error('密码修改失败')
+    ElMessage.error(t('profile.passwordFailed'))
   } finally {
     changingPassword.value = false
   }

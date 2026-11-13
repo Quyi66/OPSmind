@@ -7,7 +7,7 @@
           <template #label>
             <span class="tab-label">
               <i class="fa fa-folder" style="margin-right: 4px"></i>
-              分组
+              {{ t('asset.group') }}
             </span>
           </template>
         </el-tab-pane>
@@ -15,7 +15,7 @@
           <template #label>
             <span class="tab-label">
               <i class="fa fa-tags" style="margin-right: 4px"></i>
-              标签
+              {{ t('asset.tag') }}
             </span>
           </template>
         </el-tab-pane>
@@ -30,10 +30,10 @@
           <!-- 筛选区 -->
           <div class="ops-filter-bar">
             <el-form :inline="true" size="small" @submit.prevent>
-              <el-form-item label="关键词">
+              <el-form-item :label="t('asset.keyword')">
                 <el-input
                   v-model="groupFilter.keyword"
-                  placeholder="搜索分组路径..."
+                  :placeholder="t('asset.searchGroupPath')"
                   style="width: 200px"
                   clearable
                   @keyup.enter="handleGroupSearch"
@@ -42,11 +42,11 @@
               <el-form-item class="filter-actions">
                 <el-button type="primary" @click="handleGroupSearch">
                   <el-icon><Search /></el-icon>
-                  搜索
+                  {{ t('common.search') }}
                 </el-button>
                 <el-button @click="handleGroupReset">
                   <el-icon><RefreshRight /></el-icon>
-                  重置
+                  {{ t('common.reset') }}
                 </el-button>
               </el-form-item>
             </el-form>
@@ -56,7 +56,7 @@
           <div class="ops-action-bar">
             <el-button size="small" @click="handleAddGroup" type="primary">
               <i class="fa fa-folder-plus" style="margin-right: 4px"></i>
-              新建分组
+              {{ t('asset.newGroup') }}
             </el-button>
             <span style="flex: 1"></span>
             <el-button
@@ -65,7 +65,7 @@
               size="small"
               :loading="groupLoading"
               @click="loadGroupList"
-              title="刷新"
+              :title="t('common.refresh')"
             >
               <el-icon v-show="!groupLoading"><Refresh /></el-icon>
             </el-button>
@@ -81,7 +81,7 @@
               :default-sort="groupSort"
               @sort-change="handleGroupSortChange"
             >
-              <el-table-column prop="path" label="分组路径" min-width="220" sortable="custom">
+              <el-table-column prop="path" :label="t('asset.groupPath')" min-width="220" sortable="custom">
                 <template #default="{ row }">
                   <el-link
                     type="primary"
@@ -94,32 +94,32 @@
                   </el-link>
                 </template>
               </el-table-column>
-              <el-table-column prop="ci_type" label="适用资产类型" width="160" sortable="custom">
+              <el-table-column prop="ci_type" :label="t('asset.applicableType')" width="160" sortable="custom">
                 <template #default="{ row }">
                   <span class="cit-display">{{ row.ci_type || '-' }}</span>
                 </template>
               </el-table-column>
               <el-table-column
                 prop="total"
-                label="已绑主机数"
+                :label="t('asset.boundHostCount')"
                 width="120"
                 align="left"
                 sortable="custom"
               >
                 <template #default="{ row }">
                   <el-tag size="small" type="info" round class="count-tag-badge">
-                    {{ row.total }} 台
+                    {{ t('asset.hostCount', { count: row.total }) }}
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="120" align="left" fixed="right">
+              <el-table-column :label="t('common.actions')" width="120" align="left" fixed="right">
                 <template #default="{ row }">
                   <div class="action-cell" v-if="row.path !== '/'">
                     <el-button text type="primary" size="small" @click="handleEditGroup(row)">
-                      编辑
+                      {{ t('common.edit') }}
                     </el-button>
                     <el-button text type="danger" size="small" @click="handleDeleteGroup(row)">
-                      删除
+                      {{ t('common.delete') }}
                     </el-button>
                   </div>
                 </template>
@@ -149,13 +149,13 @@
           <!-- 筛选区 -->
           <div class="ops-filter-bar">
             <el-form :inline="true" size="small" @submit.prevent>
-              <el-form-item label="类型">
+              <el-form-item :label="t('asset.type')">
                 <el-select
                   v-model="tagFilter.ciType"
                   style="width: 140px"
                   @change="handleTagSearch"
                 >
-                  <el-option label="全部" value="sjxy_all" />
+                  <el-option :label="t('common.all')" value="sjxy_all" />
                   <el-option
                     v-for="item in resourceTypes"
                     :key="item.code"
@@ -164,10 +164,10 @@
                   />
                 </el-select>
               </el-form-item>
-              <el-form-item label="关键词">
+              <el-form-item :label="t('asset.keyword')">
                 <el-input
                   v-model="tagFilter.keyword"
-                  placeholder="搜索标签名称..."
+                  :placeholder="t('asset.searchTagName')"
                   style="width: 200px"
                   clearable
                   @keyup.enter="handleTagSearch"
@@ -177,11 +177,11 @@
               <el-form-item class="filter-actions">
                 <el-button type="primary" @click="handleTagSearch">
                   <el-icon><Search /></el-icon>
-                  搜索
+                  {{ t('common.search') }}
                 </el-button>
                 <el-button @click="handleTagReset">
                   <el-icon><RefreshRight /></el-icon>
-                  重置
+                  {{ t('common.reset') }}
                 </el-button>
               </el-form-item>
             </el-form>
@@ -191,7 +191,7 @@
           <div class="ops-action-bar">
             <el-button type="primary" size="small" @click="handleAddTag">
               <i class="fa fa-plus" style="margin-right: 4px"></i>
-              新建标签
+              {{ t('asset.newTag') }}
             </el-button>
             <span style="flex: 1"></span>
             <el-button
@@ -200,7 +200,7 @@
               size="small"
               :loading="tagLoading"
               @click="loadTagList"
-              title="刷新"
+              :title="t('common.refresh')"
             >
               <el-icon v-show="!tagLoading"><Refresh /></el-icon>
             </el-button>
@@ -216,7 +216,7 @@
               :default-sort="tagSort"
               @sort-change="handleTagSortChange"
             >
-              <el-table-column prop="name" label="标签名称" min-width="220" sortable="custom">
+              <el-table-column prop="name" :label="t('asset.tagName')" min-width="220" sortable="custom">
                 <template #default="{ row }">
                   <el-link
                     type="primary"
@@ -231,32 +231,32 @@
                   </el-link>
                 </template>
               </el-table-column>
-              <el-table-column prop="ci_type" label="适用资产类型" width="160" sortable="custom">
+              <el-table-column prop="ci_type" :label="t('asset.applicableType')" width="160" sortable="custom">
                 <template #default="{ row }">
                   <span class="cit-display">{{ row.ci_type || '-' }}</span>
                 </template>
               </el-table-column>
               <el-table-column
                 prop="total"
-                label="已绑主机数"
+                :label="t('asset.boundHostCount')"
                 width="120"
                 align="left"
                 sortable="custom"
               >
                 <template #default="{ row }">
                   <el-tag size="small" type="info" round class="count-tag-badge">
-                    {{ row.total }} 台
+                    {{ t('asset.hostCount', { count: row.total }) }}
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="120" align="left" fixed="right">
+              <el-table-column :label="t('common.actions')" width="120" align="left" fixed="right">
                 <template #default="{ row }">
                   <div class="action-cell">
                     <el-button text type="primary" size="small" @click="handleEditTag(row)">
-                      编辑
+                      {{ t('common.edit') }}
                     </el-button>
                     <el-button text type="danger" size="small" @click="handleDeleteTag(row)">
-                      删除
+                      {{ t('common.delete') }}
                     </el-button>
                   </div>
                 </template>
@@ -299,6 +299,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -475,7 +477,7 @@ const loadGroupList = async () => {
   } catch (error) {
     if (requestId !== groupRequestId) return
     console.error('加载分组列表失败:', error)
-    ElMessage.error('加载分组列表失败')
+    ElMessage.error(t('asset.groupsLoadFailed'))
   } finally {
     if (requestId === groupRequestId) groupLoading.value = false
   }
@@ -510,7 +512,7 @@ const loadTagList = async () => {
   } catch (error) {
     if (requestId !== tagRequestId) return
     console.error('加载标签列表失败:', error)
-    ElMessage.error('加载标签列表失败')
+    ElMessage.error(t('asset.tagsLoadFailed'))
   } finally {
     if (requestId === tagRequestId) tagLoading.value = false
   }
@@ -600,7 +602,7 @@ const handleEditGroup = row => {
 
 // 删除分组
 const handleDeleteGroup = row => {
-  ElMessageBox.confirm('确定要删除该分组吗？删除分组会将分组内的资产移动到根分组。', '删除确认', {
+  ElMessageBox.confirm(t('asset.deleteGroupConfirm'), t('asset.deleteConfirm'), {
     closeOnClickModal: false,
     closeOnPressEscape: false,
     type: 'warning'
@@ -609,11 +611,11 @@ const handleDeleteGroup = row => {
       try {
         const response = await dataManageApi.deleteGroup(row.id)
         throwIfWorkflowFailed(response)
-        ElMessage.success('删除成功')
+        ElMessage.success(t('asset.deleted'))
         loadGroupList()
       } catch (error) {
         console.error('删除分组失败:', error)
-        ElMessage.error(`删除失败: ${error.response?.data?.message || error.message}`)
+        ElMessage.error(t('asset.deleteFailedReason', { message: error.response?.data?.message || error.message }))
       }
     })
     .catch(() => {})
@@ -633,7 +635,7 @@ const handleEditTag = row => {
 
 // 删除标签
 const handleDeleteTag = row => {
-  ElMessageBox.confirm('确定要删除该标签吗？', '删除确认', {
+  ElMessageBox.confirm(t('asset.deleteTagConfirm'), t('asset.deleteConfirm'), {
     closeOnClickModal: false,
     closeOnPressEscape: false,
     type: 'warning'
@@ -642,11 +644,11 @@ const handleDeleteTag = row => {
       try {
         const response = await dataManageApi.deleteTag(row.id)
         throwIfWorkflowFailed(response)
-        ElMessage.success('删除成功')
+        ElMessage.success(t('asset.deleted'))
         loadTagList()
       } catch (error) {
         console.error('删除标签失败:', error)
-        ElMessage.error(`删除失败: ${error.response?.data?.message || error.message}`)
+        ElMessage.error(t('asset.deleteFailedReason', { message: error.response?.data?.message || error.message }))
       }
     })
     .catch(() => {})

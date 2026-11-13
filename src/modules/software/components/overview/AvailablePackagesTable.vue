@@ -28,8 +28,8 @@
           :loading="loading"
           :disabled="!!readError && !canRetry"
           @click="refresh"
-          :title="readError ? '重试读取' : '刷新'"
-          :aria-label="readError ? '重试读取可用软件包' : '刷新可用软件包'"
+          :title="readError ? t('yumRepo.software.retryRead') : t('common.refresh')"
+          :aria-label="readError ? t('yumRepo.software.retryPackages') : t('yumRepo.software.refreshPackages')"
         >
           <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
@@ -55,7 +55,7 @@
         size="small"
         height="100%"
       >
-        <el-table-column prop="pkg_name" label="名称" min-width="180" show-overflow-tooltip>
+        <el-table-column prop="pkg_name" :label="t('common.name')" min-width="180" show-overflow-tooltip>
           <template #default="{ row }">
             <el-button
               class="software-cell-link"
@@ -68,11 +68,11 @@
             </el-button>
           </template>
         </el-table-column>
-        <el-table-column prop="pkg_envra" label="软件包" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="pkg_arch" label="架构" width="100" />
-        <el-table-column prop="pkg_release" label="发行号" width="120" show-overflow-tooltip />
-        <el-table-column prop="pkg_version" label="版本号" width="120" show-overflow-tooltip />
-        <el-table-column prop="pkg_yumstate" label="软件状态" width="100">
+        <el-table-column prop="pkg_envra" :label="t('yumRepo.software.package')" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="pkg_arch" :label="t('yumRepo.architecture')" width="100" />
+        <el-table-column prop="pkg_release" :label="t('yumRepo.software.release')" width="120" show-overflow-tooltip />
+        <el-table-column prop="pkg_version" :label="t('yumRepo.version')" width="120" show-overflow-tooltip />
+        <el-table-column prop="pkg_yumstate" :label="t('yumRepo.software.softwareStatus')" width="100">
           <template #default="{ row }">
             <el-tag
               v-if="row.pkg_yumstate"
@@ -83,8 +83,8 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="repo_id" label="仓库ID" width="120" show-overflow-tooltip />
-        <el-table-column prop="scan_date" label="扫描时间" width="180">
+        <el-table-column prop="repo_id" :label="t('yumRepo.software.repoId')" width="120" show-overflow-tooltip />
+        <el-table-column prop="scan_date" :label="t('yumRepo.software.scannedAt')" width="180">
           <template #default="{ row }">
             {{ formatDate(row.scan_date) }}
           </template>
@@ -109,6 +109,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search, Refresh } from '@element-plus/icons-vue'
@@ -169,7 +171,7 @@ function handleSearch() {
 
 // 导出
 function handleExport() {
-  ElMessage.info('导出功能开发中')
+  ElMessage.info(t('yumRepo.software.exportPending'))
 }
 
 // 分页

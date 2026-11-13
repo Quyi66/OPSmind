@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="扫描详情"
+    :title="t('yumRepo.software.scanDetails')"
     width="min(1200px, calc(100vw - 32px))"
     destroy-on-close
     class="host-detail-dialog"
@@ -22,15 +22,15 @@
           {{ machineInfo.os_distro || '-' }} {{ machineInfo.os_version || '' }}
         </p>
         <p>
-          <strong>可用软件包：</strong>
+          <strong>{{ t('yumRepo.software.availablePackageLabel') }}</strong>
           {{ machineInfo.yum_count || 0 }}
         </p>
         <p>
-          <strong>已安装软件包：</strong>
+          <strong>{{ t('yumRepo.software.installedPackageLabel') }}</strong>
           {{ machineInfo.installed_count || 0 }}
         </p>
         <p>
-          <strong>上次扫描时间：</strong>
+          <strong>{{ t('yumRepo.software.lastScanLabel') }}</strong>
           {{ formatDate(machineInfo.scan_date) }}
         </p>
       </div>
@@ -41,19 +41,19 @@
       <el-tab-pane name="repos">
         <template #label>
           <i class="fa fa-laptop-house" />
-          仓库
+          {{ t('yumRepo.repository') }}
         </template>
       </el-tab-pane>
       <el-tab-pane name="available">
         <template #label>
           <i class="fa fa-cube" />
-          可用软件包
+          {{ t('yumRepo.software.availablePackages') }}
         </template>
       </el-tab-pane>
       <el-tab-pane name="installed">
         <template #label>
           <i class="fa fa-backpack" />
-          已安装软件包
+          {{ t('yumRepo.software.installedPackages') }}
         </template>
       </el-tab-pane>
     </el-tabs>
@@ -66,31 +66,31 @@
         <div class="filter-bar">
           <el-checkbox-group v-model="repoStatus" @change="loadRepos">
             <el-checkbox value="enabled">
-              <el-tag type="success" size="small">启用</el-tag>
+              <el-tag type="success" size="small">{{ t('yumRepo.enable') }}</el-tag>
             </el-checkbox>
             <el-checkbox value="disabled">
-              <el-tag type="warning" size="small">未启用</el-tag>
+              <el-tag type="warning" size="small">{{ t('yumRepo.software.notEnabled') }}</el-tag>
             </el-checkbox>
           </el-checkbox-group>
         </div>
         <el-table v-loading="reposLoading" :data="reposData" size="small" max-height="350px">
-          <el-table-column prop="repo_id" label="仓库" min-width="120" show-overflow-tooltip />
-          <el-table-column prop="repo_name" label="名称" min-width="150" show-overflow-tooltip />
+          <el-table-column prop="repo_id" :label="t('yumRepo.repository')" min-width="120" show-overflow-tooltip />
+          <el-table-column prop="repo_name" :label="t('common.name')" min-width="150" show-overflow-tooltip />
           <el-table-column
             prop="repo_file"
-            label="配置文件"
+            :label="t('yumRepo.software.configFile')"
             min-width="150"
             show-overflow-tooltip
           />
-          <el-table-column prop="repo_baseurl" label="地址" min-width="200" show-overflow-tooltip />
-          <el-table-column prop="repo_status" label="状态" width="80">
+          <el-table-column prop="repo_baseurl" :label="t('yumRepo.software.address')" min-width="200" show-overflow-tooltip />
+          <el-table-column prop="repo_status" :label="t('automation.workbench.status')" width="80">
             <template #default="{ row }">
               <el-tag :type="row.repo_status === '启用' ? 'success' : 'warning'" size="small">
                 {{ row.repo_status }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="176" fixed="right">
+          <el-table-column :label="t('common.actions')" width="176" fixed="right">
             <template #default="{ row, $index }">
               <div class="software-row-actions">
                 <el-button
@@ -101,7 +101,7 @@
                   :loading="isRepoActionLoading(row, $index)"
                   @click="handleEnableRepo(row, $index)"
                 >
-                  启用
+                  {{ t('yumRepo.enable') }}
                 </el-button>
                 <el-button
                   v-if="row.repo_status === '启用'"
@@ -111,10 +111,10 @@
                   :loading="isRepoActionLoading(row, $index)"
                   @click="handleDisableRepo(row, $index)"
                 >
-                  禁用
+                  {{ t('yumRepo.disable') }}
                 </el-button>
                 <el-button text type="danger" size="small" @click="handleDeleteRepo(row)">
-                  删除
+                  {{ t('common.delete') }}
                 </el-button>
               </div>
             </template>
@@ -145,7 +145,7 @@
             @click="handleInstallSelected"
           >
             <i class="fa fa-chevron-circle-right" />
-            安装选中的软件包
+            {{ t('yumRepo.software.installSelected') }}
           </el-button>
         </div>
         <el-table
@@ -157,12 +157,12 @@
           @selection-change="handleAvailableSelectionChange"
         >
           <el-table-column type="selection" width="45" />
-          <el-table-column prop="pkg_name" label="名称" min-width="150" show-overflow-tooltip />
-          <el-table-column prop="repo_id" label="仓库" width="120" show-overflow-tooltip />
-          <el-table-column prop="pkg_envra" label="软件包" min-width="200" show-overflow-tooltip />
-          <el-table-column prop="pkg_arch" label="架构" width="80" />
-          <el-table-column prop="pkg_version" label="版本号" width="100" show-overflow-tooltip />
-          <el-table-column prop="pkg_release" label="发行号" width="100" show-overflow-tooltip />
+          <el-table-column prop="pkg_name" :label="t('common.name')" min-width="150" show-overflow-tooltip />
+          <el-table-column prop="repo_id" :label="t('yumRepo.repository')" width="120" show-overflow-tooltip />
+          <el-table-column prop="pkg_envra" :label="t('yumRepo.software.package')" min-width="200" show-overflow-tooltip />
+          <el-table-column prop="pkg_arch" :label="t('yumRepo.architecture')" width="80" />
+          <el-table-column prop="pkg_version" :label="t('yumRepo.version')" width="100" show-overflow-tooltip />
+          <el-table-column prop="pkg_release" :label="t('yumRepo.software.release')" width="100" show-overflow-tooltip />
         </el-table>
         <div class="ops-pagination-wrapper">
           <el-pagination
@@ -190,7 +190,7 @@
             @click="handleUninstallSelected"
           >
             <i class="fa fa-chevron-circle-right" />
-            卸载选中的软件包
+            {{ t('yumRepo.software.uninstallSelected') }}
           </el-button>
           <el-button
             type="primary"
@@ -200,7 +200,7 @@
             @click="handleUpgradeSelected"
           >
             <i class="fa fa-upload" />
-            升级选中的软件包
+            {{ t('yumRepo.software.upgradeSelected') }}
           </el-button>
           <el-button
             type="primary"
@@ -210,7 +210,7 @@
             @click="handleRollbackSelected"
           >
             <i class="fa fa-undo-alt" />
-            回滚选中的软件包
+            {{ t('yumRepo.software.rollbackSelected') }}
           </el-button>
         </div>
         <el-table
@@ -222,12 +222,12 @@
           @selection-change="handleInstalledSelectionChange"
         >
           <el-table-column type="selection" width="45" />
-          <el-table-column prop="pkg_id" label="软件包" min-width="200" show-overflow-tooltip />
-          <el-table-column prop="pkg_name" label="名称" min-width="120" show-overflow-tooltip />
-          <el-table-column prop="pkg_version" label="安装版本" width="100" show-overflow-tooltip />
+          <el-table-column prop="pkg_id" :label="t('yumRepo.software.package')" min-width="200" show-overflow-tooltip />
+          <el-table-column prop="pkg_name" :label="t('common.name')" min-width="120" show-overflow-tooltip />
+          <el-table-column prop="pkg_version" :label="t('yumRepo.software.installedVersion')" width="100" show-overflow-tooltip />
           <el-table-column
             prop="available_pkg_version"
-            label="可升级版本"
+            :label="t('yumRepo.software.upgradableVersion')"
             width="110"
             show-overflow-tooltip
           >
@@ -237,13 +237,13 @@
               </span>
             </template>
           </el-table-column>
-          <el-table-column prop="pkg_arch" label="架构" width="80" />
-          <el-table-column prop="scan_timestamp" label="上次扫描时间" width="180">
+          <el-table-column prop="pkg_arch" :label="t('yumRepo.architecture')" width="80" />
+          <el-table-column prop="scan_timestamp" :label="t('yumRepo.software.lastScannedAt')" width="180">
             <template #default="{ row }">
               {{ formatDate(row.scan_timestamp) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="102" fixed="right">
+          <el-table-column :label="t('common.actions')" width="102" fixed="right">
             <template #default="{ row, $index }">
               <div class="software-row-actions">
                 <el-button
@@ -253,7 +253,7 @@
                   size="small"
                   @click="handleUpgradePackage(row)"
                 >
-                  升级
+                  {{ t('yumRepo.software.upgrade') }}
                 </el-button>
                 <el-button
                   v-if="row.available_pkg_version === '无'"
@@ -263,7 +263,7 @@
                   :loading="isInstalledActionLoading(row, $index)"
                   @click="handleRollbackPackage(row, $index)"
                 >
-                  回滚
+                  {{ t('yumRepo.software.rollback') }}
                 </el-button>
               </div>
             </template>
@@ -287,6 +287,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, reactive, watch, onBeforeUnmount } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { hostOverviewApi } from '../../api'
@@ -441,7 +443,7 @@ function startHostPolling(context, runId, options) {
     onError: result => {
       if (!isContextCurrent(context)) return
       ElMessage.error(
-        result instanceof Error ? '获取任务状态失败' : result?.error || options.errorMessage
+        result instanceof Error ? t('yumRepo.software.taskStatusFailed') : result?.error || options.errorMessage
       )
     },
     onComplete: result => {
@@ -617,7 +619,7 @@ async function handleEnableRepo(row, index) {
     repoFile: row.repo_file
   }
   try {
-    await ElMessageBox.confirm('确认启用该镜像源？', '确认', {
+    await ElMessageBox.confirm(t('yumRepo.software.enableRepoConfirm'), t('common.confirm'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'info'
@@ -634,8 +636,8 @@ async function handleEnableRepo(row, index) {
     if (runResult?.runId) {
       startHostPolling(context, runResult.runId, {
         interval: 1000,
-        successMessage: '启用成功',
-        errorMessage: '启用失败',
+        get successMessage() { return t('yumRepo.software.enabled') },
+        get errorMessage() { return t('yumRepo.software.enableFailed') },
         onSuccess: () => {
           loadRepos()
         },
@@ -644,7 +646,7 @@ async function handleEnableRepo(row, index) {
         }
       })
     } else {
-      ElMessage.success('启用成功')
+      ElMessage.success(t('yumRepo.software.enabled'))
       loadRepos()
       setRepoActionLoading(loadingKey, false)
     }
@@ -652,7 +654,7 @@ async function handleEnableRepo(row, index) {
     if (!isContextCurrent(context)) return
     setRepoActionLoading(loadingKey, false)
     if (error !== 'cancel' && error !== 'close') {
-      ElMessage.error('启用失败')
+      ElMessage.error(t('yumRepo.software.enableFailed'))
     }
   }
 }
@@ -671,7 +673,7 @@ async function handleDisableRepo(row, index) {
     repoFile: row.repo_file
   }
   try {
-    await ElMessageBox.confirm('确认禁用该镜像源？', '确认', {
+    await ElMessageBox.confirm(t('yumRepo.software.disableRepoConfirm'), t('common.confirm'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning'
@@ -688,8 +690,8 @@ async function handleDisableRepo(row, index) {
     if (runResult?.runId) {
       startHostPolling(context, runResult.runId, {
         interval: 1000,
-        successMessage: '禁用成功',
-        errorMessage: '禁用失败',
+        get successMessage() { return t('yumRepo.software.disabled') },
+        get errorMessage() { return t('yumRepo.software.disableFailed') },
         onSuccess: () => {
           loadRepos()
         },
@@ -698,7 +700,7 @@ async function handleDisableRepo(row, index) {
         }
       })
     } else {
-      ElMessage.success('禁用成功')
+      ElMessage.success(t('yumRepo.software.disabled'))
       loadRepos()
       setRepoActionLoading(loadingKey, false)
     }
@@ -706,7 +708,7 @@ async function handleDisableRepo(row, index) {
     if (!isContextCurrent(context)) return
     setRepoActionLoading(loadingKey, false)
     if (error !== 'cancel' && error !== 'close') {
-      ElMessage.error('禁用失败')
+      ElMessage.error(t('yumRepo.software.disableFailed'))
     }
   }
 }
@@ -721,7 +723,7 @@ async function handleDeleteRepo(row) {
     repoFile: row.repo_file
   }
   try {
-    await ElMessageBox.confirm('确认删除该仓库？', '确认删除', {
+    await ElMessageBox.confirm(t('yumRepo.software.deleteHostRepoConfirm'), t('automation.list.confirmDelete'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning'
@@ -729,12 +731,12 @@ async function handleDeleteRepo(row) {
     if (!isContextCurrent(context)) return
     await hostOverviewApi.deleteHostRepo(payload)
     if (!isContextCurrent(context)) return
-    ElMessage.success('删除成功')
+    ElMessage.success(t('automation.workbench.deleted'))
     loadRepos()
   } catch (error) {
     if (!isContextCurrent(context)) return
     if (error !== 'cancel' && error !== 'close') {
-      ElMessage.error('删除失败')
+      ElMessage.error(t('automation.workbench.deleteFailed'))
     }
   }
 }
@@ -792,7 +794,7 @@ async function handleInstallSelected() {
     hostId: context.hostId
   }
   try {
-    await ElMessageBox.confirm('确认安装选中的软件包？', '确认', {
+    await ElMessageBox.confirm(t('yumRepo.software.installSelectedConfirm'), t('common.confirm'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'info'
@@ -800,12 +802,12 @@ async function handleInstallSelected() {
     if (!isContextCurrent(context)) return
     await hostOverviewApi.installPackages(payload)
     if (!isContextCurrent(context)) return
-    ElMessage.success('安装任务已提交')
+    ElMessage.success(t('yumRepo.software.installSubmitted'))
     loadAvailablePackages()
   } catch (error) {
     if (!isContextCurrent(context)) return
     if (error !== 'cancel' && error !== 'close') {
-      ElMessage.error('安装失败')
+      ElMessage.error(t('yumRepo.software.installFailed'))
     }
   }
 }
@@ -820,7 +822,7 @@ async function handleUninstallSelected() {
     hostId: context.hostId
   }
   try {
-    await ElMessageBox.confirm('确认卸载选中的软件包？', '确认', {
+    await ElMessageBox.confirm(t('yumRepo.software.uninstallSelectedConfirm'), t('common.confirm'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning'
@@ -837,8 +839,8 @@ async function handleUninstallSelected() {
     if (runResult?.runId) {
       startHostPolling(context, runResult.runId, {
         interval: 2000,
-        successMessage: '卸载成功',
-        errorMessage: '卸载失败',
+        get successMessage() { return t('yumRepo.software.uninstalled') },
+        get errorMessage() { return t('yumRepo.software.uninstallFailed') },
         onSuccess: () => {
           loadInstalledPackages()
         },
@@ -847,7 +849,7 @@ async function handleUninstallSelected() {
         }
       })
     } else {
-      ElMessage.success('卸载任务已提交')
+      ElMessage.success(t('yumRepo.software.uninstallSubmitted'))
       loadInstalledPackages()
       uninstallSelectedLoading.value = false
     }
@@ -855,7 +857,7 @@ async function handleUninstallSelected() {
     if (!isContextCurrent(context)) return
     uninstallSelectedLoading.value = false
     if (error !== 'cancel' && error !== 'close') {
-      ElMessage.error('卸载失败')
+      ElMessage.error(t('yumRepo.software.uninstallFailed'))
     }
   }
 }
@@ -870,7 +872,7 @@ async function handleUpgradeSelected() {
     hostId: context.hostId
   }
   try {
-    await ElMessageBox.confirm('确认升级选中的软件包？', '确认', {
+    await ElMessageBox.confirm(t('yumRepo.software.upgradeSelectedConfirm'), t('common.confirm'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'info'
@@ -887,8 +889,8 @@ async function handleUpgradeSelected() {
     if (runResult?.runId) {
       startHostPolling(context, runResult.runId, {
         interval: 2000,
-        successMessage: '升级成功',
-        errorMessage: '升级失败',
+        get successMessage() { return t('yumRepo.software.upgraded') },
+        get errorMessage() { return t('yumRepo.software.upgradeFailed') },
         onSuccess: () => {
           loadInstalledPackages()
         },
@@ -897,7 +899,7 @@ async function handleUpgradeSelected() {
         }
       })
     } else {
-      ElMessage.success('升级任务已提交')
+      ElMessage.success(t('yumRepo.software.upgradeSubmitted'))
       loadInstalledPackages()
       upgradeSelectedLoading.value = false
     }
@@ -905,7 +907,7 @@ async function handleUpgradeSelected() {
     if (!isContextCurrent(context)) return
     upgradeSelectedLoading.value = false
     if (error !== 'cancel' && error !== 'close') {
-      ElMessage.error('升级失败')
+      ElMessage.error(t('yumRepo.software.upgradeFailed'))
     }
   }
 }
@@ -920,7 +922,7 @@ async function handleRollbackSelected() {
     hostId: context.hostId
   }
   try {
-    await ElMessageBox.confirm('确认回滚选中的软件包？', '确认', {
+    await ElMessageBox.confirm(t('yumRepo.software.rollbackSelectedConfirm'), t('common.confirm'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning'
@@ -929,12 +931,12 @@ async function handleRollbackSelected() {
     rollbackSelectedLoading.value = true
     await hostOverviewApi.rollbackPackages(payload)
     if (!isContextCurrent(context)) return
-    ElMessage.success('回滚任务已提交')
+    ElMessage.success(t('yumRepo.software.rollbackSubmitted'))
     loadInstalledPackages()
   } catch (error) {
     if (!isContextCurrent(context)) return
     if (error !== 'cancel' && error !== 'close') {
-      ElMessage.error('回滚失败')
+      ElMessage.error(t('yumRepo.software.rollbackFailed'))
     }
   } finally {
     if (isContextCurrent(context)) {
@@ -952,7 +954,7 @@ async function handleUpgradePackage(row) {
     hostId: context.hostId
   }
   try {
-    await ElMessageBox.confirm('确认升级该软件包？', '确认', {
+    await ElMessageBox.confirm(t('yumRepo.software.upgradeConfirm'), t('common.confirm'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'info'
@@ -960,12 +962,12 @@ async function handleUpgradePackage(row) {
     if (!isContextCurrent(context)) return
     await hostOverviewApi.upgradePackages(payload)
     if (!isContextCurrent(context)) return
-    ElMessage.success('升级任务已提交')
+    ElMessage.success(t('yumRepo.software.upgradeSubmitted'))
     loadInstalledPackages()
   } catch (error) {
     if (!isContextCurrent(context)) return
     if (error !== 'cancel' && error !== 'close') {
-      ElMessage.error('升级失败')
+      ElMessage.error(t('yumRepo.software.upgradeFailed'))
     }
   }
 }
@@ -980,7 +982,7 @@ async function handleRollbackPackage(row, index) {
     hostId: context.hostId
   }
   try {
-    await ElMessageBox.confirm('确认回滚该软件包？', '确认', {
+    await ElMessageBox.confirm(t('yumRepo.software.rollbackConfirm'), t('common.confirm'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning'
@@ -989,12 +991,12 @@ async function handleRollbackPackage(row, index) {
     setInstalledActionLoading(loadingKey, true)
     await hostOverviewApi.rollbackPackages(payload)
     if (!isContextCurrent(context)) return
-    ElMessage.success('回滚任务已提交')
+    ElMessage.success(t('yumRepo.software.rollbackSubmitted'))
     loadInstalledPackages()
   } catch (error) {
     if (!isContextCurrent(context)) return
     if (error !== 'cancel' && error !== 'close') {
-      ElMessage.error('回滚失败')
+      ElMessage.error(t('yumRepo.software.rollbackFailed'))
     }
   } finally {
     if (isContextCurrent(context)) {

@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    title="文件审核"
+    :title="t('automation.library.fileReview')"
     width="600px"
     @update:model-value="emit('update:modelValue', $event)"
     @closed="handleClosed"
@@ -9,13 +9,13 @@
     :close-on-click-modal="false"
   >
     <div v-if="selectedFiles.length === 0" class="empty-notice">
-      <el-alert type="warning" :closable="false" show-icon>请先选择要审核的文件</el-alert>
+      <el-alert type="warning" :closable="false" show-icon>{{ t('automation.library.selectFilesFirst') }}</el-alert>
     </div>
 
     <template v-else>
       <!-- 已选文件列表 -->
       <div class="selected-files-summary">
-        <el-tag type="info">已选择 {{ selectedFiles.length }} 个文件</el-tag>
+        <el-tag type="info">{{ t('automation.library.reviewFileCount', { count: selectedFiles.length }) }}</el-tag>
       </div>
 
       <!-- 审核操作选择 -->
@@ -26,7 +26,7 @@
           @click="form.action = 'PUBLISHED'"
         >
           <!-- <i class="fa fa-check" /> -->
-          通过
+          {{ t('automation.workbench.approve') }}
         </el-button>
         <el-button
           :type="form.action === 'REJECTED' ? 'danger' : ''"
@@ -34,7 +34,7 @@
           @click="form.action = 'REJECTED'"
         >
           <!-- <i class="fa fa-times" /> -->
-          拒绝
+          {{ t('automation.workbench.reject') }}
         </el-button>
         <el-button
           :type="form.action === 'REVERT' ? 'warning' : ''"
@@ -42,37 +42,39 @@
           @click="form.action = 'REVERT'"
         >
           <!-- <i class="fa fa-undo" /> -->
-          撤销
+          {{ t('automation.library.revoke') }}
         </el-button>
       </div>
 
       <!-- 备注 -->
       <div class="comment-section">
-        <label class="comment-label">备注说明</label>
+        <label class="comment-label">{{ t('automation.library.notes') }}</label>
         <el-input
           v-model="form.comment"
           type="textarea"
           :rows="3"
-          placeholder="请输入备注说明（可选）"
+          :placeholder="t('automation.library.optionalNotes')"
         />
       </div>
     </template>
 
     <template #footer>
-      <el-button @click="emit('update:modelValue', false)">取消</el-button>
+      <el-button @click="emit('update:modelValue', false)">{{ t('common.cancel') }}</el-button>
       <el-button
         type="primary"
         :loading="submitting"
         :disabled="!form.action || selectedFiles.length === 0"
         @click="handleSubmit"
       >
-        确定
+        {{ t('automation.file.confirm') }}
       </el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as gfsApi from '@/modules/automation/api/gfs'
@@ -114,12 +116,12 @@ const selectedFiles = computed(() => props.files || [])
 // 提交审核
 async function handleSubmit() {
   if (!form.value.action) {
-    ElMessage.warning('请选择审核操作')
+    ElMessage.warning(t('automation.library.selectReviewAction'))
     return
   }
 
   if (selectedFiles.value.length === 0) {
-    ElMessage.warning('请选择要审核的文件')
+    ElMessage.warning(t('automation.library.selectReviewFiles'))
     return
   }
 
@@ -141,12 +143,12 @@ async function handleSubmit() {
       )
     }
 
-    ElMessage.success('操作成功')
+    ElMessage.success(t('automation.approval.operationSucceeded'))
     reviewStore.fetchScriptCount()
     emit('update:modelValue', false)
     emit('success')
   } catch (error) {
-    ElMessage.error(error?.message || '操作失败')
+    ElMessage.error(error?.message || t('automation.schedule.operationFailed'))
   } finally {
     submitting.value = false
   }

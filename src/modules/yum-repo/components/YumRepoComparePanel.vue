@@ -3,12 +3,12 @@
     <div class="win-patch-yum-form-card">
       <el-form label-width="60px" class="win-patch-filter-form" @submit.prevent>
         <div class="win-patch-filter-row">
-          <el-form-item label="仓库" class="win-patch-filter-item">
+          <el-form-item :label="t('yumRepo.repository')" class="win-patch-filter-item">
             <el-select
               v-model="compareSelectedRepoModel"
               clearable
               filterable
-              placeholder="请选择仓库"
+              :placeholder="t('yumRepo.selectRepo')"
               style="width: 350px" @change="handleCompare">
               <el-option
                 v-for="item in compareRepoOptions"
@@ -27,7 +27,7 @@
             >
               {{ compareActionLabel }}
             </el-button>
-            <el-button @click="handleReset">重置</el-button>
+            <el-button @click="handleReset">{{ t('common.reset') }}</el-button>
           </div>
           <div v-if="selectedSourceOverview" class="win-patch-filter-status">
             <el-tag :type="getCollectStatusTagType(selectedSourceOverview)" effect="plain">
@@ -39,7 +39,7 @@
     </div>
 
     <div v-if="!selectedSourceOverview" class="win-patch-yum-empty">
-      <el-empty description="请选择仓库后查看补丁比对结果" />
+      <el-empty :description="t('yumRepo.selectCompareHint')" />
     </div>
 
     <template v-else>
@@ -53,14 +53,14 @@
 
       <div v-if="diffRunId" class="win-patch-yum-section">
         <div class="win-patch-yum-section__header">
-          <div class="win-patch-yum-section__title">补丁视图</div>
+          <div class="win-patch-yum-section__title">{{ t('yumRepo.patchView') }}</div>
         </div>
 
         <div class="win-patch-yum-patch-filter-bar">
           <el-input
             v-model="patchViewFilters.keyword"
             clearable
-            placeholder="搜索补丁 ID 或补丁标题"
+            :placeholder="t('yumRepo.searchPatches')"
             class="win-patch-yum-patch-filter-bar__keyword"
             @keyup.enter="handlePatchViewSearch"
             @clear="handlePatchViewSearch"
@@ -68,7 +68,7 @@
           <el-select
             v-model="patchViewFilters.status"
             clearable
-            placeholder="全部状态"
+            :placeholder="t('yumRepo.allStatuses')"
             class="win-patch-yum-patch-filter-bar__status"
             @change="handlePatchViewFilterChange"
           >
@@ -80,8 +80,8 @@
             />
           </el-select>
           <div class="win-patch-yum-patch-filter-bar__actions">
-            <el-button type="primary" plain @click="handlePatchViewSearch">搜索</el-button>
-            <el-button @click="handlePatchViewReset">清空筛选</el-button>
+            <el-button type="primary" plain @click="handlePatchViewSearch">{{ t('common.search') }}</el-button>
+            <el-button @click="handlePatchViewReset">{{ t('yumRepo.clearFilters') }}</el-button>
           </div>
         </div>
 
@@ -93,17 +93,17 @@
             class="natural-height-table"
             :empty-text="patchViewEmptyText"
           >
-            <el-table-column label="补丁 ID" min-width="170" show-overflow-tooltip>
+            <el-table-column :label="t('yumRepo.patchId')" min-width="170" show-overflow-tooltip>
               <template #default="{ row }">
                 {{ pickValue(row, ['patchId', 'patch_id'], '-') }}
               </template>
             </el-table-column>
-            <el-table-column label="补丁标题" min-width="260" show-overflow-tooltip>
+            <el-table-column :label="t('yumRepo.patchTitle')" min-width="260" show-overflow-tooltip>
               <template #default="{ row }">
                 {{ pickValue(row, ['patchTitle', 'patch_title'], '-') }}
               </template>
             </el-table-column>
-            <el-table-column label="严重等级" width="120" align="center">
+            <el-table-column :label="t('yumRepo.severity')" width="120" align="center">
               <template #default="{ row }">
                 <el-tag
                   size="small"
@@ -114,47 +114,47 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="状态" width="110" align="center">
+            <el-table-column :label="t('common.status')" width="110" align="center">
               <template #default="{ row }">
                 <el-tag size="small" :type="getPatchSatisfiedTagType(row)">
                   {{ getPatchSatisfiedLabel(row) }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="影响主机" width="110" align="center">
+            <el-table-column :label="t('yumRepo.affectedHosts')" width="110" align="center">
               <template #default="{ row }">
                 {{ pickValue(row, ['affectedHostCount', 'affected_host_count'], 0) }}
               </template>
             </el-table-column>
-            <el-table-column label="总包数" width="90" align="center">
+            <el-table-column :label="t('yumRepo.totalPackages')" width="90" align="center">
               <template #default="{ row }">
                 {{ pickValue(row, ['totalPkgs', 'total_pkgs'], 0) }}
               </template>
             </el-table-column>
-            <el-table-column label="满足" width="90" align="center">
+            <el-table-column :label="t('yumRepo.satisfied')" width="90" align="center">
               <template #default="{ row }">
                 {{ pickValue(row, ['availableCount', 'available_count'], 0) }}
               </template>
             </el-table-column>
-            <el-table-column label="缺失" width="90" align="center">
+            <el-table-column :label="t('yumRepo.missing')" width="90" align="center">
               <template #default="{ row }">
                 {{ pickValue(row, ['missingCount', 'missing_count'], 0) }}
               </template>
             </el-table-column>
-            <el-table-column label="版本不足" width="100" align="center">
+            <el-table-column :label="t('yumRepo.outdated')" width="100" align="center">
               <template #default="{ row }">
                 {{ pickValue(row, ['outdatedCount', 'outdated_count'], 0) }}
               </template>
             </el-table-column>
-            <el-table-column label="发行版不匹配" width="130" align="center">
+            <el-table-column :label="t('yumRepo.releaseMismatch')" width="130" align="center">
               <template #default="{ row }">
                 {{ pickValue(row, ['releaseMismatchCount', 'release_mismatch_count'], 0) }}
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="90" fixed="right" align="center">
+            <el-table-column :label="t('common.actions')" width="90" fixed="right" align="center">
               <template #default="{ row }">
                 <el-button text type="primary" size="small" @click="handleOpenDetail(row)">
-                  详情
+                  {{ t('yumRepo.details') }}
                 </el-button>
               </template>
             </el-table-column>
@@ -177,7 +177,7 @@
 
       <div v-else class="win-patch-yum-empty">
         <el-empty
-          description="当前仓库暂无补丁比对结果，可等待自动比对完成；如长时间未出现可手动重试"
+          :description="t('yumRepo.pendingCompareHint')"
         />
       </div>
     </template>
@@ -187,6 +187,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import YumRepoPatchDetailDialog from './YumRepoPatchDetailDialog.vue'
@@ -266,8 +268,8 @@ const patchViewFilters = reactive({
 })
 
 const PATCH_VIEW_STATUS_OPTIONS = [
-  { label: '仅满足', value: 'SATISFIED' },
-  { label: '仅不满足', value: 'NOT_SATISFIED' }
+  { get label() { return t('yumRepo.onlySatisfied') }, value: 'SATISFIED' },
+  { get label() { return t('yumRepo.onlyUnsatisfied') }, value: 'NOT_SATISFIED' }
 ]
 
 const overviewSources = computed(() => {
@@ -341,14 +343,14 @@ const canCompare = computed(() => {
 
 const compareActionLabel = computed(() => {
   return diffRunId.value || selectedSourceOverview.value?.diffRunId
-    ? '重新执行比对'
-    : '手动执行比对'
+    ? t('yumRepo.compareAgain')
+    : t('yumRepo.compareManuallyTitle')
 })
 
 const patchViewEmptyText = computed(() => {
   return patchViewFilters.status || patchViewFilters.keyword
-    ? '当前筛选条件下暂无补丁结果'
-    : '暂无补丁比对结果'
+    ? t('yumRepo.noFilteredPatches')
+    : t('yumRepo.noComparison')
 })
 
 const selectedSourceHint = computed(() => {
@@ -448,7 +450,7 @@ async function loadPatchView(options = {}) {
       isPatchViewRequestCurrent(requestId, contextId, repoId, currentDiffRunId)
     ) {
       console.error('加载补丁视图失败:', error)
-      ElMessage.error('加载补丁视图失败')
+      ElMessage.error(t('yumRepo.patchViewFailed'))
     }
   } finally {
     if (isPatchViewRequestCurrent(requestId, contextId, repoId, currentDiffRunId)) {
@@ -461,17 +463,17 @@ async function handleCompare(options = {}) {
   const repoId = getCurrentRepoId()
   const configId = selectedConfigId.value
   if (!repoId) {
-    ElMessage.warning('请先选择仓库')
+    ElMessage.warning(t('yumRepo.selectRepoFirst'))
     return
   }
 
   if (!canCompare.value) {
-    ElMessage.warning('当前仓库尚未采集成功，请先完成采集')
+    ElMessage.warning(t('yumRepo.collectSucceededRequired'))
     return
   }
 
   if (!configId) {
-    ElMessage.warning('当前仓库配置无效，请重新选择')
+    ElMessage.warning(t('yumRepo.invalidConfig'))
     return
   }
 
@@ -489,7 +491,7 @@ async function handleCompare(options = {}) {
 
     if (data?.success === false) {
       const bizMsg = String(data?.message || '').trim()
-      ElMessage.error(bizMsg || '执行补丁比对失败')
+      ElMessage.error(bizMsg || t('yumRepo.compareFailed'))
       return
     }
 
@@ -506,13 +508,13 @@ async function handleCompare(options = {}) {
     }
 
     if (!options.silentSuccess) {
-      ElMessage.success('补丁比对已完成')
+      ElMessage.success(t('yumRepo.compared'))
     }
   } catch (error) {
     if (isCompareRequestCurrent(requestId, contextId, repoId)) {
       console.error('执行补丁比对失败:', error)
       const errMsg = String(error?.response?.data?.message || error?.message || '').trim()
-      ElMessage.error(errMsg || '执行补丁比对失败')
+      ElMessage.error(errMsg || t('yumRepo.compareFailed'))
     }
   } finally {
     if (isCompareRequestCurrent(requestId, contextId, repoId)) {
@@ -563,7 +565,7 @@ function getPatchSatisfiedTagType(row) {
 }
 
 function getPatchSatisfiedLabel(row) {
-  return normalizeBoolean(pickValue(row, ['satisfied'], false)) ? '满足' : '不满足'
+  return normalizeBoolean(pickValue(row, ['satisfied'], false)) ? t('yumRepo.satisfied') : t('yumRepo.unsatisfied')
 }
 
 function handleOpenDetail(row) {
@@ -574,15 +576,15 @@ function handleOpenDetail(row) {
 function getOverviewHint(row) {
   const status = String(pickValue(row, ['collectStatus', 'collect_status'], '')).trim()
   if (!status || status === 'NOT_COLLECTED' || status === 'UNCOLLECTED') {
-    return '尚未采集'
+    return t('yumRepo.notCollectedYet')
   }
   if (status === 'FAILED') {
-    return '最近一次采集失败，请先重新采集'
+    return t('yumRepo.lastFailedHint')
   }
   if (status === 'PENDING' || status === 'RUNNING') {
-    return '采集中，采集成功后会自动继续比对'
+    return t('yumRepo.collectingCompareHint')
   }
-  return '暂无比对结果，可查看采集状态或手动执行比对'
+  return t('yumRepo.noComparisonHint')
 }
 
 watch(

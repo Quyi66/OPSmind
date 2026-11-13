@@ -3,14 +3,14 @@
     <!-- 筛选栏 -->
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
-        <el-form-item label="类型">
+        <el-form-item :label="t('automation.job.type')">
           <el-select
             v-model="filters.jobType"
             style="width: 150px"
-            placeholder="全部类型"
+            :placeholder="t('automation.workbench.allTypes')"
             @change="handleSearch"
           >
-            <el-option label="全部类型" value="all" />
+            <el-option :label="t('automation.workbench.allTypes')" value="all" />
             <el-option
               v-for="option in jobTypeOptions"
               :key="option.value"
@@ -19,10 +19,10 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="关键词">
+        <el-form-item :label="t('automation.workbench.keyword')">
           <el-input
             v-model="filters.keyword"
-            placeholder="搜索运维工具标题、描述..."
+            :placeholder="t('automation.list.toolSearch')"
             clearable
             style="width: 230px"
             @keyup.enter="handleSearch"
@@ -40,13 +40,13 @@
             <el-icon>
               <Search />
             </el-icon>
-            搜索
+            {{ t('common.search') }}
           </el-button>
           <el-button @click="handleReset">
             <el-icon>
               <RefreshRight />
             </el-icon>
-            重置
+            {{ t('common.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -59,7 +59,7 @@
           <el-icon>
             <Plus />
           </el-icon>
-          新建运维工具
+          {{ t('automation.job.newTool') }}
           <el-icon class="el-icon--right">
             <ArrowDown />
           </el-icon>
@@ -86,7 +86,7 @@
         <el-icon>
           <Delete />
         </el-icon>
-        删除
+        {{ t('common.delete') }}
       </el-button>
       <span style="flex: 1"></span>
       <el-button
@@ -95,7 +95,7 @@
         size="small"
         :loading="loading"
         @click="reloadJobs"
-        title="刷新"
+        :title="t('common.refresh')"
       >
         <el-icon v-show="!loading">
           <Refresh />
@@ -124,7 +124,7 @@
         :default-sort="{ prop: 'updatedAt', order: 'descending' }"
       >
         <el-table-column type="selection" width="48" />
-        <el-table-column prop="title" label="运维工具" min-width="160" show-overflow-tooltip>
+        <el-table-column prop="title" :label="t('automation.workbench.tool')" min-width="160" show-overflow-tooltip>
           <template #default="{ row }">
             <!-- <span class="job-title__text" style="color: #0077EE; cursor: pointer;" @click="handleEditJob(row)">
                 {{ getAutomationToolTitle(row) }}
@@ -134,12 +134,12 @@
             </el-button>
           </template>
         </el-table-column>
-        <el-table-column prop="description" label="描述" min-width="150" show-overflow-tooltip>
+        <el-table-column prop="description" :label="t('automation.job.description')" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
             {{ getAutomationToolDescription(row) || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="类型" width="140">
+        <el-table-column :label="t('automation.job.type')" width="140">
           <template #default="{ row }">
             <el-tag
               v-if="row.type"
@@ -154,23 +154,23 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="updatedBy" label="修改人" width="100" />
-        <el-table-column prop="updatedAt" label="修改时间" width="180" sortable="custom">
+        <el-table-column prop="updatedBy" :label="t('automation.list.updatedBy')" width="100" />
+        <el-table-column prop="updatedAt" :label="t('automation.list.modifiedAt')" width="180" sortable="custom">
           <template #default="{ row }">
             {{ formatDate(row.updatedAt) }}
           </template>
         </el-table-column>
-        <el-table-column prop="lastRunTime" label="上次运行时间" width="180" sortable="custom">
+        <el-table-column prop="lastRunTime" :label="t('automation.list.lastRun')" width="180" sortable="custom">
           <template #default="{ row }">
             {{ formatDate(row.lastRunTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" fixed="right" width="230">
+        <el-table-column :label="t('common.actions')" fixed="right" width="230">
           <template #default="{ row }">
-            <el-button text type="primary" size="small" @click="handleViewJob(row)">执行</el-button>
-            <el-button text type="primary" size="small" @click="handleCopy(row)">复制</el-button>
+            <el-button text type="primary" size="small" @click="handleViewJob(row)">{{ t('automation.workbench.execute') }}</el-button>
+            <el-button text type="primary" size="small" @click="handleCopy(row)">{{ t('automation.workbench.copy') }}</el-button>
             <el-button text type="primary" size="small" @click="handleViewHistory(row)">
-              历史
+              {{ t('automation.workbench.history') }}
             </el-button>
             <el-button
               v-if="row.id && ['script', 'rest'].includes(row.type)"
@@ -180,12 +180,12 @@
               :disabled="!!(row.needApprove || row.isApproving)"
               :title="
                 row.needApprove || row.isApproving
-                  ? '请先按原审批流程处理'
-                  : '使用当前工具创建定时任务'
+                  ? t('automation.list.approvalFirst')
+                  : t('automation.list.scheduleFromTool')
               "
               @click="handleCreateSchedule(row)"
             >
-              创建定时任务
+              {{ t('automation.list.createSchedule') }}
             </el-button>
           </template>
         </el-table-column>
@@ -252,6 +252,8 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+
 import { computed, onMounted, ref, watch, reactive } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useAutomationJobStore, JOB_TYPE_OPTIONS } from '@/modules/automation/stores/useJobStore'
@@ -282,7 +284,7 @@ const currentSort = ref({ prop: 'updatedAt', order: 'descending' })
 const appOptions = ref([])
 const loading = ref(false)
 const paginatedJobs = ref([])
-const currentApp = ref({ name: '', title: '所有应用' })
+const currentApp = ref({ name: '', get title() { return t('automation.applets.all') } })
 const originalJobs = ref([])
 
 // 统一筛选条件
@@ -386,15 +388,15 @@ function handleSortChange({ prop, order }) {
 /**删除作业 */
 function handleDeleteJobs() {
   const jobIds = selectedIds.value
-  ElMessageBox.confirm(`确定要删除选中的 ${jobIds.length} 个运维工具吗？`, '删除确认', {
+  ElMessageBox.confirm(t('automation.list.deleteToolsConfirm', { count: jobIds.length }), t('automation.workbench.confirmDelete'), {
     closeOnClickModal: false,
     closeOnPressEscape: false,
     type: 'warning',
-    confirmButtonText: '删除',
-    cancelButtonText: '取消'
+    confirmButtonText: t('common.delete'),
+    cancelButtonText: t('common.cancel')
   })
     .then(() => {
-      ElMessage.success('删除成功')
+      ElMessage.success(t('automation.workbench.deleted'))
       jaoApi.deleteJobs(JSON.stringify(jobIds)).then(() => {
         getAppTableList(currentApp.value.name)
       })
@@ -407,7 +409,7 @@ function handleDeleteJobs() {
 /** 执行作业 */
 async function handleViewJob(row) {
   if (!row?.id) {
-    ElMessage.warning('无法获取运维工具信息')
+    ElMessage.warning(t('automation.list.missingTool'))
     return
   }
 
@@ -417,7 +419,7 @@ async function handleViewJob(row) {
     if (needApprove) {
       const checkResult = await jaoApi.checkNeedApprove(row.id)
       if (checkResult?.data?.isApproving) {
-        ElMessage.info('该运维工具审批申请已提交，请等待审批')
+        ElMessage.info(t('automation.list.alreadyRequested'))
         return
       }
     }
@@ -434,7 +436,7 @@ async function handleViewJob(row) {
       approveDialogVisible.value = true
     } else if (isApproving) {
       // 审批中，提示用户
-      ElMessage.info('该运维工具审批申请已提交，请等待审批')
+      ElMessage.info(t('automation.list.alreadyRequested'))
     } else {
       // 不需要审批，直接执行
       const session = ++executeSession
@@ -448,7 +450,7 @@ async function handleViewJob(row) {
       executeDialogVisible.value = true
     }
   } catch (error) {
-    ElMessage.error(error?.message || '检查审批状态失败')
+    ElMessage.error(error?.message || t('automation.list.approvalCheckFailed'))
   }
 }
 
@@ -457,12 +459,13 @@ function handleExecuteJobSuccess(payload = {}, session, job) {
   if (payload.jobId && payload.jobId !== job.id) return
   executeDialogVisible.value = false
   if (!payload.runId) {
-    ElMessage.info('本次提交未返回运行标识，请从该工具的历史查看运行结果')
+    ElMessage.info(t('automation.list.noRunId'))
     return
   }
   resultMeta.value = {
     runId: payload.runId,
-    ...getAutomationExecutionPresentation(payload, job)
+    jobId: payload.jobId || job.id || '',
+    get jobTitle() { return getAutomationExecutionPresentation(payload, job).jobTitle }
   }
   resultDialogVisible.value = true
 }
@@ -531,7 +534,7 @@ const canMove = computed(() => selectedIds.value.length > 0 && !!moveTarget.valu
 // 过滤后的数据总数
 const filteredJobsCount = computed(() => paginatedJobs.value.length)
 
-const currentAppTitle = computed(() => currentApp.value?.title || '所有应用')
+const currentAppTitle = computed(() => currentApp.value?.title || t('automation.applets.all'))
 
 const recentlyUpdatedCount = computed(
   () => originalJobs.value.filter(job => isRecentWithinDays(job.updatedAt, 7)).length
@@ -543,7 +546,7 @@ const approvalRequiredCount = computed(
 
 const quickTypeOptions = computed(() => {
   const allOption = {
-    label: '全部',
+    label: t('common.all'),
     value: 'all',
     icon: 'fa-layer-group',
     count: originalJobs.value.length
@@ -561,19 +564,19 @@ const quickTypeOptions = computed(() => {
 
 const overviewCards = computed(() => [
   {
-    label: '当前范围运维工具',
+    label: t('automation.list.scopedTools'),
     value: originalJobs.value.length
   },
   {
-    label: '筛选后结果',
+    label: t('automation.list.filteredResults'),
     value: filteredJobsCount.value
   },
   {
-    label: '最近7天更新',
+    label: t('automation.list.updatedLast7Days'),
     value: recentlyUpdatedCount.value
   },
   {
-    label: '需审批运维工具',
+    label: t('automation.list.approvalRequiredTools'),
     value: approvalRequiredCount.value
   }
 ])
@@ -622,17 +625,17 @@ function handleSelectionChange(rows) {
 
 async function handleMoveJobs() {
   if (!selectedIds.value.length) {
-    ElMessage.warning('请先选择要移动的运维工具')
+    ElMessage.warning(t('automation.list.selectMoveTools'))
     return
   }
 
   if (!moveTarget.value) {
-    ElMessage.warning('请选择目标应用')
+    ElMessage.warning(t('automation.list.selectTargetApp'))
     return
   }
 
   if (!moveTargetOptions.value.length) {
-    ElMessage.warning('暂无可移动的目标应用')
+    ElMessage.warning(t('automation.list.noTargetApp'))
     return
   }
 
@@ -641,14 +644,14 @@ async function handleMoveJobs() {
 
   try {
     await ElMessageBox.confirm(
-      `确定将选中的 ${selectedIds.value.length} 个运维工具移动到「${targetLabel}」吗？`,
-      '移动运维工具',
+      t('automation.list.moveToolsConfirm', { count: selectedIds.value.length, target: targetLabel }),
+      t('automation.list.moveTools'),
       {
         closeOnClickModal: false,
         closeOnPressEscape: false,
         type: 'warning',
-        confirmButtonText: '确认',
-        cancelButtonText: '取消'
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel')
       }
     )
   } catch {
@@ -657,12 +660,12 @@ async function handleMoveJobs() {
 
   try {
     await store.moveSelected(selectedIds.value, moveTarget.value)
-    ElMessage.success('移动成功')
+    ElMessage.success(t('automation.list.moved'))
     selectedRows.value = []
     // 刷新当前列表
     getAppTableList(currentApp.value.name)
   } catch (error_) {
-    const message = error_ instanceof Error ? error_.message : '移动运维工具失败'
+    const message = error_ instanceof Error ? error_.message : t('automation.list.moveFailed')
     ElMessage.error(message)
   } finally {
     moveTarget.value = ''
@@ -673,28 +676,28 @@ async function handleCopy(row) {
   if (!row?.id) return
 
   try {
-    await ElMessageBox.confirm(`确定要复制运维工具「${row.title}」吗？`, '复制确认', {
+    await ElMessageBox.confirm(t('automation.list.copyToolConfirm', { name: row.title }), t('automation.list.copyConfirmTitle'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+      confirmButtonText: t('automation.file.confirm'),
+      cancelButtonText: t('common.cancel'),
       type: 'info'
     })
 
     await store.duplicateJob(row.id)
-    ElMessage.success('复制成功')
+    ElMessage.success(t('automation.workbench.copied'))
     // 刷新当前列表
     getAppTableList(currentApp.value.name)
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error(error?.message || '复制失败')
+      ElMessage.error(error?.message || t('automation.file.copyFailed'))
     }
   }
 }
 
 function handleViewHistory(row) {
   if (!row?.id) {
-    ElMessage.warning('无法获取运维工具信息')
+    ElMessage.warning(t('automation.list.missingTool'))
     return
   }
   historyJobMeta.value = {
@@ -707,7 +710,7 @@ function handleViewHistory(row) {
 function handleCreateSchedule(row) {
   if (!row?.id || !['script', 'rest'].includes(row.type)) return
   if (row.needApprove || row.isApproving) {
-    ElMessage.info('需审批或审批中的工具请先按原审批流程处理')
+    ElMessage.info(t('automation.list.useOriginalApproval'))
     return
   }
   scheduleJob.value = { id: row.id, type: row.type }
@@ -725,7 +728,7 @@ function handleCreateJob(type) {
  */
 function handleEditJob(row) {
   if (!row?.id) {
-    ElMessage.warning('无法获取运维工具信息')
+    ElMessage.warning(t('automation.list.missingTool'))
     return
   }
   editJobId.value = row.id
@@ -746,7 +749,7 @@ function handleCreateSuccess() {
  */
 function handleApproveSuccess() {
   approveDialogVisible.value = false
-  ElMessage.success('审批申请已提交，请等待审批')
+  ElMessage.success(t('automation.list.approvalSubmitted'))
 }
 
 function reloadJobs() {
@@ -782,7 +785,7 @@ function formatDate(value) {
   if (Number.isNaN(date.getTime())) {
     return String(value)
   }
-  return new Intl.DateTimeFormat('zh-CN', {
+  return new Intl.DateTimeFormat(currentLocale.value, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -794,7 +797,7 @@ function formatDate(value) {
 
 function typeLabel(type) {
   const item = JOB_TYPE_OPTIONS.find(option => option.value === type)
-  return item?.label ?? '未知类型'
+  return item?.label ?? t('automation.list.unknownType')
 }
 
 function typeIcon(type) {
@@ -823,13 +826,13 @@ function translateAppTitle(title) {
   if (title.startsWith('#{') && title.endsWith('}')) {
     const key = title.slice(2, -1)
     const translations = {
-      'cac.index.square': '系统巡检',
-      'acm.title': '资产管理',
-      'app_pms.title': '密码管理',
-      'app_sudo.title': 'sudo权限管理',
-      'app_vap.title': '补丁管理',
-      'app_spm.title': 'Yum仓库管理',
-      'app_uim.name': '用户管理'
+      'cac.index.square': t('automation.applets.cac'),
+      'acm.title': t('automation.applets.acm'),
+      'app_pms.title': t('automation.applets.pms'),
+      'app_sudo.title': t('automation.applets.sudo'),
+      'app_vap.title': t('automation.applets.vap'),
+      'app_spm.title': t('automation.applets.spm'),
+      'app_uim.name': t('automation.applets.uim')
     }
     return translations[key] || title
   }
@@ -846,13 +849,13 @@ function getAppList() {
       // 处理应用列表，翻译标题
       const translatedApps = apps.map(app => ({
         ...app,
-        title: translateAppTitle(app.title)
+        get title() { return translateAppTitle(app.title) }
       }))
 
       // 添加"所有应用"和"未分类"选项在最前面
       appOptions.value = [
-        { name: '', show: true, title: '所有应用' },
-        { name: '$NULL$', show: true, title: '未分类' }
+        { name: '', show: true, get title() { return t('automation.applets.all') } },
+        { name: '$NULL$', show: true, get title() { return t('automation.applets.unsorted') } }
       ].concat(translatedApps)
 
       // 默认选中第一个（所有应用）

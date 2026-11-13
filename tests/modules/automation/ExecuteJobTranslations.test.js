@@ -90,6 +90,31 @@ function expectForm(state) {
 }
 
 describe('执行参数真实字典与详情竞态', () => {
+  it('中英文切换更新已加载的旧参数 key，保留输入值和提交结构', async () => {
+    api.getJobDetail.mockResolvedValue(detail)
+    const state = await open()
+    translations.resolve()
+    await i18n.initTranslations()
+    await flushPromises()
+    state.formValues.scope = '原始用户值 #{raw.value}'
+    const payload = state.buildPayload()
+    const locale = await import('@/core/i18n')
+    try {
+      await locale.setLocale('en-US', { persist: false })
+      await flushPromises()
+      expect(state.formSchema[0].label).toBe('One-click jobs')
+      expect(state.formSchema[0].description).toBe('说明：One-click jobs')
+      expect(i18n.translateText('#{common.entity.action.view} / #{common.entity.action.copy}')).toBe(
+        'View / Copy'
+      )
+      expect(state.buildPayload()).toEqual(payload)
+      expect(params[0].label).toBe('#{jao.title}')
+      expect(api.getJobDetail).toHaveBeenCalledTimes(1)
+    } finally {
+      await locale.setLocale('zh-CN', { persist: false })
+    }
+  })
+
   it('详情先到时等待字典；原参数、默认值、提交值保持', async () => {
     api.getJobDetail.mockResolvedValue(detail)
     const state = await open()

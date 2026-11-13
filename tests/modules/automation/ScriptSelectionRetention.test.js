@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount, shallowMount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import { ElMessage, ElTable, ElTableColumn, ElCheckbox } from 'element-plus'
+import { setLocale } from '@/core/i18n'
 import CreateJobDialog from '@/modules/automation/components/job/JobListView/CreateJobDialog.vue'
 import FileSelectorDialog from '@/modules/automation/components/job/JobListView/FileSelectorDialog.vue'
 import * as jao from '@/modules/automation/api/jao'
@@ -137,6 +138,28 @@ afterEach(() => {
 })
 
 describe('script selection retains the current task draft', () => {
+  it('switches real table headers without clearing selected checkboxes or reloading files', async () => {
+    await setLocale('zh-CN', { persist: false })
+    try {
+      const { wrapper, state } = await mountFiles({ preSelected: [row('a.sh')] })
+      const table = state.tableRef
+      const third = wrapper.findAll('.el-table__body tr').find(tr => tr.text().includes('c.sh'))
+      await third.find('input[type="checkbox"]').setValue(true)
+      const selected = table.getSelectionRows().map(file => file.path)
+      expect(selected).toEqual(['a.sh', 'c.sh'])
+      await setLocale('en-US', { persist: false })
+      await flushPromises()
+      expect(wrapper.get('thead').text()).toContain('Name')
+      expect(table.getSelectionRows().map(file => file.path)).toEqual(selected)
+      expect(state.selectedFiles.map(file => file.path)).toEqual(selected)
+      expect(gfs.listFiles).toHaveBeenCalledTimes(1)
+      state.handleConfirm()
+      expect(wrapper.emitted('confirm')[0][0].map(file => file.path)).toEqual(selected)
+    } finally {
+      await setLocale('zh-CN', { persist: false })
+    }
+  })
+
   it('uses the real file selector and Element Plus table to re-confirm and add/remove files', async () => {
     const { wrapper, state } = await mountJob([a, b], {}, true)
     await open(state)

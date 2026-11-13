@@ -1,7 +1,7 @@
 <template>
   <el-drawer
     v-model="visible"
-    title="设备详细信息"
+    :title="t('asset.deviceDetails')"
     size="55%"
     direction="rtl"
     :close-on-click-modal="true"
@@ -43,35 +43,37 @@
               :type="getAttrValue(attr.code) == 1 ? 'danger' : 'success'"
               size="small"
             >
-              {{ getAttrValue(attr.code) == 1 ? '待重启' : '无需重启' }}
+              {{ getAttrValue(attr.code) == 1 ? t('asset.rebootPending') : t('asset.noRebootNeeded') }}
             </el-tag>
             <el-tag
               v-else-if="attr.code.toUpperCase() === 'STATUS'"
               :type="getAttrValue(attr.code) == 1 ? 'success' : 'info'"
               size="small"
             >
-              {{ getAttrValue(attr.code) == 1 ? '在线' : '离线' }}
+              {{ getAttrValue(attr.code) == 1 ? t('asset.online') : t('asset.offlineDetail') }}
             </el-tag>
             <el-tag
               v-else-if="attr.code.toUpperCase() === 'CONN_LATEST_STATUS'"
               :type="String(getAttrValue(attr.code)) === '1' ? 'success' : 'danger'"
               size="small"
             >
-              {{ String(getAttrValue(attr.code)) === '1' ? '正常' : '失联' }}
+              {{ String(getAttrValue(attr.code)) === '1' ? t('asset.normal') : t('asset.disconnected') }}
             </el-tag>
             <span v-else class="detail-value">{{ getAttrValue(attr.code) }}</span>
           </el-descriptions-item>
         </el-descriptions>
       </template>
-      <el-empty v-else-if="!loading" description="暂无数据" />
+      <el-empty v-else-if="!loading" :description="t('common.noData')" />
     </div>
     <template #footer>
-      <el-button :disabled="!assetId" @click="emit('view-history')">历史趋势</el-button>
+      <el-button :disabled="!assetId" @click="emit('view-history')">{{ t('asset.historyTrend') }}</el-button>
     </template>
   </el-drawer>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { assetApi } from '../../api'
@@ -146,7 +148,7 @@ const loadAssetDetail = async () => {
     assetType.value = typeInfo
   } catch (error) {
     console.error('加载资产详情失败:', error)
-    ElMessage.error('加载资产详情失败')
+    ElMessage.error(t('asset.assetDetailFailed'))
   } finally {
     loading.value = false
   }

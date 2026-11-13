@@ -3,10 +3,10 @@
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small" @submit.prevent>
-        <el-form-item label="关键词">
+        <el-form-item :label="t('automation.workbench.keyword')">
           <el-input
             v-model="filters.keyword"
-            placeholder="搜索运维工具名称"
+            :placeholder="t('automation.approval.searchToolName')"
             clearable
             style="width: 240px"
             @input="handleSearch"
@@ -20,20 +20,20 @@
             </template>
           </el-input>
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item :label="t('automation.workbench.status')">
           <el-select
             v-model="filters.status"
-            placeholder="状态筛选"
+            :placeholder="t('automation.approval.statusFilter')"
             clearable
             value-on-clear=""
             style="width: 140px"
             @change="handleSearch"
           >
-            <el-option label="全部状态" value="" />
-            <el-option label="审批中" :value="0" />
-            <el-option label="审批通过" :value="1" />
-            <el-option label="审批未通过" :value="2" />
-            <el-option label="审批作废" :value="3" />
+            <el-option :label="t('automation.workbench.allStatuses')" value="" />
+            <el-option :label="t('automation.approval.pending')" :value="0" />
+            <el-option :label="t('automation.approval.approved')" :value="1" />
+            <el-option :label="t('automation.approval.rejected')" :value="2" />
+            <el-option :label="t('automation.approval.discarded')" :value="3" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -47,7 +47,7 @@
             <el-icon>
               <RefreshRight />
             </el-icon>
-            重置
+            {{ t('common.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -62,7 +62,7 @@
         size="small"
         :loading="loading"
         @click="fetchData"
-        title="刷新"
+        :title="t('common.refresh')"
       >
         <el-icon v-show="!loading">
           <Refresh />
@@ -73,7 +73,7 @@
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
       <el-table v-loading="loading" :data="paginatedData" max-height="calc(100vh - 264px)">
-        <el-table-column label="运维工具" min-width="150">
+        <el-table-column :label="t('automation.workbench.tool')" min-width="150">
           <template #default="{ row }">
             <el-button type="primary" text @click="handleViewDetail(row)">
               {{ getAutomationToolTitle({ ...row, id: undefined }) }}
@@ -81,43 +81,43 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="运维工具类型" width="100">
+        <el-table-column :label="t('automation.job.toolType')" width="100">
           <template #default="{ row }">
             {{ getJobTypeLabel(row.jobType) }}
           </template>
         </el-table-column>
 
-        <el-table-column label="申请说明" min-width="200">
+        <el-table-column :label="t('automation.list.requestDescription')" min-width="200">
           <template #default="{ row }">
             <span>{{ row.description || '-' }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column label="执行策略" width="130">
+        <el-table-column :label="t('automation.approval.executionPolicy')" width="130">
           <template #default="{ row }">
             {{ getApproveModeLabel(row.approveMode) }}
           </template>
         </el-table-column>
 
-        <el-table-column label="有效时长" width="110">
+        <el-table-column :label="t('automation.list.validDuration')" width="110">
           <template #default="{ row }">
-            {{ row.approveMode !== 'limitParams' && row.validHour ? `${row.validHour} 小时` : '-' }}
+            {{ row.approveMode !== 'limitParams' && row.validHour ? t('automation.approval.durationHours', { count: row.validHour }) : '-' }}
           </template>
         </el-table-column>
 
-        <el-table-column label="申请人" width="120">
+        <el-table-column :label="t('automation.approval.applicant')" width="120">
           <template #default="{ row }">
             {{ row.applicant || '-' }}
           </template>
         </el-table-column>
 
-        <el-table-column label="申请时间" width="180">
+        <el-table-column :label="t('automation.approval.appliedAt')" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.applyTime) }}
           </template>
         </el-table-column>
 
-        <el-table-column label="状态" width="100">
+        <el-table-column :label="t('automation.workbench.status')" width="100">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)">
               {{ getStatusLabel(row.status) }}
@@ -125,13 +125,13 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="过期时间" width="180">
+        <el-table-column :label="t('automation.approval.expiresAt')" width="180">
           <template #default="{ row }">
             {{ formatExpirationTime(row.expirationTime) }}
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column :label="t('common.actions')" width="150" fixed="right">
           <template #default="{ row }">
             <div class="action-buttons">
               <el-button
@@ -141,7 +141,7 @@
                 size="small"
                 @click="handlePass(row)"
               >
-                通过
+                {{ t('automation.workbench.approve') }}
               </el-button>
               <el-button
                 v-if="row.status === 0"
@@ -150,7 +150,7 @@
                 size="small"
                 @click="handleRefuse(row)"
               >
-                拒绝
+                {{ t('automation.workbench.reject') }}
               </el-button>
               <el-button
                 v-if="row.status === 1 && row.canCanceled"
@@ -159,7 +159,7 @@
                 size="small"
                 @click="handleDiscard(row)"
               >
-                作废
+                {{ t('automation.approval.invalidate') }}
               </el-button>
             </div>
           </template>
@@ -191,6 +191,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { getAutomationToolTitle } from '../../utils/resourcePresentation'
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -212,6 +214,12 @@ const detailDialogVisible = ref(false)
 const currentApprovalData = ref(null)
 const reviewStore = useReviewCountStore()
 
+// Keep an applied title search stable while presentation language changes.
+const searchTitles = ref(new Map())
+watch([tableData, () => filters.keyword], () => {
+  searchTitles.value = new Map(tableData.value.map(item => [item, getAutomationToolTitle({ ...item, id: undefined })]))
+}, { flush: 'sync' })
+
 const filteredData = computed(() => {
   let data = tableData.value
 
@@ -221,7 +229,7 @@ const filteredData = computed(() => {
     data = data.filter(
       item =>
         item.jobName?.toLowerCase().includes(keyword) ||
-        getAutomationToolTitle({ ...item, id: undefined })
+        (searchTitles.value.get(item) || '')
           .toLowerCase()
           .includes(keyword) ||
         item.jobId?.toLowerCase().includes(keyword) ||
@@ -254,23 +262,23 @@ watch(
   }
 )
 
-const jobTypeMap = {
-  standalone: { icon: 'fa fa-terminal', label: '独立运维工具' },
-  flow: { icon: 'fa fa-stream', label: '流程运维工具' },
-  schedule: { icon: 'fa fa-clock', label: '定时运维工具' }
-}
+const jobTypeMap = computed(() => ({
+  standalone: { icon: 'fa fa-terminal', label: t('automation.approval.standalone') },
+  flow: { icon: 'fa fa-stream', label: t('automation.approval.flow') },
+  schedule: { icon: 'fa fa-clock', label: t('automation.approval.schedule') }
+}))
 
-const approveModeMap = {
-  limitParams: '限定参数执行',
-  noLimitParams: '不限定参数执行'
-}
+const approveModeMap = computed(() => ({
+  limitParams: t('automation.list.restrictedParams'),
+  noLimitParams: t('automation.list.unrestrictedParams')
+}))
 
-const statusMap = {
-  0: { label: '审批中', type: 'primary' },
-  1: { label: '审批通过', type: 'success' },
-  2: { label: '审批未通过', type: 'danger' },
-  3: { label: '审批作废', type: 'info' }
-}
+const statusMap = computed(() => ({
+  0: { label: t('automation.approval.pending'), type: 'primary' },
+  1: { label: t('automation.approval.approved'), type: 'success' },
+  2: { label: t('automation.approval.rejected'), type: 'danger' },
+  3: { label: t('automation.approval.discarded'), type: 'info' }
+}))
 
 onMounted(() => {
   fetchData()
@@ -289,7 +297,7 @@ async function fetchData() {
     tableData.value = approvals
     reviewStore.approvalCount = approvals.filter(item => item.status === 0).length
   } catch (error) {
-    ElMessage.error(error?.message || '获取审批列表失败')
+    ElMessage.error(error?.message || t('automation.approval.listFailed'))
   } finally {
     loading.value = false
   }
@@ -315,30 +323,30 @@ function handlePageSizeChange() {
 }
 
 function getJobTypeIcon(type) {
-  return jobTypeMap[type]?.icon || 'fa fa-file'
+  return jobTypeMap.value[type]?.icon || 'fa fa-file'
 }
 
 function getJobTypeLabel(type) {
-  return jobTypeMap[type]?.label || type
+  return jobTypeMap.value[type]?.label || type
 }
 
 function getApproveModeLabel(mode) {
-  return approveModeMap[mode] || '-'
+  return approveModeMap.value[mode] || '-'
 }
 
 function getStatusLabel(status) {
-  return statusMap[status]?.label || '-'
+  return statusMap.value[status]?.label || '-'
 }
 
 function getStatusType(status) {
-  return statusMap[status]?.type || 'info'
+  return statusMap.value[status]?.type || 'info'
 }
 
 
 
 function formatExpirationTime(value) {
   if (!value) return '-'
-  if (value === 'expired') return '已过期'
+  if (value === 'expired') return t('automation.approval.expired')
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '-'
   const pad = n => (n < 10 ? `0${n}` : String(n))
@@ -353,18 +361,18 @@ function handleViewDetail(row) {
 async function handlePass(row) {
   try {
     await ElMessageBox.confirm(
-      `确定要通过运维工具 "${getAutomationToolTitle({ ...row, id: undefined })}" 的审批申请吗？`,
-      '通过审批',
+      t('automation.approval.approveConfirm', { name: getAutomationToolTitle({ ...row, id: undefined }) }),
+      t('automation.approval.approveTitle'),
       { closeOnClickModal: false, closeOnPressEscape: false, type: 'success' }
     )
 
     loading.value = true
     await jaoApi.passApprove(row.id, null)
-    ElMessage.success('审批已通过')
+    ElMessage.success(t('automation.approval.approvedNotice'))
     await fetchData()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error(error?.message || '审批通过失败')
+      ElMessage.error(error?.message || t('automation.approval.approveFailed'))
     }
   } finally {
     loading.value = false
@@ -373,22 +381,22 @@ async function handlePass(row) {
 
 async function handleRefuse(row) {
   try {
-    const { value: reason } = await ElMessageBox.prompt('请输入拒绝理由', '拒绝审批', {
+    const { value: reason } = await ElMessageBox.prompt(t('automation.approval.reasonRequired'), t('automation.approval.rejectTitle'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+      confirmButtonText: t('automation.file.confirm'),
+      cancelButtonText: t('common.cancel'),
       inputType: 'textarea',
-      inputPlaceholder: '请输入拒绝理由'
+      inputPlaceholder: t('automation.approval.reasonRequired')
     })
 
     loading.value = true
     await jaoApi.refuseApprove(row.id, reason)
-    ElMessage.success('审批已拒绝')
+    ElMessage.success(t('automation.approval.rejectedNotice'))
     await fetchData()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error(error?.message || '拒绝审批失败')
+      ElMessage.error(error?.message || t('automation.approval.rejectFailed'))
     }
   } finally {
     loading.value = false
@@ -398,25 +406,25 @@ async function handleRefuse(row) {
 async function handleDiscard(row) {
   try {
     const { value: reason } = await ElMessageBox.prompt(
-      '确定要作废该审批吗？可选填写作废原因',
-      '作废审批',
+      t('automation.approval.invalidatePrompt'),
+      t('automation.approval.invalidateTitle'),
       {
         closeOnClickModal: false,
         closeOnPressEscape: false,
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('automation.file.confirm'),
+        cancelButtonText: t('common.cancel'),
         inputType: 'textarea',
-        inputPlaceholder: '请输入作废原因（可选）'
+        inputPlaceholder: t('automation.approval.invalidatePlaceholder')
       }
     )
 
     loading.value = true
     await jaoApi.discardApprove(row.id, reason || null)
-    ElMessage.success('审批已作废')
+    ElMessage.success(t('automation.approval.invalidatedNotice'))
     await fetchData()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error(error?.message || '作废审批失败')
+      ElMessage.error(error?.message || t('automation.approval.invalidateFailed'))
     }
   } finally {
     loading.value = false

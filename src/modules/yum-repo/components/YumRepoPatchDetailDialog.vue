@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visibleModel"
-    title="补丁详情"
+    :title="t('yumRepo.patchDetails')"
     width="1080px"
     destroy-on-close
     append-to-body
@@ -9,15 +9,15 @@
   >
     <div class="win-patch-yum-detail-dialog">
       <el-descriptions :column="3" border>
-        <el-descriptions-item label="补丁 ID">
+        <el-descriptions-item :label="t('yumRepo.patchId')">
           {{ pickValue(currentPatch, ['patchId', 'patch_id'], '-') }}
         </el-descriptions-item>
-        <el-descriptions-item label="状态">
+        <el-descriptions-item :label="t('common.status')">
           <el-tag size="small" :type="getPatchSatisfiedTagType(currentPatch)">
             {{ getPatchSatisfiedLabel(currentPatch) }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="严重等级">
+        <el-descriptions-item :label="t('yumRepo.severity')">
           <el-tag
             size="small"
             effect="plain"
@@ -26,36 +26,36 @@
             {{ getSeverityLabel(pickValue(currentPatch, ['severity'], '-')) }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="影响主机">
+        <el-descriptions-item :label="t('yumRepo.affectedHosts')">
           {{ affectedHostCount }}
         </el-descriptions-item>
-        <el-descriptions-item label="总包数">
+        <el-descriptions-item :label="t('yumRepo.totalPackages')">
           {{ pickValue(currentPatch, ['totalPkgs', 'total_pkgs'], 0) }}
         </el-descriptions-item>
-        <el-descriptions-item label="满足">
+        <el-descriptions-item :label="t('yumRepo.satisfied')">
           {{ pickValue(currentPatch, ['availableCount', 'available_count'], 0) }}
         </el-descriptions-item>
-        <el-descriptions-item label="缺失">
+        <el-descriptions-item :label="t('yumRepo.missing')">
           {{ pickValue(currentPatch, ['missingCount', 'missing_count'], 0) }}
         </el-descriptions-item>
-        <el-descriptions-item label="版本不足">
+        <el-descriptions-item :label="t('yumRepo.outdated')">
           {{ pickValue(currentPatch, ['outdatedCount', 'outdated_count'], 0) }}
         </el-descriptions-item>
-        <el-descriptions-item label="发行版不匹配">
+        <el-descriptions-item :label="t('yumRepo.releaseMismatch')">
           {{ pickValue(currentPatch, ['releaseMismatchCount', 'release_mismatch_count'], 0) }}
         </el-descriptions-item>
-        <el-descriptions-item label="补丁标题" :span="2">
+        <el-descriptions-item :label="t('yumRepo.patchTitle')" :span="2">
           {{ pickValue(currentPatch, ['patchTitle', 'patch_title'], '-') }}
         </el-descriptions-item>
       </el-descriptions>
 
       <div class="win-patch-yum-detail-dialog__section">
         <div class="win-patch-yum-detail-dialog__section-title">
-          {{ affectedHosts.length ? `影响主机列表（${affectedHosts.length} 台）` : '影响主机列表' }}
+          {{ affectedHosts.length ? t('yumRepo.affectedHostCount', { count: affectedHosts.length }) : t('yumRepo.affectedHostList') }}
         </div>
         <el-empty
           v-if="!affectedHosts.length"
-          description="当前未返回影响主机明细"
+          :description="t('yumRepo.noHostDetails')"
           :image-size="72"
         />
         <div v-else class="win-patch-yum-detail-dialog__host-list">
@@ -73,34 +73,34 @@
       <div class="win-patch-yum-detail-dialog__section">
         <div class="win-patch-yum-detail-dialog__section-title">
           {{
-            failedPackages.length ? `不满足包明细（${failedPackages.length} 项）` : '不满足包明细'
+            failedPackages.length ? t('yumRepo.unsatisfiedPackageCount', { count: failedPackages.length }) : t('yumRepo.unsatisfiedPackages')
           }}
         </div>
         <el-empty
           v-if="!failedPackages.length"
-          description="该补丁当前没有不满足包"
+          :description="t('yumRepo.noUnsatisfiedPackages')"
           :image-size="72"
         />
         <div v-else class="ops-table-wrapper">
           <el-table :data="failedPackages" size="small" border max-height="calc(100vh - 520px)">
-            <el-table-column label="包名" min-width="160" show-overflow-tooltip>
+            <el-table-column :label="t('yumRepo.packageName')" min-width="160" show-overflow-tooltip>
               <template #default="{ row }">
                 {{ pickValue(row, ['pkgName', 'pkg_name'], '-') }}
               </template>
             </el-table-column>
-            <el-table-column label="差异类型" width="120" align="center">
+            <el-table-column :label="t('yumRepo.diffType')" width="120" align="center">
               <template #default="{ row }">
                 <el-tag :type="getDiffTypeTagType(row)" size="small">
                   {{ getDiffTypeLabel(row) }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="要求版本" min-width="260" show-overflow-tooltip>
+            <el-table-column :label="t('yumRepo.requiredVersion')" min-width="260" show-overflow-tooltip>
               <template #default="{ row }">
                 {{ pickValue(row, ['requiredNevra', 'required_nevra'], '-') }}
               </template>
             </el-table-column>
-            <el-table-column label="基线版本" min-width="260" show-overflow-tooltip>
+            <el-table-column :label="t('yumRepo.baselineVersion')" min-width="260" show-overflow-tooltip>
               <template #default="{ row }">
                 {{ pickValue(row, ['baselineNevra', 'baseline_nevra'], '-') }}
               </template>
@@ -113,6 +113,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { computed } from 'vue'
 import {
   getSeverityLabel,
@@ -167,7 +169,7 @@ function getPatchSatisfiedTagType(row) {
 }
 
 function getPatchSatisfiedLabel(row) {
-  return normalizeBoolean(pickValue(row, ['satisfied'], false)) ? '满足' : '不满足'
+  return normalizeBoolean(pickValue(row, ['satisfied'], false)) ? t('yumRepo.satisfied') : t('yumRepo.unsatisfied')
 }
 </script>
 

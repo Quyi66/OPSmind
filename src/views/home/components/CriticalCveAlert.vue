@@ -4,36 +4,36 @@
       <div class="header-left">
         <h3 class="section-title">
           <img :src="cveHeaderIcon" alt="" class="section-icon" />
-          漏洞情报
+          {{ t('home.cveTitle') }}
         </h3>
-        <span class="section-subtitle">近期查询结果（最多 20 条），按受影响主机数排序</span>
+        <span class="section-subtitle">{{ t('home.cveSubtitle') }}</span>
       </div>
       <div class="header-actions">
-        <button class="more-btn" @click="navigateToCveList" title="查看全部">
-          <span>查看全部</span>
+        <button class="more-btn" @click="navigateToCveList" :title="t('common.viewAll')">
+          <span>{{ t('common.viewAll') }}</span>
           <i class="fas fa-chevron-right more-arrow"></i>
         </button>
       </div>
     </div>
 
-    <div v-loading="loading" class="cve-content" element-loading-text="正在加载漏洞情报...">
+    <div v-loading="loading" class="cve-content" :element-loading-text="t('home.cveLoading')">
       <div v-if="loadError" class="empty-state" role="status">
-        <p class="empty-text">漏洞情报暂不可用，不能据此判断当前风险。</p>
-        <el-button size="small" @click="loadCveData">重新加载</el-button>
+        <p class="empty-text">{{ t('home.cveFailed') }}</p>
+        <el-button size="small" @click="loadCveData">{{ t('common.reload') }}</el-button>
       </div>
       <div v-else-if="!loading && !cveList.length" class="empty-state">
         <i class="fas fa-shield-alt empty-icon"></i>
-        <p class="empty-text">暂无漏洞情报数据</p>
+        <p class="empty-text">{{ t('home.cveEmpty') }}</p>
       </div>
 
       <template v-else>
         <!-- 列表表头 -->
         <div class="list-header">
-          <span class="header-label cve-label">漏洞编号</span>
-          <span class="header-label source-label">影响系统</span>
-          <span class="header-label affected-label">受影响机器</span>
-          <span class="header-label packages-label">受影响软件包</span>
-          <span class="header-label score-label">CVSS 评分</span>
+          <span class="header-label cve-label">{{ t('home.cveId') }}</span>
+          <span class="header-label source-label">{{ t('home.affectedSystems') }}</span>
+          <span class="header-label affected-label">{{ t('home.affectedHosts') }}</span>
+          <span class="header-label packages-label">{{ t('home.affectedPackages') }}</span>
+          <span class="header-label score-label">{{ t('home.cvssScore') }}</span>
         </div>
 
         <div class="cve-list">
@@ -69,13 +69,11 @@
                 </div>
                 <!-- 受影响机器数量 -->
                 <div class="cve-affected-hosts">
-                  <span class="affected-count">{{ formatKnownCount(cve.affectedHostCount) }}</span>
-                  <span class="affected-unit">台</span>
+                  <span class="affected-count">{{ t('home.hostCount', { count: formatKnownCount(cve.affectedHostCount) }) }}</span>
                 </div>
                 <!-- 受影响软件包数量 -->
                 <div class="cve-packages">
-                  <span class="pkg-count">{{ formatKnownCount(cve.affectedCount ?? cve.affected_count) }}</span>
-                  <span class="pkg-unit">个</span>
+                  <span class="pkg-count">{{ t('home.packageCount', { count: formatKnownCount(cve.affectedCount ?? cve.affected_count) }) }}</span>
                 </div>
                 <div class="cve-score-badge" :style="getScoreStyle(cve.cvss3Score)">
                   <span class="score-value">{{ formatCvssScore(cve.cvss3Score) }}</span>
@@ -102,45 +100,45 @@
               </span>
             </div>
             <div class="popover-desc">
-              <div class="popover-label">漏洞描述</div>
-              <p class="popover-desc-text">{{ cve.description || '暂无详细描述信息' }}</p>
+              <div class="popover-label">{{ t('home.description') }}</div>
+              <p class="popover-desc-text">{{ cve.description || t('home.noDescription') }}</p>
             </div>
 
             <div class="popover-packages">
               <div class="popover-label">
-                <span>软件包状态统计</span>
-                <span class="pkg-total">共 {{ formatKnownCount(cve.totalPackageCount) }} 个</span>
+                <span>{{ t('home.packageStats') }}</span>
+                <span class="pkg-total">{{ t('home.packageTotal', { count: formatKnownCount(cve.totalPackageCount) }) }}</span>
               </div>
               <div class="packages-summary-grid">
-                <div class="pkg-stat-item is-affected" title="受影响">
-                  <span class="pkg-label">受影响</span>
+                <div class="pkg-stat-item is-affected" :title="t('home.affected')">
+                  <span class="pkg-label">{{ t('home.affected') }}</span>
                   <span class="pkg-count">{{ formatKnownCount(cve.affectedCount) }}</span>
                 </div>
-                <div class="pkg-stat-item is-fixed" title="已修复">
-                  <span class="pkg-label">已修复</span>
+                <div class="pkg-stat-item is-fixed" :title="t('home.fixed')">
+                  <span class="pkg-label">{{ t('home.fixed') }}</span>
                   <span class="pkg-count">{{ formatKnownCount(cve.fixedCount) }}</span>
                 </div>
-                <div class="pkg-stat-item is-not-affected" title="不受影响">
-                  <span class="pkg-label">无影响</span>
+                <div class="pkg-stat-item is-not-affected" :title="t('home.notAffected')">
+                  <span class="pkg-label">{{ t('home.unaffected') }}</span>
                   <span class="pkg-count">{{ formatKnownCount(cve.notAffectedCount) }}</span>
                 </div>
-                <div class="pkg-stat-item is-will-not-fix" title="不予修复">
-                  <span class="pkg-label">不修复</span>
+                <div class="pkg-stat-item is-will-not-fix" :title="t('home.willNotFix')">
+                  <span class="pkg-label">{{ t('home.noFix') }}</span>
                   <span class="pkg-count">{{ formatKnownCount(cve.willNotFixCount) }}</span>
                 </div>
-                <div class="pkg-stat-item is-fix-deferred" title="延迟修复">
-                  <span class="pkg-label">延期</span>
+                <div class="pkg-stat-item is-fix-deferred" :title="t('home.fixDeferred')">
+                  <span class="pkg-label">{{ t('home.deferred') }}</span>
                   <span class="pkg-count">{{ formatKnownCount(cve.fixDeferredCount) }}</span>
                 </div>
-                <div class="pkg-stat-item is-out-of-support" title="超出支持范围">
-                  <span class="pkg-label">超期</span>
+                <div class="pkg-stat-item is-out-of-support" :title="t('home.outOfSupport')">
+                  <span class="pkg-label">{{ t('home.expired') }}</span>
                   <span class="pkg-count">{{ formatKnownCount(cve.outOfSupportCount) }}</span>
                 </div>
               </div>
             </div>
 
             <div class="popover-footer">
-              <i class="fas fa-mouse-pointer"></i> 点击进入详情页查看补丁及受影响主机
+              <i class="fas fa-mouse-pointer"></i> {{ t('home.cveDetailHint') }}
             </div>
           </div>
         </el-popover>
@@ -151,6 +149,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { cveApi } from '@/modules/patches/api'

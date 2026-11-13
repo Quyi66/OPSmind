@@ -1,3 +1,4 @@
+import { t } from '@/core/i18n'
 function pickValue(source, keys, fallback = '') {
   if (!source || typeof source !== 'object') return fallback
 
@@ -59,7 +60,7 @@ function parseContentDispositionFilename(headerValue) {
   return plainMatch?.[1] || ''
 }
 
-export function downloadBlobResponse(response, fallbackName = 'Linux机器包清单.xlsx') {
+export function downloadBlobResponse(response, fallbackName = t('patches.catalog.linuxPackageFilename')) {
   const blob = new Blob([response?.data ?? response])
   const filename =
     parseContentDispositionFilename(response?.headers?.['content-disposition']) || fallbackName

@@ -7,7 +7,7 @@
           <template #label>
             <span class="tab-label">
               <i class="fa fa-plug"></i>
-              设备凭据配置
+              {{ t('asset.deviceCredentials') }}
             </span>
           </template>
         </el-tab-pane>
@@ -15,7 +15,7 @@
           <template #label>
             <span class="tab-label">
               <i class="fa fa-shield-alt"></i>
-              通用连接模板
+              {{ t('asset.connectionTemplates') }}
             </span>
           </template>
         </el-tab-pane>
@@ -30,19 +30,19 @@
           <!-- 筛选区 -->
           <div class="ops-filter-bar">
             <el-form :inline="true" size="small">
-              <el-form-item label="IP 地址">
+              <el-form-item :label="t('asset.ipAddress')">
                 <el-input
                   v-model="filters.ip"
-                  placeholder="请输入 IP 地址"
+                  :placeholder="t('asset.ipPlaceholder')"
                   clearable
                   style="width: 180px"
                   maxlength="50"
                   @keyup.enter="handleAutomationSearch"
                 @clear="handleAutomationSearch" />
               </el-form-item>
-              <el-form-item label="设备类型">
+              <el-form-item :label="t('asset.deviceType')">
                 <el-select v-model="filters.cit" style="width: 140px" @change="handleAutomationSearch">
-                  <el-option label="全部" value="sjxy_all" />
+                  <el-option :label="t('common.all')" value="sjxy_all" />
                   <el-option
                     v-for="item in resourceTypes"
                     :key="item.code"
@@ -51,8 +51,8 @@
                   />
                 </el-select>
               </el-form-item>
-              <el-form-item label="连接模板">
-                <el-select v-model="filters.ansible_config_id" placeholder="选择关联模板" clearable style="width: 200px" @change="handleAutomationSearch">
+              <el-form-item :label="t('asset.connectionTemplate')">
+                <el-select v-model="filters.ansible_config_id" :placeholder="t('asset.selectLinkedTemplate')" clearable style="width: 200px" @change="handleAutomationSearch">
                   <el-option
                     v-for="item in ansibleConfigOptions"
                     :key="item.id"
@@ -64,11 +64,11 @@
               <el-form-item class="filter-actions">
                 <el-button type="primary" @click="handleAutomationSearch">
                   <el-icon><Search /></el-icon>
-                  搜索
+                  {{ t('common.search') }}
                 </el-button>
                 <el-button @click="handleAutomationReset">
                   <el-icon><RefreshRight /></el-icon>
-                  重置
+                  {{ t('common.reset') }}
                 </el-button>
               </el-form-item>
             </el-form>
@@ -78,15 +78,15 @@
           <div class="ops-action-bar">
             <el-button type="primary" size="small" @click="handleDeviceManage">
               <i class="fa fa-cogs" style="margin-right: 4px"></i>
-              批量设备纳管
+              {{ t('asset.batchEnroll') }}
             </el-button>
             <el-button size="small" @click="quickCreateAnsibleConfig" plain>
               <i class="fa fa-plus" style="margin-right: 4px"></i>
-              新增模板
+              {{ t('asset.newTemplate') }}
             </el-button>
             <el-button size="small" @click="openOperationLog" plain>
               <i class="fa fa-history" style="margin-right: 4px"></i>
-              连接审计日志
+              {{ t('asset.connectionAudit') }}
             </el-button>
             <span style="flex: 1"></span>
             <el-button
@@ -95,7 +95,7 @@
               size="small"
               :loading="automationLoading"
               @click="loadAutomationData"
-              title="刷新"
+              :title="t('common.refresh')"
             >
               <el-icon v-show="!automationLoading"><Refresh /></el-icon>
             </el-button>
@@ -110,7 +110,7 @@
               row-class-name="modern-table-row"
             >
               <!-- 1. 资产标识复合列 -->
-              <el-table-column label="设备标识" min-width="180" fixed="left">
+              <el-table-column :label="t('asset.deviceId')" min-width="180" fixed="left">
                 <template #default="{ row }">
                   <div class="composite-device-cell">
                     <span>{{ row.ip || '-' }}</span>
@@ -122,7 +122,7 @@
               </el-table-column>
 
               <!-- 2. 引用模板 -->
-              <el-table-column prop="ansibleConfigName" label="关联连接模板" min-width="160">
+              <el-table-column prop="ansibleConfigName" :label="t('asset.linkedTemplate')" min-width="160">
                 <template #default="{ row }">
                   <el-link
                     v-if="row.ansibleConfigName"
@@ -134,29 +134,29 @@
                     <i class="fa fa-link icon-decorator"></i>
                     {{ row.ansibleConfigName }}
                   </el-link>
-                  <el-tag v-else size="small" type="warning" effect="light">未关联模板</el-tag>
+                  <el-tag v-else size="small" type="warning" effect="light">{{ t('asset.noTemplate') }}</el-tag>
                 </template>
               </el-table-column>
 
               <!-- 3. 执行引擎 -->
-              <el-table-column prop="instanceGroup" label="执行节点" min-width="160">
+              <el-table-column prop="instanceGroup" :label="t('asset.executionNode')" min-width="160">
                 <template #default="{ row }">
                   <span class="engine-node-text">{{ row.instanceGroup || '-' }}</span>
                 </template>
               </el-table-column>
 
               <!-- 4. AAP 节点 -->
-              <el-table-column prop="aapInstanceGroup" label="AAP 引擎节点" min-width="140">
+              <el-table-column prop="aapInstanceGroup" :label="t('asset.aapNode')" min-width="140">
                 <template #default="{ row }">
                   <span class="engine-node-text">{{ row.aapInstanceGroup || '-' }}</span>
                 </template>
               </el-table-column>
 
               <!-- 5. 登录与执行用户 -->
-              <el-table-column prop="loginUser" label="连接账号" width="130">
+              <el-table-column prop="loginUser" :label="t('asset.connectionAccount')" width="130">
                 <template #default="{ row }">
                   <div class="credentials-cell">
-                    <span class="cred-item" title="登录用户">
+                    <span class="cred-item" :title="t('asset.loginUser')">
                       <i class="fa fa-user-circle text-primary"></i>
                       {{ row.loginUser || '-' }}
                     </span>
@@ -176,17 +176,17 @@
               </el-table-column> -->
 
               <!-- 6. 更新时间 -->
-              <el-table-column prop="updated_at" label="最后修改" width="180">
+              <el-table-column prop="updated_at" :label="t('asset.lastModified')" width="180">
                 <template #default="{ row }">
                   <span>{{ formatDateTime(row.updated_at || row.updatedAt) }}</span>
                 </template>
               </el-table-column>
 
               <!-- 7. 操作 -->
-              <el-table-column label="操作" width="80" fixed="right">
+              <el-table-column :label="t('common.actions')" width="80" fixed="right">
                 <template #default="{ row }">
                   <el-button text type="primary" size="small" @click="handleEditAutomation(row)">
-                    编辑
+                    {{ t('common.edit') }}
                   </el-button>
                 </template>
               </el-table-column>
@@ -215,10 +215,10 @@
           <!-- 筛选区 -->
           <div class="ops-filter-bar">
             <el-form :inline="true" size="small">
-              <el-form-item label="关键词">
+              <el-form-item :label="t('asset.keyword')">
                 <el-input
                   v-model="ansibleSearch"
-                  placeholder="模板名 / 执行节点 / 登录用户..."
+                  :placeholder="t('asset.templateSearch')"
                   clearable
                   style="width: 260px"
                   maxlength="50"
@@ -228,11 +228,11 @@
               <el-form-item class="filter-actions">
                 <el-button type="primary" @click="handleAnsibleSearch">
                   <el-icon><Search /></el-icon>
-                  搜索
+                  {{ t('common.search') }}
                 </el-button>
                 <el-button @click="handleAnsibleReset">
                   <el-icon><RefreshRight /></el-icon>
-                  重置
+                  {{ t('common.reset') }}
                 </el-button>
               </el-form-item>
             </el-form>
@@ -242,7 +242,7 @@
           <div class="ops-action-bar">
             <el-button type="primary" size="small" @click="handleAddAnsibleConfig">
               <i class="fa fa-plus" style="margin-right: 4px"></i>
-              新增凭据模板
+              {{ t('asset.newCredentialTemplate') }}
             </el-button>
             <span style="flex: 1"></span>
             <el-button
@@ -251,7 +251,7 @@
               size="small"
               :loading="ansibleLoading"
               @click="loadAnsibleData"
-              title="刷新"
+              :title="t('common.refresh')"
             >
               <el-icon v-show="!ansibleLoading"><Refresh /></el-icon>
             </el-button>
@@ -267,15 +267,15 @@
             >
               <el-table-column
                 prop="name"
-                label="模板名称"
+                :label="t('asset.templateName')"
                 min-width="150"
                 fixed="left"
                 class-name="font-bold-column"
               />
-              <el-table-column prop="instanceGroup" label="执行节点" min-width="150" />
-              <el-table-column prop="aapInstanceGroup" label="AAP 引擎节点" min-width="140" />
+              <el-table-column prop="instanceGroup" :label="t('asset.executionNode')" min-width="150" />
+              <el-table-column prop="aapInstanceGroup" :label="t('asset.aapNode')" min-width="140" />
 
-              <el-table-column prop="loginUser" label="登录账号" width="120">
+              <el-table-column prop="loginUser" :label="t('asset.loginAccount')" width="120">
                 <template #default="{ row }">
                   <span class="user-cell-item">
                     <i class="fa fa-user text-primary"></i>
@@ -284,7 +284,7 @@
                 </template>
               </el-table-column>
 
-              <el-table-column prop="runUser" label="提权账号" width="120">
+              <el-table-column prop="runUser" :label="t('asset.privilegedAccount')" width="120">
                 <template #default="{ row }">
                   <span class="user-cell-item">
                     <i class="fa fa-user-shield text-warning"></i>
@@ -293,7 +293,7 @@
                 </template>
               </el-table-column>
 
-              <el-table-column prop="group_paths" label="适用设备分组" min-width="200">
+              <el-table-column prop="group_paths" :label="t('asset.applicableGroups')" min-width="200">
                 <template #default="{ row }">
                   <div v-if="getGroupPathList(row).length" class="group-path-list">
                     <el-tag
@@ -311,7 +311,7 @@
                 </template>
               </el-table-column>
 
-              <el-table-column prop="param" label="连接附加参数" min-width="180">
+              <el-table-column prop="param" :label="t('asset.extraConnectionParams')" min-width="180">
                 <template #default="{ row }">
                   <el-tooltip v-if="row.param" :content="row.param" placement="top" effect="dark">
                     <span class="param-preview">{{ getParamPreview(row.param) }}</span>
@@ -320,19 +320,19 @@
                 </template>
               </el-table-column>
 
-              <el-table-column prop="updatedAt" label="最后修改" width="180">
+              <el-table-column prop="updatedAt" :label="t('asset.lastModified')" width="180">
                 <template #default="{ row }">
                   <span>{{ formatDateTime(row.updatedAt) }}</span>
                 </template>
               </el-table-column>
 
-              <el-table-column label="操作" width="100" fixed="right">
+              <el-table-column :label="t('common.actions')" width="100" fixed="right">
                 <template #default="{ row }">
                   <el-button text type="primary" size="small" @click="handleEditAnsible(row)">
-                    编辑
+                    {{ t('common.edit') }}
                   </el-button>
                   <el-button text type="danger" size="small" @click="handleDeleteAnsible(row)">
-                    删除
+                    {{ t('common.delete') }}
                   </el-button>
                 </template>
               </el-table-column>
@@ -359,7 +359,7 @@
     <!-- 编辑自动化配置抽屉 (Dialog -> Drawer 升级) -->
     <el-drawer
       v-model="editAutomationDialogVisible"
-      title="配置设备自动化凭据"
+      :title="t('asset.editDeviceCredentials')"
       size="560px"
       direction="rtl"
       :close-on-click-modal="false"
@@ -369,8 +369,8 @@
     >
       <div v-loading="automationFormLoading" class="drawer-body">
         <el-alert
-          title="凭据设定说明"
-          description="在此可为指定设备单独配置SSH连接账号与特权执行凭据。如果不做单独配置，系统将默认匹配该分组关联的连接模板。"
+          :title="t('asset.credentialHelp')"
+          :description="t('asset.credentialDescription')"
           type="info"
           show-icon
           :closable="false"
@@ -378,18 +378,18 @@
         />
 
         <el-form :model="automationForm" label-position="top">
-          <el-form-item label="设备目标 IP">
+          <el-form-item :label="t('asset.targetIp')">
             <el-input v-model="automationForm.ip" disabled />
           </el-form-item>
 
-          <el-form-item label="执行节点" v-if="scriptEngine !== 'aap'">
+          <el-form-item :label="t('asset.executionNode')" v-if="scriptEngine !== 'aap'">
             <el-select
               v-model="automationForm.instanceGroup"
-              placeholder="请选择连接所适用的执行节点"
+              :placeholder="t('asset.selectExecutionNode')"
               style="width: 100%"
               clearable
             >
-              <el-option label="不指定 (none)" value="" />
+              <el-option :label="t('asset.none')" value="" />
               <el-option
                 v-for="item in instanceGroupOptions"
                 :key="item"
@@ -399,10 +399,10 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item label="AAP 引擎节点" v-if="scriptEngine === 'aap'">
+          <el-form-item :label="t('asset.aapNode')" v-if="scriptEngine === 'aap'">
             <el-select
               v-model="automationForm.aapInstanceGroup"
-              placeholder="请选择"
+              :placeholder="t('asset.select')"
               style="width: 100%"
               clearable
             >
@@ -415,18 +415,18 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item label="引用连接凭据模板">
+          <el-form-item :label="t('asset.referenceTemplate')">
             <div style="display: flex; gap: 8px; width: 100%; align-items: center;">
               <el-select
                 v-model="automationForm.ansibleConfigId"
                 clearable
-                placeholder="选择已创建的 Ansible 凭据模板进行参数同步"
+                :placeholder="t('asset.selectAnsibleTemplate')"
                 style="flex: 1"
               >
                 <template #empty>
                   <div style="padding: 12px; text-align: center; color: var(--el-text-color-secondary);">
-                    <span>暂无凭据模板，</span>
-                    <el-button type="primary" link @click="quickCreateAnsibleConfig">去新增</el-button>
+                    <span>{{ t('asset.noCredentialTemplates') }}</span>
+                    <el-button type="primary" link @click="quickCreateAnsibleConfig">{{ t('asset.createOne') }}</el-button>
                   </div>
                 </template>
                 <el-option
@@ -437,28 +437,28 @@
                 />
               </el-select>
               <el-button type="primary" plain @click="quickCreateAnsibleConfig">
-                <i class="fa fa-plus" style="margin-right: 4px"></i>新增模板
+                <i class="fa fa-plus" style="margin-right: 4px"></i>{{ t('asset.newTemplate') }}
               </el-button>
             </div>
           </el-form-item>
 
           <el-row :gutter="16">
             <el-col :span="12">
-              <el-form-item label="连接登录用户">
+              <el-form-item :label="t('asset.connectionLoginUser')">
                 <el-input
                   v-model="automationForm.loginUser"
-                  placeholder="例如: root"
+                  :placeholder="t('asset.rootExample')"
                   maxlength="32"
                 />
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="连接登录密码">
+              <el-form-item :label="t('asset.connectionPassword')">
                 <el-input
                   v-model="automationForm.loginPasswd"
                   type="password"
                   show-password
-                  placeholder="留空即表示不修改"
+                  :placeholder="t('asset.blankUnchanged')"
                   autocomplete="new-password"
                   maxlength="32"
                 />
@@ -468,21 +468,21 @@
 
           <el-row :gutter="16">
             <el-col :span="12">
-              <el-form-item label="特权执行用户 (sudo)">
+              <el-form-item :label="t('asset.privilegedUserSudo')">
                 <el-input
                   v-model="automationForm.runUser"
-                  placeholder="例如: root"
+                  :placeholder="t('asset.rootExample')"
                   maxlength="32"
                 />
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="特权执行密码">
+              <el-form-item :label="t('asset.privilegedPassword')">
                 <el-input
                   v-model="automationForm.runPasswd"
                   type="password"
                   show-password
-                  placeholder="留空即表示不修改"
+                  :placeholder="t('asset.blankUnchanged')"
                   autocomplete="new-password"
                   maxlength="32"
                 />
@@ -493,9 +493,9 @@
       </div>
       <template #footer>
         <div style="display: flex; gap: 12px; justify-content: flex-end">
-          <el-button @click="editAutomationDialogVisible = false">取消</el-button>
+          <el-button @click="editAutomationDialogVisible = false">{{ t('common.cancel') }}</el-button>
           <el-button type="primary" :loading="automationSaving" @click="saveAutomationConfig">
-            保存凭据
+            {{ t('asset.saveCredentials') }}
           </el-button>
         </div>
       </template>
@@ -504,7 +504,7 @@
     <!-- 新增/编辑Ansible配置抽屉 (Dialog -> Drawer 升级) -->
     <el-drawer
       v-model="editAnsibleDialogVisible"
-      :title="ansibleForm.id ? '编辑通用连接模板' : '新增通用连接模板'"
+      :title="ansibleForm.id ? t('asset.editSharedTemplate') : t('asset.addSharedTemplate')"
       size="580px"
       direction="rtl"
       :close-on-click-modal="false"
@@ -514,8 +514,8 @@
     >
       <div v-loading="ansibleFormLoading" class="drawer-body">
         <el-alert
-          title="模板设定说明"
-          description="配置可复用的凭据模板，并可批量与指定的分组进行自动化适配绑定。"
+          :title="t('asset.templateHelp')"
+          :description="t('asset.templateDescription')"
           type="success"
           show-icon
           :closable="false"
@@ -523,18 +523,18 @@
         />
 
         <el-form :model="ansibleForm" label-position="top">
-          <el-form-item label="连接模板名称" required>
+          <el-form-item :label="t('asset.connectionTemplateName')" required>
             <el-input
               v-model="ansibleForm.name"
-              placeholder="请输入便于识别的模版名称，例如：CentOS-7系统标准模板"
+              :placeholder="t('asset.templateNameExample')"
               maxlength="50"
             />
           </el-form-item>
 
-          <el-form-item label="自动适用设备分组">
+          <el-form-item :label="t('asset.automaticGroups')">
             <el-select
               v-model="ansibleForm.groupIds"
-              placeholder="请绑定适用此凭据模板的物理/业务分组"
+              :placeholder="t('asset.bindGroups')"
               style="width: 100%"
               multiple
               clearable
@@ -548,14 +548,14 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item label="执行节点" v-if="scriptEngine !== 'aap'">
+          <el-form-item :label="t('asset.executionNode')" v-if="scriptEngine !== 'aap'">
             <el-select
               v-model="ansibleForm.instanceGroup"
-              placeholder="请选择"
+              :placeholder="t('asset.select')"
               style="width: 100%"
               clearable
             >
-              <el-option label="不指定 (none)" value=" " />
+              <el-option :label="t('asset.none')" value=" " />
               <el-option
                 v-for="item in instanceGroupOptions"
                 :key="item"
@@ -565,10 +565,10 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item label="AAP 引擎节点" v-if="scriptEngine === 'aap'">
+          <el-form-item :label="t('asset.aapNode')" v-if="scriptEngine === 'aap'">
             <el-select
               v-model="ansibleForm.aapInstanceGroup"
-              placeholder="请选择"
+              :placeholder="t('asset.select')"
               style="width: 100%"
               clearable
             >
@@ -583,17 +583,17 @@
 
           <el-row :gutter="16">
             <el-col :span="12">
-              <el-form-item label="默认登录账号">
-                <el-input v-model="ansibleForm.loginUser" placeholder="例如: root" maxlength="32" />
+              <el-form-item :label="t('asset.defaultLoginUser')">
+                <el-input v-model="ansibleForm.loginUser" :placeholder="t('asset.rootExample')" maxlength="32" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="默认登录密码">
+              <el-form-item :label="t('asset.defaultLoginPassword')">
                 <el-input
                   v-model="ansibleForm.loginPasswd"
                   type="password"
                   show-password
-                  placeholder="如不修改请留空"
+                  :placeholder="t('asset.blankKeep')"
                   autocomplete="new-password"
                   maxlength="32"
                 />
@@ -603,17 +603,17 @@
 
           <el-row :gutter="16">
             <el-col :span="12">
-              <el-form-item label="默认特权执行账号 (sudo)">
-                <el-input v-model="ansibleForm.runUser" placeholder="例如: root" maxlength="32" />
+              <el-form-item :label="t('asset.defaultPrivilegedUser')">
+                <el-input v-model="ansibleForm.runUser" :placeholder="t('asset.rootExample')" maxlength="32" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="默认特权密码">
+              <el-form-item :label="t('asset.defaultPrivilegedPassword')">
                 <el-input
                   v-model="ansibleForm.runPasswd"
                   type="password"
                   show-password
-                  placeholder="如不修改请留空"
+                  :placeholder="t('asset.blankKeep')"
                   autocomplete="new-password"
                   maxlength="32"
                 />
@@ -621,15 +621,15 @@
             </el-col>
           </el-row>
 
-          <el-form-item label="Ansible 其它高级连接参数">
+          <el-form-item :label="t('asset.advancedAnsible')">
             <el-input
               v-model="ansibleForm.param"
               type="textarea"
               :rows="4"
-              placeholder="例如: ansible_python_interpreter=/usr/bin/python3\nansible_ssh_common_args='-o StrictHostKeyChecking=no'"
+              :placeholder="t('asset.ansibleExample')"
             />
             <div class="form-desc">
-              支持输入登录及执行用户凭据以外的其它特定 Ansible 参数变量，多条用换行隔开。
+              {{ t('asset.ansibleParamHelp') }}
             </div>
           </el-form-item>
         </el-form>
@@ -637,8 +637,8 @@
 
       <template #footer>
         <div style="display: flex; gap: 12px; justify-content: flex-end">
-          <el-button @click="editAnsibleDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="saveAnsibleConfig">保存模板</el-button>
+          <el-button @click="editAnsibleDialogVisible = false">{{ t('common.cancel') }}</el-button>
+          <el-button type="primary" @click="saveAnsibleConfig">{{ t('asset.saveTemplate') }}</el-button>
         </div>
       </template>
     </el-drawer>
@@ -654,6 +654,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
@@ -887,7 +889,7 @@ async function loadAutomationData() {
     automationTotal.value = response?.total || 0
   } catch (error) {
     console.error('加载自动化配置失败:', error)
-    ElMessage.error('加载自动化配置失败')
+    ElMessage.error(t('asset.loadAutomationFailed'))
   } finally {
     automationLoading.value = false
   }
@@ -905,7 +907,7 @@ async function loadAnsibleData() {
     ansibleConfigOptions.value = normalizeAnsibleConfigOptions(ansibleData.value)
   } catch (error) {
     console.error('加载Ansible配置失败:', error)
-    ElMessage.error('加载Ansible配置失败')
+    ElMessage.error(t('asset.loadAnsibleFailed'))
   } finally {
     ansibleLoading.value = false
   }
@@ -1111,12 +1113,12 @@ async function saveAutomationConfig() {
       params
     })
 
-    ElMessage.success('保存成功')
+    ElMessage.success(t('asset.saved'))
     editAutomationDialogVisible.value = false
     loadAutomationData()
   } catch (error) {
     console.error('保存失败:', error)
-    ElMessage.error('保存失败')
+    ElMessage.error(t('asset.saveFailed'))
   } finally {
     automationSaving.value = false
   }
@@ -1175,7 +1177,7 @@ async function handleEditAnsible(row) {
 // 删除Ansible配置
 async function handleDeleteAnsible(row) {
   try {
-    await ElMessageBox.confirm('该ansible配置可能被多个主机引用，是否确定删除？', '确认删除', {
+    await ElMessageBox.confirm(t('asset.deleteTemplateConfirm'), t('asset.confirmDelete'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning'
@@ -1190,12 +1192,12 @@ async function handleDeleteAnsible(row) {
       }
     })
 
-    ElMessage.success('删除成功')
+    ElMessage.success(t('asset.deleted'))
     loadAnsibleData()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除失败:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(t('asset.deleteFailed'))
     }
   }
 }
@@ -1203,7 +1205,7 @@ async function handleDeleteAnsible(row) {
 // 保存Ansible配置
 async function saveAnsibleConfig() {
   if (!ansibleForm.value.name) {
-    ElMessage.warning('请输入配置名称')
+    ElMessage.warning(t('asset.configNameRequired'))
     return
   }
   try {
@@ -1228,7 +1230,7 @@ async function saveAnsibleConfig() {
       params
     })
 
-    ElMessage.success('保存成功')
+    ElMessage.success(t('asset.saved'))
     editAnsibleDialogVisible.value = false
     if (isQuickCreatingAnsible.value) {
       await loadAutomationFormOptions()
@@ -1247,7 +1249,7 @@ async function saveAnsibleConfig() {
     loadAnsibleData()
   } catch (error) {
     console.error('保存失败:', error)
-    ElMessage.error('保存失败')
+    ElMessage.error(t('asset.saveFailed'))
   }
 }
 
@@ -1258,7 +1260,7 @@ function handleDeviceManage() {
 
 // 设备纳管成功回调
 function handleDeviceManageSuccess() {
-  ElMessage.success('设备纳管任务已提交，请在操作记录中查看执行状态')
+  ElMessage.success(t('asset.enrollSubmittedHint'))
   loadAutomationData()
 }
 </script>

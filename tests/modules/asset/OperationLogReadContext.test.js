@@ -4,6 +4,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 import { ElMessage, ElTable, ElTableColumn } from 'element-plus'
 import Page from '@/modules/asset/views/OperationLogPage.vue'
+import { setLocale } from '@/core/i18n'
 
 const api = vi.hoisted(() => ({ getOperationLogs: vi.fn() }))
 vi.mock('@/modules/asset/api', () => ({ operationLogApi: api }))
@@ -83,14 +84,38 @@ beforeEach(() => {
     }
   )
 })
-afterEach(() => {
+afterEach(async () => {
   root?.unmount()
+  await setLocale('zh-CN', { persist: false })
   vi.useRealTimers()
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
 
 describe('资产操作日志读取上下文', () => {
+  it('translates actions, result titles and errors without changing raw rows or refetching', async () => {
+    const record = { run_id: 'raw-run-id', action: '#{acm.job.check_conn}', status: 'COMPLETED', message: '后端中文 #{unknown} {{value}}' }
+    api.getOperationLogs.mockResolvedValueOnce({ records: [record], total: 1 })
+    await open({ day: '3', action: record.action, status: 'COMPLETED', keyword: '真实执行节点' })
+    const vm = page().vm.$.setupState, rows = vm.tableData, query = router.currentRoute.value.fullPath
+    vm.showRunResult(record); vm.currentPage = 2
+    const actions = vm.actionTypes.map(item => item.value)
+    await setLocale('en-US', { persist: false }); await flushPromises()
+    expect(vm.currentJobTitle).toBe('Device connectivity check')
+    expect(vm.currentRunId).toBe('raw-run-id'); expect(vm.runResultDialogVisible).toBe(true)
+    expect(vm.tableData).toBe(rows); expect(vm.currentPage).toBe(2)
+    expect(vm.actionTypes.map(item => item.value)).toEqual(actions)
+    expect(vm.formatMessage(record.message)).toBe(record.message)
+    expect(vm.formatMessage('cmdb.common.log.conn_success')).toBe('Device connectivity check succeeded')
+    expect(api.getOperationLogs).toHaveBeenCalledTimes(1)
+    expect(router.currentRoute.value.fullPath).toBe(query)
+    api.getOperationLogs.mockRejectedValueOnce(new Error('read failed'))
+    await vm.loadData()
+    expect(vm.loadError).toBe('Unable to load operation records. Please retry.')
+    await setLocale('zh-CN', { persist: false })
+    expect(vm.loadError).toBe('加载操作记录失败，请重试')
+    expect(api.getOperationLogs).toHaveBeenCalledTimes(2)
+  })
   it('沿真实列表轮询从运行中刷新到完成，清空读取中的旧行不使轮询丢失', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
     const running = { records: [{ run_id: 'active', status: 'RUNNING' }], total: 1 }

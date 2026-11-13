@@ -15,6 +15,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { currentLocale } from '@/core/i18n'
 
 const props = defineProps({
   typeName: {
@@ -44,7 +45,7 @@ const _emit = defineEmits(['click'])
 
 const formattedCount = computed(() => {
   if (typeof props.count === 'number') {
-    return props.count.toLocaleString()
+    return props.count.toLocaleString(currentLocale.value)
   }
   return props.count
 })

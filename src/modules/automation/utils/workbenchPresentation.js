@@ -1,18 +1,20 @@
+import { t } from '@/core/i18n'
+
 const JOB_TYPES = {
-  rest: { label: 'REST 运维工具', tag: 'primary' },
-  script: { label: '脚本运维工具', tag: 'success' },
-  command: { label: '命令运维工具', tag: 'warning' },
-  process: { label: '流程运维工具', tag: 'info' },
-  cmd: { label: '命令任务', tag: 'warning' },
-  audit: { label: '巡检任务', tag: 'primary' },
-  flows: { label: '流程任务', tag: 'info' }
+  rest: { get label() { return t('automation.types.rest') }, tag: 'primary' },
+  script: { get label() { return t('automation.types.script') }, tag: 'success' },
+  command: { get label() { return t('automation.types.command') }, tag: 'warning' },
+  process: { get label() { return t('automation.types.process') }, tag: 'info' },
+  cmd: { get label() { return t('automation.types.cmd') }, tag: 'warning' },
+  audit: { get label() { return t('automation.types.audit') }, tag: 'primary' },
+  flows: { get label() { return t('automation.types.flows') }, tag: 'info' }
 }
 
 export function getWorkbenchJobType(record) {
   const type = String(record?.job_type || record?.jobType || record?.type || '')
     .trim()
     .toLowerCase()
-  return JOB_TYPES[type] || { label: type || '类型未知', tag: 'info' }
+  return JOB_TYPES[type] || { label: type || t('automation.types.unknown'), tag: 'info' }
 }
 
 export function getWorkbenchCardLayout(width, height, compact = false) {
@@ -68,15 +70,16 @@ export function selectWorkbenchJobs(rows, type = '') {
 
 export function formatWorkbenchJobDate(job) {
   const { timestamp, source } = getWorkbenchJobDate(job)
-  if (timestamp === null) return { label: '时间未提供', title: '更新时间和创建时间均未提供或无效' }
+  const sourceLabel = source === '更新' ? t('automation.date.updated') : t('automation.date.created')
+  if (timestamp === null) return { get label() { return t('automation.date.notProvided') }, title: t('automation.date.invalid') }
   const date = new Date(timestamp)
   const pad = value => String(value).padStart(2, '0')
   const monthDay = `${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
   const time = `${pad(date.getHours())}:${pad(date.getMinutes())}`
   const fullDate = `${date.getFullYear()}-${monthDay}`
   return {
-    label: `${source} ${fullDate} ${time}`,
-    title: `${source}时间：${fullDate} ${time}:${pad(date.getSeconds())}`
+    label: t('automation.date.label', { source: sourceLabel, date: fullDate, time }),
+    title: t('automation.date.title', { source: sourceLabel, date: fullDate, time: `${time}:${pad(date.getSeconds())}` })
   }
 }
 
@@ -96,10 +99,10 @@ export function getRunHostStats(value) {
   }
   if (!stats || typeof stats !== 'object' || Array.isArray(stats)) return []
   return [
-    ['totalHosts', '总数', 'info'],
-    ['okHosts', '成功', 'success'],
-    ['failedHosts', '失败', 'danger'],
-    ['unreachableHosts', '不可达', 'warning']
+    ['totalHosts', t('automation.stats.total'), 'info'],
+    ['okHosts', t('automation.stats.ok'), 'success'],
+    ['failedHosts', t('automation.stats.failed'), 'danger'],
+    ['unreachableHosts', t('automation.stats.unreachable'), 'warning']
   ].flatMap(([key, label, tone]) => {
     const raw = stats[key]
     if ((typeof raw !== 'number' && typeof raw !== 'string') || String(raw).trim() === '') return []
@@ -112,11 +115,11 @@ export function formatRunDuration(record) {
   const start = record?.start_time ? new Date(record.start_time).getTime() : NaN
   const end = record?.end_time ? new Date(record.end_time).getTime() : NaN
   if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) {
-    return ['RUNNING', 'CALLBACK'].includes(String(record?.status).toUpperCase()) ? '进行中' : '—'
+    return ['RUNNING', 'CALLBACK'].includes(String(record?.status).toUpperCase()) ? t('automation.duration.inProgress') : '—'
   }
   const seconds = Math.floor((end - start) / 1000)
   if (seconds >= 3600)
-    return `${Math.floor(seconds / 3600)}时 ${Math.floor((seconds % 3600) / 60)}分`
-  if (seconds >= 60) return `${Math.floor(seconds / 60)}分 ${seconds % 60}秒`
-  return `${seconds}秒`
+    return t('automation.duration.hoursMinutes', { hours: Math.floor(seconds / 3600), minutes: Math.floor((seconds % 3600) / 60) })
+  if (seconds >= 60) return t('automation.duration.minutesSeconds', { minutes: Math.floor(seconds / 60), seconds: seconds % 60 })
+  return t('automation.duration.seconds', { seconds })
 }

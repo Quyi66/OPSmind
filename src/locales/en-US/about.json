@@ -1,0 +1,7 @@
+{
+  "title": "About KoreOPS",
+  "description": "KoreOPS is a modern operations management platform offering unified operations tools and services. This dashboard is built with Vue 3 to support efficient operations management.",
+  "techStack": "Technology stack",
+  "back": "Back to dashboard",
+  "version": "Version {version}"
+}

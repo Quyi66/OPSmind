@@ -5,8 +5,8 @@
     ci-types="linux"
     :initial-selection="formData.hosts"
     :options="{ selectMode: 'host,group,tag,input,recently', selector: 'multiple' }"
-    title="选择设备 · 执行命令"
-    confirm-text="执行命令"
+    :title="t('automation.command.deviceRunTitle')"
+    :confirm-text="t('automation.command.execute')"
     :description="executionDescription"
     :allow-empty="false"
     :close-on-confirm="false"
@@ -27,30 +27,30 @@
     @close="handleClose"
     :close-on-press-escape="false"
   >
-    <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
+    <el-form ref="formRef" :model="formData" :rules="formRules" :validate-on-rule-change="false" :label-width="currentLocale === 'en-US' ? '160px' : '100px'">
       <!-- 创建作业时需要填写标题和描述 -->
       <template v-if="isCreateJobMode">
-        <el-form-item label="运维工具标题" prop="title">
+        <el-form-item :label="t('automation.command.toolTitle')" prop="title">
           <el-input
             v-model="formData.title"
-            placeholder="请输入运维工具标题"
+            :placeholder="t('automation.command.toolTitleRequired')"
             maxlength="50"
             show-word-limit
           />
         </el-form-item>
 
-        <el-form-item label="运维工具描述" prop="description">
+        <el-form-item :label="t('automation.command.toolDescription')" prop="description">
           <el-input
             v-model="formData.description"
             type="textarea"
             :rows="3"
-            placeholder="请输入运维工具描述（可选）"
+            :placeholder="t('automation.command.optionalToolDescription')"
           />
         </el-form-item>
       </template>
 
       <!-- 命令信息 -->
-      <el-form-item label="选中命令">
+      <el-form-item :label="t('automation.command.selectedCommands')">
         <div class="selected-commands">
           <el-tag v-for="cmd in commandList" :key="cmd.id" type="info" class="command-tag">
             {{ cmd.name }}
@@ -59,21 +59,21 @@
       </el-form-item>
 
       <!-- 主机选择 -->
-      <el-form-item label="目标主机" prop="hosts" required>
+      <el-form-item :label="t('automation.command.targetHosts')" prop="hosts" required>
         <AcmDeviceSelector
           v-model="formData.hosts"
           ci-types="linux"
           :options="{
             selectMode: 'host,group,tag,input,recently',
             selector: 'multiple',
-            label: '选择主机'
+            label: t('automation.command.selectHosts')
           }"
         />
       </el-form-item>
     </el-form>
 
     <template #footer>
-      <el-button @click="handleClose">取消</el-button>
+      <el-button @click="handleClose">{{ t('common.cancel') }}</el-button>
       <el-button
         v-if="isCreateJobMode"
         type="primary"
@@ -81,13 +81,16 @@
         :disabled="formData.hosts.length === 0"
         @click="handleSaveJob"
       >
-        保存运维工具
+        {{ t('automation.command.saveTool') }}
       </el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+import { useLocalizedValidation } from '@/core/i18n/validation'
+
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { runJobByRequest, saveJob } from '@/modules/automation/api/command'
@@ -128,7 +131,7 @@ const isCreateJobMode = computed(() => props.mode === 'createJob')
 
 // 对话框标题
 const dialogTitle = computed(() => {
-  return isCreateJobMode.value ? '创建命令运维工具' : '执行命令'
+  return isCreateJobMode.value ? t('automation.command.createCommandTool') : t('automation.command.execute')
 })
 
 // 命令列表（支持单个或多个命令）
@@ -139,11 +142,12 @@ const commandList = computed(() => {
 
 const executionDescription = computed(
   () =>
-    `即将在所选主机上执行命令：${commandList.value.map(cmd => cmd.name).join('、')}。点击“执行命令”后立即执行。`
+    t('automation.command.runDescription', { commands: commandList.value.map(cmd => cmd.name).join(t('common.listSeparator')) })
 )
 
 // 表单引用
 const formRef = ref(null)
+useLocalizedValidation(formRef)
 
 // 表单数据
 const formData = reactive({
@@ -155,14 +159,14 @@ const formData = reactive({
 // 表单验证规则
 const formRules = computed(() => ({
   title: isCreateJobMode.value
-    ? [{ required: true, message: '请输入运维工具标题', trigger: 'blur' }]
+    ? [{ required: true, message: t('automation.command.toolTitleRequired'), trigger: 'blur' }]
     : [],
   hosts: [
     {
       validator: (rule, value, callback) => {
         const hostList = Array.isArray(value) ? value.filter(Boolean) : []
         if (hostList.length === 0) {
-          callback(new Error('请至少选择一个目标主机'))
+          callback(new Error(t('automation.command.selectOneHost')))
         } else {
           callback()
         }
@@ -190,7 +194,7 @@ watch(
       resetForm()
       // 如果是创建作业模式，默认使用命令名称作为标题
       if (isCreateJobMode.value && commandList.value.length === 1) {
-        formData.title = `${commandList.value[0].name} 运维工具`
+        formData.title = t('automation.command.defaultToolTitle', { name: commandList.value[0].name })
       }
     }
   }
@@ -209,7 +213,7 @@ async function handleRunCommand(selection = formData.hosts) {
   if (submitting.value) return
   formData.hosts = [...selection]
   if (!formData.hosts.length) {
-    ElMessage.warning('请至少选择一个目标主机')
+    ElMessage.warning(t('automation.command.selectOneHost'))
     return
   }
 
@@ -221,16 +225,16 @@ async function handleRunCommand(selection = formData.hosts) {
     const result = response.data || response
     const runResult = Array.isArray(result) ? result[0] : result
     if (['FAILED', 'ERROR'].includes(runResult?.status)) {
-      ElMessage.error(runResult.error || '执行命令失败')
+      ElMessage.error(runResult.error || t('automation.command.executeFailed'))
       return
     }
 
-    ElMessage.success('命令已提交执行，可在运行记录中查看')
+    ElMessage.success(t('automation.command.submittedRecords'))
     emit('success', result)
     handleClose()
   } catch (error) {
     console.error('执行命令失败:', error)
-    ElMessage.error(`执行命令失败: ${error.message || '未知错误'}`)
+    ElMessage.error(t('automation.command.executeFailedReason', { reason: error.message || t('automation.file.unknownError') }))
   } finally {
     submitting.value = false
   }
@@ -256,12 +260,12 @@ async function handleSaveJob() {
     const response = await saveJob(job)
     const result = response.data || response
 
-    ElMessage.success('运维工具创建成功')
+    ElMessage.success(t('automation.command.toolCreated'))
     emit('success', result)
     handleClose()
   } catch (error) {
     console.error('创建运维工具失败:', error)
-    ElMessage.error(`创建运维工具失败: ${error.message || '未知错误'}`)
+    ElMessage.error(t('automation.command.createToolFailedReason', { reason: error.message || t('automation.file.unknownError') }))
   } finally {
     submitting.value = false
   }

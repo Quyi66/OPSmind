@@ -32,8 +32,8 @@
           :loading="loading"
           :disabled="!!readError && !canRetry"
           @click="refresh"
-          :title="readError ? '重试读取' : '刷新'"
-          :aria-label="readError ? '重试读取主机概览' : '刷新主机概览'"
+          :title="readError ? t('yumRepo.software.retryRead') : t('common.refresh')"
+          :aria-label="readError ? t('yumRepo.software.retryHostOverview') : t('yumRepo.software.refreshHostOverview')"
         >
           <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
@@ -59,7 +59,7 @@
         size="small"
         height="100%"
       >
-        <el-table-column prop="host_key" label="主机" min-width="150" show-overflow-tooltip>
+        <el-table-column prop="host_key" :label="t('yumRepo.host')" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
             <el-button
               class="software-cell-link"
@@ -73,9 +73,9 @@
           </template>
         </el-table-column>
         <el-table-column prop="os_distro" label="OS" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="os_version" label="OS版本" width="150" show-overflow-tooltip />
-        <el-table-column prop="repo_count" label="已配置仓库" width="120" />
-        <el-table-column prop="installed_pkgs_count" label="已安装软件包" width="140">
+        <el-table-column prop="os_version" :label="t('yumRepo.software.osVersion')" width="150" show-overflow-tooltip />
+        <el-table-column prop="repo_count" :label="t('yumRepo.software.configuredRepo')" width="120" />
+        <el-table-column prop="installed_pkgs_count" :label="t('yumRepo.software.installedPackages')" width="140">
           <template #default="{ row }">
             {{ row.installed_pkgs_count }}
             <!-- <el-button type="primary" text @click="handleInstalledClick(row)">
@@ -83,7 +83,7 @@
             </el-button> -->
           </template>
         </el-table-column>
-        <el-table-column prop="scan_date" label="上一次扫描时间" width="180">
+        <el-table-column prop="scan_date" :label="t('yumRepo.software.previousScan')" width="180">
           <template #default="{ row }">
             {{ formatDate(row.scan_date) }}
           </template>
@@ -118,9 +118,9 @@
       ci-types="linux"
       :initial-selection="selectedScanHosts"
       :options="{ selectMode: 'host,group,tag,input,recently', selector: 'multiple' }"
-      title="选择设备 · 软件包扫描"
-      confirm-text="开始扫描"
-      description="点击“开始扫描”后将立即采集所选主机的软件包信息。"
+      :title="t('yumRepo.software.packageScanTitle')"
+      :confirm-text="t('yumRepo.startScan')"
+      :description="t('yumRepo.software.packageScanHint')"
       :allow-empty="false"
       :close-on-confirm="false"
       :submitting="scanLoading"
@@ -130,6 +130,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search, Refresh } from '@element-plus/icons-vue'
@@ -243,7 +245,7 @@ function handleSearch() {
 
 // 导出
 function handleExport() {
-  ElMessage.info('导出功能开发中')
+  ElMessage.info(t('yumRepo.software.exportPending'))
 }
 
 // 重新扫描 - 打开对话框
@@ -258,7 +260,7 @@ async function executeScan(selection = selectedScanHosts.value) {
   if (scanLoading.value) return
   selectedScanHosts.value = selection
   if (selectedScanHosts.value.length === 0) {
-    ElMessage.warning('请选择要扫描的主机')
+    ElMessage.warning(t('yumRepo.software.selectScanHosts'))
     return
   }
 
@@ -272,17 +274,17 @@ async function executeScan(selection = selectedScanHosts.value) {
     const runResult = (response?.data || response || [])[0]
 
     if (runResult && runResult.runId) {
-      ElMessage.success('软件包扫描任务已提交')
+      ElMessage.success(t('yumRepo.software.packageScanSubmitted'))
       scanDialogVisible.value = false
       selectedScanHosts.value = []
 
       trackScan(runResult.runId)
     } else {
-      throw new Error('未获取到任务运行ID')
+      throw new Error(t('yumRepo.noRunId'))
     }
   } catch (error) {
     console.error('Scan failed:', error)
-    ElMessage.error(`扫描失败: ${error.message || '未知错误'}`)
+    ElMessage.error(t('yumRepo.software.scanFailedReason', { reason: error.message || t('yumRepo.unknownError') }))
   } finally {
     scanLoading.value = false
   }

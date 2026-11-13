@@ -1,3 +1,7 @@
+import { t } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
+import { useLocalizedValidation } from '@/core/i18n/validation'
+
 import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { ElMessage } from 'element-plus'
@@ -83,11 +87,16 @@ function isAuditJobType(jobType) {
  * CRON 任务表单管理
  * 处理表单数据、作业列表加载、表单提交等功能
  */
+function localizedInitializationError(key) {
+  return Object.assign(new Error(t(key)), { i18nKey: key })
+}
+
 export function useCronJobForm(props, emit) {
   const formRef = ref(null)
+  useLocalizedValidation(formRef)
   const submitting = ref(false)
   const initializing = ref(false)
-  const initializationError = ref('')
+  const initializationError = messageRef('')
   let initializationId = 0
   const jobList = ref([])
   const multipleJobIds = ref([])
@@ -116,17 +125,17 @@ export function useCronJobForm(props, emit) {
       return
     }
 
-    callback(new Error('请选择执行运维工具'))
+    callback(new Error(t('automation.schedule.selectExecutionTool')))
   }
 
-  const formRules = {
-    jobDesc: [{ required: true, message: '请输入任务描述', trigger: 'blur' }],
-    logOutput: [{ required: true, message: '请选择是否输出日志', trigger: 'change' }],
-    isEncrypt: [{ required: true, message: '请选择是否参数加密', trigger: 'change' }],
-    scheduleConf: [{ required: true, message: '请输入Cron表达式', trigger: 'blur' }],
-    jobType: [{ required: true, message: '请选择运维工具类型', trigger: 'change' }],
+  const formRules = computed(() => ({
+    jobDesc: [{ required: true, message: t('automation.schedule.taskDescriptionRequired'), trigger: 'blur' }],
+    logOutput: [{ required: true, message: t('automation.schedule.logOutputRequired'), trigger: 'change' }],
+    isEncrypt: [{ required: true, message: t('automation.schedule.encryptionRequired'), trigger: 'change' }],
+    scheduleConf: [{ required: true, message: t('automation.schedule.cronRequired'), trigger: 'blur' }],
+    jobType: [{ required: true, message: t('automation.schedule.selectType'), trigger: 'change' }],
     jobId: [{ validator: validateJobSelection, trigger: 'change' }]
-  }
+  }))
 
   /**
    * 表单验证状态
@@ -245,7 +254,7 @@ export function useCronJobForm(props, emit) {
         }
       }
     } catch (error) {
-      ElMessage.error('获取任务详情失败')
+      ElMessage.error(t('automation.schedule.detailFailed'))
       throw error
     }
   }
@@ -269,8 +278,8 @@ export function useCronJobForm(props, emit) {
       jobParams.value = [
         {
           name: 'annex_name',
-          label: '自定义附件名称',
-          description: '自定义附件名称',
+          get label() { return t('automation.schedule.attachmentName') },
+          get description() { return t('automation.schedule.attachmentName') },
           type: null,
           defaultValue: '',
           secret: false
@@ -280,8 +289,8 @@ export function useCronJobForm(props, emit) {
       jobParams.value = [
         {
           name: 'hosts',
-          label: '主机',
-          description: '主机',
+          get label() { return t('automation.schedule.host') },
+          get description() { return t('automation.schedule.host') },
           type: 'host',
           defaultValue: [],
           secret: false
@@ -320,7 +329,7 @@ export function useCronJobForm(props, emit) {
           break
       }
     } catch {
-      if (isCurrent()) ElMessage.error('获取运维工具列表失败')
+      if (isCurrent()) ElMessage.error(t('automation.schedule.listFailed'))
       loaded = false
     }
 
@@ -373,19 +382,19 @@ export function useCronJobForm(props, emit) {
     initializationError.value = ''
     try {
       if (!source.id || !['script', 'rest'].includes(source.type)) {
-        throw new Error('当前工具不支持快捷创建定时任务')
+        throw localizedInitializationError('automation.schedule.unsupportedQuickCreate')
       }
       const loaded = await handleJobTypeChange(source.type, isCurrent)
       if (!isCurrent()) return
       if (!loaded || !Array.isArray(jobList.value)) {
-        throw new Error('读取可选工具失败，请重新加载')
+        throw localizedInitializationError('automation.schedule.loadOptionsRetry')
       }
       const selected = jobList.value.find(job => job.id === source.id)
       if (!selected || (selected.type && selected.type !== source.type)) {
-        throw new Error('当前工具不在可选列表中，请取消后重新选择工具')
+        throw localizedInitializationError('automation.schedule.toolNotAvailable')
       }
       if (selected.needApprove || selected.isApproving) {
-        throw new Error('当前工具需要审批，请取消后按原审批流程处理')
+        throw localizedInitializationError('automation.schedule.approvalRequired')
       }
       const detail = await handleJobChange(selected.id, isCurrent)
       if (!isCurrent()) return
@@ -395,23 +404,23 @@ export function useCronJobForm(props, emit) {
         Array.isArray(detail) ||
         (!detail.id && !detail.type && !Array.isArray(detail.params))
       ) {
-        throw new Error('读取工具参数失败，请重新加载')
+        throw localizedInitializationError('automation.schedule.loadParamsRetry')
       }
       if (
         (detail.id && detail.id !== selected.id) ||
         (detail.type && detail.type !== source.type)
       ) {
-        throw new Error('工具信息已变化，请取消后重新选择工具')
+        throw localizedInitializationError('automation.schedule.toolChanged')
       }
       if (detail.needApprove || detail.isApproving) {
-        throw new Error('当前工具需要审批，请取消后按原审批流程处理')
+        throw localizedInitializationError('automation.schedule.approvalRequired')
       }
       formData.value.jobId = selected.id
     } catch (error) {
       if (isCurrent()) {
         formData.value.jobId = ''
         jobParams.value = []
-        initializationError.value = error.message || '读取工具失败，请重新加载'
+        initializationError.value = error.i18nKey ? message(error.i18nKey) : error.message || message('automation.schedule.loadToolRetry')
       }
     } finally {
       if (isCurrent()) initializing.value = false
@@ -425,13 +434,13 @@ export function useCronJobForm(props, emit) {
     if (!job) return ''
 
     if (isAuditJobType(formData.value.jobType)) {
-      return getAutomationToolTitle({ title: job.templateName }, '未命名巡检任务')
+      return getAutomationToolTitle({ title: job.templateName }, t('automation.schedule.unnamedInspection'))
     }
     if (formData.value.jobType === 'cmd') {
-      return getAutomationToolTitle({ name: job.name }, '未命名命令任务')
+      return getAutomationToolTitle({ name: job.name }, t('automation.schedule.unnamedCommand'))
     }
     if (formData.value.jobType === 'flows') {
-      return getAutomationToolTitle({ name: job.name }, '未命名流程任务')
+      return getAutomationToolTitle({ name: job.name }, t('automation.schedule.unnamedFlow'))
     }
     return getAutomationToolTitle(job)
   }
@@ -445,11 +454,11 @@ export function useCronJobForm(props, emit) {
 
     // 验证运维工具选择
     if (!isMultipleJobType.value && !formData.value.jobId) {
-      ElMessage.warning('请选择执行运维工具')
+      ElMessage.warning(t('automation.schedule.selectExecutionTool'))
       return
     }
     if (isMultipleJobType.value && multipleJobIds.value.length === 0) {
-      ElMessage.warning('请选择执行运维工具')
+      ElMessage.warning(t('automation.schedule.selectExecutionTool'))
       return
     }
 
@@ -471,7 +480,7 @@ export function useCronJobForm(props, emit) {
     if (formData.value.jobType === 'cmd') {
       const hostsParam = jobParams.value.find(p => p.name === 'hosts')
       if (!hostsParam || !hostsParam.defaultValue || hostsParam.defaultValue.length === 0) {
-        ElMessage.warning('运行参数为空,请输入运行参数!')
+        ElMessage.warning(t('automation.schedule.paramsRequired'))
         return
       }
     }
@@ -515,16 +524,16 @@ export function useCronJobForm(props, emit) {
       if (props.editingId) {
         payload.id = props.editingId
         await jaoApi.updateCronJob(payload)
-        ElMessage.success('更新成功')
+        ElMessage.success(t('automation.schedule.updated'))
       } else {
         await jaoApi.createCronJob(payload)
-        ElMessage.success('创建成功')
+        ElMessage.success(t('automation.schedule.created'))
       }
 
       emit('success')
       emit('update:modelValue', false)
     } catch (error) {
-      ElMessage.error(error?.message || '操作失败')
+      ElMessage.error(error?.message || t('automation.schedule.operationFailed'))
     } finally {
       submitting.value = false
     }

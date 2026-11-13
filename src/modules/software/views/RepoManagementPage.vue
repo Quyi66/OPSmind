@@ -5,8 +5,7 @@
       <template #title>
         <div class="desc-content">
           <p class="description">
-            软件仓库（Yum源）用于管理软件包，仓库中存放各种rpm的软件包以及软件包之间的依赖关系。
-            每台主机上都可以配置自己的仓库，为避免仓库混乱，建议使用统一的基准仓库。
+            {{ t('yumRepo.software.description') }}
           </p>
         </div>
       </template>
@@ -34,13 +33,13 @@
         <!-- 筛选区域 -->
         <div class="ops-filter-bar">
           <el-form :inline="true" size="small">
-            <el-form-item label="状态">
+            <el-form-item :label="t('automation.workbench.status')">
               <el-checkbox-group v-model="baseRepoStatus" @change="loadBaseRepos">
                 <el-checkbox value="enabled">
-                  <el-tag type="success" size="small">启用</el-tag>
+                  <el-tag type="success" size="small">{{ t('yumRepo.enable') }}</el-tag>
                 </el-checkbox>
                 <el-checkbox value="disabled">
-                  <el-tag type="warning" size="small">未启用</el-tag>
+                  <el-tag type="warning" size="small">{{ t('yumRepo.software.notEnabled') }}</el-tag>
                 </el-checkbox>
               </el-checkbox-group>
             </el-form-item>
@@ -56,17 +55,17 @@
             @click="handleConfigRepoToHost"
           >
             <i class="fa fa-cogs" style="margin-right: 4px"></i>
-            配置到主机
+            {{ t('yumRepo.software.configureHosts') }}
           </el-button>
           <el-tooltip
-            content="当前页面暂不支持重新扫描仓库信息"
+            :content="t('yumRepo.software.rescanUnavailable')"
             placement="top"
             :trigger="['hover', 'focus']"
           >
-            <span class="unavailable-action" tabindex="0" aria-label="重新扫描仓库信息暂不可用">
+            <span class="unavailable-action" tabindex="0" :aria-label="t('yumRepo.software.rescanDisabledAria')">
               <el-button size="small" disabled @click="handleRescanRepoInfo">
                 <i class="fa fa-undo-alt" style="margin-right: 4px"></i>
-                重新扫描仓库信息
+                {{ t('yumRepo.software.rescanRepos') }}
               </el-button>
             </span>
           </el-tooltip>
@@ -78,8 +77,8 @@
             :loading="baseRepoLoading"
             :disabled="!!baseRepoError && !canRetryBaseRepos"
             @click="refreshBaseRepos"
-            :title="baseRepoError ? '重试读取' : '刷新'"
-            :aria-label="baseRepoError ? '重试读取基准仓库' : '刷新基准仓库'"
+            :title="baseRepoError ? t('yumRepo.software.retryRead') : t('common.refresh')"
+            :aria-label="baseRepoError ? t('yumRepo.software.retryBaseRepos') : t('yumRepo.software.refreshBaseRepos')"
           >
             <el-icon v-show="!baseRepoLoading"><Refresh /></el-icon>
           </el-button>
@@ -94,7 +93,7 @@
         >
           <template #title>
             {{ baseRepoErrorMessage }}
-            <span v-if="hasBaseRepoResult">刷新成功前，旧仓库数据仅供查看，暂不可配置到主机。</span>
+            <span v-if="hasBaseRepoResult">{{ t('yumRepo.software.staleBaseHint') }}</span>
           </template>
         </el-alert>
 
@@ -111,15 +110,15 @@
             <template #empty>
               <el-empty
                 v-if="hasBaseRepoResult && !baseRepoLoading && !baseRepoError"
-                description="暂无基准仓库"
+                :description="t('yumRepo.software.noBaseRepos')"
               >
-                <p>配置到主机前，需要已有基准主机及其采集的仓库数据。</p>
-                <el-button @click="activeTab = 'baseHost'">查看基准主机</el-button>
+                <p>{{ t('yumRepo.software.baseRepoPrerequisite') }}</p>
+                <el-button @click="activeTab = 'baseHost'">{{ t('yumRepo.software.viewBaseHost') }}</el-button>
               </el-empty>
               <span v-else>{{ baseRepoEmptyText }}</span>
             </template>
             <el-table-column type="selection" width="50" :selectable="() => canUseBaseRepos" />
-            <el-table-column prop="repo_id" label="仓库ID" min-width="120" show-overflow-tooltip>
+            <el-table-column prop="repo_id" :label="t('yumRepo.software.repoId')" min-width="120" show-overflow-tooltip>
               <template #default="{ row }">
                 <el-button
                   class="software-cell-link"
@@ -135,24 +134,24 @@
             </el-table-column>
             <el-table-column
               prop="scan_server"
-              label="基准主机"
+              :label="t('yumRepo.software.baseHost')"
               min-width="150"
               show-overflow-tooltip
             />
-            <el-table-column prop="repo_name" label="名称" min-width="150" show-overflow-tooltip />
+            <el-table-column prop="repo_name" :label="t('common.name')" min-width="150" show-overflow-tooltip />
             <el-table-column
               prop="repo_file"
-              label="配置文件"
+              :label="t('yumRepo.software.configFile')"
               min-width="150"
               show-overflow-tooltip
             />
-            <el-table-column prop="repo_pkgs" label="软件包数量" width="100">
+            <el-table-column prop="repo_pkgs" :label="t('yumRepo.software.packageCount')" width="100">
               <template #default="{ row }">
                 {{ formatPkgCount(row.repo_pkgs) }}
               </template>
             </el-table-column>
-            <el-table-column prop="repo_size" label="大小" width="100" />
-            <el-table-column prop="baseurl" label="地址" min-width="250">
+            <el-table-column prop="repo_size" :label="t('yumRepo.size')" width="100" />
+            <el-table-column prop="baseurl" :label="t('yumRepo.software.address')" min-width="250">
               <template #default="{ row }">
                 <div class="baseurl-tags">
                   <el-tag
@@ -167,19 +166,19 @@
                 </div>
               </template>
             </el-table-column>
-            <el-table-column prop="repo_status" label="状态" width="80">
+            <el-table-column prop="repo_status" :label="t('automation.workbench.status')" width="80">
               <template #default="{ row }">
                 <el-tag :type="row.repo_status === '启用' ? 'success' : 'info'" size="small">
                   {{ row.repo_status }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="repo_updated" label="仓库更新时间" width="180">
+            <el-table-column prop="repo_updated" :label="t('yumRepo.software.repoUpdatedAt')" width="180">
               <template #default="{ row }">
                 {{ formatDate(row.repo_updated) }}
               </template>
             </el-table-column>
-            <el-table-column prop="scan_date" label="信息更新时间" width="180">
+            <el-table-column prop="scan_date" :label="t('yumRepo.software.infoUpdatedAt')" width="180">
               <template #default="{ row }">
                 {{ formatDate(row.scan_date) }}
               </template>
@@ -237,6 +236,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { computed, ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
@@ -249,10 +250,10 @@ import ConfigRepoToHostDialog from '../components/repo/ConfigRepoToHostDialog.vu
 import { useSoftwareListRead } from '../composables/useSoftwareListRead'
 
 const tabs = [
-  { key: 'baseRepo', label: '基准仓库', icon: 'fa fa-home' },
-  { key: 'baseHost', label: '基准主机', icon: 'fa fa-laptop-house' },
-  { key: 'customRepo', label: '自定义仓库', icon: 'fa fa-user-cog' },
-  { key: 'configuredRepo', label: '已配置仓库', icon: 'fa fa-tools' }
+  { key: 'baseRepo', get label() { return t('yumRepo.software.baseRepo') }, icon: 'fa fa-home' },
+  { key: 'baseHost', get label() { return t('yumRepo.software.baseHost') }, icon: 'fa fa-laptop-house' },
+  { key: 'customRepo', get label() { return t('yumRepo.software.customRepo') }, icon: 'fa fa-user-cog' },
+  { key: 'configuredRepo', get label() { return t('yumRepo.software.configuredRepo') }, icon: 'fa fa-tools' }
 ]
 
 const activeTab = ref('baseRepo')
@@ -365,11 +366,11 @@ function handleViewRepoDetail(row) {
 
 function handleConfigRepoToHost() {
   if (!canUseBaseRepos.value) {
-    ElMessage.warning('请先成功刷新仓库列表，再配置到主机')
+    ElMessage.warning(t('yumRepo.software.refreshBeforeConfig'))
     return
   }
   if (selectedBaseRepos.value.length === 0) {
-    ElMessage.warning('请先选择要配置的仓库')
+    ElMessage.warning(t('yumRepo.software.selectReposFirst'))
     return
   }
   configDialogVisible.value = true
@@ -384,7 +385,7 @@ function handleConfigSuccess() {
 
 function handleRescanRepoInfo() {
   // 独立仓库扫描的作业与参数尚未核实，不能仅凭旧封装下发任务。
-  ElMessage.warning('当前页面暂不支持重新扫描仓库信息，未提交扫描任务')
+  ElMessage.warning(t('yumRepo.software.rescanUnavailableNotice'))
 }
 
 onMounted(() => {

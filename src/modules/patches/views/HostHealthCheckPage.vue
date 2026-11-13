@@ -12,15 +12,15 @@
     <!-- 2. 筛选栏 -->
     <div class="ops-filter-bar mb-2">
       <el-form :model="filters" inline size="small" @submit.prevent>
-        <el-form-item label="健康状态">
+        <el-form-item :label="t('asset.health.status')">
           <el-select
             v-model="filters.status"
             clearable
-            placeholder="全部状态"
+            :placeholder="t('asset.health.allStatuses')"
             style="width: 140px"
             @change="handleSearch"
           >
-            <el-option label="全部状态" value="" />
+            <el-option :label="t('asset.health.allStatuses')" value="" />
             <el-option
               v-for="item in HEALTH_STATUS_LIST"
               :key="item.value"
@@ -30,10 +30,10 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="关键字">
+        <el-form-item :label="t('asset.health.keyword')">
           <el-input
             v-model="filters.keyword"
-            placeholder="输入主机 IP 或主机名模糊匹配"
+            :placeholder="t('asset.health.searchPlaceholder')"
             clearable
             style="width: 220px"
             @keyup.enter="handleSearch"
@@ -44,11 +44,11 @@
         <el-form-item>
           <el-button type="primary" :loading="hostsLoading" @click="handleSearch">
             <el-icon><Search /></el-icon>
-            搜索
+            {{ t('common.search') }}
           </el-button>
           <el-button @click="handleResetFilters">
             <el-icon><RefreshRight /></el-icon>
-            重置
+            {{ t('common.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -64,7 +64,7 @@
         @click="handleRunAll"
       >
         <i class="fas fa-play me-1" aria-hidden="true"></i>
-        {{ isRunInProgress ? '巡检执行中...' : '立即巡检全部主机' }}
+        {{ isRunInProgress ? t('asset.health.running') : t('asset.health.runAll') }}
       </el-button>
 
       <el-button
@@ -76,7 +76,7 @@
         @click="handleRunSelected"
       >
         <i class="fas fa-sync-alt me-1" aria-hidden="true"></i>
-        对选中主机重新巡检
+        {{ t('asset.health.runSelected') }}
         <span v-if="selectedHostIds.length > 0">({{ selectedHostIds.length }})</span>
       </el-button>
 
@@ -93,7 +93,7 @@
 
       <el-button size="small" @click="scoringDialogVisible = true">
         <i class="fas fa-book-open me-1" aria-hidden="true"></i>
-        评分规则说明
+        {{ t('asset.health.scoringRules') }}
       </el-button>
 
       <span class="action-bar-spacer"></span>
@@ -103,8 +103,8 @@
         circle
         size="small"
         :loading="hostsLoading || summaryLoading"
-        title="刷新"
-        aria-label="刷新主机健康巡检数据"
+        :title="t('common.refresh')"
+        :aria-label="t('asset.health.refreshData')"
         @click="refreshAll"
       >
         <el-icon v-show="!hostsLoading && !summaryLoading"><Refresh /></el-icon>
@@ -123,7 +123,7 @@
       >
         <el-table-column type="selection" width="46" reserve-selection />
 
-        <el-table-column prop="hostIp" label="主机 IP" width="140" show-overflow-tooltip>
+        <el-table-column prop="hostIp" :label="t('asset.health.hostIp')" width="140" show-overflow-tooltip>
           <template #default="{ row }">
             <el-link type="primary" :underline="false" @click="openHostDetail(row)">
               {{ row.hostIp || '—' }}
@@ -131,19 +131,19 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="hostname" label="主机名" min-width="120" show-overflow-tooltip>
+        <el-table-column prop="hostname" :label="t('asset.health.hostname')" min-width="120" show-overflow-tooltip>
           <template #default="{ row }">
             {{ row.hostname || '—' }}
           </template>
         </el-table-column>
 
-        <el-table-column prop="os" label="操作系统" min-width="150" show-overflow-tooltip>
+        <el-table-column prop="os" :label="t('asset.health.os')" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
             {{ row.os || '—' }}
           </template>
         </el-table-column>
 
-        <el-table-column prop="status" label="健康状态" width="105">
+        <el-table-column prop="status" :label="t('asset.health.status')" width="105">
           <template #default="{ row }">
             <el-tag
               :type="getHealthStatusMeta(row.status).tagType"
@@ -161,19 +161,19 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="score" label="健康评分" width="90">
+        <el-table-column prop="score" :label="t('asset.health.score')" width="90">
           <template #default="{ row }">
             <span
               v-if="row.status === 'UNREACHABLE'"
               class="score-unscored-text"
-              title="主机不可达，未执行巡检，未参与健康评分"
+              :title="t('asset.health.unreachableScoreHint')"
             >
               —
             </span>
             <span
               v-else-if="row.status === 'UNCHECKED'"
               class="score-unscored-text"
-              title="未巡检，暂无评分"
+              :title="t('asset.health.uncheckedScoreHint')"
             >
               —
             </span>
@@ -183,7 +183,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="风险提示" min-width="300">
+        <el-table-column :label="t('asset.health.risks')" min-width="300">
           <template #default="{ row }">
             <div
               class="risk-summary-clamp"
@@ -195,16 +195,16 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="checkTime" label="最近巡检时间" width="180" show-overflow-tooltip>
+        <el-table-column prop="checkTime" :label="t('asset.health.lastCheckTime')" width="180" show-overflow-tooltip>
           <template #default="{ row }">
             {{ formatHealthDateTime(row.checkTime) }}
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="140" fixed="right">
+        <el-table-column :label="t('common.actions')" width="140" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="openHostDetail(row)">
-              详情
+              {{ t('asset.health.details') }}
             </el-button>
             <el-button
               link
@@ -212,13 +212,13 @@
               :disabled="runSubmitting || isRunInProgress"
               @click="handleRunSingleHost(row)"
             >
-              重新巡检
+              {{ t('asset.health.recheck') }}
             </el-button>
           </template>
         </el-table-column>
 
         <template #empty>
-          <el-empty description="暂无符合条件的主机健康数据" :image-size="80" />
+          <el-empty :description="t('asset.health.noMatchingHosts')" :image-size="80" />
         </template>
       </el-table>
     </div>
@@ -253,13 +253,15 @@
     <ExecuteResultDialog
       v-model:visible="runResultDialogVisible"
       :run-id="activeRunResultId"
-      job-title="主机健康巡检"
+      :job-title="t('asset.health.jobTitle')"
       @settled="handleRunResultSettled"
     />
   </div>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed, onMounted } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import { Search, RefreshRight, Refresh } from '@element-plus/icons-vue'
@@ -337,11 +339,11 @@ function handleRunResultSettled() {
 async function handleRunAll() {
   try {
     await ElMessageBox.confirm(
-      '确定立即对全部纳管 Linux 主机发起健康巡检吗？',
-      '立即巡检确认',
+      t('asset.health.runAllConfirm'),
+      t('asset.health.runConfirmTitle'),
       {
-        confirmButtonText: '立即巡检',
-        cancelButtonText: '取消',
+        confirmButtonText: t('asset.health.runNow'),
+        cancelButtonText: t('common.cancel'),
         type: 'info'
       }
     )

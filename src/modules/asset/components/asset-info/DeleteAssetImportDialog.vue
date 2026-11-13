@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="批量删除资产"
+    :title="t('asset.batchDeleteAssets')"
     width="600px"
     :close-on-click-modal="false"
     @closed="handleClosed"
@@ -10,16 +10,16 @@
     <div class="delete-import-content">
       <!-- 第一步：下载模板 -->
       <div class="delete-import-step">
-        <div class="delete-import-step-label">第一步：下载批量删除模板</div>
+        <div class="delete-import-step-label">{{ t('asset.deleteStepDownload') }}</div>
         <el-button @click="handleDownloadTemplate">
           <i class="fa fa-download" style="margin-right: 4px"></i>
-          下载批量删除模板
+          {{ t('asset.downloadDeleteTemplate') }}
         </el-button>
       </div>
 
       <!-- 第二步：上传文件执行删除 -->
       <div class="delete-import-step">
-        <div class="delete-import-step-label">第二步：按模板填写后上传执行删除</div>
+        <div class="delete-import-step-label">{{ t('asset.deleteStepUpload') }}</div>
         <el-upload
           ref="uploadRef"
           :auto-upload="false"
@@ -30,25 +30,27 @@
         >
           <el-button type="danger">
             <i class="fa fa-upload" style="margin-right: 4px"></i>
-            选择删除文件
+            {{ t('asset.selectDeleteFile') }}
           </el-button>
           <template #tip>
-            <div class="el-upload__tip">只能上传 xlsx/xls 文件</div>
+            <div class="el-upload__tip">{{ t('asset.excelFilesOnly') }}</div>
           </template>
         </el-upload>
       </div>
     </div>
 
     <template #footer>
-      <el-button @click="visible = false">取消</el-button>
+      <el-button @click="visible = false">{{ t('common.cancel') }}</el-button>
       <el-button type="danger" :loading="uploading" :disabled="!selectedFile" @click="handleUpload">
-        开始删除
+        {{ t('asset.startDelete') }}
       </el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { computed, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { apiService } from '@/core/api'
@@ -84,7 +86,7 @@ function downloadPublicFile(relativePath, filename) {
 }
 
 function handleDownloadTemplate() {
-  downloadPublicFile('templates/batch-delete-template.xlsx', '批量删除资产模板.xlsx')
+  downloadPublicFile('templates/batch-delete-template.xlsx', t('asset.deleteTemplateName'))
 }
 
 function escapeHtml(value) {
@@ -113,7 +115,7 @@ async function showDeleteResult(result) {
   const errorMessages = Array.isArray(result?.errorMessages) ? result.errorMessages : []
 
   if (failedCount === 0 && errorMessages.length === 0) {
-    ElMessage.success(`处理完成：共 ${totalCount} 条记录，成功删除 ${successCount} 条`)
+    ElMessage.success(t('asset.deleteCompleted', { total: totalCount, success: successCount }))
     return
   }
 
@@ -125,30 +127,30 @@ async function showDeleteResult(result) {
     : ''
   const errorItemsHtml = errorMessages.length
     ? errorMessages.map(message => `<li>${escapeHtml(message)}</li>`).join('')
-    : '<li>未返回详细错误信息</li>'
+    : `<li>${escapeHtml(t('asset.noErrorDetails'))}</li>`
 
   await ElMessageBox.alert(
     `<div style="max-height: 320px; overflow-y: auto; line-height: 1.6;">
-      <p><strong>处理总数:</strong> ${totalCount} 条</p>
-      <p><strong>成功删除:</strong> ${successCount} 条</p>
+      <p><strong>${escapeHtml(t('asset.processedCount', { count: totalCount }))}</strong></p>
+      <p><strong>${escapeHtml(t('asset.deletedCount', { count: successCount }))}</strong></p>
       ${successIpsHtml}
-      <p><strong>删除失败:</strong> ${failedCount} 条</p>
+      <p><strong>${escapeHtml(t('asset.deleteFailedCount', { count: failedCount }))}</strong></p>
       ${failedIpsHtml}
-      <p><strong>错误信息:</strong></p>
+      <p><strong>${escapeHtml(t('asset.errorDetails'))}</strong></p>
       <ul style="color: #f56c6c; margin: 8px 0 0 20px; padding: 0;">${errorItemsHtml}</ul>
     </div>`,
-    '删除结果',
+    t('asset.deleteResult'),
     {
       closeOnClickModal: true,
       dangerouslyUseHTMLString: true,
-      confirmButtonText: '确定'
+      confirmButtonText: t('asset.ok')
     }
   )
 }
 
 async function handleUpload() {
   if (!selectedFile.value) {
-    ElMessage.warning('请先选择文件')
+    ElMessage.warning(t('asset.selectFileFirst'))
     return
   }
 
@@ -172,7 +174,7 @@ async function handleUpload() {
     emit('saved')
   } catch (error) {
     console.error('删除导入失败:', error)
-    ElMessage.error(`删除导入失败: ${error.response?.data?.message || error.message}`)
+    ElMessage.error(t('asset.deleteImportFailedReason', { message: error.response?.data?.message || error.message }))
   } finally {
     uploading.value = false
   }

@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="仓库导入"
+    :title="t('yumRepo.software.repoImport')"
     width="450px"
     :close-on-click-modal="false"
     @close="handleClose"
@@ -9,7 +9,7 @@
   >
     <div class="repo-import-content">
       <el-form ref="formRef" :model="formData" label-position="top">
-        <el-form-item label="Excel文件" prop="file">
+        <el-form-item :label="t('yumRepo.software.excelFile')" prop="file">
           <div class="file-upload-row">
             <el-upload
               ref="uploadRef"
@@ -21,11 +21,11 @@
               :on-change="handleFileChange"
               :on-exceed="handleExceed"
             >
-              <el-button type="primary">选择文件上传</el-button>
+              <el-button type="primary">{{ t('yumRepo.software.uploadFile') }}</el-button>
             </el-upload>
             <span v-if="fileList.length > 0" class="file-name">{{ fileList[0].name }}</span>
           </div>
-          <div class="file-tip">支持 .xlsx, .xls 格式的 Excel 文件</div>
+          <div class="file-tip">{{ t('yumRepo.software.excelHint') }}</div>
         </el-form-item>
       </el-form>
 
@@ -36,7 +36,7 @@
           :disabled="fileList.length === 0"
           @click="handleSubmit"
         >
-          开始执行
+          {{ t('yumRepo.software.start') }}
         </el-button>
       </div>
     </div>
@@ -44,6 +44,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { repoApi } from '../../api'
@@ -85,24 +87,24 @@ function handleFileChange(file) {
 }
 
 function handleExceed() {
-  ElMessage.warning('只能上传一个文件，请先删除已上传的文件')
+  ElMessage.warning(t('yumRepo.software.oneUploadOnly'))
 }
 
 async function handleSubmit() {
   if (!formData.value.file) {
-    ElMessage.warning('请先选择要上传的文件')
+    ElMessage.warning(t('yumRepo.software.selectUploadFile'))
     return
   }
 
   try {
     await ElMessageBox.confirm(
-      '导入仓库配置源信息可能需要几分钟不等，请点击确定开始导入',
-      '执行运维工具',
+      t('yumRepo.software.importConfirm'),
+      t('yumRepo.software.executeTool'),
       {
         closeOnClickModal: false,
         closeOnPressEscape: false,
-        confirmButtonText: '确认',
-        cancelButtonText: '取消',
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
         type: 'info'
       }
     )
@@ -115,13 +117,13 @@ async function handleSubmit() {
 
     await repoApi.importRepoFromExcel(uploadData)
 
-    ElMessage.success('仓库导入成功')
+    ElMessage.success(t('yumRepo.software.repoImported'))
     emit('success')
     handleClose()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('Failed to import repo:', error)
-      ElMessage.error('仓库导入失败')
+      ElMessage.error(t('yumRepo.software.repoImportFailed'))
     }
   } finally {
     submitting.value = false

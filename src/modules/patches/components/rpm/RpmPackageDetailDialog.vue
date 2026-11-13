@@ -1,7 +1,7 @@
 <template>
   <el-drawer
     v-model="dialogVisible"
-    title="软件包详情"
+    :title="t('patches.catalog.packageDetails')"
     size="880px"
     destroy-on-close
     class="rpm-package-detail-drawer"
@@ -10,44 +10,44 @@
     <div v-loading="loading" class="rpm-package-detail">
       <template v-if="loading || hasDetail">
         <el-descriptions :column="2" border size="small" class="detail-descriptions">
-          <el-descriptions-item label="包名">
+          <el-descriptions-item :label="t('yumRepo.packageName')">
             {{ normalizedDetail.name || '-' }}
           </el-descriptions-item>
-          <el-descriptions-item label="来源">
+          <el-descriptions-item :label="t('patches.catalog.origin')">
             {{ normalizedDetail.source || '-' }}
           </el-descriptions-item>
-          <el-descriptions-item label="架构">
+          <el-descriptions-item :label="t('yumRepo.architecture')">
             {{ normalizedDetail.architecture || '-' }}
           </el-descriptions-item>
-          <el-descriptions-item label="OS版本">
-            {{ normalizedDetail.osVersion || '未知' }}
+          <el-descriptions-item :label="t('yumRepo.software.osVersion')">
+            {{ normalizedDetail.osVersion || t('automation.command.unknown') }}
           </el-descriptions-item>
-          <el-descriptions-item label="版本">
+          <el-descriptions-item :label="t('patches.catalog.version')">
             {{ versionText }}
           </el-descriptions-item>
-          <el-descriptions-item label="摘要" :span="2">
+          <el-descriptions-item :label="t('patches.catalog.abstract')" :span="2">
             {{ normalizedDetail.summary || '-' }}
           </el-descriptions-item>
           <el-descriptions-item
-            label="RPM 路径"
+            :label="t('patches.catalog.rpmPath')"
             :span="2"
             v-if="normalizedDetail.source !== 'ubuntu'"
           >
             <span class="mono-text">{{ normalizedDetail.rpmPath || '-' }}</span>
           </el-descriptions-item>
-          <el-descriptions-item label="描述" :span="2">
-            <div class="pre-wrap">{{ normalizedDetail.description || '暂无描述信息' }}</div>
+          <el-descriptions-item :label="t('yumRepo.description')" :span="2">
+            <div class="pre-wrap">{{ normalizedDetail.description || t('patches.catalog.noDescriptionInfo') }}</div>
           </el-descriptions-item>
         </el-descriptions>
 
         <section class="detail-section">
-          <h4 class="detail-section__title">关联服务</h4>
+          <h4 class="detail-section__title">{{ t('patches.catalog.associatedServices') }}</h4>
           <div v-if="normalizedDetail.services.length" class="service-list">
             <el-tag v-for="service in normalizedDetail.services" :key="service" size="small">
               {{ service }}
             </el-tag>
           </div>
-          <span v-else class="service-empty-text">暂无关联服务</span>
+          <span v-else class="service-empty-text">{{ t('patches.catalog.noServices') }}</span>
         </section>
 
         <section
@@ -57,14 +57,14 @@
           <div class="detail-section__header">
             <h4 class="detail-section__title">Changelog</h4>
             <span v-if="parsedChangelog.isStructured" class="detail-section__meta">
-              {{ filteredEntryCount }} / {{ changelogEntryCount }} 条记录
+              {{ t('patches.catalog.filteredChangelogEntries', { filtered: filteredEntryCount, total: changelogEntryCount }) }}
             </span>
           </div>
           <template v-if="parsedChangelog.isStructured">
             <div class="changelog-search">
               <el-input
                 v-model="searchKeyword"
-                placeholder="搜索 Changelog..."
+                :placeholder="t('patches.catalog.changelogSearch')"
                 clearable
                 size="small"
                 :prefix-icon="SearchIcon"
@@ -131,7 +131,7 @@
                   </ul>
                 </article>
               </div>
-              <span v-else class="service-empty-text">无匹配的 Changelog 记录</span>
+              <span v-else class="service-empty-text">{{ t('patches.catalog.noMatchingChangelog') }}</span>
             </div>
             <div v-if="filteredTotalEntries > pageSize" class="ops-pagination-wrapper mt-4">
               <el-pagination
@@ -154,12 +154,15 @@
         </section>
       </template>
 
-      <el-empty v-else description="暂无 RPM 包详情" :image-size="80" />
+      <el-empty v-else :description="t('patches.catalog.noRpmDetails')" :image-size="80" />
     </div>
   </el-drawer>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
+
 import { ref, computed, watch } from 'vue'
 import { Search as SearchIcon } from '@element-plus/icons-vue'
 import {
@@ -195,7 +198,7 @@ const dialogVisible = computed({
 
 const normalizedDetail = computed(() => normalizeRpmPackageDetail(props.detailData))
 const changelogContent = ref('')
-const changelogStatusText = ref('暂无 changelog 信息')
+const changelogStatusText = messageRef(message('patches.catalog.noChangelog'))
 const changelogLoading = ref(false)
 const changelogFileCache = new Map()
 const parsedChangelog = computed(() => parseRpmChangelog(changelogContent.value))
@@ -263,20 +266,20 @@ watch(
 
     changelogContent.value = ''
     changelogLoading.value = false
-    changelogStatusText.value = '暂无 changelog 信息'
+    changelogStatusText.value = message('patches.catalog.noChangelog')
 
     if (!visible || detailLoading) return
 
     const detail = normalizedDetail.value
     const fileUrls = buildRpmChangelogFileUrls(detail)
     if (!fileUrls.length) {
-      changelogStatusText.value = '缺少有效的软件包来源、系统版本或包名，无法加载 Changelog'
+      changelogStatusText.value = message('patches.catalog.changelogIdentityMissing')
       return
     }
 
     const versionCandidates = getRpmChangelogVersionCandidates(detail)
     if (!versionCandidates.length) {
-      changelogStatusText.value = '缺少 currentPackage 或版本信息，无法匹配 Changelog'
+      changelogStatusText.value = message('patches.catalog.changelogVersionMissing')
       return
     }
 
@@ -306,10 +309,10 @@ watch(
 
       const packageVersion = versionCandidates[versionCandidates.length - 1]
       if (loadedFile) {
-        changelogStatusText.value = `未找到版本 ${packageVersion} 对应的 Changelog`
+        changelogStatusText.value = message('patches.catalog.changelogVersionNotFound', { version: packageVersion })
       } else {
         console.error('Failed to load changelog files:', fileUrls, lastLoadError)
-        changelogStatusText.value = '未找到当前软件包对应的 Changelog 文件'
+        changelogStatusText.value = message('patches.catalog.changelogFileMissing')
       }
     } finally {
       if (!cancelled && requestId === changelogRequestId) {

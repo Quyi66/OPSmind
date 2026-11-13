@@ -5,19 +5,19 @@
       <div class="action-left">
         <el-button type="primary" size="small" @click="handleAddRepo">
           <i class="fa fa-plus" />
-          添加仓库
+          {{ t('yumRepo.software.addRepo') }}
         </el-button>
         <el-button size="small" :disabled="selectedRows.length === 0 || !canUseRows" @click="handleConfigToHost">
           <i class="fa fa-angle-right" />
-          配置到主机
+          {{ t('yumRepo.software.configureHosts') }}
         </el-button>
         <el-button size="small" @click="handleDownloadTemplate">
           <i class="fa fa-arrow-down" />
-          模板下载
+          {{ t('yumRepo.software.downloadTemplate') }}
         </el-button>
         <el-button size="small" @click="handleImportRepo">
           <i class="fa fa-file-import" />
-          仓库导入
+          {{ t('yumRepo.software.repoImport') }}
         </el-button>
       </div>
       <div class="action-right">
@@ -28,8 +28,8 @@
           :loading="loading"
           :disabled="!!readError && !canRetry"
           @click="refresh"
-          :title="readError ? '重试读取' : '刷新'"
-          :aria-label="readError ? '重试读取自定义仓库' : '刷新自定义仓库'"
+          :title="readError ? t('yumRepo.software.retryRead') : t('common.refresh')"
+          :aria-label="readError ? t('yumRepo.software.retryCustomRepos') : t('yumRepo.software.refreshCustomRepos')"
         >
           <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
@@ -39,9 +39,9 @@
     <el-alert v-if="readError" type="warning" :closable="false" show-icon style="flex-shrink: 0">
       <template #title>
         {{ readErrorMessage }}
-        <span v-if="hasResult">刷新成功前，旧仓库数据仅供查看，暂不可配置、编辑或删除。</span>
+        <span v-if="hasResult">{{ t('yumRepo.software.staleCustomHint') }}</span>
         <el-button v-if="canRetry" link type="primary" :loading="loading" @click="retry">
-          重试读取
+          {{ t('yumRepo.software.retryRead') }}
         </el-button>
       </template>
     </el-alert>
@@ -56,10 +56,10 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="50" :selectable="() => canUseRows" />
-        <el-table-column prop="repo_name" label="仓库名" min-width="130" show-overflow-tooltip />
-        <el-table-column prop="repo_file" label="仓库文件" min-width="130" show-overflow-tooltip />
-        <el-table-column prop="repo_desc" label="描述" min-width="130" show-overflow-tooltip />
-        <el-table-column label="地址" min-width="450">
+        <el-table-column prop="repo_name" :label="t('yumRepo.software.repoName')" min-width="130" show-overflow-tooltip />
+        <el-table-column prop="repo_file" :label="t('yumRepo.software.repoFile')" min-width="130" show-overflow-tooltip />
+        <el-table-column prop="repo_desc" :label="t('yumRepo.description')" min-width="130" show-overflow-tooltip />
+        <el-table-column :label="t('yumRepo.software.address')" min-width="450">
           <template #default="{ row }">
             <el-tooltip placement="top" :show-after="300" :disabled="!getRepoAddressLines(row).length">
               <template #content>
@@ -70,13 +70,13 @@
                   {{ line }}
                 </div>
                 <div v-if="getRepoAddressLines(row).length > 3" class="repo-address-more">
-                  … 共 {{ getRepoAddressLines(row).length }} 个地址
+                  {{ t('yumRepo.software.addressCount', { count: getRepoAddressLines(row).length }) }}
                 </div>
               </div>
             </el-tooltip>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100" fixed="right">
+        <el-table-column :label="t('common.actions')" width="100" fixed="right">
           <template #default="{ row }">
             <div class="software-row-actions">
               <el-button
@@ -86,7 +86,7 @@
                 :disabled="!canUseRows"
                 @click="handleEdit(row)"
               >
-                编辑
+                {{ t('automation.workbench.edit') }}
               </el-button>
               <el-button
                 text
@@ -95,7 +95,7 @@
                 :disabled="!canUseRows"
                 @click="handleDelete(row)"
               >
-                删除
+                {{ t('common.delete') }}
               </el-button>
             </div>
           </template>
@@ -132,6 +132,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
@@ -231,7 +233,7 @@ async function handleDelete(row) {
   const isCurrent = captureReady()
   const id = row.id
   try {
-    await ElMessageBox.confirm('确认删除选中镜像源？', '确认删除', {
+    await ElMessageBox.confirm(t('yumRepo.software.deleteRepoConfirm'), t('automation.list.confirmDelete'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning'
@@ -240,13 +242,13 @@ async function handleDelete(row) {
     if (!isCurrent()) return
     await repoApi.deleteCustomRepo(id)
     if (!isCurrent()) return
-    ElMessage.success('删除成功')
+    ElMessage.success(t('automation.workbench.deleted'))
     loadData()
   } catch (error) {
     if (!isCurrent()) return
     if (error !== 'cancel') {
       console.error('Failed to delete repo:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(t('automation.workbench.deleteFailed'))
     }
   }
 }
@@ -254,7 +256,7 @@ async function handleDelete(row) {
 function handleConfigToHost() {
   if (!requireCurrentRows()) return
   if (selectedRows.value.length === 0) {
-    ElMessage.warning('请先选择要配置的仓库')
+    ElMessage.warning(t('yumRepo.software.selectReposFirst'))
     return
   }
   configDialogVisible.value = true
@@ -262,7 +264,7 @@ function handleConfigToHost() {
 
 function requireCurrentRows() {
   if (canUseRows.value) return true
-  ElMessage.warning('请先成功刷新仓库列表，再配置、编辑或删除')
+  ElMessage.warning(t('yumRepo.software.refreshBeforeActions'))
   return false
 }
 

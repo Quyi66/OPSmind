@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="导入资产类型"
+    :title="t('asset.importModel')"
     width="600px"
     :close-on-click-modal="false"
     @closed="handleClosed"
@@ -21,42 +21,44 @@
       >
         <i class="fa fa-cloud-upload-alt upload-icon"></i>
         <div class="el-upload__text">
-          将文件拖到此处，或
-          <em>点击上传</em>
+          {{ t('admin.dropFile') }}
+          <em>{{ t('admin.uploadClick') }}</em>
         </div>
         <template #tip>
-          <div class="el-upload__tip">只能上传 xlsx/xls 文件</div>
+          <div class="el-upload__tip">{{ t('asset.excelFilesOnly') }}</div>
         </template>
       </el-upload>
 
       <div class="upload-tips">
         <p>
           <i class="fa fa-info-circle"></i>
-          导入说明：
+          {{ t('asset.importInstructions') }}
         </p>
         <ul>
-          <li>请使用标准的资产类型导入模板</li>
-          <li>类型编码必须唯一且以英文字母开头</li>
-          <li>导入会更新覆盖同编码的类型配置</li>
+          <li>{{ t('asset.modelImportTemplate') }}</li>
+          <li>{{ t('asset.modelImportCode') }}</li>
+          <li>{{ t('asset.modelImportOverwrite') }}</li>
         </ul>
       </div>
     </div>
 
     <template #footer>
-      <el-button @click="visible = false">取消</el-button>
+      <el-button @click="visible = false">{{ t('common.cancel') }}</el-button>
       <el-button
         type="primary"
         :loading="uploading"
         :disabled="!selectedFile"
         @click="handleUpload"
       >
-        导入
+        {{ t('asset.import') }}
       </el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { apiService } from '@/core/api'
@@ -90,13 +92,13 @@ const handleFileRemove = () => {
 
 // 超出限制
 const handleExceed = () => {
-  ElMessage.warning('只能上传一个文件')
+  ElMessage.warning(t('asset.oneFileOnly'))
 }
 
 // 上传
 const handleUpload = async () => {
   if (!selectedFile.value) {
-    ElMessage.warning('请选择要上传的文件')
+    ElMessage.warning(t('asset.selectUploadFile'))
     return
   }
 
@@ -114,16 +116,16 @@ const handleUpload = async () => {
     // 返回结果为数组，取第一条判断状态
     const result = Array.isArray(res?.data) ? res.data[0] : res?.data
     if (result?.status === 'COMPLETED') {
-      ElMessage.success('导入成功')
+      ElMessage.success(t('asset.imported'))
       visible.value = false
       emit('saved')
     } else {
-      const errMsg = result?.error || result?.data || '导入失败，请检查文件格式'
+      const errMsg = result?.error || result?.data || t('asset.importFormatFailed')
       ElMessage.error(errMsg)
     }
   } catch (error) {
     console.error('导入失败:', error)
-    ElMessage.error(`导入失败: ${error.response?.data?.message || error.message}`)
+    ElMessage.error(t('asset.importFailedReason', { message: error.response?.data?.message || error.message }))
   } finally {
     uploading.value = false
   }

@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="标签内设备信息"
+    :title="t('asset.tagAssets')"
     width="1280px"
     :close-on-click-modal="selectedRows.length === 0"
     :close-on-press-escape="selectedRows.length === 0"
@@ -16,18 +16,16 @@
             @click="handleRemoveAsset"
           >
             <i class="fa fa-minus-circle" style="margin-right: 4px"></i>
-            从标签中移除
+            {{ t('asset.removeTagAssets') }}
           </el-button>
         </div>
         <div class="toolbar-right">
           <span v-if="selectedRows.length > 0" class="selected-info">
-            选中
-            <span class="selected-count">{{ selectedRows.length }}</span>
-            项
+            {{ t('asset.selectedCount', { count: selectedRows.length }) }}
           </span>
           <el-input
             v-model="keyword"
-            placeholder="搜索"
+            :placeholder="t('common.search')"
             style="width: 180px"
             clearable
             @keyup.enter="loadAssetList"
@@ -36,12 +34,12 @@
               <i class="fa fa-search"></i>
             </template>
           </el-input>
-          <el-tooltip content="导出" placement="top">
+          <el-tooltip :content="t('asset.export')" placement="top">
             <el-button link @click="handleExport">
               <i class="fa fa-file-export"></i>
             </el-button>
           </el-tooltip>
-          <el-tooltip content="刷新" placement="top">
+          <el-tooltip :content="t('common.refresh')" placement="top">
             <el-button link @click="loadAssetList">
               <i class="fa fa-sync"></i>
             </el-button>
@@ -58,15 +56,15 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="40" fixed="left" />
-        <el-table-column label="资产状态" width="80" align="left" fixed="left">
+        <el-table-column :label="t('asset.assetStatus')" width="80" align="left" fixed="left">
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">
-              {{ row.status === 1 ? '在线' : '下线' }}
+              {{ row.status === 1 ? t('asset.online') : t('asset.offline') }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="IP" label="纳管IP" width="130" fixed="left" />
-        <el-table-column label="连通状态" width="80" align="left">
+        <el-table-column prop="IP" :label="t('asset.managedIp')" width="130" fixed="left" />
+        <el-table-column :label="t('asset.connectivityStatus')" width="80" align="left">
           <template #default="{ row }">
             <i
               v-if="String(row.CONN_LATEST_STATUS) === '1'"
@@ -81,24 +79,24 @@
             <i v-else class="fa fa-question-circle" style="color: #e6a23c"></i>
           </template>
         </el-table-column>
-        <el-table-column label="连通率" width="70" align="left">
+        <el-table-column :label="t('asset.connectionRate')" width="70" align="left">
           <template #default="{ row }">
-            {{ row.CONN_RATE ? row.CONN_RATE + '%' : '未测试' }}
+            {{ row.CONN_RATE ? row.CONN_RATE + '%' : t('asset.notTested') }}
           </template>
         </el-table-column>
-        <el-table-column prop="业务系统" label="业务系统" width="80" show-overflow-tooltip />
-        <el-table-column prop="os_version" label="系统版本" width="80" />
-        <el-table-column prop="os_distro" label="操作系统" width="80" />
-        <el-table-column prop="hostname" label="主机名" width="100" show-overflow-tooltip />
-        <el-table-column prop="arch" label="系统架构" width="80" />
-        <el-table-column prop="cpu_vcpus" label="cpu个数" width="80" align="left" />
-        <el-table-column prop="kernel" label="内核" width="100" show-overflow-tooltip />
-        <el-table-column prop="memtotal_mb" label="总内存" width="80" align="left" />
-        <el-table-column prop="系统名称" label="系统名称" width="80" show-overflow-tooltip />
-        <el-table-column prop="负责人" label="负责人" width="80" show-overflow-tooltip />
-        <el-table-column prop="memfree_mb" label="可用内存" width="80" align="left" />
-        <el-table-column prop="jdk_version" label="Java版本" width="120" show-overflow-tooltip />
-        <el-table-column prop="系统模块" label="系统模块" width="80" show-overflow-tooltip />
+        <el-table-column prop="业务系统" :label="t('asset.businessSystem')" width="80" show-overflow-tooltip />
+        <el-table-column prop="os_version" :label="t('asset.osVersion')" width="80" />
+        <el-table-column prop="os_distro" :label="t('asset.os')" width="80" />
+        <el-table-column prop="hostname" :label="t('asset.hostname')" width="100" show-overflow-tooltip />
+        <el-table-column prop="arch" :label="t('asset.arch')" width="80" />
+        <el-table-column prop="cpu_vcpus" :label="t('asset.cpuCount')" width="80" align="left" />
+        <el-table-column prop="kernel" :label="t('asset.kernel')" width="100" show-overflow-tooltip />
+        <el-table-column prop="memtotal_mb" :label="t('asset.totalMemory')" width="80" align="left" />
+        <el-table-column prop="系统名称" :label="t('asset.systemName')" width="80" show-overflow-tooltip />
+        <el-table-column prop="负责人" :label="t('asset.owner')" width="80" show-overflow-tooltip />
+        <el-table-column prop="memfree_mb" :label="t('asset.freeMemory')" width="80" align="left" />
+        <el-table-column prop="jdk_version" :label="t('asset.javaVersion')" width="120" show-overflow-tooltip />
+        <el-table-column prop="系统模块" :label="t('asset.systemModule')" width="80" show-overflow-tooltip />
       </el-table>
 
       <!-- 分页 -->
@@ -119,6 +117,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, watch, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { apiService } from '@/core/api'
@@ -170,7 +170,7 @@ const loadAssetList = async () => {
     )
   } catch (error) {
     console.error('加载设备清单失败:', error)
-    ElMessage.error('加载设备清单失败')
+    ElMessage.error(t('asset.devicesLoadFailed'))
   } finally {
     loading.value = false
   }
@@ -184,11 +184,11 @@ const handleSelectionChange = rows => {
 // 从标签中移除
 const handleRemoveAsset = () => {
   if (selectedRows.value.length === 0) {
-    ElMessage.warning('请选择要移除的资产')
+    ElMessage.warning(t('asset.selectAssetsToRemove'))
     return
   }
 
-  ElMessageBox.confirm('确定要从当前标签中移除选中的资产吗？', '移除确认', {
+  ElMessageBox.confirm(t('asset.removeTagAssetsConfirm'), t('asset.removeConfirm'), {
     closeOnClickModal: false,
     closeOnPressEscape: false,
     type: 'warning'
@@ -207,11 +207,11 @@ const handleRemoveAsset = () => {
           }
         )
         throwIfWorkflowFailed(response)
-        ElMessage.success('移除成功')
+        ElMessage.success(t('asset.removed'))
         loadAssetList()
       } catch (error) {
         console.error('移除失败:', error)
-        ElMessage.error(`移除失败: ${error.response?.data?.message || error.message}`)
+        ElMessage.error(t('asset.removeFailedReason', { message: error.response?.data?.message || error.message }))
       }
     })
     .catch(() => {})
@@ -220,7 +220,7 @@ const handleRemoveAsset = () => {
 // 导出
 const handleExport = () => {
   // TODO: 实现导出功能
-  ElMessage.info('导出功能待实现')
+  ElMessage.info(t('asset.exportPending'))
 }
 
 // 监听弹窗打开

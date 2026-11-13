@@ -1,3 +1,4 @@
+import { t } from '@/core/i18n'
 /**
  * 资产管理模块 API
  */
@@ -169,7 +170,7 @@ export const assetApi = {
   downloadImportTemplate(tenantId) {
     return apiService.download(
       `${ACM_BASE}/cit/template2/${encodeURIComponent(tenantId)}`,
-      '资产信息导入模板.xlsx'
+      t('asset.importTemplateName')
     )
   },
 

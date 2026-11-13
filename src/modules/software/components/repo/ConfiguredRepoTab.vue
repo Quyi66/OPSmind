@@ -3,13 +3,13 @@
     <!-- 状态筛选 -->
     <div class="ops-filter-bar">
       <el-form :inline="true" size="small">
-        <el-form-item label="状态">
+        <el-form-item :label="t('automation.workbench.status')">
           <el-checkbox-group v-model="repoStatus" @change="loadData">
             <el-checkbox value="enabled">
-              <el-tag type="success" size="small">启用</el-tag>
+              <el-tag type="success" size="small">{{ t('yumRepo.enable') }}</el-tag>
             </el-checkbox>
             <el-checkbox value="disabled">
-              <el-tag type="warning" size="small">未启用</el-tag>
+              <el-tag type="warning" size="small">{{ t('yumRepo.software.notEnabled') }}</el-tag>
             </el-checkbox>
           </el-checkbox-group>
         </el-form-item>
@@ -26,8 +26,8 @@
           :loading="loading"
           :disabled="!!readError && !canRetry"
           @click="refresh"
-          :title="readError ? '重试读取' : '刷新'"
-          :aria-label="readError ? '重试读取已配置仓库' : '刷新已配置仓库'"
+          :title="readError ? t('yumRepo.software.retryRead') : t('common.refresh')"
+          :aria-label="readError ? t('yumRepo.software.retryConfiguredRepos') : t('yumRepo.software.refreshConfiguredRepos')"
         >
           <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
@@ -37,13 +37,13 @@
     <el-alert v-if="readError" type="warning" :closable="false" show-icon style="flex-shrink: 0">
       <template #title>
         {{ readErrorMessage }}
-        <span v-if="hasResult">刷新成功前，旧仓库数据仅供查看。</span>
+        <span v-if="hasResult">{{ t('yumRepo.software.staleConfiguredHint') }}</span>
       </template>
     </el-alert>
 
     <div class="ops-table-wrapper">
       <el-table v-loading="loading" :data="tableData" :empty-text="emptyText" height="100%">
-        <el-table-column prop="refid" label="仓库ID" min-width="150" show-overflow-tooltip>
+        <el-table-column prop="refid" :label="t('yumRepo.software.repoId')" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
             <el-link
               class="software-cell-link"
@@ -55,29 +55,29 @@
             </el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="repo_id" label="仓库" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="repo_name" label="名称" min-width="150" show-overflow-tooltip />
-        <el-table-column prop="repo_file" label="配置文件" min-width="150" show-overflow-tooltip />
-        <el-table-column prop="repo_baseurl" label="地址" min-width="250" show-overflow-tooltip />
-        <el-table-column prop="repo_pkgs" label="软件包数量" width="100">
+        <el-table-column prop="repo_id" :label="t('yumRepo.repository')" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="repo_name" :label="t('common.name')" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="repo_file" :label="t('yumRepo.software.configFile')" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="repo_baseurl" :label="t('yumRepo.software.address')" min-width="250" show-overflow-tooltip />
+        <el-table-column prop="repo_pkgs" :label="t('yumRepo.software.packageCount')" width="100">
           <template #default="{ row }">
             {{ formatPkgCount(row.repo_pkgs) }}
           </template>
         </el-table-column>
-        <el-table-column prop="repo_size" label="大小" width="100" />
-        <el-table-column prop="repo_status" label="状态" width="80">
+        <el-table-column prop="repo_size" :label="t('yumRepo.size')" width="100" />
+        <el-table-column prop="repo_status" :label="t('automation.workbench.status')" width="80">
           <template #default="{ row }">
             <el-tag :type="row.repo_status === '启用' ? 'success' : 'warning'" size="small">
               {{ row.repo_status }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="repo_updated" label="仓库更新时间" width="180">
+        <el-table-column prop="repo_updated" :label="t('yumRepo.software.repoUpdatedAt')" width="180">
           <template #default="{ row }">
             {{ formatDate(row.repo_updated) }}
           </template>
         </el-table-column>
-        <el-table-column prop="scan_date" label="信息更新时间" width="180">
+        <el-table-column prop="scan_date" :label="t('yumRepo.software.infoUpdatedAt')" width="180">
           <template #default="{ row }">
             {{ formatDate(row.scan_date) }}
           </template>
@@ -109,6 +109,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, onMounted } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
 import { repoApi } from '../../api'

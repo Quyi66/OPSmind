@@ -1,3 +1,4 @@
+import { t } from '@/core/i18n'
 import {
   formatDateTime,
   normalizeUpper,
@@ -205,7 +206,7 @@ export function getYumConfigCompareLabel(row) {
     return primary
   }
 
-  return `${primary} (${repoCount} 个 repo)`
+  return t('yumRepo.configRepoCount', { name: primary, count: repoCount })
 }
 
 export function getYumConfigBaseurl(row) {

@@ -4,18 +4,18 @@
       <!-- 筛选区域 -->
       <div class="ops-filter-bar">
         <el-form :inline="true" size="small" @submit.prevent>
-          <el-form-item label="自动化纳管">
-            <el-select v-model="autoFilter" style="width: 120px" @change="handleSearch">
-              <el-option label="全部" value="all" />
-              <el-option label="支持" :value="1" />
-              <el-option label="不支持" :value="0" />
+          <el-form-item :label="t('asset.automatedEnrollment')">
+            <el-select v-model="autoFilter" :style="{ width: currentLocale === 'en-US' ? '170px' : '120px' }" @change="handleSearch">
+              <el-option :label="t('common.all')" value="all" />
+              <el-option :label="t('asset.supported')" :value="1" />
+              <el-option :label="t('asset.notSupported')" :value="0" />
             </el-select>
           </el-form-item>
 
-          <el-form-item label="关键词">
+          <el-form-item :label="t('asset.keyword')">
             <el-input
               v-model="keyword"
-              placeholder="搜索类型名称或编码..."
+              :placeholder="t('asset.searchModel')"
               clearable
               style="width: 220px"
               @keyup.enter="handleSearch"
@@ -26,11 +26,11 @@
           <el-form-item class="filter-actions">
             <el-button type="primary" @click="handleSearch">
               <el-icon><Search /></el-icon>
-              搜索
+              {{ t('common.search') }}
             </el-button>
             <el-button @click="handleReset">
               <el-icon><RefreshRight /></el-icon>
-              重置
+              {{ t('common.reset') }}
             </el-button>
           </el-form-item>
         </el-form>
@@ -40,7 +40,7 @@
       <div class="ops-action-bar">
         <el-button type="primary" size="small" @click="handleAddModel">
           <i class="fa fa-plus" style="margin-right: 4px"></i>
-          新建资产类型
+          {{ t('asset.newModel') }}
         </el-button>
         <span style="flex: 1"></span>
         <el-button
@@ -48,7 +48,7 @@
           circle
           size="small"
           :loading="loading"
-          title="刷新"
+          :title="t('common.refresh')"
           @click="loadModelList"
         >
           <el-icon v-show="!loading"><Refresh /></el-icon>
@@ -64,7 +64,7 @@
           row-class-name="modern-table-row"
         >
           <!-- 1. 类型名称 -->
-          <el-table-column prop="title" label="类型名称" min-width="180" fixed="left">
+          <el-table-column prop="title" :label="t('asset.modelTitle')" min-width="180" fixed="left">
             <template #default="{ row }">
               <el-link
                 type="primary"
@@ -78,30 +78,30 @@
           </el-table-column>
 
           <!-- 2. 类型编码 -->
-          <el-table-column prop="code" label="类型编码" min-width="160">
+          <el-table-column prop="code" :label="t('asset.modelCode')" min-width="160">
             <template #default="{ row }">
               <span class="code-text">{{ row.code || '-' }}</span>
             </template>
           </el-table-column>
 
           <!-- 3. 已纳管设备数 -->
-          <el-table-column prop="count" label="已纳管设备数" width="150" align="left" sortable>
+          <el-table-column prop="count" :label="t('asset.managedDeviceCount')" width="150" align="left" sortable>
             <template #default="{ row }">
               <el-tag
                 size="small"
                 type="primary"
                 round
                 class="count-tag-badge clickable-tag"
-                title="点击查看该类型下的设备清单"
+                :title="t('asset.viewTypeDevices')"
                 @click="handleViewModel(row)"
               >
-                {{ row.count ?? 0 }} 台
+                {{ t('asset.deviceCount', { count: row.count ?? 0 }) }}
               </el-tag>
             </template>
           </el-table-column>
 
           <!-- 4. 自动化纳管 -->
-          <el-table-column prop="is_auto" label="自动化纳管" width="150" align="left">
+          <el-table-column prop="is_auto" :label="t('asset.automatedEnrollment')" width="150" align="left">
             <template #default="{ row }">
               <el-tag
                 :type="row.is_auto === 1 ? 'success' : 'info'"
@@ -113,30 +113,30 @@
                   class="fa"
                   :class="row.is_auto === 1 ? 'fa-check-circle' : 'fa-minus-circle'"
                 ></i>
-                <span style="margin-left: 4px">{{ row.is_auto === 1 ? '支持' : '不支持' }}</span>
+                <span style="margin-left: 4px">{{ row.is_auto === 1 ? t('asset.supported') : t('asset.notSupported') }}</span>
               </el-tag>
             </template>
           </el-table-column>
 
           <!-- 5. 更新时间 -->
-          <el-table-column prop="updated_at" label="更新时间" min-width="180" sortable>
+          <el-table-column prop="updated_at" :label="t('asset.updatedAt')" min-width="180" sortable>
             <template #default="{ row }">
               <span>{{ formatDateTime(row.updated_at) }}</span>
             </template>
           </el-table-column>
 
           <!-- 6. 操作 -->
-          <el-table-column label="操作" width="170" align="left" fixed="right">
+          <el-table-column :label="t('common.actions')" width="170" align="left" fixed="right">
             <template #default="{ row }">
               <div class="action-cell">
                 <el-button text type="primary" size="small" @click="handleViewModel(row)">
-                  查看设备
+                  {{ t('asset.viewDevices') }}
                 </el-button>
                 <el-button text type="primary" size="small" @click="handleEditModel(row)">
-                  编辑
+                  {{ t('common.edit') }}
                 </el-button>
                 <el-button text type="danger" size="small" @click="handleDeleteModel(row)">
-                  删除
+                  {{ t('common.delete') }}
                 </el-button>
               </div>
             </template>
@@ -171,6 +171,8 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+
 import { ref, computed, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -231,7 +233,7 @@ const loadModelList = async () => {
     pagination.value.total = modelList.value.length
   } catch (error) {
     console.error('加载资产类型列表失败:', error)
-    ElMessage.error('加载资产类型列表失败')
+    ElMessage.error(t('asset.modelsLoadFailed'))
   } finally {
     loading.value = false
   }
@@ -280,7 +282,7 @@ const handleEditModel = row => {
 
 // 删除资产类型
 const handleDeleteModel = row => {
-  ElMessageBox.confirm(`确定要删除资产类型“${row.title || row.code}”吗？删除后不可恢复。`, '删除确认', {
+  ElMessageBox.confirm(t('asset.deleteModelConfirm', { name: row.title || row.code }), t('asset.deleteConfirm'), {
     closeOnClickModal: false,
     closeOnPressEscape: false,
     type: 'warning'
@@ -290,11 +292,11 @@ const handleDeleteModel = row => {
         await apiService.post(`/workflow/api/workflow/jobs/8PJcRc/run?cacheBuster=${Date.now()}`, {
           params: { id: row.id }
         })
-        ElMessage.success('删除成功')
+        ElMessage.success(t('asset.deleted'))
         loadModelList()
       } catch (error) {
         console.error('删除失败:', error)
-        ElMessage.error(`删除失败: ${error.response?.data?.message || error.message}`)
+        ElMessage.error(t('asset.deleteFailedReason', { message: error.response?.data?.message || error.message }))
       }
     })
     .catch(() => {})

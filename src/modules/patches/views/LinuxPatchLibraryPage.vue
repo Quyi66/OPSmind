@@ -28,13 +28,13 @@
 
           <div class="card-body">
             <div class="count-value">{{ vendor.count.toLocaleString() }}</div>
-            <div class="count-label">补丁总数</div>
+            <div class="count-label">{{ t('patches.catalog.totalPatches') }}</div>
           </div>
 
           <div class="card-footer">
             <div class="latest-date">
               <i class="fa fa-clock-o" />
-              <span>更新: {{ vendor.latest_date }}</span>
+              <span>{{ t('patches.catalog.updatedLabel') }} {{ vendor.latest_date }}</span>
             </div>
           </div>
         </div>
@@ -44,7 +44,7 @@
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
       <el-form :inline="true" size="small">
-        <el-form-item v-if="pickerMode" label="厂商">
+        <el-form-item v-if="pickerMode" :label="t('patches.catalog.vendor')">
           <el-select v-model="currentVendor" style="width: 140px" clearable @change="handleSearch">
             <el-option
               v-for="vendor in vendorStats"
@@ -54,25 +54,25 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="严重级别">
-          <el-select v-model="severityFilter" multiple placeholder="请选择" style="width: auto" @change="handleSearch">
-            <el-option label="严重" value="Critical" />
-            <el-option label="重要" value="Important" />
-            <el-option label="中等" value="Moderate" />
-            <el-option label="低危" value="Low" />
+        <el-form-item :label="t('patches.catalog.severity')">
+          <el-select v-model="severityFilter" multiple :placeholder="t('yumRepo.select')" style="width: auto" @change="handleSearch">
+            <el-option :label="t('patches.catalog.critical')" value="Critical" />
+            <el-option :label="t('patches.catalog.important')" value="Important" />
+            <el-option :label="t('patches.catalog.moderate')" value="Moderate" />
+            <el-option :label="t('patches.catalog.low')" value="Low" />
           </el-select>
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item :label="t('automation.workbench.status')">
           <el-select v-model="ignoreFilter" style="width: 100px" @change="handleSearch">
-            <el-option label="全部" value="0,1" />
-            <el-option label="白名单" value="1" />
-            <el-option label="非白名单" value="0" />
+            <el-option :label="t('common.all')" value="0,1" />
+            <el-option :label="t('patches.catalog.allowlist')" value="1" />
+            <el-option :label="t('patches.catalog.notAllowlisted')" value="0" />
           </el-select>
         </el-form-item>
-        <el-form-item label="关键词">
+        <el-form-item :label="t('yumRepo.keyword')">
           <el-input
             v-model="filterText"
-            placeholder="请输入关键词"
+            :placeholder="t('patches.catalog.keywordPlaceholder')"
             style="width: 240px"
             clearable
           @keyup.enter="handleSearch" @clear="handleSearch" />
@@ -82,13 +82,13 @@
             <el-icon>
               <Search />
             </el-icon>
-            搜索
+            {{ t('common.search') }}
           </el-button>
           <el-button @click="handleReset">
             <el-icon>
               <RefreshRight />
             </el-icon>
-            重置
+            {{ t('common.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -97,10 +97,10 @@
     <!-- 操作栏 -->
     <div v-if="!pickerMode" class="ops-action-bar">
       <el-button type="primary" size="small" @click="handleCheckPatchUpdate">
-        检查补丁库更新
+        {{ t('patches.catalog.checkUpdates') }}
       </el-button>
       <el-button type="primary" size="small" :loading="uploadLoading" @click="fileInput.click()">
-        上传补丁库文件
+        {{ t('patches.catalog.uploadLibrary') }}
       </el-button>
       <input
         type="file"
@@ -115,7 +115,7 @@
         size="small"
         @click="handleBatchAddWhitelist"
       >
-        添加白名单
+        {{ t('patches.catalog.addAllowlist') }}
       </el-button>
       <el-button
         :disabled="selectedPatches.length === 0"
@@ -123,7 +123,7 @@
         size="small"
         @click="handleBatchRemoveWhitelist"
       >
-        移除白名单
+        {{ t('patches.catalog.removeAllowlist') }}
       </el-button>
       <span style="flex: 1"></span>
       <el-button
@@ -132,7 +132,7 @@
         size="small"
         :loading="loading"
         @click="handleRefresh"
-        title="刷新"
+        :title="t('common.refresh')"
       >
         <el-icon v-show="!loading">
           <Refresh />
@@ -151,15 +151,15 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" :reserve-selection="true" width="50" />
-        <el-table-column prop="patch_id" label="补丁编号" width="190" show-overflow-tooltip>
+        <el-table-column prop="patch_id" :label="t('patches.catalog.patchId')" width="190" show-overflow-tooltip>
           <template #default="{ row }">
             <el-link type="primary" underline="never" @click="handleViewDetail(row)">
               {{ row.patch_id }}
             </el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="title" label="概要" min-width="180" show-overflow-tooltip />
-        <el-table-column prop="severity" label="严重级别" width="100" align="left">
+        <el-table-column prop="title" :label="t('patches.catalog.summary')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="severity" :label="t('patches.catalog.severity')" width="100" align="left">
           <template #default="{ row }">
             <el-tag
               effect="dark"
@@ -170,12 +170,12 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="publish_date" label="发布时间" width="120" sortable>
+        <el-table-column prop="publish_date" :label="t('patches.catalog.publishedAt')" width="120" sortable>
           <template #default="{ row }">
             {{ formatDate(row.publish_date) }}
           </template>
         </el-table-column>
-        <el-table-column prop="related_vuls" label="关联漏洞" min-width="200">
+        <el-table-column prop="related_vuls" :label="t('patches.catalog.associatedVulnerabilities')" min-width="200">
           <template #default="{ row }">
             <CveLinkList
               :cves="row.related_vuls"
@@ -183,8 +183,8 @@
             />
           </template>
         </el-table-column>
-        <el-table-column prop="vendor" label="厂商" width="100" />
-        <el-table-column prop="is_ignore" label="是否在白名单" width="110" align="left">
+        <el-table-column prop="vendor" :label="t('patches.catalog.vendor')" width="100" />
+        <el-table-column prop="is_ignore" :label="t('patches.catalog.isAllowlisted')" width="110" align="left">
           <template #default="{ row }">
             <el-button
               v-if="row.is_ignore"
@@ -193,10 +193,10 @@
               size="small"
               @click="handleRemoveFromWhitelist(row)"
             >
-              是
+              {{ t('patches.catalog.yes') }}
             </el-button>
             <el-button v-else text type="primary" size="small" @click="handleAddToWhitelist(row)">
-              否
+              {{ t('patches.catalog.no') }}
             </el-button>
           </template>
         </el-table-column>
@@ -220,7 +220,7 @@
     <!-- 补丁详情对话框 -->
     <el-dialog
       v-model="detailDialogVisible"
-      title="补丁详情"
+      :title="t('yumRepo.patchDetails')"
       width="1000px"
       destroy-on-close
       :close-on-click-modal="true"
@@ -232,14 +232,16 @@
         markdown
       />
       <template #footer>
-        <el-button @click="detailDialogVisible = false">关闭</el-button>
+        <el-button @click="detailDialogVisible = false">{{ t('common.close') }}</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed, nextTick } from 'vue'
+import { t, currentLocale } from '@/core/i18n'
+
+import { ref, reactive, onMounted, computed, nextTick, h } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchLibraryApi } from '../api'
@@ -338,10 +340,10 @@ function getVendorIcon(vendor) {
 // 获取严重程度显示标签
 function getSeverityLabel(severity) {
   const map = {
-    critical: '严重',
-    important: '重要',
-    moderate: '中等',
-    low: '低危'
+    critical: t('patches.catalog.critical'),
+    important: t('patches.catalog.important'),
+    moderate: t('patches.catalog.moderate'),
+    low: t('patches.catalog.low')
   }
   return map[severity?.toLowerCase()] || severity
 }
@@ -352,7 +354,7 @@ function formatDate(dateStr) {
   try {
     const date = new Date(dateStr)
     if (isNaN(date.getTime())) return '-'
-    return date.toLocaleDateString('zh-CN', {
+    return date.toLocaleDateString(currentLocale.value, {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit'
@@ -461,23 +463,31 @@ function handleVendorClick(vendor) {
 // 检查补丁库更新
 async function handleCheckPatchUpdate() {
   try {
-    await ElMessageBox.confirm('执行导入最近补丁库将花费几分钟时间不等，点确定开始导入', '确认', {
+    await ElMessageBox.confirm(t('patches.catalog.importConfirm'), t('common.confirm'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'info'
     })
 
     await runJob(CHECK_PATCH_UPDATE_JOB_ID, { params: {} })
-    ElMessage.success('补丁库更新任务已提交')
+    ElMessage.success(t('patches.catalog.updateSubmitted'))
   } catch (error) {
     if (error !== 'cancel') {
       console.error('Check patch update failed:', error)
-      ElMessage.error('操作失败')
+      ElMessage.error(t('yumRepo.operationFailed'))
     }
   }
 }
 
 // 文件上传并导入
+function formatUploadFeedback(summary, detailKey, details) {
+  const items = Array.isArray(details) ? details : []
+  return h('div', [
+    h('div', summary),
+    ...(items.length ? [h('div', t(detailKey)), ...items.map(item => h('div', String(item)))] : [])
+  ])
+}
+
 async function handleFileUpload(event) {
   const files = event.target.files
   if (!files || files.length === 0) return
@@ -487,7 +497,7 @@ async function handleFileUpload(event) {
   const formData = new FormData()
   for (let i = 0; i < files.length; i++) {
     if (files[i].size > MAX_SIZE) {
-      ElMessage.warning(`文件 ${files[i].name} 大小超过100MB限制！`)
+      ElMessage.warning(t('patches.catalog.fileTooLarge', { name: files[i].name }))
       event.target.value = ''
       return
     }
@@ -503,12 +513,10 @@ async function handleFileUpload(event) {
     const data = res?.data || res
 
     if (data.status === 'RUNNING') {
-      let msg = data.message || '文件上传成功，补丁库导入任务已启动'
+      const msg = data.message || t('patches.catalog.importStarted')
       if (data.failed && data.failed.length > 0) {
-        msg += `<br>部分失败文件: ${data.failed.join(', ')}`
         ElMessage.warning({
-          dangerouslyUseHTMLString: true,
-          message: msg,
+          message: formatUploadFeedback(msg, 'patches.catalog.failedFiles', data.failed),
           showClose: true,
           duration: 5000
         })
@@ -516,20 +524,16 @@ async function handleFileUpload(event) {
         ElMessage.success(msg)
       }
     } else {
-      let msg = data.message || '上传处理失败'
-      if (data.failed && data.failed.length > 0) {
-        msg += `<br>失败原因:<br>${data.failed.join('<br>')}`
-      }
+      const msg = data.message || t('patches.catalog.uploadProcessingFailed')
       ElMessage.error({
-        dangerouslyUseHTMLString: true,
-        message: msg,
+        message: formatUploadFeedback(msg, 'patches.catalog.failureReasons', data.failed),
         showClose: true,
         duration: 5000
       })
     }
   } catch (error) {
     console.error('Upload and import failed:', error)
-    ElMessage.error('上传失败，请检查网络或控制台日志')
+    ElMessage.error(t('patches.catalog.uploadFailed'))
   } finally {
     uploadLoading.value = false
   }
@@ -551,7 +555,7 @@ async function handleViewDetail(row) {
       patch_id: row.patch_id,
       title: row.title,
       severity: row.severity,
-      description: row.description || '暂无描述信息',
+      get description() { return row.description || t('patches.catalog.noDescriptionInfo') },
       related_vuls: row.related_vuls,
       vendor: row.vendor,
       os_distro: row.os_distro
@@ -564,7 +568,7 @@ async function handleViewDetail(row) {
 // 添加到白名单
 async function handleAddToWhitelist(row) {
   try {
-    await ElMessageBox.confirm('确认要将该补丁加入白名单吗？', '确认', {
+    await ElMessageBox.confirm(t('patches.catalog.addAllowlistConfirm'), t('common.confirm'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning'
@@ -574,19 +578,19 @@ async function handleAddToWhitelist(row) {
         patchIdList: [row.patch_id]
       }
     })
-    ElMessage.success('已添加到白名单')
+    ElMessage.success(t('patches.catalog.addedAllowlist'))
     loadData()
   } catch (error) {
     if (error === 'cancel') return
     console.error('Add to whitelist failed:', error)
-    ElMessage.error('操作失败')
+    ElMessage.error(t('yumRepo.operationFailed'))
   }
 }
 
 // 从白名单移除
 async function handleRemoveFromWhitelist(row) {
   try {
-    await ElMessageBox.confirm('确认要将该补丁移出白名单吗？', '确认', {
+    await ElMessageBox.confirm(t('patches.catalog.removeAllowlistConfirm'), t('common.confirm'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning'
@@ -596,12 +600,12 @@ async function handleRemoveFromWhitelist(row) {
         patchIdList: [row.patch_id]
       }
     })
-    ElMessage.success('已从白名单移除')
+    ElMessage.success(t('patches.catalog.removedAllowlist'))
     loadData()
   } catch (error) {
     if (error === 'cancel') return
     console.error('Remove from whitelist failed:', error)
-    ElMessage.error('操作失败')
+    ElMessage.error(t('yumRepo.operationFailed'))
   }
 }
 
@@ -610,7 +614,7 @@ async function handleBatchAddWhitelist() {
   if (selectedPatches.value.length === 0) return
 
   try {
-    await ElMessageBox.confirm('确认要加入白名单！', '确认', {
+    await ElMessageBox.confirm(t('patches.catalog.batchAddConfirm'), t('common.confirm'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'info'
@@ -620,12 +624,12 @@ async function handleBatchAddWhitelist() {
     await runJob(ADD_WHITELIST_JOB_ID, {
       params: { patchIdList }
     })
-    ElMessage.success('批量添加白名单成功')
+    ElMessage.success(t('patches.catalog.batchAddedAllowlist'))
     loadData()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('Batch add whitelist failed:', error)
-      ElMessage.error('操作失败')
+      ElMessage.error(t('yumRepo.operationFailed'))
     }
   }
 }
@@ -635,7 +639,7 @@ async function handleBatchRemoveWhitelist() {
   if (selectedPatches.value.length === 0) return
 
   try {
-    await ElMessageBox.confirm('确认要移除白名单！', '确认', {
+    await ElMessageBox.confirm(t('patches.catalog.batchRemoveConfirm'), t('common.confirm'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning'
@@ -645,12 +649,12 @@ async function handleBatchRemoveWhitelist() {
     await runJob(REMOVE_WHITELIST_JOB_ID, {
       params: { patchIdList }
     })
-    ElMessage.success('批量移除白名单成功')
+    ElMessage.success(t('patches.catalog.batchRemovedAllowlist'))
     loadData()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('Batch remove whitelist failed:', error)
-      ElMessage.error('操作失败')
+      ElMessage.error(t('yumRepo.operationFailed'))
     }
   }
 }

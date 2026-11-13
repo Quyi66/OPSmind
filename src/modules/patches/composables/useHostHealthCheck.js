@@ -1,3 +1,5 @@
+import { t } from '@/core/i18n'
+
 /**
  * 主机健康巡检业务逻辑 Composable
  * 负责概览统计、主机列表分页筛选、触发巡检及 RUNNING 状态自动轮询
@@ -68,9 +70,9 @@ export function useHostHealthCheck(options = {}) {
         } else {
           stopPolling()
           if (nextSummary.latestRun?.status === 'COMPLETED') {
-            ElMessage.success(nextSummary.latestRun.message || '主机健康巡检已完成')
+            ElMessage.success(nextSummary.latestRun.message || t('asset.health.completedNotice'))
           } else if (nextSummary.latestRun?.status === 'FAILED') {
-            ElMessage.warning(nextSummary.latestRun.message || '主机健康巡检执行结束（存在异常）')
+            ElMessage.warning(nextSummary.latestRun.message || t('asset.health.abnormalNotice'))
           }
           await loadHosts()
         }
@@ -100,7 +102,7 @@ export function useHostHealthCheck(options = {}) {
     } catch (error) {
       console.error('加载主机健康概览失败:', error)
       if (!silent) {
-        ElMessage.error(error?.message || '加载健康概览失败')
+        ElMessage.error(error?.message || t('asset.health.summaryFailed'))
       }
       return null
     } finally {
@@ -126,7 +128,7 @@ export function useHostHealthCheck(options = {}) {
       return normalized
     } catch (error) {
       console.error('加载主机健康列表失败:', error)
-      ElMessage.error(error?.message || '加载主机健康列表失败')
+      ElMessage.error(error?.message || t('asset.health.hostsFailed'))
       hostList.value = []
       total.value = 0
       return { total: 0, list: [] }
@@ -187,7 +189,7 @@ export function useHostHealthCheck(options = {}) {
 
       const res = await hostHealthApi.runHealthCheck(targetIds.length ? targetIds : undefined)
       const runId = res?.runId ?? null
-      const msg = res?.message || (runId ? '巡检已下发' : '无法发起巡检')
+      const msg = res?.message || (runId ? t('asset.health.submitted') : t('asset.health.runUnavailable'))
 
       if (!runId) {
         ElMessage.warning(msg)
@@ -205,7 +207,7 @@ export function useHostHealthCheck(options = {}) {
       return String(runId)
     } catch (error) {
       console.error('触发主机健康巡检失败:', error)
-      ElMessage.error(error?.message || '触发主机健康巡检失败')
+      ElMessage.error(error?.message || t('asset.health.runFailed'))
       return null
     } finally {
       runSubmitting.value = false

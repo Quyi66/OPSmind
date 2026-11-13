@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="同步脚本文件"
+    :title="t('automation.library.syncScripts')"
     width="600px"
     :close-on-click-modal="false"
     @closed="handleClosed"
@@ -9,13 +9,13 @@
   >
     <div class="sync-form">
       <p class="help-info">
-        <strong>说明：填写待同步文件的服务器路径，选择同步方式后提交。</strong>
+        <strong>{{ t('automation.library.syncHint') }}</strong>
       </p>
 
       <div class="form-group">
         <label class="control-label">
-          同步脚本文件路径
-          <el-tooltip content="填写待同步路径在服务器上的绝对路径" placement="top">
+          {{ t('automation.library.syncScriptPath') }}
+          <el-tooltip :content="t('automation.library.absolutePathHint')" placement="top">
             <i class="fa fa-info-circle text-muted" />
           </el-tooltip>
         </label>
@@ -25,11 +25,11 @@
       </div>
 
       <div v-if="form.path" class="form-group">
-        <label class="control-label">同步文件选项</label>
+        <label class="control-label">{{ t('automation.library.syncOptions') }}</label>
         <div class="form-control-wrapper">
           <el-radio-group v-model="form.syncMode">
-            <el-radio value="ExtractToDir">同步到子目录</el-radio>
-            <el-radio value="ExtractWithoutDir">同步到当前目录</el-radio>
+            <el-radio value="ExtractToDir">{{ t('automation.library.syncSubdir') }}</el-radio>
+            <el-radio value="ExtractWithoutDir">{{ t('automation.library.syncHere') }}</el-radio>
           </el-radio-group>
         </div>
       </div>
@@ -42,17 +42,19 @@
         @click="handleSubmit"
       >
         <i class="fa fa-check me-1" />
-        确定
+        {{ t('automation.file.confirm') }}
       </el-button>
       <el-button @click="visible = false">
         <i class="fa fa-reply me-1" />
-        取消
+        {{ t('common.cancel') }}
       </el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as gfsApi from '@/modules/automation/api/gfs'
@@ -90,11 +92,11 @@ const syncing = ref(false)
 // 提交
 async function handleSubmit() {
   if (!form.value.path) {
-    ElMessage.warning('请输入同步文件路径')
+    ElMessage.warning(t('automation.library.syncPathRequired'))
     return
   }
   if (!form.value.syncMode) {
-    ElMessage.warning('请选择同步文件选项')
+    ElMessage.warning(t('automation.library.syncOptionRequired'))
     return
   }
 
@@ -105,11 +107,11 @@ async function handleSubmit() {
       dir: props.dir,
       syncMode: form.value.syncMode
     })
-    ElMessage.success('同步成功')
+    ElMessage.success(t('automation.library.synced'))
     visible.value = false
     emit('success')
   } catch (error) {
-    ElMessage.error(error?.message || '同步失败')
+    ElMessage.error(error?.message || t('automation.library.syncFailed'))
   } finally {
     syncing.value = false
   }

@@ -2,11 +2,11 @@
   <div class="auto-config">
     <!-- 顶部标题与操作 -->
     <div class="ac-header">
-      <h2 class="ac-title">连接凭据</h2>
+      <h2 class="ac-title">{{ t('admin.credentials') }}</h2>
       <div class="ac-actions">
         <el-button type="primary" plain size="small" @click="openBatchDialog">
           <el-icon style="margin-right:6px"><EditPen /></el-icon>
-          批量设置纳管机器账户
+          {{ t('admin.batchAccounts') }}
         </el-button>
       </div>
     </div>
@@ -17,7 +17,7 @@
         <template #label>
           <span class="tab-label">
             <el-icon class="tab-icon"><InfoFilled /></el-icon>
-            连接凭据信息
+            {{ t('admin.credentialsInfo') }}
           </span>
         </template>
       </el-tab-pane>
@@ -25,7 +25,7 @@
         <template #label>
           <span class="tab-label">
             <el-icon class="tab-icon"><Connection /></el-icon>
-            Ansible连接配置
+            {{ t('admin.ansibleConfig') }}
           </span>
         </template>
       </el-tab-pane>
@@ -37,14 +37,14 @@
       :closable="false"
       class="ac-alert"
       show-icon
-      description="注意：连接凭据是针对每一个自动化资产的默认连接配置进行修改，使用场景如下：执行用户/密码、登录用户/密码、执行节点配置等"
+      :description="t('admin.credentialsHint')"
     />
 
     <!-- 工具栏：筛选 + 搜索 -->
     <div class="ac-toolbar">
       <div class="left">
         <el-select v-model="filterOS" size="small" style="width: 180px" @change="applySearch">
-          <el-option :label="'全部'" value="all" />
+          <el-option :label="t('common.all')" value="all" />
           <el-option
             v-for="opt in osOptions"
             :key="opt.value"
@@ -76,15 +76,15 @@
       class="ac-table"
       header-cell-class-name="ac-th"
     >
-      <el-table-column prop="assetCode" label="资产代码" width="120" />
+      <el-table-column prop="assetCode" :label="t('admin.assetCode')" width="120" />
       <el-table-column prop="ip" label="IP" width="160" />
-      <el-table-column prop="name" label="连接凭据名称" min-width="160" />
-      <el-table-column prop="instanceGroup" label="执行节点(instance group)" min-width="220" />
+      <el-table-column prop="name" :label="t('admin.credentialName')" min-width="160" />
+      <el-table-column prop="instanceGroup" :label="t('admin.instanceGroup')" min-width="220" />
       <el-table-column prop="aapGroup" label="AAP instance group" min-width="180" />
-      <el-table-column prop="loginUser" label="登录用户" width="120" />
-      <el-table-column prop="execUser" label="执行用户" width="120" />
-      <el-table-column prop="updatedAt" label="更新时间" width="200" />
-      <el-table-column label="操作" width="100" fixed="right">
+      <el-table-column prop="loginUser" :label="t('admin.loginUser')" width="120" />
+      <el-table-column prop="execUser" :label="t('admin.execUser')" width="120" />
+      <el-table-column prop="updatedAt" :label="t('admin.updatedAt')" width="200" />
+      <el-table-column :label="t('common.actions')" width="100" fixed="right">
         <template #default="{ row }">
           <el-button link type="primary" size="small" :disabled="true">
             <el-icon><EditPen /></el-icon>
@@ -104,13 +104,13 @@
     <!-- 批量修改对话框 -->
     <el-dialog
       v-model="batchVisible"
-      title="批量修改纳管设备"
+      :title="t('admin.batchTitle')"
       width="520px"
       :close-on-press-escape="false"
       :close-on-click-modal="false"
     >
       <div class="batch-tip">
-        请选择 Excel 模版文件（.xlsx / .xls），上传后将按模版批量更新纳管设备的登录/执行密码。
+        {{ t('admin.batchHint') }}
       </div>
       <el-upload
         drag
@@ -124,54 +124,54 @@
         class="batch-upload"
       >
         <el-icon class="el-icon--upload"><Connection /></el-icon>
-        <div class="el-upload__text">将文件拖到此处，或 <em>点击上传</em></div>
+        <div class="el-upload__text">{{ t('admin.dropFile') }} <em>{{ t('admin.uploadClick') }}</em></div>
         <template #tip>
-          <div class="el-upload__tip">仅支持 .xlsx / .xls，最多 1 个文件</div>
+          <div class="el-upload__tip">{{ t('admin.uploadHint') }}</div>
         </template>
       </el-upload>
       <el-progress v-if="uploadPercent > 0" :percentage="uploadPercent" :stroke-width="6" style="margin-top:8px"/>
 
       <template #footer>
-        <el-button @click="batchVisible = false" :disabled="uploading">取消</el-button>
-        <el-button type="primary" @click="submitBatch" :loading="uploading" :disabled="!selectedFile">提交</el-button>
+        <el-button @click="batchVisible = false" :disabled="uploading">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="submitBatch" :loading="uploading" :disabled="!selectedFile">{{ t('admin.submit') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 批量结果对话框 -->
     <el-dialog
       v-model="batchResultVisible"
-      title="批量处理结果"
+      :title="t('admin.resultTitle')"
       width="680px"
       :close-on-click-modal="true"
     >
       <div class="result-summary">
-        <el-tag type="info">总计: {{ batchResult?.total || 0 }}</el-tag>
-        <el-tag type="success" style="margin-left:8px">成功: {{ batchResult?.successCount || 0 }}</el-tag>
-        <el-tag :type="(batchResult?.failCount||0) > 0 ? 'danger' : 'success'" style="margin-left:8px">失败: {{ batchResult?.failCount || 0 }}</el-tag>
+        <el-tag type="info">{{ t('admin.totalCount', { count: batchResult?.total || 0 }) }}</el-tag>
+        <el-tag type="success" style="margin-left:8px">{{ t('admin.successCount', { count: batchResult?.successCount || 0 }) }}</el-tag>
+        <el-tag :type="(batchResult?.failCount||0) > 0 ? 'danger' : 'success'" style="margin-left:8px">{{ t('admin.failCount', { count: batchResult?.failCount || 0 }) }}</el-tag>
       </div>
 
       <div v-if="(batchResult?.successList?.length||0) > 0" class="result-block">
-        <div class="block-title">成功列表</div>
+        <div class="block-title">{{ t('admin.successList') }}</div>
         <el-table :data="batchResult?.successList || []" size="small" border>
           <el-table-column prop="rowNum" label="#" width="60" />
           <el-table-column prop="hostIp" label="IP" width="160" />
           <el-table-column prop="ciId" label="CI ID" min-width="180" />
-          <el-table-column prop="message" label="说明" min-width="220" />
+          <el-table-column prop="message" :label="t('admin.notes')" min-width="220" />
         </el-table>
       </div>
 
       <div v-if="(batchResult?.failList?.length||0) > 0" class="result-block">
-        <div class="block-title">失败列表</div>
+        <div class="block-title">{{ t('admin.failureList') }}</div>
         <el-table :data="batchResult?.failList || []" size="small" border>
           <el-table-column prop="rowNum" label="#" width="60" />
           <el-table-column prop="hostIp" label="IP" width="160" />
           <el-table-column prop="ciId" label="CI ID" min-width="180" />
-          <el-table-column prop="message" label="错误" min-width="220" />
+          <el-table-column prop="message" :label="t('admin.error')" min-width="220" />
         </el-table>
       </div>
 
       <template #footer>
-        <el-button type="primary" @click="batchResultVisible=false">知道了</el-button>
+        <el-button type="primary" @click="batchResultVisible=false">{{ t('admin.understood') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -179,6 +179,8 @@
 </template>
 
 <script setup lang="ts">
+import { t } from '@/core/i18n'
+
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus, EditPen, Search, InfoFilled, Connection } from '@element-plus/icons-vue'
@@ -277,7 +279,7 @@ function normalizeAutomationRow(record: any) {
 }
 
 function editRow(row) {
-  ElMessage.info(`编辑：${row.ip}`)
+  ElMessage.info(t('admin.editIp', { ip: row.ip }))
 }
 
 function applySearch() {
@@ -317,7 +319,7 @@ async function submitBatch() {
     // 刷新列表
     await fetchAutomationConfigs()
   } catch (e: any) {
-    ElMessage.error(e?.message || '上传失败')
+    ElMessage.error(e?.message || t('admin.uploadFailed'))
   } finally {
     uploading.value = false
   }
@@ -360,7 +362,7 @@ async function fetchAutomationConfigs() {
     const list = Array.isArray(payload) ? payload : payload?.records || []
     rows.value = list.map((r: any) => normalizeAutomationRow(r))
   } catch (e) {
-    ElMessage.error('获取连接凭据失败')
+    ElMessage.error(t('admin.loadFailed'))
   } finally {
     loading.value = false
   }

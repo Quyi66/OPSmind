@@ -3,35 +3,35 @@
     <div ref="statsContentRef" class="stats-content">
       <div class="ops-section trend-card" :style="chartSectionStyle">
         <div class="ops-section__header">
-          <h4 class="ops-section__title">最近30天执行趋势</h4>
+          <h4 class="ops-section__title">{{ t('automation.records.trendTitle') }}</h4>
           <el-button
             class="toolbar-icon-btn"
             circle
             size="small"
             :loading="contentLoading"
             @click="handleRefresh"
-            title="刷新"
+            :title="t('common.refresh')"
           >
             <el-icon v-show="!contentLoading"><RefreshRight /></el-icon>
           </el-button>
         </div>
         <el-alert v-if="statsError" :title="statsError" type="error" :closable="false" show-icon>
           <el-button link type="primary" :loading="statsLoading" @click="fetchStats">
-            重试趋势
+            {{ t('automation.records.retryTrend') }}
           </el-button>
         </el-alert>
         <el-alert
           v-else-if="invalidTrendCount"
-          title="部分趋势记录的次数或日期无效，图表中留空或不计入。"
+          :title="t('automation.records.invalidTrendHint')"
           type="warning"
           :closable="false"
           show-icon
         />
         <div v-loading="statsLoading" class="card-body">
-          <el-empty v-if="statsError" description="趋势读取失败，请重试" />
+          <el-empty v-if="statsError" :description="t('automation.records.trendFailed')" />
           <el-empty
             v-else-if="!statsLoading && !recentTrendRows.length"
-            description="暂无统计数据"
+            :description="t('automation.records.noStatistics')"
           />
           <VChart
             v-else-if="recentTrendRows.length"
@@ -44,13 +44,13 @@
 
       <div class="ops-section summary-card" :style="summarySectionStyle">
         <div class="ops-section__header">
-          <h4 class="ops-section__title">运维工具运行次数排行</h4>
+          <h4 class="ops-section__title">{{ t('automation.records.rankingTitle') }}</h4>
           <el-input
             v-model="summaryQuery"
             clearable
             size="small"
             class="summary-search"
-            placeholder="搜索运维工具"
+            :placeholder="t('automation.records.searchTool')"
           >
             <template #prefix>
               <el-icon><Search /></el-icon>
@@ -65,26 +65,27 @@
           show-icon
         >
           <el-button link type="primary" :loading="summaryLoading" @click="fetchRunCounts">
-            重试排行
+            {{ t('automation.records.retryRanking') }}
           </el-button>
         </el-alert>
         <el-alert
           v-else-if="invalidSummaryCount"
-          title="部分运行次数无效，图表中留空，未按零次处理。"
+          :title="t('automation.records.invalidCountHint')"
           type="warning"
           :closable="false"
           show-icon
         />
         <div v-loading="summaryLoading" class="card-body">
-          <el-empty v-if="summaryError" description="排行读取失败，请重试" />
+          <el-empty v-if="summaryError" :description="t('automation.records.rankingFailed')" />
           <el-empty
             v-else-if="!summaryLoading && !filteredSummary.length"
-            :description="summaryRows.length ? '没有匹配的运维工具' : '暂无统计数据'"
+            :description="summaryRows.length ? t('automation.records.noMatchingTool') : t('automation.records.noStatistics')"
           />
           <VChart
             v-else-if="filteredSummary.length"
             autoresize
             :option="summaryChartOption"
+            @datazoom="handleSummaryZoom"
             class="chart-view"
           />
         </div>
@@ -94,6 +95,9 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
+
 import {
   computed,
   nextTick,
@@ -122,14 +126,26 @@ const canRead = () => componentActive && props.active
 
 const statsLoading = ref(false)
 const summaryLoading = ref(false)
-const statsError = ref('')
-const summaryError = ref('')
+const statsError = messageRef('')
+const summaryError = messageRef('')
 let componentActive = true
 let statsRequestId = 0
 let summaryRequestId = 0
 const rawData = ref([])
 const summaryRows = ref([])
 const summaryQuery = ref('')
+const summaryZoom = ref({ startValue: 0, endValue: 11 })
+
+function handleSummaryZoom(event) {
+  const range = event?.batch?.[0] || event
+  if (!range) return
+  const keys = Number.isFinite(range.start) && Number.isFinite(range.end)
+    ? ['start', 'end']
+    : ['startValue', 'endValue']
+  if (!keys.every(key => Number.isFinite(range[key]))) return
+  if (keys.every(key => summaryZoom.value[key] === range[key])) return
+  summaryZoom.value = Object.fromEntries(keys.map(key => [key, range[key]]))
+}
 const statsViewRef = ref(null)
 const statsContentRef = ref(null)
 const chartSectionHeight = ref(0)
@@ -197,14 +213,14 @@ async function fetchStats() {
     const response = await jaoApi.fetchJobStats()
     if (!canRead() || request !== statsRequestId) return
     const data = response?.data || response
-    if (data?.records != null && !Array.isArray(data.records)) throw new Error('统计记录格式无效')
+    if (data?.records != null && !Array.isArray(data.records)) throw new Error(t('automation.records.invalidTrend'))
     if (data?.records?.some(row => !row || typeof row !== 'object'))
-      throw new Error('统计记录格式无效')
+      throw new Error(t('automation.records.invalidTrend'))
     rawData.value = data?.records || []
   } catch (error) {
     if (!canRead() || request !== statsRequestId) return
-    statsError.value = '获取执行趋势失败，请重试'
-    ElMessage.error(error?.message || '获取统计数据失败')
+    statsError.value = message('automation.records.trendFailedRetry')
+    ElMessage.error(error?.message || t('automation.records.statisticsFailed'))
   } finally {
     if (canRead() && request === statsRequestId) statsLoading.value = false
   }
@@ -219,16 +235,16 @@ async function fetchRunCounts() {
     const response = await jaoApi.fetchJobRunCounts()
     if (!canRead() || request !== summaryRequestId) return
     const data = response?.data || response
-    if (data?.records != null && !Array.isArray(data.records)) throw new Error('排行记录格式无效')
+    if (data?.records != null && !Array.isArray(data.records)) throw new Error(t('automation.records.invalidRanking'))
     summaryRows.value = (data?.records || []).map(item => ({
       job_id: item.job_id,
-      job_title: item.job_title || '未命名运维工具',
+      job_title: item.job_title || '',
       run_count: normalizeCount(item.run_count)
     }))
   } catch (error) {
     if (!canRead() || request !== summaryRequestId) return
-    summaryError.value = '获取运行次数排行失败，请重试'
-    ElMessage.error(error?.message || '获取运行次数失败')
+    summaryError.value = message('automation.records.rankingFailedRetry')
+    ElMessage.error(error?.message || t('automation.records.countsFailed'))
   } finally {
     if (canRead() && request === summaryRequestId) summaryLoading.value = false
   }
@@ -292,9 +308,17 @@ const invalidSummaryCount = computed(
   () => summaryRows.value.filter(row => row.run_count == null).length
 )
 
+// Capture search labels on query/data changes, preserving results on locale changes.
+const searchTitles = ref(new Map())
+watch([summaryRows, summaryQuery], () => {
+  searchTitles.value = new Map(summaryRows.value.map(row => [row, getAutomationToolTitle(row)]))
+  summaryZoom.value = { startValue: 0, endValue: 11 }
+}, { flush: 'sync' })
+
 const translatedSummaryRows = computed(() =>
   summaryRows.value.map(row => ({
     ...row,
+    searchTitle: searchTitles.value.get(row) || '',
     translatedTitle: getAutomationToolTitle(row)
   }))
 )
@@ -302,7 +326,7 @@ const translatedSummaryRows = computed(() =>
 const filteredSummary = computed(() => {
   const keyword = summaryQuery.value.trim().toLowerCase()
   const baseRows = keyword
-    ? translatedSummaryRows.value.filter(row => row.translatedTitle.toLowerCase().includes(keyword))
+    ? translatedSummaryRows.value.filter(row => row.searchTitle.toLowerCase().includes(keyword))
     : translatedSummaryRows.value
 
   return [...baseRows].sort((a, b) => (b.run_count ?? -1) - (a.run_count ?? -1))
@@ -311,8 +335,8 @@ const filteredSummary = computed(() => {
 function invalidateRead() {
   statsRequestId += 1
   summaryRequestId += 1
-  if (statsLoading.value) statsError.value = '趋势读取已中断，请刷新重试'
-  if (summaryLoading.value) summaryError.value = '排行读取已中断，请刷新重试'
+  if (statsLoading.value) statsError.value = message('automation.records.trendInterrupted')
+  if (summaryLoading.value) summaryError.value = message('automation.records.rankingInterrupted')
   statsLoading.value = false
   summaryLoading.value = false
 }
@@ -410,7 +434,7 @@ const recentTrendOption = computed(() => ({
   },
   series: [
     {
-      name: '执行次数',
+      name: t('automation.records.executionCount'),
       type: 'line',
       smooth: true,
       symbolSize: 8,
@@ -469,8 +493,7 @@ const summaryChartOption = computed(() => ({
           {
             type: 'inside',
             yAxisIndex: 0,
-            startValue: 0,
-            endValue: 11,
+            ...summaryZoom.value,
             zoomLock: false,
             zoomOnMouseWheel: false,
             moveOnMouseWheel: false
@@ -483,8 +506,7 @@ const summaryChartOption = computed(() => ({
             top: 16,
             bottom: 24,
             width: 12,
-            startValue: 0,
-            endValue: 11,
+            ...summaryZoom.value,
             brushSelect: false
           }
         ]
@@ -524,7 +546,7 @@ const summaryChartOption = computed(() => ({
   },
   series: [
     {
-      name: '运行次数',
+      name: t('automation.records.runCount'),
       type: 'bar',
       barWidth: 16,
       data: filteredSummary.value.map(row => row.run_count),

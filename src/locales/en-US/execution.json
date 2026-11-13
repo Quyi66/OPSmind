@@ -97,7 +97,8 @@
     "INTERRUPTED": "Terminated",
     "SUCCESS": "Succeeded",
     "PARTIAL_SUCCESS": "Partially succeeded",
-    "CANCELLED": "Cancelled"
+    "CANCELLED": "Cancelled",
+    "TIMEOUT": "Timed out"
   },
   "agentErrors": {
     "AGENT_AUTH_FAILED": "Agent authentication failed. The token may be invalid or revoked.",

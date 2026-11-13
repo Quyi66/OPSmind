@@ -1,5 +1,5 @@
 <template>
-  <div class="command-preview" aria-label="待执行命令">
+  <div class="command-preview" :aria-label="t('automation.command.pendingCommands')">
     <div
       v-for="(command, index) in commands"
       :key="command.id || index"
@@ -12,15 +12,17 @@
           (command.command.length > 240 || command.command.split('\n').length > 4)
         "
       >
-        <summary>查看完整命令内容</summary>
+        <summary>{{ t('automation.command.fullContent') }}</summary>
         <pre>{{ command.command }}</pre>
       </details>
       <pre v-else-if="command.command">{{ command.command }}</pre>
-      <span v-else class="text-muted">未提供命令内容</span>
+      <span v-else class="text-muted">{{ t('automation.command.noContent') }}</span>
     </div>
   </div>
 </template>
 <script setup>
+import { t } from '@/core/i18n'
+
 defineProps({ commands: { type: Array, default: () => [] } })
 </script>
 <style scoped>

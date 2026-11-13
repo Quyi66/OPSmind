@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="编辑资产"
+    :title="t('asset.editAsset')"
     width="1060px"
     :close-on-click-modal="false"
     @close="handleClose"
@@ -16,7 +16,7 @@
                 <template v-if="attr.editable">
                   <el-input
                     v-model="formData[attr.code]"
-                    :placeholder="`请输入${attr.title}`"
+                    :placeholder="t('asset.attrPlaceholder', { name: attr.title })"
                     clearable
                     style="width: 100%"
                   />
@@ -29,16 +29,18 @@
           </el-row>
         </el-form>
       </template>
-      <el-empty v-else-if="!loading" description="暂无数据" />
+      <el-empty v-else-if="!loading" :description="t('common.noData')" />
     </div>
     <template #footer>
-      <el-button @click="handleClose">取消</el-button>
-      <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
+      <el-button @click="handleClose">{{ t('common.cancel') }}</el-button>
+      <el-button type="primary" :loading="saving" @click="handleSave">{{ t('common.save') }}</el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { assetApi } from '../../api'
@@ -105,7 +107,7 @@ const loadAssetDetail = async () => {
     assetType.value = typeInfo
   } catch (error) {
     console.error('加载资产详情失败:', error)
-    ElMessage.error('加载资产详情失败')
+    ElMessage.error(t('asset.assetDetailFailed'))
   } finally {
     loading.value = false
   }
@@ -125,18 +127,18 @@ const handleSave = async () => {
     }
 
     if (!hasChanges) {
-      ElMessage.info('没有修改任何数据')
+      ElMessage.info(t('asset.noChanges'))
       return
     }
 
     // 提交所有属性数据（包含 null 值）
     await assetApi.updateAssetAttrs(props.assetId, formData.value)
-    ElMessage.success('保存成功')
+    ElMessage.success(t('asset.saved'))
     emit('saved')
     handleClose()
   } catch (error) {
     console.error('保存失败:', error)
-    ElMessage.error('保存失败')
+    ElMessage.error(t('asset.saveFailed'))
   } finally {
     saving.value = false
   }

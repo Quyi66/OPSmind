@@ -2,12 +2,12 @@
   <div class="win-patch-yum-panel">
     <div class="ops-filter-bar">
       <el-form :inline="true" size="small">
-        <el-form-item label="已采集仓库">
+        <el-form-item :label="t('yumRepo.collectedRepos')">
           <el-select
             v-model="packagesSelectedRepoModel"
             clearable
             filterable
-            placeholder="请选择已采集仓库"
+            :placeholder="t('yumRepo.selectCollectedRepo')"
             style="width: 480px" @change="handleSearch">
             <el-option
               v-for="item in packageRepoOptions"
@@ -17,10 +17,10 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="包名">
+        <el-form-item :label="t('yumRepo.packageName')">
           <el-input
             v-model="keyword"
-            placeholder="按包名模糊搜索"
+            :placeholder="t('yumRepo.searchPackages')"
             clearable
             style="width: 300px"
             @keyup.enter="handleSearch"
@@ -28,20 +28,20 @@
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :disabled="!hasSelectedRepo" @click="handleSearch">
-            搜索
+            {{ t('common.search') }}
           </el-button>
-          <el-button :disabled="!hasSelectedRepo" @click="handleReset">重置</el-button>
-          <el-button :disabled="!hasSelectedRepo" @click="handleRefresh">刷新</el-button>
+          <el-button :disabled="!hasSelectedRepo" @click="handleReset">{{ t('common.reset') }}</el-button>
+          <el-button :disabled="!hasSelectedRepo" @click="handleRefresh">{{ t('common.refresh') }}</el-button>
         </el-form-item>
       </el-form>
     </div>
 
     <div v-if="!packageRepoOptions.length" class="win-patch-yum-empty">
-      <el-empty description="暂无已采集仓库，请先在仓库管理页触发采集" />
+      <el-empty :description="t('yumRepo.noCollectedRepo')" />
     </div>
 
     <div v-else-if="!hasSelectedRepo" class="win-patch-yum-empty">
-      <el-empty description="请选择已采集仓库后查看采集状态和包清单" />
+      <el-empty :description="t('yumRepo.selectInventoryHint')" />
     </div>
 
     <template v-else>
@@ -61,16 +61,16 @@
         class="win-patch-yum-status"
         label-width="100px"
       >
-        <el-descriptions-item label="仓库名称">
+        <el-descriptions-item :label="t('yumRepo.repoName')">
           {{ getYumConfigCompareLabel(currentConfig) }}
         </el-descriptions-item>
-        <el-descriptions-item label="仓库地址">
+        <el-descriptions-item :label="t('yumRepo.repoUrl')">
           {{ currentConfigBaseurlsText }}
         </el-descriptions-item>
         <!-- <el-descriptions-item label="仓库 ID">
           {{ resolveYumRepoId(currentRepo) || '-' }}
         </el-descriptions-item> -->
-        <el-descriptions-item label="采集状态">
+        <el-descriptions-item :label="t('yumRepo.collectStatus')">
           <el-tag :type="getCollectStatusTagType(statusData)" size="small">
             {{ getCollectStatusLabel(statusData) }}
           </el-tag>
@@ -78,13 +78,13 @@
         <!-- <el-descriptions-item label="快照 ID">
           {{ pickValue(statusData, ['snapshotId', 'snapshot_id'], '-') }}
         </el-descriptions-item> -->
-        <el-descriptions-item label="包数量">
+        <el-descriptions-item :label="t('yumRepo.packages')">
           {{ pickValue(statusData, ['packageCount', 'package_count'], 0) }}
         </el-descriptions-item>
-        <el-descriptions-item label="完成时间">
+        <el-descriptions-item :label="t('yumRepo.completedAt')">
           {{ formatDateTime(pickValue(statusData, ['finishedAt', 'finished_at'], '')) }}
         </el-descriptions-item>
-        <el-descriptions-item label="错误信息" :span="2">
+        <el-descriptions-item :label="t('yumRepo.errorInfo')" :span="2">
           {{ pickValue(statusData, ['errorMessage', 'error_message'], '-') }}
         </el-descriptions-item>
       </el-descriptions>
@@ -102,22 +102,22 @@
           :empty-text="packageEmptyText"
           :element-loading-text="tableLoadingText"
         >
-          <el-table-column label="包名" min-width="180" show-overflow-tooltip>
+          <el-table-column :label="t('yumRepo.packageName')" min-width="180" show-overflow-tooltip>
             <template #default="{ row }">
               {{ pickValue(row, ['pkgName', 'pkg_name'], '-') }}
             </template>
           </el-table-column>
-          <el-table-column label="版本号" min-width="140" show-overflow-tooltip>
+          <el-table-column :label="t('yumRepo.version')" min-width="140" show-overflow-tooltip>
             <template #default="{ row }">
               {{ pickValue(row, ['pkgVersion', 'pkg_version'], '-') }}
             </template>
           </el-table-column>
-          <el-table-column label="架构" width="120" align="center">
+          <el-table-column :label="t('yumRepo.architecture')" width="120" align="center">
             <template #default="{ row }">
               {{ pickValue(row, ['pkgArch', 'pkg_arch'], '-') }}
             </template>
           </el-table-column>
-          <el-table-column label="完整包名" min-width="320" show-overflow-tooltip>
+          <el-table-column :label="t('yumRepo.fullPackageName')" min-width="320" show-overflow-tooltip>
             <template #default="{ row }">
               {{ pickValue(row, ['pkgFullNevra', 'pkg_full_nevra'], '-') }}
             </template>
@@ -142,6 +142,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
@@ -242,15 +244,15 @@ const isStatusPollingActive = computed(() => {
   )
 })
 const showPollingNotice = computed(() => isStatusPollingActive.value && !loadingPackages.value)
-const pollingNoticeText = computed(() => '正在轮询采集状态，包清单会在采集完成后自动刷新')
+const pollingNoticeText = computed(() => t('yumRepo.pollingPackages'))
 const tableLoading = computed(() => loadingPackages.value)
-const tableLoadingText = computed(() => (loadingPackages.value ? '正在加载包清单...' : ''))
+const tableLoadingText = computed(() => (loadingPackages.value ? t('yumRepo.loadingPackages') : ''))
 const packageEmptyText = computed(() => {
   if (showPollingNotice.value) {
-    return '正在轮询采集状态，请稍后查看包清单'
+    return t('yumRepo.pollingInventory')
   }
 
-  return '暂无包清单数据'
+  return t('yumRepo.noPackages')
 })
 
 const autoPollingEnabled = ref(true)
@@ -324,7 +326,7 @@ async function loadStatus(options = {}) {
 
     if (!options.silent) {
       console.error('加载 Yum 仓库采集状态失败:', error)
-      ElMessage.error('加载 Yum 仓库采集状态失败')
+      ElMessage.error(t('yumRepo.statusFailed'))
     }
   } finally {
     if (requestId === statusRequestId) {
@@ -358,7 +360,7 @@ async function loadPackages(options = {}) {
 
     if (!options.silent) {
       console.error('加载 Yum 仓库包清单失败:', error)
-      ElMessage.error('加载 Yum 仓库包清单失败')
+      ElMessage.error(t('yumRepo.packagesFailed'))
     }
   } finally {
     if (requestId === packagesRequestId) {

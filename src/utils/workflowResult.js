@@ -1,4 +1,6 @@
 // 仅供明确的 workflow 作业回执/执行结果使用，不递归检查普通业务数据。
+import { t } from '@/core/i18n'
+
 export function unwrapWorkflowResponse(response) {
   return typeof response?.status === 'string' ? response : (response?.data ?? response)
 }
@@ -25,7 +27,7 @@ function readErrorMessage(value) {
   return ''
 }
 
-export function getWorkflowFailure(response, fallback = '任务执行失败') {
+export function getWorkflowFailure(response, fallback = t('common.workflowTaskFailed')) {
   const body = unwrapWorkflowResponse(response)
   const results = Array.isArray(body) ? body : [body]
   const result = results.find(item => {
@@ -46,7 +48,7 @@ export function getWorkflowFailure(response, fallback = '任务执行失败') {
 }
 
 // 无明确失败只保持原返回契约；受理/运行回执不在这里冒充最终完成。
-export function throwIfWorkflowFailed(response, fallback = '操作失败，请重试') {
+export function throwIfWorkflowFailed(response, fallback = t('common.operationFailed')) {
   const failure = getWorkflowFailure(response, fallback)
   if (failure) throw new Error(failure.message)
 }

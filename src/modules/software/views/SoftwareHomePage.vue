@@ -48,7 +48,7 @@
           @click="activeTab = 'hosts'"
         >
           <i class="fa fa-laptop-house" />
-          <span>主机概览</span>
+          <span>{{ t('yumRepo.software.hostOverview') }}</span>
           <div class="external-link-icon">
             <i class="fa fa-external-link-alt" />
           </div>
@@ -59,7 +59,7 @@
           @click="activeTab = 'packages'"
         >
           <i class="fa fa-cubes" />
-          <span>可用软件包</span>
+          <span>{{ t('yumRepo.software.availablePackages') }}</span>
         </div>
       </div>
     </div>
@@ -80,6 +80,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -116,28 +118,28 @@ function formatDate(timestamp) {
 // KPI 定义（与源系统一致）
 const kpiDefs = {
   scan_count_host: {
-    title: '扫描主机数',
+    get title() { return t('yumRepo.software.scannedHosts') },
     icon: 'fa fa-desktop',
     linkPage: 'hosts',
     order: 1,
     theme: 'secondary'
   },
   scan_count_repos: {
-    title: '仓库',
+    get title() { return t('yumRepo.repository') },
     icon: 'fa fa-laptop-house',
     linkPage: 'repos',
     order: 2,
     theme: 'primary'
   },
   scan_count_pkgs: {
-    title: '可用软件包数',
+    get title() { return t('yumRepo.software.availablePackageCount') },
     icon: 'fa fa-cube',
     linkPage: 'packages',
     order: 3,
     theme: 'info'
   },
   scan_count_installed_pkgs: {
-    title: '已安装软件包数',
+    get title() { return t('yumRepo.software.installedPackageCount') },
     icon: 'fa fa-check-circle',
     linkPage: 'installed',
     order: 4,
@@ -160,7 +162,7 @@ async function loadStatsData() {
         const def = kpiDefs[rec.name]
         if (def) {
           result.push({
-            name: def.title,
+            get name() { return def.title },
             value: rec.value,
             date: rec.updated_at,
             icon: def.icon,
@@ -180,7 +182,7 @@ async function loadStatsData() {
 
       statsData.value = [
         {
-          name: '扫描主机数',
+          get name() { return t('yumRepo.software.scannedHosts') },
           value: data.total || hostCount,
           icon: 'fa fa-desktop',
           theme: 'secondary',
@@ -188,7 +190,7 @@ async function loadStatsData() {
           _order: 1
         },
         {
-          name: '仓库',
+          get name() { return t('yumRepo.repository') },
           value: repoCount,
           icon: 'fa fa-laptop-house',
           theme: 'primary',
@@ -196,7 +198,7 @@ async function loadStatsData() {
           _order: 2
         },
         {
-          name: '可用软件包数',
+          get name() { return t('yumRepo.software.availablePackageCount') },
           value: 0,
           icon: 'fa fa-cube',
           theme: 'info',
@@ -204,7 +206,7 @@ async function loadStatsData() {
           _order: 3
         },
         {
-          name: '已安装软件包数',
+          get name() { return t('yumRepo.software.installedPackageCount') },
           value: installedCount,
           icon: 'fa fa-check-circle',
           theme: 'success',
@@ -233,7 +235,7 @@ function handleKpiClick(item) {
     // 跳转到已安装软件包列表页面
     router.push('/yum-repo/installed')
   } else {
-    ElMessage.info(`${item.name} 数据`)
+    ElMessage.info(t('yumRepo.software.dataNotice', { name: item.name }))
   }
 }
 

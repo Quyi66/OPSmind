@@ -3,6 +3,7 @@
  */
 
 import { formatDateTime as formatDateTimeGlobal } from '@/utils/date'
+import { t } from '@/core/i18n'
 
 // 格式化日期
 export function formatDate(dateStr) {
@@ -82,7 +83,7 @@ export function getCveSourceLabel(source) {
   const key = normalizeCveSourceKey(source)
   const labelMap = {
     redhat: 'Red Hat',
-    kylin: '麒麟',
+    kylin: t('common.kylin'),
     suse: 'SUSE',
     ubuntu: 'Ubuntu',
     oracle: 'Oracle',
@@ -215,10 +216,10 @@ export function getSeverityClass(severity) {
 export function getSeverityLabel(severity) {
   const key = normalizeSeverityKey(severity)
   const labelMap = {
-    critical: '严重',
-    important: '重要',
-    moderate: '中等',
-    low: '低危'
+    critical: t('patches.catalog.critical'),
+    important: t('patches.catalog.important'),
+    moderate: t('patches.catalog.moderate'),
+    low: t('patches.catalog.low')
   }
 
   return labelMap[key] || severity || '-'

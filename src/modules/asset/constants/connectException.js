@@ -1,11 +1,13 @@
+import { t } from '@/core/i18n'
+
 export const CONNECT_EXCEPTION_DEFAULT_CONDITION = 'sjxy_all'
 
 export const CONNECT_EXCEPTION_CONDITION_OPTIONS = Object.freeze([
-  { label: '今日更新且最近连通失败', value: 'today' },
-  { label: '最近一次连通失败（不限日期）', value: 'recently' },
-  { label: '最近一次连通正常', value: 'recently_ok' },
-  { label: '连通率低于 50%', value: 'low' },
-  { label: '全部异常设备', value: CONNECT_EXCEPTION_DEFAULT_CONDITION }
+  { get label() { return t('asset.conditionToday') }, value: 'today' },
+  { get label() { return t('asset.conditionRecentFailed') }, value: 'recently' },
+  { get label() { return t('asset.conditionRecentOk') }, value: 'recently_ok' },
+  { get label() { return t('asset.conditionLow') }, value: 'low' },
+  { get label() { return t('asset.conditionAll') }, value: CONNECT_EXCEPTION_DEFAULT_CONDITION }
 ])
 
 const SELECTABLE_CONNECT_EXCEPTION_CONDITIONS = new Set(

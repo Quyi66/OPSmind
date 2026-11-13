@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="资产属性趋势图"
+    :title="t('asset.attrHistory')"
     width="800px"
     :close-on-click-modal="true"
     @close="handleClose"
@@ -10,13 +10,15 @@
       <!-- 折线图 -->
       <div class="chart-container">
         <div ref="chartRef" class="chart"></div>
-        <el-empty v-if="!loading && chartData.length === 0" description="暂无历史数据" />
+        <el-empty v-if="!loading && chartData.length === 0" :description="t('asset.noHistory')" />
       </div>
     </div>
   </el-dialog>
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
@@ -72,7 +74,7 @@ const loadHistoryData = async () => {
     renderChart()
   } catch (error) {
     console.error('加载历史数据失败:', error)
-    ElMessage.error('加载历史数据失败')
+    ElMessage.error(t('asset.historyLoadFailed'))
   } finally {
     loading.value = false
   }
@@ -103,7 +105,7 @@ const renderChart = () => {
       trigger: 'axis'
     },
     legend: {
-      data: ['可用内存', 'memtotal_mb'],
+      data: [t('asset.freeMemory'), 'memtotal_mb'],
       top: 10
     },
     grid: {
@@ -122,7 +124,7 @@ const renderChart = () => {
     },
     series: [
       {
-        name: '可用内存',
+        name: t('asset.freeMemory'),
         type: 'line',
         smooth: true,
         data: memFreeData,
@@ -176,6 +178,8 @@ watch(visible, val => {
     loadHistoryData()
   }
 })
+
+watch(currentLocale, () => { if (visible.value) renderChart() })
 
 // 监听深色模式切换
 watch(isDark, () => {

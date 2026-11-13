@@ -2,21 +2,21 @@
   <div class="ops-page-layout">
     <div class="ops-filter-bar">
       <el-form inline size="small">
-        <el-form-item label="过滤">
+        <el-form-item :label="t('yumRepo.software.filter')">
           <el-select
             v-model="filterParams.availablePkg"
-            placeholder="全部"
+            :placeholder="t('common.all')"
             style="width: auto"
             multiple @change="handleSearch">
-            <el-option label="全部" value="all" />
-            <el-option label="可升级" value="可升级" />
+            <el-option :label="t('common.all')" value="all" />
+            <el-option :label="t('yumRepo.software.upgradable')" value="可升级" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="搜索">
+        <el-form-item :label="t('common.search')">
           <el-input
             v-model="filterParams.keyword"
-            placeholder="软件包名称/ID"
+            :placeholder="t('yumRepo.software.packageSearch')"
             style="width: 240px"
             clearable
             @keyup.enter="handleSearch"
@@ -31,11 +31,11 @@
         <el-form-item>
           <el-button type="primary" @click="handleSearch">
             <el-icon><Search /></el-icon>
-            搜索
+            {{ t('common.search') }}
           </el-button>
           <el-button @click="handleReset">
             <el-icon><RefreshRight /></el-icon>
-            重置
+            {{ t('common.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -49,7 +49,7 @@
         @click="handleUpgrade"
       >
         <i class="fa fa-chevron-circle-up" style="margin-right: 4px" />
-        批量升级
+        {{ t('yumRepo.software.batchUpgrade') }}
       </el-button>
       <el-button
         type="primary"
@@ -58,7 +58,7 @@
         @click="handleRollback"
       >
         <i class="fa fa-undo-alt" style="margin-right: 4px" />
-        批量回滚
+        {{ t('yumRepo.software.batchRollback') }}
       </el-button>
       <el-button
         type="danger"
@@ -67,7 +67,7 @@
         @click="handleUninstall"
       >
         <i class="fa fa-minus-circle" style="margin-right: 4px" />
-        批量卸载
+        {{ t('yumRepo.software.batchUninstall') }}
       </el-button>
       <div style="flex: 1"></div>
       <el-button circle size="small" @click="loadData">
@@ -85,7 +85,7 @@
       >
         <el-table-column type="selection" width="55" align="center" />
 
-        <el-table-column prop="pkg_name" label="名称" min-width="180" show-overflow-tooltip>
+        <el-table-column prop="pkg_name" :label="t('common.name')" min-width="180" show-overflow-tooltip>
           <template #default="{ row }">
             <el-link type="primary" underline="never" @click="openDetail(row)">
               {{ row.pkg_name }}
@@ -93,10 +93,10 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="pkg_id" label="软件包" min-width="250" show-overflow-tooltip />
-        <el-table-column prop="pkg_arch" label="架构" width="100" />
-        <el-table-column prop="pkg_version" label="当前版本" min-width="150" />
-        <el-table-column prop="available_pkg_version" label="可升级版本" min-width="150">
+        <el-table-column prop="pkg_id" :label="t('yumRepo.software.package')" min-width="250" show-overflow-tooltip />
+        <el-table-column prop="pkg_arch" :label="t('yumRepo.architecture')" width="100" />
+        <el-table-column prop="pkg_version" :label="t('yumRepo.software.currentVersion')" min-width="150" />
+        <el-table-column prop="available_pkg_version" :label="t('yumRepo.software.upgradableVersion')" min-width="150">
           <template #default="{ row }">
             <el-tag
               v-if="row.available_pkg_version && row.available_pkg_version !== '无'"
@@ -105,7 +105,7 @@
             >
               {{ row.available_pkg_version }}
             </el-tag>
-            <el-tag v-else type="info" effect="plain">无</el-tag>
+            <el-tag v-else type="info" effect="plain">{{ t('yumRepo.software.none') }}</el-tag>
           </template>
         </el-table-column>
       </el-table>
@@ -135,10 +135,10 @@
     >
       <div class="ops-table-wrapper" style="height: 400px; margin: 0" v-loading="detailLoading">
         <el-table :data="detailData" style="width: 100%" height="100%" size="small">
-          <el-table-column prop="host_key" label="主机及IP" min-width="150" show-overflow-tooltip />
-          <el-table-column prop="os_distro" label="操作系统" width="120" />
-          <el-table-column prop="os_version" label="系统版本" width="120" />
-          <el-table-column prop="scan_timestamp" label="最后扫描时间" min-width="160">
+          <el-table-column prop="host_key" :label="t('yumRepo.software.hostsAndIps')" min-width="150" show-overflow-tooltip />
+          <el-table-column prop="os_distro" :label="t('yumRepo.os')" width="120" />
+          <el-table-column prop="os_version" :label="t('yumRepo.software.systemVersion')" width="120" />
+          <el-table-column prop="scan_timestamp" :label="t('yumRepo.software.lastScan')" min-width="160">
             <template #default="{ row }">
               {{ formatDateTime(row.scan_timestamp) }}
             </template>
@@ -163,6 +163,9 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
+
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDateTime as formatDateTimeGlobal } from '@/utils/date'
@@ -186,7 +189,7 @@ const pagination = reactive({
 
 // 详情弹窗相关
 const detailVisible = ref(false)
-const detailTitle = ref('')
+const detailTitle = messageRef('')
 const detailLoading = ref(false)
 const detailData = ref([])
 const currentDetailPkgId = ref('')
@@ -215,7 +218,7 @@ async function loadData() {
     pagination.total = data.total || 0
   } catch (error) {
     console.error('Failed to load installed packages:', error)
-    ElMessage.error('加载软件包失败')
+    ElMessage.error(t('yumRepo.software.packagesFailed'))
   } finally {
     loading.value = false
   }
@@ -237,7 +240,7 @@ async function loadDetailData() {
     detailPagination.total = data.total || 0
   } catch (error) {
     console.error('Failed to load pkg machines:', error)
-    ElMessage.error('加载主机列表失败')
+    ElMessage.error(t('yumRepo.software.hostsFailed'))
   } finally {
     detailLoading.value = false
   }
@@ -287,7 +290,7 @@ function formatDateTime(dateStr) {
 
 // 打开详情
 function openDetail(row) {
-  detailTitle.value = `目标主机 - ${row.pkg_name}`
+  detailTitle.value = message('yumRepo.software.targetHostsTitle', { name: row.pkg_name })
   currentDetailPkgId.value = row.pkg_id || row.pkg_name // 优先使用ID，兜底用Name
   detailPagination.page = 1
   detailData.value = []
@@ -299,45 +302,45 @@ function openDetail(row) {
 // 批量升级
 function handleUpgrade() {
   const count = selectedRows.value.length
-  ElMessageBox.confirm(`确定要升级选中的 ${count} 个软件包吗？`, '批量升级', {
+  ElMessageBox.confirm(t('yumRepo.software.upgradeCountConfirm', { count }), t('yumRepo.software.batchUpgrade'), {
     closeOnClickModal: false,
     closeOnPressEscape: false,
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+    confirmButtonText: t('yumRepo.confirm'),
+    cancelButtonText: t('common.cancel'),
     type: 'warning'
   }).then(() => {
     // 调用升级API
     // 示例：const pkgs = selectedRows.value.map(row => row.pkg_id)
     // packageApi.upgradePackages({ updatePkgs: pkgs })
-    ElMessage.success('任务已提交')
+    ElMessage.success(t('yumRepo.software.submitted'))
   })
 }
 
 // 批量回滚
 function handleRollback() {
   const count = selectedRows.value.length
-  ElMessageBox.confirm(`确定要回滚选中的 ${count} 个软件包吗？`, '批量回滚', {
+  ElMessageBox.confirm(t('yumRepo.software.rollbackCountConfirm', { count }), t('yumRepo.software.batchRollback'), {
     closeOnClickModal: false,
     closeOnPressEscape: false,
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+    confirmButtonText: t('yumRepo.confirm'),
+    cancelButtonText: t('common.cancel'),
     type: 'warning'
   }).then(() => {
-    ElMessage.success('任务已提交')
+    ElMessage.success(t('yumRepo.software.submitted'))
   })
 }
 
 // 批量卸载
 function handleUninstall() {
   const count = selectedRows.value.length
-  ElMessageBox.confirm(`确定要卸载选中的 ${count} 个软件包吗？`, '批量卸载', {
+  ElMessageBox.confirm(t('yumRepo.software.uninstallCountConfirm', { count }), t('yumRepo.software.batchUninstall'), {
     closeOnClickModal: false,
     closeOnPressEscape: false,
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+    confirmButtonText: t('yumRepo.confirm'),
+    cancelButtonText: t('common.cancel'),
     type: 'warning'
   }).then(() => {
-    ElMessage.success('任务已提交')
+    ElMessage.success(t('yumRepo.software.submitted'))
   })
 }
 

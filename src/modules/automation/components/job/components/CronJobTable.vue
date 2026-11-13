@@ -10,7 +10,7 @@
     >
       <el-table-column type="selection" width="50" align="left" :selectable="() => !unavailable" />
 
-      <el-table-column prop="jobDesc" label="任务名称" min-width="180" show-overflow-tooltip>
+      <el-table-column prop="jobDesc" :label="t('automation.schedule.taskName')" min-width="180" show-overflow-tooltip>
         <template #default="{ row }">
           <span :title="getCronTaskConfirmation(row)">
             {{ getCronTaskDisplayName(row, identityData || data) }}
@@ -18,13 +18,13 @@
         </template>
       </el-table-column>
 
-      <el-table-column prop="scheduleConf" label="CRON表达式" width="140" align="left">
+      <el-table-column prop="scheduleConf" :label="t('automation.schedule.expressionLabel')" width="140" align="left">
         <template #default="{ row }">
           <el-tag size="small" type="info">{{ row.scheduleConf }}</el-tag>
         </template>
       </el-table-column>
 
-      <el-table-column label="运维工具类型" width="110" align="left">
+      <el-table-column :label="t('automation.job.toolType')" width="110" align="left">
         <template #default="{ row }">
           <el-tag :type="getJobTypeTag(row.jobType)" size="small">
             {{ getJobTypeName(row.jobType) }}
@@ -32,7 +32,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="当前状态" width="100" align="left">
+      <el-table-column :label="t('automation.list.currentStatus')" width="100" align="left">
         <template #default="{ row }">
           <el-tag
             :type="row.triggerStatus === '1' ? 'success' : 'danger'"
@@ -41,17 +41,17 @@
             role="button"
             :tabindex="unavailable || row._switching ? -1 : 0"
             :aria-disabled="unavailable || row._switching"
-            :aria-label="`${getCronTaskConfirmation(row)}：${row.triggerStatus === '1' ? '已启用' : '已停用'}，切换启停`"
+            :aria-label="t('automation.cron.toggleAria', { name: getCronTaskConfirmation(row), status: row.triggerStatus === '1' ? t('automation.list.enabled') : t('automation.list.disabled') })"
             @click="!unavailable && !row._switching && $emit('toggle-status', row)"
             @keydown.enter.prevent="!unavailable && !row._switching && $emit('toggle-status', row)"
             @keydown.space.prevent="!unavailable && !row._switching && $emit('toggle-status', row)"
           >
-            {{ row.triggerStatus === '1' ? '已启用' : '已停用' }}
+            {{ row.triggerStatus === '1' ? t('automation.list.enabled') : t('automation.list.disabled') }}
           </el-tag>
         </template>
       </el-table-column>
 
-      <el-table-column prop="author" label="创建者" width="100" align="left" />
+      <el-table-column prop="author" :label="t('automation.list.createdBy')" width="100" align="left" />
 
       <!-- <el-table-column label="查看" width="80" align="left">
         <template #default="{ row }">
@@ -66,7 +66,7 @@
         </template>
       </el-table-column> -->
 
-      <el-table-column label="操作" width="260" align="left" fixed="right">
+      <el-table-column :label="t('common.actions')" width="260" align="left" fixed="right">
         <template #default="{ row }">
           <el-button
             text
@@ -75,7 +75,7 @@
             :disabled="unavailable"
             @click="$emit('execute', row)"
           >
-            执行
+            {{ t('automation.workbench.execute') }}
           </el-button>
           <el-button
             text
@@ -84,7 +84,7 @@
             :disabled="unavailable"
             @click="$emit('edit', row)"
           >
-            编辑
+            {{ t('automation.workbench.edit') }}
           </el-button>
           <el-button
             text
@@ -93,17 +93,17 @@
             :disabled="unavailable"
             @click="$emit('copy', row)"
           >
-            复制
+            {{ t('automation.workbench.copy') }}
           </el-button>
           <el-button
             type="primary"
             size="small"
             text
-            title="查询下次执行时间"
+            :title="t('automation.schedule.queryNextTime')"
             :disabled="unavailable"
             @click="$emit('query-next-time', row)"
           >
-            下次执行时间
+            {{ t('automation.schedule.nextTimes') }}
           </el-button>
           <el-button
             text
@@ -112,14 +112,14 @@
             :disabled="unavailable"
             @click="$emit('delete', row)"
           >
-            删除
+            {{ t('common.delete') }}
           </el-button>
         </template>
       </el-table-column>
       <template #empty>
-        <span v-if="loading">正在读取定时任务…</span>
-        <span v-else-if="unavailable">读取失败，请重试</span>
-        <span v-else>{{ identityData?.length ? '没有匹配的定时任务' : '暂无定时任务' }}</span>
+        <span v-if="loading">{{ t('automation.list.readingCron') }}</span>
+        <span v-else-if="unavailable">{{ t('automation.list.readFailedRetry') }}</span>
+        <span v-else>{{ identityData?.length ? t('automation.list.noMatchingCron') : t('automation.workbench.noCron') }}</span>
       </template>
     </el-table>
     <div v-if="!unavailable || loading" class="table-pagination">
@@ -138,6 +138,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { Edit, Delete, CopyDocument, VideoPlay, Clock } from '@element-plus/icons-vue'
 import { computed, ref, watch } from 'vue'
 import {

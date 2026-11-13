@@ -1,3 +1,5 @@
+import { t } from '@/core/i18n'
+
 import { computed, onActivated, onDeactivated, onScopeDispose, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getCronTaskConfirmation } from '@/modules/automation/utils/cronTaskPresentation'
@@ -59,9 +61,9 @@ export function useAutomationWorkbench({ canViewJobs = true, canViewCommands = t
   let activeRunPollingTimer = 0
 
   const JOB_TYPE_META = [
-    { key: 'rest', label: 'REST运维工具', type: 'rest' },
-    { key: 'command', label: '命令运维工具', type: 'command' },
-    { key: 'script', label: '脚本运维工具', type: 'script' }
+    { key: 'rest', get label() { return t('automation.types.restCompact') }, type: 'rest' },
+    { key: 'command', get label() { return t('automation.types.command') }, type: 'command' },
+    { key: 'script', get label() { return t('automation.types.script') }, type: 'script' }
   ]
   const CMD_TYPE_META = [
     { key: 'cmd', label: 'CMD', type: 'cmd' },
@@ -211,7 +213,7 @@ export function useAutomationWorkbench({ canViewJobs = true, canViewCommands = t
         ? raw
             .map(r => ({
               id: r.id ?? r.flowId ?? '',
-              name: r.name ?? r.flowName ?? '未命名流程',
+              get name() { return r.name ?? r.flowName ?? t('automation.workbench.unnamedFlow') },
               updatedAt: r.updatedAt ?? r.updated_at ?? ''
             }))
             .filter(f => f.id)
@@ -254,47 +256,47 @@ export function useAutomationWorkbench({ canViewJobs = true, canViewCommands = t
     const isEnabled = item.triggerStatus === '1'
     try {
       await ElMessageBox.confirm(
-        `确定${isEnabled ? '停用' : '启用'}定时任务「${getCronTaskConfirmation(item)}」吗？`,
-        '确认操作',
+        t('automation.cron.toggleConfirm', { action: t(isEnabled ? 'automation.workbench.disable' : 'automation.workbench.enable'), name: getCronTaskConfirmation(item) }),
+        t('common.confirm'),
         {
           closeOnClickModal: false,
           closeOnPressEscape: false,
           type: 'warning',
-          confirmButtonText: '确定',
-          cancelButtonText: '取消'
+          confirmButtonText: t('common.confirm'),
+          cancelButtonText: t('common.cancel')
         }
       )
       if (isEnabled) {
         await jaoApi.stopCronJob(item.id)
-        ElMessage.success(`已停用：${getCronTaskConfirmation(item)}`)
+        ElMessage.success(t('automation.cron.disabledNotice', { name: getCronTaskConfirmation(item) }))
       } else {
         await jaoApi.startCronJob(item.id)
-        ElMessage.success(`已启用：${getCronTaskConfirmation(item)}`)
+        ElMessage.success(t('automation.cron.enabledNotice', { name: getCronTaskConfirmation(item) }))
       }
       await loadCronData()
     } catch (error) {
-      if (error !== 'cancel' && error !== 'close') ElMessage.error('操作失败，请重试')
+      if (error !== 'cancel' && error !== 'close') ElMessage.error(t('common.operationFailed'))
     }
   }
 
   async function executeCronJobNow(item) {
     try {
       await ElMessageBox.confirm(
-        `确定立即执行定时任务「${getCronTaskConfirmation(item)}」吗？`,
-        '确认操作',
+        t('automation.cron.executeConfirm', { name: getCronTaskConfirmation(item) }),
+        t('common.confirm'),
         {
           closeOnClickModal: false,
           closeOnPressEscape: false,
           type: 'warning',
-          confirmButtonText: '确定',
-          cancelButtonText: '取消'
+          confirmButtonText: t('common.confirm'),
+          cancelButtonText: t('common.cancel')
         }
       )
       const response = await jaoApi.executeCronJob(item.id)
-      ElMessage.success(`已触发执行：${getCronTaskConfirmation(item)}`)
+      ElMessage.success(t('automation.cron.executionTriggered', { name: getCronTaskConfirmation(item) }))
       return unwrapResponseData(response)
     } catch (error) {
-      if (error !== 'cancel' && error !== 'close') ElMessage.error('执行失败，请重试')
+      if (error !== 'cancel' && error !== 'close') ElMessage.error(t('automation.cron.runFailedRetry'))
       return null
     }
   }

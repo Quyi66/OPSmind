@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="选择命令"
+    :title="t('automation.job.selectCommand')"
     width="900px"
     destroy-on-close
     @close="handleClose"
@@ -14,7 +14,7 @@
       <div class="search-bar">
         <el-input
           v-model="searchKeyword"
-          placeholder="搜索命令名称或内容"
+          :placeholder="t('automation.file.commandSearch')"
           clearable
           class="search-input"
         >
@@ -35,13 +35,13 @@
         row-key="id"
       >
         <el-table-column type="selection" width="50" :reserve-selection="true" />
-        <el-table-column prop="name" label="名称" width="180" show-overflow-tooltip />
-        <el-table-column prop="type" label="类型" width="100">
+        <el-table-column prop="name" :label="t('common.name')" width="180" show-overflow-tooltip />
+        <el-table-column prop="type" :label="t('automation.job.type')" width="100">
           <template #default="{ row }">
             <el-tag size="small" effect="plain">{{ row.type || '-' }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="command" label="命令" min-width="300">
+        <el-table-column prop="command" :label="t('automation.workbench.command')" min-width="300">
           <template #default="{ row }">
             <div class="command-content" :title="row.command">
               {{ row.command }}
@@ -54,11 +54,9 @@
       <div v-if="selectedCommands.length > 0" class="selected-preview">
         <div class="preview-header">
           <span>
-            已选择
-            <strong>{{ selectedCommands.length }}</strong>
-            条命令
+            {{ t('automation.job.selectedCommandCount', { count: selectedCommands.length }) }}
           </span>
-          <el-button type="danger" link size="small" @click="clearSelection">清空选择</el-button>
+          <el-button type="danger" link size="small" @click="clearSelection">{{ t('automation.file.clearSelection') }}</el-button>
         </div>
         <div class="preview-list">
           <div v-for="(cmd, index) in selectedCommands" :key="cmd.id" class="preview-item">
@@ -75,14 +73,16 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose">取消</el-button>
-        <el-button type="primary" @click="handleConfirm">确定</el-button>
+        <el-button @click="handleClose">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="handleConfirm">{{ t('automation.file.confirm') }}</el-button>
       </div>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed, watch, nextTick } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import * as jaoApi from '@/modules/automation/api/jao'

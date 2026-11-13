@@ -4,28 +4,28 @@
       <!-- 筛选区 -->
       <div class="ops-filter-bar">
         <el-form :inline="true" size="small" @submit.prevent>
-          <el-form-item label="时间范围">
+          <el-form-item :label="t('asset.timeRange')">
             <el-select v-model="filters.day" style="width: 95px" @change="handleFilterChange">
-              <el-option label="今天" :value="1" />
-              <el-option label="近 3 天" :value="3" />
-              <el-option label="近 7 天" :value="7" />
-              <el-option label="近 30 天" :value="30" />
+              <el-option :label="t('asset.today')" :value="1" />
+              <el-option :label="t('asset.last3Days')" :value="3" />
+              <el-option :label="t('asset.last7Days')" :value="7" />
+              <el-option :label="t('asset.last30Days')" :value="30" />
             </el-select>
           </el-form-item>
 
-          <el-form-item label="执行状态">
+          <el-form-item :label="t('asset.executionStatus')">
             <el-select v-model="filters.status" style="width: 105px" @change="handleFilterChange">
-              <el-option label="全部" value="all" />
-              <el-option label="运行成功" value="COMPLETED" />
-              <el-option label="运行失败" value="FAILED" />
-              <el-option label="运行异常" value="ERROR" />
-              <el-option label="正在运行" value="RUNNING" />
+              <el-option :label="t('common.all')" value="all" />
+              <el-option :label="t('asset.runSucceeded')" value="COMPLETED" />
+              <el-option :label="t('asset.runFailed')" value="FAILED" />
+              <el-option :label="t('asset.runAbnormal')" value="ERROR" />
+              <el-option :label="t('asset.runningNow')" value="RUNNING" />
             </el-select>
           </el-form-item>
 
-          <el-form-item label="操作类型">
+          <el-form-item :label="t('asset.operationType')">
             <el-select v-model="filters.action" style="width: 155px" @change="handleFilterChange">
-              <el-option label="全部操作" value="all" />
+              <el-option :label="t('asset.allOperations')" value="all" />
               <el-option
                 v-for="action in actionTypes"
                 :key="action.value"
@@ -35,10 +35,10 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item label="执行节点">
+          <el-form-item :label="t('asset.executionNode')">
             <el-input
               v-model="searchKeyword"
-              placeholder="搜索执行节点..."
+              :placeholder="t('asset.searchNode')"
               clearable
               style="width: 170px"
               @keyup.enter="handleFilterChange"
@@ -49,11 +49,11 @@
           <el-form-item class="filter-actions">
             <el-button type="primary" @click="handleFilterChange">
               <el-icon><Search /></el-icon>
-              搜索
+              {{ t('common.search') }}
             </el-button>
             <el-button @click="handleReset">
               <el-icon><RefreshRight /></el-icon>
-              重置
+              {{ t('common.reset') }}
             </el-button>
           </el-form-item>
         </el-form>
@@ -68,14 +68,14 @@
           size="small"
           :loading="loading"
           @click="loadData"
-          title="刷新"
+          :title="t('common.refresh')"
         >
           <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
       </div>
 
       <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
-        <el-button link type="primary" @click="loadData">重试</el-button>
+        <el-button link type="primary" @click="loadData">{{ t('common.retry') }}</el-button>
       </el-alert>
 
       <!-- 表格区域 -->
@@ -86,24 +86,24 @@
           height="100%"
           row-key="run_id"
           row-class-name="modern-table-row"
-          :empty-text="loading ? '正在读取操作日志…' : loadError || '暂无符合条件的操作日志'"
+          :empty-text="loading ? t('asset.logsLoading') : loadError || t('asset.logsEmpty')"
         >
           <!-- 1. 开始时间 -->
-          <el-table-column prop="start_time" label="开始执行时间" width="180" sortable>
+          <el-table-column prop="start_time" :label="t('asset.startedAt')" width="180" sortable>
             <template #default="{ row }">
               <span>{{ formatDateTime(row.start_time) }}</span>
             </template>
           </el-table-column>
 
           <!-- 2. 操作 -->
-          <el-table-column prop="action" label="操作任务" min-width="180" sortable>
+          <el-table-column prop="action" :label="t('asset.operationTask')" min-width="180" sortable>
             <template #default="{ row }">
               <span>{{ getActionLabel(row.action) }}</span>
             </template>
           </el-table-column>
 
           <!-- 3. 状态 -->
-          <el-table-column prop="status" label="执行状态" width="105" align="left" sortable>
+          <el-table-column prop="status" :label="t('asset.executionStatus')" width="105" align="left" sortable>
             <template #default="{ row }">
               <RunLogStatusTag
                 :type="getStatusType(row.status)"
@@ -117,7 +117,7 @@
           </el-table-column>
 
           <!-- 4. 引擎节点 -->
-          <el-table-column prop="executor_node" label="执行节点" width="150" align="left">
+          <el-table-column prop="executor_node" :label="t('asset.executionNode')" width="150" align="left">
             <template #default="{ row }">
               <el-tag
                 v-if="row.executor_node"
@@ -135,7 +135,7 @@
           <!-- 5. 结果消息 -->
           <el-table-column
             prop="message"
-            label="诊断采集结果反馈"
+            :label="t('asset.diagnosticFeedback')"
             min-width="240"
             show-overflow-tooltip
           >
@@ -147,24 +147,24 @@
           </el-table-column>
 
           <!-- 6. 用户 -->
-          <el-table-column prop="username" label="操作人" width="100" align="left" />
+          <el-table-column prop="username" :label="t('asset.operator')" width="100" align="left" />
 
           <!-- 7. 结束时间 -->
-          <el-table-column prop="end_time" label="结束时间" width="180" sortable>
+          <el-table-column prop="end_time" :label="t('asset.endedAt')" width="180" sortable>
             <template #default="{ row }">
               <span>{{ formatDateTime(row.end_time) }}</span>
             </template>
           </el-table-column>
 
           <!-- 8. 耗时 -->
-          <el-table-column label="执行耗时" width="105" align="left" sortable>
+          <el-table-column :label="t('asset.duration')" width="105" align="left" sortable>
             <template #default="{ row }">
               <span>{{ calculateDuration(row.start_time, row.end_time) }}</span>
             </template>
           </el-table-column>
 
           <!-- 9. 操作 (定位设备) -->
-          <el-table-column label="操作" width="100" align="center" fixed="right">
+          <el-table-column :label="t('common.actions')" width="100" align="center" fixed="right">
             <template #default="{ row }">
               <el-link
                 v-if="extractIpFromRow(row)"
@@ -173,7 +173,7 @@
                 size="small"
                 @click="goToDevice(extractIpFromRow(row))"
               >
-                定位设备
+                {{ t('asset.locateDevice') }}
               </el-link>
               <span v-else class="placeholder-dash">-</span>
             </template>
@@ -207,6 +207,9 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
+
 import { ref, computed, watch, onBeforeUnmount, onDeactivated } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
@@ -235,7 +238,7 @@ const searchKeyword = ref('')
 // 表格数据
 const loading = ref(false)
 const tableData = ref([])
-const loadError = ref('')
+const loadError = messageRef('')
 let logRequest = 0
 
 useActiveTaskListPolling({
@@ -243,10 +246,10 @@ useActiveTaskListPolling({
   refresh: loadData
 })
 const ataNodes = ref([])
-const actionTypes = ref([
-  { label: '设备连通性检测', value: '#{acm.job.check_conn}' },
-  { label: '信息数据采集', value: '#{acm.job.collect_assert_info}' }
-])
+const actionTypes = computed(() => ([
+  { label: t('asset.connectivityCheck'), value: '#{acm.job.check_conn}' },
+  { label: t('asset.collectInfo'), value: '#{acm.job.collect_assert_info}' }
+]))
 
 // 分页
 const currentPage = ref(1)
@@ -256,7 +259,10 @@ const total = ref(0)
 // 运行结果弹窗
 const runResultDialogVisible = ref(false)
 const currentRunId = ref('')
-const currentJobTitle = ref('')
+const currentJobAction = ref('')
+const currentJobTitle = computed(() => currentJobAction.value
+  ? getActionLabel(currentJobAction.value)
+  : t('asset.runResults'))
 
 // 表格数据（后端分页）
 const filteredData = computed(() => {
@@ -330,8 +336,7 @@ function openRunResultByQuery(query) {
   if (!runId) return
 
   currentRunId.value = runId
-  currentJobTitle.value =
-    typeof query.action === 'string' && query.action ? getActionLabel(query.action) : '运行结果'
+  currentJobAction.value = typeof query.action === 'string' ? query.action : ''
   runResultDialogVisible.value = true
 }
 
@@ -376,9 +381,9 @@ async function loadData() {
     total.value = response?.total || 0
   } catch (error) {
     if (!isCurrent()) return
-    loadError.value = '加载操作记录失败，请重试'
+    loadError.value = message('asset.logsReadFailedRetry')
     console.error('加载操作记录失败:', error)
-    ElMessage.error('加载操作记录失败')
+    ElMessage.error(t('asset.logsReadFailed'))
   } finally {
     if (isCurrent()) loading.value = false
   }
@@ -386,7 +391,7 @@ async function loadData() {
 
 function invalidateLogRead() {
   logRequest += 1
-  if (loading.value) loadError.value = '操作日志读取已中断，请刷新重试'
+  if (loading.value) loadError.value = message('asset.logsReadInterrupted')
   loading.value = false
   runResultDialogVisible.value = false
   currentRunId.value = ''
@@ -463,11 +468,11 @@ watch(
 // 显示运行结果弹窗
 function showRunResult(row) {
   if (!row.run_id) {
-    ElMessage.warning('无法获取运行记录')
+    ElMessage.warning(t('asset.noRunRecord'))
     return
   }
   currentRunId.value = row.run_id
-  currentJobTitle.value = getActionLabel(row.action)
+  currentJobAction.value = row.action || ''
   runResultDialogVisible.value = true
 }
 
@@ -476,7 +481,9 @@ function showRunResult(row) {
 function getActionLabel(action) {
   if (!action) return '-'
   const actionLabelMap = {
-    asset_import: '资产导入'
+    asset_import: t('asset.assetImport'),
+    '#{acm.job.check_conn}': t('asset.connectivityCheck'),
+    '#{acm.job.collect_assert_info}': t('asset.collectInfo')
   }
   if (actionLabelMap[action]) return actionLabelMap[action]
   return translateI18nKey(action)
@@ -485,11 +492,11 @@ function getActionLabel(action) {
 // 获取状态标签
 function getStatusLabel(status) {
   const statusMap = {
-    COMPLETED: '完成',
-    ERROR: '运行错误',
-    RUNNING: '运行中',
-    WAITING: '等待中',
-    FAILED: '失败'
+    COMPLETED: t('asset.completed'),
+    ERROR: t('asset.executionError'),
+    RUNNING: t('asset.running'),
+    WAITING: t('asset.waiting'),
+    FAILED: t('asset.failed')
   }
   return statusMap[status] || status || '-'
 }
@@ -510,8 +517,8 @@ function getStatusType(status) {
 function formatMessage(message) {
   if (!message) return '-'
   const messageLabels = {
-    'cmdb.common.log.conn_success': '设备连通性检测成功',
-    'cmdb.common.log.collect_success': '设备信息采集成功'
+    'cmdb.common.log.conn_success': t('asset.connectivitySucceeded'),
+    'cmdb.common.log.collect_success': t('asset.collectionSucceeded')
   }
   if (typeof message === 'string' && messageLabels[message]) return messageLabels[message]
   try {
@@ -524,10 +531,10 @@ function formatMessage(message) {
     }
     if (msgObj.msg_id) {
       const msgIdMap = {
-        'acm.common.log.conn_failed': '设备信息采集回调失败',
-        'acm.common.log.conn_success': '设备连通性检测成功',
-        'acm.common.log.collect_success': '设备信息采集成功',
-        'acm.common.log.collect_failed': '设备信息采集失败'
+        'acm.common.log.conn_failed': t('asset.collectionCallbackFailed'),
+        'acm.common.log.conn_success': t('asset.connectivitySucceeded'),
+        'acm.common.log.collect_success': t('asset.collectionSucceeded'),
+        'acm.common.log.collect_failed': t('asset.collectionFailed')
       }
       return msgIdMap[msgObj.msg_id] || messageLabels[msgObj.msg_id] || msgObj.msg_id
     }

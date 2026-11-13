@@ -4,29 +4,29 @@
       <div class="console-toolbar">
         <el-button size="small" @click="handleHistory">
           <i class="fas fa-history"></i>
-          运行记录
+          {{ t('automation.records.records') }}
         </el-button>
         <el-button size="small" :disabled="!command" @click="handleClearCommand">
           <i class="fas fa-eraser"></i>
-          清空命令
+          {{ t('automation.command.clear') }}
         </el-button>
       </div>
 
       <el-form label-position="top" class="console-form">
-        <el-form-item label="主机">
+        <el-form-item :label="t('automation.command.host')">
           <AcmDeviceSelector
             v-model="hosts"
             ci-types="[auto]"
             :options="{
               selectMode: 'host,group,tag,input,recently',
               selector: 'multiple',
-              label: '选择主机'
+              label: t('automation.command.selectHosts')
             }"
           />
         </el-form-item>
 
-        <el-form-item label="语法">
-          <el-select v-model="commandType" placeholder="请选择执行语法" class="grammar-select">
+        <el-form-item :label="t('automation.command.syntax')">
+          <el-select v-model="commandType" :placeholder="t('automation.command.syntaxRequired')" class="grammar-select">
             <el-option label="cmd" value="cmd" />
             <el-option label="shell" value="shell" />
             <el-option label="python" value="python" />
@@ -35,7 +35,7 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="命令" class="command-form-item">
+        <el-form-item :label="t('automation.command.commands')" class="command-form-item">
           <div class="command-editor-field">
             <div class="code-editor">
               <div class="line-numbers">
@@ -44,11 +44,11 @@
               <textarea
                 v-model="command"
                 class="code-textarea"
-                placeholder="请输入要执行的命令内容"
+                :placeholder="t('automation.command.commandPlaceholder')"
                 @input="updateLineCount"
               ></textarea>
             </div>
-            <div class="form-tip">当前共 {{ lineCount }} 行命令。</div>
+            <div class="form-tip">{{ t('automation.command.lineCount', { count: lineCount }) }}</div>
           </div>
         </el-form-item>
       </el-form>
@@ -57,11 +57,11 @@
       <div class="form-actions">
         <el-button type="primary" :loading="executing" @click="executeCommand">
           <i class="fas fa-check"></i>
-          执行命令
+          {{ t('automation.command.execute') }}
         </el-button>
         <el-button @click="handleBack">
           <i class="fas fa-reply"></i>
-          返回
+          {{ t('automation.command.back') }}
         </el-button>
       </div>
     </div>
@@ -69,14 +69,14 @@
     <!-- 运行记录对话框 -->
     <el-dialog
       v-model="historyDialogVisible"
-      title="运行记录"
+      :title="t('automation.records.records')"
       width="1200px"
       :close-on-click-modal="true"
     >
       <div class="history-toolbar">
         <el-input
           v-model="historySearchKeyword"
-          placeholder="搜索命令、主机、创建人..."
+          :placeholder="t('automation.command.historySearch')"
           style="width: 300px"
           clearable
           @input="historyCurrentPage = 1"
@@ -91,25 +91,25 @@
         :default-sort="historySort"
         @sort-change="handleHistorySortChange"
       >
-        <el-table-column prop="cmd" label="命令" show-overflow-tooltip>
+        <el-table-column prop="cmd" :label="t('automation.command.commands')" show-overflow-tooltip>
           <template #default="{ row }">
             <span class="text-ellipsis">{{ row.cmd }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="type" label="语法" width="80" />
-        <el-table-column prop="hostname" label="主机" show-overflow-tooltip>
+        <el-table-column prop="type" :label="t('automation.command.syntax')" width="80" />
+        <el-table-column prop="hostname" :label="t('automation.command.host')" show-overflow-tooltip>
           <template #default="{ row }">
             <span class="text-ellipsis">{{ row.hostname?.join(',') }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="180" sortable="custom" />
-        <el-table-column prop="createdBy" label="创建人" width="100" />
-        <el-table-column prop="lastRunTime" label="最后执行时间" width="180" sortable="custom" />
-        <el-table-column prop="runNumber" label="执行次数" width="110" sortable="custom" />
-        <el-table-column label="操作" width="100" fixed="right" align="left">
+        <el-table-column prop="createdAt" :label="t('automation.command.createdAt')" width="180" sortable="custom" />
+        <el-table-column prop="createdBy" :label="t('automation.command.createdBy')" width="100" />
+        <el-table-column prop="lastRunTime" :label="t('automation.command.lastExecutedAt')" width="180" sortable="custom" />
+        <el-table-column prop="runNumber" :label="t('automation.command.executionCount')" width="110" sortable="custom" />
+        <el-table-column :label="t('common.actions')" width="100" fixed="right" align="left">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="handleUseHistory(row)">
-              填回控制台
+              {{ t('automation.command.fillConsole') }}
             </el-button>
           </template>
         </el-table-column>
@@ -129,14 +129,14 @@
       </div>
 
       <template #footer>
-        <el-button @click="historyDialogVisible = false">关闭</el-button>
+        <el-button @click="historyDialogVisible = false">{{ t('common.close') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 日志查看器对话框 -->
     <el-dialog
       v-model="logViewerVisible"
-      title="执行过程"
+      :title="t('automation.command.executionProcess')"
       width="900px"
       class="log-viewer-dialog"
       :close-on-click-modal="true"
@@ -151,28 +151,30 @@
             size="small"
           >
             {{
-              logStatus === 'RUNNING' ? '运行中' : logStatus === 'COMPLETED' ? '完成' : logStatus
+              logStatus === 'RUNNING' ? t('automation.job.running') : logStatus === 'COMPLETED' ? t('automation.workbench.done') : logStatus
             }}
           </el-tag>
           <el-switch
             v-model="autoScroll"
-            active-text="自动滚动"
+            :active-text="t('automation.command.autoScroll')"
             size="small"
             style="margin-left: 16px"
           />
         </div>
       </div>
       <div class="log-viewer-content">
-        <pre ref="logContentRef" class="log-output">{{ logContent || '等待输出...' }}</pre>
+        <pre ref="logContentRef" class="log-output">{{ logContent || t('automation.command.waitingOutput') }}</pre>
       </div>
       <template #footer>
-        <el-button @click="closeLogViewer">关闭</el-button>
+        <el-button @click="closeLogViewer">{{ t('common.close') }}</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useApi } from '@/core/api'
@@ -243,15 +245,15 @@ function updateLineCount() {
 // 执行命令
 async function executeCommand() {
   if (!hosts.value.length) {
-    ElMessage.error('请选择目标主机')
+    ElMessage.error(t('automation.command.targetHostsRequired'))
     return
   }
   if (!commandType.value) {
-    ElMessage.error('请选择执行语法')
+    ElMessage.error(t('automation.command.syntaxRequired'))
     return
   }
   if (!command.value.trim()) {
-    ElMessage.error('请输入命令')
+    ElMessage.error(t('automation.command.commandRequired'))
     return
   }
 
@@ -273,14 +275,14 @@ async function executeCommand() {
     const response = await useApi().post('/workflow/api/workflow/console-log/run', request)
     const result = response.data || response
 
-    ElMessage.success('命令已提交执行')
+    ElMessage.success(t('automation.command.submitted'))
 
     if (result.runId) {
       openLogViewer(result.runId)
     }
   } catch (error) {
     console.error('执行命令失败:', error)
-    ElMessage.error(`执行命令失败: ${error?.message || '未知错误'}`)
+    ElMessage.error(t('automation.command.executeFailedReason', { reason: error?.message || t('automation.file.unknownError') }))
   } finally {
     executing.value = false
   }
@@ -319,7 +321,7 @@ async function handleHistory() {
     historyDialogVisible.value = true
   } catch (error) {
     console.error('加载运行记录失败:', error)
-    ElMessage.error('加载运行记录失败')
+    ElMessage.error(t('automation.command.historyFailed'))
   }
 }
 

@@ -37,11 +37,11 @@
     </section> -->
 
     <div v-if="loading" class="yum-ov__placeholder">
-      <div class="yum-ov__placeholder-title">正在同步仓库比对状态…</div>
+      <div class="yum-ov__placeholder-title">{{ t('yumRepo.syncingComparison') }}</div>
     </div>
 
     <div v-else-if="!overviewSources.length" class="yum-ov__placeholder yum-ov__placeholder--empty">
-      <div class="yum-ov__placeholder-title">暂无仓库数据</div>
+      <div class="yum-ov__placeholder-title">{{ t('yumRepo.noRepositories') }}</div>
     </div>
 
     <div v-else class="yum-ov__scroller">
@@ -61,7 +61,7 @@
           <div class="yum-card__header">
             <div class="yum-card__name-wrap">
               <div class="yum-card__name">{{ getYumRepoLabel(item) }}</div>
-              <span v-if="isActiveRepo(item)" class="yum-card__selected-mark">当前</span>
+              <span v-if="isActiveRepo(item)" class="yum-card__selected-mark">{{ t('yumRepo.current') }}</span>
             </div>
             <span class="yum-card__state-pill">{{ getCardHeadline(item) }}</span>
           </div>
@@ -89,6 +89,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { computed } from 'vue'
 import { formatNumber, normalizeBoolean, pickValue } from '@/modules/patches/windows-patch/utils.js'
 import { getYumRepoLabel, resolveYumRepoId, unwrapResponse } from '../utils'
@@ -143,10 +145,10 @@ function getPassedState(row) {
 
 function getOverviewHint(row) {
   const status = getCollectStatus(row)
-  if (!status || status === 'NOT_COLLECTED' || status === 'UNCOLLECTED') return '尚未采集软件包清单'
-  if (status === 'FAILED') return '最近一次采集失败，请重新执行'
-  if (status === 'PENDING' || status === 'RUNNING') return '仓库正在采集中，完成后会自动继续比对'
-  return '暂无比对结果，可查看采集状态或手动执行比对'
+  if (!status || status === 'NOT_COLLECTED' || status === 'UNCOLLECTED') return t('yumRepo.noCollectedInventory')
+  if (status === 'FAILED') return t('yumRepo.lastCollectionFailed')
+  if (status === 'PENDING' || status === 'RUNNING') return t('yumRepo.collectingAutoCompare')
+  return t('yumRepo.noComparisonHint')
 }
 
 function getCardTone(row) {
@@ -163,11 +165,11 @@ function getCardTone(row) {
 
 function getCardHeadline(row) {
   const tone = getCardTone(row)
-  if (tone === 'success') return '比对通过'
-  if (tone === 'danger') return getCollectStatus(row) === 'FAILED' ? '采集失败' : '比对不通过'
-  if (tone === 'pending') return '采集中'
-  if (tone === 'ready') return '待比对'
-  return '未采集'
+  if (tone === 'success') return t('yumRepo.comparisonPassed')
+  if (tone === 'danger') return getCollectStatus(row) === 'FAILED' ? t('yumRepo.collectionFailed') : t('yumRepo.comparisonFailed')
+  if (tone === 'pending') return t('yumRepo.collecting')
+  if (tone === 'ready') return t('yumRepo.awaitingComparison')
+  return t('yumRepo.notCollected')
 }
 
 function getCardHero(row) {
@@ -177,7 +179,7 @@ function getCardHero(row) {
   if (status === 'PENDING' || status === 'RUNNING') {
     return {
       value: '...',
-      label: '采集中',
+      label: t('yumRepo.collecting'),
       tone: 'idle'
     }
   }
@@ -186,7 +188,7 @@ function getCardHero(row) {
     if (status === 'FAILED') {
       return {
         value: '!',
-        label: '采集失败',
+        label: t('yumRepo.collectionFailed'),
         tone: 'danger'
       }
     }
@@ -194,14 +196,14 @@ function getCardHero(row) {
     if (status === 'SUCCESS') {
       return {
         value: '0',
-        label: '待自动比对',
+        label: t('yumRepo.awaitingAutoCompare'),
         tone: 'ready'
       }
     }
 
     return {
       value: '--',
-      label: '未采集',
+      label: t('yumRepo.notCollected'),
       tone: 'idle'
     }
   }
@@ -210,7 +212,7 @@ function getCardHero(row) {
 
   return {
     value: formatMetricValue(missingPackages),
-    label: '缺失包',
+    label: t('yumRepo.missingPackages'),
     tone: getPassedState(row) ? 'success' : 'danger'
   }
 }
@@ -220,14 +222,14 @@ function getCardFootnote(row) {
   const groupByOs = Array.isArray(row?.groupByOs) ? row.groupByOs.length : 0
 
   if (packageCount > 0) {
-    return `已采集 ${formatMetricValue(packageCount)} 个软件包`
+    return t('yumRepo.collectedPackages', { count: formatMetricValue(packageCount) })
   }
 
   if (groupByOs > 1) {
-    return `已按 ${formatMetricValue(groupByOs)} 个 OS 维度汇总`
+    return t('yumRepo.osGroupCount', { count: formatMetricValue(groupByOs) })
   }
 
-  return '已完成最近一次补丁比对'
+  return t('yumRepo.lastCompared')
 }
 </script>
 

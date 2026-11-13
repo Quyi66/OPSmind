@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    :title="`仓库详情 - ${repoId}`"
+    :title="t('yumRepo.software.repoDetailTitle', { name: repoId })"
     width="min(900px, calc(100vw - 32px))"
     class="repo-detail-shell"
     destroy-on-close
@@ -13,14 +13,14 @@
       <div class="ops-action-bar">
         <div class="action-left">
           <el-tooltip
-            content="当前页面暂不支持移除主机配置"
+            :content="t('yumRepo.software.removeUnavailable')"
             placement="top"
             :trigger="['hover', 'focus']"
           >
-            <span class="unavailable-action" tabindex="0" aria-label="移除主机配置暂不可用">
+            <span class="unavailable-action" tabindex="0" :aria-label="t('yumRepo.software.removeDisabledAria')">
               <el-button type="danger" plain disabled @click="handleRemoveRepoFromHost">
                 <i class="fa fa-calendar-minus" />
-                移除主机配置
+                {{ t('yumRepo.software.removeHostConfig') }}
               </el-button>
             </span>
           </el-tooltip>
@@ -37,7 +37,7 @@
           @selection-change="handleSelectionChange"
         >
           <el-table-column type="selection" width="50" />
-          <el-table-column prop="host_key" label="主机" min-width="200" show-overflow-tooltip>
+          <el-table-column prop="host_key" :label="t('yumRepo.host')" min-width="200" show-overflow-tooltip>
             <template #default="{ row }">
               <el-link
                 class="software-cell-link"
@@ -50,8 +50,8 @@
             </template>
           </el-table-column>
           <el-table-column prop="os_distro" label="OS" width="120" show-overflow-tooltip />
-          <el-table-column prop="os_version" label="OS版本" width="120" show-overflow-tooltip />
-          <el-table-column prop="scan_date" label="最后扫描时间" width="180">
+          <el-table-column prop="os_version" :label="t('yumRepo.software.osVersion')" width="120" show-overflow-tooltip />
+          <el-table-column prop="scan_date" :label="t('yumRepo.software.lastScan')" width="180">
             <template #default="{ row }">
               {{ formatDate(row.scan_date) }}
             </template>
@@ -76,6 +76,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { repoApi } from '../../api'
@@ -168,13 +170,13 @@ function handleSelectionChange(selection) {
 }
 
 function handleViewHost(row) {
-  ElMessage.info(`查看主机详情: ${row.host_key}`)
+  ElMessage.info(t('yumRepo.software.hostDetailNotice', { host: row.host_key }))
   // TODO: 跳转到主机详情页面
 }
 
 function handleRemoveRepoFromHost() {
   // refid 与删除作业 repo_name 的语义尚未核实，保留未接通状态。
-  ElMessage.warning('当前页面暂不支持移除主机配置，未移除任何配置')
+  ElMessage.warning(t('yumRepo.software.removeUnavailableNotice'))
 }
 
 function handleClose() {

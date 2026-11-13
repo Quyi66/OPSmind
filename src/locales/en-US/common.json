@@ -52,5 +52,22 @@
   "noData": "No data",
   "selectPage": "Select an item from the sidebar",
   "resourceMismatch": "Page resources have different versions. Please refresh the page.",
-  "resourceUpdated": "An update is available. Refreshing to load the latest resources."
+  "resourceUpdated": "An update is available. Refreshing to load the latest resources.",
+  "reload": "Reload",
+  "viewAll": "View all",
+  "unknown": "Unknown",
+  "pendingConfirmation": "Unconfirmed",
+  "unscored": "Unscored",
+  "unnamedDevice": "Unnamed device",
+  "kylin": "Kylin",
+  "listSeparator": ", ",
+  "workflowTaskFailed": "Task execution failed",
+  "operationFailed": "Operation failed. Please retry.",
+  "remove": "Remove",
+  "pollingSuccess": "Task completed successfully",
+  "pollingFailed": "Task execution failed",
+  "pollingTimeout": "Task timed out",
+  "pollingStatusFailed": "Unable to retrieve task status",
+  "view": "View",
+  "copy": "Copy"
 }

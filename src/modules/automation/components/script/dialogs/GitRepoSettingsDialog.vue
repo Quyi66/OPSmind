@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    :title="isEdit ? '编辑脚本库设定' : '脚本库设定'"
+    :title="isEdit ? t('automation.library.editSettings') : t('automation.library.settings')"
     width="600px"
     :close-on-click-modal="false"
     @closed="handleClosed"
@@ -10,20 +10,20 @@
     <!-- 说明信息 -->
     <el-alert type="success" :closable="false" class="mb-4">
       <p class="help-text">
-        <strong>说明：</strong>
-        用于配置外部 Git 脚本库。 同步前请先备份现有脚本库内容，并确认外部 Git 库地址。
+        <strong>{{ t('automation.library.settingsDescriptionLabel') }}</strong>
+        {{ t('automation.library.settingsHint') }}
       </p>
     </el-alert>
 
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
+    <el-form ref="formRef" :model="form" :rules="rules" :validate-on-rule-change="false" :label-width="currentLocale === 'en-US' ? '180px' : '120px'">
       <!-- 认证方式 -->
-      <el-form-item label="Git库认证方式" prop="authType">
+      <el-form-item :label="t('automation.library.authMethod')" prop="authType">
         <el-tooltip placement="top">
           <template #content>
             <div style="max-width: 300px">
-              HTTPS：填写 Git 库账户和密码
+              {{ t('automation.library.httpsHint') }}
               <br />
-              SSH：上传用于 Git 库认证的私钥文件
+              {{ t('automation.library.sshHint') }}
             </div>
           </template>
           <el-radio-group v-model="form.authType">
@@ -34,15 +34,15 @@
       </el-form-item>
 
       <!-- 仓库名 -->
-      <el-form-item label="仓库名" prop="repoName">
-        <el-tooltip content="填写此脚本库的仓库名，可留空" placement="top">
-          <el-input v-model="form.repoName" :disabled="!form.canEdit" placeholder="请输入仓库名" />
+      <el-form-item :label="t('automation.library.repoName')" prop="repoName">
+        <el-tooltip :content="t('automation.library.repoNameHint')" placement="top">
+          <el-input v-model="form.repoName" :disabled="!form.canEdit" :placeholder="t('automation.library.repoNamePlaceholder')" />
         </el-tooltip>
       </el-form-item>
 
       <!-- 同步策略 -->
-      <el-form-item label="同步策略" prop="jobInterval">
-        <el-tooltip content="填写同步间隔，单位为分钟" placement="top">
+      <el-form-item :label="t('automation.library.syncPolicy')" prop="jobInterval">
+        <el-tooltip :content="t('automation.library.syncMinutesHint')" placement="top">
           <div class="interval-input">
             <el-input-number
               v-model="form.jobInterval"
@@ -50,14 +50,14 @@
               :max="60"
               controls-position="right"
             />
-            <span class="interval-unit">分钟</span>
+            <span class="interval-unit">{{ t('automation.library.minutes') }}</span>
           </div>
         </el-tooltip>
       </el-form-item>
 
       <!-- Git库地址 -->
-      <el-form-item label="Git库地址" prop="repoUrl">
-        <el-tooltip content="填写需要同步的外部 Git 库地址" placement="top">
+      <el-form-item :label="t('automation.library.repoUrl')" prop="repoUrl">
+        <el-tooltip :content="t('automation.library.repoUrlHint')" placement="top">
           <el-input
             v-model="form.repoUrl"
             :disabled="!form.canEdit"
@@ -72,13 +72,13 @@
 
       <!-- SSH 认证 -->
       <template v-if="form.authType === 'ssh'">
-        <el-form-item label="密钥文件路径">
+        <el-form-item :label="t('automation.library.keyPath')">
           <div class="key-file-info">
             ~&nbsp;&nbsp;/&nbsp;&nbsp;
-            <strong>{{ form.authFile?.name || '未选择' }}</strong>
+            <strong>{{ form.authFile?.name || t('automation.library.notSelected') }}</strong>
           </div>
         </el-form-item>
-        <el-form-item label="选择密钥文件" prop="authFile">
+        <el-form-item :label="t('automation.library.selectKeyFile')" prop="authFile">
           <el-upload
             ref="uploadRef"
             :auto-upload="false"
@@ -88,7 +88,7 @@
           >
             <el-button type="primary" plain>
               <i class="fa fa-file-upload" />
-              选择密钥&lt;私钥&gt;文件
+              {{ t('automation.library.privateKeyFile') }}
             </el-button>
           </el-upload>
         </el-form-item>
@@ -96,17 +96,17 @@
 
       <!-- HTTPS 认证 -->
       <template v-if="form.authType === 'https'">
-        <el-form-item label="Git库账户" prop="authName">
-          <el-tooltip content="用于外部Git库认证的用户名" placement="top">
-            <el-input v-model="form.authName" placeholder="请输入用户名" />
+        <el-form-item :label="t('automation.library.repoAccount')" prop="authName">
+          <el-tooltip :content="t('automation.library.repoAccountHint')" placement="top">
+            <el-input v-model="form.authName" :placeholder="t('automation.library.username')" />
           </el-tooltip>
         </el-form-item>
-        <el-form-item label="Git库密码" prop="authPass">
-          <el-tooltip content="用于外部Git库认证的用户名密码" placement="top">
+        <el-form-item :label="t('automation.library.repoPassword')" prop="authPass">
+          <el-tooltip :content="t('automation.library.repoPasswordHint')" placement="top">
             <el-input
               v-model="form.authPass"
               type="password"
-              placeholder="请输入密码"
+              :placeholder="t('automation.library.password')"
               show-password
               autocomplete="new-password"
             />
@@ -124,15 +124,18 @@
     />
 
     <template #footer>
-      <el-button @click="dialogVisible = false">取消</el-button>
+      <el-button @click="dialogVisible = false">{{ t('common.cancel') }}</el-button>
       <el-button type="primary" :loading="saving" :disabled="!isFormValid" @click="handleSave">
-        确定
+        {{ t('automation.file.confirm') }}
       </el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+import { useLocalizedValidation } from '@/core/i18n/validation'
+
 import { ref, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import * as gfsApi from '@/modules/automation/api/gfs'
@@ -160,6 +163,7 @@ const emit = defineEmits(['update:modelValue', 'success', 'closed'])
 
 const dialogVisible = ref(false)
 const formRef = ref(null)
+useLocalizedValidation(formRef)
 const saving = ref(false)
 const progress = ref(0)
 
@@ -174,11 +178,11 @@ const form = ref({
   canEdit: true
 })
 
-const rules = {
-  repoUrl: [{ required: true, message: '请输入Git库地址', trigger: 'blur' }],
-  authName: [{ required: true, message: '请输入Git库账户', trigger: 'blur' }],
-  authPass: [{ required: true, message: '请输入Git库密码', trigger: 'blur' }]
-}
+const rules = computed(() => ({
+  repoUrl: [{ required: true, message: t('automation.library.repoUrlRequired'), trigger: 'blur' }],
+  authName: [{ required: true, message: t('automation.library.repoAccountRequired'), trigger: 'blur' }],
+  authPass: [{ required: true, message: t('automation.library.repoPasswordRequired'), trigger: 'blur' }]
+}))
 
 // 是否编辑模式
 const isEdit = computed(() => !!props.editData?.id)
@@ -243,8 +247,8 @@ async function handleSave() {
   // 确认提示
   try {
     await ElMessageBox.confirm(
-      `确认同步 ${form.value.repoUrl} 到KoreOPS脚本库中？`,
-      '外部Git库同步确认',
+      t('automation.library.externalSyncConfirm', { url: form.value.repoUrl }),
+      t('automation.library.externalSyncTitle'),
       {
         closeOnClickModal: false,
         closeOnPressEscape: false,
@@ -278,11 +282,11 @@ async function handleSave() {
       progress.value = p
     })
 
-    ElMessage.success('初始化外部Git库成功')
+    ElMessage.success(t('automation.library.externalInitialized'))
     emit('success')
     dialogVisible.value = false
   } catch (error) {
-    ElMessage.error(error?.message || '初始化外部Git库失败')
+    ElMessage.error(error?.message || t('automation.library.externalInitFailed'))
   } finally {
     saving.value = false
   }

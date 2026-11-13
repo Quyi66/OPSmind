@@ -3,6 +3,7 @@ import { defineComponent, h, KeepAlive } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 import Page from '@/modules/asset/views/AutomationConfigPage.vue'
+import { setLocale } from '@/core/i18n'
 
 const api = vi.hoisted(() => ({
   getAutomationConfigs: vi.fn(),
@@ -80,14 +81,38 @@ async function open(query = {}) {
   await flushPromises()
 }
 beforeEach(() => {
+  vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} })
   api.getAutomationConfigs.mockReset().mockResolvedValue({ records: [], total: 0 })
   api.getResourceTypes.mockReset().mockResolvedValue({ records: [] })
   api.get.mockReset().mockResolvedValue({ data: [] })
   api.post.mockReset()
 })
-afterEach(() => root?.unmount())
+afterEach(async () => {
+  root?.unmount()
+  await setLocale('zh-CN', { persist: false })
+  vi.unstubAllGlobals()
+})
 
 describe('连接凭据页只消费自身路由的IP', () => {
+  it('keeps credential drafts, pagination and request fields when switching languages', async () => {
+    await open({ ip: 'original-host' })
+    const vm = state()
+    vm.activeTab = 'ansible'; vm.automationPage = 3; vm.ansiblePage = 2
+    vm.editAutomationDialogVisible = true
+    vm.automationForm = { id: 'row-id', ciId: 'raw-ci', ansibleConfigId: 'template-id', loginUser: '中文账号', loginPasswd: 'Original!123', runUser: 'sudo-user', runPasswd: 'Raw#Password', instanceGroup: '真实执行节点', aapInstanceGroup: '' }
+    const form = vm.automationForm, route = router.currentRoute.value.fullPath
+    await setLocale('en-US', { persist: false }); await flushPromises()
+    expect(vm.automationForm).toBe(form)
+    expect(vm.automationPage).toBe(3); expect(vm.ansiblePage).toBe(2)
+    expect(vm.activeTab).toBe('ansible'); expect(vm.editAutomationDialogVisible).toBe(true)
+    expect(router.currentRoute.value.fullPath).toBe(route)
+    expect(api.getAutomationConfigs).toHaveBeenCalledTimes(1)
+    expect(api.post).not.toHaveBeenCalled()
+    api.post.mockResolvedValue({})
+    await vm.saveAutomationConfig()
+    expect(api.post.mock.calls[0][0]).toMatch(/\/jobs\/3TRE7d\/run\?cacheBuster=/)
+    expect(api.post.mock.calls[0][1]).toEqual({ params: { ...form } })
+  })
   it('缓存失活后不受设备清单/日志IP影响，也不切换原页签或搜索条件', async () => {
     await open({ ip: 'host-a' })
     const context = state()

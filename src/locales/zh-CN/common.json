@@ -52,5 +52,22 @@
   "noData": "暂无数据",
   "selectPage": "请选择左侧菜单",
   "resourceMismatch": "检测到页面资源版本不一致，请手动刷新页面",
-  "resourceUpdated": "检测到前端已更新，正在刷新页面以加载最新资源"
+  "resourceUpdated": "检测到前端已更新，正在刷新页面以加载最新资源",
+  "reload": "重新加载",
+  "viewAll": "查看全部",
+  "unknown": "未知",
+  "pendingConfirmation": "待确认",
+  "unscored": "未评分",
+  "unnamedDevice": "未命名设备",
+  "kylin": "麒麟",
+  "listSeparator": "、",
+  "workflowTaskFailed": "任务执行失败",
+  "operationFailed": "操作失败，请重试",
+  "remove": "移除",
+  "pollingSuccess": "任务执行成功",
+  "pollingFailed": "任务执行失败",
+  "pollingTimeout": "任务执行超时",
+  "pollingStatusFailed": "获取任务状态失败",
+  "view": "查看",
+  "copy": "复制"
 }

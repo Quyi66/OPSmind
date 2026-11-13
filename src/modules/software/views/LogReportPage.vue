@@ -3,13 +3,13 @@
     <!-- 筛选栏 -->
     <div class="ops-filter-bar">
       <el-form inline size="small">
-        <el-form-item label="时间范围">
+        <el-form-item :label="t('yumRepo.software.timeRange')">
           <el-select v-model="filterDay" style="width: 100px" @change="handleSearch">
-            <el-option label="全部" value="all" />
-            <el-option label="今天" value="1" />
-            <el-option label="最近7天" value="7" />
-            <el-option label="最近30天" value="30" />
-            <el-option label="最近一年" value="365" />
+            <el-option :label="t('common.all')" value="all" />
+            <el-option :label="t('yumRepo.software.today')" value="1" />
+            <el-option :label="t('yumRepo.software.last7Days')" value="7" />
+            <el-option :label="t('yumRepo.software.last30Days')" value="30" />
+            <el-option :label="t('yumRepo.software.lastYear')" value="365" />
           </el-select>
         </el-form-item>
         <!-- <el-form-item label="执行引擎">
@@ -26,8 +26,8 @@
             />
           </el-select>
         </el-form-item> -->
-        <el-form-item label="状态">
-          <el-select v-model="statusFilter" placeholder="全部" clearable style="width: 100px" @change="handleSearch">
+        <el-form-item :label="t('automation.workbench.status')">
+          <el-select v-model="statusFilter" :placeholder="t('common.all')" clearable style="width: 100px" @change="handleSearch">
             <el-option
               v-for="status in statusOptions"
               :key="status.value"
@@ -36,8 +36,8 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="操作">
-          <el-select v-model="actionFilter" placeholder="全部" clearable style="width: 100px" @change="handleSearch">
+        <el-form-item :label="t('common.actions')">
+          <el-select v-model="actionFilter" :placeholder="t('common.all')" clearable style="width: 100px" @change="handleSearch">
             <el-option
               v-for="action in actionOptions"
               :key="action"
@@ -46,8 +46,8 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="关键词">
-          <el-input v-model="searchText" placeholder="搜索..." clearable style="width: 180px" @keyup.enter="handleSearch" @clear="handleSearch">
+        <el-form-item :label="t('yumRepo.keyword')">
+          <el-input v-model="searchText" :placeholder="t('yumRepo.search')" clearable style="width: 180px" @keyup.enter="handleSearch" @clear="handleSearch">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
@@ -56,11 +56,11 @@
         <el-form-item>
           <el-button type="primary" @click="handleSearch">
             <el-icon><Search /></el-icon>
-            搜索
+            {{ t('common.search') }}
           </el-button>
           <el-button @click="handleReset">
             <el-icon><RefreshRight /></el-icon>
-            重置
+            {{ t('common.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -75,7 +75,7 @@
         size="small"
         :loading="loading"
         @click="loadLogs"
-        title="刷新"
+        :title="t('common.refresh')"
       >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
@@ -91,15 +91,15 @@
         row-key="run_id"
         max-height="calc(100vh - 264px)"
         :default-sort="{ prop: 'start_time', order: 'descending' }"
-        empty-text="没有数据"
+        :empty-text="t('yumRepo.software.noData')"
       >
-        <el-table-column prop="start_time" label="开始时间" min-width="160" sortable>
+        <el-table-column prop="start_time" :label="t('yumRepo.software.startedAt')" min-width="160" sortable>
           <template #default="{ row }">
             {{ formatDateTime(row.start_time) }}
           </template>
         </el-table-column>
-        <el-table-column prop="action" label="操作" min-width="120" sortable />
-        <el-table-column prop="status" label="状态" min-width="100" sortable>
+        <el-table-column prop="action" :label="t('common.actions')" min-width="120" sortable />
+        <el-table-column prop="status" :label="t('automation.workbench.status')" min-width="100" sortable>
           <template #default="{ row }">
             <RunLogStatusTag
               :type="getStatusType(row.status)"
@@ -111,19 +111,19 @@
             </RunLogStatusTag>
           </template>
         </el-table-column>
-        <el-table-column prop="executor_node" label="执行节点" min-width="130" sortable />
-        <el-table-column prop="message" label="结果" min-width="200" sortable show-overflow-tooltip>
+        <el-table-column prop="executor_node" :label="t('yumRepo.software.executionNodes')" min-width="130" sortable />
+        <el-table-column prop="message" :label="t('yumRepo.software.result')" min-width="200" sortable show-overflow-tooltip>
           <template #default="{ row }">
             {{ formatMessage(row.message) }}
           </template>
         </el-table-column>
-        <el-table-column prop="username" label="用户" min-width="100" sortable />
-        <el-table-column prop="end_time" label="结束时间" min-width="160" sortable>
+        <el-table-column prop="username" :label="t('yumRepo.software.user')" min-width="100" sortable />
+        <el-table-column prop="end_time" :label="t('yumRepo.software.endedAt')" min-width="160" sortable>
           <template #default="{ row }">
             {{ formatDateTime(row.end_time) }}
           </template>
         </el-table-column>
-        <el-table-column label="耗时" min-width="100" sortable>
+        <el-table-column :label="t('yumRepo.software.duration')" min-width="100" sortable>
           <template #default="{ row }">
             {{ calcTimeDiff(row.start_time, row.end_time) }}
           </template>
@@ -155,6 +155,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed, onMounted } from 'vue'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { formatDateTime as formatDateTimeGlobal } from '@/utils/date'
@@ -208,22 +210,22 @@ const engineOptions = computed(() => {
 })
 
 const statusOptions = [
-  { value: 'RUNNING', label: '执行中' },
-  { value: 'ASYNC', label: '异步' },
-  { value: 'COMPLETED', label: '已完成' },
-  { value: 'FAILED', label: '失败' },
-  { value: 'ERROR', label: '错误' }
+  { value: 'RUNNING', get label() { return t('yumRepo.running') } },
+  { value: 'ASYNC', get label() { return t('yumRepo.software.async') } },
+  { value: 'COMPLETED', get label() { return t('automation.workbench.completed') } },
+  { value: 'FAILED', get label() { return t('automation.stats.failed') } },
+  { value: 'ERROR', get label() { return t('automation.flow.error') } }
 ]
 
 // 状态定义（对应 jaoUtil.jobStatusDefs）
 const jobStatusDefs = {
-  RUNNING: { color: 'warning', title: '执行中' },
-  ASYNC: { color: 'info', title: '异步' },
-  COMPLETED: { color: 'success', title: '已完成' },
-  FAILED: { color: 'danger', title: '失败' },
-  ERROR: { color: 'danger', title: '错误' },
-  PENDING: { color: 'info', title: '等待中' },
-  CANCELLED: { color: 'info', title: '已取消' }
+  RUNNING: { color: 'warning', get title() { return t('yumRepo.running') } },
+  ASYNC: { color: 'info', get title() { return t('yumRepo.software.async') } },
+  COMPLETED: { color: 'success', get title() { return t('automation.workbench.completed') } },
+  FAILED: { color: 'danger', get title() { return t('automation.stats.failed') } },
+  ERROR: { color: 'danger', get title() { return t('automation.flow.error') } },
+  PENDING: { color: 'info', get title() { return t('automation.workbench.waiting') } },
+  CANCELLED: { color: 'info', get title() { return t('automation.flow.cancelled') } }
 }
 
 // 执行结果弹窗
@@ -251,15 +253,15 @@ function calcTimeDiff(startTime, endTime) {
   if (diffMs < 0) return ''
 
   const seconds = Math.floor(diffMs / 1000)
-  if (seconds < 60) return `${seconds}秒`
+  if (seconds < 60) return t('yumRepo.software.seconds', { seconds })
 
   const minutes = Math.floor(seconds / 60)
   const secs = seconds % 60
-  if (minutes < 60) return `${minutes}分${secs}秒`
+  if (minutes < 60) return t('yumRepo.software.minutesSeconds', { minutes, seconds: secs })
 
   const hours = Math.floor(minutes / 60)
   const mins = minutes % 60
-  return `${hours}时${mins}分`
+  return t('yumRepo.software.hoursMinutes', { hours, minutes: mins })
 }
 
 /**

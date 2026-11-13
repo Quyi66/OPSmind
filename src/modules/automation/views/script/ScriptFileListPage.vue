@@ -20,63 +20,63 @@
           <div class="action-group action-group--primary">
             <el-button type="primary" @click="handleAddFolder">
               <i class="fa fa-fw fa-folder-plus" />
-              文件夹
+              {{ t('automation.library.folder') }}
             </el-button>
             <el-button v-if="repoType === 'git'" @click="scriptDialogVisible = true">
               <i class="fa fa-file-code" />
-              脚本
+              {{ t('automation.library.script') }}
             </el-button>
             <el-button @click="uploadDialogVisible = true">
               <i class="fa fa-fw fa-file-upload" />
-              文件
+              {{ t('automation.library.file') }}
             </el-button>
             <el-button v-if="repoType === 'git'" @click="syncDialogVisible = true">
               <i class="fa fa-cloud" />
-              同步文件
+              {{ t('automation.library.syncFiles') }}
             </el-button>
           </div>
 
           <div class="action-group">
             <el-button :disabled="!hasSelection" @click="handleDelete">
               <i class="fa fa-fw fa-trash-alt" />
-              删除
+              {{ t('common.delete') }}
             </el-button>
             <el-button :disabled="!hasSelection" @click="handleDownload">
               <i class="fa fa-download" />
-              下载
+              {{ t('automation.file.download') }}
             </el-button>
           </div>
 
           <div v-if="repoType === 'git'" class="action-group">
             <el-button @click="goBaseRepo">
               <i class="fa fa-fw fa-scroll" />
-              内置应用脚本
+              {{ t('automation.library.builtinAppScripts') }}
             </el-button>
             <el-button @click="handleGitPull">
               <i class="fa fa-cloud-download-alt fa-fw" />
-              拉取
+              {{ t('automation.library.pull') }}
             </el-button>
             <el-button @click="handleGitPush">
               <i class="fa fa-cloud-upload-alt fa-fw" />
-              推送
+              {{ t('automation.library.push') }}
             </el-button>
           </div>
 
           <el-dropdown class="utility-menu" trigger="click" @command="handleUtilityCommand">
             <el-button>
               <i class="fa fa-sliders-h" />
-              更多操作
+              {{ t('automation.library.moreActions') }}
               <i class="fa fa-chevron-down action-caret" />
             </el-button>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="cut" :disabled="!hasSelection">
                   <i class="fa fa-cut fa-fw" />
-                  剪切
+                  {{ t('automation.library.cut') }}
                 </el-dropdown-item>
                 <el-dropdown-item command="paste" :disabled="!canPaste">
                   <i class="fa fa-paste fa-fw" />
-                  粘贴
+                  {{ t('automation.library.paste') }}
                 </el-dropdown-item>
                 <el-dropdown-item
                   v-if="repoType === 'git'"
@@ -84,19 +84,19 @@
                   :disabled="!hasSelection"
                 >
                   <i class="fa fa-stop-circle fa-fw" />
-                  停用/启用
+                  {{ t('automation.library.toggle') }}
                 </el-dropdown-item>
                 <el-dropdown-item divided command="refresh">
                   <i class="fa fa-sync-alt fa-fw" />
-                  刷新当前列表
+                  {{ t('automation.library.refreshList') }}
                 </el-dropdown-item>
                 <el-dropdown-item command="repair">
                   <i class="fa fa-tools fa-fw" />
-                  修复
+                  {{ t('automation.library.repair') }}
                 </el-dropdown-item>
                 <el-dropdown-item v-if="repoType === 'git'" command="gitList">
                   <i class="fa fa-list-alt fa-fw" />
-                  Git库
+                  {{ t('automation.library.gitRepos') }}
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -108,12 +108,12 @@
             <el-button
               type="primary"
               :disabled="!hasSelection"
-              title="审核已选择的文件"
+              :title="t('automation.library.reviewSelectedTitle')"
               @click="fileApproveDialogVisible = true"
             >
-              审核已选文件
+              {{ t('automation.library.reviewSelected') }}
             </el-button>
-            <el-button @click="approvalHistoryDialogVisible = true">审批历史</el-button>
+            <el-button @click="approvalHistoryDialogVisible = true">{{ t('automation.library.approvalHistory') }}</el-button>
           </div>
         </template>
       </div>
@@ -133,32 +133,32 @@
 
         <el-popover v-if="repoType === 'git'" placement="bottom-end" :width="320" trigger="click">
           <template #reference>
-            <el-button class="info-btn" title="文件状态">
+            <el-button class="info-btn" :title="t('automation.library.fileStatus')">
               <i class="fa fa-info" />
             </el-button>
           </template>
           <div class="file-status-help">
             <dl>
               <dt><span class="status-indicator stage-exist">filename</span></dt>
-              <dd>有新版本，等待审核</dd>
+              <dd>{{ t('automation.library.newVersionPending') }}</dd>
               <dt><span class="status-indicator stage-rejected">filename</span></dt>
-              <dd>新版本被拒绝</dd>
+              <dd>{{ t('automation.library.newVersionRejected') }}</dd>
               <dt><span class="status-indicator master-disabled">filename</span></dt>
-              <dd>文件被停用</dd>
+              <dd>{{ t('automation.library.fileDisabled') }}</dd>
               <dt>
                 <span class="status-indicator missing-file">
                   filename
                   <i class="fa fa-exclamation-triangle" />
                 </span>
               </dt>
-              <dd>找不到文件</dd>
+              <dd>{{ t('automation.library.fileMissing') }}</dd>
               <dt>
                 <span class="status-indicator missing-rec">
                   filename
                   <i class="fa fa-exclamation-triangle" />
                 </span>
               </dt>
-              <dd>找不到记录</dd>
+              <dd>{{ t('automation.library.recordMissing') }}</dd>
             </dl>
           </div>
         </el-popover>
@@ -171,15 +171,15 @@
         <span>{{ selectionBannerDescription }}</span>
       </div>
       <div class="selection-banner__chips">
-        <span class="selection-banner__chip">已选 {{ selectedFiles.length }} 项</span>
+        <span class="selection-banner__chip">{{ t('automation.library.selectedCount', { count: selectedFiles.length }) }}</span>
         <span v-if="clipboard.length" class="selection-banner__chip">
-          剪贴板 {{ clipboard.length }} 项
+          {{ t('automation.library.clipboardCount', { count: clipboard.length }) }}
         </span>
       </div>
     </div>
 
     <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
-      <el-button link type="primary" @click="loadFiles">重试</el-button>
+      <el-button link type="primary" @click="loadFiles">{{ t('common.retry') }}</el-button>
     </el-alert>
 
     <div
@@ -192,8 +192,8 @@
           <h3>{{ emptyStateTitle }}</h3>
           <p>{{ emptyStateDescription }}</p>
           <div v-if="!loadError && repoType !== 'stage'" class="empty-state__actions">
-            <el-button type="primary" @click="handleAddFolder">新建文件夹</el-button>
-            <el-button @click="uploadDialogVisible = true">上传文件</el-button>
+            <el-button type="primary" @click="handleAddFolder">{{ t('automation.library.newFolder') }}</el-button>
+            <el-button @click="uploadDialogVisible = true">{{ t('automation.library.uploadFiles') }}</el-button>
           </div>
         </div>
       </template>
@@ -216,7 +216,7 @@
           :reserve-selection="true"
         />
 
-        <el-table-column label="名称" min-width="300" sortable="custom" prop="name">
+        <el-table-column :label="t('common.name')" min-width="300" sortable="custom" prop="name">
           <template #default="{ row }">
             <div class="file-name-cell">
               <i :class="getFileIcon(row)" class="file-icon" />
@@ -246,19 +246,19 @@
                   <el-dropdown-menu>
                     <el-dropdown-item v-if="!row.directory" command="download">
                       <i class="fa fa-file-download fa-fw" />
-                      下载文件
+                      {{ t('automation.library.downloadFile') }}
                     </el-dropdown-item>
                     <el-dropdown-item v-if="!row.directory" command="edit">
                       <i class="fa fa-pencil fa-fw" />
-                      修改信息
+                      {{ t('automation.library.editInfo') }}
                     </el-dropdown-item>
                     <el-dropdown-item v-if="row.canDelete" command="delete">
                       <i class="fa fa-trash-alt fa-fw" />
-                      删除文件
+                      {{ t('automation.library.deleteFile') }}
                     </el-dropdown-item>
                     <el-dropdown-item v-if="row.directory && repoType === 'git'" command="editDir">
                       <i class="fa fa-pencil fa-fw" />
-                      修改信息
+                      {{ t('automation.library.editInfo') }}
                     </el-dropdown-item>
                     <!-- <el-dropdown-item v-if="!row.directory && repoType === 'git'" command="testRun">
                       <i class="fa fa-chevron-right fa-fw" />
@@ -266,11 +266,11 @@
                     </el-dropdown-item> -->
                     <el-dropdown-item v-if="!row.directory && repoType === 'git'" command="history">
                       <i class="fa fa-comment-alt-dots fa-fw" />
-                      审批历史
+                      {{ t('automation.library.approvalHistory') }}
                     </el-dropdown-item>
                     <el-dropdown-item v-if="row.directory" command="downloadDir">
                       <i class="fa fa-file-download fa-fw" />
-                      下载文件夹
+                      {{ t('automation.library.downloadFolder') }}
                     </el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
@@ -281,7 +281,7 @@
 
         <el-table-column
           v-if="repoType === 'git' || repoType === 'stage'"
-          label="说明"
+          :label="t('automation.library.description')"
           prop="description"
           min-width="200"
         >
@@ -292,18 +292,18 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="大小" prop="size" width="100" sortable="custom">
+        <el-table-column :label="t('automation.library.size')" prop="size" width="100" sortable="custom">
           <template #default="{ row }">
             {{ formatFileSize(row) }}
           </template>
         </el-table-column>
 
-        <el-table-column label="修改日期" prop="lastModified" width="120" sortable="custom">
+        <el-table-column :label="t('automation.library.modifiedDate')" prop="lastModified" width="120" sortable="custom">
           <template #default="{ row }">
             <a
               v-if="row.lastModified && !row.directory && !row._isParentDir && repoType === 'git'"
               class="date-link"
-              title="历史版本"
+              :title="t('automation.library.revisions')"
               @click="handleShowRevList(row)"
             >
               {{ formatDate(row.lastModified) }}
@@ -315,14 +315,14 @@
 
         <el-table-column
           v-if="repoType === 'git' || repoType === 'stage'"
-          label="状态"
+          :label="t('automation.workbench.status')"
           width="110"
           align="left"
         >
           <template #default="{ row }">
             <div v-if="row._statusCss && !row.directory && !row._isParentDir" class="status-cell">
               <span class="status-dot" :class="row._statusCss" />
-              <span>{{ row._statusText || '未知' }}</span>
+              <span>{{ getFileStatusText(row) || t('automation.command.unknown') }}</span>
             </div>
             <span v-else>-</span>
           </template>
@@ -439,6 +439,10 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
+import { getFileStatusText } from '@/modules/automation/utils/filePresentation'
+
 import { ref, computed, onMounted, onBeforeUnmount, onDeactivated, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import * as gfsApi from '@/modules/automation/api/gfs'
@@ -477,7 +481,7 @@ const emit = defineEmits(['dir-change', 'navigate-to-script-library'])
 
 // 状态
 const loading = ref(false)
-const loadError = ref('')
+const loadError = messageRef('')
 let fileRequest = 0
 let repoRequest = 0
 let mounted = false
@@ -528,8 +532,8 @@ const repoMeta = computed(() => {
 })
 
 const searchPlaceholder = computed(() => {
-  if (props.repoType === 'stage') return '搜索待审核文件或说明'
-  return '搜索名称或说明'
+  if (props.repoType === 'stage') return t('automation.library.reviewSearch')
+  return t('automation.library.search')
 })
 
 const showSelectionBanner = computed(
@@ -538,41 +542,41 @@ const showSelectionBanner = computed(
 
 const selectionBannerTitle = computed(() => {
   if (props.repoType === 'stage') {
-    return selectedFiles.value.length > 0 ? '已选审核文件' : '当前有待处理条目'
+    return selectedFiles.value.length > 0 ? t('automation.library.reviewSelection') : t('automation.library.pendingItems')
   }
-  return selectedFiles.value.length > 0 ? '已选文件条目' : '当前有待粘贴内容'
+  return selectedFiles.value.length > 0 ? t('automation.library.selectedItems') : t('automation.library.pastePending')
 })
 
 const selectionBannerDescription = computed(() => {
   if (props.repoType === 'stage') {
     return selectedFiles.value.length > 0
-      ? `已选择 ${selectedFiles.value.length} 个文件，可直接发起审核。`
-      : '当前没有选中文件，但审批历史仍可随时查看。'
+      ? t('automation.library.reviewSelectionHint', { count: selectedFiles.value.length })
+      : t('automation.library.noSelectedReview')
   }
 
   if (selectedFiles.value.length > 0 && clipboard.value.length > 0) {
-    return `已选择 ${selectedFiles.value.length} 项，剪贴板中还有 ${clipboard.value.length} 项待粘贴。`
+    return t('automation.library.selectionClipboardHint', { selected: selectedFiles.value.length, clipboard: clipboard.value.length })
   }
 
   if (selectedFiles.value.length > 0) {
-    return `已选择 ${selectedFiles.value.length} 项，可继续执行剪切、删除、下载或状态操作。`
+    return t('automation.library.selectionActionsHint', { count: selectedFiles.value.length })
   }
 
-  return `剪贴板中有 ${clipboard.value.length} 项，可直接粘贴到当前目录。`
+  return t('automation.library.clipboardHint', { count: clipboard.value.length })
 })
 
 const emptyStateTitle = computed(() => {
-  if (loadError.value) return '文件列表读取失败'
-  if (searchText.value) return '没有找到匹配内容'
-  if (props.repoType === 'stage') return '当前没有待审核文件'
-  return currentDir.value ? '当前目录为空' : '当前仓库暂无文件'
+  if (loadError.value) return t('automation.library.readFailedTitle')
+  if (searchText.value) return t('automation.library.noMatch')
+  if (props.repoType === 'stage') return t('automation.library.noPendingReview')
+  return currentDir.value ? t('automation.library.emptyDirectory') : t('automation.library.emptyRepo')
 })
 
 const emptyStateDescription = computed(() => {
-  if (loadError.value) return '请重试读取当前目录。'
-  if (searchText.value) return '可以尝试调整关键词，或切换到其他目录继续查看。'
-  if (props.repoType === 'stage') return '待有新版本提交后，这里会出现可审核的文件。'
-  return '可以在当前目录新建文件夹、上传文件，或同步远程内容到这里。'
+  if (loadError.value) return t('automation.library.retryDirectory')
+  if (searchText.value) return t('automation.library.searchHint')
+  if (props.repoType === 'stage') return t('automation.library.reviewEmptyHint')
+  return t('automation.library.emptyHint')
 })
 
 async function resolveRepoId() {
@@ -765,8 +769,8 @@ async function loadFiles() {
     return true
   } catch (error) {
     if (!isCurrent()) return false
-    loadError.value = '获取文件列表失败，请重试'
-    ElMessage.error(error?.message || '获取文件列表失败')
+    loadError.value = message('automation.library.readFailedRetry')
+    ElMessage.error(error?.message || t('automation.library.readFailed'))
     return false
   } finally {
     if (isCurrent()) loading.value = false
@@ -776,7 +780,7 @@ async function loadFiles() {
 function invalidateFileRead() {
   fileRequest += 1
   repoRequest += 1
-  if (loading.value) loadError.value = '文件列表读取已中断，请重试'
+  if (loading.value) loadError.value = message('automation.library.readInterrupted')
   loading.value = false
 }
 onBeforeUnmount(invalidateFileRead)
@@ -784,7 +788,7 @@ onDeactivated(invalidateFileRead)
 
 // 刷新
 async function refresh() {
-  if (await loadFiles()) ElMessage.success('刷新成功')
+  if (await loadFiles()) ElMessage.success(t('automation.library.refreshed'))
 }
 
 function handleUtilityCommand(command) {
@@ -919,7 +923,7 @@ function handleFileAction(command, file) {
       break
     case 'edit':
       if (file.conflict === 'FileNotFound') {
-        ElMessage.error('找不到文件，无法修改信息')
+        ElMessage.error(t('automation.library.missingForEdit'))
         break
       }
       openFileContent(file, { mode: 'edit' })
@@ -932,7 +936,7 @@ function handleFileAction(command, file) {
       folderDialogVisible.value = true
       break
     case 'testRun':
-      ElMessage.info('测试运行功能开发中')
+      ElMessage.info(t('automation.library.testRunPending'))
       break
     case 'history':
       historyFile.value = file
@@ -949,7 +953,7 @@ function handleCut() {
   clipboard.value = [...selectedFiles.value]
   clipboardDir.value = currentDir.value
   selectedFiles.value = []
-  ElMessage.success(`已剪切 ${clipboard.value.length} 个文件`)
+  ElMessage.success(t('automation.library.cutCount', { count: clipboard.value.length }))
 }
 
 // 粘贴
@@ -960,10 +964,10 @@ async function handlePaste() {
     await gfsApi.moveFiles(props.repoType, currentRepo.value, currentDir.value, paths)
     clipboard.value = []
     clipboardDir.value = ''
-    ElMessage.success('移动成功')
+    ElMessage.success(t('automation.list.moved'))
     loadFiles()
   } catch (error) {
-    ElMessage.error(error?.message || '移动失败')
+    ElMessage.error(error?.message || t('automation.library.moveFailed'))
   }
 }
 
@@ -971,19 +975,19 @@ async function handlePaste() {
 async function handleDelete() {
   if (!hasSelection.value) return
   try {
-    await ElMessageBox.confirm('确定删除选中的文件吗？', '删除确认', {
+    await ElMessageBox.confirm(t('automation.library.deleteSelectionConfirm'), t('automation.library.deleteTitle'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning'
     })
     const paths = selectedFiles.value.map(f => f.path)
     await gfsApi.deleteFiles(props.repoType, currentRepo.value, paths)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('automation.workbench.deleted'))
     selectedFiles.value = []
     loadFiles()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error(error?.message || '删除失败')
+      ElMessage.error(error?.message || t('automation.workbench.deleteFailed'))
     }
   }
 }
@@ -991,17 +995,17 @@ async function handleDelete() {
 // 删除单个
 async function handleDeleteSingle(file) {
   try {
-    await ElMessageBox.confirm(`确定删除 "${file.name}" 吗？`, '删除确认', {
+    await ElMessageBox.confirm(t('automation.library.deleteFileConfirm', { name: file.name }), t('automation.library.deleteTitle'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning'
     })
     await gfsApi.deleteFiles(props.repoType, currentRepo.value, [file.path])
-    ElMessage.success('删除成功')
+    ElMessage.success(t('automation.workbench.deleted'))
     loadFiles()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error(error?.message || '删除失败')
+      ElMessage.error(error?.message || t('automation.workbench.deleteFailed'))
     }
   }
 }
@@ -1022,7 +1026,7 @@ async function handleChangeStatus() {
   }
 
   if (currentRepo.value === '$tnt') {
-    ElMessage.error('无法获取有效仓库信息')
+    ElMessage.error(t('automation.library.invalidRepo'))
     return
   }
 
@@ -1038,10 +1042,10 @@ function handleRepair() {
 async function handleGitPull() {
   try {
     await gfsApi.gitPull(currentRepo.value)
-    ElMessage.success('拉取最新Git库数据成功')
+    ElMessage.success(t('automation.library.pulled'))
     loadFiles()
   } catch (error) {
-    ElMessage.error(error?.message || '拉取最新Git库数据失败')
+    ElMessage.error(error?.message || t('automation.library.pullFailed'))
   }
 }
 
@@ -1049,9 +1053,9 @@ async function handleGitPull() {
 async function handleGitPush() {
   try {
     await gfsApi.gitPush(currentRepo.value)
-    ElMessage.success('推送最新本地数据到远程Git库成功')
+    ElMessage.success(t('automation.library.pushed'))
   } catch (error) {
-    ElMessage.error(error?.message || '推送最新本地数据到远程Git库失败')
+    ElMessage.error(error?.message || t('automation.library.pushFailed'))
   }
 }
 
@@ -1110,11 +1114,11 @@ function formatDate(dateStr) {
   const now = new Date()
   const diff = now - date
 
-  if (diff < 60000) return '刚刚'
-  if (diff < 3600000) return `${Math.floor(diff / 60000)} 分钟前`
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)} 小时前`
-  if (diff < 2592000000) return `${Math.floor(diff / 86400000)} 天前`
-  if (diff < 31536000000) return `${Math.floor(diff / 2592000000)} 个月前`
+  if (diff < 60000) return t('automation.file.justNow')
+  if (diff < 3600000) return t('automation.file.minutesAgo', { count: Math.floor(diff / 60000) })
+  if (diff < 86400000) return t('automation.file.hoursAgo', { count: Math.floor(diff / 3600000) })
+  if (diff < 2592000000) return t('automation.file.daysAgo', { count: Math.floor(diff / 86400000) })
+  if (diff < 31536000000) return t('automation.library.monthsAgo', { count: Math.floor(diff / 2592000000) })
 
   const pad = n => (n < 10 ? `0${n}` : String(n))
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`

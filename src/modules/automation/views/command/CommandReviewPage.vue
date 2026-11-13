@@ -3,17 +3,17 @@
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
       <el-form :inline="true" size="small" @submit.prevent>
-        <el-form-item label="关键词">
+        <el-form-item :label="t('automation.workbench.keyword')">
           <el-input
             v-model="searchKeyword"
-            placeholder="搜索名称或待审核命令"
+            :placeholder="t('automation.command.reviewSearch')"
             style="width: 240px"
             clearable
           @keyup.enter="handleSearch" @clear="handleSearch" />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch">搜索</el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <el-button type="primary" @click="handleSearch">{{ t('common.search') }}</el-button>
+          <el-button @click="handleReset">{{ t('common.reset') }}</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -27,7 +27,7 @@
         @click="handleBatchApprove"
       >
         <i class="fas fa-check"></i>
-        批量审核
+        {{ t('automation.command.batchReview') }}
       </el-button>
       <span style="flex: 1"></span>
       <el-button
@@ -36,7 +36,7 @@
         size="small"
         :loading="loading"
         @click="loadData"
-        title="刷新"
+        :title="t('common.refresh')"
       >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
@@ -54,7 +54,7 @@
       >
         <el-table-column type="selection" width="45" />
 
-        <el-table-column prop="name" label="名称" min-width="200" sortable="custom">
+        <el-table-column prop="name" :label="t('common.name')" min-width="200" sortable="custom">
           <template #default="{ row }">
             <div class="command-name-cell">
               <el-button text type="primary" class="name-link" @click="handleApprove(row)">
@@ -65,7 +65,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="unapprovedCommand" label="命令" min-width="300" sortable="custom">
+        <el-table-column prop="unapprovedCommand" :label="t('automation.command.commands')" min-width="300" sortable="custom">
           <template #default="{ row }">
             <div class="command-preview" :title="row.unapprovedCommand">
               {{ truncateCommand(row.unapprovedCommand) }}
@@ -75,7 +75,7 @@
 
         <el-table-column
           prop="createdAt"
-          label="创建时间"
+          :label="t('automation.command.createdAt')"
           width="170"
           align="left"
           sortable="custom"
@@ -87,15 +87,15 @@
 
         <el-table-column
           prop="createdBy"
-          label="创建人"
+          :label="t('automation.command.createdBy')"
           width="100"
           align="left"
           sortable="custom"
         />
 
-        <el-table-column label="操作" width="80" fixed="right" align="left">
+        <el-table-column :label="t('common.actions')" width="80" fixed="right" align="left">
           <template #default="{ row }">
-            <el-button text type="primary" size="small" @click="handleApprove(row)">审核</el-button>
+            <el-button text type="primary" size="small" @click="handleApprove(row)">{{ t('automation.command.review') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -127,6 +127,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
@@ -214,7 +216,7 @@ async function loadData() {
     reviewStore.commandCount = unapprovedCommands.length
   } catch (error) {
     console.error('加载待审核命令失败:', error)
-    ElMessage.error('加载待审核命令失败')
+    ElMessage.error(t('automation.command.pendingListFailed'))
   } finally {
     loading.value = false
   }
@@ -255,7 +257,7 @@ function handleApprove(row) {
 // 批量审核
 function handleBatchApprove() {
   if (selectedCommands.value.length === 0) {
-    ElMessage.warning('请选择要审核的命令')
+    ElMessage.warning(t('automation.command.selectReviewCommands'))
     return
   }
   currentCommand.value = null

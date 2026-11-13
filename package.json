@@ -30,6 +30,7 @@
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
     "i18n:check": "node scripts/check-i18n.mjs",
+    "i18n:sync-ai": "node scripts/ai-i18n-runtime.mjs",
     "lint:staged": "lint-staged",
     "test": "vitest",
     "test:run": "vitest run",

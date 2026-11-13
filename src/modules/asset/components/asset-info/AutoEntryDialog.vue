@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="自动化资产录入"
+    :title="t('asset.autoEntryTitle')"
     width="800px"
     :close-on-click-modal="false"
     @close="handleClose"
@@ -12,8 +12,7 @@
       <el-alert type="success" :closable="false" show-icon class="tip-alert">
         <template #title>
           <span class="tip-alert-text">
-            注意：使用自动化设备录入需满足，该资产模型的唯一模型属性有且只能是纳管IP。
-            支持文本格式的IP，文本格式支持：逗号分割、空格分割、换行分割中的一种或多种，同时支持网段录入。例如：192.168.1.0/26
+            {{ t('asset.autoEntryHint') }}
           </span>
         </template>
       </el-alert>
@@ -22,7 +21,7 @@
       <el-form
         ref="formRef"
         :model="formData"
-        :rules="formRules"
+        :rules="formRules" :validate-on-rule-change="false"
         label-position="top"
         class="entry-form"
       >
@@ -31,12 +30,12 @@
             v-model="formData.hostKeys"
             type="textarea"
             :rows="5"
-            placeholder="请输入IP地址，支持逗号分割、空格分割、换行分割"
+            :placeholder="t('asset.ipListPlaceholder')"
           />
         </el-form-item>
 
-        <el-form-item label="分组" prop="groupId">
-          <el-select v-model="formData.groupId" placeholder="请选择分组" style="width: 100%">
+        <el-form-item :label="t('asset.group')" prop="groupId">
+          <el-select v-model="formData.groupId" :placeholder="t('asset.selectGroup')" style="width: 100%">
             <el-option
               v-for="item in groupOptions"
               :key="item.id"
@@ -46,10 +45,10 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="模型属性" prop="attr">
+        <el-form-item :label="t('asset.modelAttributes')" prop="attr">
           <el-select
             v-model="formData.attr"
-            placeholder="请选择模型属性"
+            :placeholder="t('asset.selectModelAttr')"
             style="width: 100%"
             clearable
           >
@@ -62,14 +61,14 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="属性值" prop="value">
-          <el-input v-model="formData.value" type="textarea" :rows="3" placeholder="请输入属性值" />
+        <el-form-item :label="t('asset.attrValue')" prop="value">
+          <el-input v-model="formData.value" type="textarea" :rows="3" :placeholder="t('asset.enterAttrValue')" />
         </el-form-item>
 
-        <el-form-item label="执行节点 (Instance Group)">
+        <el-form-item :label="t('asset.executionNodeGroup')">
           <el-select
             v-model="formData.instanceGroup"
-            placeholder="请选择执行节点"
+            :placeholder="t('asset.selectExecutionNodeShort')"
             style="width: 100%"
             clearable
           >
@@ -80,19 +79,22 @@
               :value="item.value"
             />
           </el-select>
-          <div class="form-desc">此为Ansible或者Tower引擎节点</div>
+          <div class="form-desc">{{ t('asset.executionNodeHint') }}</div>
         </el-form-item>
       </el-form>
     </div>
 
     <template #footer>
-      <el-button @click="handleClose">取消</el-button>
-      <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
+      <el-button @click="handleClose">{{ t('common.cancel') }}</el-button>
+      <el-button type="primary" :loading="saving" @click="handleSave">{{ t('common.save') }}</el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { useLocalizedValidation } from '@/core/i18n/validation'
+
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { assetApi, automationApi } from '../../api'
@@ -119,6 +121,7 @@ const visible = computed({
 const loading = ref(false)
 const saving = ref(false)
 const formRef = ref(null)
+useLocalizedValidation(formRef)
 
 // 表单数据
 const formData = ref({
@@ -130,9 +133,9 @@ const formData = ref({
 })
 
 // 表单校验规则
-const formRules = {
-  hostKeys: [{ required: true, message: '请输入IP地址', trigger: 'blur' }]
-}
+const formRules = computed(() => ({
+  hostKeys: [{ required: true, message: t('asset.ipRequired'), trigger: 'blur' }]
+}))
 
 // 下拉选项
 const groupOptions = ref([])
@@ -169,7 +172,7 @@ const loadInstanceGroupOptions = async () => {
     const instanceGroups = await automationApi.getInstanceGroupList()
     if (instanceGroups.length > 0) {
       instanceGroupOptions.value = [
-        { label: '不指定 (none)', value: 'none' },
+        { get label() { return t('asset.noInstanceGroup') }, value: 'none' },
         ...instanceGroups.map(item => ({ label: item, value: item }))
       ]
     } else {
@@ -219,12 +222,12 @@ const handleSave = async () => {
       }
     })
 
-    ElMessage.success('资产录入任务已提交')
+    ElMessage.success(t('asset.entrySubmitted'))
     emit('saved')
     handleClose()
   } catch (error) {
     console.error('保存失败:', error)
-    ElMessage.error(`保存失败: ${error.message || '未知错误'}`)
+    ElMessage.error(t('asset.saveFailedReason', { message: error.message || t('asset.unknownError') }))
   } finally {
     saving.value = false
   }

@@ -1,3 +1,5 @@
+import { message as localMessage, messageRef } from '@/core/i18n/feedback'
+import { t } from '@/core/i18n'
 import { defineStore } from 'pinia'
 import { computed, reactive, ref } from 'vue'
 import {
@@ -23,16 +25,16 @@ export interface JobTypeOption {
 }
 
 export const JOB_TYPE_OPTIONS: JobTypeOption[] = [
-  { label: '全部类型', value: '', icon: 'fa-list' },
-  { label: '脚本运维工具', value: 'script', icon: 'fa-file-alt' },
-  { label: '命令运维工具', value: 'command', icon: 'fa-terminal' },
-  { label: 'REST 运维工具', value: 'rest', icon: 'fa-cloud-upload' },
+  { get label() { return t('automation.workbench.allTypes') }, value: '', icon: 'fa-list' },
+  { get label() { return t('automation.types.script') }, value: 'script', icon: 'fa-file-alt' },
+  { get label() { return t('automation.types.command') }, value: 'command', icon: 'fa-terminal' },
+  { get label() { return t('automation.types.rest') }, value: 'rest', icon: 'fa-cloud-upload' },
   // { label: '流程运维工具', value: 'process', icon: 'fa-random' }
 ]
 
 export const useAutomationJobStore = defineStore('automation/jobs', () => {
   const loading = ref(false)
-  const error = ref<string | null>(null)
+  const error = messageRef(null)
   const jobs = ref<JobSummary[]>([])
 
   const filters = reactive<JobFilters>({
@@ -89,7 +91,7 @@ export const useAutomationJobStore = defineStore('automation/jobs', () => {
 
       jobs.value = Array.isArray(data) ? data : []
     } catch (err) {
-      const message = err instanceof Error ? err.message : '加载运维工具列表失败'
+      const message = err instanceof Error ? err.message : localMessage('automation.list.jobLoadFailed')
       error.value = message
       jobs.value = []
     } finally {

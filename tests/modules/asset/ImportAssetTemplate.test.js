@@ -3,6 +3,7 @@ import { nextTick } from 'vue'
 import { flushPromises, shallowMount } from '@vue/test-utils'
 import ImportAssetDialog from '@/modules/asset/components/asset-info/ImportAssetDialog.vue'
 import { ElMessage } from 'element-plus'
+import { setLocale } from '@/core/i18n'
 
 const api = vi.hoisted(() => ({ download: vi.fn(), post: vi.fn() }))
 vi.mock('@/core/api', () => ({ apiService: api, getJaoOperationLogs: vi.fn() }))
@@ -45,12 +46,32 @@ beforeEach(() => {
   vi.spyOn(window, 'open').mockImplementation(() => null)
   vi.spyOn(console, 'error').mockImplementation(() => {})
 })
-afterEach(() => {
+afterEach(async () => {
   wrappers.splice(0).forEach(wrapper => wrapper.unmount())
   vi.restoreAllMocks()
+  await setLocale('zh-CN', { persist: false })
 })
 
 describe('CMDB asset import template download', () => {
+  it('keeps a selected file and tenant header through language changes, and localizes the downloaded filename', async () => {
+    const wrapper = mountDialog('原始租户-ID')
+    const vm = wrapper.vm.$.setupState
+    const file = new File(['raw workbook'], '原始中文文件.xlsx')
+    vm.handleFileChange({ raw: file })
+    await setLocale('en-US', { persist: false }); await flushPromises()
+    expect(vm.selectedFile).toBe(file)
+    const button = wrapper.findAllComponents({ name: 'ElButton' }).find(item => item.text() === 'Download the asset import template')
+    await button.trigger('click'); await flushPromises()
+    expect(api.download).toHaveBeenCalledExactlyOnceWith('/cmdb/api/cmdb/cit/template2/%E5%8E%9F%E5%A7%8B%E7%A7%9F%E6%88%B7-ID', 'Asset import template.xlsx')
+    api.post.mockResolvedValue({})
+    await vm.handleUpload(); await flushPromises()
+    const [url, body, config] = api.post.mock.calls[0]
+    expect(url).toBe('/cmdb/api/cmdb/ci/import2')
+    expect(body.get('file').name).toBe('原始中文文件.xlsx')
+    expect(config.headers['Tenant-Id']).toBe('原始租户-ID')
+    expect(config.headers['X-Run-Id']).toBe(vm.currentRunId)
+    expect(vm.resultDialogVisible).toBe(true)
+  })
   it('downloads the backend template using the current tenant instead of the static file', async () => {
     const wrapper = mountDialog('tenant/a b')
     await downloadButton(wrapper).trigger('click')

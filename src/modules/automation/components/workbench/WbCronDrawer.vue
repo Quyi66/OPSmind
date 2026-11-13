@@ -1,7 +1,7 @@
 <template>
   <el-drawer
     v-model="visible"
-    title="定时任务"
+    :title="t('automation.workbench.cronTasks')"
     size="900px"
     destroy-on-close
     class="wb-workbench-drawer"
@@ -10,17 +10,17 @@
     <div class="wb-drawer-body">
       <div class="wb-filter-panel">
         <el-form :model="filters" inline size="small" class="wb-filter-panel__form" @submit.prevent="handleSearch">
-          <el-form-item label="状态">
+          <el-form-item :label="t('automation.workbench.status')">
             <el-select v-model="filters.status" style="width: 130px" @change="handleSearch">
-              <el-option label="全部状态" value="all" />
-              <el-option label="启用" value="1" />
-              <el-option label="停用" value="0" />
+              <el-option :label="t('automation.workbench.allStatuses')" value="all" />
+              <el-option :label="t('automation.workbench.enabled')" value="1" />
+              <el-option :label="t('automation.workbench.disabled')" value="0" />
             </el-select>
           </el-form-item>
-          <el-form-item label="关键词">
+          <el-form-item :label="t('automation.workbench.keyword')">
             <el-input
               v-model="filters.keyword"
-              placeholder="任务名称、表达式或 ID:编号"
+              :placeholder="t('automation.workbench.cronSearch')"
               clearable
               style="width: 260px"
               @keyup.enter="handleSearch"
@@ -28,8 +28,8 @@
             />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="handleSearch">搜索</el-button>
-            <el-button @click="handleReset">重置</el-button>
+            <el-button type="primary" @click="handleSearch">{{ t('common.search') }}</el-button>
+            <el-button @click="handleReset">{{ t('common.reset') }}</el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -46,9 +46,9 @@
               <strong class="wb-cron-item__name" :title="getCronTaskConfirmation(item)">
                 {{ getCronTaskDisplayName(item, jobs) }}
               </strong>
-              <el-tag size="small" :type="String(item.triggerStatus) === '1' ? 'success' : 'info'">{{ String(item.triggerStatus) === '1' ? '启用' : '停用' }}</el-tag>
+              <el-tag size="small" :type="String(item.triggerStatus) === '1' ? 'success' : 'info'">{{ String(item.triggerStatus) === '1' ? t('automation.workbench.enabled') : t('automation.workbench.disabled') }}</el-tag>
             </div>
-            <span class="wb-cron-item__cron">CRON：{{ item.scheduleConf || '未配置' }}</span>
+            <span class="wb-cron-item__cron">CRON：{{ item.scheduleConf || t('automation.workbench.notConfigured') }}</span>
           </div>
           <div class="wb-cron-item__actions">
             <el-button
@@ -59,7 +59,7 @@
               :loading="actionLoading[item.id + '_exec']"
               @click="$emit('execute', item)"
             >
-              执行
+              {{ t('automation.workbench.execute') }}
             </el-button>
             <el-button
               class="wb-inline-action"
@@ -69,13 +69,13 @@
               :loading="actionLoading[item.id + '_toggle']"
               @click="$emit('toggle', item)"
             >
-              {{ String(item.triggerStatus) === '1' ? '停用' : '启用' }}
+              {{ String(item.triggerStatus) === '1' ? t('automation.workbench.disable') : t('automation.workbench.enable') }}
             </el-button>
             <el-button class="wb-inline-action" text size="small" @click="$emit('edit', item)">
-              编辑
+              {{ t('automation.workbench.edit') }}
             </el-button>
             <el-button class="wb-inline-action" text size="small" @click="$emit('copy', item)">
-              复制
+              {{ t('automation.workbench.copy') }}
             </el-button>
             <el-button
               class="wb-inline-action"
@@ -84,7 +84,7 @@
               size="small"
               @click="$emit('delete', item)"
             >
-              删除
+              {{ t('common.delete') }}
             </el-button>
           </div>
         </div>
@@ -94,15 +94,17 @@
     <template #footer>
       <div class="wb-drawer-footer">
         <span class="wb-drawer-footer__total">
-          当前 {{ filteredJobs.length }} 个 / 共 {{ jobs.length }} 个 · 启用 {{ summary.enabled }}
+          {{ t('automation.workbench.cronCountSummary', { visible: filteredJobs.length, total: jobs.length, enabled: summary.enabled }) }}
         </span>
-        <el-button size="small" @click="$emit('navigate')">在列表页管理</el-button>
+        <el-button size="small" @click="$emit('navigate')">{{ t('automation.workbench.manageInList') }}</el-button>
       </div>
     </template>
   </el-drawer>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { computed, reactive, watch } from 'vue'
 import {
   getCronTaskConfirmation,
@@ -137,7 +139,7 @@ const filteredJobs = computed(() => {
 })
 
 const emptyText = computed(() =>
-  props.jobs.length ? '没有符合筛选条件的定时任务' : '暂无定时任务'
+  props.jobs.length ? t('automation.workbench.noMatchingCron') : t('automation.workbench.noCron')
 )
 
 function handleSearch() {

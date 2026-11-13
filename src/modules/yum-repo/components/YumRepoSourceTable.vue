@@ -2,10 +2,10 @@
   <div class="win-patch-yum-page">
     <div class="ops-filter-bar">
       <el-form inline size="small">
-        <el-form-item label="关键词">
+        <el-form-item :label="t('yumRepo.keyword')">
           <el-input
             v-model="filterText"
-            placeholder="搜索名称、描述、地址或文件"
+            :placeholder="t('yumRepo.searchConfigs')"
             style="width: 240px"
             clearable
             maxlength="100"
@@ -19,14 +19,14 @@
     </div>
 
     <div class="ops-action-bar">
-      <el-button type="primary" size="small" @click="handleAddConfig">YUM源配置录入</el-button>
+      <el-button type="primary" size="small" @click="handleAddConfig">{{ t('yumRepo.addConfig') }}</el-button>
       <el-button
         size="small"
         :disabled="!configs.length"
         :loading="batchCollecting"
         @click="emit('collect-all')"
       >
-        全部采集
+        {{ t('yumRepo.collectAll') }}
       </el-button>
       <span class="win-patch-action-spacer"></span>
       <el-button
@@ -42,17 +42,17 @@
 
     <div class="ops-table-wrapper">
       <el-table v-loading="loading" :data="paginatedConfigs" class="natural-height-table">
-        <el-table-column label="源名称" min-width="150" show-overflow-tooltip>
+        <el-table-column :label="t('yumRepo.sourceName')" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
             {{ getYumConfigLabel(row) }}
           </template>
         </el-table-column>
-        <el-table-column label="描述" min-width="180" show-overflow-tooltip>
+        <el-table-column :label="t('yumRepo.description')" min-width="180" show-overflow-tooltip>
           <template #default="{ row }">
             {{ row.description || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="仓库地址" min-width="260">
+        <el-table-column :label="t('yumRepo.repoUrl')" min-width="260">
           <template #default="{ row }">
             <div v-if="getYumConfigBaseurls(row).length" class="yum-baseurls-cell">
               <div
@@ -69,7 +69,7 @@
                 :width="400"
               >
                 <template #reference>
-                  <span class="more-link">+{{ getYumConfigBaseurls(row).length - 2 }} 更多</span>
+                  <span class="more-link">+{{ getYumConfigBaseurls(row).length - 2 }} {{ t('yumRepo.more') }}</span>
                 </template>
                 <div class="yum-baseurls-popover">
                   <div v-for="url in getYumConfigBaseurls(row)" :key="url" class="yum-baseurl-item">
@@ -81,29 +81,29 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column label="来源文件" min-width="150" show-overflow-tooltip>
+        <el-table-column :label="t('yumRepo.sourceFile')" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
             {{ getYumConfigFile(row) }}
           </template>
         </el-table-column>
-        <el-table-column label="更新时间" min-width="170" show-overflow-tooltip>
+        <el-table-column :label="t('yumRepo.updatedAt')" min-width="170" show-overflow-tooltip>
           <template #default="{ row }">
             {{ formatDateTime(row.updateTime || row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="采集状态" width="110" align="center">
+        <el-table-column :label="t('yumRepo.collectStatus')" width="110" align="center">
           <template #default="{ row }">
             <el-tag size="small" :type="getCollectStatusTagType(row)">
               {{ getCollectStatusLabel(row) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="包数量" width="90" align="center">
+        <el-table-column :label="t('yumRepo.packages')" width="90" align="center">
           <template #default="{ row }">
             {{ row.packageCount ?? '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="230" fixed="right">
+        <el-table-column :label="t('common.actions')" width="230" fixed="right">
           <template #default="{ row }">
             <el-button
               text
@@ -112,7 +112,7 @@
               :loading="collectingConfigId === resolveYumConfigId(row)"
               @click.stop="emit('collect', row)"
             >
-              采集
+              {{ t('yumRepo.collect') }}
             </el-button>
             <el-button
               text
@@ -121,7 +121,7 @@
               :disabled="!getSourceId(row)"
               @click.stop="emit('open-packages', row)"
             >
-              清单
+              {{ t('yumRepo.inventory') }}
             </el-button>
             <el-button
               text
@@ -130,13 +130,13 @@
               :disabled="!canOpenCompare(row)"
               @click.stop="emit('open-compare', row)"
             >
-              比对
+              {{ t('yumRepo.compare') }}
             </el-button>
             <el-button text type="primary" size="small" @click.stop="handleEditConfig(row)">
-              编辑
+              {{ t('common.edit') }}
             </el-button>
             <el-button text type="danger" size="small" @click.stop="handleDeleteConfig(row)">
-              删除
+              {{ t('common.delete') }}
             </el-button>
           </template>
         </el-table-column>
@@ -157,24 +157,24 @@
 
     <el-dialog
       v-model="dialogVisible"
-      :title="editingConfig ? '编辑YUM源配置' : 'YUM源配置录入'"
+      :title="editingConfig ? t('yumRepo.editConfig') : t('yumRepo.addConfig')"
       width="800px"
       :close-on-press-escape="false"
       :close-on-click-modal="false"
     >
-      <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
-        <el-form-item label="YUM源名称" prop="name">
-          <el-input v-model="formData.name" placeholder="请输入YUM源名称" maxlength="50" />
+      <el-form ref="formRef" :model="formData" :rules="formRules" :validate-on-rule-change="false" :label-width="currentLocale === 'en-US' ? '180px' : '100px'">
+        <el-form-item :label="t('yumRepo.yumSourceName')" prop="name">
+          <el-input v-model="formData.name" :placeholder="t('yumRepo.nameRequired')" maxlength="50" />
         </el-form-item>
-        <el-form-item label="描述" prop="description">
-          <el-input v-model="formData.description" placeholder="请输入描述" maxlength="200" />
+        <el-form-item :label="t('yumRepo.description')" prop="description">
+          <el-input v-model="formData.description" :placeholder="t('yumRepo.descriptionPlaceholder')" maxlength="200" />
         </el-form-item>
-        <el-form-item label="YUM仓库地址" prop="baseurls">
+        <el-form-item :label="t('yumRepo.yumRepoUrl')" prop="baseurls">
           <div class="yum-baseurl-list">
             <div v-for="(url, index) in formData.baseurls" :key="index" class="yum-baseurl-row">
               <el-input
                 v-model="formData.baseurls[index]"
-                placeholder="请输入仓库baseurl地址"
+                :placeholder="t('yumRepo.baseurlPlaceholder')"
                 maxlength="500"
               />
               <el-button class="yum-baseurl-action" circle @click="addBaseurlRow">
@@ -193,8 +193,8 @@
             </div>
           </div>
         </el-form-item>
-        <el-form-item label="操作系统" prop="osFamily">
-          <el-select v-model="formData.osFamily" placeholder="请选择操作系统" style="width: 100%">
+        <el-form-item :label="t('yumRepo.os')" prop="osFamily">
+          <el-select v-model="formData.osFamily" :placeholder="t('yumRepo.osRequired')" style="width: 100%">
             <el-option
               v-for="item in YUM_REPO_OS_FAMILY_OPTIONS"
               :key="item.value"
@@ -203,22 +203,22 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="主版本号" prop="osMajor">
+        <el-form-item :label="t('yumRepo.osMajor')" prop="osMajor">
           <el-input
             v-model="formData.osMajor"
-            placeholder="如：V10、8、22.04、20、12 SP5"
+            :placeholder="t('yumRepo.majorExample')"
             maxlength="16"
           />
         </el-form-item>
-        <el-form-item label="OS 精确版本" prop="osSpVersion">
+        <el-form-item :label="t('yumRepo.osRelease')" prop="osSpVersion">
           <el-input
             v-model="formData.osSpVersion"
-            placeholder="如：SP1、SP3、SP3 2403、HPC、Host"
+            :placeholder="t('yumRepo.releaseExample')"
             maxlength="32"
           />
         </el-form-item>
-        <el-form-item label="架构" prop="arch">
-          <el-select v-model="formData.arch" placeholder="请选择架构" style="width: 100%">
+        <el-form-item :label="t('yumRepo.architecture')" prop="arch">
+          <el-select v-model="formData.arch" :placeholder="t('yumRepo.archRequired')" style="width: 100%">
             <el-option
               v-for="item in YUM_REPO_ARCH_OPTIONS"
               :key="item.value"
@@ -227,23 +227,26 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="YUM源文件" prop="file">
+        <el-form-item :label="t('yumRepo.yumSourceFile')" prop="file">
           <el-input
             v-model="formData.file"
-            placeholder="如：/etc/yum.repos.d/local.repo"
+            :placeholder="t('yumRepo.fileExample')"
             maxlength="256"
           />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleSubmit">确定</el-button>
+        <el-button @click="dialogVisible = false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="submitting" @click="handleSubmit">{{ t('yumRepo.confirm') }}</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+import { useLocalizedValidation } from '@/core/i18n/validation'
+
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete, Plus, Refresh, Search } from '@element-plus/icons-vue'
@@ -301,6 +304,7 @@ const dialogVisible = ref(false)
 const submitting = ref(false)
 const editingConfig = ref(null)
 const formRef = ref(null)
+useLocalizedValidation(formRef)
 const formData = reactive({
   name: '',
   description: '',
@@ -315,13 +319,13 @@ const formData = reactive({
 function validateBaseurls(rule, value, callback) {
   const baseurls = normalizeBaseurls(value)
   if (!baseurls.length) {
-    callback(new Error('请至少输入一个YUM源地址'))
+    callback(new Error(t('yumRepo.baseurlsRequired')))
     return
   }
 
   const invalidUrl = baseurls.find(item => !/^https?:\/\//i.test(item))
   if (invalidUrl) {
-    callback(new Error('YUM源地址需以 http:// 或 https:// 开头'))
+    callback(new Error(t('yumRepo.baseurlProtocol')))
     return
   }
 
@@ -334,11 +338,11 @@ function validateBaseurls(rule, value, callback) {
 function validateOsMajor(rule, value, callback) {
   const v = String(value || '').trim()
   if (!v) {
-    callback(new Error('请填写主版本号'))
+    callback(new Error(t('yumRepo.majorRequired')))
     return
   }
   if (!/^[A-Za-z0-9][A-Za-z0-9.\- ]{0,15}$/.test(v)) {
-    callback(new Error('主版本号格式不正确（仅允许字母/数字/点号/连字符/空格，长度 1~16）'))
+    callback(new Error(t('yumRepo.majorInvalid')))
     return
   }
   callback()
@@ -349,7 +353,7 @@ function validateOsSpVersion(rule, value, callback) {
   if (v && !/^(SP\d+(?:\.\d+)?(?:[\s_/-]+\d\w*)?|Update\d+|HPC|Host|Compat)$/i.test(v)) {
     callback(
       new Error(
-        'OS 精确版本格式不正确，请按 SP1 / SP1.1 / SP3 2403 / Update6 / HPC / Host / Compat 形式填写'
+        t('yumRepo.spInvalid')
       )
     )
     return
@@ -357,14 +361,14 @@ function validateOsSpVersion(rule, value, callback) {
   callback()
 }
 
-const formRules = {
-  name: [{ required: true, message: '请输入YUM源名称', trigger: 'blur' }],
+const formRules = computed(() => ({
+  name: [{ required: true, message: t('yumRepo.nameRequired'), trigger: 'blur' }],
   baseurls: [{ validator: validateBaseurls, trigger: ['blur', 'change'] }],
-  osFamily: [{ required: true, message: '请选择操作系统', trigger: 'change' }],
+  osFamily: [{ required: true, message: t('yumRepo.osRequired'), trigger: 'change' }],
   osMajor: [{ validator: validateOsMajor, trigger: 'blur' }],
   osSpVersion: [{ validator: validateOsSpVersion, trigger: 'blur' }],
-  arch: [{ required: true, message: '请选择架构', trigger: 'change' }]
-}
+  arch: [{ required: true, message: t('yumRepo.archRequired'), trigger: 'change' }]
+}))
 
 const filteredConfigs = computed(() => {
   const keyword = String(filterText.value || '')
@@ -549,7 +553,7 @@ async function handleSubmit() {
       const nextBaseurls = serializeBaseurls(resolveConfigBaseurls(updatedConfig))
       const baseurlChanged = previousBaseurls !== nextBaseurls
 
-      ElMessage.success(baseurlChanged ? '更新成功，正在自动重新采集并比对' : '更新成功')
+      ElMessage.success(baseurlChanged ? t('yumRepo.updatedRecollecting') : t('yumRepo.updated'))
       dialogVisible.value = false
       emit('updated', {
         config: updatedConfig,
@@ -558,7 +562,7 @@ async function handleSubmit() {
     } else {
       const response = await yumRepoApi.createConfig(submitPayload)
       const newConfig = response?.data ?? response ?? {}
-      ElMessage.success('添加成功，正在自动采集并比对')
+      ElMessage.success(t('yumRepo.addedCollecting'))
       dialogVisible.value = false
       emit('created', newConfig)
     }
@@ -574,8 +578,8 @@ async function handleSubmit() {
 async function handleDeleteConfig(row) {
   try {
     await ElMessageBox.confirm(
-      `确定要删除“${getYumConfigLabel(row)}”吗？此操作不可恢复。`,
-      '删除确认',
+      t('yumRepo.deleteConfigConfirm', { name: getYumConfigLabel(row) }),
+      t('yumRepo.deleteTitle'),
       {
         closeOnClickModal: false,
         closeOnPressEscape: false,
@@ -583,12 +587,12 @@ async function handleDeleteConfig(row) {
       }
     )
     await yumRepoApi.deleteConfig(resolveYumConfigId(row))
-    ElMessage.success('配置已删除')
+    ElMessage.success(t('yumRepo.configDeleted'))
     emit('refresh')
   } catch (error) {
     if (error !== 'cancel' && error !== 'close') {
       console.error('删除YUM源配置失败:', error)
-      ElMessage.error('删除YUM源配置失败')
+      ElMessage.error(t('yumRepo.deleteConfigFailed'))
     }
   }
 }

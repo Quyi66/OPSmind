@@ -3,10 +3,10 @@
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
       <el-form inline size="small">
-        <el-form-item label="关键词">
+        <el-form-item :label="t('automation.workbench.keyword')">
           <el-input
             v-model="searchKeyword"
-            placeholder="搜索运维工具标题"
+            :placeholder="t('automation.command.searchToolTitle')"
             clearable
             style="width: 240px" @keyup.enter="currentPage = 1" @clear="currentPage = 1">
             <template #prefix>
@@ -17,9 +17,9 @@
         <el-form-item>
           <el-button type="primary" @click="currentPage = 1">
             <el-icon><Search /></el-icon>
-            搜索
+            {{ t('common.search') }}
           </el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <el-button @click="handleReset">{{ t('common.reset') }}</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -28,7 +28,7 @@
     <div class="ops-action-bar">
       <el-button type="primary" size="small" @click="handleCreateJob">
         <i class="fas fa-plus" />
-        创建运维工具
+        {{ t('automation.command.createTool') }}
       </el-button>
       <span style="flex: 1"></span>
       <el-button
@@ -37,7 +37,7 @@
         size="small"
         :loading="loading"
         @click="loadJobs"
-        title="刷新"
+        :title="t('common.refresh')"
       >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
@@ -53,28 +53,28 @@
         :default-sort="{ prop: sortField, order: sortOrder }"
         @sort-change="handleSortChange"
       >
-        <el-table-column prop="title" label="运维工具标题" min-width="200" sortable="custom">
+        <el-table-column prop="title" :label="t('automation.command.toolTitle')" min-width="200" sortable="custom">
           <template #default="{ row }">
             <el-button text type="primary" @click="openDetail(row)">{{ row.title }}</el-button>
           </template>
         </el-table-column>
-        <el-table-column prop="description" label="描述" min-width="220" show-overflow-tooltip />
-        <el-table-column label="命令数" width="90">
+        <el-table-column prop="description" :label="t('automation.job.description')" min-width="220" show-overflow-tooltip />
+        <el-table-column :label="t('automation.command.commandCount')" width="90">
           <template #default="{ row }">{{ getCommandCount(row) }}</template>
         </el-table-column>
-        <el-table-column label="主机数" width="90">
+        <el-table-column :label="t('automation.command.hostCount')" width="90">
           <template #default="{ row }">{{ getHostCount(row) }}</template>
         </el-table-column>
-        <el-table-column prop="updatedAt" label="修改时间" min-width="160" sortable="custom">
+        <el-table-column prop="updatedAt" :label="t('automation.list.modifiedAt')" min-width="160" sortable="custom">
           <template #default="{ row }">{{ formatDateTime(row.updatedAt) }}</template>
         </el-table-column>
-        <el-table-column prop="lastRunTime" label="最近执行" min-width="160" sortable="custom">
+        <el-table-column prop="lastRunTime" :label="t('automation.command.lastRun')" min-width="160" sortable="custom">
           <template #default="{ row }">{{ formatDateTime(row.lastRunTime) || '-' }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column :label="t('common.actions')" width="180" fixed="right">
           <template #default="{ row }">
-            <el-button text type="primary" size="small" @click="openDetail(row)">查看</el-button>
-            <el-button text type="primary" size="small" @click="openEdit(row)">编辑</el-button>
+            <el-button text type="primary" size="small" @click="openDetail(row)">{{ t('automation.approval.view') }}</el-button>
+            <el-button text type="primary" size="small" @click="openEdit(row)">{{ t('automation.workbench.edit') }}</el-button>
             <el-button
               text
               type="primary"
@@ -82,10 +82,10 @@
               :loading="running && runningJobId === row.id"
               @click="handleRunJob(row)"
             >
-              执行
+              {{ t('automation.workbench.execute') }}
             </el-button>
             <el-button text type="danger" size="small" @click="handleDeleteJob(row)">
-              删除
+              {{ t('common.delete') }}
             </el-button>
           </template>
         </el-table-column>
@@ -110,28 +110,28 @@
     <el-dialog
       v-model="detailDialogVisible"
       width="780px"
-      title="运维工具详情"
+      :title="t('automation.command.toolDetails')"
       :close-on-click-modal="true"
     >
       <div v-if="detailJob" class="detail-dialog-body">
         <el-descriptions :column="2" border size="small">
-          <el-descriptions-item label="标题">{{ detailJob.title }}</el-descriptions-item>
-          <el-descriptions-item label="类型">
+          <el-descriptions-item :label="t('automation.job.title')">{{ detailJob.title }}</el-descriptions-item>
+          <el-descriptions-item :label="t('automation.job.type')">
             {{ detailJob.type || 'command' }}
           </el-descriptions-item>
-          <el-descriptions-item label="最近修改">
+          <el-descriptions-item :label="t('automation.command.lastModified')">
             {{ formatDateTime(detailJob.updatedAt) }}
           </el-descriptions-item>
-          <el-descriptions-item label="最近执行">
+          <el-descriptions-item :label="t('automation.command.lastRun')">
             {{ formatDateTime(detailJob.lastRunTime) || '-' }}
           </el-descriptions-item>
-          <el-descriptions-item label="描述" :span="2">
+          <el-descriptions-item :label="t('automation.job.description')" :span="2">
             {{ detailJob.description || '-' }}
           </el-descriptions-item>
         </el-descriptions>
 
         <div class="subsection">
-          <h4>命令</h4>
+          <h4>{{ t('automation.command.commands') }}</h4>
           <div class="chip-list" v-if="detailCommands.length">
             <el-tag
               v-for="cmd in detailCommands"
@@ -143,11 +143,11 @@
               <span class="cmd-type">{{ cmd.type || '-' }}</span>
             </el-tag>
           </div>
-          <div v-else class="text-muted">未配置命令</div>
+          <div v-else class="text-muted">{{ t('automation.command.noCommands') }}</div>
         </div>
 
         <div class="subsection">
-          <h4>目标主机</h4>
+          <h4>{{ t('automation.command.targetHosts') }}</h4>
           <div class="chip-list" v-if="detailHosts.length">
             <el-tag
               v-for="host in detailHosts"
@@ -159,19 +159,19 @@
               <span class="host-type">{{ host.assetType || '-' }}</span>
             </el-tag>
           </div>
-          <div v-else class="text-muted">未配置主机</div>
+          <div v-else class="text-muted">{{ t('automation.command.noHosts') }}</div>
         </div>
       </div>
 
       <template #footer>
-        <el-button @click="detailDialogVisible = false">关闭</el-button>
-        <el-button @click="handleEditFromDetail">编辑运维工具</el-button>
+        <el-button @click="detailDialogVisible = false">{{ t('common.close') }}</el-button>
+        <el-button @click="handleEditFromDetail">{{ t('automation.job.editTool') }}</el-button>
         <el-button
           type="primary"
           :loading="running && runningJobId === detailJob?.id"
           @click="detailJob && handleRunJob(detailJob)"
         >
-          执行运维工具
+          {{ t('automation.command.executeTool') }}
         </el-button>
       </template>
     </el-dialog>
@@ -185,24 +185,24 @@
       destroy-on-close
       :close-on-press-escape="false"
     >
-      <el-form ref="formRef" :model="jobForm" :rules="formRules" label-width="100px">
-        <el-form-item label="运维工具标题" prop="title">
-          <el-input v-model="jobForm.title" placeholder="请输入运维工具标题" maxlength="100" />
+      <el-form ref="formRef" :model="jobForm" :rules="formRules" :validate-on-rule-change="false" :label-width="currentLocale === 'en-US' ? '160px' : '100px'">
+        <el-form-item :label="t('automation.command.toolTitle')" prop="title">
+          <el-input v-model="jobForm.title" :placeholder="t('automation.command.toolTitleRequired')" maxlength="100" />
         </el-form-item>
-        <el-form-item label="描述">
+        <el-form-item :label="t('automation.job.description')">
           <el-input
             v-model="jobForm.description"
             type="textarea"
             :rows="3"
-            placeholder="请输入运维工具描述"
+            :placeholder="t('automation.command.toolDescriptionPlaceholder')"
           />
         </el-form-item>
-        <el-form-item label="命令列表" required>
+        <el-form-item :label="t('automation.command.list')" required>
           <el-select
             v-model="selectedCommandIds"
             multiple
             filterable
-            placeholder="选择要执行的命令"
+            :placeholder="t('automation.command.commandSelection')"
             style="width: 100%"
           >
             <el-option
@@ -213,20 +213,20 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="目标主机" required>
+        <el-form-item :label="t('automation.command.targetHosts')" required>
           <AcmDeviceSelector
             v-model="jobHosts"
             ci-types="[auto]"
             :options="{
               selectMode: 'host,group,tag,input,recently',
               selector: 'multiple',
-              label: '选择主机'
+              label: t('automation.command.selectHosts')
             }"
           />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="editDialogVisible = false">取消</el-button>
+        <el-button @click="editDialogVisible = false">{{ t('common.cancel') }}</el-button>
         <el-button type="primary" :loading="saving" @click="handleSaveJob">
           {{ editDialogConfirmText }}
         </el-button>
@@ -246,6 +246,9 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+import { useLocalizedValidation } from '@/core/i18n/validation'
+
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -299,6 +302,7 @@ const selectedJob = ref(null)
 const detailJob = ref(null)
 
 const formRef = ref(null)
+useLocalizedValidation(formRef)
 const jobForm = ref(createEmptyJobForm())
 
 const selectedCommandIds = ref([])
@@ -315,15 +319,15 @@ const approveJobMeta = ref(null)
 const detailDialogVisible = ref(false)
 const editDialogVisible = ref(false)
 
-const formRules = {
-  title: [{ required: true, message: '请输入运维工具标题', trigger: 'blur' }]
-}
+const formRules = computed(() => ({
+  title: [{ required: true, message: t('automation.command.toolTitleRequired'), trigger: 'blur' }]
+}))
 
 const isEditMode = computed(() => Boolean(jobForm.value.id))
 
-const editDialogTitle = computed(() => (isEditMode.value ? '编辑运维工具' : '创建运维工具'))
+const editDialogTitle = computed(() => (isEditMode.value ? t('automation.job.editTool') : t('automation.command.createTool')))
 
-const editDialogConfirmText = computed(() => (isEditMode.value ? '保存' : '创建运维工具'))
+const editDialogConfirmText = computed(() => (isEditMode.value ? t('common.save') : t('automation.command.createTool')))
 
 const filteredJobs = computed(() => {
   let result = [...jobs.value]
@@ -398,7 +402,7 @@ async function loadJobs() {
     jobs.value = response.data || response || []
   } catch (error) {
     console.error('加载运维工具列表失败:', error)
-    ElMessage.error('加载运维工具列表失败')
+    ElMessage.error(t('automation.command.toolListFailed'))
   } finally {
     loading.value = false
   }
@@ -421,7 +425,7 @@ async function loadJobDetail(job) {
     return data
   } catch (error) {
     console.error('加载运维工具详情失败:', error)
-    ElMessage.error('加载运维工具详情失败')
+    ElMessage.error(t('automation.command.toolDetailFailed'))
     return null
   }
 }
@@ -512,11 +516,11 @@ async function handleSaveJob() {
   }
 
   if (selectedCommandIds.value.length === 0) {
-    ElMessage.error('请至少选择一个命令')
+    ElMessage.error(t('automation.command.oneCommandRequired'))
     return
   }
   if (jobHosts.value.length === 0) {
-    ElMessage.error('请至少添加一个目标主机')
+    ElMessage.error(t('automation.command.oneHostRequired'))
     return
   }
 
@@ -530,7 +534,7 @@ async function handleSaveJob() {
     }
 
     await saveJob(job)
-    ElMessage.success(isEditAction ? '运维工具保存成功' : '运维工具创建成功')
+    ElMessage.success(isEditAction ? t('automation.command.toolSaved') : t('automation.command.toolCreated'))
     editDialogVisible.value = false
     await loadJobs()
     if (detailDialogVisible.value && detailJob.value?.id === job.id) {
@@ -540,7 +544,7 @@ async function handleSaveJob() {
     }
   } catch (error) {
     console.error('保存运维工具失败:', error)
-    ElMessage.error('保存运维工具失败')
+    ElMessage.error(t('automation.command.saveToolFailed'))
   } finally {
     saving.value = false
   }
@@ -552,29 +556,29 @@ async function handleRunJob(job) {
 
   const cfg = parseJobConfig(detail)
   if (!cfg.commands.length) {
-    ElMessage.warning('运维工具未配置命令')
+    ElMessage.warning(t('automation.command.noToolCommands'))
     return
   }
   if (!cfg.hosts.length) {
-    ElMessage.warning('运维工具未配置目标主机')
+    ElMessage.warning(t('automation.command.noToolHosts'))
     return
   }
 
   try {
     await ElMessageBox.confirm(
-      `确定立即执行运维工具 "${detail.title}" 吗？该运维工具将向 ${cfg.hosts.length} 台主机执行 ${cfg.commands.length} 条命令。`,
-      '执行确认',
+      t('automation.command.toolRunConfirm', { name: detail.title, hosts: cfg.hosts.length, commands: cfg.commands.length }),
+      t('automation.command.executionConfirm'),
       {
         closeOnClickModal: false,
         closeOnPressEscape: false,
         type: 'warning',
-        confirmButtonText: '立即执行',
-        cancelButtonText: '取消'
+        confirmButtonText: t('automation.command.runNow'),
+        cancelButtonText: t('common.cancel')
       }
     )
   } catch (error) {
     if (error !== 'cancel' && error !== 'close') {
-      ElMessage.error('执行确认失败')
+      ElMessage.error(t('automation.command.confirmFailed'))
     }
     return
   }
@@ -585,7 +589,7 @@ async function handleRunJob(job) {
       const checkResult = await jaoApi.checkNeedApprove(detail.id)
       const resData = checkResult?.data || checkResult || {}
       if (resData.isApproving) {
-        ElMessage.info('该运维工具审批申请已提交，请等待审批')
+        ElMessage.info(t('automation.list.alreadyRequested'))
         return
       }
       if (resData.needApprove) {
@@ -599,7 +603,7 @@ async function handleRunJob(job) {
         return
       }
     } catch (error) {
-      ElMessage.error(error?.message || '检查审批状态失败')
+      ElMessage.error(error?.message || t('automation.list.approvalCheckFailed'))
       return
     }
   }
@@ -608,11 +612,11 @@ async function handleRunJob(job) {
   runningJobId.value = job.id
   try {
     await runJobByRequest(buildSavedCommandJobRunRequest(detail))
-    ElMessage.success('运维工具已提交执行，可在运行记录中查看')
+    ElMessage.success(t('automation.command.toolSubmitted'))
     router.push('/run-records/logs')
   } catch (error) {
     console.error('运行运维工具失败:', error)
-    ElMessage.error(`运行运维工具失败: ${error?.message || '未知错误'}`)
+    ElMessage.error(t('automation.command.runToolFailedReason', { reason: error?.message || t('automation.file.unknownError') }))
   } finally {
     running.value = false
     runningJobId.value = ''
@@ -620,20 +624,20 @@ async function handleRunJob(job) {
 }
 
 function handleApproveSuccess() {
-  ElMessage.success('审批申请已提交')
+  ElMessage.success(t('automation.command.approvalSubmitted'))
   approveDialogVisible.value = false
 }
 
 async function handleDeleteJob(job) {
   try {
-    await ElMessageBox.confirm(`确定要删除运维工具 "${job.title}" 吗？`, '确认删除', {
+    await ElMessageBox.confirm(t('automation.command.deleteToolConfirm', { name: job.title }), t('automation.list.confirmDelete'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'error',
       confirmButtonClass: 'el-button--danger'
     })
     await deleteJob(job.id)
-    ElMessage.success('运维工具已删除')
+    ElMessage.success(t('automation.command.toolDeleted'))
     if (detailJob.value?.id === job.id) {
       detailDialogVisible.value = false
       detailJob.value = null
@@ -643,7 +647,7 @@ async function handleDeleteJob(job) {
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除运维工具失败:', error)
-      ElMessage.error('删除运维工具失败')
+      ElMessage.error(t('automation.command.deleteToolFailed'))
     }
   }
 }

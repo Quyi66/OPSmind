@@ -1,3 +1,4 @@
+import { t } from '@/core/i18n'
 import { useApi } from '@/core/api'
 
 /**
@@ -186,10 +187,10 @@ export const COMMAND_STATUS = {
 }
 
 export const COMMAND_STATUS_MAP = {
-  0: { text: '已发布', color: 'success', type: 'success' },
-  1: { text: '待审核', color: 'warning', type: 'warning' },
-  2: { text: '审核未通过', color: 'danger', type: 'danger' },
-  3: { text: '已停用', color: 'info', type: 'info' }
+  0: { get text() { return t('automation.command.published') }, color: 'success', type: 'success' },
+  1: { get text() { return t('automation.command.pendingReview') }, color: 'warning', type: 'warning' },
+  2: { get text() { return t('automation.command.reviewRejected') }, color: 'danger', type: 'danger' },
+  3: { get text() { return t('automation.list.disabled') }, color: 'info', type: 'info' }
 }
 
 /**
@@ -197,7 +198,7 @@ export const COMMAND_STATUS_MAP = {
  * @param {number} status - 状态码
  */
 export const getCommandStatusInfo = status => {
-  return COMMAND_STATUS_MAP[status] || { text: '未知', color: 'default', type: 'info' }
+  return COMMAND_STATUS_MAP[status] || { get text() { return t('automation.command.unknown') }, color: 'default', type: 'info' }
 }
 
 /**

@@ -1,40 +1,40 @@
 <template>
   <div class="ops-page-layout run-logs-page">
     <el-tabs v-model="activeTab" class="run-logs-tabs" @tab-change="handleTabChange">
-      <el-tab-pane label="运行记录" name="logs">
+      <el-tab-pane :label="t('automation.records.records')" name="logs">
         <div class="run-logs-tab-content">
           <div class="ops-filter-bar">
             <el-form :model="filters" inline size="small" @submit.prevent>
-              <el-form-item label="时间范围">
+              <el-form-item :label="t('automation.records.timeRange')">
                 <el-select v-model="filters.day" style="width: 140px" @change="handleSearch">
-                  <el-option label="全部" value="3650" />
-                  <el-option label="今天" value="0" />
-                  <el-option label="最近7天" value="7" />
-                  <el-option label="最近30天" value="30" />
-                  <el-option label="最近一年" value="365" />
+                  <el-option :label="t('common.all')" value="3650" />
+                  <el-option :label="t('automation.workbench.today')" value="0" />
+                  <el-option :label="t('automation.workbench.last7Days')" value="7" />
+                  <el-option :label="t('automation.workbench.last30Days')" value="30" />
+                  <el-option :label="t('automation.records.lastYear')" value="365" />
                 </el-select>
               </el-form-item>
-              <el-form-item label="状态">
+              <el-form-item :label="t('automation.workbench.status')">
                 <el-select
                   v-model="filters.status"
-                  placeholder="状态筛选"
+                  :placeholder="t('automation.approval.statusFilter')"
                   style="width: 140px"
                   @change="handleSearch"
                 >
-                  <el-option label="全部状态" value="all" />
-                  <el-option label="等待中" value="WAITING" />
-                  <el-option label="正在运行" value="RUNNING" />
-                  <el-option label="回调" value="CALLBACK" />
-                  <el-option label="运行错误" value="ERROR" />
-                  <el-option label="运行失败" value="FAILED" />
-                  <el-option label="完成" value="COMPLETED" />
-                  <el-option label="运行终止" value="INTERRUPTED" />
+                  <el-option :label="t('automation.workbench.allStatuses')" value="all" />
+                  <el-option :label="t('automation.workbench.waiting')" value="WAITING" />
+                  <el-option :label="t('automation.workbench.runningNow')" value="RUNNING" />
+                  <el-option :label="t('automation.workbench.callback')" value="CALLBACK" />
+                  <el-option :label="t('automation.workbench.executionError')" value="ERROR" />
+                  <el-option :label="t('automation.workbench.executionFailed')" value="FAILED" />
+                  <el-option :label="t('automation.workbench.done')" value="COMPLETED" />
+                  <el-option :label="t('automation.workbench.executionInterrupted')" value="INTERRUPTED" />
                 </el-select>
               </el-form-item>
-              <el-form-item label="类型">
+              <el-form-item :label="t('automation.job.type')">
                 <el-select
                   v-model="filters.type"
-                  placeholder="类型筛选"
+                  :placeholder="t('automation.records.typeFilter')"
                   style="width: 140px"
                   @change="handleSearch"
                 >
@@ -60,11 +60,11 @@
               <el-form-item>
                 <el-button type="primary" :loading="loading" @click="handleSearch">
                   <el-icon><Search /></el-icon>
-                  搜索
+                  {{ t('common.search') }}
                 </el-button>
                 <el-button @click="handleReset">
                   <el-icon><RefreshRight /></el-icon>
-                  重置
+                  {{ t('common.reset') }}
                 </el-button>
               </el-form-item>
             </el-form>
@@ -78,7 +78,7 @@
               size="small"
               :loading="loading"
               @click="handleRefresh"
-              title="刷新"
+              :title="t('common.refresh')"
             >
               <el-icon v-show="!loading"><Refresh /></el-icon>
             </el-button>
@@ -86,7 +86,7 @@
 
           <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
             <el-button link type="primary" :loading="loading" @click="handleRefresh">
-              重试
+              {{ t('common.retry') }}
             </el-button>
           </el-alert>
           <div class="ops-table-wrapper">
@@ -97,54 +97,54 @@
               :default-sort="{ prop: 'start_time', order: 'descending' }"
               @sort-change="handleSortChange"
             >
-              <el-table-column prop="start_time" label="开始时间" width="180" sortable="custom">
+              <el-table-column prop="start_time" :label="t('automation.workbench.startedAt')" width="180" sortable="custom">
                 <template #default="{ row }">
                   {{ formatDateTime(row.start_time) }}
                 </template>
               </el-table-column>
               <template #empty>
-                <span v-if="loading">正在读取运行记录…</span>
-                <span v-else-if="loadError">读取失败，请重试</span>
-                <span v-else>暂无符合条件的运行记录</span>
+                <span v-if="loading">{{ t('automation.records.reading') }}</span>
+                <span v-else-if="loadError">{{ t('automation.list.readFailedRetry') }}</span>
+                <span v-else>{{ t('automation.records.empty') }}</span>
               </template>
 
-              <el-table-column label="任务" show-overflow-tooltip min-width="200">
+              <el-table-column :label="t('execution.ui.task')" show-overflow-tooltip min-width="200">
                 <template #default="{ row }">
                   {{ getAutomationRunTitle(row) }}
                 </template>
               </el-table-column>
 
-              <el-table-column label="类型" width="130">
+              <el-table-column :label="t('automation.job.type')" width="130">
                 <template #default="{ row }">
                   {{ getJobTypeLabel(row.job_type) }}
                 </template>
               </el-table-column>
 
-              <el-table-column label="用户" width="100">
+              <el-table-column :label="t('common.user')" width="100">
                 <template #default="{ row }">
                   {{ row.username || '-' }}
                 </template>
               </el-table-column>
 
-              <el-table-column label="审核" width="100">
+              <el-table-column :label="t('automation.records.review')" width="100">
                 <template #default="{ row }">
                   {{ row.review_user || '-' }}
                 </template>
               </el-table-column>
 
-              <el-table-column label="耗时" width="100">
+              <el-table-column :label="t('automation.workbench.duration')" width="100">
                 <template #default="{ row }">
                   {{ calculateDuration(row.start_time, row.end_time) }}
                 </template>
               </el-table-column>
 
-              <el-table-column prop="end_time" label="结束时间" width="180" sortable="custom">
+              <el-table-column prop="end_time" :label="t('automation.workbench.endedAt')" width="180" sortable="custom">
                 <template #default="{ row }">
                   {{ formatDateTime(row.end_time) }}
                 </template>
               </el-table-column>
 
-              <el-table-column label="执行节点" width="150">
+              <el-table-column :label="t('automation.records.executionNodes')" width="150">
                 <template #default="{ row }">
                   <div class="node-list">
                     <el-tag
@@ -159,7 +159,7 @@
                 </template>
               </el-table-column>
 
-              <el-table-column label="状态" width="100">
+              <el-table-column :label="t('automation.workbench.status')" width="100">
                 <template #default="{ row }">
                   <RunLogStatusTag :type="getStatusType(row.status)" @click="handleViewResult(row)">
                     {{ getStatusLabel(row.status) }}
@@ -167,13 +167,13 @@
                 </template>
               </el-table-column>
 
-              <el-table-column label="详情" width="150">
+              <el-table-column :label="t('automation.records.details')" width="150">
                 <template #default="{ row }">
                   <div class="stats-info">{{ formatStats(row.stats_json) }}</div>
                 </template>
               </el-table-column>
 
-              <el-table-column label="操作" width="80" fixed="right">
+              <el-table-column :label="t('common.actions')" width="80" fixed="right">
                 <template #default="{ row }">
                   <el-button
                     v-if="canRerun(row)"
@@ -182,7 +182,7 @@
                     size="small"
                     @click="handleRerun(row)"
                   >
-                    重新启动
+                    {{ t('automation.records.restart') }}
                   </el-button>
                 </template>
               </el-table-column>
@@ -205,7 +205,7 @@
         </div>
       </el-tab-pane>
 
-      <el-tab-pane label="统计分析" name="statistics">
+      <el-tab-pane :label="t('automation.records.statistics')" name="statistics">
         <div class="stats-tab-wrapper">
           <JobStatisticsPage
             v-if="activeTab === 'statistics'"
@@ -229,6 +229,9 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
+
 import { ref, onMounted, onBeforeUnmount, onActivated, onDeactivated, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -250,7 +253,7 @@ import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
 import { throwIfWorkflowFailed } from '@/utils/workflowResult'
 
 const loading = ref(false)
-const loadError = ref('')
+const loadError = messageRef('')
 const pageActive = ref(true)
 const orderBy = ref('start_time desc')
 let listRequestId = 0
@@ -389,8 +392,8 @@ async function fetchData() {
     pagination.value.total = data.total || 0
   } catch (error) {
     if (!pageActive.value || requestId !== listRequestId) return
-    loadError.value = '获取运行记录失败，请重试'
-    ElMessage.error(error?.message || '获取运行记录失败')
+    loadError.value = message('automation.records.readFailedRetry')
+    ElMessage.error(error?.message || t('automation.records.readFailed'))
   } finally {
     if (requestId === listRequestId) loading.value = false
   }
@@ -405,7 +408,7 @@ function handleSortChange(sort) {
 function invalidateRead() {
   listRequestId += 1
   clearTimeout(searchTimeout)
-  if (loading.value) loadError.value = '运行记录读取已中断，请刷新重试'
+  if (loading.value) loadError.value = message('automation.records.readInterrupted')
   loading.value = false
 }
 function pauseReading() {
@@ -543,10 +546,10 @@ function formatStats(statsJson) {
     const stats = JSON.parse(statsJson)
     const parts = []
     for (const [field, label] of [
-      ['totalHosts', '总数'],
-      ['okHosts', '成功'],
-      ['failedHosts', '失败'],
-      ['unreachableHosts', '不可达']
+      ['totalHosts', t('automation.stats.total')],
+      ['okHosts', t('automation.stats.ok')],
+      ['failedHosts', t('automation.stats.failed')],
+      ['unreachableHosts', t('automation.stats.unreachable')]
     ]) {
       const value = stats[field]
       if (!['number', 'string'].includes(typeof value) || String(value).trim() === '') continue
@@ -575,7 +578,7 @@ function handleViewResult(row) {
   if (!row?.id) return
   resultMeta.value = {
     runId: row.id,
-    jobTitle: getAutomationRunTitle(row)
+    get jobTitle() { return getAutomationRunTitle(row) }
   }
   resultDialogVisible.value = true
 }
@@ -584,24 +587,24 @@ async function handleRerun(row) {
   try {
     const effectiveRunId = String(row?.runId ?? row?.id ?? '')
     if (!effectiveRunId || effectiveRunId.startsWith('step_')) {
-      ElMessage.warning('聚合步骤视图不支持按运行 ID 重新执行，请切换到单个任务记录后重试')
+      ElMessage.warning(t('automation.records.unsupportedStepRerun'))
       return
     }
 
     await ElMessageBox.confirm(
-      `确定要重新启动运维工具 "${getAutomationRunTitle(row)}" 吗？`,
-      '重新启动运维工具',
+      t('automation.records.rerunConfirm', { name: getAutomationRunTitle(row) }),
+      t('automation.records.rerunTitle'),
       { closeOnClickModal: false, closeOnPressEscape: false, type: 'warning' }
     )
 
     loading.value = true
     try {
       const response = await jaoApi.rerunJob(row.job_id, effectiveRunId)
-      throwIfWorkflowFailed(response, '重新启动运维工具失败')
-      ElMessage.success('运维工具已重新启动')
+      throwIfWorkflowFailed(response, t('automation.records.rerunFailed'))
+      ElMessage.success(t('automation.records.rerunSucceeded'))
       fetchData()
     } catch (error) {
-      ElMessage.error(error?.message || '重新启动运维工具失败')
+      ElMessage.error(error?.message || t('automation.records.rerunFailed'))
     } finally {
       loading.value = false
     }

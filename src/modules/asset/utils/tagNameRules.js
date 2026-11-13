@@ -1,3 +1,5 @@
+import { t } from '@/core/i18n'
+
 export const TAG_NAME_FORMAT_MESSAGE = '标签名称只能包含中英文、数字、下划线和空格'
 
 // 只允许普通空格；末尾断言也排除换行符，避免 $ 接受末尾换行。
@@ -8,12 +10,12 @@ export function createTagNameRules() {
     {
       required: true,
       whitespace: true,
-      message: '请输入标签名称',
+      message: t('asset.tagNameRequired'),
       trigger: ['blur', 'change']
     },
     {
       pattern: TAG_NAME_PATTERN,
-      message: TAG_NAME_FORMAT_MESSAGE,
+      message: t('asset.tagNameFormat', {}, TAG_NAME_FORMAT_MESSAGE),
       trigger: ['blur', 'change']
     }
   ]

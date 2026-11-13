@@ -4,7 +4,7 @@
     <div v-if="!multipleSelect" class="single-file-display">
       <el-input
         v-model="displayFilePath"
-        placeholder="请选择脚本文件"
+        :placeholder="t('automation.flow.selectScriptPlaceholder')"
         size="small"
         :disabled="disabled"
         readonly
@@ -19,7 +19,7 @@
         <el-col :span="12" v-if="showConfig">
           <el-input
             v-model="fileList[0].config"
-            placeholder="ansible-playbook或脚本执行参数"
+            :placeholder="t('automation.flow.scriptArgs')"
             size="small"
             :disabled="disabled"
           />
@@ -27,7 +27,7 @@
         <el-col :span="12" v-if="showTag">
           <el-input
             v-model="fileList[0].tag"
-            placeholder="ansible-playbook tag参数"
+            :placeholder="t('automation.flow.playbookTags')"
             size="small"
             :disabled="disabled"
           />
@@ -39,9 +39,7 @@
     <div v-else-if="multipleSelect && fileList.length" class="file-list">
       <div class="file-list-header">
         <el-button size="small" :disabled="disabled" @click="handleOpenSelector">
-          共
-          <strong>{{ fileList.length }}</strong>
-          个文件
+          {{ t('automation.flow.fileCount', { count: fileList.length }) }}
         </el-button>
       </div>
       <table class="file-table">
@@ -50,14 +48,14 @@
             <td class="file-path-cell">
               <div v-if="fileStatusMap[file.path]" class="gfs-missing-file">
                 <span class="gfs-ff-name">{{ file.path }}</span>
-                <el-tooltip content="文件不存在" placement="top">
+                <el-tooltip :content="t('automation.flow.fileMissing')" placement="top">
                   <i class="fa fa-exclamation-triangle gfs-ff-warn" />
                 </el-tooltip>
               </div>
               <el-input
                 v-else
                 v-model="file.path"
-                placeholder="请输入脚本路径"
+                :placeholder="t('automation.flow.scriptPathRequired')"
                 size="small"
                 :disabled="disabled"
               />
@@ -65,7 +63,7 @@
             <td v-if="showConfig" class="file-config-cell">
               <el-input
                 v-model="file.config"
-                placeholder="Ansible playbook 参数"
+                :placeholder="t('automation.flow.playbookArgs')"
                 size="small"
                 :disabled="disabled"
               />
@@ -76,7 +74,7 @@
             <td class="file-action-cell">
               <el-button
                 size="small"
-                title="移除文件"
+                :title="t('automation.flow.removeFile')"
                 :disabled="disabled"
                 @click="handleRemove(index)"
               >
@@ -90,13 +88,13 @@
 
     <!-- 无文件时的空状态 -->
     <div v-else>
-      <el-button size="small" :disabled="disabled" @click="handleOpenSelector">选择文件</el-button>
+      <el-button size="small" :disabled="disabled" @click="handleOpenSelector">{{ t('automation.library.selectFiles') }}</el-button>
     </div>
 
     <!-- GFS 文件选择对话框 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="multipleSelect ? '选择脚本文件' : '选择脚本文件（单选）'"
+      :title="multipleSelect ? t('automation.flow.selectScript') : t('automation.flow.selectSingleScript')"
       width="800px"
       :close-on-click-modal="false"
       append-to-body
@@ -106,7 +104,7 @@
         <div class="gfs-browser-header">
           <el-input
             v-model="searchKeyword"
-            placeholder="搜索文件名..."
+            :placeholder="t('automation.flow.fileSearch')"
             prefix-icon="Search"
             clearable
             style="width: 300px"
@@ -114,7 +112,7 @@
         </div>
         <div class="gfs-browser-body">
           <div class="gfs-path-bar">
-            <span class="path-label">当前路径：</span>
+            <span class="path-label">{{ t('automation.flow.currentPathLabel') }}</span>
             <el-breadcrumb separator="/">
               <el-breadcrumb-item
                 v-for="(segment, idx) in pathSegments"
@@ -122,12 +120,12 @@
                 class="breadcrumb-clickable"
                 @click="navigateToPath(idx)"
               >
-                {{ segment || '根目录' }}
+                {{ segment || t('automation.library.root') }}
               </el-breadcrumb-item>
             </el-breadcrumb>
           </div>
           <el-alert v-if="loadError" :title="loadError" type="error" :closable="false">
-            <el-button size="small" @click="loadGfsFiles(currentPath)">重试</el-button>
+            <el-button size="small" @click="loadGfsFiles(currentPath)">{{ t('common.retry') }}</el-button>
           </el-alert>
           <div v-loading="loading" class="gfs-file-list">
             <div
@@ -144,22 +142,22 @@
             </div>
             <el-empty
               v-if="!loading && !loadError && !filteredFiles.length"
-              description="暂无文件"
+              :description="t('automation.flow.noFiles')"
               :image-size="60"
             />
           </div>
         </div>
         <div class="gfs-browser-footer">
           <div class="selected-count">
-            已选择 {{ selectedFiles.length }} 个文件
-            <span v-if="!multipleSelect" class="text-muted">（单选模式）</span>
+            {{ t('automation.library.reviewFileCount', { count: selectedFiles.length }) }}
+            <span v-if="!multipleSelect" class="text-muted">{{ t('automation.flow.singleSelection') }}</span>
           </div>
         </div>
       </div>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button @click="dialogVisible = false">{{ t('common.cancel') }}</el-button>
         <el-button type="primary" :disabled="loading || !!loadError" @click="handleConfirmSelect">
-          确定
+          {{ t('automation.file.confirm') }}
         </el-button>
       </template>
     </el-dialog>
@@ -167,6 +165,9 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
+
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as gfsApi from '@/modules/automation/api/gfs'
@@ -204,7 +205,7 @@ const searchKeyword = ref('')
 const currentPath = ref('')
 const selectedFiles = ref([])
 const loading = ref(false)
-const loadError = ref('')
+const loadError = messageRef('')
 const lastSuccessfulPath = ref('')
 let directoryRequestId = 0
 
@@ -260,7 +261,7 @@ async function loadGfsFiles(path = '') {
   } catch (error) {
     if (!isCurrentRequest()) return
     console.error('加载文件列表失败:', error)
-    loadError.value = `加载文件列表失败: ${error?.message || '未知错误'}`
+    loadError.value = message('automation.flow.filesFailedReason', () => ({ reason: error?.message || t('automation.file.unknownError') }))
     ElMessage.error(loadError.value)
     gfsFiles.value = []
   } finally {
@@ -325,7 +326,7 @@ function navigateToPath(idx) {
 function handleConfirmSelect() {
   if (!dialogVisible.value || props.disabled || loading.value || loadError.value) return
   if (selectedFiles.value.length === 0) {
-    ElMessage.warning('请至少选择一个文件')
+    ElMessage.warning(t('automation.flow.selectOneFile'))
     return
   }
 

@@ -1,3 +1,4 @@
+import { t } from '@/core/i18n'
 import { reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { rpmInfoApi } from '../api'
@@ -88,7 +89,7 @@ export function useRpmPackageList() {
       pagination.total = Number(data.totalElements || 0)
     } catch (error) {
       console.error('Failed to load rpm package list:', error)
-      ElMessage.error('获取 RPM 包列表失败')
+      ElMessage.error(t('patches.catalog.rpmListFailed'))
       tableData.value = []
       pagination.total = 0
     } finally {

@@ -1,3 +1,4 @@
+import { currentLocale } from '@/core/i18n'
 import { computed, ref } from 'vue'
 import { assetApi, dataManageApi, operationLogApi, overviewApi, permissionApi } from '../api'
 import { extractRecords, extractTotal, toNumber } from './response'
@@ -24,7 +25,7 @@ function extractPermissionRows(response) {
 }
 
 function formatCount(value) {
-  return toNumber(value).toLocaleString('zh-CN')
+  return toNumber(value).toLocaleString(currentLocale.value)
 }
 
 function formatPercent(part, total) {

@@ -4,20 +4,19 @@
       <div class="about-header">
         <img src="@/assets/icons/logo.png" alt="KoreOPS" class="logo" />
         <h1>KoreOPS Dashboard</h1>
-        <p class="version">Version 1.0.0</p>
+        <p class="version">{{ t('about.version', { version: '1.0.0' }) }}</p>
       </div>
 
       <div class="about-content">
         <div class="info-section">
-          <h2>关于 KoreOPS</h2>
+          <h2>{{ t('about.title') }}</h2>
           <p>
-            KoreOPS 是一个现代化的运维管理平台，提供统一的运维工具和服务。 本仪表盘基于 Vue 3
-            构建，提供高效的运维管理体验。
+            {{ t('about.description') }}
           </p>
         </div>
 
         <div class="tech-section">
-          <h2>技术栈</h2>
+          <h2>{{ t('about.techStack') }}</h2>
           <div class="tech-grid">
             <div class="tech-item">
               <i class="fab fa-vuejs"></i>
@@ -39,7 +38,7 @@
         </div>
 
         <div class="actions-section">
-          <el-button type="primary" @click="goBack">返回仪表盘</el-button>
+          <el-button type="primary" @click="goBack">{{ t('about.back') }}</el-button>
         </div>
       </div>
     </div>
@@ -47,6 +46,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { useRouter } from 'vue-router'
 
 const router = useRouter()

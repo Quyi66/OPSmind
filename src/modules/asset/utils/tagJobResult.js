@@ -1,3 +1,5 @@
+import { t } from '@/core/i18n'
+
 function readErrorMessage(value) {
   if (typeof value === 'string') {
     const text = value.trim()
@@ -40,7 +42,7 @@ export function throwIfTagJobFailed(response) {
 
   if (failure) {
     throw new Error(
-      readErrorMessage(failure.error) || readErrorMessage(failure) || '标签操作失败，请重试'
+      readErrorMessage(failure.error) || readErrorMessage(failure) || t('asset.tagOperationFailed')
     )
   }
 }

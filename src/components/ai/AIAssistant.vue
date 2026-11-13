@@ -4,10 +4,10 @@
     <div class="assistant-banner">
       <!-- 左侧：图标与文字 -->
       <div class="banner-left">
-        <img src="@/assets/icons/aiOPS2@2x.png" alt="AI助手" class="ai-ops-icon" />
+        <img src="@/assets/icons/aiOPS2@2x.png" :alt="t('ai.assistant')" class="ai-ops-icon" />
         <div class="banner-text">
-          <h3 class="banner-title">OPS智能助手，很高兴为你服务</h3>
-          <p class="banner-subtitle">为运维人员设计的助手Agent，帮助解决系统维护问题。</p>
+          <h3 class="banner-title">{{ t('ai.greeting') }}</h3>
+          <p class="banner-subtitle">{{ t('ai.description') }}</p>
         </div>
       </div>
 
@@ -17,13 +17,13 @@
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="询问任何系统维护问题"
+            :placeholder="t('ai.placeholder')"
             class="search-input"
             @focus="handleFocus"
             @keyup.enter="handleSearch"
           />
           <button @click="handleSearch" class="search-btn" :disabled="!searchQuery.trim()">
-            <img class="search-icon" src="@/assets/icons/icon-aiops-search@2x.png" alt="Search" />
+            <img class="search-icon" src="@/assets/icons/icon-aiops-search@2x.png" :alt="t('common.search')" />
           </button>
         </div>
       </div>
@@ -32,6 +32,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 
@@ -80,7 +82,7 @@ const recentChats = ref([
 // 事件处理
 const handleSearch = () => {
   if (!searchQuery.value.trim()) {
-    ElMessage.warning('请输入您的问题')
+    ElMessage.warning(t('ai.questionRequired'))
     return
   }
 
@@ -100,7 +102,7 @@ const handleSearch = () => {
     console.warn('Failed to open aiops-embed page:', e)
   }
 
-  ElMessage.info(`正在处理您的问题: ${q}`)
+  ElMessage.info(t('ai.processing', { question: q }))
 
   // 模拟添加到最近对话
   recentChats.value.unshift({

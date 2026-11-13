@@ -13,7 +13,7 @@
       <!-- 基本信息区块 -->
       <div class="ops-section mb-3">
         <div class="ops-section__header">
-          <div class="ops-section__title">主机概览</div>
+          <div class="ops-section__title">{{ t('asset.health.hostOverview') }}</div>
           <el-button
             type="primary"
             size="small"
@@ -23,29 +23,29 @@
             @click="emit('recheck-host', host)"
           >
             <i class="fas fa-sync-alt me-1" aria-hidden="true"></i>
-            重新巡检该主机
+            {{ t('asset.health.recheckHost') }}
           </el-button>
         </div>
 
         <el-descriptions :column="2" border size="small">
-          <el-descriptions-item label="主机 IP">
+          <el-descriptions-item :label="t('asset.health.hostIp')">
             {{ host.hostIp || '—' }}
           </el-descriptions-item>
-          <el-descriptions-item label="主机名">
+          <el-descriptions-item :label="t('asset.health.hostname')">
             {{ host.hostname || '—' }}
           </el-descriptions-item>
-          <el-descriptions-item label="健康状态">
+          <el-descriptions-item :label="t('asset.health.status')">
             <el-tag :type="statusMeta.tagType" size="small" round>
               {{ statusMeta.label }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="健康得分">
+          <el-descriptions-item :label="t('asset.health.healthScore')">
             {{ formatHostScore(host) }}
           </el-descriptions-item>
-          <el-descriptions-item label="操作系统" :span="2">
+          <el-descriptions-item :label="t('asset.health.os')" :span="2">
             {{ host.os || '—' }}
           </el-descriptions-item>
-          <el-descriptions-item label="最近巡检时间" :span="2">
+          <el-descriptions-item :label="t('asset.health.lastCheckTime')" :span="2">
             {{ formatHealthDateTime(host.checkTime) }}
           </el-descriptions-item>
         </el-descriptions>
@@ -55,7 +55,7 @@
       <div class="ops-section mb-3">
         <div class="ops-section__header">
           <div class="ops-section__title">
-            风险提示
+            {{ t('asset.health.risks') }}
             <el-tag
               v-if="host.risks && host.risks.length"
               type="warning"
@@ -63,26 +63,26 @@
               round
               class="ms-2"
             >
-              {{ host.risks.length }} 项
+              {{ t('asset.health.itemCount', { count: host.risks.length }) }}
             </el-tag>
           </div>
         </div>
 
         <el-empty
           v-if="host.status === 'UNCHECKED'"
-          description="该主机纳管后尚未巡检，请点击上方「重新巡检该主机」发起巡检"
+          :description="t('asset.health.uncheckedHint')"
           :image-size="64"
         />
         <el-alert
           v-else-if="host.status === 'UNREACHABLE' && (!host.risks || !host.risks.length)"
-          title="主机不可达或巡检脚本执行失败（0 分，不计入平均分）"
+          :title="t('asset.health.unreachableHint')"
           type="info"
           show-icon
           :closable="false"
         />
         <el-alert
           v-else-if="!host.risks || !host.risks.length"
-          title="当前主机全部检查项正常，无风险提示"
+          :title="t('asset.health.allNormalHint')"
           type="success"
           show-icon
           :closable="false"
@@ -99,27 +99,27 @@
       <div class="ops-section">
         <div class="ops-section__header">
           <div class="ops-section__title">
-            检查项明细
+            {{ t('asset.health.itemDetails') }}
             <el-tag size="small" type="info" round class="ms-2">
-              {{ filteredItems.length }} / {{ enrichedItems.length }} 项
+              {{ t('asset.health.visibleItemCount', { visible: filteredItems.length, total: enrichedItems.length }) }}
             </el-tag>
           </div>
           <el-radio-group v-model="levelFilter" size="small">
-            <el-radio-button label="ALL">全部 ({{ enrichedItems.length }})</el-radio-button>
+            <el-radio-button label="ALL">{{ t('asset.health.allItems', { count: enrichedItems.length }) }}</el-radio-button>
             <el-radio-button label="ABNORMAL">
-              异常 ({{ abnormalCount }})
+              {{ t('asset.health.abnormalItems', { count: abnormalCount }) }}
             </el-radio-button>
             <el-radio-button label="NORMAL">
-              正常 ({{ enrichedItems.length - abnormalCount }})
+              {{ t('asset.health.normalItems', { count: enrichedItems.length - abnormalCount }) }}
             </el-radio-button>
           </el-radio-group>
         </div>
 
         <div class="ops-table-wrapper">
           <el-table :data="filteredItems" style="width: 100%">
-            <el-table-column prop="name" label="检查项" min-width="170" show-overflow-tooltip />
-            <el-table-column prop="value" label="当前值" min-width="110" show-overflow-tooltip />
-            <el-table-column prop="level" label="状态" width="95">
+            <el-table-column prop="name" :label="t('asset.health.checkItem')" min-width="170" show-overflow-tooltip />
+            <el-table-column prop="value" :label="t('asset.health.currentValue')" min-width="110" show-overflow-tooltip />
+            <el-table-column prop="level" :label="t('asset.health.itemStatus')" width="95">
               <template #default="{ row }">
                 <el-tag :type="getHealthItemLevelMeta(row.level).tagType" size="small" round>
                   {{ getHealthItemLevelMeta(row.level).label }}
@@ -128,15 +128,15 @@
             </el-table-column>
             <el-table-column
               prop="threshold"
-              label="告警 / 严重阈值"
+              :label="t('asset.health.thresholdLabel')"
               min-width="130"
               show-overflow-tooltip
             />
-            <el-table-column prop="deduction" label="扣分标准" width="95" show-overflow-tooltip />
+            <el-table-column prop="deduction" :label="t('asset.health.deductionLabel')" width="95" show-overflow-tooltip />
             <template #empty>
               <el-empty
                 :description="
-                  host.status === 'UNCHECKED' ? '尚未生成检查项记录' : '暂无匹配的检查项数据'
+                  host.status === 'UNCHECKED' ? t('asset.health.noItemsYet') : t('asset.health.noMatchingItems')
                 "
                 :image-size="60"
               />
@@ -149,6 +149,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed, watch } from 'vue'
 import {
   getHealthStatusMeta,
@@ -189,10 +191,10 @@ watch(
 )
 
 const drawerTitle = computed(() => {
-  if (!props.host) return '主机健康巡检详情'
+  if (!props.host) return t('asset.health.detailTitle')
   const ip = props.host.hostIp || ''
   const name = props.host.hostname ? ` (${props.host.hostname})` : ''
-  return `主机健康巡检详情 — ${ip}${name}`
+  return t('asset.health.detailTitleHost', { ip, name })
 })
 
 const statusMeta = computed(() => getHealthStatusMeta(props.host?.status))

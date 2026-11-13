@@ -1,17 +1,17 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="审批详情"
+    :title="t('automation.approval.detailTitle')"
     width="600px"
     :close-on-click-modal="true"
     @close="handleClose"
   >
-    <el-form label-width="120px" size="default">
-      <el-form-item label="运维工具名称">
+    <el-form :label-width="currentLocale === 'en-US' ? '180px' : '120px'" size="default">
+      <el-form-item :label="t('automation.list.toolName')">
         <span>{{ getAutomationToolTitle({ jobId: approveData.jobId, title: approveData.jobName }) }}</span>
       </el-form-item>
 
-      <el-form-item label="执行策略">
+      <el-form-item :label="t('automation.approval.executionPolicy')">
         <span>{{ getApproveModeLabel(approveData.approveMode) }}</span>
 
         <div
@@ -28,21 +28,21 @@
         </div>
       </el-form-item>
 
-      <el-form-item label="脚本运维工具">
+      <el-form-item :label="t('automation.types.script')">
         <el-button type="primary" @click="handleViewJob" size="small">
           <i class="fa fa-eye" />
-          查看
+          {{ t('automation.approval.view') }}
         </el-button>
       </el-form-item>
 
-      <el-form-item label="有效时长" v-if="approveData.approveMode !== 'limitParams'">
-        <span>{{ approveData.validHour }} 小时</span>
-        <el-tooltip content="审批通过后，在有效期内可以执行运维工具" placement="top">
+      <el-form-item :label="t('automation.list.validDuration')" v-if="approveData.approveMode !== 'limitParams'">
+        <span>{{ approveData.validHour }} {{ t('automation.list.hours') }}</span>
+        <el-tooltip :content="t('automation.list.approvalValidityHint')" placement="top">
           <i class="fa fa-question-circle text-muted" style="margin-left: 8px; cursor: help" />
         </el-tooltip>
       </el-form-item>
 
-      <el-form-item label="描述">
+      <el-form-item :label="t('automation.job.description')">
         <span>{{ approveData.description || '-' }}</span>
       </el-form-item>
 
@@ -54,19 +54,19 @@
         <span>{{ formatDateTime(approveData.applyTime) }}</span>
       </el-form-item> -->
 
-      <el-form-item label="审批人" v-if="approveData.approver">
+      <el-form-item :label="t('automation.approval.approver')" v-if="approveData.approver">
         <span>{{ approveData.approver }}</span>
       </el-form-item>
 
-      <el-form-item label="审批时间" v-if="approveData.approveTime">
+      <el-form-item :label="t('automation.approval.approvedAt')" v-if="approveData.approveTime">
         <span>{{ formatDateTime(approveData.approveTime) }}</span>
       </el-form-item>
 
-      <el-form-item label="过期时间" v-if="approveData.expirationTime && approveData.status > 0">
+      <el-form-item :label="t('automation.approval.expiresAt')" v-if="approveData.expirationTime && approveData.status > 0">
         <span>{{ formatExpirationTime(approveData.expirationTime) }}</span>
       </el-form-item>
 
-      <el-form-item label="状态">
+      <el-form-item :label="t('automation.workbench.status')">
         <el-tag :type="getStatusType(approveData.status)">
           {{ getStatusLabel(approveData.status) }}
         </el-tag>
@@ -74,7 +74,7 @@
     </el-form>
 
     <template #footer>
-      <el-button @click="handleClose">关闭</el-button>
+      <el-button @click="handleClose">{{ t('common.close') }}</el-button>
     </template>
 
     <!-- 作业详情弹窗 -->
@@ -90,6 +90,8 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+
 import { getAutomationToolTitle } from '@/modules/automation/utils/resourcePresentation'
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
@@ -125,17 +127,17 @@ const emit = defineEmits(['update:visible'])
 const dialogVisible = ref(false)
 const jobDialogVisible = ref(false)
 
-const approveModeMap = {
-  limitParams: '限定参数执行',
-  noLimitParams: '不限定参数执行'
-}
+const approveModeMap = computed(() => ({
+  limitParams: t('automation.list.restrictedParams'),
+  noLimitParams: t('automation.list.unrestrictedParams')
+}))
 
-const statusMap = {
-  0: { label: '审批中', type: 'primary' },
-  1: { label: '审批通过', type: 'success' },
-  2: { label: '审批未通过', type: 'danger' },
-  3: { label: '审批作废', type: 'info' }
-}
+const statusMap = computed(() => ({
+  0: { label: t('automation.approval.pending'), type: 'primary' },
+  1: { label: t('automation.approval.approved'), type: 'success' },
+  2: { label: t('automation.approval.rejected'), type: 'danger' },
+  3: { label: t('automation.approval.discarded'), type: 'info' }
+}))
 
 const paramsArray = computed(() => {
   if (!props.approveData.params) return []
@@ -168,22 +170,22 @@ watch(dialogVisible, val => {
 })
 
 function getApproveModeLabel(mode) {
-  return approveModeMap[mode] || '-'
+  return approveModeMap.value[mode] || '-'
 }
 
 function getStatusLabel(status) {
-  return statusMap[status]?.label || '-'
+  return statusMap.value[status]?.label || '-'
 }
 
 function getStatusType(status) {
-  return statusMap[status]?.type || 'info'
+  return statusMap.value[status]?.type || 'info'
 }
 
 
 
 function formatExpirationTime(value) {
   if (!value) return '-'
-  if (value === 'expired') return '已过期'
+  if (value === 'expired') return t('automation.approval.expired')
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '-'
   const pad = n => (n < 10 ? `0${n}` : String(n))
@@ -192,7 +194,7 @@ function formatExpirationTime(value) {
 
 function handleViewJob() {
   if (!props.approveData.jobId) {
-    ElMessage.warning('无法获取运维工具信息')
+    ElMessage.warning(t('automation.list.missingTool'))
     return
   }
   jobDialogVisible.value = true

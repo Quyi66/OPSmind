@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="导入资产"
+    :title="t('asset.importAssets')"
     width="600px"
     :close-on-click-modal="false"
     @closed="handleClosed"
@@ -10,20 +10,20 @@
     <div class="import-content">
       <!-- 第一步：下载模板 -->
       <div class="import-step">
-        <div class="import-step-label">第一步：下载导入模板</div>
+        <div class="import-step-label">{{ t('asset.importStepDownload') }}</div>
         <el-button
           @click="handleDownloadTemplate"
           :disabled="!tenantId"
           :loading="downloadingTemplate"
         >
           <i class="fa fa-download" style="margin-right: 4px"></i>
-          下载资产信息导入模板
+          {{ t('asset.downloadAssetTemplate') }}
         </el-button>
       </div>
 
       <!-- 第二步：上传文件 -->
       <div class="import-step">
-        <div class="import-step-label">第二步：按模板填写数据后上传</div>
+        <div class="import-step-label">{{ t('asset.importStepUpload') }}</div>
         <el-upload
           ref="uploadRef"
           :auto-upload="false"
@@ -34,12 +34,11 @@
         >
           <el-button type="primary">
             <i class="fa fa-upload" style="margin-right: 4px"></i>
-            选择文件
+            {{ t('asset.selectFile') }}
           </el-button>
           <template #tip>
             <div class="el-upload__tip">
-              只能上传 xlsx/xls 文件。“端口”列（ANSIBLE_PORT）命中对应的 Ansible
-              连接模板时会自动绑定； 未命中时保留原绑定。
+              {{ t('asset.importPortHint') }}
             </div>
           </template>
         </el-upload>
@@ -47,14 +46,14 @@
     </div>
 
     <template #footer>
-      <el-button @click="visible = false">取消</el-button>
+      <el-button @click="visible = false">{{ t('common.cancel') }}</el-button>
       <el-button
         type="primary"
         :loading="uploading"
         :disabled="!selectedFile"
         @click="handleUpload"
       >
-        上传
+        {{ t('asset.upload') }}
       </el-button>
     </template>
   </el-dialog>
@@ -63,13 +62,15 @@
     v-if="resultDialogVisible"
     v-model:visible="resultDialogVisible"
     :run-id="currentRunId"
-    job-title="资产导入"
+    :job-title="t('asset.assetImportJob')"
     @settled="handleExecuteResultSettled"
     @close="handleExecuteResultClose"
   />
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { apiService } from '@/core/api'
@@ -129,7 +130,7 @@ const handleFileRemove = () => {
 const handleDownloadTemplate = async () => {
   if (downloadingTemplate.value) return
   if (!props.tenantId) {
-    ElMessage.warning('当前租户信息缺失，无法下载导入模板')
+    ElMessage.warning(t('asset.tenantRequiredTemplate'))
     return
   }
 
@@ -138,7 +139,7 @@ const handleDownloadTemplate = async () => {
     await assetApi.downloadImportTemplate(props.tenantId)
   } catch (error) {
     console.error('下载导入模板失败:', error)
-    ElMessage.error('下载导入模板失败，请稍后重试')
+    ElMessage.error(t('asset.downloadTemplateFailed'))
   } finally {
     downloadingTemplate.value = false
   }
@@ -147,12 +148,12 @@ const handleDownloadTemplate = async () => {
 // 上传
 const handleUpload = async () => {
   if (!selectedFile.value) {
-    ElMessage.warning('请先选择文件')
+    ElMessage.warning(t('asset.selectFileFirst'))
     return
   }
 
   if (!props.tenantId) {
-    ElMessage.warning('当前租户信息缺失，无法上传导入文件')
+    ElMessage.warning(t('asset.tenantRequiredImport'))
     return
   }
 
@@ -175,11 +176,11 @@ const handleUpload = async () => {
     uploading.value = false
     visible.value = false
     resultDialogVisible.value = true
-    ElMessage.success(`导入任务已提交，正在打开运行结果，运行 ID: ${runId}`)
+    ElMessage.success(t('asset.importSubmittedRun', { id: runId }))
   } catch (error) {
     console.error('导入失败:', error)
     ElMessage.error(
-      `导入失败: ${error.response?.data?.error || error.response?.data?.message || error.message}`
+      t('asset.importFailedReason', { message: error.response?.data?.error || error.response?.data?.message || error.message })
     )
   } finally {
     uploading.value = false

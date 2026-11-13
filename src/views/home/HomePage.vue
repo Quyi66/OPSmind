@@ -5,13 +5,13 @@
       v-if="dashboardStore.loading"
       class="loading-container"
       v-loading="true"
-      element-loading-text="正在加载仪表盘数据..."
+      :element-loading-text="t('home.loading')"
     ></div>
 
     <!-- 错误状态 -->
     <div v-else-if="dashboardStore.error" class="error-container">
       <el-alert :title="dashboardStore.error" type="error" show-icon :closable="false" />
-      <el-button @click="handleRefresh" type="primary" class="mt-3">重新加载</el-button>
+      <el-button @click="handleRefresh" type="primary" class="mt-3">{{ t('common.reload') }}</el-button>
     </div>
 
     <!-- 主体布局 -->
@@ -52,6 +52,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { onMounted, watch, defineAsyncComponent } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -97,13 +99,13 @@ const loadDashboardData = async () => {
     await dashboardStore.fetchAiOpsUrl()
   } catch (error) {
     console.error('❌ Failed to load dashboard data:', error)
-    ElMessage.error('加载仪表盘数据失败')
+    ElMessage.error(t('home.loadFailed'))
   }
 }
 
 const handleRefresh = async () => {
   await loadDashboardData()
-  ElMessage.success('数据已刷新')
+  ElMessage.success(t('home.refreshed'))
 }
 
 // 监听路由变化

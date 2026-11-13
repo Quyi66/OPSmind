@@ -1,3 +1,5 @@
+import { t } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
 import { ref, computed, onMounted, onBeforeUnmount, onActivated, onDeactivated, watch } from 'vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { ElMessage } from 'element-plus'
@@ -9,7 +11,7 @@ import { matchesCronTaskKeyword } from '@/modules/automation/utils/cronTaskPrese
  */
 export function useCronJobList() {
   const loading = ref(false)
-  const loadError = ref('')
+  const loadError = messageRef('')
   const searchRevision = ref(0)
   let active = true
   let requestId = 0
@@ -47,8 +49,8 @@ export function useCronJobList() {
       }))
     } catch (error) {
       if (!active || request !== requestId) return
-      loadError.value = '获取定时任务列表失败，请重试'
-      ElMessage.error(error?.message || '获取定时任务列表失败')
+      loadError.value = message('automation.list.cronLoadRetry')
+      ElMessage.error(error?.message || t('automation.list.cronLoadFailed'))
     } finally {
       if (active && request === requestId) loading.value = false
     }
@@ -84,7 +86,7 @@ export function useCronJobList() {
   function invalidateRead() {
     active = false
     requestId += 1
-    if (loading.value) loadError.value = '定时任务读取已中断，请刷新重试'
+    if (loading.value) loadError.value = message('automation.list.cronReadInterrupted')
     loading.value = false
   }
   onBeforeUnmount(invalidateRead)

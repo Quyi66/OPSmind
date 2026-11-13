@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="修改记录"
+    :title="t('automation.library.changes')"
     width="900px"
     :close-on-click-modal="true"
     @closed="handleClosed"
@@ -34,14 +34,14 @@
                 :loading="rollbackLoading"
               >
                 <i class="fa fa-undo"></i>
-                回退
+                {{ t('automation.library.revert') }}
               </el-button>
             </div>
             <div class="revision-author">{{ rev.author }}</div>
           </div>
           <el-empty
             v-if="!loading && revisions.length === 0"
-            description="暂无历史版本"
+            :description="t('automation.library.noRevisions')"
             :image-size="80"
           />
         </div>
@@ -78,25 +78,27 @@
               <i class="fa fa-plus"></i>
             </div>
             <div class="diff-add-state__body">
-              <strong>该版本为新建文件</strong>
-              <p>首次提交没有历史差异可对比，可以直接打开当前文件查看完整内容。</p>
+              <strong>{{ t('automation.library.addedRevision') }}</strong>
+              <p>{{ t('automation.library.addedRevisionHint') }}</p>
               <el-button type="primary" plain size="small" @click="handleOpenFile">
-                查看当前文件
+                {{ t('automation.library.viewCurrent') }}
               </el-button>
             </div>
           </div>
         </div>
-        <el-empty v-else description="请选择一个版本查看详情" :image-size="80" />
+        <el-empty v-else :description="t('automation.library.selectRevision')" :image-size="80" />
       </div>
     </div>
 
     <template #footer>
-      <el-button @click="dialogVisible = false">关闭</el-button>
+      <el-button @click="dialogVisible = false">{{ t('common.close') }}</el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import * as gfsApi from '@/modules/automation/api/gfs'
@@ -157,7 +159,7 @@ async function loadRevisions() {
     }
   } catch (error) {
     console.error('获取历史版本失败:', error)
-    ElMessage.error(error?.message || '获取历史版本失败')
+    ElMessage.error(error?.message || t('automation.library.revisionsFailed'))
     revisions.value = []
   } finally {
     loading.value = false
@@ -251,7 +253,7 @@ function parseDiff(rev) {
 
 async function handleRollback(rev) {
   try {
-    await ElMessageBox.confirm(`确定要回退到此版本吗？此操作将覆盖当前文件内容。`, '回退确认', {
+    await ElMessageBox.confirm(t('automation.library.rollbackConfirm'), t('automation.library.rollbackTitle'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning'
@@ -260,12 +262,12 @@ async function handleRollback(rev) {
     rollbackLoading.value = true
     await gfsApi.rollbackFileRevision(props.repo, rev.name, props.path)
 
-    ElMessage.success('回退成功')
+    ElMessage.success(t('automation.library.reverted'))
     emit('rollback', rev)
     loadRevisions()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error(error?.message || '回退失败')
+      ElMessage.error(error?.message || t('automation.library.revertFailed'))
     }
   } finally {
     rollbackLoading.value = false
@@ -308,9 +310,9 @@ function getChangeBadgeClass(changeType) {
 
 function getChangeTypeName(changeType) {
   const map = {
-    ADD: '新建',
-    DELETE: '删除',
-    MODIFY: '修改'
+    ADD: t('automation.library.addChange'),
+    DELETE: t('common.delete'),
+    MODIFY: t('automation.library.modifyChange')
   }
   return map[changeType] || changeType
 }

@@ -7,7 +7,7 @@
     />
 
     <el-tabs v-model="activeTab" class="yum-repo-tabs">
-      <el-tab-pane label="仓库管理" name="repos">
+      <el-tab-pane :label="t('yumRepo.management')" name="repos">
         <YumRepoSourceTable
           :configs="configList"
           :sources="sourceList"
@@ -24,7 +24,7 @@
         />
       </el-tab-pane>
 
-      <el-tab-pane label="采集与清单" name="packages" lazy>
+      <el-tab-pane :label="t('yumRepo.collectionInventory')" name="packages" lazy>
         <YumRepoPackagesPanel
           :active="activeTab === 'packages'"
           :configs="configList"
@@ -33,7 +33,7 @@
         />
       </el-tab-pane>
 
-      <el-tab-pane label="补丁比对" name="compare" lazy>
+      <el-tab-pane :label="t('yumRepo.patchComparison')" name="compare" lazy>
         <YumRepoComparePanel
           :active="activeTab === 'compare'"
           :configs="configList"
@@ -48,6 +48,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import YumRepoComparePanel from '../components/YumRepoComparePanel.vue'
@@ -92,7 +94,7 @@ async function loadOverview(options = {}) {
   } catch (error) {
     if (!options.silent) {
       console.error('加载 Yum 仓库补丁比对总览失败:', error)
-      ElMessage.error('加载 Yum 仓库补丁比对总览失败')
+      ElMessage.error(t('yumRepo.overviewFailed'))
     }
   } finally {
     overviewLoading.value = false
@@ -127,7 +129,7 @@ async function loadConfigs(preferredConfigId = '', preferredRepoId = '') {
     await loadOverview({ silent: true })
   } catch (error) {
     console.error('加载 Yum 源配置失败:', error)
-    ElMessage.error('加载 Yum 源配置失败')
+    ElMessage.error(t('yumRepo.configsFailed'))
     sourceList.value = []
   } finally {
     loadingConfigs.value = false
@@ -172,12 +174,12 @@ async function handleCollect(config) {
     const data = unwrapResponse(response) || {}
     selectedRepoId.value = configId
 
-    ElMessage.info(data?.message || '采集任务已提交，正在等待采集完成…')
+    ElMessage.info(data?.message || t('yumRepo.collectionSubmitted'))
 
     await pollCollectThenCompare(configId)
   } catch (error) {
     console.error('触发 Yum 仓库采集失败:', error)
-    ElMessage.error('触发 Yum 仓库采集失败')
+    ElMessage.error(t('yumRepo.collectFailed'))
     await loadConfigs(configId, selectedRepoId.value)
   } finally {
     collectingConfigId.value = ''
@@ -212,38 +214,38 @@ async function pollCollectThenCompare(configId) {
         const compareData = unwrapResponse(compareResp)
         if (compareData?.success === false) {
           const bizMsg = String(compareData?.message || '').trim()
-          ElMessage.warning(`采集成功，但补丁比对失败：${bizMsg || '请手动执行比对'}`)
+          ElMessage.warning(t('yumRepo.collectCompareFailed', { reason: bizMsg || t('yumRepo.compareManually') }))
           await loadConfigs(configId, configId)
           return
         }
       } catch (err) {
         console.error('触发补丁比对失败:', err)
         const errMsg = String(err?.response?.data?.message || err?.message || '').trim()
-        ElMessage.warning(`采集成功，但补丁比对触发失败：${errMsg || '请手动执行比对'}`)
+        ElMessage.warning(t('yumRepo.collectCompareStartFailed', { reason: errMsg || t('yumRepo.compareManually') }))
         await loadConfigs(configId, configId)
         return
       }
       await loadConfigs(configId, configId)
-      ElMessage.success('采集完成，已自动继续比对并刷新列表')
+      ElMessage.success(t('yumRepo.autoCompared'))
       return
     }
 
     if (cs === 'FAILED') {
       const errMsg = String(currentConfig.errorMessage || '').trim()
-      ElMessage.error(`采集失败${errMsg ? `：${errMsg}` : '，请检查仓库地址是否可访问'}`)
+      ElMessage.error(t('yumRepo.collectionFailedReason', { reason: errMsg || t('yumRepo.inaccessibleRepo') }))
       await loadConfigs(configId, configId)
       return
     }
   }
 
-  ElMessage.warning('采集等待超时，请稍后手动刷新')
+  ElMessage.warning(t('yumRepo.collectionTimeout'))
   await loadConfigs(configId, configId)
 }
 
 async function handleCollectAll() {
   const dcDataIds = configList.value.map(item => resolveYumConfigId(item)).filter(Boolean)
   if (dcDataIds.length === 0) {
-    ElMessage.warning('当前没有可采集的 YUM 源配置')
+    ElMessage.warning(t('yumRepo.noCollectableConfigs'))
     return
   }
 
@@ -260,18 +262,18 @@ async function handleCollectAll() {
     if (successCount > 0) {
       ElMessage.success(
         failCount > 0
-          ? `批量采集已提交：成功 ${successCount} 条，失败 ${failCount} 条`
-          : `批量采集已提交：成功 ${successCount} 条`
+          ? t('yumRepo.batchSubmittedWithFailures', { succeeded: successCount, failed: failCount })
+          : t('yumRepo.batchSubmitted', { count: successCount })
       )
       return
     }
 
     ElMessage.warning(
-      failCount > 0 ? `批量采集提交失败：共 ${failCount} 条失败` : '批量采集未提交任何任务'
+      failCount > 0 ? t('yumRepo.batchFailed', { count: failCount }) : t('yumRepo.noCollectionSubmitted')
     )
   } catch (error) {
     console.error('批量触发 Yum 仓库采集失败:', error)
-    ElMessage.error('批量触发 Yum 仓库采集失败')
+    ElMessage.error(t('yumRepo.batchCollectFailed'))
   } finally {
     batchCollecting.value = false
   }
@@ -282,7 +284,7 @@ function openPackagesTab(config) {
   selectedConfigId.value = configId
 
   if (!configId || !normalizeYumConfigRecord(config).sourceIds.length) {
-    ElMessage.warning('该配置尚未触发采集，请先执行采集')
+    ElMessage.warning(t('yumRepo.collectFirst'))
     return
   }
 
@@ -294,12 +296,12 @@ function openCompareTab(config) {
   const configId = resolveYumConfigId(config)
   selectedConfigId.value = configId
   if (!isConfigCollectSucceeded(config)) {
-    ElMessage.warning('该配置下所有 repo 采集成功后才可比对')
+    ElMessage.warning(t('yumRepo.collectAllReposFirst'))
     return
   }
 
   if (!configId) {
-    ElMessage.warning('该配置尚未生成可比对仓库，请先执行采集')
+    ElMessage.warning(t('yumRepo.noComparableRepo'))
     return
   }
 

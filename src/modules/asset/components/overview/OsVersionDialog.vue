@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    :title="title"
+    :title="title || t('asset.osVersionDistribution')"
     width="800px"
     destroy-on-close
     @closed="handleClosed"
@@ -9,7 +9,7 @@
   >
     <div v-loading="loading" class="version-chart-container">
       <div v-if="!loading && (!data || data.length === 0)" class="empty-state">
-        <el-empty description="暂无版本分布数据" />
+        <el-empty :description="t('asset.noVersionData')" />
       </div>
       <div v-else ref="chartRef" class="chart-box"></div>
     </div>
@@ -17,6 +17,8 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+
 import { ref, computed, watch, nextTick, onUnmounted } from 'vue'
 import * as echarts from 'echarts'
 import { useTheme } from '@/composables/useTheme'
@@ -27,7 +29,7 @@ const props = defineProps({
   modelValue: Boolean,
   title: {
     type: String,
-    default: '操作系统版本分布'
+    default: ''
   },
   data: {
     type: Array,
@@ -101,7 +103,7 @@ function initChart() {
     },
     yAxis: {
       type: 'value',
-      name: '主机数量',
+      name: t('asset.hostCountAxis'),
       nameTextStyle: {
         color: '#999',
         padding: [0, 0, 0, 30]
@@ -117,7 +119,7 @@ function initChart() {
     },
     series: [
       {
-        name: '版本分布',
+        name: t('asset.versionDistribution'),
         type: 'bar',
         data: yData,
         barMaxWidth: 40,
@@ -154,6 +156,8 @@ function initChart() {
 
   chartInstance.setOption(option)
 }
+
+watch(currentLocale, () => { if (visible.value) nextTick(initChart) })
 
 function handleResize() {
   chartInstance?.resize()

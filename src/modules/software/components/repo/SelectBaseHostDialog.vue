@@ -3,9 +3,9 @@
     v-model="visible"
     ci-types="[auto]"
     :options="selectorOptions"
-    title="选择设备 · 设置基准仓库主机"
-    confirm-text="设为基准仓库主机"
-    description="点击“设为基准仓库主机”后，将立即为所选主机设置基准仓库。"
+    :title="t('yumRepo.software.selectBaseHostsTitle')"
+    :confirm-text="t('yumRepo.software.setBaseHosts')"
+    :description="t('yumRepo.software.setBaseHostsHint')"
     :allow-empty="false"
     :close-on-confirm="false"
     :submitting="submitting"
@@ -14,6 +14,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { repoApi } from '../../api'
@@ -36,7 +38,7 @@ async function handleSubmit(selection) {
   if (submitting.value) return
   const hosts = normalizeAcmDeviceJobHosts(selection, 'linux')
   if (!hosts.length) {
-    ElMessage.warning('请选择主机')
+    ElMessage.warning(t('yumRepo.software.selectHosts'))
     return
   }
   submitting.value = true
@@ -45,15 +47,15 @@ async function handleSubmit(selection) {
     const data = response?.data || response
     const result = Array.isArray(data) ? data[0] : data
     if (['FAILED', 'ERROR'].includes(result?.status)) {
-      ElMessage.error(result.error || '设置失败')
+      ElMessage.error(result.error || t('yumRepo.software.settingFailed'))
       return
     }
-    ElMessage.success('设置任务已提交')
+    ElMessage.success(t('yumRepo.software.settingSubmitted'))
     emit('success')
     visible.value = false
   } catch (error) {
     console.error('Failed to set base repo hosts:', error)
-    ElMessage.error('设置失败')
+    ElMessage.error(t('yumRepo.software.settingFailed'))
   } finally {
     submitting.value = false
   }

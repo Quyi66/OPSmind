@@ -18,21 +18,21 @@
         <!-- 筛选区域 -->
         <div class="ops-filter-bar">
           <el-form :inline="true" size="small" @submit.prevent="handleSearch">
-            <el-form-item label="在线状态">
-              <el-select v-model="filters.status" style="width: 85px" @change="handleSearch">
-                <el-option label="全部" value="all" />
-                <el-option label="在线" value="1" />
-                <el-option label="下线" value="0" />
+            <el-form-item :label="t('asset.onlineStatus')">
+              <el-select v-model="filters.status" :style="{ width: currentLocale === 'en-US' ? '150px' : '85px' }" @change="handleSearch">
+                <el-option :label="t('common.all')" value="all" />
+                <el-option :label="t('asset.online')" value="1" />
+                <el-option :label="t('asset.takeOffline')" value="0" />
               </el-select>
             </el-form-item>
-            <el-form-item label="分组">
+            <el-form-item :label="t('asset.group')">
               <el-tree-select
                 v-model="selectedGroups"
                 :data="groupTreeData"
                 :props="treeProps"
                 node-key="path"
                 :default-expanded-keys="['/']"
-                placeholder="全部分组"
+                :placeholder="t('asset.allGroups')"
                 multiple
                 show-checkbox
                 check-strictly
@@ -64,10 +64,10 @@
             </el-form-item>
             -->
 
-            <el-form-item label="标签">
+            <el-form-item :label="t('asset.tag')">
               <el-select
                 v-model="selectedTags"
-                placeholder="全部标签"
+                :placeholder="t('asset.allTags')"
                 multiple
                 collapse-tags
                 collapse-tags-tooltip
@@ -80,12 +80,12 @@
               </el-select>
             </el-form-item>
 
-            <el-form-item label="最近连通">
-              <el-select v-model="filters.connLatestStatus" style="width: 95px" @change="handleSearch">
-                <el-option label="所有" value="all" />
-                <el-option label="连通成功" value="1" />
-                <el-option label="连通失败" value="0" />
-                <el-option label="未测试" value="null" />
+            <el-form-item :label="t('asset.lastConnectivity')">
+              <el-select v-model="filters.connLatestStatus" :style="{ width: currentLocale === 'en-US' ? '180px' : '95px' }" @change="handleSearch">
+                <el-option :label="t('asset.allOptions')" value="all" />
+                <el-option :label="t('asset.connectivitySuccess')" value="1" />
+                <el-option :label="t('asset.connectivityFailure')" value="0" />
+                <el-option :label="t('asset.notTested')" value="null" />
               </el-select>
             </el-form-item>
 
@@ -107,10 +107,10 @@
               </el-select>
             </el-form-item> -->
 
-            <el-form-item label="关键词">
+            <el-form-item :label="t('asset.keyword')">
               <el-input
                 v-model="searchText"
-                placeholder="IP/主机名/系统版本"
+                :placeholder="t('asset.keywordDevice')"
                 clearable
                 style="width: 160px"
                 @keyup.enter="handleSearch"
@@ -121,11 +121,11 @@
             <el-form-item class="filter-actions">
               <el-button type="primary" @click="handleSearch">
                 <el-icon><Search /></el-icon>
-                搜索
+                {{ t('common.search') }}
               </el-button>
               <el-button @click="handleReset">
                 <el-icon><RefreshRight /></el-icon>
-                重置
+                {{ t('common.reset') }}
               </el-button>
             </el-form-item>
           </el-form>
@@ -136,7 +136,7 @@
           <div class="action-left">
             <el-button type="primary" size="small" @click="handleAutoEntry">
               <i class="fa fa-plus" style="margin-right: 4px"></i>
-              自动化设备录入
+              {{ t('asset.autoEntryDevices') }}
             </el-button>
             <!-- [Agent 功能暂停]
             <el-button type="success" size="small" @click="agentEnrollmentVisible = true">
@@ -146,7 +146,7 @@
             -->
             <el-button size="small" @click="importDialogVisible = true">
               <i class="fa fa-file-import" style="margin-right: 4px"></i>
-              导入设备
+              {{ t('asset.importDevices') }}
             </el-button>
             <el-button
               type="danger"
@@ -155,7 +155,7 @@
               @click="deleteImportDialogVisible = true"
             >
               <i class="fa fa-trash-alt" style="margin-right: 4px"></i>
-              批量删除设备
+              {{ t('asset.deleteDevicesByFile') }}
             </el-button>
           </div>
           <span style="flex: 1"></span>
@@ -165,7 +165,7 @@
             size="small"
             :loading="loading"
             @click="handleRefresh"
-            title="刷新"
+            :title="t('common.refresh')"
           >
             <el-icon v-show="!loading"><Refresh /></el-icon>
           </el-button>
@@ -175,11 +175,11 @@
         <transition name="slide-fade" mode="out-in">
           <div v-if="hasSelection" key="selection-actions" class="selection-action-bar-top">
             <div class="selection-action-bar-top__summary">
-              <el-tooltip content="取消选择" placement="top" :show-after="300">
+              <el-tooltip :content="t('asset.clearSelection')" placement="top" :show-after="300">
                 <button
                   type="button"
                   class="selection-summary-icon"
-                  aria-label="取消选择"
+                  :aria-label="t('asset.clearSelection')"
                   @click="resetSelectionState"
                 >
                   <i class="fa fa-check selection-icon-checked"></i>
@@ -187,18 +187,18 @@
                 </button>
               </el-tooltip>
               <span>
-                已选择 <strong>{{ selectedCount }}</strong> 台设备
-                <span v-if="allSelected" class="selection-scope">（全部筛选结果）</span>
-                <span v-else class="selection-scope">（跨页、跨筛选保留）</span>
+                {{ t('asset.selectedDeviceCount', { count: selectedCount }) }}
+                <span v-if="allSelected" class="selection-scope">{{ t('asset.allResultsScope') }}</span>
+                <span v-else class="selection-scope">{{ t('asset.retainedScope') }}</span>
               </span>
             </div>
             <div class="selection-action-bar-top__actions">
               <el-button size="small" :disabled="selectionBusy" @click="handleReviewSelection">
-                查看已选
+                {{ t('asset.reviewSelection') }}
               </el-button>
               <el-button size="small" :disabled="selectionBusy" @click="handleAddTag">
                 <i class="fa fa-tag" style="margin-right: 4px"></i>
-                添加标签
+                {{ t('asset.addTag') }}
               </el-button>
               <el-button
                 size="small"
@@ -207,7 +207,7 @@
                 @click="handleAddGroup"
               >
                 <i class="fa fa-folder" style="margin-right: 4px"></i>
-                添加分组
+                {{ t('asset.addGroup') }}
               </el-button>
               <el-dropdown
                 trigger="click"
@@ -215,27 +215,27 @@
                 @command="handleBatchActionCommand"
               >
                 <el-button size="small" :disabled="selectionBusy">
-                  更多操作
+                  {{ t('asset.moreActions') }}
                   <el-icon class="dropdown-arrow"><ArrowDown /></el-icon>
                 </el-button>
                 <template #dropdown>
                   <el-dropdown-menu>
-                    <el-dropdown-item command="edit" :icon="Edit">批量修改</el-dropdown-item>
-                    <el-dropdown-item command="online" :icon="Top">上线</el-dropdown-item>
-                    <el-dropdown-item command="offline" :icon="Bottom">下线</el-dropdown-item>
+                    <el-dropdown-item command="edit" :icon="Edit">{{ t('asset.batchEdit') }}</el-dropdown-item>
+                    <el-dropdown-item command="online" :icon="Top">{{ t('asset.bringOnline') }}</el-dropdown-item>
+                    <el-dropdown-item command="offline" :icon="Bottom">{{ t('asset.takeOffline') }}</el-dropdown-item>
                     <el-dropdown-item
                       command="delete"
                       :icon="Delete"
                       divided
                       class="batch-delete-menu-item"
                     >
-                      删除所选设备
+                      {{ t('asset.deleteSelectedDevices') }}
                     </el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
               <el-button text size="small" @click="resetSelectionState">
-                取消选择
+                {{ t('asset.clearSelection') }}
               </el-button>
             </div>
           </div>
@@ -245,9 +245,9 @@
                 <i class="fa fa-mouse-pointer"></i>
               </span>
               <div>
-                <div class="selection-hint-title">勾选设备后可进行批量操作</div>
+                <div class="selection-hint-title">{{ t('asset.selectionHint') }}</div>
                 <div class="selection-hint-description">
-                  支持批量修改、添加标签、分组、上下线及删除等操作
+                  {{ t('asset.batchActionsHint') }}
                 </div>
               </div>
             </div>
@@ -258,7 +258,7 @@
               @click="handleToggleSelectAll"
             >
               <i class="fa fa-check-double" style="margin-right: 4px"></i>
-              选择全部<span v-if="total > 0"> {{ total }} 台</span>
+              {{ total > 0 ? t('asset.selectAllCount', { count: total }) : t('asset.selectAll') }}
             </el-button>
           </div>
         </transition>
@@ -282,7 +282,7 @@
             />
 
             <!-- 1. 设备标识复合列 -->
-            <el-table-column label="设备标识" min-width="220" fixed="left">
+            <el-table-column :label="t('asset.deviceIdentity')" min-width="220" fixed="left">
               <template #default="{ row }">
                 <div class="composite-identity-cell">
                   <el-tag
@@ -295,7 +295,7 @@
                       class="status-dot-pulse"
                       :class="{ 'is-online': row.status === 1 }"
                     ></span>
-                    {{ row.status === 1 ? '在线' : '离线' }}
+                    {{ row.status === 1 ? t('asset.online') : t('asset.offlineDetail') }}
                   </el-tag>
                   <div class="identity-text">
                     <el-link
@@ -306,7 +306,7 @@
                     >
                       {{ getAssetDisplayName(row) }}
                     </el-link>
-                    <span class="ip-subtext">{{ row.IP || 'IP 未采集' }}</span>
+                    <span class="ip-subtext">{{ row.IP || t('asset.ipNotCollected') }}</span>
                   </div>
                 </div>
               </template>
@@ -350,7 +350,7 @@
             -->
 
             <!-- 4. 重启建议 -->
-            <el-table-column label="重启建议" width="110" align="left">
+            <el-table-column :label="t('asset.rebootAdvice')" width="110" align="left">
               <template #default="{ row }">
                 <el-tag
                   v-if="row.needReboot == 1"
@@ -360,7 +360,7 @@
                   class="reboot-tag"
                 >
                   <i class="fa fa-exclamation-triangle" style="margin-right: 2px"></i>
-                  待重启
+                  {{ t('asset.rebootPending') }}
                 </el-tag>
                 <el-tag
                   v-else-if="row.needReboot == 0"
@@ -369,14 +369,14 @@
                   effect="plain"
                   class="reboot-tag-none"
                 >
-                  无需重启
+                  {{ t('asset.noRebootNeeded') }}
                 </el-tag>
                 <span v-else class="placeholder-dash">-</span>
               </template>
             </el-table-column>
 
             <!-- 系统环境 -->
-            <el-table-column label="系统环境" min-width="160" show-overflow-tooltip>
+            <el-table-column :label="t('asset.systemEnvironment')" min-width="160" show-overflow-tooltip>
               <template #default="{ row }">
                 <div class="os-env-cell">
                   <i :class="[getOsIcon(row.os_distro), 'os-brand-icon']"></i>
@@ -389,10 +389,10 @@
             </el-table-column>
 
             <!-- 连通巡检 -->
-            <el-table-column label="连通巡检" min-width="190" align="left">
+            <el-table-column :label="t('asset.connectivityInspection')" min-width="190" align="left">
               <template #default="{ row }">
                 <div class="health-cell">
-                  <el-tooltip content="点击发起连通性诊断" placement="top" :enterable="false">
+                  <el-tooltip :content="t('asset.diagnoseConnectivity')" placement="top" :enterable="false">
                     <el-tag
                       :type="
                         row.CONN_LATEST_STATUS === '1'
@@ -421,12 +421,12 @@
                       <span style="margin-left: 4px">
                         {{
                           checkingConnIds.includes(row.id)
-                            ? '诊断中...'
+                            ? t('asset.diagnosing')
                             : row.CONN_LATEST_STATUS === '1'
-                              ? '正常'
+                              ? t('asset.normal')
                               : row.CONN_LATEST_STATUS === '0'
-                                ? '失联'
-                                : '未知'
+                                ? t('asset.disconnected')
+                                : t('common.unknown')
                         }}
                       </span>
                     </el-tag>
@@ -452,7 +452,7 @@
             </el-table-column>
 
             <!-- 责任人 -->
-            <el-table-column label="责任人" width="120" show-overflow-tooltip>
+            <el-table-column :label="t('asset.responsiblePerson')" width="120" show-overflow-tooltip>
               <template #default="{ row }">
                 <div v-if="row.负责人" class="owner-cell">
                   <el-avatar
@@ -469,20 +469,20 @@
             </el-table-column>
 
             <!-- 最后同步 -->
-            <el-table-column label="最后同步" width="180">
+            <el-table-column :label="t('asset.lastSyncShort')" width="180">
               <template #default="{ row }">
                 <span>{{ formatDateTime(row.updated_at) }}</span>
               </template>
             </el-table-column>
 
             <!-- 8. 操作 -->
-            <el-table-column label="操作" width="120" fixed="right">
+            <el-table-column :label="t('common.actions')" width="120" fixed="right">
               <template #default="{ row }">
                 <el-button text type="primary" size="small" @click="handleEditRow(row)">
-                  编辑
+                  {{ t('common.edit') }}
                 </el-button>
                 <el-button text type="primary" size="small" @click="handleHistory(row)">
-                  历史
+                  {{ t('asset.history') }}
                 </el-button>
               </template>
             </el-table-column>
@@ -507,7 +507,7 @@
 
     <el-drawer
       v-model="selectionReviewVisible"
-      title="已选设备"
+      :title="t('asset.selectedDevices')"
       size="520px"
       :close-on-click-modal="true"
     >
@@ -518,20 +518,20 @@
           type="error"
           :closable="false"
         >
-          <el-button link type="primary" @click="handleReviewSelection">重试</el-button>
+          <el-button link type="primary" @click="handleReviewSelection">{{ t('common.retry') }}</el-button>
         </el-alert>
         <template v-else>
-          <p>已选择 {{ selectedCount }} 台设备</p>
+          <p>{{ t('asset.selectedDeviceCount', { count: selectedCount }) }}</p>
           <el-table :data="selectionReviewPage" row-key="id">
-            <el-table-column label="设备" min-width="180">
+            <el-table-column :label="t('asset.device')" min-width="180">
               <template #default="{ row }">
                 <div>{{ getAssetDisplayName(row) }}</div>
-                <span class="selection-scope">{{ row.IP || 'IP 未采集' }}</span>
+                <span class="selection-scope">{{ row.IP || t('asset.ipNotCollected') }}</span>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="80">
+            <el-table-column :label="t('common.actions')" width="80">
               <template #default="{ row }">
-                <el-button link type="primary" @click="removeSelectedAsset(row)">移除</el-button>
+                <el-button link type="primary" @click="removeSelectedAsset(row)">{{ t('common.remove') }}</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -608,6 +608,9 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
+
 import { ref, computed, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -679,7 +682,7 @@ const tagOptions = computed(() => {
 
 // 树形组件配置
 const treeProps = {
-  label: 'name',
+  label: data => data.path === '/' ? t('asset.rootGroup') : data.name,
   children: 'children'
 }
 
@@ -747,7 +750,7 @@ const selectAllLoading = ref(false)
 const selectionBusy = computed(() => loading.value || selectAllLoading.value)
 const selectionReviewVisible = ref(false)
 const selectionReviewLoading = ref(false)
-const selectionReviewError = ref('')
+const selectionReviewError = messageRef('')
 const selectionReviewResolvedRows = ref([])
 const selectionReviewPageNumber = ref(1)
 let selectionRevision = 0
@@ -990,7 +993,7 @@ const resolveSelectedRowsForAction = async warningMessage => {
   } catch (error) {
     if (revision !== selectionRevision) return null
     console.error('加载全量设备选择失败:', error)
-    ElMessage.error('加载全量设备失败，请稍后重试')
+    ElMessage.error(t('asset.loadAllFailed'))
     return null
   } finally {
     selectAllLoading.value = false
@@ -1024,7 +1027,7 @@ const handleReviewSelection = async () => {
     )
       return
     console.error('加载已选设备失败:', error)
-    selectionReviewError.value = '加载已选设备失败，请重试'
+    selectionReviewError.value = message('asset.selectionLoadFailed')
   } finally {
     if (requestId === selectionReviewRequestId) selectionReviewLoading.value = false
   }
@@ -1167,7 +1170,7 @@ const loadAssetTypes = async () => {
     }
   } catch (error) {
     console.error('加载设备类型失败:', error)
-    ElMessage.error('加载设备类型失败')
+    ElMessage.error(t('asset.typesLoadFailed'))
   }
 }
 
@@ -1196,7 +1199,7 @@ const loadAssetList = async ({ preserveSelection = false } = {}) => {
     selectionReviewLoading.value = false
   }
   if (typeChanged && hasSelection.value) {
-    ElMessage.info('资产类型已变更，已清空之前选择的设备')
+    ElMessage.info(t('asset.typeSelectionCleared'))
   }
   if (!preserveSelection || typeChanged) {
     resetSelectionState()
@@ -1256,12 +1259,12 @@ const loadAssetList = async ({ preserveSelection = false } = {}) => {
     if (requestId !== assetListRequestId) return
     if (resolvingPreviousSelection) {
       console.error('保留原筛选已选设备失败:', error)
-      ElMessage.error('保留原筛选的已选设备失败，尚未应用新筛选，请重试')
+      ElMessage.error(t('asset.retainSelectionFailed'))
       return
     }
     tableData.value = []
     console.error('加载设备列表失败:', error)
-    ElMessage.error('加载设备列表失败')
+    ElMessage.error(t('asset.deviceListLoadFailed'))
   } finally {
     if (requestId === assetListRequestId) loading.value = false
   }
@@ -1342,7 +1345,7 @@ const handlePageChange = page => {
 }
 
 const handleEdit = async () => {
-  const rows = await resolveSelectedRowsForAction('请先选择要修改的设备')
+  const rows = await resolveSelectedRowsForAction(t('asset.selectEditDevices'))
   if (!rows?.length) return
   batchEditDialogVisible.value = true
 }
@@ -1352,7 +1355,7 @@ const handleBatchEditSaved = () => {
 }
 
 const handleAddTag = async () => {
-  const rows = await resolveSelectedRowsForAction('请先选择要添加标签的设备')
+  const rows = await resolveSelectedRowsForAction(t('asset.selectTagDevices'))
   if (!rows?.length) return
   addTagDialogVisible.value = true
 }
@@ -1363,7 +1366,7 @@ const handleAddTagSaved = () => {
 }
 
 const handleAddGroup = async () => {
-  const rows = await resolveSelectedRowsForAction('请先选择要添加分组的设备')
+  const rows = await resolveSelectedRowsForAction(t('asset.selectGroupDevices'))
   if (!rows?.length) return
   groupTargetIds.value = rows.map(row => row.id)
   groupTargetType.value = currentType.value
@@ -1376,9 +1379,9 @@ const handleAddGroupSaved = () => {
 }
 
 const handleOnline = async () => {
-  const rows = await resolveSelectedRowsForAction('请先选择要上线的设备')
+  const rows = await resolveSelectedRowsForAction(t('asset.selectOnlineDevices'))
   if (!rows?.length) return
-  ElMessageBox.confirm('是否将选中的设备设置为在线状态？', '上线确认', {
+  ElMessageBox.confirm(t('asset.onlineConfirmMessage'), t('asset.onlineConfirm'), {
     closeOnClickModal: false,
     closeOnPressEscape: false,
     type: 'warning'
@@ -1392,11 +1395,11 @@ const handleOnline = async () => {
             id: ids
           }
         })
-        ElMessage.success('上线成功')
+        ElMessage.success(t('asset.onlineSuccess'))
         loadAssetList()
       } catch (error) {
         console.error('上线失败:', error)
-        ElMessage.error(`上线失败: ${error.response?.data?.message || error.message}`)
+        ElMessage.error(t('asset.onlineFailedReason', { message: error.response?.data?.message || error.message }))
       }
     })
     .catch(() => {})
@@ -1412,11 +1415,11 @@ function removeCheckingId(id) {
 const handleCheckSingleConn = async row => {
   const ip = row.IP || row.ip
   try {
-    await ElMessageBox.confirm(`是否重新检查主机${ip}的连通性？`, '提示', {
+    await ElMessageBox.confirm(t('asset.checkHostConnectivity', { ip }), t('asset.prompt'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+      confirmButtonText: t('asset.ok'),
+      cancelButtonText: t('common.cancel'),
       type: 'warning'
     })
   } catch {
@@ -1443,11 +1446,11 @@ const handleCheckSingleConn = async row => {
     const result = Array.isArray(data) ? data[0] : data
 
     if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
-      ElMessage.success(`检查连通性任务已发起`)
+      ElMessage.success(t('asset.connectivitySubmitted'))
       pollJobStatus(result.runId, {
         interval: 5000,
-        successMessage: '连通性检查完成',
-        errorMessage: '连通性检查失败',
+        successMessage: () => t('asset.connectivityDone'),
+        errorMessage: () => t('asset.connectivityFailed'),
         onSuccess: () => {
           removeCheckingId(row.id)
           loadAssetList()
@@ -1460,27 +1463,27 @@ const handleCheckSingleConn = async row => {
         }
       })
     } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
-      ElMessage.success(`连通性检查完成`)
+      ElMessage.success(t('asset.connectivityDone'))
       removeCheckingId(row.id)
       loadAssetList()
     } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
       removeCheckingId(row.id)
-      ElMessage.error(result?.error || '连通性检查失败')
+      ElMessage.error(result?.error || t('asset.connectivityFailed'))
     } else {
-      ElMessage.success(`检查连通性任务已启动`)
+      ElMessage.success(t('asset.connectivityStarted'))
       removeCheckingId(row.id)
     }
   } catch (error) {
     removeCheckingId(row.id)
     console.error('检查连通性失败', error)
-    ElMessage.error('检查连通性失败')
+    ElMessage.error(t('asset.checkConnectivityError'))
   }
 }
 
 const handleOffline = async () => {
-  const rows = await resolveSelectedRowsForAction('请先选择要下线的设备')
+  const rows = await resolveSelectedRowsForAction(t('asset.selectOfflineDevices'))
   if (!rows?.length) return
-  ElMessageBox.confirm('是否将选中的设备设置为下线状态？', '下线确认', {
+  ElMessageBox.confirm(t('asset.offlineConfirmMessage'), t('asset.offlineConfirm'), {
     closeOnClickModal: false,
     closeOnPressEscape: false,
     type: 'warning'
@@ -1494,20 +1497,20 @@ const handleOffline = async () => {
             id: ids
           }
         })
-        ElMessage.success('下线成功')
+        ElMessage.success(t('asset.offlineSuccess'))
         loadAssetList()
       } catch (error) {
         console.error('下线失败:', error)
-        ElMessage.error(`下线失败: ${error.response?.data?.message || error.message}`)
+        ElMessage.error(t('asset.offlineFailedReason', { message: error.response?.data?.message || error.message }))
       }
     })
     .catch(() => {})
 }
 
 const handleDelete = async () => {
-  const rows = await resolveSelectedRowsForAction('请先选择要删除的设备')
+  const rows = await resolveSelectedRowsForAction(t('asset.selectDeleteDevices'))
   if (!rows?.length) return
-  ElMessageBox.confirm('是否确认删除选中的设备？此操作不可恢复！', '删除确认', {
+  ElMessageBox.confirm(t('asset.deleteDevicesConfirm'), t('asset.deleteConfirm'), {
     closeOnClickModal: false,
     closeOnPressEscape: false,
     type: 'warning'
@@ -1520,11 +1523,11 @@ const handleDelete = async () => {
             id: ids
           }
         })
-        ElMessage.success('删除成功')
+        ElMessage.success(t('asset.deleted'))
         loadAssetList()
       } catch (error) {
         console.error('删除失败:', error)
-        ElMessage.error(`删除失败: ${error.response?.data?.message || error.message}`)
+        ElMessage.error(t('asset.deleteFailedReason', { message: error.response?.data?.message || error.message }))
       }
     })
     .catch(() => {})

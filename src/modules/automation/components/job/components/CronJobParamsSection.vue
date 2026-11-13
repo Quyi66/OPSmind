@@ -11,7 +11,7 @@
       <template v-else>
         <el-input
           v-model="param.defaultValue"
-          :placeholder="`请输入${param.label || param.name}`"
+          :placeholder="t('automation.schedule.paramPlaceholder', { name: param.label || param.name })"
         />
       </template>
       <div v-if="param.description" class="param-desc">{{ param.description }}</div>
@@ -20,6 +20,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 
 defineProps({
@@ -32,7 +34,7 @@ defineProps({
 const hostSelectorOptions = {
   selectMode: 'host,group,tag,input,recently',
   selector: 'multiple',
-  label: '选择主机'
+  get label() { return t('automation.schedule.chooseHost') }
 }
 </script>
 

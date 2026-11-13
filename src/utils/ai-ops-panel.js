@@ -1,3 +1,6 @@
+import { watch } from 'vue'
+import { currentLocale, t } from '@/core/i18n'
+
 const PANEL_IDS = {
   root: 'ops-dify-bubble-root',
   panel: 'ops-dify-bubble-panel',
@@ -372,7 +375,7 @@ function buildIframeHtml() {
 
   return {
     signature: `${token || ''}::${difyBase || ''}`,
-    html: `<!doctype html><html lang="zh-CN"><head>
+    html: `<!doctype html><html lang="${currentLocale.value}"><head>
       <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
       <link rel="preconnect" href="${difyBase}" crossorigin>
       <style>
@@ -594,7 +597,7 @@ function buildPanelShell(titleText) {
   const closeButton = document.createElement('button')
   closeButton.id = PANEL_IDS.close
   closeButton.type = 'button'
-  closeButton.setAttribute('aria-label', '关闭 AI OPS 面板')
+  closeButton.setAttribute('aria-label', t('ai.closePanel'))
   closeButton.textContent = '×'
 
   const body = document.createElement('div')
@@ -602,6 +605,7 @@ function buildPanelShell(titleText) {
 
   const iframe = document.createElement('iframe')
   iframe.id = PANEL_IDS.iframe
+  iframe.title = t('ai.frameTitle')
   iframe.setAttribute('allow', 'fullscreen;microphone')
 
   header.appendChild(title)
@@ -629,6 +633,12 @@ function buildPanelShell(titleText) {
 
 function mountAiOpsPanelEvents(elements) {
   const { panel, header, closeButton, resizeHandles } = elements
+  cleanupTasks.push(watch(currentLocale, locale => {
+    closeButton.setAttribute('aria-label', t('ai.closePanel'))
+    elements.iframe.title = t('ai.frameTitle')
+    // Only update our iframe shell; preserve the chat document and its conversation.
+    elements.iframe.contentDocument?.documentElement?.setAttribute('lang', locale)
+  }))
 
   const handleHeaderPointerDown = event => {
     if (event.button !== 0) return

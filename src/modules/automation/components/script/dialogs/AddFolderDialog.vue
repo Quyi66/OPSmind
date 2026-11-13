@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    :title="isEdit ? '修改文件夹' : '新建文件夹'"
+    :title="isEdit ? t('automation.library.editFolder') : t('automation.library.newFolder')"
     width="500px"
     :close-on-click-modal="false"
     @closed="handleClosed"
@@ -9,13 +9,13 @@
   >
     <div class="folder-form">
       <div class="form-group">
-        <label class="control-label">文件夹名称</label>
+        <label class="control-label">{{ t('automation.library.folderName') }}</label>
         <div class="form-control-wrapper">
           <el-input v-model="form.name" :disabled="isEdit" class="code-input" maxlength="100" />
         </div>
       </div>
       <div class="form-group">
-        <label class="control-label">描述</label>
+        <label class="control-label">{{ t('automation.job.description') }}</label>
         <div class="form-control-wrapper">
           <el-input v-model="form.description" maxlength="200" />
         </div>
@@ -24,17 +24,19 @@
     <template #footer>
       <el-button type="primary" :disabled="!form.name" :loading="saving" @click="handleSubmit">
         <i class="fa fa-check me-1" />
-        确定
+        {{ t('automation.file.confirm') }}
       </el-button>
       <el-button @click="visible = false">
         <i class="fa fa-reply me-1" />
-        取消
+        {{ t('common.cancel') }}
       </el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as gfsApi from '@/modules/automation/api/gfs'
@@ -93,7 +95,7 @@ watch(
 // 提交
 async function handleSubmit() {
   if (!form.value.name) {
-    ElMessage.warning('请输入文件夹名称')
+    ElMessage.warning(t('automation.library.folderNameRequired'))
     return
   }
 
@@ -109,7 +111,7 @@ async function handleSubmit() {
         form.value.name,
         form.value.description
       )
-      ElMessage.success('修改成功')
+      ElMessage.success(t('automation.library.modified'))
     } else {
       await gfsApi.addFolder(
         {
@@ -120,12 +122,12 @@ async function handleSubmit() {
         form.value.name,
         form.value.description
       )
-      ElMessage.success('创建成功')
+      ElMessage.success(t('automation.schedule.created'))
     }
     visible.value = false
     emit('success')
   } catch (error) {
-    ElMessage.error(error?.message || '操作失败')
+    ElMessage.error(error?.message || t('automation.schedule.operationFailed'))
   } finally {
     saving.value = false
   }

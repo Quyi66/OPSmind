@@ -1,3 +1,5 @@
+import { t } from '@/core/i18n'
+
 /**
  * 作业轮询 Composable
  * 用于轮询作业执行状态，直到任务完成
@@ -5,6 +7,10 @@
 import { ref, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { apiService } from '@/core/api'
+
+function resolvePollingMessage(value) {
+  return typeof value === 'function' ? value() : value
+}
 
 /**
  * 作业状态常量
@@ -60,9 +66,9 @@ export function useJobPolling() {
    * @param {function} options.onError - 失败回调
    * @param {function} options.onTimeout - 超时回调
    * @param {function} options.onComplete - 完成回调（无论成功失败）
-   * @param {string} options.successMessage - 成功提示消息
-   * @param {string} options.errorMessage - 失败提示消息
-   * @param {string} options.timeoutMessage - 超时提示消息
+   * @param {string|function} options.successMessage - 成功提示消息
+   * @param {string|function} options.errorMessage - 失败提示消息
+   * @param {string|function} options.timeoutMessage - 超时提示消息
    * @param {boolean} options.showMessage - 是否显示消息，默认 true
    */
   async function startPolling(runId, options = {}) {
@@ -74,9 +80,9 @@ export function useJobPolling() {
       onError,
       onTimeout,
       onComplete,
-      successMessage = '任务执行成功',
-      errorMessage = '任务执行失败',
-      timeoutMessage = '任务执行超时',
+      successMessage = () => t('common.pollingSuccess'),
+      errorMessage = () => t('common.pollingFailed'),
+      timeoutMessage = () => t('common.pollingTimeout'),
       showMessage = true
     } = options
 
@@ -107,7 +113,7 @@ export function useJobPolling() {
             isPolling.value = false
             currentRunId = null
             if (showMessage) {
-              ElMessage.warning(timeoutMessage)
+              ElMessage.warning(resolvePollingMessage(timeoutMessage))
             }
             onTimeout?.(result)
             onComplete?.(result)
@@ -122,18 +128,18 @@ export function useJobPolling() {
 
           if (isJobSuccess(status)) {
             if (showMessage) {
-              ElMessage.success(successMessage)
+              ElMessage.success(resolvePollingMessage(successMessage))
             }
             onSuccess?.(result)
           } else if (status === JOB_STATUS.FAILED || status === 'ERROR') {
             if (showMessage) {
-              ElMessage.error(result?.error || errorMessage)
+              ElMessage.error(result?.error || resolvePollingMessage(errorMessage))
             }
             onError?.(result)
           } else {
             // 其他状态视为成功
             if (showMessage) {
-              ElMessage.success(successMessage)
+              ElMessage.success(resolvePollingMessage(successMessage))
             }
             onSuccess?.(result)
           }
@@ -146,7 +152,7 @@ export function useJobPolling() {
         isPolling.value = false
         currentRunId = null
         if (showMessage) {
-          ElMessage.error('获取任务状态失败')
+          ElMessage.error(t('common.pollingStatusFailed'))
         }
         onError?.(error)
         onComplete?.(null)
@@ -194,8 +200,8 @@ export async function pollJobStatus(runId, options = {}) {
     onSuccess,
     onError,
     onComplete,
-    successMessage = '任务执行成功',
-    errorMessage = '任务执行失败',
+    successMessage = () => t('common.pollingSuccess'),
+    errorMessage = () => t('common.pollingFailed'),
     showMessage = true
   } = options
 
@@ -216,12 +222,12 @@ export async function pollJobStatus(runId, options = {}) {
         // 任务结束
         if (isJobSuccess(status)) {
           if (showMessage) {
-            ElMessage.success(successMessage)
+            ElMessage.success(resolvePollingMessage(successMessage))
           }
           onSuccess?.(result)
         } else if (status === JOB_STATUS.FAILED) {
           if (showMessage) {
-            ElMessage.error(errorMessage)
+            ElMessage.error(resolvePollingMessage(errorMessage))
           }
           onError?.(result)
         }
@@ -231,7 +237,7 @@ export async function pollJobStatus(runId, options = {}) {
     } catch (error) {
       console.error('Failed to poll job status:', error)
       if (showMessage) {
-        ElMessage.error('获取任务状态失败')
+        ElMessage.error(t('common.pollingStatusFailed'))
       }
       onError?.(error)
       onComplete?.(null)

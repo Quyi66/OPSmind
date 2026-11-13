@@ -14,41 +14,41 @@
       type="error"
       :closable="false"
     >
-      <el-button link type="primary" @click="initializeFromJob">重新加载工具</el-button>
+      <el-button link type="primary" @click="initializeFromJob">{{ t('automation.schedule.reloadTool') }}</el-button>
     </el-alert>
     <el-form
       ref="formRef"
       v-loading="initializing"
       :model="formData"
-      :rules="formRules"
+      :rules="formRules" :validate-on-rule-change="false"
       :disabled="initializing || !!initializationError"
-      label-width="140px"
+      :label-width="currentLocale === 'en-US' ? '180px' : '140px'"
     >
-      <h4 class="form-section__title">执行内容</h4>
-      <el-form-item label="任务名称" prop="jobDesc">
-        <el-input v-model="formData.jobDesc" placeholder="例如：每日服务器巡检" maxlength="200" />
+      <h4 class="form-section__title">{{ t('automation.schedule.executionContent') }}</h4>
+      <el-form-item :label="t('automation.schedule.taskName')" prop="jobDesc">
+        <el-input v-model="formData.jobDesc" :placeholder="t('automation.schedule.taskNameExample')" maxlength="200" />
       </el-form-item>
 
-      <el-form-item label="工具类型" prop="jobType">
+      <el-form-item :label="t('automation.schedule.toolType')" prop="jobType">
         <el-select
           v-model="formData.jobType"
-          placeholder="请选择运维工具类型"
+          :placeholder="t('automation.schedule.selectType')"
           clearable
           @change="handleJobTypeChange"
         >
-          <el-option label="脚本任务" value="script" />
-          <el-option label="REST接口" value="rest" />
-          <el-option label="巡检任务" value="audit" />
-          <el-option label="命令任务" value="cmd" />
-          <el-option label="流程任务" value="flows" />
+          <el-option :label="t('automation.schedule.scriptTask')" value="script" />
+          <el-option :label="t('automation.schedule.restApi')" value="rest" />
+          <el-option :label="t('automation.schedule.inspectionTask')" value="audit" />
+          <el-option :label="t('automation.schedule.commandTask')" value="cmd" />
+          <el-option :label="t('automation.schedule.flowTask')" value="flows" />
         </el-select>
       </el-form-item>
 
-      <el-form-item label="执行工具" prop="jobId">
+      <el-form-item :label="t('automation.schedule.executionTool')" prop="jobId">
         <el-select
           v-if="!isMultipleJobType"
           v-model="formData.jobId"
-          placeholder="请选择运维工具"
+          :placeholder="t('automation.schedule.selectTool')"
           filterable
           @change="handleJobChange"
         >
@@ -59,7 +59,7 @@
             :value="job.id"
           />
         </el-select>
-        <el-select v-else v-model="multipleJobIds" placeholder="请选择运维工具" multiple filterable>
+        <el-select v-else v-model="multipleJobIds" :placeholder="t('automation.schedule.selectTool')" multiple filterable>
           <el-option
             v-for="job in jobList"
             :key="job.id"
@@ -70,11 +70,11 @@
       </el-form-item>
 
       <div class="form-section">
-        <h4 class="form-section__title">执行时间</h4>
-        <el-form-item label="Cron 表达式" prop="scheduleConf">
-          <el-input v-model="formData.scheduleConf" placeholder="例：0 0 12 * * ?" maxlength="100">
+        <h4 class="form-section__title">{{ t('automation.schedule.executionTime') }}</h4>
+        <el-form-item :label="t('automation.schedule.expression')" prop="scheduleConf">
+          <el-input v-model="formData.scheduleConf" :placeholder="t('automation.schedule.expressionExample')" maxlength="100">
             <template #append>
-              <el-button @click="cronGeneratorVisible = true" :icon="Calendar">生成器</el-button>
+              <el-button @click="cronGeneratorVisible = true" :icon="Calendar">{{ t('automation.schedule.generator') }}</el-button>
             </template>
           </el-input>
           <div class="form-help">
@@ -84,9 +84,9 @@
               :disabled="!formData.scheduleConf?.trim()"
               @click="nextTimeVisible = true"
             >
-              预览执行时间
+              {{ t('automation.schedule.previewTimes') }}
             </el-button>
-            <span>预览不会保存或更改执行计划。</span>
+            <span>{{ t('automation.schedule.previewHint') }}</span>
           </div>
         </el-form-item>
       </div>
@@ -94,10 +94,10 @@
       <div v-if="showParamsSection" class="form-section">
         <div class="form-section__header">
           <div>
-            <h4 class="form-section__title">运行参数</h4>
-            <p class="form-section__subtitle">以下参数会与当前定时任务一并保存</p>
+            <h4 class="form-section__title">{{ t('automation.schedule.params') }}</h4>
+            <p class="form-section__subtitle">{{ t('automation.schedule.paramsHint') }}</p>
           </div>
-          <span class="form-section__count">{{ jobParams.length }} 项</span>
+          <span class="form-section__count">{{ t('automation.schedule.itemCount', { count: jobParams.length }) }}</span>
         </div>
         <CronJobParamsSection :params="jobParams" />
       </div>
@@ -105,22 +105,22 @@
       <el-collapse v-model="expandedSections" class="advanced-settings">
         <el-collapse-item name="advanced">
           <template #title>
-            <span>高级设置</span>
+            <span>{{ t('automation.schedule.advancedSettings') }}</span>
             <span class="advanced-settings__summary">
-              {{ formData.logOutput === '0' ? '输出日志' : '不输出日志' }} ·
-              {{ formData.isEncrypt === '0' ? '参数加密' : '参数不加密' }}
+              {{ formData.logOutput === '0' ? t('automation.schedule.outputLogs') : t('automation.schedule.noOutputLogs') }} ·
+              {{ formData.isEncrypt === '0' ? t('automation.schedule.encryptParams') : t('automation.schedule.noEncryptParams') }}
             </span>
           </template>
-          <el-form-item label="输出日志" prop="logOutput">
+          <el-form-item :label="t('automation.schedule.outputLogs')" prop="logOutput">
             <el-select v-model="formData.logOutput">
-              <el-option label="不输出" value="1" />
-              <el-option label="输出" value="0" />
+              <el-option :label="t('automation.schedule.noOutput')" value="1" />
+              <el-option :label="t('automation.schedule.output')" value="0" />
             </el-select>
           </el-form-item>
-          <el-form-item label="参数加密" prop="isEncrypt">
+          <el-form-item :label="t('automation.schedule.encryptParams')" prop="isEncrypt">
             <el-select v-model="formData.isEncrypt">
-              <el-option label="不加密" value="1" />
-              <el-option label="加密" value="0" />
+              <el-option :label="t('automation.schedule.noEncryption')" value="1" />
+              <el-option :label="t('automation.schedule.encryption')" value="0" />
             </el-select>
           </el-form-item>
         </el-collapse-item>
@@ -130,14 +130,14 @@
     <template #footer>
       <div class="dialog-footer">
         <div class="dialog-footer__spacer"></div>
-        <el-button @click="visible = false">取消</el-button>
+        <el-button @click="visible = false">{{ t('common.cancel') }}</el-button>
         <el-button
           type="primary"
           :loading="submitting"
           :disabled="!isFormValid || initializing || !!initializationError"
           @click="handleSubmit"
         >
-          保存
+          {{ t('common.save') }}
         </el-button>
       </div>
     </template>
@@ -152,12 +152,14 @@
       v-if="nextTimeVisible"
       v-model="nextTimeVisible"
       :schedule-conf="formData.scheduleConf"
-      empty-description="当前表达式没有可预览的执行时间"
+      :empty-description="t('automation.schedule.noPreviewTimes')"
     />
   </el-dialog>
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+
 import { ref, computed, watch } from 'vue'
 import { Calendar } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
@@ -193,7 +195,7 @@ const visible = computed({
 })
 
 const title = computed(() => {
-  return props.editingId ? '编辑定时任务' : '新增定时任务'
+  return props.editingId ? t('automation.schedule.editTask') : t('automation.schedule.newTask')
 })
 
 const cronGeneratorVisible = ref(false)
@@ -243,7 +245,7 @@ const showParamsSection = computed(() => {
  */
 function handleCronConfirm(cronExpression) {
   formData.value.scheduleConf = cronExpression
-  ElMessage.success('CRON表达式已设置')
+  ElMessage.success(t('automation.schedule.expressionSet'))
 }
 </script>
 

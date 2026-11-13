@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="新建脚本"
+    :title="t('automation.library.newScript')"
     width="800px"
     :close-on-click-modal="false"
     @closed="handleClosed"
@@ -9,24 +9,24 @@
   >
     <div class="script-form">
       <div class="form-group">
-        <label class="control-label">保存路径</label>
+        <label class="control-label">{{ t('automation.library.savePath') }}</label>
         <div class="form-control-wrapper">
           <div class="path-preview">{{ dirLabel }}</div>
         </div>
       </div>
       <div class="form-group">
-        <label class="control-label">脚本名称</label>
+        <label class="control-label">{{ t('automation.library.scriptName') }}</label>
         <div class="form-control-wrapper">
           <el-input
             v-model="form.name"
-            placeholder="例如: deploy.sh"
+            :placeholder="t('automation.library.scriptNameExample')"
             class="code-input"
             maxlength="100"
           />
         </div>
       </div>
       <div class="form-group">
-        <label class="control-label">脚本内容</label>
+        <label class="control-label">{{ t('automation.library.scriptContents') }}</label>
         <div class="form-control-wrapper">
           <div class="code-editor-wrapper">
             <div class="line-numbers" ref="lineNumbersRef">
@@ -45,9 +45,9 @@
       </div>
       <div v-if="repoType === 'git'" class="form-group">
         <label class="control-label">
-          参数配置
+          {{ t('automation.library.parameterConfig') }}
           <el-tooltip
-            content="如果文件支持配置（例如命令行执行参数），可以在这里填写"
+            :content="t('automation.library.parameterConfigHint')"
             placement="top"
           >
             <i class="fa fa-info-circle text-muted" />
@@ -59,9 +59,9 @@
       </div>
       <div v-if="repoType === 'git'" class="form-group">
         <label class="control-label">
-          说明
+          {{ t('automation.library.description') }}
           <el-tooltip
-            content="可以在这里填写文件的用途、目的、使用方法等描述信息，便于使用者理解这个文件"
+            :content="t('automation.library.descriptionHint')"
             placement="top"
           >
             <i class="fa fa-info-circle text-muted" />
@@ -80,17 +80,19 @@
         @click="handleSubmit"
       >
         <i class="fa fa-check me-1" />
-        确定
+        {{ t('automation.file.confirm') }}
       </el-button>
       <el-button @click="visible = false">
         <i class="fa fa-reply me-1" />
-        取消
+        {{ t('common.cancel') }}
       </el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed, watch, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as gfsApi from '@/modules/automation/api/gfs'
@@ -154,11 +156,11 @@ function updateLineNumbers() {
 // 提交
 async function handleSubmit() {
   if (!form.value.name) {
-    ElMessage.warning('请输入脚本名称')
+    ElMessage.warning(t('automation.library.scriptNameRequired'))
     return
   }
   if (!form.value.content) {
-    ElMessage.warning('请输入脚本内容')
+    ElMessage.warning(t('automation.library.scriptContentRequired'))
     return
   }
 
@@ -173,11 +175,11 @@ async function handleSubmit() {
       description: form.value.description,
       config: form.value.config
     })
-    ElMessage.success('创建成功')
+    ElMessage.success(t('automation.schedule.created'))
     visible.value = false
     emit('success')
   } catch (error) {
-    ElMessage.error(error?.message || '创建失败')
+    ElMessage.error(error?.message || t('automation.job.createFailed'))
   } finally {
     saving.value = false
   }

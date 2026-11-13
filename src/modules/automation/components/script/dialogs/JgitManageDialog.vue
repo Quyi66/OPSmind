@@ -1,20 +1,20 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="JGit管理"
+    :title="t('automation.library.jgitManage')"
     width="700px"
     :close-on-click-modal="false"
     @closed="handleClosed"
     :close-on-press-escape="false"
   >
     <el-form label-width="100px">
-      <el-form-item label="JGit信息">
+      <el-form-item :label="t('automation.library.jgitInfo')">
         <div class="code-editor-wrapper">
           <div class="code-editor">
             <div class="line-numbers">
               <div v-for="n in lineCount" :key="n" class="line-number">{{ n }}</div>
             </div>
-            <textarea v-model="jgitInfo" class="code-textarea" readonly placeholder="加载中..." />
+            <textarea v-model="jgitInfo" class="code-textarea" readonly :placeholder="t('automation.file.loading')" />
           </div>
         </div>
       </el-form-item>
@@ -24,13 +24,13 @@
       <div class="dialog-footer">
         <el-button type="danger" :loading="resetting" @click="handleReset">
           <i class="fa fa-undo-alt" />
-          重置JGit
+          {{ t('automation.library.resetJgit') }}
         </el-button>
         <el-button type="warning" :loading="repairing" @click="handleRepair">
           <i class="fa fa-tools" />
-          修复
+          {{ t('automation.library.repair') }}
         </el-button>
-        <el-button type="primary" :loading="refreshing" @click="handleRefresh" title="刷新">
+        <el-button type="primary" :loading="refreshing" @click="handleRefresh" :title="t('common.refresh')">
           <i class="fa fa-sync-alt" />
         </el-button>
       </div>
@@ -39,6 +39,9 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
+
 import { ref, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import * as gfsApi from '@/modules/automation/api/gfs'
@@ -61,7 +64,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'success'])
 
 const dialogVisible = ref(false)
-const jgitInfo = ref('')
+const jgitInfo = messageRef('')
 const resetting = ref(false)
 const repairing = ref(false)
 const refreshing = ref(false)
@@ -93,14 +96,14 @@ async function loadJgitInfo() {
     const data = await gfsApi.getJgitInfo(props.repoType, props.repo)
     jgitInfo.value = JSON.stringify(data, null, 4)
   } catch (error) {
-    jgitInfo.value = `加载失败: ${error?.message || '未知错误'}`
+    jgitInfo.value = message('automation.library.jgitLoadFailed', () => ({ reason: error?.message || t('automation.file.unknownError') }))
   }
 }
 
 // 重置 JGit
 async function handleReset() {
   try {
-    await ElMessageBox.confirm('确定重置JGit存储区吗？该操作将清除本地JGit缓存数据。', '重置确认', {
+    await ElMessageBox.confirm(t('automation.library.resetJgitConfirm'), t('automation.library.resetTitle'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning'
@@ -112,11 +115,11 @@ async function handleReset() {
   resetting.value = true
   try {
     await gfsApi.resetJgit(props.repoType, props.repo)
-    ElMessage.success('JGit重置成功')
+    ElMessage.success(t('automation.library.jgitReset'))
     loadJgitInfo()
     emit('success')
   } catch (error) {
-    ElMessage.error(error?.message || 'JGit重置失败')
+    ElMessage.error(error?.message || t('automation.library.jgitResetFailed'))
   } finally {
     resetting.value = false
   }
@@ -127,11 +130,11 @@ async function handleRepair() {
   repairing.value = true
   try {
     await gfsApi.repairJgit(props.repo)
-    ElMessage.success('JGit修复成功')
+    ElMessage.success(t('automation.library.jgitRepaired'))
     loadJgitInfo()
     emit('success')
   } catch (error) {
-    ElMessage.error(error?.message || 'JGit修复失败')
+    ElMessage.error(error?.message || t('automation.library.jgitRepairFailed'))
   } finally {
     repairing.value = false
   }
@@ -142,7 +145,7 @@ async function handleRefresh() {
   refreshing.value = true
   try {
     await loadJgitInfo()
-    ElMessage.success('刷新成功')
+    ElMessage.success(t('automation.library.refreshed'))
   } finally {
     refreshing.value = false
   }

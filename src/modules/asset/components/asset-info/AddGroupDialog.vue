@@ -1,32 +1,32 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="添加分组"
+    :title="t('asset.addGroup')"
     width="480px"
     :close-on-click-modal="false"
     :close-on-press-escape="false"
     :show-close="!saving"
     @closed="handleClosed"
   >
-    <p>将为 {{ ciIds.length }} 台设备添加分组</p>
-    <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top">
-      <el-form-item label="操作" prop="operate">
+    <p>{{ t('asset.groupTargetCount', { count: ciIds.length }) }}</p>
+    <el-form ref="formRef" :model="formData" :rules="formRules" :validate-on-rule-change="false" label-position="top">
+      <el-form-item :label="t('common.actions')" prop="operate">
         <el-radio-group v-model="formData.operate">
-          <el-radio value="new">新建</el-radio>
-          <el-radio value="select">选择已有</el-radio>
+          <el-radio value="new">{{ t('asset.new') }}</el-radio>
+          <el-radio value="select">{{ t('asset.selectExisting') }}</el-radio>
         </el-radio-group>
       </el-form-item>
 
       <!-- 新建分组 -->
       <template v-if="formData.operate === 'new'">
-        <el-form-item label="分组名称" prop="name">
-          <el-input v-model="formData.name" placeholder="请输入分组名称" style="width: 100%" />
+        <el-form-item :label="t('asset.groupName')" prop="name">
+          <el-input v-model="formData.name" :placeholder="t('asset.groupNameRequired')" style="width: 100%" />
         </el-form-item>
 
-        <el-form-item label="上级分组" prop="parentId">
+        <el-form-item :label="t('asset.parentGroup')" prop="parentId">
           <el-select
             v-model="formData.parentId"
-            placeholder="请选择"
+            :placeholder="t('asset.select')"
             style="width: 100%"
             :loading="loadingGroups"
           >
@@ -41,10 +41,10 @@
       </template>
 
       <!-- 选择已有分组 -->
-      <el-form-item v-if="formData.operate === 'select'" label="已有分组" prop="id">
+      <el-form-item v-if="formData.operate === 'select'" :label="t('asset.existingGroup')" prop="id">
         <el-select
           v-model="formData.id"
-          placeholder="请选择"
+          :placeholder="t('asset.select')"
           style="width: 100%"
           :loading="loadingGroups"
         >
@@ -59,13 +59,16 @@
     </el-form>
 
     <template #footer>
-      <el-button :disabled="saving" @click="visible = false">取消</el-button>
-      <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
+      <el-button :disabled="saving" @click="visible = false">{{ t('common.cancel') }}</el-button>
+      <el-button type="primary" :loading="saving" @click="handleSave">{{ t('common.save') }}</el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { useLocalizedValidation } from '@/core/i18n/validation'
+
 import { ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { assetApi } from '../../api'
@@ -95,6 +98,7 @@ const visible = computed({
 })
 
 const formRef = ref()
+useLocalizedValidation(formRef)
 const formData = ref({
   operate: 'select',
   name: '',
@@ -104,14 +108,14 @@ const formData = ref({
 
 // 动态验证规则
 const formRules = computed(() => ({
-  operate: [{ required: true, message: '请选择操作', trigger: 'change' }],
+  operate: [{ required: true, message: t('asset.selectOperation'), trigger: 'change' }],
   name:
     formData.value.operate === 'new'
-      ? [{ required: true, message: '请输入分组名称', trigger: 'blur' }]
+      ? [{ required: true, message: t('asset.groupNameRequired'), trigger: 'blur' }]
       : [],
   id:
     formData.value.operate === 'select'
-      ? [{ required: true, message: '请选择已有分组', trigger: 'change' }]
+      ? [{ required: true, message: t('asset.selectExistingGroup'), trigger: 'change' }]
       : []
 }))
 
@@ -127,7 +131,7 @@ const loadExistingGroups = async () => {
     existingGroups.value = res?.records || []
   } catch (error) {
     console.error('加载分组列表失败:', error)
-    ElMessage.error('加载分组列表失败')
+    ElMessage.error(t('asset.groupsLoadFailed'))
   } finally {
     loadingGroups.value = false
   }
@@ -144,7 +148,7 @@ const handleSave = async () => {
 
   if (saving.value) return
   if (props.ciIds.length === 0) {
-    ElMessage.warning('请选择要添加分组的资产')
+    ElMessage.warning(t('asset.selectAssetsGroup'))
     return
   }
 
@@ -176,12 +180,12 @@ const handleSave = async () => {
     )
     throwIfWorkflowFailed(response)
 
-    ElMessage.success('添加分组成功')
+    ElMessage.success(t('asset.groupAdded'))
     visible.value = false
     emit('saved')
   } catch (error) {
     console.error('添加分组失败:', error)
-    ElMessage.error(`添加分组失败: ${error.response?.data?.message || error.message}`)
+    ElMessage.error(t('asset.addGroupFailedReason', { message: error.response?.data?.message || error.message }))
   } finally {
     saving.value = false
   }

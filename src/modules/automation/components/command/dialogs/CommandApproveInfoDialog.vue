@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="审核详情"
+    :title="t('automation.command.reviewDetails')"
     width="600px"
     :close-on-click-modal="true"
     destroy-on-close
@@ -9,19 +9,19 @@
   >
     <div v-if="command" class="approve-info">
       <div class="info-item">
-        <label>命令名称</label>
+        <label>{{ t('automation.command.name') }}</label>
         <div class="value">{{ command.name }}</div>
       </div>
 
       <div class="info-item">
-        <label>语法类型</label>
+        <label>{{ t('automation.command.syntaxType') }}</label>
         <div class="value">
           <el-tag size="small" type="info">{{ command.type || '-' }}</el-tag>
         </div>
       </div>
 
       <div class="info-item">
-        <label>当前状态</label>
+        <label>{{ t('automation.list.currentStatus') }}</label>
         <div class="value">
           <el-tag :type="getStatusType(command.status)" size="default">
             {{ getStatusText(command.status) }}
@@ -30,54 +30,56 @@
       </div>
 
       <div v-if="command.command" class="info-item">
-        <label>已发布内容</label>
+        <label>{{ t('automation.command.publishedContent') }}</label>
         <div class="code-block">
           <pre>{{ command.command }}</pre>
         </div>
       </div>
 
       <div v-if="command.unapprovedCommand" class="info-item">
-        <label>待审核内容</label>
+        <label>{{ t('automation.command.pendingContent') }}</label>
         <div class="code-block pending">
           <pre>{{ command.unapprovedCommand }}</pre>
         </div>
       </div>
 
       <div v-if="command.unapprovedReason" class="info-item">
-        <label>审核原因</label>
+        <label>{{ t('automation.command.reviewReason') }}</label>
         <div class="reason-block">
           {{ command.unapprovedReason }}
         </div>
       </div>
 
       <div class="info-item">
-        <label>创建人</label>
+        <label>{{ t('automation.command.createdBy') }}</label>
         <div class="value">{{ command.createdBy || '-' }}</div>
       </div>
 
       <div v-if="command.checkBy" class="info-item">
-        <label>审核人</label>
+        <label>{{ t('automation.command.reviewer') }}</label>
         <div class="value">{{ command.checkBy }}</div>
       </div>
 
       <div class="info-item">
-        <label>创建时间</label>
+        <label>{{ t('automation.command.createdAt') }}</label>
         <div class="value">{{ formatDate(command.createdAt) }}</div>
       </div>
 
       <div v-if="command.updatedAt" class="info-item">
-        <label>更新时间</label>
+        <label>{{ t('automation.command.updatedAt') }}</label>
         <div class="value">{{ formatDate(command.updatedAt) }}</div>
       </div>
     </div>
 
     <template #footer>
-      <el-button @click="handleClose">关闭</el-button>
+      <el-button @click="handleClose">{{ t('common.close') }}</el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { computed } from 'vue'
 import { getCommandStatusInfo } from '@/modules/automation/api/command'
 

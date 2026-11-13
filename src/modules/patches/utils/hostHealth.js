@@ -1,3 +1,5 @@
+import { t } from '@/core/i18n'
+
 /**
  * 主机健康巡检数据归一化与格式化工具函数
  */
@@ -132,7 +134,7 @@ export function getHealthStatusMeta(status) {
   return (
     HEALTH_STATUS_MAP[status] || {
       value: status || 'UNCHECKED',
-      label: status || '未知',
+      label: status || t('common.unknown'),
       description: '',
       tagType: 'info',
       cardVariant: 'info',
@@ -148,7 +150,7 @@ export function getHealthItemLevelMeta(level) {
   return (
     HEALTH_ITEM_LEVEL_MAP[level] || {
       value: level || 'NORMAL',
-      label: level || '正常',
+      label: level || t('asset.health.normal'),
       tagType: 'info'
     }
   )
@@ -161,7 +163,7 @@ export function getLatestRunStatusMeta(status) {
   return (
     LATEST_RUN_STATUS_MAP[status] || {
       value: status || '',
-      label: status || '未知',
+      label: status || t('common.unknown'),
       tagType: 'info'
     }
   )
@@ -230,7 +232,7 @@ export function formatHostScore(row) {
   ) {
     return '—'
   }
-  return `${row.score} 分`
+  return t('asset.health.scoreValue', { score: row.score })
 }
 
 /**
@@ -238,17 +240,20 @@ export function formatHostScore(row) {
  */
 export function formatHostRiskSummary(row) {
   if (!row || row.status === 'UNCHECKED') {
-    return '暂未执行过巡检'
+    return t('asset.health.notRunYet')
   }
   const risks = Array.isArray(row.risks) ? row.risks : []
   if (!risks.length) {
     if (row.status === 'UNREACHABLE') {
-      return '主机不可达或巡检脚本执行失败'
+      return t('asset.health.unreachableRisk')
     }
-    return '全部检查项正常，无风险提示'
+    return t('asset.health.noRisk')
   }
   if (risks.length === 1) {
     return risks[0]
   }
-  return `共 ${risks.length} 项风险：${risks.join('；')}`
+  return t('asset.health.riskSummary', {
+    count: risks.length,
+    risks: risks.join(t('asset.health.riskSeparator'))
+  })
 }

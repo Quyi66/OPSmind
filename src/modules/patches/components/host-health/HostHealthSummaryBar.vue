@@ -1,5 +1,5 @@
 <template>
-  <section v-loading="loading" class="health-overview mb-3" aria-label="主机健康概览">
+  <section v-loading="loading" class="health-overview mb-3" :aria-label="t('asset.health.overview')">
     <!-- 主体：左侧健康评分仪表盘卡片 + 右侧资产统计卡片 -->
     <div class="overview-grid">
       <!-- 1. 顶部健康概览卡片 (仅环形仪表盘使用渐变，其余保持纯净白底) -->
@@ -50,7 +50,7 @@
           <div class="score-dial-center">
             <div class="score-number-group" :class="{ 'is-three-digits': isThreeDigits }">
               <strong class="score-dial-val">{{ hasScore ? summary.avgScore : '—' }}</strong>
-              <span v-if="hasScore" class="score-dial-unit">分</span>
+              <span v-if="hasScore" class="score-dial-unit">{{ t('asset.health.scoreUnit') }}</span>
             </div>
           </div>
         </div>
@@ -58,11 +58,11 @@
         <!-- 评分描述与元信息 -->
         <div class="score-meta-block">
           <div class="meta-row-header">
-            <span class="meta-title">参评主机平均健康分</span>
+            <span class="meta-title">{{ t('asset.health.averageScore') }}</span>
             <el-tooltip
               placement="top"
               effect="dark"
-              :content="`平均分仅基于已连通巡检的有效主机计算（当前共 ${scoredHostsCount.toLocaleString()} 台）。不可达（${unreachableCount.toLocaleString()} 台）及未巡检主机不参与平均分计算。`"
+              :content="t('asset.health.averageHint', { scored: scoredHostsCount.toLocaleString(currentLocale), unreachable: unreachableCount.toLocaleString(currentLocale) })"
             >
               <i class="far fa-question-circle score-rule-tip-icon" aria-hidden="true"></i>
             </el-tooltip>
@@ -73,32 +73,32 @@
 
           <!-- 参评与纳管基数 -->
           <div class="meta-row-hosts">
-            <span class="hosts-stat-item" :title="`有效参评主机：${scoredHostsCount} 台`">
-              <span class="hosts-label">参评主机:</span>
-              <strong class="hosts-val">{{ scoredHostsCount.toLocaleString() }}</strong>
-              <span class="hosts-unit">台</span>
+            <span class="hosts-stat-item" :title="t('asset.health.scoredHostsHint', { count: scoredHostsCount })">
+              <span class="hosts-label">{{ t('asset.health.scoredHostsLabel') }}</span>
+              <strong class="hosts-val">{{ scoredHostsCount.toLocaleString(currentLocale) }}</strong>
+              <span class="hosts-unit">{{ t('asset.health.hostUnit') }}</span>
             </span>
             <span class="hosts-sep">|</span>
             <button
               type="button"
               class="hosts-stat-btn"
               :class="{ 'is-active': !activeStatus }"
-              title="点击查看/重置为全部状态主机"
+              :title="t('asset.health.allStatusHint')"
               @click="emit('select-status', '')"
             >
-              <span class="hosts-label">纳管主机:</span>
-              <strong class="hosts-val">{{ totalHostsCount.toLocaleString() }}</strong>
-              <span class="hosts-unit">台</span>
+              <span class="hosts-label">{{ t('asset.health.managedHostsLabel') }}</span>
+              <strong class="hosts-val">{{ totalHostsCount.toLocaleString(currentLocale) }}</strong>
+              <span class="hosts-unit">{{ t('asset.health.hostUnit') }}</span>
             </button>
-            <span v-if="!activeStatus" class="hosts-all-pill">全量</span>
+            <span v-if="!activeStatus" class="hosts-all-pill">{{ t('asset.health.allHosts') }}</span>
             <button
               v-else
               type="button"
               class="hosts-reset-btn"
-              title="点击重置，查看全部状态主机"
+              :title="t('asset.health.resetStatusHint')"
               @click="emit('select-status', '')"
             >
-              <i class="fas fa-undo-alt me-1"></i>重置
+              <i class="fas fa-undo-alt me-1"></i>{{ t('common.reset') }}
             </button>
           </div>
 
@@ -106,8 +106,8 @@
           <div class="meta-row-run">
             <template v-if="summary.latestRun">
               <span class="run-dot" :class="`is-${summary.latestRun.status}`"></span>
-              <span class="run-label">最近巡检:</span>
-              <span class="run-time" :title="`巡检时间：${latestRunDisplayTime}`">
+              <span class="run-label">{{ t('asset.health.latestCheckLabel') }}</span>
+              <span class="run-time" :title="t('asset.health.inspectionTimeHint', { time: latestRunDisplayTime })">
                 {{ latestRunDisplayTime || '—' }}
               </span>
               <template v-if="summary.latestRun.runId">
@@ -117,13 +117,13 @@
                   class="run-detail-link"
                   @click.stop="emit('view-run-detail', summary.latestRun.runId)"
                 >
-                  查看详情 <i class="fas fa-chevron-right ms-1"></i>
+                  {{ t('asset.health.viewDetails') }} <i class="fas fa-chevron-right ms-1"></i>
                 </button>
               </template>
             </template>
             <template v-else>
               <span class="run-dot is-empty"></span>
-              <span class="run-time-empty">尚未执行巡检</span>
+              <span class="run-time-empty">{{ t('asset.health.notInspected') }}</span>
             </template>
           </div>
         </div>
@@ -134,32 +134,32 @@
         <!-- 顶部：健康分布全景与待处置异常提示 -->
         <div class="distrib-header">
           <div class="distrib-title-wrap">
-            <span class="distrib-title">资产健康分布</span>
-            <span class="distrib-total">共 {{ totalHostsCount.toLocaleString() }} 台</span>
+            <span class="distrib-title">{{ t('asset.health.healthDistribution') }}</span>
+            <span class="distrib-total">{{ t('asset.health.totalHosts', { count: totalHostsCount.toLocaleString(currentLocale) }) }}</span>
           </div>
 
           <!-- 待处置异常风险态势提示 -->
           <div class="distrib-badge-wrap">
             <span v-if="riskCount > 0" class="risk-badge">
               <i class="fas fa-exclamation-circle me-1" aria-hidden="true"></i>
-              <strong>{{ riskCount }}</strong> 台待处置（严重/告警）
+              {{ t('asset.health.pendingRisks', { count: riskCount }) }}
             </span>
             <span v-else class="safe-badge">
               <i class="fas fa-check-circle me-1" aria-hidden="true"></i>
-              无严重或告警主机
+              {{ t('asset.health.noRiskHosts') }}
             </span>
           </div>
         </div>
 
         <!-- 连续彩色胶囊堆叠比例条 (7px 细条，圆角胶囊段) -->
-        <div class="stacked-distribution-bar" aria-label="健康状态占比堆叠条">
+        <div class="stacked-distribution-bar" :aria-label="t('asset.health.distributionAria')">
           <div
             v-for="seg in distributionSegments"
             :key="seg.value"
             class="stacked-bar-seg"
             :class="`seg--${seg.variant}`"
             :style="{ width: `${seg.renderWidth}%` }"
-            :title="`${seg.label}: ${seg.count.toLocaleString()} 台 (${seg.percentText})`"
+            :title="t('asset.health.segmentHint', { label: seg.label, count: seg.count.toLocaleString(currentLocale), percent: seg.percentText })"
           ></div>
         </div>
 
@@ -180,7 +180,7 @@
                 'is-risk-focus': item.isRisk && item.count > 0
               }
             ]"
-            :title="`点击${activeStatus === item.value ? '取消筛选' : '按「' + item.label + '」筛选'}`"
+            :title="activeStatus === item.value ? t('asset.health.clearFilter') : t('asset.health.filterByStatus', { status: item.label })"
             @click="handleCardClick(item.value)"
           >
             <div class="pill-top-row">
@@ -192,8 +192,8 @@
             </div>
 
             <div class="pill-bottom-row">
-              <strong class="pill-count-num">{{ item.count.toLocaleString() }}</strong>
-              <span class="pill-unit-text">台</span>
+              <strong class="pill-count-num">{{ item.count.toLocaleString(currentLocale) }}</strong>
+              <span class="pill-unit-text">{{ t('asset.health.hostUnit') }}</span>
             </div>
           </button>
         </div>
@@ -213,6 +213,8 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+
 import { computed } from 'vue'
 import { HEALTH_STATUS_LIST } from '../../constants/hostHealth'
 import { getLatestRunStatusMeta, formatHealthDateTime } from '../../utils/hostHealth'
@@ -261,12 +263,12 @@ const ringDashOffset = computed(() => {
 
 const scoreGrade = computed(() => {
   if (!hasScore.value) {
-    return { label: '未评分', tagType: 'info', theme: 'neutral' }
+    return { label: t('asset.health.unscored'), tagType: 'info', theme: 'neutral' }
   }
   const s = normalizedScore.value
-  if (s >= 90) return { label: '健康良好', tagType: 'success', theme: 'good' }
-  if (s >= 75) return { label: '存在告警', tagType: 'warning', theme: 'warn' }
-  return { label: '高危风险', tagType: 'danger', theme: 'danger' }
+  if (s >= 90) return { label: t('asset.health.good'), tagType: 'success', theme: 'good' }
+  if (s >= 75) return { label: t('asset.health.warningGrade'), tagType: 'warning', theme: 'warn' }
+  return { label: t('asset.health.highRisk'), tagType: 'danger', theme: 'danger' }
 })
 
 const totalHostsCount = computed(() => Number(props.summary?.totalHosts) || 0)
@@ -328,14 +330,14 @@ const statusCards = computed(() => {
 const distributionSegments = computed(() => {
   const total = totalHostsCount.value
   if (total <= 0) {
-    return [{ value: 'EMPTY', label: '暂无数据', count: 0, percentText: '0%', renderWidth: 100, variant: 'empty' }]
+    return [{ value: 'EMPTY', label: t('common.noData'), count: 0, percentText: '0%', renderWidth: 100, variant: 'empty' }]
   }
 
   const cards = statusCards.value
   const activeSegments = cards.filter(c => c.count > 0)
 
   if (activeSegments.length === 0) {
-    return [{ value: 'EMPTY', label: '暂无数据', count: 0, percentText: '0%', renderWidth: 100, variant: 'empty' }]
+    return [{ value: 'EMPTY', label: t('common.noData'), count: 0, percentText: '0%', renderWidth: 100, variant: 'empty' }]
   }
 
   // 保障微小比例有基础显示宽度，随后归一化

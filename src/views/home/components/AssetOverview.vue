@@ -2,8 +2,8 @@
   <div class="asset-overview">
     <div class="section-header">
       <h3 class="section-title">
-        <img :src="assetHeaderIcon" alt="资产概览" class="section-icon" />
-        资产概览
+        <img :src="assetHeaderIcon" :alt="t('home.assetTitle')" class="section-icon" />
+        {{ t('home.assetTitle') }}
       </h3>
       <div class="header-actions">
         <div class="filter-tabs">
@@ -13,7 +13,7 @@
             :aria-pressed="activeTab === 'type'"
             @click.stop="activeTab = 'type'"
           >
-            按类型
+            {{ t('home.byType') }}
           </button>
           <button
             class="filter-tab"
@@ -21,11 +21,11 @@
             :aria-pressed="activeTab === 'system'"
             @click.stop="activeTab = 'system'"
           >
-            按系统
+            {{ t('home.bySystem') }}
           </button>
         </div>
-        <button class="more-btn" @click="navigateToAssetOverview" title="查看全部">
-          <span>查看全部</span>
+        <button class="more-btn" @click="navigateToAssetOverview" :title="t('common.viewAll')">
+          <span>{{ t('common.viewAll') }}</span>
           <i class="fas fa-chevron-right more-arrow"></i>
         </button>
       </div>
@@ -35,17 +35,17 @@
     <div
       class="chart-container clickable-area"
       v-loading="dashboardStore.loading"
-      element-loading-text="正在加载资产数据..."
+      :element-loading-text="t('home.assetLoading')"
       @click="navigateToAssetOverview"
     >
       <div v-if="dashboardStore.error" class="chart-empty-overlay error-state" @click.stop>
         <i class="fas fa-exclamation-circle error-icon"></i>
-        <span>资产数据加载失败</span>
-        <el-button size="small" type="primary" link @click="dashboardStore.loadDashboardData">重新加载</el-button>
+        <span>{{ t('home.assetFailed') }}</span>
+        <el-button size="small" type="primary" link @click="dashboardStore.loadDashboardData">{{ t('common.reload') }}</el-button>
       </div>
       <div v-else-if="!hasAssetOverview" class="chart-empty-overlay">
         <i class="fas fa-server empty-icon"></i>
-        <span>暂无资产数据</span>
+        <span>{{ t('home.assetEmpty') }}</span>
       </div>
       <v-chart
         v-else
@@ -60,6 +60,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { use } from 'echarts/core'
@@ -90,14 +92,8 @@ const navigateToAssetOverview = () => {
   router.push({ path: '/acm/info' })
 }
 
-const assetTypeRouteMap = {
-  Windows服务器: 'windows',
-  Unix服务器: 'unix',
-  Linux服务器: 'linux',
-  Windows: 'windows',
-  Unix: 'unix',
-  Linux: 'linux'
-}
+// Series order carries stable route values; translated axis labels are display-only.
+const assetTypes = ['windows', 'unix', 'linux']
 
 const navigateToAssetInfoByType = assetType => {
   if (!assetType) {
@@ -119,7 +115,7 @@ const hasAssetOverview = computed(() => {
 const assetData = computed(() => {
   const a = dashboardStore.dashboardFullData?.assetOverview
   const values = [a?.windowsServers ?? 0, a?.unixServers ?? 0, a?.linuxServers ?? 0]
-  const byType = ['Windows服务器', 'Unix服务器', 'Linux服务器']
+  const byType = [t('home.windowsServers'), t('home.unixServers'), t('home.linuxServers')]
   const bySystem = ['Windows', 'Unix', 'Linux']
   return {
     categories: activeTab.value === 'system' ? bySystem : byType,
@@ -128,7 +124,7 @@ const assetData = computed(() => {
 })
 
 const handleChartClick = params => {
-  const assetType = assetTypeRouteMap[params?.name] || ''
+  const assetType = assetTypes[params?.dataIndex] || ''
   navigateToAssetInfoByType(assetType)
 }
 

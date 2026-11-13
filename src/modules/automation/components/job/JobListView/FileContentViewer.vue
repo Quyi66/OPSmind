@@ -8,7 +8,7 @@
         class="toolbar-icon-btn"
         circle
         @click="toggleViewMode"
-        :title="viewMode === 'raw' ? '切换到渲染视图' : '切换到代码视图'"
+        :title="viewMode === 'raw' ? t('automation.file.renderView') : t('automation.file.codeView')"
       >
         <i :class="viewMode === 'raw' ? 'fa fa-file-alt' : 'fa fa-code'"></i>
       </el-button>
@@ -24,13 +24,13 @@
       </span>
 
       <!-- 操作按钮（平铺） -->
-      <el-button class="toolbar-icon-btn" circle @click="downloadFile" title="下载">
+      <el-button class="toolbar-icon-btn" circle @click="downloadFile" :title="t('automation.file.download')">
         <i class="fa fa-download"></i>
       </el-button>
-      <el-button class="toolbar-icon-btn" circle @click="editFileInfo" title="修改信息">
+      <el-button class="toolbar-icon-btn" circle @click="editFileInfo" :title="t('automation.file.editInfo')">
         <i class="fa fa-edit"></i>
       </el-button>
-      <el-button class="toolbar-icon-btn" circle @click="copyLink" title="复制链接">
+      <el-button class="toolbar-icon-btn" circle @click="copyLink" :title="t('automation.file.copyLink')">
         <i class="fa fa-copy"></i>
       </el-button>
     </div>
@@ -51,14 +51,14 @@
             <template #error>
               <div class="image-error">
                 <i class="fa fa-image fa-3x"></i>
-                <p>图片加载失败</p>
-                <el-button type="primary" size="small" @click="downloadFile">下载查看</el-button>
+                <p>{{ t('automation.file.imageFailed') }}</p>
+                <el-button type="primary" size="small" @click="downloadFile">{{ t('automation.file.downloadToView') }}</el-button>
               </div>
             </template>
             <template #placeholder>
               <div class="image-loading">
                 <i class="el-icon-loading"></i>
-                <span>加载中...</span>
+                <span>{{ t('automation.file.loading') }}</span>
               </div>
             </template>
           </el-image>
@@ -107,7 +107,7 @@
             </table>
             <div v-else class="excel-empty">
               <i class="fa fa-table fa-2x"></i>
-              <p>表格为空</p>
+              <p>{{ t('automation.file.emptySheet') }}</p>
             </div>
           </div>
         </div>
@@ -119,12 +119,12 @@
 
         <!-- 视频 -->
         <div v-else-if="renderType === 'video'" class="render-video">
-          <video controls :src="fileUrl" class="video-player">您的浏览器不支持视频播放</video>
+          <video controls :src="fileUrl" class="video-player">{{ t('automation.file.videoUnsupported') }}</video>
         </div>
 
         <!-- 音频 -->
         <div v-else-if="renderType === 'audio'" class="render-audio">
-          <audio controls :src="fileUrl" class="audio-player">您的浏览器不支持音频播放</audio>
+          <audio controls :src="fileUrl" class="audio-player">{{ t('automation.file.audioUnsupported') }}</audio>
         </div>
 
         <!-- Word 文档 -->
@@ -149,16 +149,16 @@
       <!-- 无法预览 -->
       <div v-if="!canPreview && !loading" class="no-preview">
         <i class="fa fa-file fa-3x"></i>
-        <p>该文件类型不支持预览</p>
-        <p class="hint">文件类型：{{ fileInfo?.mime || fileExtension || '未知' }}</p>
-        <el-button type="primary" @click="downloadFile">下载文件</el-button>
+        <p>{{ t('automation.file.previewUnsupported') }}</p>
+        <p class="hint">{{ t('automation.file.fileType', { type: fileInfo?.mime || fileExtension || t('common.unknown') }) }}</p>
+        <el-button type="primary" @click="downloadFile">{{ t('automation.file.downloadFile') }}</el-button>
       </div>
     </div>
 
     <!-- 修改信息弹窗 -->
     <el-dialog
       v-model="editDialogVisible"
-      title="修改文件"
+      :title="t('automation.file.editFile')"
       width="800px"
       destroy-on-close
       :close-on-click-modal="false"
@@ -168,10 +168,10 @@
     >
       <el-tabs v-model="editActiveTab">
         <!-- 基本信息标签页 -->
-        <el-tab-pane label="基本信息" name="basic">
+        <el-tab-pane :label="t('automation.file.baseInfo')" name="basic">
           <el-form :model="editForm" label-width="100px" label-position="top">
             <!-- 文件路径 -->
-            <el-form-item label="文件路径">
+            <el-form-item :label="t('automation.file.filePath')">
               <div class="file-path-display">
                 <span class="file-dir">{{ fileDir || '~' }}</span>
                 <span class="file-separator">&nbsp;&nbsp;/&nbsp;&nbsp;</span>
@@ -182,9 +182,9 @@
             <!-- 参数配置 -->
             <el-form-item>
               <template #label>
-                <span>参数配置</span>
+                <span>{{ t('automation.file.paramConfig') }}</span>
                 <el-tooltip
-                  content="如果文件支持配置（例如命令行执行参数），可以在这里填写"
+                  :content="t('automation.file.paramHelp')"
                   placement="top"
                 >
                   <i class="fa fa-question-circle text-muted" style="margin-left: 4px"></i>
@@ -193,16 +193,16 @@
               <el-input
                 v-model="editForm.config"
                 class="config-input"
-                placeholder="例如: --help 或 -v"
+                :placeholder="t('automation.file.paramExample')"
               />
             </el-form-item>
 
             <!-- 说明 -->
             <el-form-item>
               <template #label>
-                <span>说明</span>
+                <span>{{ t('automation.file.notes') }}</span>
                 <el-tooltip
-                  content="可以在这里填写文件的用途、目的、使用方法等描述信息，便于使用者理解这个文件"
+                  :content="t('automation.file.descriptionHelp')"
                   placement="top"
                 >
                   <i class="fa fa-question-circle text-muted" style="margin-left: 4px"></i>
@@ -212,7 +212,7 @@
                 v-model="editForm.description"
                 type="textarea"
                 :rows="4"
-                placeholder="请输入文件说明..."
+                :placeholder="t('automation.file.descriptionPlaceholder')"
                 resize="none"
               />
             </el-form-item>
@@ -220,9 +220,9 @@
         </el-tab-pane>
 
         <!-- 脚本内容标签页 -->
-        <el-tab-pane label="脚本内容" name="content">
+        <el-tab-pane :label="t('automation.file.scriptContent')" name="content">
           <div v-if="!isFileContentEditable" class="content-warning">
-            <el-alert type="warning" :closable="false" show-icon>该文件不支持编辑。</el-alert>
+            <el-alert type="warning" :closable="false" show-icon>{{ t('automation.file.notEditable') }}</el-alert>
           </div>
           <div class="content-editor" v-if="editActiveTab === 'content' && isFileContentEditable">
             <codemirror
@@ -237,14 +237,17 @@
         </el-tab-pane>
       </el-tabs>
       <template #footer>
-        <el-button @click="editDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveFileInfo" :loading="saving">确定</el-button>
+        <el-button @click="editDialogVisible = false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="saveFileInfo" :loading="saving">{{ t('automation.file.confirm') }}</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
+
 import { ref, computed, watch, nextTick, onMounted, shallowRef, defineAsyncComponent } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as gfsApi from '@/modules/automation/api/gfs'
@@ -340,7 +343,7 @@ const props = defineProps({
 const emit = defineEmits(['loaded', 'error', 'updated'])
 
 const loading = ref(true)
-const content = ref('')
+const content = messageRef('')
 const fileInfo = ref(null)
 const viewMode = ref('raw') // 'raw' | 'render'
 
@@ -351,7 +354,7 @@ const activeSheet = ref('')
 const excelWorkbook = ref(null)
 
 // Word 相关
-const wordContent = ref('')
+const wordContent = messageRef('')
 
 const renderType = ref('') // 'image' | 'markdown' | 'html' | 'excel' | 'pdf' | 'video' | 'audio' | 'word' | ''
 const htmlFrame = ref(null)
@@ -573,7 +576,7 @@ async function loadContent() {
     } else if (data.content) {
       content.value = data.content
     } else {
-      content.value = '(无法加载文件内容)'
+      content.value = message('automation.file.contentUnavailable')
     }
 
     // 检测渲染类型
@@ -587,7 +590,7 @@ async function loadContent() {
     emit('loaded', fileInfo.value)
   } catch (error) {
     console.error('Failed to load file content:', error)
-    content.value = `加载文件内容失败: ${error.message || '未知错误'}`
+    content.value = message('automation.file.loadContentFailed', () => ({ message: error.message || t('automation.file.unknownError') }))
     emit('error', error)
   } finally {
     loading.value = false
@@ -702,7 +705,7 @@ async function loadExcelFile() {
     }
   } catch (error) {
     console.error('Failed to load Excel file:', error)
-    ElMessage.error('Excel 文件加载失败')
+    ElMessage.error(t('automation.file.excelFailed'))
   }
 }
 
@@ -784,7 +787,7 @@ async function loadWordFile() {
     // 仅支持 docx 格式，doc 格式需要服务端转换
     if (ext === 'doc') {
       wordContent.value =
-        '<div class="word-notice"><p>暂不支持 .doc 格式预览，请下载后查看或转换为 .docx 格式</p></div>'
+        t('automation.file.wordDocNotice')
       return
     }
 
@@ -803,8 +806,8 @@ async function loadWordFile() {
     }
   } catch (error) {
     console.error('Failed to load Word file:', error)
-    ElMessage.error('Word 文档加载失败')
-    wordContent.value = '<div class="word-error"><p>Word 文档加载失败，请尝试下载后查看</p></div>'
+    ElMessage.error(t('automation.file.wordFailed'))
+    wordContent.value = message('automation.file.wordErrorNotice')
   }
 }
 
@@ -833,9 +836,9 @@ function downloadFile() {
 async function copyLink() {
   try {
     await navigator.clipboard.writeText(fileUrl.value)
-    ElMessage.success('链接已复制到剪贴板')
+    ElMessage.success(t('automation.file.linkCopied'))
   } catch (error) {
-    ElMessage.error('复制失败')
+    ElMessage.error(t('automation.file.copyFailed'))
   }
 }
 
@@ -882,13 +885,13 @@ async function saveFileInfo() {
     }
 
     await gfsApi.updateFileInfo(props.repoType, fileInfo.value?.repo, props.path, updateData)
-    ElMessage.success('保存成功')
+    ElMessage.success(t('automation.job.saved'))
     editDialogVisible.value = false
     emit('updated', updateData)
     // 重新加载文件信息
     loadContent()
   } catch (error) {
-    ElMessage.error(`保存失败: ${error.message || '未知错误'}`)
+    ElMessage.error(t('automation.file.saveFailedReason', { message: error.message || t('automation.file.unknownError') }))
   } finally {
     saving.value = false
   }
@@ -917,11 +920,11 @@ function formatRelativeTime(dateStr) {
   const hours = Math.floor(minutes / 60)
   const days = Math.floor(hours / 24)
 
-  if (days > 30) return date.toLocaleDateString('zh-CN')
-  if (days > 0) return `${days} 天前`
-  if (hours > 0) return `${hours} 小时前`
-  if (minutes > 0) return `${minutes} 分钟前`
-  return '刚刚'
+  if (days > 30) return date.toLocaleDateString(currentLocale.value)
+  if (days > 0) return t('automation.file.daysAgo', { count: days })
+  if (hours > 0) return t('automation.file.hoursAgo', { count: hours })
+  if (minutes > 0) return t('automation.file.minutesAgo', { count: minutes })
+  return t('automation.file.justNow')
 }
 
 // 监听 path 变化重新加载

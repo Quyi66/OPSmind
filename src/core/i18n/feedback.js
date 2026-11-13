@@ -7,6 +7,7 @@ export function message(key, params = {}) {
 }
 
 // Preserve keys in long-lived feedback, while leaving backend text completely untouched.
+/** @param {string | null | ReturnType<typeof message>} [initial] */
 export function messageRef(initial = '') {
   const source = shallowRef(initial)
   return computed({
@@ -16,7 +17,7 @@ export function messageRef(initial = '') {
             source.value.key,
             typeof source.value.params === 'function' ? source.value.params() : source.value.params
           )
-        : source.value,
+        : /** @type {string | null} */ (source.value),
     set: value => {
       source.value = value
     }

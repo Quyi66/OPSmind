@@ -8,13 +8,13 @@
           class="wb-metric-item"
           @click="openTodayRunsDrawer"
         >
-          <span class="wb-metric-item__label">今日运行</span>
+          <span class="wb-metric-item__label">{{ t('automation.workbench.todayRuns') }}</span>
           <div class="wb-metric-item__value-group" :class="{ 'is-running': hasActiveRuns }">
             <WbFlipNumber class="wb-metric-item__value" :value="todayRunTotal" />
             <span class="wb-metric-item__sub">
-              成功 {{ successfulRunTotal }}
+              {{ t('automation.workbench.success') }} {{ successfulRunTotal }}
               <span v-if="hasActiveRuns" class="wb-metric-item__run-badge">
-                <i class="fas fa-spinner fa-spin" /> 执行中 {{ activeRunCount }}
+                <i class="fas fa-spinner fa-spin" /> {{ t('automation.workbench.runningCount', { count: activeRunCount }) }}
               </span>
             </span>
           </div>
@@ -24,7 +24,7 @@
           class="wb-metric-item"
           @click="openFailedRunsDrawer"
         >
-          <span class="wb-metric-item__label">今日失败</span>
+          <span class="wb-metric-item__label">{{ t('automation.workbench.todayFailures') }}</span>
           <div class="wb-metric-item__value-group" :class="{ 'is-danger': failedRunTotal > 0 }">
             <WbFlipNumber class="wb-metric-item__value" :value="failedRunTotal" />
             <span class="wb-metric-item__sub">{{ failedRateLabel }}</span>
@@ -36,10 +36,10 @@
           class="wb-metric-item"
           @click="openApprovalsDrawer"
         >
-          <span class="wb-metric-item__label">运维工具审批</span>
+          <span class="wb-metric-item__label">{{ t('automation.workbench.toolApprovals') }}</span>
           <div class="wb-metric-item__value-group" :class="{ 'is-warning': reviewStore.approvalCount > 0 }">
             <WbFlipNumber class="wb-metric-item__value" :value="reviewStore.approvalCount" />
-            <span class="wb-metric-item__sub">待处理审批</span>
+            <span class="wb-metric-item__sub">{{ t('automation.workbench.pendingApprovals') }}</span>
           </div>
         </button>
 
@@ -48,10 +48,10 @@
           class="wb-metric-item"
           @click="openCmdReviewDrawer"
         >
-          <span class="wb-metric-item__label">命令待审</span>
+          <span class="wb-metric-item__label">{{ t('automation.workbench.commandReviews') }}</span>
           <div class="wb-metric-item__value-group" :class="{ 'is-warning': reviewStore.commandCount > 0 }">
             <WbFlipNumber class="wb-metric-item__value" :value="reviewStore.commandCount" />
-            <span class="wb-metric-item__sub">待审核队列</span>
+            <span class="wb-metric-item__sub">{{ t('automation.workbench.reviewQueue') }}</span>
           </div>
         </button>
 
@@ -60,15 +60,15 @@
           class="wb-metric-item"
           @click="openScriptReviewDrawer"
         >
-          <span class="wb-metric-item__label">脚本待审</span>
+          <span class="wb-metric-item__label">{{ t('automation.workbench.scriptReviews') }}</span>
           <div class="wb-metric-item__value-group" :class="{ 'is-warning': reviewStore.scriptCount > 0 }">
             <WbFlipNumber class="wb-metric-item__value" :value="reviewStore.scriptCount" />
-            <span class="wb-metric-item__sub">待审核变更</span>
+            <span class="wb-metric-item__sub">{{ t('automation.workbench.pendingChanges') }}</span>
           </div>
         </button>
 
         <button v-if="canViewJobs" class="wb-metric-item" @click="openCronDrawer">
-          <span class="wb-metric-item__label">定时任务</span>
+          <span class="wb-metric-item__label">{{ t('automation.workbench.cronTasks') }}</span>
           <div class="wb-metric-item__value-group">
             <WbFlipNumber class="wb-metric-item__value" :value="cronSummary.total" />
             <span class="wb-metric-item__sub">{{ cronStatusLabel }}</span>
@@ -83,8 +83,8 @@
       <section v-if="canViewJobs" class="wb-panel wb-panel--jobs">
         <div class="wb-panel__header wb-panel__header--jobs">
           <div class="wb-panel__title-group wb-panel__title-group--jobs">
-            <h3 class="wb-panel__title">运维工具分布</h3>
-            <div class="wb-job-panel-stats" aria-label="按运维工具类型筛选">
+            <h3 class="wb-panel__title">{{ t('automation.workbench.toolDistribution') }}</h3>
+            <div class="wb-job-panel-stats" :aria-label="t('automation.workbench.typeFilterAria')">
               <button
                 type="button"
                 class="wb-job-panel-stat"
@@ -92,7 +92,7 @@
                 :aria-pressed="!selectedJobType"
                 @click="selectedJobType = ''"
               >
-                <span class="wb-job-panel-stat__label">全部</span>
+                <span class="wb-job-panel-stat__label">{{ t('common.all') }}</span>
                 <strong class="wb-job-panel-stat__value">{{ totalJobCount }}</strong>
               </button>
               <button
@@ -126,7 +126,7 @@
               size="small"
               @click="handleJobTypeCreate('script')"
             >
-              + 脚本
+              {{ t('automation.workbench.addScript') }}
             </el-button>
             <el-button
               class="wb-inline-action"
@@ -135,7 +135,7 @@
               size="small"
               @click="handleJobTypeCreate('command')"
             >
-              + 命令
+              {{ t('automation.workbench.addCommand') }}
             </el-button>
             <el-button
               class="wb-inline-action"
@@ -144,14 +144,14 @@
               size="small"
               @click="openFilteredJobListDrawer"
             >
-              查看全部
+              {{ t('automation.workbench.viewAll') }}
             </el-button>
             <el-button
               circle
               size="small"
               :loading="loading"
-              title="刷新数据"
-              aria-label="刷新数据"
+              :title="t('automation.workbench.refreshData')"
+              :aria-label="t('automation.workbench.refreshData')"
               @click="refreshAll"
             >
               <el-icon v-show="!loading"><Refresh /></el-icon>
@@ -160,15 +160,15 @@
         </div>
         <div class="wb-job-panel-summary" aria-live="polite">
           <div class="wb-job-panel-summary__info">
-            <span>最近变更优先 · 当前展示 {{ currentDisplayedCount }} / {{ filteredWorkbenchJobs.length }} 项</span>
-            <span v-if="selectedJobType">已筛选：{{ workbenchJobTypeLabel(selectedJobType) }}</span>
+            <span>{{ t('automation.workbench.displaySummary', { visible: currentDisplayedCount, total: filteredWorkbenchJobs.length }) }}</span>
+            <span v-if="selectedJobType">{{ t('automation.workbench.filteredType', { type: workbenchJobTypeLabel(selectedJobType) }) }}</span>
           </div>
-          <div class="wb-job-view-switch" role="group" aria-label="视图切换">
+          <div class="wb-job-view-switch" role="group" :aria-label="t('automation.workbench.viewSwitch')">
             <button
               type="button"
               class="wb-view-btn"
               :class="{ 'is-active': workbenchViewMode === 'card' }"
-              title="卡片视图"
+              :title="t('automation.workbench.cardView')"
               @click="workbenchViewMode = 'card'"
             >
               <i class="fa fa-th-large" />
@@ -177,7 +177,7 @@
               type="button"
               class="wb-view-btn"
               :class="{ 'is-active': workbenchViewMode === 'table' }"
-              title="列表视图"
+              :title="t('automation.workbench.tableView')"
               @click="workbenchViewMode = 'table'"
             >
               <i class="fa fa-list" />
@@ -220,30 +220,30 @@
                   <button
                     type="button"
                     class="wb-workbench-job-card__action wb-workbench-job-card__action--primary"
-                    title="执行工具"
+                    :title="t('automation.workbench.executeTool')"
                     @click.stop="handleExecuteJobFromDrawer(job)"
                   >
                     <i class="fa fa-play" />
-                    <span>执行</span>
+                    <span>{{ t('automation.workbench.execute') }}</span>
                   </button>
                   <div class="wb-workbench-job-card__sub-actions">
                     <button
                       type="button"
                       class="wb-workbench-job-card__action-btn"
-                      title="编辑"
+                      :title="t('automation.workbench.edit')"
                       @click.stop="handleEditJobFromDrawer(job)"
                     >
                       <i class="fa fa-cog" />
-                      <span>编辑</span>
+                      <span>{{ t('automation.workbench.edit') }}</span>
                     </button>
                     <button
                       type="button"
                       class="wb-workbench-job-card__action-btn"
-                      title="历史"
+                      :title="t('automation.workbench.history')"
                       @click.stop="handleOpenJobHistory(job)"
                     >
                       <i class="fa fa-history" />
-                      <span>历史</span>
+                      <span>{{ t('automation.workbench.history') }}</span>
                     </button>
                     <el-dropdown
                       trigger="click"
@@ -253,7 +253,7 @@
                       <button
                         type="button"
                         class="wb-workbench-job-card__action-btn wb-workbench-job-card__action-btn--more"
-                        aria-label="更多运维工具操作"
+                        :aria-label="t('automation.workbench.moreToolActions')"
                         @click.stop
                       >
                         <i class="fa fa-ellipsis-h" />
@@ -262,10 +262,10 @@
                         <el-dropdown-menu>
                           <el-dropdown-item command="copy">
                             <i class="fa fa-copy wb-workbench-job-card__menu-icon" />
-                            <span>复制</span>
+                            <span>{{ t('automation.workbench.copy') }}</span>
                           </el-dropdown-item>
                           <el-dropdown-item command="delete" divided>
-                            <span class="wb-workbench-job-delete"><i class="fa fa-trash wb-workbench-job-card__menu-icon" />删除</span>
+                            <span class="wb-workbench-job-delete"><i class="fa fa-trash wb-workbench-job-card__menu-icon" />{{ t('common.delete') }}</span>
                           </el-dropdown-item>
                         </el-dropdown-menu>
                       </template>
@@ -289,31 +289,31 @@
                   style="width: 100%"
                   @row-click="handleEditJobFromDrawer"
                 >
-                  <el-table-column prop="type" label="类型" width="90">
+                  <el-table-column prop="type" :label="t('automation.workbench.type')" width="90">
                     <template #default="{ row }">
                       <el-tag size="small" :type="workbenchJobTypeTag(row.type)" class="wb-job-type-tag">
                         {{ workbenchJobTypeLabel(row.type) }}
                       </el-tag>
                     </template>
                   </el-table-column>
-                  <el-table-column prop="name" label="工具名称" min-width="200" show-overflow-tooltip>
+                  <el-table-column prop="name" :label="t('automation.workbench.toolName')" min-width="200" show-overflow-tooltip>
                     <template #default="{ row }">
                       <span class="wb-table-job-name">{{ getAutomationToolTitle(row) }}</span>
                     </template>
                   </el-table-column>
-                  <el-table-column prop="description" label="描述" min-width="180" show-overflow-tooltip>
+                  <el-table-column prop="description" :label="t('automation.workbench.description')" min-width="180" show-overflow-tooltip>
                     <template #default="{ row }">
                       <span class="wb-table-job-desc">{{ row.description || row.desc || '-' }}</span>
                     </template>
                   </el-table-column>
-                  <el-table-column label="更新时间" width="160">
+                  <el-table-column :label="t('automation.workbench.updatedAt')" width="160">
                     <template #default="{ row }">
                       <span class="wb-table-job-time" :title="formatWorkbenchJobDate(row).title">
                         {{ formatWorkbenchJobDate(row).label }}
                       </span>
                     </template>
                   </el-table-column>
-                  <el-table-column label="操作" width="210" fixed="right">
+                  <el-table-column :label="t('common.actions')" width="210" fixed="right">
                     <template #default="{ row }">
                       <div class="wb-table-actions" @click.stop>
                         <el-button
@@ -323,37 +323,37 @@
                           class="wb-table-exec-btn"
                           @click="handleExecuteJobFromDrawer(row)"
                         >
-                          <i class="fa fa-play" style="margin-right: 3px;" />执行
+                          <i class="fa fa-play" style="margin-right: 3px;" />{{ t('automation.workbench.execute') }}
                         </el-button>
                         <el-button
                           link
                           size="small"
                           @click="handleEditJobFromDrawer(row)"
                         >
-                          编辑
+                          {{ t('automation.workbench.edit') }}
                         </el-button>
                         <el-button
                           link
                           size="small"
                           @click="handleOpenJobHistory(row)"
                         >
-                          历史
+                          {{ t('automation.workbench.history') }}
                         </el-button>
                         <el-dropdown
                           trigger="click"
                           placement="bottom-end"
                           @command="handleWorkbenchJobCommand(row, $event)"
                         >
-                          <el-button link size="small" class="wb-table-more-btn" aria-label="更多操作">
+                          <el-button link size="small" class="wb-table-more-btn" :aria-label="t('automation.workbench.moreActions')">
                             <i class="fa fa-ellipsis-h" />
                           </el-button>
                           <template #dropdown>
                             <el-dropdown-menu>
                               <el-dropdown-item command="copy">
-                                <i class="fa fa-copy" style="margin-right: 6px;" />复制
+                                <i class="fa fa-copy" style="margin-right: 6px;" />{{ t('automation.workbench.copy') }}
                               </el-dropdown-item>
                               <el-dropdown-item command="delete" divided>
-                                <span class="text-danger"><i class="fa fa-trash" style="margin-right: 6px;" />删除</span>
+                                <span class="text-danger"><i class="fa fa-trash" style="margin-right: 6px;" />{{ t('common.delete') }}</span>
                               </el-dropdown-item>
                             </el-dropdown-menu>
                           </template>
@@ -376,14 +376,14 @@
               </div>
             </div>
           </template>
-          <el-empty v-else :description="selectedJobType ? '该类型暂无运维工具' : '暂无运维工具'" :image-size="60" />
+          <el-empty v-else :description="selectedJobType ? t('automation.workbench.noTypeTools') : t('automation.workbench.noTools')" :image-size="60" />
         </div>
       </section>
 
       <!-- 流程编排 -->
       <section v-if="canViewJobs && showFlowWorkbenchPanel" class="wb-panel wb-panel--flows">
         <div class="wb-panel__header">
-          <h3 class="wb-panel__title">流程编排</h3>
+          <h3 class="wb-panel__title">{{ t('automation.workbench.flowEditor') }}</h3>
           <div class="wb-panel__header-actions">
             <el-button
               class="wb-inline-action"
@@ -392,7 +392,7 @@
               size="small"
               @click="handleLauncherAction('create-flow')"
             >
-              + 新建
+              {{ t('automation.workbench.create') }}
             </el-button>
             <el-button
               class="wb-inline-action"
@@ -401,7 +401,7 @@
               size="small"
               @click="openFlowListDrawer"
             >
-              查看全部
+              {{ t('automation.workbench.viewAll') }}
             </el-button>
           </div>
         </div>
@@ -423,7 +423,7 @@
                 size="small"
                 @click.stop="openFlowForRun(item)"
               >
-                执行
+                {{ t('automation.workbench.execute') }}
               </el-button>
               <el-button
                 class="wb-inline-action"
@@ -432,7 +432,7 @@
                 size="small"
                 @click.stop="openFlowInstancesDrawer(item)"
               >
-                实例
+                {{ t('automation.workbench.instances') }}
               </el-button>
               <el-button
                 class="wb-inline-action"
@@ -441,7 +441,7 @@
                 size="small"
                 @click.stop="openFlowForEdit(item)"
               >
-                编辑
+                {{ t('automation.workbench.edit') }}
               </el-button>
               <el-button
                 class="wb-inline-action"
@@ -450,14 +450,14 @@
                 size="small"
                 @click.stop="handleDeleteFlow(item)"
               >
-                删除
+                {{ t('common.delete') }}
               </el-button>
             </div>
           </div>
         </div>
-        <el-empty v-else description="暂无流程" :image-size="60" />
+        <el-empty v-else :description="t('automation.workbench.noFlows')" :image-size="60" />
         <div v-if="flows.length" class="wb-cron-footer">
-          <span class="wb-cron-footer__total">共 {{ flows.length }} 个流程</span>
+          <span class="wb-cron-footer__total">{{ t('automation.workbench.flowCount', { count: flows.length }) }}</span>
         </div>
       </section>
 
@@ -467,7 +467,7 @@
         class="wb-panel wb-panel--commands"
       >
         <div class="wb-panel__header">
-          <h3 class="wb-panel__title">命令执行</h3>
+          <h3 class="wb-panel__title">{{ t('automation.workbench.commandExecution') }}</h3>
           <div class="wb-panel__header-actions">
             <el-button
               class="wb-inline-action"
@@ -476,7 +476,7 @@
               size="small"
               @click="openCommandEditor('create')"
             >
-              + 命令
+              {{ t('automation.workbench.addCommand') }}
             </el-button>
             <el-button
               class="wb-inline-action"
@@ -485,21 +485,21 @@
               size="small"
               @click="handleLauncherAction('create-command-job')"
             >
-              + 运维工具
+              {{ t('automation.workbench.addTool') }}
             </el-button>
             <el-button
               class="wb-inline-action"
               link
               type="primary"
               size="small"
-              @click="openCommandListDrawer('', '全部命令')"
+              @click="openCommandListDrawer('', t('automation.workbench.allCommands'))"
             >
-              查看全部
+              {{ t('automation.workbench.viewAll') }}
             </el-button>
           </div>
         </div>
         <div v-if="commandTypeCounts.length || commandJobCount" class="wb-command-panel">
-          <div v-if="commandTypeCounts.length" class="wb-panel-subtitle">命令统计</div>
+          <div v-if="commandTypeCounts.length" class="wb-panel-subtitle">{{ t('automation.workbench.commandStatistics') }}</div>
           <div v-if="commandTypeCounts.length" class="wb-job-types wb-command-type-list">
             <div
               v-for="item in commandTypeCounts"
@@ -517,8 +517,8 @@
           </div>
 
           <div class="wb-command-job-head">
-            <span class="wb-panel-subtitle">命令运维工具</span>
-            <span class="wb-command-job-head__meta">共 {{ commandJobCount }} 个</span>
+            <span class="wb-panel-subtitle">{{ t('automation.workbench.commandTool') }}</span>
+            <span class="wb-command-job-head__meta">{{ t('automation.workbench.commandCount', { count: commandJobCount }) }}</span>
           </div>
 
           <div v-if="commandJobList.length" class="wb-command-job-list">
@@ -541,7 +541,7 @@
                   size="small"
                   @click.stop="handleExecuteJobFromDrawer(item)"
                 >
-                  执行
+                  {{ t('automation.workbench.execute') }}
                 </el-button>
                 <el-button
                   class="wb-inline-action"
@@ -550,7 +550,7 @@
                   size="small"
                   @click.stop="handleEditJobFromDrawer(item)"
                 >
-                  编辑
+                  {{ t('automation.workbench.edit') }}
                 </el-button>
                 <el-button
                   class="wb-inline-action"
@@ -558,7 +558,7 @@
                   size="small"
                   @click.stop="handleOpenJobHistory(item)"
                 >
-                  历史
+                  {{ t('automation.workbench.history') }}
                 </el-button>
                 <el-button
                   class="wb-inline-action"
@@ -567,15 +567,15 @@
                   size="small"
                   @click.stop="handleDeleteJob(item)"
                 >
-                  删除
+                  {{ t('common.delete') }}
                 </el-button>
               </div>
             </div>
           </div>
-          <el-empty v-else description="暂无命令运维工具" :image-size="56" />
+          <el-empty v-else :description="t('automation.workbench.noCommandTools')" :image-size="56" />
 
           <div v-if="commandJobList.length" class="wb-command-job-footer">
-            <span class="wb-command-job-footer__meta">最近更新的命令运维工具会优先显示在这里</span>
+            <span class="wb-command-job-footer__meta">{{ t('automation.workbench.recentCommandToolsHint') }}</span>
             <el-button
               class="wb-inline-action"
               link
@@ -583,11 +583,11 @@
               size="small"
               @click="openCommandJobDrawer"
             >
-              查看全部
+              {{ t('automation.workbench.viewAll') }}
             </el-button>
           </div>
         </div>
-        <el-empty v-else description="暂无命令与命令运维工具" :image-size="60" />
+        <el-empty v-else :description="t('automation.workbench.noCommandsOrTools')" :image-size="60" />
       </section>
 
     </div>
@@ -667,17 +667,17 @@
       :title="todayRunsDrawer.title"
       :reload-version="runLogsReloadVersion"
       link="/run-records/logs?day=0"
-      link-label="查看完整记录"
+      :link-label="t('automation.workbench.viewFullRecords')"
       @open-result="handleOpenRunResult"
       @navigate="handleNavigate"
     />
 
     <WbRunLogsDrawer
       v-model:visible="failedRunsDrawer.visible"
-      title="今日失败运行"
+      :title="t('automation.workbench.todayFailedRuns')"
       :reload-version="runLogsReloadVersion"
       link="/run-records/logs?day=0&status=FAILED"
-      link-label="查看完整记录"
+      :link-label="t('automation.workbench.viewFullRecords')"
       failed-only
       @open-result="handleOpenRunResult"
       @navigate="handleNavigate"
@@ -685,13 +685,13 @@
 
     <WbReviewDrawer
       v-model:visible="approvalsDrawer.visible"
-      title="待审批列表"
+      :title="t('automation.workbench.approvalList')"
       :records="approvalsDrawer.records"
       :loading="approvalsDrawer.loading"
       drawer-type="approval"
       link="/jao/approvals"
-      link-label="前往审批页面"
-      empty-text="暂无待审批记录"
+      :link-label="t('automation.workbench.goApprovals')"
+      :empty-text="t('automation.workbench.noApprovals')"
       @navigate="handleNavigate"
       @approve="handleApproveItem"
       @reject="handleRejectItem"
@@ -699,12 +699,12 @@
 
     <WbReviewDrawer
       v-model:visible="cmdReviewDrawer.visible"
-      title="待审核命令"
+      :title="t('automation.workbench.pendingCommands')"
       :records="cmdReviewDrawer.records"
       :loading="cmdReviewDrawer.loading"
       link="/cmd/review"
-      link-label="前往审核页面"
-      empty-text="暂无待审核命令"
+      :link-label="t('automation.workbench.goReviews')"
+      :empty-text="t('automation.workbench.noCommandReviews')"
       drawer-type="command"
       @navigate="handleNavigate"
       @approve="handleCmdApproveItem"
@@ -713,12 +713,12 @@
 
     <WbReviewDrawer
       v-model:visible="scriptReviewDrawer.visible"
-      title="待审核脚本"
+      :title="t('automation.workbench.pendingScripts')"
       :records="scriptReviewDrawer.records"
       :loading="scriptReviewDrawer.loading"
       link="/gfs/scriptReview"
-      link-label="前往审核页面"
-      empty-text="暂无待审核脚本"
+      :link-label="t('automation.workbench.goReviews')"
+      :empty-text="t('automation.workbench.noScriptReviews')"
       @navigate="handleNavigate"
     />
 
@@ -786,6 +786,9 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
+
 import {
   computed,
   defineAsyncComponent,
@@ -899,14 +902,14 @@ const successfulRunTotal = computed(() =>
 const failedRateLabel = computed(() => {
   const total = Number(todayRunTotal.value || 0)
   const failed = Number(failedRunTotal.value || 0)
-  if (!total) return '失败率 0%'
-  return `失败率 ${Math.round((failed / total) * 100)}%`
+  if (!total) return t('automation.workbench.failureRate', { rate: 0 })
+  return t('automation.workbench.failureRate', { rate: Math.round((failed / total) * 100) })
 })
 
 const WORKBENCH_JOB_TYPE_LABELS = {
   rest: 'REST',
-  script: '脚本',
-  command: '命令'
+  get script() { return t('automation.workbench.script') },
+  get command() { return t('automation.workbench.command') }
 }
 
 const WORKBENCH_JOB_TYPE_TAGS = {
@@ -984,7 +987,7 @@ const workbenchJobs = computed(() =>
 )
 
 const cronStatusLabel = computed(
-  () => `启用 ${cronSummary.value.enabled} / 停用 ${cronSummary.value.disabled}`
+  () => t('automation.workbench.cronSummary', { enabled: cronSummary.value.enabled, disabled: cronSummary.value.disabled })
 )
 const commandJobCount = computed(() => commandJobList.value.length)
 
@@ -1019,20 +1022,20 @@ const cronActionLoading = reactive({})
 // 抽屉状态
 const todayRunsDrawer = reactive({
   visible: false,
-  title: '今日运行记录',
+  title: messageRef(message('automation.workbench.todayRunsTitle')),
   filterType: ''
 })
 const failedRunsDrawer = reactive({ visible: false })
 const runLogsReloadVersion = ref(0)
 const cronDrawer = reactive({ visible: false })
-const jobListDrawer = reactive({ visible: false, filterType: '', title: '全部运维工具' })
+const jobListDrawer = reactive({ visible: false, filterType: '', title: messageRef(message('automation.workbench.allTools')) })
 const jobListReloadVersion = ref(0)
-const commandListDrawer = reactive({ visible: false, filterType: '', title: '全部命令' })
+const commandListDrawer = reactive({ visible: false, filterType: '', title: messageRef(message('automation.workbench.allCommands')) })
 const flowListDrawer = reactive({ visible: false })
 const flowInstancesDrawer = reactive({
   visible: false,
   loading: false,
-  title: '流程实例',
+  title: messageRef(message('automation.workbench.flowInstances')),
   records: []
 })
 const approvalsDrawer = reactive({ visible: false, loading: false, records: [] })
@@ -1077,24 +1080,24 @@ function handleJobDialogSuccess() {
   refreshAll()
   bumpJobListReload()
   if (jobEditId.value) {
-    ElMessage.success('运维工具已保存。')
+    ElMessage.success(t('automation.workbench.toolSaved'))
   } else {
-    ElMessage.success('运维工具已创建，可前往运维工具箱查看或纳入调度。')
+    ElMessage.success(t('automation.workbench.toolCreated'))
   }
 }
 
 function handleCronDialogSuccess() {
   refreshAll()
   if (cronEditId.value) {
-    ElMessage.success('定时任务已保存。')
+    ElMessage.success(t('automation.workbench.cronSaved'))
   } else {
-    ElMessage.success('定时任务已创建，可在调度列表中管理启停。')
+    ElMessage.success(t('automation.workbench.cronCreated'))
   }
 }
 
 function handleFlowSaved() {
   refreshAll()
-  ElMessage.success('流程已保存。')
+  ElMessage.success(t('automation.workbench.flowSaved'))
 }
 
 function openCommandEditor(mode = 'create', command = null) {
@@ -1121,7 +1124,7 @@ async function handleCommandRunSuccess(result) {
         runId,
         jobTitle: Array.isArray(activeCommand.value)
           ? `批量命令 (${activeCommand.value.length})`
-          : activeCommand.value?.name || '命令执行'
+          : activeCommand.value?.name || t('automation.workbench.commandExecution')
       }
       resultDialogVisible.value = true
     }
@@ -1140,7 +1143,7 @@ async function handleToggleCommand(item) {
   if (!item?.id || !(item.status === 0 || item.status === 3)) return
 
   const nextStatus = item.status === 3 ? 0 : 3
-  const actionLabel = nextStatus === 0 ? '启用' : '停用'
+  const actionLabel = nextStatus === 0 ? t('automation.workbench.enable') : t('automation.workbench.disable')
 
   try {
     await ElMessageBox.confirm(
@@ -1151,7 +1154,7 @@ async function handleToggleCommand(item) {
         closeOnPressEscape: false,
         type: 'warning',
         confirmButtonText: actionLabel,
-        cancelButtonText: '取消'
+        cancelButtonText: t('common.cancel')
       }
     )
     await saveCommand({ ...item, status: nextStatus })
@@ -1168,20 +1171,20 @@ async function handleDeleteCommand(item) {
   if (!item?.id) return
 
   try {
-    await ElMessageBox.confirm(`确定要删除命令「${item.name || item.id}」吗？`, '删除命令', {
+    await ElMessageBox.confirm(`确定要删除命令「${item.name || item.id}」吗？`, t('automation.workbench.deleteCommand'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning',
-      confirmButtonText: '删除',
-      cancelButtonText: '取消',
+      confirmButtonText: t('common.delete'),
+      cancelButtonText: t('common.cancel'),
       confirmButtonClass: 'el-button--danger'
     })
     await deleteCommandApi(item.id)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('automation.workbench.deleted'))
     await refreshAll()
   } catch (error) {
     if (error !== 'cancel' && error !== 'close') {
-      ElMessage.error('删除失败')
+      ElMessage.error(t('automation.workbench.deleteFailed'))
     }
   }
 }
@@ -1212,7 +1215,7 @@ async function handleExecuteCron(item) {
     if (runId) {
       resultMeta.value = {
         runId,
-        jobTitle: item?.jobDesc || '未命名定时任务'
+        get jobTitle() { return item?.jobDesc || t('automation.workbench.unnamedCron') }
       }
       resultDialogVisible.value = true
     }
@@ -1238,7 +1241,7 @@ async function openFlowInstancesDrawer(flow) {
   flowListDrawer.visible = false
   flowInstanceViewerVisible.value = false
   viewingFlowInstanceId.value = ''
-  flowInstancesDrawer.title = `${flow.name || '未命名流程'} 实例`
+  flowInstancesDrawer.title = `${flow.name || t('automation.workbench.unnamedFlow')} 实例`
   flowInstancesDrawer.visible = true
   flowInstancesDrawer.loading = true
   flowInstancesDrawer.records = []
@@ -1247,7 +1250,7 @@ async function openFlowInstancesDrawer(flow) {
     flowInstancesDrawer.records = normalizeFlowInstances(resolveResponseArray(response))
   } catch (error) {
     flowInstancesDrawer.records = []
-    ElMessage.error(error?.message || '获取流程实例失败')
+    ElMessage.error(error?.message || t('automation.workbench.loadInstancesFailed'))
   } finally {
     flowInstancesDrawer.loading = false
   }
@@ -1272,7 +1275,7 @@ function handleJobTypeCreate(type) {
 function workbenchJobTypeLabel(type) {
   return (
     WORKBENCH_JOB_TYPE_LABELS[String(type || '').toLowerCase()] ||
-    String(type || '运维工具').toUpperCase()
+    String(type || t('automation.workbench.tool')).toUpperCase()
   )
 }
 
@@ -1292,7 +1295,7 @@ function handleWorkbenchJobCommand(job, command) {
 }
 
 function openFilteredJobListDrawer() {
-  openJobListDrawer(selectedJobType.value, selectedJobType.value ? `${workbenchJobTypeLabel(selectedJobType.value)}运维工具` : '全部运维工具')
+  openJobListDrawer(selectedJobType.value, selectedJobType.value ? message('automation.workbench.typedTools', () => ({ type: workbenchJobTypeLabel(selectedJobType.value) })) : message('automation.workbench.allTools'))
 }
 
 function observeJobViewport() {
@@ -1310,16 +1313,18 @@ function handleOpenRunResult(item) {
   resultMeta.value = {
     runId: item?.id || '',
     jobId: item?.job_id || item?.jobId || '',
-    jobTitle: getAutomationRunTitle(item)
+    get jobTitle() { return getAutomationRunTitle(item) }
   }
   resultDialogVisible.value = true
 }
 
 async function handleExecuteJobSuccess(payload = {}) {
   if (payload.runId) {
+    const source = { ...executeJobMeta }
     resultMeta.value = {
       runId: payload.runId,
-      ...getAutomationExecutionPresentation(payload, executeJobMeta)
+      jobId: payload.jobId || executeJobMeta.id || '',
+      get jobTitle() { return getAutomationExecutionPresentation(payload, source).jobTitle }
     }
     resultDialogVisible.value = true
   }
@@ -1336,7 +1341,9 @@ function handleExecuteJobFromDrawer(job) {
   executeJobMeta.id = job.id
   executeJobMeta.type = job.type || ''
   executeJobMeta.configJson = job.configJson || ''
-  executeJobMeta.title = getAutomationToolTitle(job)
+  // Retain raw source names so localized fallback titles can be recomputed later.
+  executeJobMeta.title = [job.title, job.job_title, job.jobTitle, job.jobName, job.templateName, job.name]
+    .find(value => typeof value === 'string' && value.trim()) || ''
   executeDialogVisible.value = true
 }
 
@@ -1349,7 +1356,7 @@ function handleEditJobFromDrawer(job) {
 function handleOpenJobHistory(job) {
   historyJobMeta.value = {
     id: job?.id || '',
-    title: getAutomationToolTitle(job)
+    get title() { return getAutomationToolTitle(job) }
   }
   historyDialogVisible.value = true
 }
@@ -1359,11 +1366,11 @@ async function handleCopyJob(job) {
 
   try {
     await copyJobApi(job.id)
-    ElMessage.success('复制成功')
+    ElMessage.success(t('automation.workbench.copied'))
     await refreshAll()
     bumpJobListReload()
   } catch (error) {
-    ElMessage.error(error?.message || '复制失败')
+    ElMessage.error(error?.message || t('automation.workbench.copyFailed'))
   }
 }
 
@@ -1372,24 +1379,24 @@ async function handleDeleteJob(job) {
 
   try {
     await ElMessageBox.confirm(
-      `确定要删除运维工具「${getAutomationToolTitle(job)}」吗？`,
-      '删除运维工具',
+      t('automation.workbench.deleteToolConfirm', { name: getAutomationToolTitle(job) }),
+      t('automation.workbench.deleteTool'),
       {
         closeOnClickModal: false,
         closeOnPressEscape: false,
         type: 'warning',
-        confirmButtonText: '删除',
-        cancelButtonText: '取消',
+        confirmButtonText: t('common.delete'),
+        cancelButtonText: t('common.cancel'),
         confirmButtonClass: 'el-button--danger'
       }
     )
     await deleteJobApi(job.id)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('automation.workbench.deleted'))
     await refreshAll()
     bumpJobListReload()
   } catch (error) {
     if (error !== 'cancel' && error !== 'close') {
-      ElMessage.error(error?.message || '删除失败')
+      ElMessage.error(error?.message || t('automation.workbench.deleteFailed'))
     }
   }
 }
@@ -1404,10 +1411,10 @@ async function handleCopyCronFromDrawer(item) {
 
   try {
     await copyCronJob(item.id)
-    ElMessage.success('复制成功')
+    ElMessage.success(t('automation.workbench.copied'))
     await refreshAll()
   } catch (error) {
-    ElMessage.error(error?.message || '复制失败')
+    ElMessage.error(error?.message || t('automation.workbench.copyFailed'))
   }
 }
 
@@ -1416,23 +1423,23 @@ async function handleDeleteCronFromDrawer(item) {
 
   try {
     await ElMessageBox.confirm(
-      `确定要删除定时任务「${getCronTaskConfirmation(item)}」吗？`,
-      '删除定时任务',
+      t('automation.workbench.deleteCronConfirm', { name: getCronTaskConfirmation(item) }),
+      t('automation.workbench.deleteCron'),
       {
         closeOnClickModal: false,
         closeOnPressEscape: false,
         type: 'warning',
-        confirmButtonText: '删除',
-        cancelButtonText: '取消',
+        confirmButtonText: t('common.delete'),
+        cancelButtonText: t('common.cancel'),
         confirmButtonClass: 'el-button--danger'
       }
     )
     await deleteCronJob(item.id)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('automation.workbench.deleted'))
     await refreshAll()
   } catch (error) {
     if (error !== 'cancel' && error !== 'close') {
-      ElMessage.error(error?.message || '删除失败')
+      ElMessage.error(error?.message || t('automation.workbench.deleteFailed'))
     }
   }
 }
@@ -1450,22 +1457,22 @@ async function handleDeleteFlow(flow) {
   try {
     await ElMessageBox.confirm(
       `确定要删除流程「${flow.name || flow.id}」吗？此操作不可恢复。`,
-      '删除确认',
+      t('automation.workbench.confirmDelete'),
       {
         closeOnClickModal: false,
         closeOnPressEscape: false,
         type: 'warning',
-        confirmButtonText: '删除',
-        cancelButtonText: '取消',
+        confirmButtonText: t('common.delete'),
+        cancelButtonText: t('common.cancel'),
         confirmButtonClass: 'el-button--danger'
       }
     )
     await deleteFlowApi(flow.id)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('automation.workbench.deleted'))
     await refreshAll()
   } catch (error) {
     if (error !== 'cancel' && error !== 'close') {
-      ElMessage.error(error?.message || '删除失败')
+      ElMessage.error(error?.message || t('automation.workbench.deleteFailed'))
     }
   }
 }
@@ -1478,7 +1485,7 @@ function extractRunId(source) {
 function _normalizeApprovalRecord(item) {
   return {
     id: item.id,
-    name: getAutomationToolTitle(item),
+    get name() { return getAutomationToolTitle(item) },
     meta: item.description || item.approveMode || '-',
     tagType:
       item.status === 0
@@ -1488,14 +1495,14 @@ function _normalizeApprovalRecord(item) {
           : item.status === 2
             ? 'danger'
             : 'info',
-    tagLabel:
-      item.status === 0
-        ? '审批中'
+    get tagLabel() { return       item.status === 0
+        ? t('automation.workbench.approving')
         : item.status === 1
-          ? '已通过'
+          ? t('automation.workbench.approved')
           : item.status === 2
-            ? '未通过'
-            : '已作废'
+            ? t('automation.workbench.rejected')
+            : t('automation.workbench.invalidated')
+    }
   }
 }
 
@@ -1511,43 +1518,43 @@ async function _refreshApprovalsInPlace() {
 
 async function handleApproveItem(item) {
   try {
-    await ElMessageBox.confirm(`确定通过「${item.name}」的审批？`, '审批确认', {
+    await ElMessageBox.confirm(t('automation.workbench.approveConfirm', { name: item.name }), t('automation.workbench.approvalConfirm'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'success',
-      confirmButtonText: '确定通过',
-      cancelButtonText: '取消'
+      confirmButtonText: t('automation.workbench.confirmApprove'),
+      cancelButtonText: t('common.cancel')
     })
     await passApprove(item.id, '')
-    ElMessage.success('审批已通过')
+    ElMessage.success(t('automation.workbench.approvalApproved'))
     await _refreshApprovalsInPlace()
     reviewStore.fetchAll()
   } catch (e) {
-    if (e !== 'cancel') ElMessage.error('操作失败，请重试')
+    if (e !== 'cancel') ElMessage.error(t('common.operationFailed'))
   }
 }
 
 async function handleRejectItem(item) {
   try {
     const { value: remark } = await ElMessageBox.prompt(
-      `请输入拒绝「${item.name}」的原因`,
-      '拒绝审批',
+      t('automation.workbench.rejectReason', { name: item.name }),
+      t('automation.workbench.rejectApproval'),
       {
         closeOnClickModal: false,
         closeOnPressEscape: false,
         type: 'warning',
-        confirmButtonText: '确定拒绝',
-        cancelButtonText: '取消',
-        inputPlaceholder: '输入拒绝原因（可不填）',
+        confirmButtonText: t('automation.workbench.confirmReject'),
+        cancelButtonText: t('common.cancel'),
+        inputPlaceholder: t('automation.workbench.rejectionPlaceholder'),
         inputType: 'textarea'
       }
     )
     await refuseApprove(item.id, remark || '')
-    ElMessage.success('审批已拒绝')
+    ElMessage.success(t('automation.workbench.approvalRejected'))
     await _refreshApprovalsInPlace()
     reviewStore.fetchAll()
   } catch (e) {
-    if (e !== 'cancel') ElMessage.error('操作失败，请重试')
+    if (e !== 'cancel') ElMessage.error(t('common.operationFailed'))
   }
 }
 
@@ -1587,24 +1594,24 @@ function getFlowInstanceStatusType(status) {
 
 function getFlowInstanceStatusLabel(status) {
   const statusLabelMap = {
-    SUCCESS: '成功',
-    COMPLETED: '已完成',
-    FINISHED: '已完成',
-    DONE: '已完成',
-    FAILED: '失败',
-    ERROR: '错误',
-    INTERRUPTED: '已中断',
-    ABORTED: '已终止',
-    CANCELLED: '已取消',
-    RUNNING: '运行中',
-    STARTED: '运行中',
-    PROCESSING: '处理中',
-    WAITING: '等待中',
-    PENDING: '待执行',
-    QUEUED: '排队中'
+    SUCCESS: t('automation.workbench.success'),
+    COMPLETED: t('automation.workbench.completed'),
+    FINISHED: t('automation.workbench.completed'),
+    DONE: t('automation.workbench.completed'),
+    FAILED: t('automation.workbench.failed'),
+    ERROR: t('automation.workbench.error'),
+    INTERRUPTED: t('automation.workbench.interrupted'),
+    ABORTED: t('automation.workbench.aborted'),
+    CANCELLED: t('automation.workbench.cancelled'),
+    RUNNING: t('automation.workbench.running'),
+    STARTED: t('automation.workbench.running'),
+    PROCESSING: t('automation.workbench.processing'),
+    WAITING: t('automation.workbench.waiting'),
+    PENDING: t('automation.workbench.pending'),
+    QUEUED: t('automation.workbench.queued')
   }
 
-  return statusLabelMap[status] || status || '未知'
+  return statusLabelMap[status] || status || t('common.unknown')
 }
 
 function normalizeFlowInstances(rows) {
@@ -1618,7 +1625,7 @@ function normalizeFlowInstances(rows) {
       )
       return {
         id: row.id ?? row.instanceId ?? '',
-        name: row.name ?? row.instanceName ?? '未命名实例',
+        name: row.name ?? row.instanceName ?? t('automation.workbench.unnamedInstance'),
         status,
         statusType: getFlowInstanceStatusType(status),
         statusLabel: getFlowInstanceStatusLabel(status),
@@ -1632,20 +1639,20 @@ function normalizeFlowInstances(rows) {
     .filter(item => !!item.id)
 }
 
-function openJobListDrawer(type = '', title = '全部运维工具') {
+function openJobListDrawer(type = '', title = message('automation.workbench.allTools')) {
   jobListDrawer.filterType = type
-  jobListDrawer.title = title || '全部运维工具'
+  jobListDrawer.title = title || message('automation.workbench.allTools')
   jobListDrawer.visible = true
 }
 
-function openCommandListDrawer(type = '', title = '全部命令') {
+function openCommandListDrawer(type = '', title = message('automation.workbench.allCommands')) {
   commandListDrawer.filterType = type
-  commandListDrawer.title = title || '全部命令'
+  commandListDrawer.title = title || message('automation.workbench.allCommands')
   commandListDrawer.visible = true
 }
 
 function openCommandJobDrawer() {
-  openJobListDrawer('command', '命令运维工具')
+  openJobListDrawer('command', message('automation.workbench.commandTool'))
 }
 
 function openFlowListDrawer() {
@@ -1657,7 +1664,7 @@ function openFailedRunsDrawer() {
 }
 
 function openTodayRunsDrawer() {
-  todayRunsDrawer.title = '今日运行记录'
+  todayRunsDrawer.title = message('automation.workbench.todayRunsTitle')
   todayRunsDrawer.filterType = ''
   todayRunsDrawer.visible = true
 }
@@ -1720,7 +1727,7 @@ async function openCmdReviewDrawer() {
       meta: item.command || item.unapprovedCommand || '-',
       metaCode: true,
       tagType: 'warning',
-      tagLabel: '待审核',
+      get tagLabel() { return t('automation.workbench.pendingReview') },
       _raw: item
     }))
   } finally {
@@ -1738,7 +1745,7 @@ async function _refreshCmdReviewInPlace() {
       meta: item.command || item.unapprovedCommand || '-',
       metaCode: true,
       tagType: 'warning',
-      tagLabel: '待审核',
+      get tagLabel() { return t('automation.workbench.pendingReview') },
       _raw: item
     }))
   } finally {
@@ -1748,45 +1755,45 @@ async function _refreshCmdReviewInPlace() {
 
 async function handleCmdApproveItem(item) {
   try {
-    await ElMessageBox.confirm(`确定通过【${item.name}】的审核？`, '审核确认', {
+    await ElMessageBox.confirm(t('automation.workbench.commandApproveConfirm', { name: item.name }), t('automation.workbench.reviewConfirm'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'success',
-      confirmButtonText: '确定通过',
-      cancelButtonText: '取消'
+      confirmButtonText: t('automation.workbench.confirmApprove'),
+      cancelButtonText: t('common.cancel')
     })
     await approveCommand([{ ...item._raw, status: COMMAND_STATUS.PUBLISHED }])
-    ElMessage.success('审核已通过')
+    ElMessage.success(t('automation.workbench.reviewApproved'))
     await _refreshCmdReviewInPlace()
     reviewStore.fetchAll()
   } catch (e) {
-    if (e !== 'cancel') ElMessage.error('操作失败，请重试')
+    if (e !== 'cancel') ElMessage.error(t('common.operationFailed'))
   }
 }
 
 async function handleCmdRejectItem(item) {
   try {
     const { value: reason } = await ElMessageBox.prompt(
-      `请输入拒绝【${item.name}】的原因`,
-      '拒绝审核',
+      t('automation.workbench.commandRejectReason', { name: item.name }),
+      t('automation.workbench.rejectReview'),
       {
         closeOnClickModal: false,
         closeOnPressEscape: false,
         type: 'warning',
-        confirmButtonText: '确定拒绝',
-        cancelButtonText: '取消',
-        inputPlaceholder: '输入拒绝原因（可不填）',
+        confirmButtonText: t('automation.workbench.confirmReject'),
+        cancelButtonText: t('common.cancel'),
+        inputPlaceholder: t('automation.workbench.rejectionPlaceholder'),
         inputType: 'textarea'
       }
     )
     await approveCommand([
       { ...item._raw, status: COMMAND_STATUS.REJECTED, unapprovedReason: reason || '' }
     ])
-    ElMessage.success('审核已拒绝')
+    ElMessage.success(t('automation.workbench.reviewRejected'))
     await _refreshCmdReviewInPlace()
     reviewStore.fetchAll()
   } catch (e) {
-    if (e !== 'cancel') ElMessage.error('操作失败，请重试')
+    if (e !== 'cancel') ElMessage.error(t('common.operationFailed'))
   }
 }
 
@@ -1800,7 +1807,7 @@ async function openScriptReviewDrawer() {
       name: item.name || item.path || '-',
       meta: item.submitMsg || item.path || '-',
       tagType: 'warning',
-      tagLabel: '待审核'
+      get tagLabel() { return t('automation.workbench.pendingReview') }
     }))
   } finally {
     scriptReviewDrawer.loading = false

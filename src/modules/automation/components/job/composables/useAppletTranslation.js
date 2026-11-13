@@ -1,3 +1,4 @@
+import { t } from '@/core/i18n'
 import { ref, onMounted } from 'vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 
@@ -22,18 +23,18 @@ export function useAppletTranslation() {
 
       // 应用翻译映射
       const translations = {
-        'cac.index.square': '系统巡检',
-        'acm.title': '资产管理',
-        'app_pms.title': '密码管理',
-        'app_sudo.title': 'sudo权限管理',
-        'app_vap.title': '补丁管理',
-        'app_spm.title': 'Yum仓库管理',
-        'app_uim.name': '用户管理',
-        'app_uim.menu.dashboard': '控制台',
-        'app_vcm.menu.host_cluster': '主机集群',
-        'app_vcm.menu.vm_template': '虚拟机模板',
-        'applet.selector.all': '所有应用',
-        'applet.selector.unsorted': '未分类'
+        'cac.index.square': t('automation.applets.cac'),
+        'acm.title': t('automation.applets.acm'),
+        'app_pms.title': t('automation.applets.pms'),
+        'app_sudo.title': t('automation.applets.sudo'),
+        'app_vap.title': t('automation.applets.vap'),
+        'app_spm.title': t('automation.applets.spm'),
+        'app_uim.name': t('automation.applets.uim'),
+        'app_uim.menu.dashboard': t('automation.applets.dashboard'),
+        'app_vcm.menu.host_cluster': t('automation.applets.cluster'),
+        'app_vcm.menu.vm_template': t('automation.applets.vm'),
+        'applet.selector.all': t('automation.applets.all'),
+        'applet.selector.unsorted': t('automation.applets.unsorted')
       }
 
       return translations[key] || parts[parts.length - 1] || title
@@ -53,11 +54,11 @@ export function useAppletTranslation() {
       // 处理翻译 key，移除 #{} 包裹并提取实际文本
       appletsList.value = applets.map(app => ({
         ...app,
-        displayTitle: translateTitle(app.title)
+        get displayTitle() { return translateTitle(app.title) }
       }))
 
       appletMap.value = applets.reduce((map, app) => {
-        map[app.name] = translateTitle(app.title)
+        Object.defineProperty(map, app.name, { enumerable: true, configurable: true, get: () => translateTitle(app.title) })
         return map
       }, {})
     } catch (error) {

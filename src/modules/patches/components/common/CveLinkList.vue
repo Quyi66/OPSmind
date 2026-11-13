@@ -25,7 +25,7 @@
     <el-dialog
       v-if="overflowCount > 0"
       v-model="dialogVisible"
-      :title="dialogTitle"
+      :title="dialogTitle || t('patches.catalog.associatedVulnerabilities')"
       width="fit-content"
       :style="{ minWidth: '680px', maxWidth: 'calc(100vw - 32px)' }"
       append-to-body
@@ -48,7 +48,7 @@
         </template>
       </div>
       <template #footer>
-        <el-button @click="dialogVisible = false">关闭</el-button>
+        <el-button @click="dialogVisible = false">{{ t('common.close') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -56,6 +56,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { computed, ref } from 'vue'
 
 const props = defineProps({
@@ -77,7 +79,7 @@ const props = defineProps({
   // "+N" 弹窗标题
   dialogTitle: {
     type: String,
-    default: '关联漏洞'
+    default: ''
   },
   // 空数据占位文案
   emptyText: {

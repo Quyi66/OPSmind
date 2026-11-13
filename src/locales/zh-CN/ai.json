@@ -1,0 +1,23 @@
+{
+  "assistant": "AI助手",
+  "greeting": "OPS智能助手，很高兴为你服务",
+  "description": "为运维人员设计的助手Agent，帮助解决系统维护问题。",
+  "placeholder": "询问任何系统维护问题",
+  "questionRequired": "请输入您的问题",
+  "processing": "正在处理您的问题: {question}",
+  "pageTitle": "OPS智能助手",
+  "bubbleTitle": "OPS智能助手 · 气泡",
+  "loading": "正在加载 OPS 智能助手...",
+  "missingToken": "缺少 token：请通过 URL 传入 ?token=...，或通过运行时配置设置 DIFY_TOKEN。",
+  "windowMissing": "加载失败：未检测到 Dify 窗口。请点击“手动打开”，或检查脚本加载与网络/CSP。",
+  "initFailed": "初始化失败：请检查控制台错误信息。",
+  "stillClosed": "仍未打开，请检查脚本或网络。",
+  "controlMissing": "未检测到 Dify 按钮或对象，请检查脚本路径是否正确。",
+  "retryFailed": "手动打开失败，查看控制台错误。",
+  "manualOpen": "手动打开",
+  "scriptFailed": "脚本加载失败：请检查本地 embed 路径或网络。",
+  "embedFailed": "加载失败：请检查脚本或 CSP 配置。",
+  "initError": "初始化失败：{message}",
+  "closePanel": "关闭 AI OPS 面板",
+  "frameTitle": "AI OPS 助手"
+}

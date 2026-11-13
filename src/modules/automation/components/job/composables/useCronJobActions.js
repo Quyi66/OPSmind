@@ -1,3 +1,4 @@
+import { t } from '@/core/i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { h } from 'vue'
@@ -55,38 +56,38 @@ export function useCronJobActions(refreshCallback) {
       const nextExecTimes = await fetchNextExecutionTimes(row.scheduleConf)
 
       if (nextExecTimes.length === 0) {
-        ElMessage.error('该任务没有执行计划，是否已禁用？')
+        ElMessage.error(t('automation.schedule.noSchedule'))
         return
       }
 
       const content = []
       if (row.triggerStatus === '1') {
         // 停止任务
-        content.push(h('div', `停用定时任务「${taskName(row)}」？`))
+        content.push(h('div', t('automation.list.disableCronConfirm', { name: taskName(row) })))
       } else {
         // 启动任务
-        content.push(h('div', `启用定时任务「${taskName(row)}」？`))
+        content.push(h('div', t('automation.list.enableCronConfirm', { name: taskName(row) })))
 
         // 检查是否高频任务
         if (nextExecTimes.length >= 2) {
           const interval = calculateInterval(nextExecTimes[0], nextExecTimes[1])
           if (interval.isHighFrequency) {
-            content.push(h('p', { style: { color: 'var(--el-color-warning)' } }, '当前计划执行频率较高，请确认执行间隔。'))
+            content.push(h('p', { style: { color: 'var(--el-color-warning)' } }, t('automation.list.highFrequencyHint')))
           }
         }
 
         // 显示下次执行时间
-        content.push(h('p', '下次执行时间'))
+        content.push(h('p', t('automation.schedule.nextTimes')))
         nextExecTimes.slice(0, 5).forEach(time => {
           content.push(h('div', String(time)))
         })
       }
 
-      await ElMessageBox.confirm(h('div', content), '确认操作', {
+      await ElMessageBox.confirm(h('div', content), t('automation.list.confirmOperation'), {
         closeOnClickModal: false,
         closeOnPressEscape: false,
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('automation.file.confirm'),
+        cancelButtonText: t('common.cancel'),
         type: 'warning'
       })
 
@@ -96,20 +97,20 @@ export function useCronJobActions(refreshCallback) {
           // 当前是启用状态，调用停止接口
           await jaoApi.stopCronJob(row.id)
           row.triggerStatus = '0'
-          ElMessage.success(`已停用：${taskName(row)}`)
+          ElMessage.success(t('automation.cron.disabledNotice', { name: taskName(row) }))
         } else {
           // 当前是停用状态，调用启动接口
           await jaoApi.startCronJob(row.id)
           row.triggerStatus = '1'
-          ElMessage.success(`已启用：${taskName(row)}`)
+          ElMessage.success(t('automation.cron.enabledNotice', { name: taskName(row) }))
         }
       } catch (error) {
-        ElMessage.error(error?.message || '状态切换失败')
+        ElMessage.error(error?.message || t('automation.list.toggleFailed'))
         throw error
       }
     } catch (error) {
       if (error !== 'cancel') {
-        ElMessage.error(error?.message || '状态切换失败')
+        ElMessage.error(error?.message || t('automation.list.toggleFailed'))
       }
     } finally {
       row._switching = false
@@ -124,13 +125,13 @@ export function useCronJobActions(refreshCallback) {
 
     try {
       await ElMessageBox.confirm(
-        `确定要切换选中 ${selectedRows.length} 个任务的启停状态吗？已启用的任务将停用，已停用的任务将启用。\n${selectedRows.map(taskName).join('\n')}`,
-        '批量启停',
+        t('automation.list.batchToggleConfirm', { count: selectedRows.length, tasks: selectedRows.map(taskName).join('\n') }),
+        t('automation.list.batchToggle'),
         {
           closeOnClickModal: false,
           closeOnPressEscape: false,
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
+          confirmButtonText: t('automation.file.confirm'),
+          cancelButtonText: t('common.cancel'),
           type: 'warning'
         }
       )
@@ -142,11 +143,11 @@ export function useCronJobActions(refreshCallback) {
       }, {})
 
       await jaoApi.batchToggleCronJobs(statusData)
-      ElMessage.success('批量操作成功')
+      ElMessage.success(t('automation.list.batchSucceeded'))
       refreshCallback()
     } catch (error) {
       if (error !== 'cancel') {
-        ElMessage.error(error?.message || '批量操作失败')
+        ElMessage.error(error?.message || t('automation.list.batchFailed'))
       }
     }
   }
@@ -156,19 +157,19 @@ export function useCronJobActions(refreshCallback) {
    */
   async function handleExecuteOnce(row) {
     try {
-      await ElMessageBox.confirm(`确定立即执行定时任务「${taskName(row)}」吗？`, '确认操作', {
+      await ElMessageBox.confirm(t('automation.cron.executeConfirm', { name: taskName(row) }), t('automation.list.confirmOperation'), {
         closeOnClickModal: false,
         closeOnPressEscape: false,
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('automation.file.confirm'),
+        cancelButtonText: t('common.cancel'),
         type: 'warning'
       })
 
       await jaoApi.executeCronJob(row.id)
-      ElMessage.success(`已触发执行：${taskName(row)}`)
+      ElMessage.success(t('automation.cron.executionTriggered', { name: taskName(row) }))
     } catch (error) {
       if (error !== 'cancel') {
-        ElMessage.error(error?.message || `任务「${taskName(row)}」执行失败`)
+        ElMessage.error(error?.message || t('automation.list.cronFailed', { name: taskName(row) }))
       }
     }
   }
@@ -178,20 +179,20 @@ export function useCronJobActions(refreshCallback) {
    */
   async function handleCopy(row) {
     try {
-      await ElMessageBox.confirm(`确定要复制定时任务「${taskName(row)}」吗？`, '确认操作', {
+      await ElMessageBox.confirm(t('automation.list.copyCronConfirm', { name: taskName(row) }), t('automation.list.confirmOperation'), {
         closeOnClickModal: false,
         closeOnPressEscape: false,
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('automation.file.confirm'),
+        cancelButtonText: t('common.cancel'),
         type: 'info'
       })
 
       await jaoApi.copyCronJob(row.id)
-      ElMessage.success('复制成功')
+      ElMessage.success(t('automation.workbench.copied'))
       refreshCallback()
     } catch (error) {
       if (error !== 'cancel') {
-        ElMessage.error(error?.message || '复制失败')
+        ElMessage.error(error?.message || t('automation.workbench.copyFailed'))
       }
     }
   }
@@ -201,20 +202,20 @@ export function useCronJobActions(refreshCallback) {
    */
   async function handleDelete(row) {
     try {
-      await ElMessageBox.confirm(`确定要删除定时任务「${taskName(row)}」吗？`, '确认删除', {
+      await ElMessageBox.confirm(t('automation.workbench.deleteCronConfirm', { name: taskName(row) }), t('automation.list.confirmDelete'), {
         closeOnClickModal: false,
         closeOnPressEscape: false,
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('automation.file.confirm'),
+        cancelButtonText: t('common.cancel'),
         type: 'warning'
       })
 
       await jaoApi.deleteCronJob(row.id)
-      ElMessage.success(`已删除：${taskName(row)}`)
+      ElMessage.success(t('automation.list.cronDeleted', { name: taskName(row) }))
       refreshCallback()
     } catch (error) {
       if (error !== 'cancel') {
-        ElMessage.error(error?.message || '删除失败')
+        ElMessage.error(error?.message || t('automation.workbench.deleteFailed'))
       }
     }
   }

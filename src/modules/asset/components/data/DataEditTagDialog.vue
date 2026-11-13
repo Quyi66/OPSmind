@@ -1,26 +1,29 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="编辑标签"
+    :title="t('asset.editTag')"
     width="500px"
     :close-on-click-modal="false"
     @closed="handleClosed"
     :close-on-press-escape="false"
   >
-    <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top">
-      <el-form-item label="标签名称" prop="name">
-        <el-input v-model="formData.name" placeholder="仅支持中英文、数字、下划线和空格" />
+    <el-form ref="formRef" :model="formData" :rules="formRules" :validate-on-rule-change="false" label-position="top">
+      <el-form-item :label="t('asset.tagName')" prop="name">
+        <el-input v-model="formData.name" :placeholder="t('asset.tagNameHint')" />
       </el-form-item>
     </el-form>
 
     <template #footer>
-      <el-button @click="visible = false">取消</el-button>
-      <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
+      <el-button @click="visible = false">{{ t('common.cancel') }}</el-button>
+      <el-button type="primary" :loading="saving" @click="handleSave">{{ t('common.save') }}</el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { useLocalizedValidation } from '@/core/i18n/validation'
+
 import { ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { apiService } from '@/core/api'
@@ -46,13 +49,14 @@ const visible = computed({
 })
 
 const formRef = ref()
+useLocalizedValidation(formRef)
 const formData = ref({
   name: ''
 })
 
-const formRules = {
+const formRules = computed(() => ({
   name: createTagNameRules()
-}
+}))
 
 const saving = ref(false)
 
@@ -80,12 +84,12 @@ const handleSave = async () => {
       }
     )
     throwIfTagJobFailed(response)
-    ElMessage.success('保存成功')
+    ElMessage.success(t('asset.saved'))
     visible.value = false
     emit('saved')
   } catch (error) {
     console.error('保存失败:', error)
-    ElMessage.error(`保存失败: ${error.response?.data?.message || error.message}`)
+    ElMessage.error(t('asset.saveFailedReason', { message: error.response?.data?.message || error.message }))
   } finally {
     saving.value = false
   }

@@ -3,10 +3,10 @@
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small" @submit.prevent>
-        <el-form-item label="关键词">
+        <el-form-item :label="t('automation.workbench.keyword')">
           <el-input
             v-model="filters.keyword"
-            placeholder="搜索名称、描述或命令内容"
+            :placeholder="t('automation.command.search')"
             clearable
             style="width: 240px"
             @input="handleSearch"
@@ -21,9 +21,9 @@
         <el-form-item>
           <el-button type="primary" @click="handleSearch">
             <el-icon><Search /></el-icon>
-            搜索
+            {{ t('common.search') }}
           </el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <el-button @click="handleReset">{{ t('common.reset') }}</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -32,7 +32,7 @@
     <div class="ops-action-bar">
       <el-button type="primary" size="small" @click="handleCreate">
         <i class="fas fa-plus" />
-        创建命令
+        {{ t('automation.command.create') }}
       </el-button>
       <el-button
         size="small"
@@ -40,7 +40,7 @@
         @click="handleBatchRun('run')"
       >
         <i class="fas fa-play" />
-        执行命令
+        {{ t('automation.command.execute') }}
       </el-button>
       <el-button
         size="small"
@@ -48,7 +48,7 @@
         @click="handleBatchRun('createJob')"
       >
         <i class="fas fa-tasks" />
-        创建运维工具
+        {{ t('automation.command.createTool') }}
       </el-button>
       <span style="flex: 1"></span>
       <el-button
@@ -57,7 +57,7 @@
         size="small"
         :loading="loading"
         @click="loadData"
-        title="刷新"
+        :title="t('common.refresh')"
       >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
@@ -75,7 +75,7 @@
       >
         <el-table-column type="selection" width="45" :selectable="checkSelectable" />
 
-        <el-table-column prop="name" label="名称" min-width="180" sortable="custom">
+        <el-table-column prop="name" :label="t('common.name')" min-width="180" sortable="custom">
           <template #default="{ row }">
             <el-button text type="primary" @click="handleView(row)">
               {{ row.name }}
@@ -83,9 +83,9 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="description" label="描述" min-width="140" show-overflow-tooltip />
+        <el-table-column prop="description" :label="t('automation.job.description')" min-width="140" show-overflow-tooltip />
 
-        <el-table-column prop="command" label="命令内容" min-width="200">
+        <el-table-column prop="command" :label="t('automation.command.content')" min-width="200">
           <template #default="{ row }">
             <div class="command-preview" :title="getDisplayCommand(row) || '-'">
               {{ getDisplayCommand(row) || '-' }}
@@ -93,11 +93,11 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="type" label="类型" width="100" align="left" sortable="custom" />
+        <el-table-column prop="type" :label="t('automation.job.type')" width="100" align="left" sortable="custom" />
 
         <el-table-column
           prop="createdAt"
-          label="创建时间"
+          :label="t('automation.command.createdAt')"
           width="180"
           align="left"
           sortable="custom"
@@ -109,7 +109,7 @@
 
         <el-table-column
           prop="updatedAt"
-          label="修改时间"
+          :label="t('automation.list.modifiedAt')"
           width="180"
           align="left"
           sortable="custom"
@@ -121,19 +121,19 @@
 
         <el-table-column
           prop="createdBy"
-          label="创建人"
+          :label="t('automation.command.createdBy')"
           width="100"
           align="left"
           sortable="custom"
         />
 
-        <el-table-column prop="checkBy" label="审核人" width="100" align="left" sortable="custom">
+        <el-table-column prop="checkBy" :label="t('automation.command.reviewer')" width="100" align="left" sortable="custom">
           <template #default="{ row }">
             {{ row.checkBy || '' }}
           </template>
         </el-table-column>
 
-        <el-table-column prop="status" label="状态" width="100" align="left" sortable="custom">
+        <el-table-column prop="status" :label="t('automation.workbench.status')" width="100" align="left" sortable="custom">
           <template #default="{ row }">
             <el-tag
               :type="getStatusTagType(row.status)"
@@ -146,7 +146,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="176" fixed="right" align="left">
+        <el-table-column :label="t('common.actions')" width="176" fixed="right" align="left">
           <template #default="{ row }">
             <el-button
               text
@@ -155,7 +155,7 @@
               :disabled="row.status === 3"
               @click="handleEdit(row)"
             >
-              编辑
+              {{ t('automation.workbench.edit') }}
             </el-button>
             <el-button
               text
@@ -164,7 +164,7 @@
               :disabled="row.status === 1 || row.status === 2"
               @click="handleToggleStatus(row)"
             >
-              {{ row.status === 3 ? '启用' : '停用' }}
+              {{ row.status === 3 ? t('automation.workbench.enable') : t('automation.workbench.disable') }}
             </el-button>
             <el-button
               text
@@ -173,9 +173,9 @@
               :disabled="row.status !== 0"
               @click="handleRun(row)"
             >
-              执行
+              {{ t('automation.workbench.execute') }}
             </el-button>
-            <el-button text type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+            <el-button text type="danger" size="small" @click="handleDelete(row)">{{ t('common.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -212,6 +212,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, reactive, computed, onMounted, inject, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search } from '@element-plus/icons-vue'
@@ -309,7 +311,7 @@ async function loadData() {
     commands.value = response.data || response || []
   } catch (error) {
     console.error('加载命令列表失败:', error)
-    ElMessage.error('加载命令列表失败')
+    ElMessage.error(t('automation.command.listFailed'))
   } finally {
     loading.value = false
   }
@@ -376,7 +378,7 @@ function handleRun(row) {
 // 批量执行/创建作业
 function handleBatchRun(type) {
   if (selectedCommands.value.length === 0) {
-    ElMessage.warning('请选择要操作的命令')
+    ElMessage.warning(t('automation.command.selectCommands'))
     return
   }
   if (type === 'run') {
@@ -404,34 +406,34 @@ function handleStatusClick(row) {
 async function handleToggleStatus(row) {
   if (row.status === 3) {
     try {
-      await ElMessageBox.confirm('确定要启用该命令吗？', '启用命令', {
+      await ElMessageBox.confirm(t('automation.command.enableConfirm'), t('automation.command.enableTitle'), {
         closeOnClickModal: false,
         closeOnPressEscape: false,
         type: 'warning'
       })
       const command = { ...row, status: 0 }
       await saveCommand(command)
-      ElMessage.success('操作成功')
+      ElMessage.success(t('automation.approval.operationSucceeded'))
       loadData()
     } catch (error) {
       if (error !== 'cancel') {
-        ElMessage.error('操作失败')
+        ElMessage.error(t('automation.schedule.operationFailed'))
       }
     }
   } else if (row.status === 0) {
     try {
-      await ElMessageBox.confirm('确定要停用该命令吗？', '停用命令', {
+      await ElMessageBox.confirm(t('automation.command.disableConfirm'), t('automation.command.disableTitle'), {
         closeOnClickModal: false,
         closeOnPressEscape: false,
         type: 'warning'
       })
       const command = { ...row, status: 3 }
       await saveCommand(command)
-      ElMessage.success('操作成功')
+      ElMessage.success(t('automation.approval.operationSucceeded'))
       loadData()
     } catch (error) {
       if (error !== 'cancel') {
-        ElMessage.error('操作失败')
+        ElMessage.error(t('automation.schedule.operationFailed'))
       }
     }
   }
@@ -440,18 +442,18 @@ async function handleToggleStatus(row) {
 // 删除命令
 async function handleDelete(row) {
   try {
-    await ElMessageBox.confirm('确定要删除该命令吗？', '删除命令', {
+    await ElMessageBox.confirm(t('automation.command.deleteConfirm'), t('automation.command.deleteTitle'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning'
     })
     await apiDeleteCommand(row.id)
-    ElMessage.success('操作成功')
+    ElMessage.success(t('automation.approval.operationSucceeded'))
     loadData()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除命令失败:', error)
-      ElMessage.error('操作失败')
+      ElMessage.error(t('automation.schedule.operationFailed'))
     }
   }
 }

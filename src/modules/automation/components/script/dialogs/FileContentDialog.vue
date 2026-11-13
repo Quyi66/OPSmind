@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    :title="file?.path || file?.name || '文件内容'"
+    :title="file?.path || file?.name || t('automation.library.fileContents')"
     width="80%"
     :close-on-click-modal="true"
     destroy-on-close
@@ -20,12 +20,14 @@
       />
     </div>
     <template #footer>
-      <el-button @click="visible = false">关闭</el-button>
+      <el-button @click="visible = false">{{ t('common.close') }}</el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { computed, ref, watch, nextTick } from 'vue'
 import FileContentViewer from '@/modules/automation/components/job/JobListView/FileContentViewer.vue'
 

@@ -3,14 +3,15 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import Page from '@/modules/asset/views/ExceptionDevicePage.vue'
 import Selector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
+import { setLocale } from '@/core/i18n'
 
-const api = vi.hoisted(() => ({ post: vi.fn() }))
+const api = vi.hoisted(() => ({ post: vi.fn(), kpis: vi.fn(), rows: vi.fn() }))
 vi.mock('@/core/api', () => ({ apiService: api }))
 vi.mock('@/modules/asset/api', () => ({
   dataManageApi: { getResourceTypes: vi.fn().mockResolvedValue({ records: [] }) },
   exceptionApi: {
-    getConnectionCount: vi.fn().mockResolvedValue({ records: [] }),
-    getConnectException: vi.fn().mockResolvedValue({ records: [], total: 0 })
+    getConnectionCount: api.kpis,
+    getConnectException: api.rows
   }
 }))
 vi.mock('@/modules/automation/api/jao', () => ({
@@ -106,6 +107,8 @@ async function openSelector(props = {}) {
 }
 beforeEach(() => {
   vi.clearAllMocks()
+  api.kpis.mockResolvedValue({ records: [] })
+  api.rows.mockResolvedValue({ records: [], total: 0 })
   api.post.mockReset().mockResolvedValue({ data: { status: 'RUNNING', runId: 'run-1' } })
   vi.spyOn(ElMessageBox, 'confirm').mockResolvedValue('confirm')
   vi.spyOn(ElMessage, 'success').mockImplementation(() => {})
@@ -113,13 +116,36 @@ beforeEach(() => {
   vi.spyOn(ElMessage, 'error').mockImplementation(() => {})
   vi.spyOn(console, 'error').mockImplementation(() => {})
 })
-afterEach(() => {
+afterEach(async () => {
   wrapper?.unmount()
   wrapper = undefined
+  await setLocale('zh-CN', { persist: false })
   vi.restoreAllMocks()
 })
 
 describe('选择设备后直接执行资产操作', () => {
+  it('keeps selected devices, action identity and result context across a language switch', async () => {
+    await openPage('信息数据采集')
+    await selectHosts(hosts)
+    const vm = wrapper.vm.$.setupState, selection = selector().vm.$.setupState.allSelectedHosts
+    const reads = api.rows.mock.calls.length, kpis = api.kpis.mock.calls.length
+    await setLocale('en-US', { persist: false }); await flushPromises()
+    expect(selector().vm.$.setupState.allSelectedHosts).toEqual(selection)
+    expect(selector().props('title')).toBe('Select devices · Collect information')
+    expect(selector().props('description')).toContain('Asset data collection')
+    expect(vm.currentActionKey).toBe('collectInfo')
+    expect(api.rows).toHaveBeenCalledTimes(reads)
+    expect(api.kpis).toHaveBeenCalledTimes(kpis)
+    expect(api.post).not.toHaveBeenCalled()
+    await button('Collect asset data now', selector()).trigger('click'); await flushPromises()
+    expect(api.post.mock.calls[0][0]).toContain('/jobs/mjedwe/run?')
+    expect(api.post.mock.calls[0][1].params.hosts).toEqual(hosts)
+    expect(vm.currentRunId).toBe('run-1')
+    expect(vm.currentRunTitle).toBe('Asset information collection')
+    await setLocale('zh-CN', { persist: false })
+    expect(vm.currentRunTitle).toBe('信息数据采集')
+    expect(api.post).toHaveBeenCalledTimes(1)
+  })
   it.each([
     ['连通性检测', '检查连通性', '立即检查连通性', 'M1x855'],
     ['信息数据采集', '采集信息', '立即采集资产数据', 'mjedwe']
@@ -237,7 +263,7 @@ describe('选择设备后直接执行资产操作', () => {
 describe('通用选择器兼容现有表单', () => {
   it('默认允许确认空选择以清空表单，确认后关闭', async () => {
     await openSelector()
-    expect(wrapper.props('title')).toBe('选择设备')
+    expect(wrapper.find('section[aria-label="选择设备"]').exists()).toBe(true)
     expect(button('确定').element.disabled).toBe(false)
     await button('确定').trigger('click')
     expect(wrapper.emitted('confirm')).toEqual([[[]]])

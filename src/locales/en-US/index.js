@@ -5,4 +5,37 @@ import hostUser from './hostUser.json'
 import selection from './selection.json'
 import execution from './execution.json'
 
-export default { common, auth, navigation, hostUser, selection, execution }
+import home from './home.json'
+
+import profile from './profile.json'
+
+import about from './about.json'
+
+import ai from './ai.json'
+
+import admin from './admin.json'
+import asset from './asset.json'
+
+import automation from './automation.json'
+
+import yumRepo from './yumRepo.json'
+
+import patches from './patches.json'
+
+export default {
+  common,
+  auth,
+  navigation,
+  hostUser,
+  selection,
+  execution,
+  home,
+  profile,
+  about,
+  ai,
+  admin,
+  asset,
+  automation,
+  yumRepo,
+  patches
+}

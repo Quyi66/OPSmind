@@ -28,11 +28,11 @@
     </el-form>
 
     <div class="flow-editor-panel__footer">
-      <el-button @click="handleCancel">取消</el-button>
+      <el-button @click="handleCancel">{{ t('common.cancel') }}</el-button>
       <el-button v-if="!isInstance" type="primary" :loading="loading" @click="handleSave">
-        保存
+        {{ t('common.save') }}
       </el-button>
-      <el-button v-else type="primary" :loading="loading" @click="handleRun">执行</el-button>
+      <el-button v-else type="primary" :loading="loading" @click="handleRun">{{ t('automation.workbench.execute') }}</el-button>
     </div>
   </div>
 
@@ -66,17 +66,19 @@
       </el-form>
 
       <div class="flow-editor-drawer__footer">
-        <el-button @click="handleCancel">取消</el-button>
+        <el-button @click="handleCancel">{{ t('common.cancel') }}</el-button>
         <el-button v-if="!isInstance" type="primary" :loading="loading" @click="handleSave">
-          保存
+          {{ t('common.save') }}
         </el-button>
-        <el-button v-else type="primary" :loading="loading" @click="handleRun">执行</el-button>
+        <el-button v-else type="primary" :loading="loading" @click="handleRun">{{ t('automation.workbench.execute') }}</el-button>
       </div>
     </div>
   </el-drawer>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as jaoApi from '@/modules/automation/api/jao'
@@ -107,8 +109,8 @@ const scriptSelectorSession = ref(0)
 let flowDetailRequestId = 0
 
 const headerTitle = computed(() => {
-  if (isInstance.value) return '运行流程'
-  return flow.id ? '编辑流程' : '新建流程'
+  if (isInstance.value) return t('automation.flow.runTitle')
+  return flow.id ? t('automation.flow.edit') : t('automation.flow.newFlow')
 })
 
 watch(
@@ -178,7 +180,7 @@ async function fetchFlowDetail(flowId) {
     applyFlowDetail(response?.data ?? response ?? {})
   } catch (error) {
     if (requestId === flowDetailRequestId) {
-      ElMessage.error(error?.message || '获取流程详情失败')
+      ElMessage.error(error?.message || t('automation.flow.detailFailed'))
     }
   } finally {
     if (requestId === flowDetailRequestId) {
@@ -358,15 +360,15 @@ async function handleParseParams() {
 
   if (newParams.length > 0) {
     flow.globalParams.push(...newParams)
-    ElMessage.success(`解析到 ${newParams.length} 个新参数`)
+    ElMessage.success(t('automation.flow.parsedParamCount', { count: newParams.length }))
   } else {
-    ElMessage.info('未发现新参数')
+    ElMessage.info(t('automation.flow.noNewParams'))
   }
 }
 
 function handleSave() {
   if (!flow.name?.trim()) {
-    ElMessage.warning('请输入流程名称')
+    ElMessage.warning(t('automation.flow.nameRequired'))
     return
   }
 
@@ -421,7 +423,7 @@ function handleSave() {
         response?.flowId ||
         flow.id ||
         ''
-      ElMessage.success('保存成功')
+      ElMessage.success(t('automation.job.saved'))
       emit('saved', {
         action: 'save',
         flowId: savedFlowId,
@@ -430,7 +432,7 @@ function handleSave() {
       visible.value = false
     })
     .catch(error => {
-      ElMessage.error(error?.message || '保存失败')
+      ElMessage.error(error?.message || t('automation.job.saveFailed'))
     })
     .finally(() => {
       loading.value = false
@@ -439,12 +441,12 @@ function handleSave() {
 
 function handleRun() {
   if (!flow.name?.trim()) {
-    ElMessage.warning('请输入流程名称')
+    ElMessage.warning(t('automation.flow.nameRequired'))
     return
   }
 
   if (!flow.hosts.length) {
-    ElMessage.warning('请至少添加一个目标主机')
+    ElMessage.warning(t('automation.command.oneHostRequired'))
     return
   }
 
@@ -509,7 +511,7 @@ function handleRun() {
   jaoApi
     .createFlowInstance(payload)
     .then(() => {
-      ElMessage.success('流程已开始执行')
+      ElMessage.success(t('automation.flow.started'))
       emit('saved', {
         action: 'run',
         flowId: flow.id || props.flowId || payload.jobFlowId || '',
@@ -518,7 +520,7 @@ function handleRun() {
       visible.value = false
     })
     .catch(error => {
-      ElMessage.error(error?.message || '执行失败')
+      ElMessage.error(error?.message || t('automation.job.executionFailed'))
     })
     .finally(() => {
       loading.value = false

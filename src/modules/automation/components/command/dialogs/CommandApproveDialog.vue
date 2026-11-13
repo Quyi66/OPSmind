@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="命令审核"
+    :title="t('automation.command.reviewTitle')"
     width="700px"
     :close-on-click-modal="false"
     destroy-on-close
@@ -12,17 +12,17 @@
     <div v-if="isSingleMode" class="approve-content">
       <div class="approve-action">
         <el-tag :type="isNewCommand ? 'success' : 'warning'" size="default">
-          {{ isNewCommand ? '新增命令' : '修改命令' }}
+          {{ isNewCommand ? t('automation.command.addAction') : t('automation.command.modifyAction') }}
         </el-tag>
       </div>
 
       <div class="info-item">
-        <label>命令名称</label>
+        <label>{{ t('automation.command.name') }}</label>
         <div class="value">{{ currentCommand?.name }}</div>
       </div>
 
       <div class="info-item">
-        <label>语法类型</label>
+        <label>{{ t('automation.command.syntaxType') }}</label>
         <div class="value">
           <el-tag size="small" type="info">{{ currentCommand?.type || '-' }}</el-tag>
         </div>
@@ -30,7 +30,7 @@
 
       <!-- 新增命令：只显示待审核内容 -->
       <div v-if="isNewCommand" class="info-item">
-        <label>命令内容</label>
+        <label>{{ t('automation.command.content') }}</label>
         <div class="code-block">
           <pre>{{ currentCommand?.unapprovedCommand }}</pre>
         </div>
@@ -39,14 +39,14 @@
       <!-- 修改命令：显示对比 -->
       <template v-else>
         <div class="info-item">
-          <label>原命令 (Old)</label>
+          <label>{{ t('automation.command.old') }}</label>
           <div class="code-block">
             <pre>{{ currentCommand?.command }}</pre>
           </div>
         </div>
 
         <div class="info-item">
-          <label>新命令 (New)</label>
+          <label>{{ t('automation.command.newContent') }}</label>
           <div class="code-block new">
             <pre>{{ currentCommand?.unapprovedCommand }}</pre>
           </div>
@@ -54,7 +54,7 @@
       </template>
 
       <div v-if="currentCommand?.description" class="info-item">
-        <label>描述</label>
+        <label>{{ t('automation.job.description') }}</label>
         <div class="value">{{ currentCommand?.description }}</div>
       </div>
     </div>
@@ -62,8 +62,7 @@
     <!-- 批量审核 -->
     <div v-else class="approve-content batch-mode">
       <div class="batch-summary">
-        <strong>共 {{ commandList.length }} 条</strong>
-        命令待审核
+        <strong>{{ t('automation.command.pendingCount', { count: commandList.length }) }}</strong>
       </div>
 
       <el-collapse accordion>
@@ -75,17 +74,17 @@
           </template>
           <div class="collapse-content">
             <div class="info-row">
-              <label>操作：</label>
+              <label>{{ t('automation.command.operationLabel') }}</label>
               <el-tag :type="!cmd.command ? 'success' : 'warning'" size="small">
-                {{ !cmd.command ? '新增命令' : '修改命令' }}
+                {{ !cmd.command ? t('automation.command.addAction') : t('automation.command.modifyAction') }}
               </el-tag>
             </div>
             <div class="info-row">
-              <label>类型：</label>
+              <label>{{ t('automation.command.typeLabel') }}</label>
               <span>{{ cmd.type }}</span>
             </div>
             <div v-if="!cmd.command" class="info-row">
-              <label>命令内容：</label>
+              <label>{{ t('automation.command.contentLabel') }}</label>
               <div class="code-block small">
                 <pre>{{ cmd.unapprovedCommand }}</pre>
               </div>
@@ -105,7 +104,7 @@
               </div>
             </template>
             <div v-if="cmd.description" class="info-row">
-              <label>描述：</label>
+              <label>{{ t('automation.command.descriptionLabel') }}</label>
               <span>{{ cmd.description }}</span>
             </div>
           </div>
@@ -115,19 +114,19 @@
 
     <!-- 审核原因 -->
     <div class="approve-reason">
-      <label>审核原因（可选）</label>
-      <el-input v-model="approveReason" type="textarea" :rows="3" placeholder="请输入审核原因..." />
+      <label>{{ t('automation.command.reviewReasonOptional') }}</label>
+      <el-input v-model="approveReason" type="textarea" :rows="3" :placeholder="t('automation.command.reviewReasonPlaceholder')" />
     </div>
 
     <template #footer>
       <div class="dialog-footer">
         <el-button type="success" :loading="submitting" @click="handleApprove(true)">
           <i class="fas fa-check"></i>
-          审核通过
+          {{ t('automation.command.approved') }}
         </el-button>
         <el-button type="danger" :loading="submitting" @click="handleApprove(false)">
           <i class="fas fa-times"></i>
-          审核拒绝
+          {{ t('automation.command.reject') }}
         </el-button>
       </div>
     </template>
@@ -135,6 +134,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { approveCommand, COMMAND_STATUS } from '@/modules/automation/api/command'
@@ -224,12 +225,12 @@ async function handleApprove(isApproved) {
 
     await approveCommand(commandsToApprove)
 
-    ElMessage.success(isApproved ? '审核通过' : '审核已拒绝')
+    ElMessage.success(isApproved ? t('automation.command.approved') : t('automation.command.rejectedNotice'))
     emit('success')
     handleClose()
   } catch (error) {
     console.error('审核操作失败:', error)
-    ElMessage.error('审核操作失败')
+    ElMessage.error(t('automation.command.reviewFailed'))
   } finally {
     submitting.value = false
   }

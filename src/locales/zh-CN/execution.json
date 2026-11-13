@@ -97,7 +97,8 @@
     "INTERRUPTED": "运行终止",
     "SUCCESS": "执行成功",
     "PARTIAL_SUCCESS": "部分成功",
-    "CANCELLED": "已取消"
+    "CANCELLED": "已取消",
+    "TIMEOUT": "超时"
   },
   "agentErrors": {
     "AGENT_AUTH_FAILED": "Agent 鉴权失败，Token 凭据可能无效或已被吊销",

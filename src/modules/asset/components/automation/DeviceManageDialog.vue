@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="自动化配置信息 > 设备纳管"
+    :title="t('asset.enrollTitle')"
     width="900px"
     destroy-on-close
     :close-on-click-modal="false"
@@ -14,7 +14,7 @@
         <template #label>
           <span>
             <i class="fa fa-unlock-alt"></i>
-            用户名密码纳管
+            {{ t('asset.passwordEnrollment') }}
           </span>
         </template>
       </el-tab-pane>
@@ -22,7 +22,7 @@
         <template #label>
           <span>
             <i class="fa fa-key"></i>
-            SSH公钥纳管
+            {{ t('asset.sshEnrollment') }}
           </span>
         </template>
       </el-tab-pane>
@@ -31,28 +31,28 @@
     <!-- 用户名密码纳管 Tab -->
     <div v-show="activeTab === 'password'" class="tab-content">
       <el-alert
-        title="注意：此Ansible配置作用于具体的机器上，区别于组Ansible配置和资产类型Ansible配置，该Ansible配置具有最高优先级。"
+        :title="t('asset.enrollPriority')"
         type="success"
         :closable="false"
         show-icon
         class="tip-alert"
       />
 
-      <el-form :model="passwordForm" class="manage-form" label-width="120px">
+      <el-form :model="passwordForm" class="manage-form" :label-width="currentLocale === 'en-US' ? '170px' : '120px'">
         <!-- 设备选择器 -->
-        <el-form-item label="选择设备">
+        <el-form-item :label="t('asset.chooseDevice')">
           <AcmDeviceSelector
             v-model="passwordForm.hosts"
             ci-types="[auto]"
-            :options="{ label: '选择设备' }"
+            :options="{ label: t('asset.chooseDevice') }"
           />
         </el-form-item>
 
         <!-- 执行引擎节点 (非 AAP) -->
-        <el-form-item v-if="scriptEngine !== 'aap'" label="执行节点">
+        <el-form-item v-if="scriptEngine !== 'aap'" :label="t('asset.executionNode')">
           <el-select
             v-model="passwordForm.instanceGroup"
-            placeholder="请选择"
+            :placeholder="t('asset.select')"
             style="width: 100%"
             clearable
           >
@@ -70,7 +70,7 @@
         <el-form-item v-if="scriptEngine === 'aap'" label="AAP instance_group">
           <el-select
             v-model="passwordForm.aapInstanceGroup"
-            placeholder="请选择"
+            :placeholder="t('asset.select')"
             style="width: 100%"
             clearable
           >
@@ -84,11 +84,11 @@
         </el-form-item>
 
         <!-- 自动化配置信息 -->
-        <el-form-item label="自动化配置信息">
+        <el-form-item :label="t('asset.automationInfo')">
           <div style="display: flex; gap: 8px; width: 100%; align-items: center;">
             <el-select
               v-model="passwordForm.ansibleVarsSetId"
-              placeholder="请选择"
+              :placeholder="t('asset.select')"
               style="flex: 1"
               clearable
             >
@@ -101,40 +101,40 @@
               />
             </el-select>
             <el-button type="primary" plain @click="emit('create-template')">
-              <i class="fa fa-plus" style="margin-right: 4px"></i>新增模板
+              <i class="fa fa-plus" style="margin-right: 4px"></i>{{ t('asset.newTemplate') }}
             </el-button>
           </div>
         </el-form-item>
 
         <!-- 登录用户 -->
-        <el-form-item label="登录用户">
-          <el-input v-model="passwordForm.loginUser" placeholder="请输入登录用户" />
+        <el-form-item :label="t('asset.loginUser')">
+          <el-input v-model="passwordForm.loginUser" :placeholder="t('asset.loginUserPlaceholder')" />
         </el-form-item>
 
         <!-- 登录密码 -->
-        <el-form-item label="登录密码">
+        <el-form-item :label="t('asset.loginPassword')">
           <el-input
             v-model="passwordForm.loginPasswd"
             type="password"
             show-password
             autocomplete="new-password"
-            placeholder="请输入登录密码"
+            :placeholder="t('asset.loginPasswordPlaceholder')"
           />
         </el-form-item>
 
         <!-- 执行用户 -->
-        <el-form-item label="执行用户">
-          <el-input v-model="passwordForm.runUser" placeholder="请输入执行用户" />
+        <el-form-item :label="t('asset.executionUser')">
+          <el-input v-model="passwordForm.runUser" :placeholder="t('asset.executionUserPlaceholder')" />
         </el-form-item>
 
         <!-- 执行密码 -->
-        <el-form-item label="执行密码">
+        <el-form-item :label="t('asset.executionPassword')">
           <el-input
             v-model="passwordForm.runPasswd"
             type="password"
             show-password
             autocomplete="new-password"
-            placeholder="请输入执行密码"
+            :placeholder="t('asset.executionPasswordPlaceholder')"
           />
         </el-form-item>
       </el-form>
@@ -143,7 +143,7 @@
     <!-- SSH公钥纳管 Tab -->
     <div v-show="activeTab === 'ssh'" class="tab-content">
       <el-alert
-        title="注意：机器必须在导入时填写Ansible执行节点列（即：INSTANCE_GROUP属性）若需修改节点配置，请前往自动化配置管理 -> 设备纳管 -> 用户名密码纳管中单独进行节点配置 否则，任务将下发至default节点执行"
+        :title="t('asset.sshNodeHint')"
         type="success"
         :closable="false"
         show-icon
@@ -152,44 +152,44 @@
 
       <el-form :model="sshForm" label-position="top" class="manage-form">
         <!-- 设备选择器 -->
-        <el-form-item label="选择设备">
+        <el-form-item :label="t('asset.chooseDevice')">
           <AcmDeviceSelector
             v-model="sshForm.hosts"
             ci-types="[auto]"
-            :options="{ label: '选择设备' }"
+            :options="{ label: t('asset.chooseDevice') }"
           />
         </el-form-item>
 
         <!-- Oplus纳管目标用户 -->
-        <el-form-item label="纳管目标用户">
+        <el-form-item :label="t('asset.enrollmentUser')">
           <el-input v-model="sshForm.oplus_ansible_ssh_user" placeholder="ansible" />
         </el-form-item>
 
         <!-- 当前可以SSH连接到目标机器的用户 -->
-        <el-form-item label="当前可以SSH连接到目标机器的用户">
+        <el-form-item :label="t('asset.currentSshUser')">
           <el-input v-model="sshForm.ansible_ssh_user" placeholder="demo" />
         </el-form-item>
 
         <!-- 当前可以SSH连接到目标机器的用户密码 -->
-        <el-form-item label="当前可以SSH连接到目标机器的用户密码">
+        <el-form-item :label="t('asset.currentSshPassword')">
           <el-input
             v-model="sshForm.ansible_ssh_pass"
             type="password"
             show-password
             autocomplete="new-password"
-            placeholder="请输入密码"
+            :placeholder="t('asset.passwordPlaceholder')"
           />
         </el-form-item>
 
         <!-- 需要发送的id_rsa.pub文件内容 -->
-        <el-form-item label="需要发送的id_rsa.pub文件内容">
+        <el-form-item :label="t('asset.publicKey')">
           <el-input
             v-model="sshForm.oplus_ssh_pub_key"
             type="textarea"
             :rows="4"
-            placeholder="请输入SSH公钥内容"
+            :placeholder="t('asset.publicKeyPlaceholder')"
           />
-          <div class="form-desc">文件默认路径为 ~/.ssh/id_rsa.pub</div>
+          <div class="form-desc">{{ t('asset.publicKeyPath') }}</div>
         </el-form-item>
       </el-form>
     </div>
@@ -197,17 +197,17 @@
     <!-- 底部按钮区 -->
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="visible = false">取消</el-button>
+        <el-button @click="visible = false">{{ t('common.cancel') }}</el-button>
         <el-button
           v-if="activeTab === 'password'"
           type="primary"
           :loading="submitting"
           @click="handlePasswordSubmit"
         >
-          保存
+          {{ t('common.save') }}
         </el-button>
         <el-button v-else type="primary" :loading="submitting" @click="handleSSHSubmit">
-          开始执行
+          {{ t('asset.execute') }}
         </el-button>
       </div>
     </template>
@@ -215,6 +215,8 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+
 import { ref, computed, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { automationApi } from '../../api'
@@ -312,14 +314,14 @@ async function loadFormOptions() {
     assetTypes.value = typeRes.data || []
   } catch (error) {
     console.error('加载表单选项失败:', error)
-    ElMessage.error('加载表单选项失败')
+    ElMessage.error(t('asset.formOptionsFailed'))
   }
 }
 
 // 提交密码表单
 async function handlePasswordSubmit() {
   if (!passwordForm.value.hosts || passwordForm.value.hosts.length === 0) {
-    ElMessage.warning('请选择设备')
+    ElMessage.warning(t('asset.selectDevice'))
     return
   }
 
@@ -344,12 +346,12 @@ async function handlePasswordSubmit() {
     }
 
     await apiService.post(`/workflow/api/workflow/jobs/eGfsxb/run?cacheBuster=${Date.now()}`, { params })
-    ElMessage.success('设备纳管任务已提交')
+    ElMessage.success(t('asset.enrollSubmitted'))
     emit('success')
     visible.value = false
   } catch (error) {
     console.error('提交失败:', error)
-    ElMessage.error(`提交失败: ${error.message || '未知错误'}`)
+    ElMessage.error(t('asset.submissionFailed', { message: error.message || t('asset.unknownError') }))
   } finally {
     submitting.value = false
   }
@@ -358,7 +360,7 @@ async function handlePasswordSubmit() {
 // 提交SSH表单
 async function handleSSHSubmit() {
   if (!sshForm.value.hosts || sshForm.value.hosts.length === 0) {
-    ElMessage.warning('请选择设备')
+    ElMessage.warning(t('asset.selectDevice'))
     return
   }
 
@@ -376,12 +378,12 @@ async function handleSSHSubmit() {
     }
 
     await apiService.post(`/workflow/api/workflow/jobs/p2AW5s/run?cacheBuster=${Date.now()}`, { params })
-    ElMessage.success('SSH公钥纳管任务已提交')
+    ElMessage.success(t('asset.sshEnrollSubmitted'))
     emit('success')
     visible.value = false
   } catch (error) {
     console.error('提交失败:', error)
-    ElMessage.error(`提交失败: ${error.message || '未知错误'}`)
+    ElMessage.error(t('asset.submissionFailed', { message: error.message || t('asset.unknownError') }))
   } finally {
     submitting.value = false
   }

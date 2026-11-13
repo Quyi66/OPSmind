@@ -3,7 +3,7 @@
     <!-- 左侧卡片：健康度环形图 -->
     <div class="dashboard-card left-card">
       <div class="chart-header">
-        <span class="chart-title">连通性概览</span>
+        <span class="chart-title">{{ t('asset.connectivityOverview') }}</span>
       </div>
       <div class="chart-container" ref="chartRef"></div>
     </div>
@@ -11,7 +11,7 @@
     <!-- 右侧卡片：连通诊断详情 -->
     <div class="dashboard-card right-card">
       <div class="list-header">
-        <span class="list-title">连通诊断详情</span>
+        <span class="list-title">{{ t('asset.connectivityDetails') }}</span>
       </div>
       <div class="metrics-list">
         <div
@@ -29,7 +29,7 @@
           <div class="metric-content">
             <div class="metric-info-row">
               <span class="metric-name">{{ item.title }}</span>
-              <span class="metric-value" :class="item.theme">{{ item.value.toLocaleString('zh-CN') }} 台</span>
+              <span class="metric-value" :class="item.theme">{{ t('asset.hostCount', { count: item.value.toLocaleString(currentLocale) }) }}</span>
             </div>
             <!-- 进度条背景 -->
             <div class="metric-progress-bg">
@@ -52,6 +52,8 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+
 import { computed, ref, onMounted, watch, nextTick, onUnmounted } from 'vue'
 import * as echarts from 'echarts'
 import { useTheme } from '@/composables/useTheme'
@@ -115,7 +117,7 @@ const listData = computed(() => {
     {
       condi: '0',
       queryCondi: 'recently_ok',
-      title: '连通正常设备',
+      title: t('asset.connectedDevices'),
       icon: 'fa-check-circle',
       theme: 'success',
       value: okCount,
@@ -124,7 +126,7 @@ const listData = computed(() => {
     {
       condi: '1',
       queryCondi: 'recently',
-      title: '连通异常设备',
+      title: t('asset.disconnectedDevices'),
       icon: 'fa-exclamation-triangle',
       theme: 'danger',
       value: failCount,
@@ -134,28 +136,19 @@ const listData = computed(() => {
 })
 
 // 初始化图表
-function initChart() {
-  if (!chartRef.value) return
-
-  if (chartInstance) {
-    chartInstance.dispose()
-    chartInstance = null
-  }
-
-  chartInstance = echarts.init(chartRef.value, isDark.value ? 'dark' : '')
-
+function createChartOption() {
   const { okCount, failCount, successRate } = parsedStats.value
 
-  const option = {
+  return {
     backgroundColor: 'transparent',
     tooltip: {
       trigger: 'item',
       confine: true,
-      formatter: '{b}: {c} 台 ({d}%)'
+      formatter: params => t('asset.connectivityTooltip', { label: params.name, count: params.value, percent: params.percent })
     },
     title: {
       text: `${successRate}%`,
-      subtext: '连通率',
+      subtext: t('asset.connectionRate'),
       left: 'center',
       top: '26%',
       textStyle: {
@@ -182,7 +175,7 @@ function initChart() {
     },
     series: [
       {
-        name: '连通状态',
+        name: t('asset.connectivityStatus'),
         type: 'pie',
         radius: ['58%', '76%'],
         center: ['50%', '40%'],
@@ -197,13 +190,13 @@ function initChart() {
         data: [
           {
             value: okCount,
-            name: '连通正常',
+            name: t('asset.connected'),
             condi: 'recently_ok',
             itemStyle: { color: '#67C23A' }
           },
           {
             value: failCount,
-            name: '连通异常',
+            name: t('asset.connectionAbnormal'),
             condi: 'recently',
             itemStyle: { color: '#F56C6C' }
           }
@@ -211,8 +204,21 @@ function initChart() {
       }
     ]
   }
+}
 
-  chartInstance.setOption(option)
+watch(currentLocale, () => chartInstance?.setOption(createChartOption()))
+
+function initChart() {
+  if (!chartRef.value) return
+
+  if (chartInstance) {
+    chartInstance.dispose()
+    chartInstance = null
+  }
+
+  chartInstance = echarts.init(chartRef.value, isDark.value ? 'dark' : '')
+
+  chartInstance.setOption(createChartOption())
 
   chartInstance.on('click', params => {
     if (params.data && params.data.condi) {

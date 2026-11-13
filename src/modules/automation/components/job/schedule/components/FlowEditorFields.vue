@@ -1,22 +1,22 @@
 <template>
   <div>
     <div class="form-section">
-      <div class="section-title">基础信息</div>
+      <div class="section-title">{{ t('automation.flow.basicInfo') }}</div>
 
-      <el-form-item label="名称" required>
-        <el-input v-model="flow.name" placeholder="请输入流程名称" style="width: 100%" />
+      <el-form-item :label="t('common.name')" required>
+        <el-input v-model="flow.name" :placeholder="t('automation.flow.nameRequired')" style="width: 100%" />
       </el-form-item>
 
-      <el-form-item label="描述">
+      <el-form-item :label="t('automation.job.description')">
         <el-input v-model="flow.description" type="textarea" :rows="3" />
       </el-form-item>
 
-      <el-form-item label="目标主机">
+      <el-form-item :label="t('automation.command.targetHosts')">
         <template #label>
           <span class="label-with-tooltip">
-            <span>目标主机</span>
+            <span>{{ t('automation.command.targetHosts') }}</span>
             <el-tooltip
-              content="设置流程执行的目标主机，支持选择单台主机、主机组或标签"
+              :content="t('automation.flow.hostHint')"
               placement="top"
             >
               <span class="tooltip-icon" tabindex="0">
@@ -31,18 +31,18 @@
 
     <div class="form-section" :class="{ 'section-disabled': isInstance }">
       <div class="section-header">
-        <div class="section-title">步骤设置</div>
+        <div class="section-title">{{ t('automation.flow.stepSettings') }}</div>
         <div class="section-actions">
           <el-button class="fold-btn" text size="small" @click="$emit('toggle-fold-all')">
             <i
               class="fa"
               :class="isFoldAllSteps ? 'fa-angle-double-right' : 'fa-angle-double-down'"
             />
-            {{ isFoldAllSteps ? '展开全部' : '折叠全部' }}
+            {{ isFoldAllSteps ? t('automation.flow.expandAll') : t('automation.flow.collapseAll') }}
           </el-button>
           <el-button size="small" @click="$emit('add-step')">
             <i class="fa fa-plus me-1" />
-            新增步骤
+            {{ t('automation.flow.addStep') }}
           </el-button>
         </div>
       </div>
@@ -52,7 +52,7 @@
           <div class="step-header" @click="$emit('toggle-step-fold', index)">
             <div class="step-title">
               <span class="step-number">{{ index + 1 }}</span>
-              <span class="step-name">{{ step.name || '未命名' }}</span>
+              <span class="step-name">{{ step.name || t('automation.flow.unnamed') }}</span>
             </div>
             <div class="step-actions">
               <el-button
@@ -63,7 +63,7 @@
                 @click.stop="$emit('remove-step', index)"
               >
                 <i class="fa fa-trash-alt me-1" />
-                删除
+                {{ t('common.delete') }}
               </el-button>
               <i
                 class="fa toggle-icon"
@@ -75,21 +75,21 @@
           <div v-show="!stepFoldList[index]" class="step-body">
             <el-row class="form-row">
               <el-col :span="12">
-                <el-form-item label="步骤名称">
-                  <el-input v-model="step.name" placeholder="请输入" style="width: 100%" />
+                <el-form-item :label="t('automation.flow.stepName')">
+                  <el-input v-model="step.name" :placeholder="t('automation.flow.enterValue')" style="width: 100%" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="自动执行">
+                <el-form-item :label="t('automation.flow.automatic')">
                   <el-checkbox v-model="step.autoNext" :disabled="isInstance">
-                    自动执行下一步骤
+                    {{ t('automation.flow.autoNext') }}
                   </el-checkbox>
                 </el-form-item>
               </el-col>
             </el-row>
             <el-row class="form-row">
               <el-col :span="24">
-                <el-form-item label="脚本">
+                <el-form-item :label="t('automation.library.script')">
                   <GfsFileSelector
                     :key="scriptSelectorSession"
                     v-model="step.config.tasks[0].scripts"
@@ -105,9 +105,9 @@
                 <el-form-item>
                   <template #label>
                     <span class="label-with-tooltip">
-                      <span>输出等级</span>
+                      <span>{{ t('automation.flow.verbosity') }}</span>
                       <el-tooltip
-                        content="控制脚本执行时的输出详细程度，调试问题时可选择更高等级"
+                        :content="t('automation.flow.verbosityHint')"
                         placement="top"
                       >
                         <span class="tooltip-icon" tabindex="0">
@@ -117,11 +117,11 @@
                     </span>
                   </template>
                   <el-select v-model="step.config.verbosity" style="width: 100%">
-                    <el-option :value="0" label="普通" />
-                    <el-option :value="1" label="详细" />
-                    <el-option :value="2" label="更多" />
-                    <el-option :value="3" label="调试" />
-                    <el-option :value="4" label="连接调试" />
+                    <el-option :value="0" :label="t('automation.flow.normal')" />
+                    <el-option :value="1" :label="t('automation.flow.verbose')" />
+                    <el-option :value="2" :label="t('automation.flow.more')" />
+                    <el-option :value="3" :label="t('automation.flow.debug')" />
+                    <el-option :value="4" :label="t('automation.flow.connectionDebug')" />
                   </el-select>
                 </el-form-item>
               </el-col>
@@ -129,8 +129,8 @@
                 <el-form-item>
                   <template #label>
                     <span class="label-with-tooltip">
-                      <span>任务超时(秒)</span>
-                      <el-tooltip content="任务执行超时时间，-1 表示无限制" placement="top">
+                      <span>{{ t('automation.flow.timeout') }}</span>
+                      <el-tooltip :content="t('automation.flow.timeoutHint')" placement="top">
                         <span class="tooltip-icon" tabindex="0">
                           <i class="fa fa-question-circle text-muted" />
                         </span>
@@ -154,9 +154,9 @@
 
     <div class="form-section">
       <div class="section-title">
-        运行参数
+        {{ t('automation.flow.runParams') }}
         <el-tooltip
-          content="运行参数会替换脚本命令行中 ${变量名} 形式的变量，以及主机的参数名"
+          :content="t('automation.flow.paramReplacementHint', { variable: '${name}' })"
           placement="top"
         >
           <i class="fa fa-question-circle text-muted ms-1" />
@@ -167,28 +167,28 @@
         <div class="param-toolbar">
           <el-button size="small" class="ms-auto" @click="$emit('add-param')">
             <i class="fa fa-plus" />
-            添加参数
+            {{ t('automation.flow.addParam') }}
           </el-button>
           <el-button size="small" @click="$emit('parse-params')">
             <span class="text-primary me-1">{}</span>
-            解析参数
+            {{ t('automation.flow.parseParams') }}
           </el-button>
         </div>
 
         <table v-if="flow.globalParams.length" class="op-param-table table">
           <thead>
             <tr>
-              <th>运行参数</th>
-              <th>显示名称</th>
-              <th>描述</th>
+              <th>{{ t('automation.flow.runParams') }}</th>
+              <th>{{ t('automation.flow.displayName') }}</th>
+              <th>{{ t('automation.job.description') }}</th>
               <th>
-                默认值
-                <el-tooltip content="执行时如未填写则使用默认值" placement="top">
+                {{ t('automation.flow.defaultValue') }}
+                <el-tooltip :content="t('automation.flow.defaultValueHint')" placement="top">
                   <i class="fa fa-question-circle text-muted ms-1" />
                 </el-tooltip>
               </th>
-              <th>保密</th>
-              <th class="text-right" width="60">操作</th>
+              <th>{{ t('automation.flow.secret') }}</th>
+              <th class="text-right" width="60">{{ t('common.actions') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -203,7 +203,7 @@
               <td class="text-right">
                 <el-button
                   text
-                  title="删除参数"
+                  :title="t('automation.flow.deleteParam')"
                   type="danger"
                   @click="$emit('delete-param', index)"
                 >
@@ -213,13 +213,15 @@
             </tr>
           </tbody>
         </table>
-        <el-empty v-else description="暂无参数" :image-size="60" style="width: 100%" />
+        <el-empty v-else :description="t('automation.flow.noParams')" :image-size="60" style="width: 100%" />
       </el-form-item>
     </div>
   </div>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { Delete } from '@element-plus/icons-vue'
 import AcmDeviceSelector from './AcmDeviceSelector.vue'
 import GfsFileSelector from './GfsFileSelector.vue'

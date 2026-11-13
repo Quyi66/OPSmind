@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="批量更新设备属性"
+    :title="t('asset.batchUpdateAttrs')"
     width="680px"
     :close-on-click-modal="false"
     @close="handleClose"
@@ -9,8 +9,8 @@
   >
     <div class="dialog-body">
       <el-alert
-        title="批量编辑提示"
-        description="您正在对选中的主机进行批量属性更新，保存后属性值将被批量覆盖为新输入的值。"
+        :title="t('asset.batchEditNotice')"
+        :description="t('asset.batchEditWarning')"
         type="warning"
         show-icon
         :closable="false"
@@ -18,10 +18,10 @@
       />
 
       <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top">
-        <el-form-item label="待更新属性字段" prop="code">
+        <el-form-item :label="t('asset.attrField')" prop="code">
           <el-select
             v-model="formData.code"
-            placeholder="请选择要修改的模型属性"
+            :placeholder="t('asset.selectAttrToEdit')"
             style="width: 100%"
             :loading="loadingAttrs"
           >
@@ -34,12 +34,12 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="更新属性值" prop="value">
+        <el-form-item :label="t('asset.updatedAttrValue')" prop="value">
           <el-input
             v-model="formData.value"
             type="textarea"
             :rows="6"
-            placeholder="请输入新的属性内容，多个资产将全部覆盖为此内容"
+            :placeholder="t('asset.batchAttrPlaceholder')"
           />
         </el-form-item>
       </el-form>
@@ -47,14 +47,16 @@
 
     <template #footer>
       <div style="display: flex; gap: 12px; justify-content: flex-end">
-        <el-button @click="visible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="handleSave">保存修改</el-button>
+        <el-button @click="visible = false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="saving" @click="handleSave">{{ t('asset.saveChanges') }}</el-button>
       </div>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { assetApi } from '../../api'
@@ -89,8 +91,8 @@ const formData = ref({
 })
 
 const formRules = {
-  code: [{ required: true, message: '请选择模型属性', trigger: 'change' }],
-  value: [{ required: true, message: '请输入属性值', trigger: 'blur' }]
+  code: [{ required: true, message: t('asset.selectModelAttr'), trigger: 'change' }],
+  value: [{ required: true, message: t('asset.enterAttrValue'), trigger: 'blur' }]
 }
 
 const loadingAttrs = ref(false)
@@ -110,7 +112,7 @@ const loadEditableAttrs = async () => {
     )
   } catch (error) {
     console.error('加载模型属性失败:', error)
-    ElMessage.error('加载模型属性失败')
+    ElMessage.error(t('asset.attrsLoadFailed'))
   } finally {
     loadingAttrs.value = false
   }
@@ -125,7 +127,7 @@ const handleSave = async () => {
   }
 
   if (props.ciIds.length === 0) {
-    ElMessage.warning('请选择要修改的资产')
+    ElMessage.warning(t('asset.selectAssetsEdit'))
     return
   }
 
@@ -140,12 +142,12 @@ const handleSave = async () => {
       }
     })
 
-    ElMessage.success('保存成功')
+    ElMessage.success(t('asset.saved'))
     visible.value = false
     emit('saved')
   } catch (error) {
     console.error('保存失败:', error)
-    ElMessage.error(`保存失败: ${error.response?.data?.message || error.message}`)
+    ElMessage.error(t('asset.saveFailedReason', { message: error.response?.data?.message || error.message }))
   } finally {
     saving.value = false
   }

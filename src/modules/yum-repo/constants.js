@@ -1,3 +1,4 @@
+import { t } from '@/core/i18n'
 export const YUM_REPO_PAGE_SIZE_OPTIONS = [10, 20, 50, 100]
 
 // value 须与 vap2_patch.vendor 一致（导入 JSON 顶层 type 字段，全小写）
@@ -8,9 +9,9 @@ export const YUM_REPO_OS_FAMILY_OPTIONS = [
   { label: 'Ubuntu', value: 'ubuntu' },
   { label: 'SUSE', value: 'suse' },
   { label: 'IBM AIX', value: 'aix' },
-  { label: '麒麟 KylinOS', value: 'kylinos' },
-  { label: '统信 UOS（Uniontech）', value: 'uniontech' },
-  { label: '龙蜥 Anolis', value: 'anolis' },
+  { get label() { return t('yumRepo.kylin') }, value: 'kylinos' },
+  { get label() { return t('yumRepo.uos') }, value: 'uniontech' },
+  { get label() { return t('yumRepo.anolis') }, value: 'anolis' },
   { label: 'Oracle Linux', value: 'oracle' }
 ]
 
@@ -25,13 +26,13 @@ export const YUM_REPO_ARCH_OPTIONS = [
 ]
 
 export const YUM_REPO_COLLECT_STATUS_LABELS = {
-  UNCOLLECTED: '未采集',
-  NOT_COLLECTED: '未采集',
-  PENDING: '待执行',
-  RUNNING: '采集中',
-  SUCCESS: '采集成功',
-  SUCCEEDED: '采集成功',
-  FAILED: '采集失败'
+  get UNCOLLECTED() { return t('yumRepo.notCollected') },
+  get NOT_COLLECTED() { return t('yumRepo.notCollected') },
+  get PENDING() { return t('yumRepo.pending') },
+  get RUNNING() { return t('yumRepo.collecting') },
+  get SUCCESS() { return t('yumRepo.collected') },
+  get SUCCEEDED() { return t('yumRepo.collected') },
+  get FAILED() { return t('yumRepo.collectionFailed') }
 }
 
 export const YUM_REPO_COLLECT_STATUS_TAG_TYPES = {
@@ -45,11 +46,11 @@ export const YUM_REPO_COLLECT_STATUS_TAG_TYPES = {
 }
 
 export const YUM_REPO_DIFF_TYPE_LABELS = {
-  AVAILABLE: '满足要求',
-  MISSING: '缺失',
-  OUTDATED: '版本不足',
-  RELEASE_MISMATCH: '发行版不匹配',
-  AHEAD: '版本更高'
+  get AVAILABLE() { return t('yumRepo.requirementMet') },
+  get MISSING() { return t('yumRepo.missing') },
+  get OUTDATED() { return t('yumRepo.outdated') },
+  get RELEASE_MISMATCH() { return t('yumRepo.releaseMismatch') },
+  get AHEAD() { return t('yumRepo.ahead') }
 }
 
 export const YUM_REPO_DIFF_TYPE_TAG_TYPES = {

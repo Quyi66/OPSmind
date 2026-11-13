@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="更改状态"
+    :title="t('automation.library.changeStatus')"
     width="500px"
     :close-on-click-modal="false"
     destroy-on-close
@@ -9,44 +9,46 @@
   >
     <div class="change-status-dialog">
       <el-form label-position="top">
-        <el-form-item label="操作">
+        <el-form-item :label="t('common.actions')">
           <el-radio-group v-model="status">
             <el-radio value="PUBLISHED">
               <i class="fa fa-play-circle text-success me-1"></i>
-              启用
+              {{ t('automation.workbench.enable') }}
             </el-radio>
             <el-radio value="DISABLED">
               <i class="fa fa-stop-circle text-danger me-1"></i>
-              停用
+              {{ t('automation.workbench.disable') }}
             </el-radio>
           </el-radio-group>
         </el-form-item>
 
-        <el-form-item label="备注说明">
-          <el-input v-model="comment" type="textarea" :rows="3" placeholder="请输入备注说明" />
+        <el-form-item :label="t('automation.library.notes')">
+          <el-input v-model="comment" type="textarea" :rows="3" :placeholder="t('automation.library.notesRequired')" />
         </el-form-item>
 
         <div class="selected-files-info">
-          <p>将对以下 {{ files.length }} 个文件/文件夹执行操作：</p>
+          <p>{{ t('automation.library.statusFileCount', { count: files.length }) }}</p>
           <div class="file-list">
             <div v-for="file in files.slice(0, 5)" :key="file.path" class="file-item">
               {{ file.name }}
             </div>
-            <div v-if="files.length > 5" class="file-more">... 等 {{ files.length }} 个文件</div>
+            <div v-if="files.length > 5" class="file-more">{{ t('automation.library.remainingFileCount', { count: files.length }) }}</div>
           </div>
         </div>
       </el-form>
     </div>
     <template #footer>
-      <el-button @click="visible = false">取消</el-button>
+      <el-button @click="visible = false">{{ t('common.cancel') }}</el-button>
       <el-button type="primary" :loading="submitting" @click="handleSubmit" :disabled="!status">
-        确定
+        {{ t('automation.file.confirm') }}
       </el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as gfsApi from '@/modules/automation/api/gfs'
@@ -80,7 +82,7 @@ const submitting = ref(false)
 
 async function handleSubmit() {
   if (!status.value) {
-    ElMessage.warning('请选择操作')
+    ElMessage.warning(t('automation.library.selectOperation'))
     return
   }
 
@@ -93,11 +95,11 @@ async function handleSubmit() {
       status.value,
       comment.value
     )
-    ElMessage.success('操作成功')
+    ElMessage.success(t('automation.approval.operationSucceeded'))
     emit('success')
     visible.value = false
   } catch (error) {
-    ElMessage.error(error?.message || '操作失败')
+    ElMessage.error(error?.message || t('automation.schedule.operationFailed'))
   } finally {
     submitting.value = false
   }

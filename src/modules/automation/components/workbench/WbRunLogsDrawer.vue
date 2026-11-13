@@ -1,7 +1,7 @@
 <template>
   <el-drawer
     v-model="visible"
-    :title="title"
+    :title="title || t('automation.workbench.runRecords')"
     size="88%"
     destroy-on-close
     class="wb-workbench-drawer wb-run-drawer"
@@ -10,7 +10,7 @@
     <div class="wb-run-drawer__content">
       <div class="wb-filter-panel">
         <el-form :model="filters" inline size="small" class="wb-run-filters" @submit.prevent>
-          <el-form-item label="时间范围">
+          <el-form-item :label="t('automation.workbench.timeRange')">
             <el-select v-model="filters.day" style="width: 130px" @change="handleSearch">
               <el-option
                 v-for="option in dayOptions"
@@ -20,7 +20,7 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="状态">
+          <el-form-item :label="t('automation.workbench.status')">
             <el-select v-model="filters.status" style="width: 130px" @change="handleSearch">
               <el-option
                 v-for="option in statusOptions"
@@ -30,10 +30,10 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="工具类型">
+          <el-form-item :label="t('automation.workbench.toolType')">
             <el-select
               v-model="filters.type"
-              placeholder="全部类型"
+              :placeholder="t('automation.workbench.allTypes')"
               style="width: 160px"
               @change="handleSearch"
             >
@@ -45,62 +45,62 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="关键词" class="wb-run-filters__keyword">
-            <el-input v-model="pageKeyword" placeholder="筛选本页：标题、用户、节点" clearable />
+          <el-form-item :label="t('automation.workbench.keyword')" class="wb-run-filters__keyword">
+            <el-input v-model="pageKeyword" :placeholder="t('automation.workbench.pageSearch')" clearable />
           </el-form-item>
           <el-form-item>
-            <el-button @click="handleReset">重置</el-button>
+            <el-button @click="handleReset">{{ t('common.reset') }}</el-button>
           </el-form-item>
         </el-form>
       </div>
       <el-alert v-if="loadError" :title="loadError" type="error" show-icon :closable="false">
-        <el-button link type="primary" @click="loadRecords">重试</el-button>
+        <el-button link type="primary" @click="loadRecords">{{ t('common.retry') }}</el-button>
       </el-alert>
       <el-table
         v-loading="drawerLoading"
         :data="displayRecords"
         height="100%"
         class="wb-run-drawer__table"
-        :empty-text="loadError ? '记录未加载成功' : '暂无符合条件的运行记录'"
+        :empty-text="loadError ? t('automation.workbench.recordsNotLoaded') : t('automation.workbench.noMatchingRuns')"
         @row-dblclick="$emit('open-result', $event)"
       >
-        <el-table-column label="运维工具" min-width="230" show-overflow-tooltip>
+        <el-table-column :label="t('automation.workbench.tool')" min-width="230" show-overflow-tooltip>
           <template #default="{ row }">
             <el-button link type="primary" class="wb-run-title" @click="$emit('open-result', row)">
               {{ getAutomationRunTitle(row) }}
             </el-button>
           </template>
         </el-table-column>
-        <el-table-column label="工具类型" width="136">
+        <el-table-column :label="t('automation.workbench.toolType')" width="136">
           <template #default="{ row }">
             <el-tag size="small" :type="getWorkbenchJobType(row).tag" effect="light">
               {{ getWorkbenchJobType(row).label }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="执行用户" width="110" show-overflow-tooltip>
+        <el-table-column :label="t('automation.workbench.executionUser')" width="110" show-overflow-tooltip>
           <template #default="{ row }">
             <span>{{ row.username || '—' }}</span>
-            <div v-if="row.review_user" class="wb-run-secondary">审核：{{ row.review_user }}</div>
+            <div v-if="row.review_user" class="wb-run-secondary">{{ t('automation.workbench.reviewer', { name: row.review_user }) }}</div>
           </template>
         </el-table-column>
-        <el-table-column label="开始时间" width="172" show-overflow-tooltip>
+        <el-table-column :label="t('automation.workbench.startedAt')" width="172" show-overflow-tooltip>
           <template #default="{ row }">
             {{ formatDateTime(row.start_time) }}
           </template>
         </el-table-column>
-        <el-table-column label="结束时间" width="172" show-overflow-tooltip>
+        <el-table-column :label="t('automation.workbench.endedAt')" width="172" show-overflow-tooltip>
           <template #default="{ row }">
             {{ formatDateTime(row.end_time) }}
           </template>
         </el-table-column>
-        <el-table-column label="耗时" width="100">
+        <el-table-column :label="t('automation.workbench.duration')" width="100">
           <template #default="{ row }">{{ formatRunDuration(row) }}</template>
         </el-table-column>
-        <el-table-column label="执行节点" min-width="145" show-overflow-tooltip>
-          <template #default="{ row }">{{ getRunNodes(row).join(', ') || '未提供' }}</template>
+        <el-table-column :label="t('automation.workbench.executionNode')" min-width="145" show-overflow-tooltip>
+          <template #default="{ row }">{{ getRunNodes(row).join(', ') || t('automation.workbench.notProvided') }}</template>
         </el-table-column>
-        <el-table-column label="主机执行统计" min-width="220">
+        <el-table-column :label="t('automation.workbench.hostStatistics')" min-width="220">
           <template #default="{ row }">
             <div v-if="getRunHostStats(row.stats_json).length" class="wb-run-stats">
               <span
@@ -112,11 +112,11 @@
                 <b>{{ stat.count }}</b>
               </span>
             </div>
-            <span v-else class="wb-run-secondary">未提供主机统计</span>
+            <span v-else class="wb-run-secondary">{{ t('automation.workbench.noHostStatistics') }}</span>
           </template>
         </el-table-column>
         <el-table-column
-          label="状态"
+          :label="t('automation.workbench.status')"
           width="100"
           fixed="right"
           align="center"
@@ -133,9 +133,9 @@
     <template #footer>
       <div class="wb-drawer-footer">
         <div class="wb-run-secondary">
-          <span>点击运维工具名称查看执行结果</span>
+          <span>{{ t('automation.workbench.openRunHint') }}</span>
           <span v-if="pageKeyword">
-            · 本页匹配 {{ displayRecords.length }} / {{ drawerRecords.length }} 条
+            {{ t('automation.workbench.pageMatches', { matched: displayRecords.length, total: drawerRecords.length }) }}
           </span>
         </div>
         <el-pagination
@@ -148,13 +148,16 @@
           @current-change="loadRecords"
           @size-change="handlePageSizeChange"
         />
-        <el-button size="small" @click="$emit('navigate', resolvedLink)">{{ linkLabel }}</el-button>
+        <el-button size="small" @click="$emit('navigate', resolvedLink)">{{ linkLabel || t('automation.workbench.viewFullRecords') }}</el-button>
       </div>
     </template>
   </el-drawer>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
+
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { getAutomationRunTitle } from '../../utils/resourcePresentation'
@@ -173,35 +176,36 @@ import {
 } from '../../utils/workbenchPresentation'
 
 const props = defineProps({
-  title: { type: String, default: '运行记录' },
+  title: { type: String, default: '' },
   reloadVersion: { type: Number, default: 0 },
   initialType: { type: String, default: '' },
   link: { type: String, default: '/run-records/logs' },
-  linkLabel: { type: String, default: '查看完整记录' },
+  linkLabel: { type: String, default: '' },
   failedOnly: Boolean
 })
 defineEmits(['open-result', 'navigate'])
 const visible = defineModel('visible', { default: false })
-const dayOptions = [
-  { label: '全部', value: '3650' },
-  { label: '今天', value: '0' },
-  { label: '最近7天', value: '7' },
-  { label: '最近30天', value: '30' },
-  { label: '最近一年', value: '365' }
-]
-const statusOptions = [
-  { label: '全部状态', value: 'all' },
-  { label: '等待中', value: 'WAITING' },
-  { label: '正在运行', value: 'RUNNING' },
-  { label: '回调', value: 'CALLBACK' },
-  { label: '运行错误', value: 'ERROR' },
-  { label: '运行失败', value: 'FAILED' },
-  { label: '完成', value: 'COMPLETED' },
-  { label: '运行终止', value: 'INTERRUPTED' }
-]
+const dayOptions = computed(() => [
+  { label: t('common.all'), value: '3650' },
+  { label: t('automation.workbench.today'), value: '0' },
+  { label: t('automation.workbench.last7Days'), value: '7' },
+  { label: t('automation.workbench.last30Days'), value: '30' },
+  { label: t('automation.workbench.lastYear'), value: '365' }
+])
+const statusOptions = computed(() => [
+  { label: t('automation.workbench.allStatuses'), value: 'all' },
+  { label: t('automation.workbench.waiting'), value: 'WAITING' },
+  { label: t('automation.workbench.runningNow'), value: 'RUNNING' },
+  { label: t('automation.workbench.callback'), value: 'CALLBACK' },
+  { label: t('automation.workbench.executionError'), value: 'ERROR' },
+  { label: t('automation.workbench.executionFailed'), value: 'FAILED' },
+  { label: t('automation.workbench.done'), value: 'COMPLETED' },
+  { label: t('automation.workbench.executionInterrupted'), value: 'INTERRUPTED' }
+])
 const drawerLoading = ref(false)
-const loadError = ref('')
+const loadError = messageRef('')
 const drawerRecords = ref([])
+const searchLabels = ref(new Map())
 const drawerTotal = ref(0)
 const pageKeyword = ref('')
 const pagination = reactive({ page: 1, size: 20 })
@@ -217,17 +221,21 @@ const displayRecords = computed(() => {
   if (!keyword) return drawerRecords.value
   return drawerRecords.value.filter(row =>
     [
-      getAutomationRunTitle(row),
+      searchLabels.value.get(row),
       row.job_title,
       row.username,
       row.review_user,
-      ...getRunNodes(row),
-      getWorkbenchJobType(row).label
+      ...getRunNodes(row)
     ]
       .filter(Boolean)
       .some(value => String(value).toLowerCase().includes(keyword))
   )
 })
+watch([pageKeyword, drawerRecords], () => {
+  searchLabels.value = new Map(drawerRecords.value.map(row => [row,
+    `${getAutomationRunTitle(row)} ${getWorkbenchJobType(row).label}`
+  ]))
+}, { flush: 'sync' })
 const resolvedLink = computed(() => {
   const query = new URLSearchParams({ day: appliedFilters.day, status: appliedFilters.status })
   if (appliedFilters.type) query.set('type', appliedFilters.type)
@@ -260,7 +268,7 @@ async function loadRecords(background = false) {
   } catch {
     if (currentId !== requestId) return
     drawerRecords.value = []
-    loadError.value = '运行记录加载失败，请重试。'
+    loadError.value = message('automation.workbench.runLoadFailedRetry')
   } finally {
     if (currentId === requestId) drawerLoading.value = false
   }

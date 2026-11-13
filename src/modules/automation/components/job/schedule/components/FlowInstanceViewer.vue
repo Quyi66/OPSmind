@@ -6,13 +6,13 @@
         <div class="viewer__panel" @click.stop>
           <header class="viewer__header">
             <div class="viewer__heading">
-              <div class="viewer__eyebrow">流程实例详情</div>
-              <h3 class="header-title">{{ instanceData?.name || '流程实例详情' }}</h3>
+              <div class="viewer__eyebrow">{{ t('automation.flow.instanceDetails') }}</div>
+              <h3 class="header-title">{{ instanceData?.name || t('automation.flow.instanceDetails') }}</h3>
               <div class="header-meta">
-                <span>执行人 {{ instanceData?.createdBy || '-' }}</span>
-                <span>开始时间 {{ formatDateTime(instanceData?.createdAt) }}</span>
-                <span>主机 {{ hostRows.length }}</span>
-                <span>步骤 {{ normalizedSteps.length }}</span>
+                <span>{{ t('automation.flow.executedBy') }} {{ instanceData?.createdBy || '-' }}</span>
+                <span>{{ t('automation.workbench.startedAt') }} {{ formatDateTime(instanceData?.createdAt) }}</span>
+                <span>{{ t('automation.command.host') }} {{ hostRows.length }}</span>
+                <span>{{ t('automation.flow.steps') }} {{ normalizedSteps.length }}</span>
               </div>
             </div>
             <el-button class="header-close" text circle @click="handleClose">
@@ -25,19 +25,19 @@
               <template v-if="instanceData">
                 <section class="viewer-summary-grid">
                   <article class="summary-card">
-                    <span class="summary-card__label">目标主机</span>
+                    <span class="summary-card__label">{{ t('automation.command.targetHosts') }}</span>
                     <strong class="summary-card__value">{{ hostRows.length }}</strong>
                   </article>
                   <article class="summary-card">
-                    <span class="summary-card__label">流程步骤</span>
+                    <span class="summary-card__label">{{ t('automation.flow.flowSteps') }}</span>
                     <strong class="summary-card__value">{{ normalizedSteps.length }}</strong>
                   </article>
                   <article class="summary-card">
-                    <span class="summary-card__label">全局参数</span>
+                    <span class="summary-card__label">{{ t('automation.flow.globalParams') }}</span>
                     <strong class="summary-card__value">{{ globalParamCount }}</strong>
                   </article>
                   <article class="summary-card">
-                    <span class="summary-card__label">整体状态</span>
+                    <span class="summary-card__label">{{ t('automation.flow.overallStatus') }}</span>
                     <strong class="summary-card__value">{{ overallStatusText }}</strong>
                   </article>
                 </section>
@@ -45,7 +45,7 @@
                 <section class="viewer-section is-step-overview">
                   <div class="section-heading">
                     <div>
-                      <h4 class="section-title">步骤概览</h4>
+                      <h4 class="section-title">{{ t('automation.flow.stepOverview') }}</h4>
                     </div>
                   </div>
                   <div class="step-overview-grid">
@@ -57,10 +57,10 @@
                     >
                       <div class="step-overview-card__main">
                         <div class="step-overview-card__meta">
-                          <span class="step-overview-card__index">步骤 {{ step.index }}</span>
+                          <span class="step-overview-card__index">{{ t('automation.flow.steps') }} {{ step.index }}</span>
                           <strong class="step-overview-card__title">{{ step.name }}</strong>
                           <span class="step-overview-card__script">
-                            {{ step.scriptPath || '未配置脚本路径' }}
+                            {{ step.scriptPath || t('automation.flow.noScriptPath') }}
                           </span>
                         </div>
                         <el-tag
@@ -75,19 +75,19 @@
                       <div class="step-overview-card__stats">
                         <span>
                           <b>{{ step.summary.success }}</b>
-                          成功
+                          {{ t('automation.stats.ok') }}
                         </span>
                         <span>
                           <b>{{ step.summary.running }}</b>
-                          运行中
+                          {{ t('automation.job.running') }}
                         </span>
                         <span>
                           <b>{{ step.summary.failed }}</b>
-                          失败
+                          {{ t('automation.stats.failed') }}
                         </span>
                         <span>
                           <b>{{ step.summary.pending }}</b>
-                          待执行
+                          {{ t('automation.flow.pending') }}
                         </span>
                       </div>
                     </article>
@@ -97,16 +97,16 @@
                 <section class="viewer-section">
                   <div class="section-heading">
                     <div>
-                      <h4 class="section-title">主机执行矩阵</h4>
+                      <h4 class="section-title">{{ t('automation.flow.hostMatrix') }}</h4>
                       <p class="section-subtitle">
-                        点击状态单元格可查看该主机在对应步骤上的具体输出。
+                        {{ t('automation.flow.matrixHint') }}
                       </p>
                     </div>
                     <div class="status-legend">
-                      <span class="legend-item is-success">成功</span>
-                      <span class="legend-item is-running">运行中</span>
-                      <span class="legend-item is-failed">失败</span>
-                      <span class="legend-item is-pending">待执行</span>
+                      <span class="legend-item is-success">{{ t('automation.stats.ok') }}</span>
+                      <span class="legend-item is-running">{{ t('automation.job.running') }}</span>
+                      <span class="legend-item is-failed">{{ t('automation.stats.failed') }}</span>
+                      <span class="legend-item is-pending">{{ t('automation.flow.pending') }}</span>
                     </div>
                   </div>
 
@@ -114,7 +114,7 @@
                     <table class="status-table">
                       <thead>
                         <tr>
-                          <th class="status-table__host-head">主机</th>
+                          <th class="status-table__host-head">{{ t('automation.command.host') }}</th>
                           <th
                             v-for="step in normalizedSteps"
                             :key="step.id"
@@ -122,7 +122,7 @@
                           >
                             <div class="status-table__step-name">{{ step.name }}</div>
                             <div class="status-table__step-script">
-                              {{ step.scriptPath || '未配置脚本' }}
+                              {{ step.scriptPath || t('automation.flow.noScript') }}
                             </div>
                           </th>
                         </tr>
@@ -131,7 +131,7 @@
                         <tr v-for="host in hostRows" :key="host.hostId">
                           <td class="host-cell">
                             <strong>{{ host.hostKey }}</strong>
-                            <span>{{ host.assetType || '未知类型' }}</span>
+                            <span>{{ host.assetType || t('automation.list.unknownType') }}</span>
                           </td>
                           <td v-for="step in normalizedSteps" :key="step.id" class="status-cell">
                             <button
@@ -159,8 +159,8 @@
                   </div>
                   <div v-else class="viewer-empty-state">
                     <i class="fa fa-stream" />
-                    <h4>暂无可展示的执行矩阵</h4>
-                    <p>当前实例没有返回主机状态视图，稍后可刷新后再试。</p>
+                    <h4>{{ t('automation.flow.noMatrix') }}</h4>
+                    <p>{{ t('automation.flow.noMatrixHint') }}</p>
                   </div>
                 </section>
               </template>
@@ -183,8 +183,8 @@
     <div v-loading="hostOutputLoading" class="host-output-drawer__body">
       <div class="host-output-drawer__header">
         <div>
-          <div class="host-output-drawer__eyebrow">主机执行输出</div>
-          <h4 class="host-output-drawer__title">{{ currentCell.stepName || '步骤输出' }}</h4>
+          <div class="host-output-drawer__eyebrow">{{ t('automation.flow.hostOutput') }}</div>
+          <h4 class="host-output-drawer__title">{{ currentCell.stepName || t('automation.flow.stepOutput') }}</h4>
           <div class="host-output-drawer__meta">
             <span>{{ currentCell.hostKey || '-' }}</span>
             <span>{{ getStatusLabel(currentCell.status) }}</span>
@@ -203,17 +203,17 @@
                 <el-tag :type="getTaskStatusType(task.status)" size="small">
                   {{ formatTaskStatus(task.status) }}
                 </el-tag>
-                <strong class="task-name">{{ task.task || `任务 ${index + 1}` }}</strong>
+                <strong class="task-name">{{ task.task || t('automation.flow.taskNumber', { index: index + 1 }) }}</strong>
               </div>
             </div>
             <pre v-if="task.output" class="task-output">{{ task.output }}</pre>
-            <div v-else class="task-output task-output--empty">该任务没有返回输出内容。</div>
+            <div v-else class="task-output task-output--empty">{{ t('automation.flow.noTaskOutput') }}</div>
           </article>
         </template>
         <div v-else class="viewer-empty-state is-compact">
           <i class="fa fa-file-alt" />
-          <h4>暂无主机输出</h4>
-          <p>该步骤当前没有返回可展示的任务输出。</p>
+          <h4>{{ t('automation.flow.noHostOutput') }}</h4>
+          <p>{{ t('automation.flow.noStepOutput') }}</p>
         </div>
       </div>
     </div>
@@ -221,6 +221,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { computed, ref, watch } from 'vue'
 import { ElMessage, useZIndex } from 'element-plus'
 import { formatDateTime } from '@/modules/automation/utils/helpers'
@@ -270,7 +272,7 @@ const normalizedSteps = computed(() => {
     return {
       ...step,
       index: index + 1,
-      name: step.name || `步骤 ${index + 1}`,
+      get name() { return step.name || t('automation.flow.stepNumber', { index: index + 1 }) },
       scriptPath: getStepScriptPath(step),
       summary,
       aggregateBucket: getAggregateBucket(summary)
@@ -325,11 +327,11 @@ const overallStatusText = computed(() => {
     { success: 0, running: 0, failed: 0, pending: 0 }
   )
 
-  if (summary.failed) return '存在失败'
-  if (summary.running) return '运行中'
-  if (summary.success && !summary.pending) return '全部成功'
-  if (summary.success) return '部分完成'
-  return '待执行'
+  if (summary.failed) return t('automation.flow.hasFailures')
+  if (summary.running) return t('automation.job.running')
+  if (summary.success && !summary.pending) return t('automation.flow.allSucceeded')
+  if (summary.success) return t('automation.flow.partlyCompleted')
+  return t('automation.flow.pending')
 })
 
 watch(
@@ -358,7 +360,7 @@ async function fetchInstanceView() {
     instanceData.value = data.instance || null
     hostStatusList.value = Array.isArray(data.statusView) ? data.statusView : []
   } catch (error) {
-    ElMessage.error(error?.message || '获取实例详情失败')
+    ElMessage.error(error?.message || t('automation.flow.instanceDetailFailed'))
   } finally {
     loading.value = false
   }
@@ -367,13 +369,13 @@ async function fetchInstanceView() {
 async function handleCellClick(step, host) {
   if (!step?.id || !host?.hostId) return
   if (!canInspectStatus(host?.stepStates?.[step.id])) {
-    ElMessage.info('该步骤尚未执行，暂无可查看输出')
+    ElMessage.info(t('automation.flow.stepNotExecuted'))
     return
   }
 
   currentCell.value = {
     stepId: step.id,
-    stepName: step.name,
+    get stepName() { return step.name || t('automation.flow.stepNumber', { index: step.index }) },
     hostId: host.hostId,
     hostKey: host.hostKey,
     status: host.stepStates[step.id] || ''
@@ -387,7 +389,7 @@ async function handleCellClick(step, host) {
     const data = response?.data || response
     hostOutputTasks.value = normalizeHostOutputTasks(data?.result)
   } catch (error) {
-    ElMessage.error(error?.message || '获取主机输出失败')
+    ElMessage.error(error?.message || t('automation.flow.hostOutputFailed'))
   } finally {
     hostOutputLoading.value = false
   }
@@ -463,12 +465,12 @@ function getStepStatusBucket(status) {
 function getStatusLabel(status) {
   const bucket = getStepStatusBucket(status)
   const labelMap = {
-    success: '成功',
-    running: '运行中',
-    failed: '失败',
-    pending: '待执行'
+    success: t('automation.stats.ok'),
+    running: t('automation.job.running'),
+    failed: t('automation.stats.failed'),
+    pending: t('automation.flow.pending')
   }
-  return labelMap[bucket] || '待执行'
+  return labelMap[bucket] || t('automation.flow.pending')
 }
 
 function getStatusTagType(status) {
@@ -535,17 +537,17 @@ function getTaskStatusType(status) {
 
 function formatTaskStatus(status) {
   const labelMap = {
-    changed: '已变更',
-    ok: '成功',
-    success: '成功',
-    finished: '已完成',
-    failed: '失败',
-    error: '错误',
-    running: '运行中',
-    skipped: '已跳过'
+    changed: t('automation.flow.changed'),
+    ok: t('automation.stats.ok'),
+    success: t('automation.stats.ok'),
+    finished: t('automation.workbench.completed'),
+    failed: t('automation.stats.failed'),
+    error: t('automation.flow.error'),
+    running: t('automation.job.running'),
+    skipped: t('automation.flow.skipped')
   }
   const key = String(status || '').toLowerCase()
-  return labelMap[key] || status || '未知'
+  return labelMap[key] || status || t('automation.command.unknown')
 }
 
 function resetData() {

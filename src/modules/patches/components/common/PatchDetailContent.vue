@@ -15,49 +15,51 @@
       <p v-if="patch.title" class="patch-detail__title">{{ patch.title }}</p>
 
       <div v-if="showPublishDate && patch.publish_date" class="patch-detail__meta">
-        <span class="patch-detail__meta-label">发布日期</span>
+        <span class="patch-detail__meta-label">{{ t('patches.catalog.publishDate') }}</span>
         <span class="patch-detail__meta-value">{{ formatDate(patch.publish_date) }}</span>
       </div>
 
       <section class="patch-detail__section">
-        <h4 class="patch-detail__section-title">描述</h4>
+        <h4 class="patch-detail__section-title">{{ t('yumRepo.description') }}</h4>
         <!-- eslint-disable-next-line vue/no-v-html -->
         <div v-if="markdown" class="patch-detail__desc" v-html="renderedDescription"></div>
-        <p v-else class="patch-detail__desc">{{ patch.description || '暂无描述' }}</p>
+        <p v-else class="patch-detail__desc">{{ patch.description || t('patches.catalog.noDescription') }}</p>
       </section>
 
       <section class="patch-detail__section">
         <h4 class="patch-detail__section-title">
-          关联漏洞
+          {{ t('patches.catalog.associatedVulnerabilities') }}
           <span v-if="cveList.length" class="patch-detail__count">{{ cveList.length }}</span>
         </h4>
         <CveLinkList
           :cves="cveList"
           :url-resolver="cve => getCveUrl(cve, linkSource)"
           :max="0"
-          empty-text="暂无关联漏洞"
+          :empty-text="t('patches.catalog.noCves')"
         />
       </section>
 
       <section class="patch-detail__section">
         <h4 class="patch-detail__section-title">
-          关联 CNNVD
+          {{ t('patches.catalog.associatedCnnvd') }}
           <span v-if="cnnvdList.length" class="patch-detail__count">{{ cnnvdList.length }}</span>
         </h4>
         <CveLinkList
           :cves="cnnvdList"
           :url-resolver="cnnvd => getCnnvdUrl(cnnvd)"
           :max="0"
-          dialog-title="关联 CNNVD"
-          empty-text="暂无关联 CNNVD"
+          :dialog-title="t('patches.catalog.associatedCnnvd')"
+          :empty-text="t('patches.catalog.noCnnvd')"
         />
       </section>
     </template>
-    <el-empty v-else-if="!loading" description="暂无补丁详情" :image-size="80" />
+    <el-empty v-else-if="!loading" :description="t('patches.catalog.noPatchDetails')" :image-size="80" />
   </div>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { computed } from 'vue'
 import {
   formatDate,
@@ -112,7 +114,7 @@ function escapeHtml(text) {
 
 const renderedDescription = computed(() => {
   const text = props.patch?.description
-  if (!text) return '<span class="patch-detail__muted">暂无描述</span>'
+  if (!text) return `<span class="patch-detail__muted">${t('patches.catalog.noDescription')}</span>`
 
   return escapeHtml(text)
     .replace(/\n/g, '<br>')

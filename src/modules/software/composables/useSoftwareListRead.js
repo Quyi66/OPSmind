@@ -1,3 +1,4 @@
+import { t } from '@/core/i18n'
 import { computed, onActivated, onBeforeUnmount, onDeactivated, ref, watch } from 'vue'
 
 // Only manages the four software lists. Authentication, API parsing and GET retries stay in apiService.
@@ -22,23 +23,23 @@ export function useSoftwareListRead(
   )
   const canRetry = computed(() => available() && !!error.value && error.value !== 'auth')
   const errorMessage = computed(() => {
-    if (error.value === 'auth') return '读取失败：登录已失效或无权访问，请重新登录或联系管理员。'
+    if (error.value === 'auth') return t('yumRepo.software.authReadError')
     if (error.value === 'interrupted') {
       return hasResult.value
-        ? '读取已中断，当前显示上次成功结果，可能已过期。请重试。'
-        : '读取已中断，请重试。'
+        ? t('yumRepo.software.interruptedStale')
+        : t('yumRepo.software.interrupted')
     }
     if (error.value) {
       return hasResult.value
-        ? '刷新失败，当前显示上次成功结果，可能已过期。请重试。'
-        : '读取失败，请重试。'
+        ? t('yumRepo.software.refreshStale')
+        : t('yumRepo.software.readFailed')
     }
     return ''
   })
   const emptyText = computed(() => {
-    if (loading.value) return '正在读取…'
+    if (loading.value) return t('yumRepo.software.reading')
     if (error.value) return errorMessage.value
-    return hasResult.value ? '暂无数据' : '尚未读取'
+    return hasResult.value ? t('yumRepo.software.noRecords') : t('yumRepo.software.notRead')
   })
 
   function discard() {

@@ -4,10 +4,10 @@
       <!-- 筛选区域 -->
       <div class="ops-filter-bar">
         <el-form :inline="true" size="small" @submit.prevent>
-          <el-form-item label="关键词">
+          <el-form-item :label="t('asset.keyword')">
             <el-input
               v-model="searchKeyword"
-              placeholder="资源路径 / 资产类型..."
+              :placeholder="t('asset.resourceSearch')"
               clearable
               style="width: 240px"
               @keyup.enter="handleSearch"
@@ -17,11 +17,11 @@
           <el-form-item class="filter-actions">
             <el-button type="primary" @click="handleSearch">
               <el-icon><Search /></el-icon>
-              搜索
+              {{ t('common.search') }}
             </el-button>
             <el-button @click="handleReset">
               <el-icon><RefreshRight /></el-icon>
-              重置
+              {{ t('common.reset') }}
             </el-button>
           </el-form-item>
         </el-form>
@@ -44,12 +44,12 @@
             <span style="margin-left: 4px">
               {{
                 loading
-                  ? '正在加载权限…'
+                  ? t('asset.permissionsLoading')
                   : loadError
-                    ? '权限加载失败'
+                    ? t('asset.permissionsFailed')
                     : hasPendingChanges
-                      ? `${changedRowCount} 项资源的权限待保存（含其他页及筛选外的修改）`
-                      : '当前权限已保存'
+                      ? t('asset.permissionsDirtyCount', { count: changedRowCount })
+                      : t('asset.permissionsCurrent')
               }}
             </span>
           </el-tag>
@@ -61,7 +61,7 @@
             @click="handleSave"
           >
             <i class="fa fa-save" style="margin-right: 4px"></i>
-            保存权限更改
+            {{ t('asset.savePermissions') }}
           </el-button>
           <el-button
             size="small"
@@ -70,7 +70,7 @@
             plain
           >
             <i class="fa fa-undo" style="margin-right: 4px"></i>
-            撤销修改
+            {{ t('asset.undoChanges') }}
           </el-button>
         </div>
         <span style="flex: 1"></span>
@@ -81,14 +81,14 @@
           :loading="loading"
           :disabled="saving || loading"
           @click="handleRefresh"
-          title="刷新"
+          :title="t('common.refresh')"
         >
           <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
       </div>
 
       <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
-        <el-button link type="primary" @click="handleRefresh">重新加载</el-button>
+        <el-button link type="primary" @click="handleRefresh">{{ t('common.reload') }}</el-button>
       </el-alert>
 
       <!-- 表格区域 -->
@@ -104,7 +104,7 @@
           <!-- 1. 资源信息 -->
           <el-table-column
             prop="groupInfo"
-            label="资源分组路径"
+            :label="t('asset.resourceGroupPath')"
             min-width="260"
             show-overflow-tooltip
             sortable="custom"
@@ -120,7 +120,7 @@
           <!-- 2. 资产类型 -->
           <el-table-column
             prop="assets_type"
-            label="适用资产类型"
+            :label="t('asset.applicableType')"
             min-width="150"
             align="left"
             sortable="custom"
@@ -143,7 +143,7 @@
             <template #header>
               <div class="team-column-header">
                 <span>{{ teamName }}</span>
-                <span class="team-column-caption">团队权限 · 勾选要授予的权限</span>
+                <span class="team-column-caption">{{ t('asset.teamPermissions') }}</span>
               </div>
             </template>
             <template #default="{ row }">
@@ -151,7 +151,7 @@
                 <div
                   class="permission-options"
                   role="group"
-                  :aria-label="`${teamName} 对 ${row.groupInfo} 的权限`"
+                  :aria-label="t('asset.teamGroupPermission', { team: teamName, path: row.groupInfo })"
                 >
                   <el-checkbox
                     v-for="permission in permissionOptions"
@@ -172,7 +172,7 @@
                     type="warning"
                     effect="plain"
                   >
-                    未保存
+                    {{ t('asset.unsaved') }}
                   </el-tag>
                 </div>
               </div>
@@ -199,6 +199,9 @@
 </template>
 
 <script setup>
+import { t, currentLocale, i18n } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
+
 import { ref, computed, onMounted } from 'vue'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -213,28 +216,36 @@ const permissionData = ref([])
 const originalPermissionData = ref([])
 const searchKeyword = ref('')
 const appliedSearch = ref('')
+const appliedSearchLocale = ref(currentLocale.value)
 const teamNames = ref([])
 const changedRowIds = ref([])
-const loadError = ref('')
+const loadError = messageRef('')
 const editingDisabled = computed(() => loading.value || saving.value || Boolean(loadError.value))
-const permissionOptions = [
-  { value: 'r', label: '查看' },
-  { value: 'w', label: '修改' },
-  { value: 'x', label: '执行' }
-]
+const permissionOptions = computed(() => ([
+  { value: 'r', label: t('asset.view') },
+  { value: 'w', label: t('asset.modify') },
+  { value: 'x', label: t('asset.run') }
+]))
 
 function getAssetTypeLabel(value) {
-  return { linux: 'Linux 服务器', windows: 'Windows 主机' }[value] || value || '所有类型'
+  return { linux: t('asset.linuxServer'), windows: t('asset.windowsHost') }[value] || value || t('asset.allTypes')
+}
+
+function getAssetTypeQueryLabel(value, locale) {
+  const key = { linux: 'asset.linuxServer', windows: 'asset.windowsHost' }[value]
+  return key ? i18n.global.t(key, {}, { locale }) : value || i18n.global.t('asset.allTypes', {}, { locale })
 }
 
 function getPermissionSummary(row, teamName) {
-  const labels = permissionOptions
+  const labels = permissionOptions.value
     .filter(permission => hasPermission(row, teamName, permission.value))
     .map(permission => permission.label)
   const pending = isTeamDirty(row.id, teamName)
   return labels.length
-    ? `${pending ? '待保存' : '已授权'}：${labels.join('、')}`
-    : `${pending ? '待保存：' : ''}未授予查看、修改或执行权限`
+    ? t(pending ? 'asset.permissionsPendingSummary' : 'asset.permissionsGrantedSummary', {
+        permissions: labels.join(t('common.listSeparator'))
+      })
+    : t(pending ? 'asset.permissionsPendingNone' : 'asset.permissionsNone')
 }
 
 function isTeamDirty(rowId, teamName) {
@@ -251,6 +262,7 @@ function isTeamDirty(rowId, teamName) {
 const currentPage = ref(1)
 const pageSize = ref(10)
 const sortState = ref({ prop: '', order: null })
+const sortLocale = ref(currentLocale.value)
 
 // 过滤后的数据
 const filteredData = computed(() => {
@@ -259,7 +271,7 @@ const filteredData = computed(() => {
   if (appliedSearch.value) {
     const keyword = appliedSearch.value.toLowerCase()
     data = data.filter(item =>
-      [item.groupInfo, item.assets_type, getAssetTypeLabel(item.assets_type)].some(value =>
+      [item.groupInfo, item.assets_type, getAssetTypeQueryLabel(item.assets_type, appliedSearchLocale.value)].some(value =>
         String(value ?? '')
           .toLowerCase()
           .includes(keyword)
@@ -278,7 +290,7 @@ const sortedData = computed(() => {
   if (!['groupInfo', 'assets_type'].includes(prop)) return rows
   if (!['ascending', 'descending'].includes(order)) return rows
   const value = row =>
-    String(prop === 'assets_type' ? getAssetTypeLabel(row[prop]) : (row[prop] ?? '')).trim()
+    String(prop === 'assets_type' ? getAssetTypeQueryLabel(row[prop], sortLocale.value) : (row[prop] ?? '')).trim()
   return rows.sort((left, right) => {
     const a = value(left),
       b = value(right)
@@ -295,6 +307,7 @@ const paginatedData = computed(() => {
 })
 
 function handleSortChange({ prop, order }) {
+  sortLocale.value = currentLocale.value
   sortState.value = { prop, order }
   currentPage.value = 1
 }
@@ -382,9 +395,9 @@ async function loadData() {
     changedRowIds.value = []
     buildTableState(permissionData.value)
   } catch (error) {
-    loadError.value = '未能加载最新权限，请重新加载后再编辑。已有未保存修改仍保留在本页。'
+    loadError.value = message('asset.permissionsLoadError')
     console.error('加载权限数据失败:', error)
-    ElMessage.error('加载权限数据失败')
+    ElMessage.error(t('asset.permissionsLoadFailed'))
   } finally {
     loading.value = false
   }
@@ -460,10 +473,10 @@ async function handleSave() {
     await permissionApi.saveTablePermission('ACM', submittedData)
     originalPermissionData.value = _.cloneDeep(submittedData)
     changedRowIds.value = []
-    ElMessage.success('权限变更已保存')
+    ElMessage.success(t('asset.permissionsSaved'))
   } catch (error) {
     console.error('保存权限失败:', error)
-    ElMessage.error('保存权限失败')
+    ElMessage.error(t('asset.permissionsSaveFailed'))
   } finally {
     saving.value = false
   }
@@ -486,8 +499,8 @@ async function handleRefresh() {
 
   try {
     await ElMessageBox.confirm(
-      '当前有未保存的权限变更，刷新后将丢失这些修改。是否继续？',
-      '确认刷新',
+      t('asset.permissionsRefreshConfirm'),
+      t('asset.confirmRefresh'),
       {
         closeOnClickModal: false,
         closeOnPressEscape: false,
@@ -502,6 +515,7 @@ async function handleRefresh() {
 
 // 搜索
 const handleSearch = () => {
+  appliedSearchLocale.value = currentLocale.value
   appliedSearch.value = searchKeyword.value.trim()
   currentPage.value = 1
 }

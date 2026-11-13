@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="执行运维工具"
+    :title="t('automation.job.executeTool')"
     width="1000px"
     destroy-on-close
     @close="handleClose"
@@ -19,7 +19,7 @@
           </el-form-item>
         </template>
       </el-form>
-      <div v-else-if="!detailLoading" class="execute-dialog__empty">当前运维工具暂无可配置参数</div>
+      <div v-else-if="!detailLoading" class="execute-dialog__empty">{{ t('automation.job.noConfigurableParams') }}</div>
     </div>
     <template #footer>
       <div class="dialog-footer">
@@ -27,14 +27,14 @@
           <span>{{ executionStatusLabel }}</span>
         </div>
         <div class="dialog-footer__actions">
-          <el-button @click="handleClose">取消</el-button>
+          <el-button @click="handleClose">{{ t('common.cancel') }}</el-button>
           <el-button
             type="primary"
             :loading="submitLoading"
             :disabled="detailLoading || lastLoadedJobId !== jobId"
             @click="handleSubmit"
           >
-            执行运维工具
+            {{ t('automation.job.executeTool') }}
           </el-button>
         </div>
       </div>
@@ -43,6 +43,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as jaoApi from '@/modules/automation/api/jao'
@@ -108,7 +110,7 @@ async function fetchJobDetail(jobId) {
     lastLoadedJobId.value = jobId
     initializeForm(detail)
   } catch (error) {
-    if (isCurrent()) ElMessage.error(error?.message || '获取运维工具详情失败')
+    if (isCurrent()) ElMessage.error(error?.message || t('automation.job.detailReadFailed'))
   } finally {
     if (isCurrent()) detailLoading.value = false
   }
@@ -119,8 +121,8 @@ function initializeForm(detail) {
   const params = Array.isArray(detail?.params) ? detail.params : []
   formSchema.value = params.map(item => ({
     name: item.name,
-    label: translateText(item.label) || item.name,
-    description: translateText(item.description) || '',
+    get label() { return translateText(item.label) || item.name },
+    get description() { return translateText(item.description) || '' },
     defaultValue: item.defaultValue ?? ''
   }))
   const defaults = {}
@@ -151,7 +153,7 @@ function handleClose() {
 /** 提交执行作业 */
 async function handleSubmit() {
   if (!props.jobId) {
-    ElMessage.warning('缺少运维工具标识')
+    ElMessage.warning(t('automation.job.missingIdentity'))
     return
   }
   if (detailLoading.value || lastLoadedJobId.value !== props.jobId) return
@@ -160,7 +162,7 @@ async function handleSubmit() {
   try {
     const payload = buildPayload()
     const response = await jaoApi.executeJob(payload)
-    throwIfWorkflowFailed(response, '执行运维工具失败')
+    throwIfWorkflowFailed(response, t('automation.job.executeFailed'))
     const responseData = response?.data ?? response ?? {}
     // 脚本工具返回单条运行数组；多条时不擅自选取某一次运行。
     const result =
@@ -176,11 +178,11 @@ async function handleSubmit() {
       jobTitle: jobDetail.value?.title || jobDetail.value?.jobTitle || ''
     })
     ElMessage.success(
-      runId ? '运维工具已提交执行，正在打开运行结果' : '运维工具已提交执行，正在刷新运行记录'
+      runId ? t('automation.job.submittedOpenResult') : t('automation.job.submittedRefresh')
     )
     handleClose()
   } catch (error) {
-    ElMessage.error(error?.message || '执行运维工具失败')
+    ElMessage.error(error?.message || t('automation.job.executeFailed'))
   } finally {
     submitLoading.value = false
   }
@@ -258,7 +260,7 @@ async function pollExecuteResult(runId) {
     handleStatusTransition(status, runId)
   } catch (error) {
     stopResultPolling()
-    ElMessage.error(error?.message || '获取执行结果失败')
+    ElMessage.error(error?.message || t('automation.job.loadResultFailed'))
   }
 }
 

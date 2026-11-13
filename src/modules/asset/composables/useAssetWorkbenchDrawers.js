@@ -1,3 +1,4 @@
+import { t, currentLocale } from '@/core/i18n'
 /**
  * 资产工作台抽屉与弹窗状态管理
  * 从 AssetOverviewPage.vue 提取，减少单文件体积
@@ -8,7 +9,7 @@ import { assetApi, exceptionApi, operationLogApi, overviewApi } from '../api'
 import { ensureArray, normalizePagedResponse, toNumber } from '../utils/response'
 
 function formatCount(value) {
-  return toNumber(value).toLocaleString('zh-CN')
+  return toNumber(value).toLocaleString(currentLocale.value)
 }
 
 function formatDateTime(value) {
@@ -28,25 +29,27 @@ function formatConnRate(value) {
 }
 
 function getConnStatusText(status) {
-  if (status === null || status === 'null' || status === undefined) return '未测试'
-  if (status == 0) return '最近失败'
-  if (status == 1) return '最近成功'
-  return '状态未知'
+  if (status === null || status === 'null' || status === undefined) return t('asset.notTested')
+  if (status == 0) return t('asset.lastFailed')
+  if (status == 1) return t('asset.lastSucceeded')
+  return t('asset.unknownStatus')
 }
 
 import { translateI18nKey } from '@/utils/i18n'
 
 function getOperationActionLabel(action) {
-  if (!action) return '未知操作'
+  if (!action) return t('asset.unknownOperation')
   const actionLabelMap = {
-    asset_import: '资产导入'
+    asset_import: t('asset.assetImport'),
+    '#{acm.job.check_conn}': t('asset.connectivityCheckAction'),
+    '#{acm.job.collect_assert_info}': t('asset.collectInformation')
   }
   if (actionLabelMap[action]) return actionLabelMap[action]
   return translateI18nKey(action)
 }
 
 function formatOperationMessage(message) {
-  if (!message) return '无失败详情'
+  if (!message) return t('asset.noFailureDetails')
   try {
     const p = typeof message === 'string' ? JSON.parse(message) : message
     return p?.exception?.message || p?.message || p?.msg_id || JSON.stringify(p)
@@ -97,7 +100,7 @@ export function useAssetWorkbenchDrawers({
 
   // ── 计算 ──
   const assetListDrawerTitle = computed(() => {
-    return assetListDrawer.filterType ? `设备清单 · ${assetListDrawer.filterType}` : '设备清单'
+    return assetListDrawer.filterType ? t('asset.deviceListType', { type: assetListDrawer.filterType }) : t('asset.deviceList')
   })
 
   // ── 资产列表抽屉 ──
@@ -173,10 +176,10 @@ export function useAssetWorkbenchDrawers({
       const { records: rows, total } = normalizePagedResponse(response)
       exceptionDrawer.records = rows.map(row => ({
         key: row.IP || row.ip || row.ci_name || `${row.updated_at || ''}-${row.CONN_RATE || ''}`,
-        title: row.IP || row.ip || '未识别 IP',
+        get title() { return row.IP || row.ip || t('asset.unidentifiedIp') },
         badge: formatConnRate(row.CONN_RATE),
-        desc: row.description ? `${row.ci_name || '未命名资产'} · ${row.description}` : (row.ci_name || '未命名资产'),
-        meta: `${getConnStatusText(row.CONN_LATEST_STATUS)} · ${formatDateTimeShort(row.updated_at)}`,
+        get desc() { return row.description ? `${row.ci_name || t('asset.unnamedAsset')} · ${row.description}` : (row.ci_name || t('asset.unnamedAsset')) },
+        get meta() { return `${getConnStatusText(row.CONN_LATEST_STATUS)} · ${formatDateTimeShort(row.updated_at)}` },
         raw: row
       }))
       exceptionDrawer.total = total
@@ -214,14 +217,11 @@ export function useAssetWorkbenchDrawers({
       )
       const { records: rows } = normalizePagedResponse(response)
       failedLogDrawer.records = rows.map(row => {
-        const actionLabel = getActionLabel
-          ? getActionLabel(row.action)
-          : getOperationActionLabel(row.action)
         return {
           key: row.run_id || `${row.start_time || ''}-${row.action || ''}`,
-          title: actionLabel,
+          get title() { return getActionLabel ? getActionLabel(row.action) : getOperationActionLabel(row.action) },
           badge: formatDateTimeShort(row.start_time),
-          desc: formatOperationMessage(row.message),
+          get desc() { return formatOperationMessage(row.message) },
           meta: `${row.executor_node || '--'} · ${row.username || '--'}`,
           raw: row
         }
@@ -239,7 +239,7 @@ export function useAssetWorkbenchDrawers({
     if (runResultMeta) {
       runResultMeta.value = {
         runId: row.run_id,
-        jobTitle: getActionLabel ? getActionLabel(row.action) : getOperationActionLabel(row.action)
+        get jobTitle() { return getActionLabel ? getActionLabel(row.action) : getOperationActionLabel(row.action) }
       }
       runResultDialogVisible.value = true
     }
@@ -286,9 +286,7 @@ export function useAssetWorkbenchDrawers({
     if (runResultMeta) {
       runResultMeta.value = {
         runId: item.run_id,
-        jobTitle: getActionLabel
-          ? getActionLabel(item.action)
-          : getOperationActionLabel(item.action)
+        get jobTitle() { return getActionLabel ? getActionLabel(item.action) : getOperationActionLabel(item.action) }
       }
       runResultDialogVisible.value = true
     }

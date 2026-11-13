@@ -1,20 +1,22 @@
+import { t } from '@/core/i18n'
+
 // 仅派生展示身份，不写回任务或用关联工具 ID 替代调度 ID。
 export function getCronTaskName(task) {
-  return typeof task.jobDesc === 'string' && task.jobDesc.trim() ? task.jobDesc : '未命名定时任务'
+  return typeof task.jobDesc === 'string' && task.jobDesc.trim() ? task.jobDesc : t('automation.cron.unnamed')
 }
 
 export function getCronTaskType(type) {
   return (
     {
-      rest: 'REST接口',
-      script: '脚本任务',
-      audit: '巡检任务',
-      cac: '巡检任务',
-      cmd: '命令任务',
-      flows: '流程任务'
+      rest: t('automation.cron.rest'),
+      script: t('automation.cron.script'),
+      audit: t('automation.types.audit'),
+      cac: t('automation.types.audit'),
+      cmd: t('automation.types.cmd'),
+      flows: t('automation.types.flows')
     }[type] ||
     type ||
-    '类型未返回'
+    t('automation.cron.typeMissing')
   )
 }
 
@@ -28,12 +30,12 @@ export function getCronTaskShortId(task) {
 }
 
 export function getCronTaskIdentity(task) {
-  return `${getCronTaskName(task)}（${getCronTaskType(task.jobType)} · ID：${getCronTaskShortId(task) || '未返回'}）`
+  return t('automation.cron.identity', { name: getCronTaskName(task), type: getCronTaskType(task.jobType), id: getCronTaskShortId(task) || t('automation.cron.idMissing') })
 }
 
 export function getCronTaskConfirmation(task) {
   const id = getCronTaskId(task)
-  return `${getCronTaskIdentity(task)}${id.length > 12 ? `，完整 ID：${id}` : ''}`
+  return id.length > 12 ? t('automation.cron.fullId', { identity: getCronTaskIdentity(task), id }) : getCronTaskIdentity(task)
 }
 
 export function getCronTaskDisplayName(task, tasks) {

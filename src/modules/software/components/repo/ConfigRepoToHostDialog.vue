@@ -3,8 +3,8 @@
     v-model="visible"
     ci-types="[auto]"
     :options="selectorOptions"
-    title="选择设备 · 配置仓库到主机"
-    confirm-text="开始配置"
+    :title="t('yumRepo.software.configureHostsTitle')"
+    :confirm-text="t('yumRepo.software.startConfig')"
     :description="configDescription"
     :allow-empty="false"
     :close-on-confirm="false"
@@ -13,7 +13,7 @@
   >
     <template #context="{ selection }">
       <div class="repo-target-summary">
-        <strong>待配置仓库（{{ selectedRepos.length }}）</strong>
+        <strong>{{ t('yumRepo.software.selectedRepoCount', { count: selectedRepos.length }) }}</strong>
         <ul>
           <li v-for="(repo, index) in selectedRepos" :key="index">
             {{ repo.repo_name || repo.name || repo.repo_id || repo.id || repo.refid }}
@@ -26,6 +26,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { repoApi } from '../../api'
@@ -49,7 +51,7 @@ const visible = computed({
 })
 const submitting = ref(false)
 const configDescription = computed(
-  () => `已选择 ${props.selectedRepos.length} 个仓库配置，点击“开始配置”后将立即配置到所选主机。`
+  () => t('yumRepo.software.configDescription', { count: props.selectedRepos.length })
 )
 const selectorOptions = {
   selectMode: 'host,group,tag,input,recently',
@@ -60,11 +62,11 @@ async function handleSubmit(selection) {
   if (submitting.value) return
   const hosts = normalizeAcmDeviceJobHosts(selection, 'linux')
   if (!hosts.length) {
-    ElMessage.warning('请选择目标主机')
+    ElMessage.warning(t('yumRepo.software.selectTargetHosts'))
     return
   }
   if (!props.selectedRepos.length) {
-    ElMessage.warning('请选择要配置的仓库')
+    ElMessage.warning(t('yumRepo.software.selectRepos'))
     return
   }
   const apiParams = { hosts }
@@ -81,15 +83,15 @@ async function handleSubmit(selection) {
     const data = response?.data || response
     const result = Array.isArray(data) ? data[0] : data
     if (['FAILED', 'ERROR'].includes(result?.status)) {
-      ElMessage.error(result.error || '配置失败，请稍后重试')
+      ElMessage.error(result.error || t('yumRepo.software.configFailedRetry'))
       return
     }
-    ElMessage.success('配置任务已提交')
+    ElMessage.success(t('yumRepo.software.configSubmitted'))
     emit('success')
     visible.value = false
   } catch (error) {
     console.error('Failed to config repo to hosts:', error)
-    ElMessage.error(error?.message || '配置失败，请稍后重试')
+    ElMessage.error(error?.message || t('yumRepo.software.configFailedRetry'))
   } finally {
     submitting.value = false
   }

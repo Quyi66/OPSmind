@@ -2,10 +2,10 @@
   <div class="ops-page-layout linux-yum-manage-page">
     <div class="ops-filter-bar">
       <el-form :model="hostFilters" inline size="small" @submit.prevent>
-        <el-form-item label="关键词">
+        <el-form-item :label="t('yumRepo.keyword')">
           <el-input
             v-model="hostFilterText"
-            placeholder="搜索..."
+            :placeholder="t('yumRepo.search')"
             style="width: 200px"
             clearable
             maxlength="50"
@@ -22,7 +22,7 @@
     </div>
 
     <div class="ops-action-bar">
-      <el-button type="primary" size="small" @click="handleScanRepoList">YUM源清单扫描</el-button>
+      <el-button type="primary" size="small" @click="handleScanRepoList">{{ t('yumRepo.scanInventory') }}</el-button>
       <span style="flex: 1"></span>
       <el-button
         class="toolbar-icon-btn"
@@ -30,7 +30,7 @@
         size="small"
         :loading="hostLoading"
         @click="loadHostData"
-        title="刷新"
+        :title="t('common.refresh')"
       >
         <el-icon v-show="!hostLoading">
           <Refresh />
@@ -40,22 +40,22 @@
 
     <el-alert v-if="latestScanRunId" type="info" :closable="false" show-icon class="mb-3">
       <template #title>
-        最近提交的 YUM 源扫描任务
-        <el-button link type="primary" @click="scanResultVisible = true">查看进度与结果</el-button>
+        {{ t('yumRepo.recentScan') }}
+        <el-button link type="primary" @click="scanResultVisible = true">{{ t('yumRepo.viewProgress') }}</el-button>
       </template>
     </el-alert>
     <div class="ops-table-wrapper">
       <el-table v-loading="hostLoading" :data="paginatedHostTableData" height="100%">
-        <el-table-column prop="$data_owner" label="主机" min-width="150">
+        <el-table-column prop="$data_owner" :label="t('yumRepo.host')" min-width="150">
           <template #default="{ row }">
             <el-link type="primary" underline="never" @click="handleViewHostDetail(row)">
               {{ row.$data_owner }}
             </el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="os_distro" label="操作系统" min-width="200" sortable />
-        <el-table-column prop="os_version" label="操作系统版本" min-width="150" sortable />
-        <el-table-column prop="yum_count" label="已配置yum源数量" min-width="130" sortable />
+        <el-table-column prop="os_distro" :label="t('yumRepo.os')" min-width="200" sortable />
+        <el-table-column prop="os_version" :label="t('yumRepo.osVersion')" min-width="150" sortable />
+        <el-table-column prop="yum_count" :label="t('yumRepo.configuredSourceCount')" min-width="130" sortable />
       </el-table>
     </div>
 
@@ -76,15 +76,15 @@
       v-if="latestScanRunId"
       v-model:visible="scanResultVisible"
       :run-id="latestScanRunId"
-      job-title="YUM 源扫描"
+      :job-title="t('yumRepo.scanTitle')"
     />
     <AcmDeviceSelectorDialog
       v-model="selectHostDialogVisible"
       ci-types="[auto]"
       :options="{ selectMode: 'host,group,tag,input,recently', selector: 'multiple' }"
-      title="选择设备 · 扫描 YUM 源"
-      confirm-text="开始扫描"
-      description="点击“开始扫描”后将立即采集所选主机的 YUM 源配置。"
+      :title="t('yumRepo.scanDevicesTitle')"
+      :confirm-text="t('yumRepo.startScan')"
+      :description="t('yumRepo.scanHint')"
       :allow-empty="false"
       :close-on-confirm="false"
       :submitting="jobExecuting"
@@ -93,28 +93,28 @@
 
     <el-dialog
       v-model="hostDetailDialogVisible"
-      :title="`${currentHostDetail?.$data_owner || ''} - YUM源详情`"
+      :title="t('yumRepo.sourceDetailsTitle', { name: currentHostDetail?.['$data_owner'] || '' })"
       width="1400px"
       :close-on-click-modal="true"
     >
       <div class="host-detail-dialog-content">
         <div class="ops-filter-bar">
           <el-form inline size="small" @submit.prevent>
-            <el-form-item label="状态">
+            <el-form-item :label="t('common.status')">
               <el-select
                 v-model="detailRepoStatus"
-                placeholder="请选择"
+                :placeholder="t('yumRepo.select')"
                 style="width: 120px"
                 @change="handleDetailStatusChange"
               >
-                <el-option value="enabled" label="启用" />
-                <el-option value="disabled" label="禁用" />
+                <el-option value="enabled" :label="t('yumRepo.enable')" />
+                <el-option value="disabled" :label="t('yumRepo.disable')" />
               </el-select>
             </el-form-item>
-            <el-form-item label="关键词">
+            <el-form-item :label="t('yumRepo.keyword')">
               <el-input
                 v-model="detailFilterText"
-                placeholder="搜索名称、地址..."
+                :placeholder="t('yumRepo.searchSources')"
                 style="width: 220px"
                 clearable
                 @input="handleDetailFilterChange"
@@ -127,15 +127,15 @@
             <el-form-item>
               <el-button type="primary" @click="handleDetailFilterChange">
                 <el-icon><Search /></el-icon>
-                搜索
+                {{ t('common.search') }}
               </el-button>
               <el-button @click="handleDetailReset">
                 <el-icon><RefreshRight /></el-icon>
-                重置
+                {{ t('common.reset') }}
               </el-button>
               <el-button :loading="hostDetailLoading" @click="loadHostRepoDetail">
                 <el-icon><Refresh /></el-icon>
-                刷新
+                {{ t('common.refresh') }}
               </el-button>
             </el-form-item>
           </el-form>
@@ -148,9 +148,9 @@
           size="small"
           max-height="500"
         >
-          <el-table-column prop="$data_owner" label="主机" min-width="100" />
-          <el-table-column prop="repo-name" label="名称" min-width="120" />
-          <el-table-column prop="repo-pkgs" label="软件包数" min-width="80" />
+          <el-table-column prop="$data_owner" :label="t('yumRepo.host')" min-width="100" />
+          <el-table-column prop="repo-name" :label="t('common.name')" min-width="120" />
+          <el-table-column prop="repo-pkgs" :label="t('yumRepo.packageCount')" min-width="80" />
           <el-table-column
             prop="repo-baseurl"
             label="Base URL"
@@ -171,21 +171,21 @@
               </div>
             </template>
           </el-table-column>
-          <el-table-column prop="repo-file" label="YUM文件" min-width="150" show-overflow-tooltip />
-          <el-table-column prop="repo-status" label="状态" width="90" align="left">
+          <el-table-column prop="repo-file" :label="t('yumRepo.yumFile')" min-width="150" show-overflow-tooltip />
+          <el-table-column prop="repo-status" :label="t('common.status')" width="90" align="left">
             <template #default="{ row }">
               <el-tag :type="row['repo-status'] === 'enabled' ? 'success' : 'info'" size="small">
                 {{ row['repo-status'] === 'enabled' ? 'Enabled' : 'Disabled' }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="repo-size" label="大小" width="80" />
-          <el-table-column prop="repo-updated" label="更新时间" width="180">
+          <el-table-column prop="repo-size" :label="t('yumRepo.size')" width="80" />
+          <el-table-column prop="repo-updated" :label="t('yumRepo.updatedAt')" width="180">
             <template #default="{ row }">
               {{ formatDate(row['repo-updated']) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="88" fixed="right" align="left">
+          <el-table-column :label="t('common.actions')" width="88" fixed="right" align="left">
             <template #default="{ row }">
               <el-button
                 v-if="row['repo-status'] === 'disabled'"
@@ -194,7 +194,7 @@
                 size="small"
                 @click="handleEnableRepo(row)"
               >
-                启用
+                {{ t('yumRepo.enable') }}
               </el-button>
               <el-button
                 v-if="row['repo-status'] === 'enabled'"
@@ -203,10 +203,10 @@
                 size="small"
                 @click="handleDisableRepo(row)"
               >
-                禁用
+                {{ t('yumRepo.disable') }}
               </el-button>
               <el-button text type="danger" size="small" @click="handleDeleteRepo(row)">
-                删除
+                {{ t('common.delete') }}
               </el-button>
             </template>
           </el-table-column>
@@ -229,6 +229,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
@@ -356,7 +358,7 @@ async function executeScanJob(selection = selectedDevices.value) {
   if (jobExecuting.value) return
   selectedDevices.value = selection
   if (selectedDevices.value.length === 0) {
-    ElMessage.warning('请选择至少一台主机')
+    ElMessage.warning(t('yumRepo.oneHostRequired'))
     return
   }
 
@@ -374,21 +376,21 @@ async function executeScanJob(selection = selectedDevices.value) {
     const runResult = Array.isArray(data) ? data[0] : data
 
     if (['FAILED', 'ERROR'].includes(runResult?.status)) {
-      throw new Error(runResult.error || '扫描任务提交失败')
+      throw new Error(runResult.error || t('yumRepo.scanSubmitFailed'))
     }
 
     if (!runResult?.runId) {
-      throw new Error('未获取到任务运行ID')
+      throw new Error(t('yumRepo.noRunId'))
     }
 
-    ElMessage.success('扫描任务已提交')
+    ElMessage.success(t('yumRepo.scanSubmitted'))
     selectHostDialogVisible.value = false
     latestScanRunId.value = String(runResult.runId)
 
     trackScan(runResult.runId)
   } catch (error) {
     console.error('Job execution failed:', error)
-    ElMessage.error(`任务执行失败: ${error.message || '未知错误'}`)
+    ElMessage.error(t('yumRepo.taskFailedReason', { reason: error.message || t('yumRepo.unknownError') }))
   } finally {
     jobExecuting.value = false
   }
@@ -469,7 +471,7 @@ function formatDate(timestamp) {
 
 async function handleEnableRepo(row) {
   try {
-    await ElMessageBox.confirm(`确定要启用 "${row['repo-name']}" 吗？`, '确认', {
+    await ElMessageBox.confirm(t('yumRepo.enableConfirm', { name: row['repo-name'] }), t('common.confirm'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'info'
@@ -498,19 +500,19 @@ async function handleEnableRepo(row) {
       }
     })
 
-    ElMessage.success('启用任务已提交')
+    ElMessage.success(t('yumRepo.enableSubmitted'))
     setTimeout(() => loadHostRepoDetail(), 2000)
   } catch (error) {
     if (error !== 'cancel') {
       console.error('Enable repo failed:', error)
-      ElMessage.error('操作失败')
+      ElMessage.error(t('yumRepo.operationFailed'))
     }
   }
 }
 
 async function handleDisableRepo(row) {
   try {
-    await ElMessageBox.confirm(`确定要禁用 "${row['repo-name']}" 吗？`, '确认', {
+    await ElMessageBox.confirm(t('yumRepo.disableConfirm', { name: row['repo-name'] }), t('common.confirm'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning'
@@ -539,19 +541,19 @@ async function handleDisableRepo(row) {
       }
     })
 
-    ElMessage.success('禁用任务已提交')
+    ElMessage.success(t('yumRepo.disableSubmitted'))
     setTimeout(() => loadHostRepoDetail(), 2000)
   } catch (error) {
     if (error !== 'cancel') {
       console.error('Disable repo failed:', error)
-      ElMessage.error('操作失败')
+      ElMessage.error(t('yumRepo.operationFailed'))
     }
   }
 }
 
 async function handleDeleteRepo(row) {
   try {
-    await ElMessageBox.confirm(`确定要删除 "${row['repo-name']}" 吗？此操作不可恢复。`, '警告', {
+    await ElMessageBox.confirm(t('yumRepo.deleteConfirm', { name: row['repo-name'] }), t('yumRepo.warning'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning'
@@ -580,12 +582,12 @@ async function handleDeleteRepo(row) {
       }
     })
 
-    ElMessage.success('删除任务已提交')
+    ElMessage.success(t('yumRepo.deleteSubmitted'))
     setTimeout(() => loadHostRepoDetail(), 2000)
   } catch (error) {
     if (error !== 'cancel') {
       console.error('Delete repo failed:', error)
-      ElMessage.error('操作失败')
+      ElMessage.error(t('yumRepo.operationFailed'))
     }
   }
 }

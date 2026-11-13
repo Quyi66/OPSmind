@@ -5,7 +5,7 @@
       <div class="action-left">
         <el-button type="primary" size="small" @click="handleChooseBaseHost">
           <i class="fa fa-mouse-pointer" />
-          选择基准主机
+          {{ t('yumRepo.software.selectBaseHosts') }}
         </el-button>
         <el-button
           type="danger"
@@ -15,7 +15,7 @@
           @click="handleBatchDelete"
         >
           <i class="fa fa-trash-alt" />
-          批量删除
+          {{ t('yumRepo.software.batchDelete') }}
         </el-button>
       </div>
       <div class="action-right">
@@ -26,8 +26,8 @@
           :loading="loading"
           :disabled="!!readError && !canRetry"
           @click="refresh"
-          :title="readError ? '重试读取' : '刷新'"
-          :aria-label="readError ? '重试读取基准主机' : '刷新基准主机'"
+          :title="readError ? t('yumRepo.software.retryRead') : t('common.refresh')"
+          :aria-label="readError ? t('yumRepo.software.retryBaseHosts') : t('yumRepo.software.refreshBaseHosts')"
         >
           <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
@@ -37,7 +37,7 @@
     <el-alert v-if="readError" type="warning" :closable="false" show-icon style="flex-shrink: 0">
       <template #title>
         {{ readErrorMessage }}
-        <span v-if="hasResult">刷新成功前，旧主机数据仅供查看，暂不可删除。</span>
+        <span v-if="hasResult">{{ t('yumRepo.software.staleHostsHint') }}</span>
       </template>
     </el-alert>
 
@@ -51,15 +51,15 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="50" :selectable="() => canUseRows" />
-        <el-table-column prop="host_key" label="主机" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="host_key" :label="t('yumRepo.host')" min-width="200" show-overflow-tooltip />
         <el-table-column prop="os_distro" label="OS" width="120" show-overflow-tooltip />
-        <el-table-column prop="os_version" label="OS版本" width="120" show-overflow-tooltip />
-        <el-table-column prop="update_time" label="更新时间" width="180">
+        <el-table-column prop="os_version" :label="t('yumRepo.software.osVersion')" width="120" show-overflow-tooltip />
+        <el-table-column prop="update_time" :label="t('yumRepo.updatedAt')" width="180">
           <template #default="{ row }">
             {{ formatDate(row.update_time) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="80" fixed="right">
+        <el-table-column :label="t('common.actions')" width="80" fixed="right">
           <template #default="{ row }">
             <div class="software-row-actions">
               <el-button
@@ -69,7 +69,7 @@
                 :disabled="!canUseRows"
                 @click="handleDelete(row)"
               >
-                删除
+                {{ t('common.delete') }}
               </el-button>
             </div>
           </template>
@@ -96,6 +96,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
@@ -152,7 +154,7 @@ async function handleBatchDelete() {
   // 使用 id 作为删除参数
   const ids = selectedRows.value.map(item => item.id)
   try {
-    await ElMessageBox.confirm('确定要批量删除选中的基准主机吗？', '确认删除', {
+    await ElMessageBox.confirm(t('yumRepo.software.deleteBaseHostsConfirm'), t('automation.list.confirmDelete'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning'
@@ -160,19 +162,19 @@ async function handleBatchDelete() {
 
     // 批量删除 - 一次 API 调用
     await repoApi.deleteBaseHost(ids)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('automation.workbench.deleted'))
     loadData()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('Failed to delete base hosts:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(t('automation.workbench.deleteFailed'))
     }
   }
 }
 
 async function handleDelete(row) {
   try {
-    await ElMessageBox.confirm(`确定要删除基准主机 ${row.host_key} 吗？`, '确认删除', {
+    await ElMessageBox.confirm(t('yumRepo.software.deleteBaseHostConfirm', { host: row.host_key }), t('automation.list.confirmDelete'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning'
@@ -180,12 +182,12 @@ async function handleDelete(row) {
 
     // 使用 id 作为删除参数
     await repoApi.deleteBaseHost(row.id)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('automation.workbench.deleted'))
     loadData()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('Failed to delete base host:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(t('automation.workbench.deleteFailed'))
     }
   }
 }

@@ -1,7 +1,7 @@
 <template>
   <el-drawer
     v-model="visible"
-    :title="title"
+    :title="title || t('automation.workbench.reviewList')"
     size="540px"
     destroy-on-close
     class="wb-workbench-drawer"
@@ -34,7 +34,7 @@
                 size="small"
                 @click.stop="$emit('approve', item)"
               >
-                通过
+                {{ t('automation.workbench.approve') }}
               </el-button>
               <el-button
                 class="wb-inline-action"
@@ -43,31 +43,33 @@
                 size="small"
                 @click.stop="$emit('reject', item)"
               >
-                拒绝
+                {{ t('automation.workbench.reject') }}
               </el-button>
             </div>
           </div>
         </div>
       </div>
-      <el-empty v-else :description="emptyText" :image-size="60" />
+      <el-empty v-else :description="emptyText || t('automation.workbench.noReviews')" :image-size="60" />
     </div>
     <template #footer>
       <div class="wb-drawer-footer">
-        <span class="wb-drawer-footer__total">共 {{ records.length }} 条</span>
-        <el-button size="small" @click="$emit('navigate', link)">{{ linkLabel }}</el-button>
+        <span class="wb-drawer-footer__total">{{ t('automation.workbench.recordCount', { count: records.length }) }}</span>
+        <el-button size="small" @click="$emit('navigate', link)">{{ linkLabel || t('automation.workbench.goReviews') }}</el-button>
       </div>
     </template>
   </el-drawer>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 const props = defineProps({
-  title: { type: String, default: '待审核列表' },
+  title: { type: String, default: '' },
   records: { type: Array, default: () => [] },
   loading: Boolean,
   link: { type: String, default: '' },
-  linkLabel: { type: String, default: '前往审核页面' },
-  emptyText: { type: String, default: '暂无待审核记录' },
+  linkLabel: { type: String, default: '' },
+  emptyText: { type: String, default: '' },
   drawerType: { type: String, default: '' } // 'approval' | 'command' | 'script'
 })
 

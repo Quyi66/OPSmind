@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h, watch } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
 import { ElTable, ElTableColumn, ElTreeSelect, ElSelect, ElMessage } from 'element-plus'
+import { setLocale } from '@/core/i18n'
 import Page from '@/modules/asset/views/AssetInfoPage.vue'
 import AddGroupDialog from '@/modules/asset/components/asset-info/AddGroupDialog.vue'
 
@@ -168,14 +169,47 @@ beforeEach(() => {
     }
   )
 })
-afterEach(() => {
+afterEach(async () => {
   wrapper?.unmount()
   wrapper = undefined
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
+  await setLocale('zh-CN', { persist: false })
 })
 
 describe('设备清单跨页选择与原添加分组链路', () => {
+  it('中英文往返保留跨页选择、查询、复核抽屉及分组草稿，不额外请求', async () => {
+    await openPage()
+    await selectRow('host-a')
+    await page(2)
+    await selectRow('host-b')
+    await button('查看已选').trigger('click')
+    await button('添加分组').trigger('click')
+    await flushPromises()
+    groupState().formData.id = 'group-original'
+    state().searchText = '未提交的中文搜索'
+    const selection = state().selectedRows
+    const data = state().tableData
+    const requests = api.getAssetList.mock.calls.length
+    for (const locale of ['en-US', 'zh-CN', 'en-US']) {
+      await setLocale(locale, { persist: false })
+      await flushPromises()
+      expect(state().selectedRows).toBe(selection)
+      expect(state().tableData).toBe(data)
+      expect(ids()).toEqual(['asset-a', 'asset-b'])
+      expect(state().currentPage).toBe(2)
+      expect(state().searchText).toBe('未提交的中文搜索')
+      expect(state().selectionReviewVisible).toBe(true)
+      expect(groupState().formData.id).toBe('group-original')
+      expect(api.getAssetList).toHaveBeenCalledTimes(requests)
+      expect(api.post).not.toHaveBeenCalled()
+      expect(groupFilter().props('props').label({ path: '/', name: '根分组' })).toBe(locale === 'en-US' ? 'Root group' : '根分组')
+    }
+    expect(wrapper.text()).toContain('2 devices selected')
+    await button('Save', groupDialog()).trigger('click')
+    await flushPromises()
+    expect(api.post.mock.calls[0][1]).toEqual({ params: { operate: 'new', ciIds: 'asset-a,asset-b', ciType: 'linux', id: 'group-original', name: '' } })
+  })
   it('真实表格跨两页累计选择，当前页取消不影响其他页，返回及调整页大小恢复勾选', async () => {
     await openPage()
     await selectRow('host-a')
@@ -322,8 +356,11 @@ describe('设备清单跨页选择与原添加分组链路', () => {
       checkStrictly: true,
       filterable: true,
       clearable: true,
-      props: { label: 'name', children: 'children' }
+      props: { label: expect.any(Function), children: 'children' }
     })
+    const getLabel = groupFilter().props('props').label
+    expect(getLabel({ path: '/', name: '根分组' })).toBe('根分组')
+    expect(getLabel({ path: '/existing', name: 'existing' })).toBe('existing')
     expect(groupFilter().props('data')[0].children.find(node => node.path === '/existing')).toMatchObject({
       path: '/existing',
       children: [{ path: '/existing/child', name: 'child' }]

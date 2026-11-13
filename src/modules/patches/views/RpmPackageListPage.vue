@@ -2,35 +2,35 @@
   <div class="ops-page-layout">
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
-        <el-form-item label="数据源">
-          <el-select v-model="filters.source" clearable placeholder="全部" style="width: 140px" @change="handleSearch">
-            <el-option label="全部" value="" />
-            <el-option label="麒麟" value="kylin" />
+        <el-form-item :label="t('patches.catalog.source')">
+          <el-select v-model="filters.source" clearable :placeholder="t('common.all')" style="width: 140px" @change="handleSearch">
+            <el-option :label="t('common.all')" value="" />
+            <el-option :label="t('common.kylin')" value="kylin" />
             <el-option label="Oracle" value="oracle" />
             <el-option label="Red Hat" value="redhat" />
             <el-option label="SUSE" value="suse" />
             <el-option label="ubuntu" value="ubuntu" />
           </el-select>
         </el-form-item>
-        <el-form-item label="包名">
+        <el-form-item :label="t('yumRepo.packageName')">
           <el-input
             v-model="filters.name"
             clearable
-            placeholder="请输入包名"
+            :placeholder="t('patches.catalog.packageNamePlaceholder')"
             style="width: 280px"
             @keyup.enter="handleSearch"
           @clear="handleSearch" />
         </el-form-item>
-        <el-form-item label="架构">
-          <el-select v-model="filters.arch" clearable placeholder="全部" style="width: 160px" @change="handleSearch">
+        <el-form-item :label="t('yumRepo.architecture')">
+          <el-select v-model="filters.arch" clearable :placeholder="t('common.all')" style="width: 160px" @change="handleSearch">
             <el-option v-for="arch in archOptions" :key="arch" :label="arch" :value="arch" />
           </el-select>
         </el-form-item>
-        <el-form-item label="OS版本">
+        <el-form-item :label="t('yumRepo.software.osVersion')">
           <el-select
             v-model="filters.osVersion"
             clearable
-            placeholder="全部"
+            :placeholder="t('common.all')"
             style="width: 160px"
             @change="handleSearch"
           >
@@ -45,25 +45,25 @@
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleSearch">
             <el-icon><Search /></el-icon>
-            搜索
+            {{ t('common.search') }}
           </el-button>
           <el-button @click="handleReset">
             <el-icon><RefreshRight /></el-icon>
-            重置
+            {{ t('common.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
     </div>
 
     <div class="ops-action-bar">
-      <div class="action-summary">共 {{ pagination.total }} 个 RPM 包</div>
+      <div class="action-summary">{{ t('patches.catalog.rpmCount', { count: pagination.total }) }}</div>
       <span style="flex: 1"></span>
       <el-button
         class="toolbar-icon-btn"
         circle
         size="small"
         :loading="loading"
-        title="刷新"
+        :title="t('common.refresh')"
         @click="loadData"
       >
         <el-icon v-show="!loading"><Refresh /></el-icon>
@@ -74,7 +74,7 @@
       <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 294px)">
         <el-table-column
           prop="completePackageName"
-          label="包名"
+          :label="t('yumRepo.packageName')"
           min-width="220"
           show-overflow-tooltip
         >
@@ -84,14 +84,14 @@
             </el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="version" label="版本" min-width="120" />
-        <el-table-column prop="architecture" label="架构" width="120" />
-        <el-table-column prop="osVersion" label="OS版本" width="120">
+        <el-table-column prop="version" :label="t('patches.catalog.version')" min-width="120" />
+        <el-table-column prop="architecture" :label="t('yumRepo.architecture')" width="120" />
+        <el-table-column prop="osVersion" :label="t('yumRepo.software.osVersion')" width="120">
           <template #default="{ row }">
-            {{ row.osVersion || '未知' }}
+            {{ row.osVersion || t('automation.command.unknown') }}
           </template>
         </el-table-column>
-        <el-table-column prop="source" label="数据源" width="120">
+        <el-table-column prop="source" :label="t('patches.catalog.source')" width="120">
           <template #default="{ row }">
             <el-tag
               size="small"
@@ -103,7 +103,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="关联服务" min-width="240">
+        <el-table-column :label="t('patches.catalog.associatedServices')" min-width="240">
           <template #default="{ row }">
             <div class="service-cell">
               <div
@@ -122,7 +122,7 @@
               >
                 <template #reference>
                   <span class="more-link">
-                    +{{ getServiceDisplay(row.services).restCount }} 更多
+                    +{{ getServiceDisplay(row.services).restCount }} {{ t('yumRepo.more') }}
                   </span>
                 </template>
                 <div class="services-popover">
@@ -166,6 +166,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh, RefreshRight, Search } from '@element-plus/icons-vue'
@@ -207,7 +209,7 @@ onBeforeUnmount(() => {
 })
 
 function getSourceLabel(source) {
-  if (source === 'kylin') return '麒麟'
+  if (source === 'kylin') return t('common.kylin')
   if (source === 'oracle') return 'Oracle'
   if (source === 'redhat') return 'Red Hat'
   if (source === 'suse') return 'SUSE'
@@ -228,7 +230,7 @@ function getServiceDisplay(services) {
 async function handleViewDetail(row) {
   const packageName = String(row?.completePackageName || '').trim()
   if (!row?.id && !packageName) {
-    ElMessage.warning('当前行缺少可查询的 RPM 包标识')
+    ElMessage.warning(t('patches.catalog.noRpmIdentity'))
     return
   }
 
@@ -272,7 +274,7 @@ async function handleViewDetail(row) {
   } catch (error) {
     if (requestId !== detailRequestId || !detailVisible.value) return
     console.error('Failed to load rpm package detail:', error)
-    ElMessage.error('获取 RPM 包详情失败')
+    ElMessage.error(t('patches.catalog.rpmDetailFailed'))
     detailVisible.value = false
   } finally {
     if (requestId === detailRequestId) detailLoading.value = false

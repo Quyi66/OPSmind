@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    :title="isEditMode ? '编辑资产类型' : '新建资产类型'"
+    :title="isEditMode ? t('asset.editModel') : t('asset.newModel')"
     width="560px"
     :close-on-click-modal="false"
     :close-on-press-escape="false"
@@ -13,45 +13,46 @@
         ref="formRef"
         :model="formData"
         :rules="formRules"
+        :validate-on-rule-change="false"
         :disabled="saving || loading"
-        label-width="120px"
+        :label-width="currentLocale === 'en-US' ? '160px' : '120px'"
       >
-        <el-form-item label="类型编码" prop="code">
+        <el-form-item :label="t('asset.modelCode')" prop="code">
           <el-input
             v-model="formData.code"
-            placeholder="请输入类型编码，如 linux、windows、switch"
+            :placeholder="t('asset.typeCodeExample')"
             :disabled="isEditMode"
             maxlength="50"
           />
           <div class="form-tip">
             {{
               isEditMode
-                ? '类型编码作为唯一标识，创建后不可修改'
-                : '仅支持英文字母开头，包含字母、数字和下划线'
+                ? t('asset.typeCodeImmutable')
+                : t('asset.typeCodeHint')
             }}
           </div>
         </el-form-item>
 
-        <el-form-item label="类型名称" prop="title">
+        <el-form-item :label="t('asset.modelTitle')" prop="title">
           <el-input
             v-model="formData.title"
-            placeholder="请输入类型名称，如 Linux服务器、网络交换机"
+            :placeholder="t('asset.typeNameExample')"
             maxlength="50"
           />
         </el-form-item>
 
-        <el-form-item label="自动化纳管" prop="isAuto">
+        <el-form-item :label="t('asset.automatedEnrollment')" prop="isAuto">
           <el-radio-group v-model="formData.isAuto">
-            <el-radio :value="1">支持自动化管理</el-radio>
-            <el-radio :value="0">不支持</el-radio>
+            <el-radio :value="1">{{ t('asset.supportAutomation') }}</el-radio>
+            <el-radio :value="0">{{ t('asset.notSupported') }}</el-radio>
           </el-radio-group>
-          <div class="form-tip">开启后可对该类型的设备执行自动化连接检测、巡检及脚本下发</div>
+          <div class="form-tip">{{ t('asset.automationSupportHint') }}</div>
         </el-form-item>
 
-        <el-form-item v-if="!isEditMode" label="复用类型模板" prop="templateId">
+        <el-form-item v-if="!isEditMode" :label="t('asset.reuseModelTemplate')" prop="templateId">
           <el-select
             v-model="formData.templateId"
-            placeholder="请选择要复用的类型模板"
+            :placeholder="t('asset.selectModelTemplate')"
             :loading="templateLoading"
             :disabled="templateLoading || saving"
             style="width: 100%"
@@ -72,31 +73,35 @@
               :disabled="templateLoading"
               @click="loadTemplateList()"
             >
-              重试
+              {{ t('common.retry') }}
             </el-button>
           </div>
           <div v-else-if="!templateLoading" class="form-tip">
-            沿用所选类型的基础字段与列表展示结构，快速完成创建
+            {{ t('asset.modelTemplateHint') }}
           </div>
         </el-form-item>
       </el-form>
     </div>
 
     <template #footer>
-      <el-button :disabled="saving" @click="visible = false">取消</el-button>
+      <el-button :disabled="saving" @click="visible = false">{{ t('common.cancel') }}</el-button>
       <el-button
         type="primary"
         :loading="saving"
         :disabled="saveDisabled"
         @click="handleSave"
       >
-        保存
+        {{ t('common.save') }}
       </el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
+import { useLocalizedValidation } from '@/core/i18n/validation'
+
 import { ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { apiService } from '@/core/api'
@@ -125,13 +130,14 @@ const modelId = computed(
 const isEditMode = computed(() => Boolean(modelId.value))
 
 const formRef = ref()
+useLocalizedValidation(formRef)
 const loading = ref(false)
 const saving = ref(false)
 const originalData = ref(null)
 
 const templateList = ref([])
 const templateLoading = ref(false)
-const templateError = ref('')
+const templateError = messageRef('')
 let loadRequestId = 0
 
 function createDefaultAttrs() {
@@ -170,18 +176,18 @@ const formData = ref({
 
 const formRules = computed(() => {
   const rules = {
-    title: [{ required: true, message: '请输入类型名称', trigger: 'blur' }],
+    title: [{ required: true, message: t('asset.typeNameRequired'), trigger: 'blur' }],
     code: [
-      { required: true, message: '请输入类型编码', trigger: 'blur' },
+      { required: true, message: t('asset.typeCodeRequired'), trigger: 'blur' },
       {
         pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/,
-        message: '编码必须以英文字母开头，只能包含字母、数字和下划线',
+        message: t('asset.typeCodeFormat'),
         trigger: 'blur'
       }
     ]
   }
   if (!isEditMode.value) {
-    rules.templateId = [{ required: true, message: '请选择要复用的类型模板', trigger: 'change' }]
+    rules.templateId = [{ required: true, message: t('asset.selectModelTemplate'), trigger: 'change' }]
   }
   return rules
 })
@@ -204,7 +210,7 @@ const loadTemplateList = async (requestId = loadRequestId) => {
     const response = await apiService.get(url)
     const list = response?.data || response || []
     if (requestId !== loadRequestId || isEditMode.value) return
-    if (!Array.isArray(list)) throw new Error('模板列表格式不正确')
+    if (!Array.isArray(list)) throw new Error(t('asset.templateListInvalid'))
     templateList.value = list
     const defaultTemplate =
       list.find(
@@ -217,7 +223,7 @@ const loadTemplateList = async (requestId = loadRequestId) => {
     if (requestId !== loadRequestId || isEditMode.value) return
     console.error('加载类型模板失败:', error)
     templateList.value = []
-    templateError.value = '类型模板加载失败，请重试'
+    templateError.value = message('asset.templateListFailed')
   } finally {
     if (requestId === loadRequestId) {
       templateLoading.value = false
@@ -276,7 +282,7 @@ const loadModelDetail = async () => {
   } catch (error) {
     if (requestId !== loadRequestId) return
     console.error('加载资产类型详情失败:', error)
-    ElMessage.error('加载资产类型详情失败')
+    ElMessage.error(t('asset.modelDetailFailed'))
   } finally {
     if (requestId === loadRequestId) {
       loading.value = false
@@ -336,12 +342,12 @@ const handleSave = async () => {
     const url = `/cmdb/api/cmdb/cit/modify/batch?cacheBuster=${Date.now()}`
     await apiService.post(url, saveData)
 
-    ElMessage.success(isEditMode.value ? '修改成功' : '新建成功')
+    ElMessage.success(isEditMode.value ? t('asset.modified') : t('asset.created'))
     visible.value = false
     emit('saved')
   } catch (error) {
     console.error('保存资产类型失败:', error)
-    ElMessage.error(`保存失败: ${error.response?.data?.message || error.message}`)
+    ElMessage.error(t('asset.saveFailedReason', { message: error.response?.data?.message || error.message }))
   } finally {
     saving.value = false
   }

@@ -9,14 +9,14 @@
   >
     <div v-loading="loading" class="history-container">
       <el-alert v-if="loadError" :title="loadError" type="error" show-icon :closable="false">
-        <el-button link type="primary" @click="retryRead">重试</el-button>
+        <el-button link type="primary" @click="retryRead">{{ t('common.retry') }}</el-button>
       </el-alert>
       <!-- 单个文件的审批历史 (singleFile) -->
       <template v-if="viewMode === 'singleFile'">
         <el-table :data="historyList" height="400" :empty-text="emptyText">
-          <el-table-column label="时间" prop="actionDate" width="160" />
-          <el-table-column label="备注" prop="comment" show-overflow-tooltip />
-          <el-table-column label="审批结果" width="150">
+          <el-table-column :label="t('automation.library.time')" prop="actionDate" width="160" />
+          <el-table-column :label="t('automation.library.remark')" prop="comment" show-overflow-tooltip />
+          <el-table-column :label="t('automation.library.approvalResult')" width="150">
             <template #default="{ row }">
               <span>{{ row.action }}</span>
             </template>
@@ -27,50 +27,50 @@
       <!-- 全部审批历史列表 (all) -->
       <template v-else-if="viewMode === 'all'">
         <el-table :data="historyList" height="400" :empty-text="emptyText">
-          <el-table-column label="时间" prop="actionDate" width="160" />
-          <el-table-column label="文件数" width="100">
+          <el-table-column :label="t('automation.library.time')" prop="actionDate" width="160" />
+          <el-table-column :label="t('automation.library.fileCount')" width="100">
             <template #default="{ row }">
               <el-button type="primary" link @click="showApprovalDetail(row.id)">
                 {{ row.approvalFileCount ?? '-' }}
               </el-button>
             </template>
           </el-table-column>
-          <el-table-column label="审批人" prop="approvalBy" width="120" />
-          <el-table-column label="审批结果" width="100">
+          <el-table-column :label="t('automation.approval.approver')" prop="approvalBy" width="120" />
+          <el-table-column :label="t('automation.library.approvalResult')" width="100">
             <template #default="{ row }">
               <span>{{ row.action }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="备注" prop="comment" show-overflow-tooltip />
+          <el-table-column :label="t('automation.library.remark')" prop="comment" show-overflow-tooltip />
         </el-table>
       </template>
 
       <!-- 审批详情（某次审批涉及的文件列表）(approvalDetail) -->
       <template v-else-if="viewMode === 'approvalDetail'">
         <el-table :data="detailPaths" height="400">
-          <el-table-column label="文件路径" min-width="200">
+          <el-table-column :label="t('automation.library.filePath')" min-width="200">
             <template #default="{ row }">
               <el-button type="primary" link @click="openFile(row)">
                 {{ row }}
               </el-button>
             </template>
           </el-table-column>
-          <el-table-column label="时间" width="160">
+          <el-table-column :label="t('automation.library.time')" width="160">
             <template #default>
               {{ currentDetail?.actionDate }}
             </template>
           </el-table-column>
-          <el-table-column label="审批人" width="120">
+          <el-table-column :label="t('automation.approval.approver')" width="120">
             <template #default>
               {{ currentDetail?.approverBy }}
             </template>
           </el-table-column>
-          <el-table-column label="审批结果" width="100">
+          <el-table-column :label="t('automation.library.approvalResult')" width="100">
             <template #default>
               {{ currentDetail?.action }}
             </template>
           </el-table-column>
-          <el-table-column label="备注" width="200">
+          <el-table-column :label="t('automation.library.remark')" width="200">
             <template #default>
               {{ currentDetail?.comment || '-' }}
             </template>
@@ -82,14 +82,17 @@
     <template #footer>
       <el-button v-if="viewMode === 'approvalDetail'" @click="backToList" type="primary">
         <i class="fa fa-arrow-left" />
-        返回列表
+        {{ t('automation.library.backToList') }}
       </el-button>
-      <el-button @click="emit('update:modelValue', false)">关闭</el-button>
+      <el-button @click="emit('update:modelValue', false)">{{ t('common.close') }}</el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
+
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import { formatDateTime } from '@/modules/automation/utils/helpers'
@@ -127,11 +130,11 @@ const historyList = ref([])
 const viewMode = ref('all')
 const currentDetail = ref(null)
 const detailPaths = ref([])
-const loadError = ref('')
+const loadError = messageRef('')
 const failedDetailId = ref('')
 let readVersion = 0
 const emptyText = computed(() =>
-  loading.value ? '正在读取审批历史…' : loadError.value || '暂无审批历史'
+  loading.value ? t('automation.library.readingHistory') : loadError.value || t('automation.library.noHistory')
 )
 
 function readContext() {
@@ -152,12 +155,12 @@ function invalidateRead() {
 // 弹窗标题
 const dialogTitle = computed(() => {
   if (viewMode.value === 'singleFile' && props.file) {
-    return `审批历史 - ${props.file.name}`
+    return t('automation.library.fileHistoryTitle', { name: props.file.name })
   }
   if (viewMode.value === 'approvalDetail') {
-    return '审批文件详情'
+    return t('automation.library.approvalFileDetails')
   }
-  return '审批历史'
+  return t('automation.library.approvalHistory')
 })
 
 // 加载历史记录
@@ -188,14 +191,14 @@ async function loadHistory() {
     // API 返回格式: { _status: "ok", result: [...] } 或 axios response
     const data = response?.data || response
     const list = data?.result || data || []
-    if (!Array.isArray(list)) throw new Error('审批历史响应不是列表，请重试')
+    if (!Array.isArray(list)) throw Object.assign(new Error(t('automation.library.invalidHistory')), { i18nKey: 'automation.library.invalidHistory' })
 
     // 解析历史记录
     historyList.value = parseHistories(list)
   } catch (error) {
     if (!isCurrent()) return
-    loadError.value = error?.message || '加载审批历史失败，请重试'
-    ElMessage.error(error?.message || '加载审批历史失败')
+    loadError.value = error?.i18nKey ? message(error.i18nKey) : error?.message || message('automation.library.historyFailedRetry')
+    ElMessage.error(error?.message || t('automation.library.historyFailed'))
   } finally {
     if (isCurrent()) loading.value = false
   }
@@ -206,7 +209,7 @@ function parseHistories(records) {
   return records.map(record => ({
     ...record,
     actionDate: formatDateTime(record.updatedAt || record.actionDate),
-    action: detectActionOfApprove(record)
+    get action() { return detectActionOfApprove(record) }
   }))
 }
 
@@ -215,17 +218,17 @@ function parseDetail(detail) {
   return {
     ...detail,
     actionDate: formatDateTime(detail.approverAt || detail.updatedAt || detail.actionDate),
-    action: detectActionOfApprove(detail)
+    get action() { return detectActionOfApprove(detail) }
   }
 }
 
 // 检测审批动作 (与源代码 detectActionOfApprove 逻辑一致)
 function detectActionOfApprove(record) {
   const ACTION_DEFS = [
-    { name: 'APPROVE', text: '通过', status: 'PUBLISHED' },
-    { name: 'REJECT', text: '拒绝', status: 'REJECTED' },
-    { name: 'DISABLE', text: '停用', status: 'DISABLED' },
-    { name: 'REVERT', text: '撤销', status: 'REVERT' }
+    { name: 'APPROVE', text: t('automation.workbench.approve'), status: 'PUBLISHED' },
+    { name: 'REJECT', text: t('automation.workbench.reject'), status: 'REJECTED' },
+    { name: 'DISABLE', text: t('automation.workbench.disable'), status: 'DISABLED' },
+    { name: 'REVERT', text: t('automation.library.revoke'), status: 'REVERT' }
   ]
 
   const fileStatus = record.onlineStatus || record.approverStatus || ''
@@ -255,13 +258,13 @@ async function showApprovalDetail(approvalId) {
       detailPaths.value = normalizePaths(detail)
       viewMode.value = 'approvalDetail'
     } else {
-      throw new Error('无法读取审批详情，请重试')
+      throw Object.assign(new Error(t('automation.library.detailUnavailable')), { i18nKey: 'automation.library.detailUnavailable' })
     }
   } catch (error) {
     if (!isCurrent()) return
     failedDetailId.value = approvalId
-    loadError.value = error?.message || '加载详情失败，请重试'
-    ElMessage.error(error?.message || '加载详情失败')
+    loadError.value = error?.i18nKey ? message(error.i18nKey) : error?.message || message('automation.library.detailFailedRetry')
+    ElMessage.error(error?.message || t('automation.library.detailFailed'))
   } finally {
     if (isCurrent()) loading.value = false
   }

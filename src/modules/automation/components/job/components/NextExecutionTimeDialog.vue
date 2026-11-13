@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="visible" title="查询下次执行时间" width="500px" :close-on-click-modal="true">
+  <el-dialog v-model="visible" :title="t('automation.schedule.queryNextTime')" width="500px" :close-on-click-modal="true">
     <div v-loading="loading" class="next-time-content">
       <div v-if="times.length" class="next-time-list">
         <h4 v-for="(time, index) in times" :key="index" class="next-time-item">
@@ -8,14 +8,17 @@
       </div>
       <div v-else-if="error" role="alert">
         <p>{{ error }}</p>
-        <el-button @click="fetchNextExecutionTimes">重试</el-button>
+        <el-button @click="fetchNextExecutionTimes">{{ t('common.retry') }}</el-button>
       </div>
-      <el-empty v-else-if="!loading" :description="emptyDescription" />
+      <el-empty v-else-if="!loading" :description="emptyDescription || t('automation.schedule.noSchedule')" />
     </div>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
+
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 
@@ -30,7 +33,7 @@ const props = defineProps({
   },
   emptyDescription: {
     type: String,
-    default: '该任务没有执行计划，是否已禁用？'
+    default: ''
   }
 })
 
@@ -43,7 +46,7 @@ const visible = computed({
 
 const loading = ref(false)
 const times = ref([])
-const error = ref('')
+const error = messageRef('')
 let requestId = 0
 
 /**
@@ -70,7 +73,7 @@ async function fetchNextExecutionTimes() {
       times.value = []
     }
   } catch {
-    if (isCurrent()) error.value = '查询执行时间失败，请检查表达式后重试'
+    if (isCurrent()) error.value = message('automation.schedule.previewFailedRetry')
   } finally {
     if (isCurrent()) loading.value = false
   }
