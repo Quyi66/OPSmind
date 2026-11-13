@@ -9,9 +9,9 @@ export const ACM_ROUTE_DEFS = [
     path: 'hostHealthCheck',
     name: 'acm-hostHealthCheck',
     title: '系统健康度',
-    // 后端接口迁移完成前隐藏入口，旧地址跳转到资产总览，避免触发 404。
+    navLabel: '系统健康度',
     icon: 'fad fa-fw fa-heartbeat',
-    redirect: '/acm/overview'
+    component: () => import('@/modules/patches/views/HostHealthCheckPage.vue')
   },
   {
     key: 'overview',
