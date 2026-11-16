@@ -122,6 +122,8 @@ describe('batch creation and credentials', () => {
     const { vm, wrapper } = await openCreate()
     vm.form.targetText = '10.0.0.10-20, 10.0.0.0/28\n10.0.1.5'
     vm.form.groupId = 'group-id'
+    expect(vm.credentials.linux.enabled).toBe(true)
+    vm.credentials.linux.enabled = false
     await vm.submit()
     expect(api.createBatch).toHaveBeenCalledWith({
       name: undefined,
@@ -180,6 +182,7 @@ describe('batch creation and credentials', () => {
     expect(vm.errorMessage).toContain('2000')
     await wrapper.setProps({ hosts: [] })
     vm.form.targetText = 'invalid-ip'
+    vm.credentials.linux.enabled = false
     api.createBatch.mockRejectedValue({
       response: { status: 400, data: { message: 'IP 不合法：invalid-ip' } }
     })

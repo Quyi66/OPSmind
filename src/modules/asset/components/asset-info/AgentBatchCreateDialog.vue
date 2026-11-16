@@ -20,22 +20,54 @@
       />
       <template v-else>
         <el-form-item label="导入 Excel">
-          <el-upload
-            :auto-upload="false"
-            :show-file-list="false"
-            accept=".xlsx,.xls"
-            :disabled="saving"
-            :on-change="handleFile"
-          >
-            <el-button :loading="parsing">选择文件</el-button>
-          </el-upload>
-          <span class="credential-hint">
-            <template v-if="importedTargets.length">
-              已导入 {{ importedTargets.length }} 台
-              <el-button link type="primary" @click="importedTargets = []">清除</el-button>
-            </template>
-            <template v-else>表头需含“IP”列，可选“主机名”“操作系统”列。</template>
-          </span>
+          <div class="import-box">
+            <div v-if="!importedTargets.length" class="import-simple">
+              <el-upload
+                :auto-upload="false"
+                :show-file-list="false"
+                accept=".xlsx,.xls"
+                :disabled="saving || parsing"
+                :on-change="handleFile"
+              >
+                <el-button :loading="parsing">选择文件</el-button>
+              </el-upload>
+              <span class="credential-hint">
+                可选，表头含“IP”列（主机名、操作系统列可选），单批最多 {{ BATCH_MAX_TARGETS }} 台
+              </span>
+              <el-button link type="primary" @click="downloadTemplate">下载模板</el-button>
+            </div>
+            <div v-else class="import-result">
+              <div class="import-result__head">
+                <span class="import-result__title">
+                  {{ importedFileName }}：共 {{ importedTargets.length }} 台
+                  （Linux {{ importedOsCount.linux }} / Windows {{ importedOsCount.windows }}）
+                </span>
+                <span>
+                  <el-upload
+                    class="import-reupload"
+                    :auto-upload="false"
+                    :show-file-list="false"
+                    accept=".xlsx,.xls"
+                    :disabled="saving || parsing"
+                    :on-change="handleFile"
+                  >
+                    <el-button link type="primary" :loading="parsing">重新选择</el-button>
+                  </el-upload>
+                  <el-button link type="danger" :disabled="saving" @click="clearImported">
+                    清除
+                  </el-button>
+                </span>
+              </div>
+              <el-table :data="importedTargets" size="small" max-height="180" border>
+                <el-table-column type="index" label="#" width="56" />
+                <el-table-column prop="ip" label="IP" min-width="140" />
+                <el-table-column prop="hostname" label="主机名" min-width="140" />
+                <el-table-column label="操作系统" width="100">
+                  <template #default="{ row }">{{ row.os === 'windows' ? 'Windows' : 'Linux' }}</template>
+                </el-table-column>
+              </el-table>
+            </div>
+          </div>
         </el-form-item>
         <el-form-item label="目标 IP" :required="!importedTargets.length">
           <el-input
@@ -92,6 +124,7 @@
 
 <script setup>
 import { computed, onUnmounted, ref, watch } from 'vue'
+import { ElMessage } from 'element-plus'
 import { agentApi, dataManageApi, getAgentErrorMessage } from '../../api'
 import {
   buildBatchCredentials,
@@ -99,6 +132,7 @@ import {
   getBatchHostOs,
   BATCH_MAX_TARGETS,
   countTargetText,
+  downloadBatchTargetTemplate,
   readBatchTargetsFile
 } from '../../utils/agentBatch'
 import AgentBatchCredentials from './AgentBatchCredentials.vue'
@@ -123,19 +157,41 @@ const emptyForm = () => ({
   keepCredentials: false
 })
 const form = ref(emptyForm())
-const credentials = ref(createBatchCredentials())
+const credentials = ref(createBatchCredentials(true))
 const saving = ref(false)
 const parsing = ref(false)
 const importedTargets = ref([])
+const importedFileName = ref('')
+const importedOsCount = computed(() => ({
+  linux: importedTargets.value.filter(target => target.os !== 'windows').length,
+  windows: importedTargets.value.filter(target => target.os === 'windows').length
+}))
 const errorMessage = ref('')
 const groups = ref([])
 const loadingGroups = ref(false)
 const operatingSystems = computed(() =>
   props.hosts.length
     ? [...new Set(props.hosts.map(host => getBatchHostOs(host, props.defaultTargetOs)))]
-    : [...new Set([form.value.targetOs, ...importedTargets.value.map(target => target.os)])]
+    : [
+        ...new Set([
+          ...(form.value.targetText.trim() || !importedTargets.value.length ? [form.value.targetOs] : []),
+          ...importedTargets.value.map(target => target.os)
+        ])
+      ]
 )
 let session = 0
+
+function clearImported() {
+  importedTargets.value = []
+  importedFileName.value = ''
+}
+async function downloadTemplate() {
+  try {
+    await downloadBatchTargetTemplate()
+  } catch (error) {
+    errorMessage.value = getAgentErrorMessage(error, '下载模板失败')
+  }
+}
 
 async function handleFile(uploadFile) {
   const file = uploadFile.raw
@@ -145,7 +201,11 @@ async function handleFile(uploadFile) {
   errorMessage.value = ''
   try {
     const targets = await readBatchTargetsFile(file, form.value.targetOs)
-    if (session === version) importedTargets.value = targets
+    if (session === version) {
+      importedTargets.value = targets
+      importedFileName.value = file.name || '已导入文件'
+      ElMessage.success(`已导入 ${targets.length} 台主机`)
+    }
   } catch (error) {
     if (session === version) errorMessage.value = getAgentErrorMessage(error, '解析导入文件失败')
   } finally {
@@ -190,7 +250,7 @@ async function submit() {
     saving.value = true
     const result = await agentApi.createBatch(payload)
     if (session !== version) return
-    credentials.value = createBatchCredentials()
+    credentials.value = createBatchCredentials(true)
     emit('update:modelValue', false)
     emit('created', result)
   } catch (error) {
@@ -204,11 +264,11 @@ watch(
   visible,
   async open => {
     const version = ++session
-    credentials.value = createBatchCredentials()
+    credentials.value = createBatchCredentials(true)
     saving.value = false
     if (!open) return
     form.value = emptyForm()
-    importedTargets.value = []
+    clearImported()
     errorMessage.value = ''
     groups.value = []
     loadingGroups.value = false
@@ -240,5 +300,35 @@ onUnmounted(() => {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   margin-top: 12px;
+}
+.import-box {
+  width: 100%;
+}
+.import-simple {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.import-simple .credential-hint {
+  margin-left: 0;
+}
+.import-result {
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+.import-result__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.import-result__title {
+  font-size: 13px;
+}
+.import-reupload {
+  display: inline-block;
 }
 </style>

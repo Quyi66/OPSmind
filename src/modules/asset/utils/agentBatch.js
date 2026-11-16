@@ -41,12 +41,12 @@ export function getBatchHostOs(host, fallback = 'linux') {
   return /windows/i.test(String(os)) ? 'windows' : 'linux'
 }
 
-export function createBatchCredentials() {
+export function createBatchCredentials(enabled = false) {
   return Object.fromEntries(
     ['linux', 'windows'].map(os => [
       os,
       {
-        enabled: false,
+        enabled,
         authType: 'password',
         user: os === 'linux' ? 'root' : 'Administrator',
         password: '',
@@ -170,4 +170,17 @@ export function hasAgentManagePermission(authService) {
       'role_free'
     ].some(role => authService.hasRole(role))
   )
+}
+
+export async function downloadBatchTargetTemplate() {
+  const XLSX = await import('xlsx')
+  const sheet = XLSX.utils.aoa_to_sheet([
+    ['IP', '主机名', '操作系统'],
+    ['10.0.0.11', 'web-01', 'linux'],
+    ['10.0.0.12', 'db-01', 'windows']
+  ])
+  sheet['!cols'] = [{ wch: 18 }, { wch: 18 }, { wch: 12 }]
+  const workbook = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(workbook, sheet, '批量纳管')
+  XLSX.writeFile(workbook, '批量纳管导入模板.xlsx')
 }
