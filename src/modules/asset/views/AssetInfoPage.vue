@@ -161,6 +161,15 @@
               导入设备
             </el-button>
             <el-button
+              size="small"
+              :loading="exporting"
+              :disabled="!currentType"
+              @click="handleExportAll"
+            >
+              <i class="fa fa-file-export" style="margin-right: 4px"></i>
+              导出设备
+            </el-button>
+            <el-button
               type="danger"
               plain
               size="small"
@@ -229,6 +238,15 @@
               >
                 <i class="fa fa-folder" style="margin-right: 4px"></i>
                 添加分组
+              </el-button>
+              <el-button
+                size="small"
+                :disabled="selectionBusy || exporting"
+                :loading="exporting"
+                @click="handleExportSelected"
+              >
+                <i class="fa fa-file-export" style="margin-right: 4px"></i>
+                导出所选设备
               </el-button>
               <el-dropdown
                 trigger="click"
@@ -325,9 +343,9 @@
                       class="hostname-link"
                       @click="handleView(row)"
                     >
-                      {{ getAssetDisplayName(row) }}
+                      {{ row.IP || 'IP 未采集' }}
                     </el-link>
-                    <span class="ip-subtext">{{ row.IP || 'IP 未采集' }}</span>
+                    <span class="ip-subtext">{{ getRowHostname(row) || '-' }}</span>
                   </div>
                 </div>
               </template>
@@ -899,6 +917,11 @@ const selectionReviewPage = computed(() => {
 })
 
 const isRowSelectable = row => !selectionBusy.value && Boolean(getAssetRowId(row))
+
+const getRowHostname = row => {
+  const text = String(row?.hostname ?? row?.HOSTNAME ?? '').trim()
+  return text && !/^(n\/a|null|undefined|unknown|-)$/i.test(text) ? text : ''
+}
 
 const getAssetRowId = row => row?.id || row?.host_id || row?.hostId || null
 const isAgentConnection = connectionType => connectionType === 'koreops_agent'
@@ -1861,6 +1884,39 @@ const getAvatarColor = name => {
 const getInitials = name => {
   if (!name) return '?'
   return name.trim().charAt(0).toUpperCase()
+}
+
+const exporting = ref(false)
+
+const runExport = async payload => {
+  exporting.value = true
+  try {
+    await assetApi.exportAssets(payload)
+    ElMessage.success('导出成功')
+  } catch (error) {
+    ElMessage.error(error.message || '导出失败')
+  } finally {
+    exporting.value = false
+  }
+}
+
+// 导出当前资产类型下的全部设备（不传 ids）
+const handleExportAll = () => {
+  if (exporting.value || !currentType.value) return
+  return runExport({ ciType: currentType.value })
+}
+
+// 导出已选设备
+const handleExportSelected = async () => {
+  if (exporting.value) return
+  const rows = await resolveSelectedRowsForAction('请先选择要导出的设备')
+  if (!rows) return
+  const ids = rows.map(getAssetRowId).filter(Boolean)
+  if (ids.length === 0) {
+    ElMessage.warning('请先选择要导出的设备')
+    return
+  }
+  return runExport({ ciType: currentType.value, ids })
 }
 
 const handleBatchActionCommand = command => {
