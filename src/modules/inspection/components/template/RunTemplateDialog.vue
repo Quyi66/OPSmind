@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="visible"
-    title="启动巡检任务"
+    :title="t('inspection.templates.startTitle')"
     width="820px"
     :close-on-click-modal="false"
     @update:model-value="handleVisibleChange"
@@ -12,45 +12,45 @@
       <div class="banner-main">
         <div class="banner-title">
           <i class="fas fa-bolt" aria-hidden="true"></i>
-          <span>执行前配置确认</span>
+          <span>{{ t('inspection.templates.reviewConfiguration') }}</span>
         </div>
-        <p>可针对本次巡检任务微调运行参数或目标主机范围，变更仅对本次任务生效。</p>
+        <p>{{ t('inspection.templates.runConfigurationHint') }}</p>
       </div>
       <div class="banner-metrics">
         <div class="banner-metric-item">
           <span class="metric-dot metric-dot--primary"></span>
-          <span>目标主机项</span>
+          <span>{{ t('inspection.templates.targetHostEntries') }}</span>
           <strong>{{ totalHosts }}</strong>
         </div>
         <div class="banner-metric-item">
           <span class="metric-dot metric-dot--success"></span>
-          <span>关联脚本数</span>
+          <span>{{ t('inspection.templates.linkedScriptCount') }}</span>
           <strong>{{ totalScripts }}</strong>
         </div>
       </div>
     </div>
 
-    <el-form ref="formRef" :model="formData" :rules="rules" label-position="top" class="run-template-form">
+    <el-form ref="formRef" :model="formData" :rules="rules" :validate-on-rule-change="false" label-position="top" class="run-template-form">
       <!-- 任务基础信息 -->
       <section class="config-section-card">
         <div class="section-card-header">
           <div class="section-card-title">
             <span class="section-step-badge">1</span>
             <div>
-              <h3>任务标识与说明</h3>
-              <p>确认本次巡检记录显示的模板名称与描述信息。</p>
+              <h3>{{ t('inspection.templates.taskIdentity') }}</h3>
+              <p>{{ t('inspection.templates.taskIdentityHint') }}</p>
             </div>
           </div>
         </div>
         <div class="section-card-body">
           <div class="form-row-grid">
-            <el-form-item label="模板名称" prop="templateName" class="mb-0">
-              <el-input v-model="formData.templateName" placeholder="请输入模板名称" />
+            <el-form-item :label="t('inspection.email.templateName')" prop="templateName" class="mb-0">
+              <el-input v-model="formData.templateName" :placeholder="t('inspection.templates.enterName')" />
             </el-form-item>
-            <el-form-item label="场景说明" prop="description" class="mb-0">
+            <el-form-item :label="t('inspection.templates.scenarioNotes')" prop="description" class="mb-0">
               <el-input
                 v-model="formData.description"
-                placeholder="可选：补充本次执行的备注或描述"
+                :placeholder="t('inspection.templates.runNotesPlaceholder')"
               />
             </el-form-item>
           </div>
@@ -63,17 +63,19 @@
           <div class="section-card-title">
             <span class="section-step-badge">2</span>
             <div>
-              <h3>巡检剧本与运行参数</h3>
-              <p>核实本次执行的巡检脚本路径与附加命令行参数。</p>
+              <h3>{{ t('inspection.templates.scriptsHeading') }}</h3>
+              <p>{{ t('inspection.templates.checkScriptsHint') }}</p>
             </div>
           </div>
           <div class="section-card-actions">
             <span class="config-count-pill">
-              共 <strong>{{ formData.scripts.length }}</strong> 个文件
+              <I18nT keypath="inspection.templates.selectedFiles" :plural="formData.scripts.length" :i18n="i18n.global">
+                <template #count><strong>{{ formData.scripts.length }}</strong></template>
+              </I18nT>
             </span>
             <el-button type="primary" plain size="small" @click="openScriptSelector">
               <i class="fas fa-folder-open" aria-hidden="true"></i>
-              更换脚本
+              {{ t('inspection.templates.changeScripts') }}
             </el-button>
           </div>
         </div>
@@ -89,10 +91,10 @@
                   <i class="fas fa-file-code" aria-hidden="true" />
                 </div>
                 <div class="script-empty-text">
-                  <span>暂未关联巡检脚本</span>
-                  <small>点击选择本次巡检要执行的脚本文件</small>
+                  <span>{{ t('inspection.templates.noScripts') }}</span>
+                  <small>{{ t('inspection.templates.selectRunScripts') }}</small>
                 </div>
-                <el-button size="small" type="primary" plain>选择文件</el-button>
+                <el-button size="small" type="primary" plain>{{ t('inspection.templates.selectFiles') }}</el-button>
               </div>
               <div v-else class="selected-scripts">
                 <el-table
@@ -101,9 +103,9 @@
                   class="script-table"
                   max-height="260px"
                 >
-                  <el-table-column prop="scriptPath" label="巡检脚本路径" min-width="220">
+                  <el-table-column prop="scriptPath" :label="t('inspection.templates.scriptPath')" min-width="220">
                     <template #default="{ row }">
-                      <el-tooltip :content="row.scriptPath || '未提供路径'" placement="top">
+                      <el-tooltip :content="row.scriptPath || t('inspection.templates.pathMissing')" placement="top">
                         <span class="script-path-badge">
                           <i class="fas fa-file-code" aria-hidden="true"></i>
                           {{ getInspectionScriptLabel(row) }}
@@ -111,15 +113,15 @@
                       </el-tooltip>
                     </template>
                   </el-table-column>
-                  <el-table-column label="运行参数" min-width="180">
+                  <el-table-column :label="t('inspection.templates.runParameters')" min-width="180">
                     <template #default="{ row }">
-                      <el-input v-model="row.scriptParams" size="small" placeholder="脚本运行参数" />
+                      <el-input v-model="row.scriptParams" size="small" :placeholder="t('inspection.templates.scriptParameters')" />
                     </template>
                   </el-table-column>
-                  <el-table-column label="操作" width="68" align="center">
+                  <el-table-column :label="t('common.actions')" width="68" align="center">
                     <template #default="{ $index }">
                       <el-button type="danger" link size="small" @click="removeScript($index)">
-                        移除
+                        {{ t('common.remove') }}
                       </el-button>
                     </template>
                   </el-table-column>
@@ -136,13 +138,15 @@
           <div class="section-card-title">
             <span class="section-step-badge">3</span>
             <div>
-              <h3>本次巡检目标主机</h3>
-              <p>选择或调整本次巡检覆盖的目标主机、分组或标签。</p>
+              <h3>{{ t('inspection.templates.runTargets') }}</h3>
+              <p>{{ t('inspection.templates.runTargetsHint') }}</p>
             </div>
           </div>
           <div class="section-card-actions">
             <span class="config-count-pill">
-              已选 <strong>{{ totalHosts }}</strong> 项主机配置
+              <I18nT keypath="inspection.templates.selectedHostConfigurations" :plural="totalHosts" :i18n="i18n.global">
+                <template #count><strong>{{ totalHosts }}</strong></template>
+              </I18nT>
             </span>
           </div>
         </div>
@@ -154,7 +158,7 @@
               :options="{
                 selectMode: 'host,group,tag,input,recently',
                 selector: 'multiple',
-                label: '选择巡检主机'
+                label: t('inspection.templates.selectHosts')
               }"
             />
           </el-form-item>
@@ -163,8 +167,8 @@
     </el-form>
 
     <template #footer>
-      <el-button @click="handleClose">取消</el-button>
-      <el-button type="primary" :loading="running" @click="handleRun">立即执行</el-button>
+      <el-button @click="handleClose">{{ t('common.cancel') }}</el-button>
+      <el-button type="primary" :loading="running" @click="handleRun">{{ t('inspection.templates.runNow') }}</el-button>
     </template>
 
     <!-- 脚本选择弹窗 -->
@@ -178,6 +182,9 @@
 </template>
 
 <script setup>
+import { t, i18n } from '@/core/i18n'
+import { useLocalizedValidation } from '@/core/i18n/validation'
+import { I18nT } from 'vue-i18n'
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { templateApi, jobApi } from '../../api'
@@ -220,9 +227,11 @@ const formData = ref({
 })
 
 // 表单验证规则
-const rules = {
-  templateName: [{ required: true, message: '请输入模板名称', trigger: 'blur' }]
-}
+useLocalizedValidation(formRef)
+
+const rules = computed(() => ({
+  templateName: [{ required: true, message: t('inspection.templates.enterName'), trigger: 'blur' }]
+}))
 
 // 过滤后的主机
 const filteredHosts = computed(() => {
@@ -325,7 +334,7 @@ async function loadTemplate() {
     }
   } catch (error) {
     console.error('Failed to load template:', error)
-    ElMessage.error('加载模板失败')
+    ElMessage.error(t('inspection.templates.loadFailed'))
   }
 }
 
@@ -341,11 +350,11 @@ async function handleRun() {
 
   // 验证
   if (formData.value.hosts.length === 0) {
-    ElMessage.error('请先选择主机')
+    ElMessage.error(t('inspection.templates.selectHostFirst'))
     return
   }
   if (formData.value.scripts.length === 0) {
-    ElMessage.error('请先选择脚本')
+    ElMessage.error(t('inspection.templates.selectScriptFirst'))
     return
   }
 
@@ -376,17 +385,17 @@ async function handleRun() {
 
     // 检查 runId 或 status 来判断是否成功
     if (result && (result.runId || result.status === 'WAITING' || result.status === 'RUNNING')) {
-      ElMessage.success('巡检任务已启动')
+      ElMessage.success(t('inspection.templates.taskStarted'))
       emit('success', result)
       handleClose()
     } else if (result && result.error) {
       ElMessage.error(result.error)
     } else {
-      ElMessage.error('执行失败')
+      ElMessage.error(t('inspection.templates.executionFailed'))
     }
   } catch (error) {
     console.error('执行巡检失败:', error)
-    ElMessage.error(error?.message || '执行巡检失败')
+    ElMessage.error(error?.message || t('inspection.templates.runFailed'))
   } finally {
     running.value = false
   }

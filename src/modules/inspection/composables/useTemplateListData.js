@@ -1,3 +1,4 @@
+import { t } from '@/core/i18n'
 import { computed, onActivated, onBeforeUnmount, onDeactivated, reactive, ref, watch } from 'vue'
 import { templateApi } from '../api'
 
@@ -51,12 +52,12 @@ export function useTemplateListData() {
   )
   const canRetry = computed(() => available() && !loading.value && error.value !== 'auth')
   const readMessage = computed(() => {
-    if (error.value === 'auth') return '登录已失效或无权读取巡检模板，请重新登录或联系管理员。'
+    if (error.value === 'auth') return t('inspection.templates.authenticationRequired')
     if (!error.value) return ''
-    const reason = error.value === 'interrupted' ? '读取已中断' : '读取失败'
+    const reason = error.value === 'interrupted' ? t('inspection.templates.readInterrupted') : t('inspection.templates.readFailed')
     return hasResult.value
-      ? `${reason}，当前保留上次成功结果，可能已过期。请刷新重试后再执行、编辑或删除。`
-      : `${reason}，请重试读取巡检模板。`
+      ? t('inspection.templates.staleResult', { reason })
+      : t('inspection.templates.retryResult', { reason })
   })
 
   const filteredData = computed(() => {

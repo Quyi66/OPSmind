@@ -2,11 +2,11 @@
   <div class="ops-page-layout template-list-page">
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small" @submit.prevent="handleSearch">
-        <el-form-item label="关键词">
+        <el-form-item :label="t('inspection.templates.keyword')">
           <el-input
             v-model="filters.keyword"
-            placeholder="搜索名称、描述或执行人"
-            aria-label="搜索模板名称、描述或执行人"
+            :placeholder="t('inspection.templates.searchKeyword')"
+            :aria-label="t('inspection.templates.searchAria')"
             clearable
             size="small"
             class="template-search"
@@ -24,10 +24,10 @@
     <div class="ops-action-bar">
       <el-button type="primary" size="small" @click="goToAdd">
         <i class="fa fa-plus" aria-hidden="true"></i>
-        新建模板
+        {{ t('inspection.templates.newTemplate') }}
       </el-button>
       <span v-if="hasResult" class="template-count" role="status">
-        {{ filteredData.length }} / {{ tableData.length }} 个模板
+        {{ t('inspection.templates.filteredCount', { matched: filteredData.length, total: tableData.length, count: tableData.length }) }}
       </span>
       <span class="template-action-spacer"></span>
       <el-button
@@ -36,8 +36,8 @@
         size="small"
         :loading="loading"
         :disabled="!canRetry"
-        :title="error ? '重试读取' : '刷新'"
-        :aria-label="error ? '重试读取巡检模板' : '刷新巡检模板'"
+        :title="error ? t('inspection.templates.retryRead') : t('common.refresh')"
+        :aria-label="error ? t('inspection.templates.retryTemplates') : t('inspection.templates.refresh')"
         @click="loadTemplates"
       >
         <el-icon v-show="!loading"><Refresh /></el-icon>
@@ -58,14 +58,14 @@
       >
         <el-table-column
           prop="templateName"
-          label="模板名称"
+          :label="t('inspection.email.templateName')"
           min-width="200"
           show-overflow-tooltip
         />
-        <el-table-column prop="description" label="描述" min-width="230" show-overflow-tooltip />
+        <el-table-column prop="description" :label="t('inspection.templates.description')" min-width="230" show-overflow-tooltip />
         <el-table-column
           prop="hostCount"
-          label="配置主机数"
+          :label="t('inspection.templates.configuredHosts')"
           min-width="120"
           align="right"
           sortable="custom"
@@ -77,7 +77,7 @@
         </el-table-column>
         <el-table-column
           prop="scriptCount"
-          label="脚本数"
+          :label="t('inspection.templates.scriptCount')"
           min-width="100"
           align="right"
           sortable="custom"
@@ -89,19 +89,19 @@
         </el-table-column>
         <el-table-column
           prop="executedAt"
-          label="上次检查时间"
+          :label="t('inspection.email.lastChecked')"
           min-width="200"
           sortable="custom"
           show-overflow-tooltip
         >
           <template #default="{ row }">{{ formatDateTime(row.executedAt) }}</template>
         </el-table-column>
-        <el-table-column prop="executedBy" label="执行人" min-width="120" show-overflow-tooltip />
-        <el-table-column label="操作" width="200" align="left" fixed="right">
+        <el-table-column prop="executedBy" :label="t('inspection.templates.operator')" min-width="120" show-overflow-tooltip />
+        <el-table-column :label="t('common.actions')" min-width="320" align="left" fixed="right">
           <template #default="{ row }">
             <div class="template-row-actions" :title="rowActionReason">
               <el-button text type="primary" size="small" @click="goToJobList(row)">
-                执行记录
+                {{ t('navigation.pages.cac.results') }}
               </el-button>
               <el-button
                 text
@@ -110,7 +110,7 @@
                 :disabled="!isTemplateCurrent(row)"
                 @click="runTemplate(row)"
               >
-                执行
+                {{ t('inspection.templates.execute') }}
               </el-button>
               <el-button
                 text
@@ -119,7 +119,7 @@
                 :disabled="!isTemplateCurrent(row)"
                 @click="editTemplate(row)"
               >
-                编辑
+                {{ t('common.edit') }}
               </el-button>
               <el-button
                 text
@@ -128,31 +128,31 @@
                 :disabled="deleting || !isTemplateCurrent(row)"
                 @click="deleteTemplate(row)"
               >
-                删除
+                {{ t('common.delete') }}
               </el-button>
             </div>
           </template>
         </el-table-column>
         <template #empty>
-          <span v-if="loading">正在读取巡检模板…</span>
+          <span v-if="loading">{{ t('inspection.templates.loading') }}</span>
           <span v-else-if="error">{{ readMessage }}</span>
           <el-empty
             v-else-if="hasResult && !tableData.length"
-            description="暂无巡检模板"
+            :description="t('inspection.templates.noTemplates')"
             :image-size="80"
           >
-            <el-button type="primary" size="small" @click="goToAdd">新建模板</el-button>
+            <el-button type="primary" size="small" @click="goToAdd">{{ t('inspection.templates.newTemplate') }}</el-button>
           </el-empty>
-          <el-empty v-else-if="hasResult" description="没有匹配的模板" :image-size="80">
-            <el-button size="small" @click="filters.keyword = ''">清除搜索</el-button>
+          <el-empty v-else-if="hasResult" :description="t('inspection.templates.noMatches')" :image-size="80">
+            <el-button size="small" @click="filters.keyword = ''">{{ t('inspection.templates.clearSearch') }}</el-button>
           </el-empty>
-          <span v-else>尚未读取巡检模板</span>
+          <span v-else>{{ t('inspection.templates.notLoaded') }}</span>
         </template>
       </el-table>
     </div>
 
     <div class="template-footer">
-      <span class="template-note">数量为模板配置条目数，“—”表示无法核实。</span>
+      <span class="template-note">{{ t('inspection.templates.configurationCountNote') }}</span>
       <el-pagination
         v-if="hasResult"
         v-model:current-page="currentPage"
@@ -178,6 +178,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -216,9 +217,9 @@ const runTemplateId = ref('')
 const deleting = ref(false)
 const rowActionReason = computed(() =>
   error.value
-    ? '请刷新成功后再执行、编辑或删除模板'
+    ? t('inspection.templates.refreshBeforeActions')
     : loading.value
-      ? '正在读取，暂不可执行、编辑或删除模板'
+      ? t('inspection.templates.loadingActionsDisabled')
       : ''
 )
 
@@ -280,22 +281,22 @@ async function deleteTemplate(template) {
   const name = template.templateName
   deleting.value = true
   try {
-    await ElMessageBox.confirm(`确定要删除模板「${name}」吗？`, '删除确认', {
+    await ElMessageBox.confirm(t('inspection.templates.deleteConfirm', { name }), t('inspection.templates.deleteTitle'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
-      confirmButtonText: '删除',
-      cancelButtonText: '取消',
+      confirmButtonText: t('common.delete'),
+      cancelButtonText: t('common.cancel'),
       type: 'warning'
     })
     if (!isCurrent()) return
     await templateApi.deleteTemplate(id)
     if (!isCurrent()) return
-    ElMessage.success('删除成功')
+    ElMessage.success(t('inspection.templates.deleteSucceeded'))
     await loadTemplates()
   } catch (error) {
     if (isCurrent() && error !== 'cancel' && error !== 'close') {
       console.error('Failed to delete template:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(t('inspection.templates.deleteFailed'))
     }
   } finally {
     deleting.value = false

@@ -2,18 +2,25 @@
  * 巡检总览：模板关联报告统计。各报告可能来自不同执行批次。
  */
 import { ref, computed, onActivated, onDeactivated, onBeforeUnmount } from 'vue'
+import { t, currentLocale } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
 import { templateApi, dtsApi, paramApi, jobApi } from '../api'
 import axios from 'axios'
 import { authService } from '@/core/auth'
 
 const resultFields = [
-  ['OK', 'ok', '检查通过', '#28a745'],
-  ['FAILED', 'failed', '检查失败', '#dc3545'],
-  ['CHECK', 'check', '人工检查', '#17a2b8'],
-  ['SKIPPING', 'skipping', '已跳过', '#6c757d'],
-  ['UNREACHABLE', 'unreachable', '数据缺失', '#ffc107']
+  ['OK', 'ok', 'inspection.status.passed', '#28a745'],
+  ['FAILED', 'failed', 'inspection.status.checkFailed', '#dc3545'],
+  ['CHECK', 'check', 'inspection.status.manual', '#17a2b8'],
+  ['SKIPPING', 'skipping', 'inspection.status.skipped', '#6c757d'],
+  ['UNREACHABLE', 'unreachable', 'inspection.status.missingData', '#ffc107']
 ]
 const hasJob = value => value !== null && value !== undefined && value !== ''
+// Recompute for the selected language while reusing the formatter across rows.
+// Keep numeric durations ("1 day ago"), matching the original "1天前" display.
+const relativeTimeFormatter = computed(
+  () => new Intl.RelativeTimeFormat(currentLocale.value, { numeric: 'always' })
+)
 
 function formatRelativeTime(value) {
   if (!value) return ''
@@ -21,16 +28,16 @@ function formatRelativeTime(value) {
   if (!Number.isFinite(timestamp)) return ''
   const seconds = Math.floor((Date.now() - timestamp) / 1000)
   const ranges = [
-    [31536000, '年'],
-    [2592000, '个月'],
-    [86400, '天'],
-    [3600, '小时'],
-    [60, '分钟']
+    [31536000, 'year'],
+    [2592000, 'month'],
+    [86400, 'day'],
+    [3600, 'hour'],
+    [60, 'minute']
   ]
   for (const [size, unit] of ranges) {
-    if (seconds >= size) return `${Math.floor(seconds / size)}${unit}前`
+    if (seconds >= size) return relativeTimeFormatter.value.format(-Math.floor(seconds / size), unit)
   }
-  return seconds < 0 ? '' : '刚刚'
+  return seconds < 0 ? '' : t('inspection.overview.justNow')
 }
 
 function getIconClass(icon) {
@@ -78,7 +85,7 @@ export function useOverviewData() {
   const loading = ref(true)
   const templateList = ref([])
   const searchKeyword = ref('')
-  const listError = ref('')
+  const listError = messageRef('')
   const listLoaded = ref(false)
   const active = ref(true)
   let disposed = false
@@ -141,9 +148,9 @@ export function useOverviewData() {
       (sum, [, field]) => sum + globalStats.value[`${field}Total`],
       0
     )
-    return resultFields.map(([key, field, label, color]) => {
+    return resultFields.map(([key, field, labelKey, color]) => {
       const value = globalStats.value[`${field}Total`]
-      return { key, field, label, color, value, percent: total ? (value / total) * 100 : 0 }
+      return { key, field, label: t(labelKey), color, value, percent: total ? (value / total) * 100 : 0 }
     })
   })
   const recentExecutions = ref([])
@@ -173,7 +180,7 @@ export function useOverviewData() {
       templateList.value = data.map(template => ({
         ...template,
         hostLength: parseHostCount(template.auditParams),
-        executedTime: formatRelativeTime(template.executedAt),
+        get executedTime() { return formatRelativeTime(template.executedAt) },
         iconClass: getIconClass(template.icon),
         stats: null,
         passRate: null,
@@ -186,7 +193,7 @@ export function useOverviewData() {
       console.error('Failed to load templates:', error)
       templateList.value = []
       listLoaded.value = false
-      listError.value = '读取巡检模板失败，请刷新重试。'
+      listError.value = message('inspection.overview.loadFailed')
       return null
     } finally {
       if (isCurrent()) loading.value = false
@@ -288,7 +295,6 @@ export function useOverviewData() {
           t => t.id === job.templateId || t.templateName === job.templateName
         )
         const icon = tmpl ? tmpl.iconClass : 'fas fa-server'
-        const executedTime = job.createdAt ? formatRelativeTime(job.createdAt) : ''
 
         return {
           id: job.id,
@@ -296,7 +302,7 @@ export function useOverviewData() {
           templateName: job.templateName,
           executedBy: job.createdBy || '-',
           executedAt: job.createdAt,
-          executedTime,
+          get executedTime() { return job.createdAt ? formatRelativeTime(job.createdAt) : '' },
           icon,
           hasResult: Boolean(job.id),
           stats: null
@@ -361,7 +367,7 @@ export function useOverviewData() {
     if (loading.value) {
       templateList.value = []
       listLoaded.value = false
-      listError.value = '模板读取已中断，请刷新重试。'
+      listError.value = message('inspection.overview.loadInterrupted')
     }
     loading.value = false
     templateList.value.forEach(template => {

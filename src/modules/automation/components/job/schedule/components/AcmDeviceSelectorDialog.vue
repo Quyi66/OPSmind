@@ -326,10 +326,7 @@ const selectModeDefs = computed(() => {
   const selectMode = props.options.selectMode || 'host,group,tag,input,recently'
   const modeList = selectMode.split(',')
 
-  modeList.forEach((mode, index) => {
-    if (index === 0) {
-      currentMode.value = mode
-    }
+  modeList.forEach(mode => {
     if (selectModeDefaults[mode]) {
       modes[mode] = selectModeDefaults[mode]
     }
@@ -337,6 +334,14 @@ const selectModeDefs = computed(() => {
 
   return modes
 })
+
+// Translated option captions can replace the options object without changing
+// available modes. Only an actual mode configuration change resets the tab.
+watch(
+  () => props.options.selectMode || 'host,group,tag,input,recently',
+  modes => { currentMode.value = modes.split(',')[0] },
+  { immediate: true }
+)
 
 watch(
   visible,

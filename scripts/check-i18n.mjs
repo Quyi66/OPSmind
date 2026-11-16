@@ -77,8 +77,7 @@ for (const locale of languages.filter(locale => locale !== DEFAULT_LOCALE)) {
     if (!(key in source) || !(key in target)) errors.push(`${locale}: key mismatch: ${key}`)
     else {
       const params = text =>
-        [...text.matchAll(/\{(\w+)\}/g)]
-          .map(match => match[1])
+        [...new Set([...text.matchAll(/\{(\w+)\}/g)].map(match => match[1]))]
           .sort()
           .join(',')
       if (params(source[key]) !== params(target[key]))

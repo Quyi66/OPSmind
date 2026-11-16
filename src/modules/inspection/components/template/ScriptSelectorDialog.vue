@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="选择巡检脚本"
+    :title="t('inspection.templates.selectInspectionScripts')"
     width="820px"
     :close-on-click-modal="false"
     append-to-body
@@ -18,15 +18,15 @@
               href="javascript:void(0)"
               @click="navigateTo(index)"
             >
-              {{ crumb === '~' ? '脚本库根目录' : crumb }}
+              {{ crumb === '~' ? t('inspection.scripts.root') : crumb }}
             </a>
-            <span v-else class="current">{{ crumb === '~' ? '脚本库根目录' : crumb }}</span>
+            <span v-else class="current">{{ crumb === '~' ? t('inspection.scripts.root') : crumb }}</span>
             <span v-if="index < breadcrumbs.length - 1" class="separator">/</span>
           </span>
         </div>
         <el-input
           v-model="searchKeyword"
-          placeholder="搜索脚本或目录名称..."
+          :placeholder="t('inspection.scripts.search')"
           clearable
           size="small"
           :prefix-icon="Search"
@@ -35,18 +35,18 @@
       </div>
 
       <div v-if="loadFailed" class="script-load-alert" role="alert">
-        <span>文件列表加载失败，请重试后确认。</span>
-        <el-button link type="primary" @click="loadFiles">重试</el-button>
+        <span>{{ t('inspection.scripts.loadFailed') }}</span>
+        <el-button link type="primary" @click="loadFiles">{{ t('common.retry') }}</el-button>
       </div>
 
       <!-- 已选状态提示栏 -->
       <div class="selection-status-bar">
-        <span class="selection-label">当前已选脚本：</span>
+        <span class="selection-label">{{ t('inspection.scripts.currentSelection') }}</span>
         <span v-if="selectedFiles.length > 0" class="selection-value">
           <i class="fas fa-check-circle" aria-hidden="true"></i>
           {{ selectedFiles[0].scriptPath || selectedFiles[0].path }}
         </span>
-        <span v-else class="selection-empty">尚未选择脚本文件（单击文件行即可选中，双击文件夹进入下级）</span>
+        <span v-else class="selection-empty">{{ t('inspection.scripts.noSelection') }}</span>
       </div>
 
       <!-- 文件列表表格 -->
@@ -54,11 +54,11 @@
         <table class="file-table" v-loading="loading">
           <thead>
             <tr>
-              <th style="width: 44px">选择</th>
-              <th class="name-col">文件 / 目录名称</th>
-              <th style="width: 100px">大小</th>
-              <th style="width: 120px">更新日期</th>
-              <th style="width: 90px">发布状态</th>
+              <th style="width: 80px">{{ t('inspection.scripts.select') }}</th>
+              <th class="name-col">{{ t('inspection.scripts.fileDirectory') }}</th>
+              <th style="width: 100px">{{ t('inspection.scripts.size') }}</th>
+              <th style="width: 130px">{{ t('inspection.scripts.updatedAt') }}</th>
+              <th style="width: 150px">{{ t('inspection.scripts.releaseState') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -67,7 +67,7 @@
               <td></td>
               <td class="name-cell">
                 <i class="fa fa-level-up-alt text-muted" />
-                <span class="file-name">..（返回上一级目录）</span>
+                <span class="file-name">{{ t('inspection.scripts.parent') }}</span>
               </td>
               <td></td>
               <td></td>
@@ -95,7 +95,7 @@
                 <i :class="getFileIcon(file)" class="file-icon" />
                 <span class="file-name">{{ file.name }}</span>
               </td>
-              <td class="size-cell">{{ file.isDirectory ? '目录' : formatSize(file.size) }}</td>
+              <td class="size-cell">{{ file.isDirectory ? t('inspection.scripts.directory') : formatSize(file.size) }}</td>
               <td class="date-cell">{{ formatDate(file.lastModified) }}</td>
               <td class="status-cell">
                 <el-tag v-if="file.statusText" :type="file.statusType" size="small">
@@ -107,7 +107,7 @@
         </table>
         <el-empty
           v-if="!loading && filteredFiles.length === 0 && !currentPath"
-          description="当前目录暂无可用脚本文件"
+          :description="t('inspection.scripts.noFiles')"
           :image-size="72"
         />
       </div>
@@ -128,19 +128,20 @@
     </div>
 
     <template #footer>
-      <el-button @click="dialogVisible = false">取消</el-button>
+      <el-button @click="dialogVisible = false">{{ t('common.cancel') }}</el-button>
       <el-button
         type="primary"
         :disabled="loading || loadFailed || selectedFiles.length === 0"
         @click="handleConfirm"
       >
-        确定
+        {{ t('inspection.scripts.confirmSelection') }}
       </el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import { apiService } from '@/core/api'
@@ -250,7 +251,7 @@ function formatSize(bytes) {
 function formatDate(timestamp) {
   if (!timestamp) return ''
   const date = new Date(timestamp)
-  return date.toLocaleDateString('zh-CN')
+  return date.toLocaleDateString(currentLocale.value)
 }
 
 /**
@@ -272,7 +273,7 @@ function toggleSelect(file) {
   } else {
     const originals = originalSelection.filter(s => (s.scriptPath || s.path) === file.path)
     if (originals.length > 1) {
-      ElMessage.warning('该脚本存在多份原配置，请取消选择并在原表单中确认要保留的配置')
+      ElMessage.warning(t('inspection.scripts.duplicateConfiguration'))
       return
     }
     // 单选模式
@@ -324,13 +325,10 @@ async function loadFiles() {
     files.value = filesList.map(f => {
       const isDir = f.directory || f.isDir || false
       // 状态处理
-      let statusText = ''
       let statusType = ''
       if (f.onlineStatus === 'PUBLISHED') {
-        statusText = '已启用'
         statusType = 'success'
       } else if (f.onlineStatus === 'DISABLED') {
-        statusText = '已停用'
         statusType = 'info'
       }
 
@@ -340,7 +338,10 @@ async function loadFiles() {
         isDirectory: isDir,
         size: f.size || 0,
         lastModified: f.lastModified,
-        statusText,
+        get statusText() {
+          return f.onlineStatus === 'PUBLISHED' ? t('inspection.scripts.enabled')
+            : f.onlineStatus === 'DISABLED' ? t('inspection.scripts.disabled') : ''
+        },
         statusType
       }
     })

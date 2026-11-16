@@ -1,3 +1,4 @@
+import { t } from '@/core/i18n'
 import { pickResultListRouteQuery } from './result-list-route-state'
 
 const queryText = value => (typeof value === 'string' ? value : '')
@@ -31,7 +32,7 @@ export function buildOverviewReportQuery(context) {
 export function getReportReturnTarget(query = {}, basePath = '/cac') {
   if (query.from === 'overview') {
     return {
-      label: '巡检总览',
+      get label() { return t('navigation.pages.cac.overview') },
       location: {
         path: `${basePath}/overview`,
         query: buildOverviewReportQuery(parseOverviewReportContext(query))
@@ -39,7 +40,7 @@ export function getReportReturnTarget(query = {}, basePath = '/cac') {
     }
   }
   return {
-    label: '执行记录',
+    get label() { return t('navigation.pages.cac.results') },
     location: { path: `${basePath}/results`, query: pickResultListRouteQuery(query) }
   }
 }

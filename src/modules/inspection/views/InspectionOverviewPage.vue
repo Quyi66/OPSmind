@@ -1,10 +1,10 @@
 <template>
   <div class="ops-page-layout overview-dashboard">
-    <section class="overview-summary" aria-label="关联报告的检查结果汇总">
+    <section class="overview-summary" :aria-label="t('inspection.overview.summaryAria')">
       <div class="summary-heading">
         <div>
-          <h2>检查结果汇总</h2>
-          <p>全部模板关联报告的检查项结果合计，各报告执行时间可能不同。</p>
+          <h2>{{ t('inspection.overview.summaryTitle') }}</h2>
+          <p>{{ t('inspection.overview.summaryDescription') }}</p>
         </div>
         <span class="summary-coverage" role="status">{{ summaryCoverage }}</span>
       </div>
@@ -12,7 +12,7 @@
         <div v-for="item in distributionData" :key="item.key" class="summary-value">
           <span class="summary-dot" :class="`summary-dot--${item.field}`" aria-hidden="true"></span>
           <span>{{ item.label }}</span>
-          <strong>{{ hasSummaryData ? item.value.toLocaleString() : '—' }}</strong>
+          <strong>{{ hasSummaryData ? item.value.toLocaleString(currentLocale.value) : '—' }}</strong>
         </div>
       </div>
     </section>
@@ -20,16 +20,16 @@
     <section class="overview-results" aria-labelledby="overview-results-title">
       <div class="results-toolbar">
         <div class="results-title">
-          <h2 id="overview-results-title">模板巡检结果</h2>
+          <h2 id="overview-results-title">{{ t('inspection.overview.templateResults') }}</h2>
           <span v-if="listLoaded" class="template-count">
-            {{ filteredTemplateList.length }} / {{ templateList.length }} 个模板
+            {{ t('inspection.templates.filteredCount', { matched: filteredTemplateList.length, total: templateList.length, count: templateList.length }) }}
           </span>
         </div>
         <div class="results-tools">
           <el-input
             v-model="searchKeyword"
-            placeholder="搜索模板名称"
-            aria-label="搜索模板名称"
+            :placeholder="t('inspection.email.searchTemplates')"
+            :aria-label="t('inspection.email.searchTemplates')"
             clearable
             size="small"
             class="template-search-input"
@@ -41,8 +41,8 @@
             circle
             size="small"
             :loading="refreshing"
-            :title="listError ? '重试读取' : '刷新'"
-            :aria-label="listError ? '重试读取巡检模板' : '刷新巡检总览'"
+            :title="listError ? t('inspection.templates.retryRead') : t('common.refresh')"
+            :aria-label="listError ? t('inspection.templates.retryTemplates') : t('inspection.overview.refresh')"
             @click="refreshAll"
           >
             <i v-show="!refreshing" class="fas fa-sync-alt" aria-hidden="true"></i>
@@ -61,8 +61,8 @@
           height="100%"
           style="width: 100%"
         >
-          <el-table-column prop="templateName" label="模板" min-width="200" show-overflow-tooltip />
-          <el-table-column label="结果状态" min-width="136">
+          <el-table-column prop="templateName" :label="t('inspection.templates.template')" min-width="200" show-overflow-tooltip />
+          <el-table-column :label="t('inspection.overview.resultState')" min-width="136">
             <template #default="{ row }">
               <div class="result-state">
                 <el-tag :type="getResultState(row).type" size="small">
@@ -76,7 +76,7 @@
                   :disabled="loading"
                   @click="retryStatistics(row)"
                 >
-                  重试统计
+                  {{ t('inspection.overview.retryStatistics') }}
                 </el-button>
               </div>
             </template>
@@ -94,23 +94,23 @@
                 class="result-count"
                 :class="row.stats?.[column.field] > 0 ? `result-count--${column.field}` : ''"
               >
-                {{ row.stats ? row.stats[column.field].toLocaleString() : '—' }}
+                {{ row.stats ? row.stats[column.field].toLocaleString(currentLocale.value) : '—' }}
               </span>
             </template>
           </el-table-column>
-          <el-table-column label="配置主机数" min-width="104" align="right" show-overflow-tooltip>
+          <el-table-column :label="t('inspection.templates.configuredHosts')" min-width="104" align="right" show-overflow-tooltip>
             <template #default="{ row }">
               <span class="result-count">{{ row.hostLength ?? '—' }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="模板记录时间" min-width="180" show-overflow-tooltip>
+          <el-table-column :label="t('inspection.overview.recordedAt')" min-width="180" show-overflow-tooltip>
             <template #default="{ row }">
               <span :title="formatRecordedTime(row.executedAt)">
                 {{ formatRecordedTime(row.executedAt) }}
               </span>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="170" align="left" fixed="right">
+          <el-table-column :label="t('common.actions')" min-width="260" align="left" fixed="right">
             <template #default="{ row }">
               <div class="overview-row-actions">
                 <el-button
@@ -120,7 +120,7 @@
                   :disabled="openingReport || !hasReport(row) || !isTemplateCurrent(row)"
                   @click="handleViewReport(row)"
                 >
-                  查看报告
+                  {{ t('inspection.templates.viewReport') }}
                 </el-button>
                 <el-button
                   text
@@ -129,7 +129,7 @@
                   :disabled="!isTemplateCurrent(row)"
                   @click="handleCommand('run', row)"
                 >
-                  执行
+                  {{ t('inspection.templates.execute') }}
                 </el-button>
                 <el-dropdown
                   trigger="click"
@@ -141,15 +141,15 @@
                     type="primary"
                     size="small"
                     :disabled="!isTemplateCurrent(row)"
-                    :aria-label="`${row.templateName}的更多操作`"
+                    :aria-label="t('inspection.templates.moreActions', { name: row.templateName })"
                   >
-                    更多
+                    {{ t('inspection.templates.more') }}
                     <i class="fas fa-angle-down" aria-hidden="true"></i>
                   </el-button>
                   <template #dropdown>
                     <el-dropdown-menu>
-                      <el-dropdown-item command="edit">编辑</el-dropdown-item>
-                      <el-dropdown-item command="delete" divided>删除</el-dropdown-item>
+                      <el-dropdown-item command="edit">{{ t('common.edit') }}</el-dropdown-item>
+                      <el-dropdown-item command="delete" divided>{{ t('common.delete') }}</el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
                 </el-dropdown>
@@ -157,22 +157,21 @@
             </template>
           </el-table-column>
           <template #empty>
-            <span v-if="loading">正在读取巡检模板…</span>
-            <span v-else-if="listError">读取失败，请刷新重试</span>
+            <span v-if="loading">{{ t('inspection.templates.loading') }}</span>
+            <span v-else-if="listError">{{ t('inspection.templates.readRetry') }}</span>
             <el-empty
               v-else-if="listLoaded && templateList.length === 0"
-              description="暂无巡检模板"
+              :description="t('inspection.templates.noTemplates')"
               :image-size="80"
             >
-              <el-button type="primary" @click="goToAddTemplate">新增模板</el-button>
+              <el-button type="primary" @click="goToAddTemplate">{{ t('inspection.templates.addTemplate') }}</el-button>
             </el-empty>
-            <span v-else>没有匹配的模板</span>
+            <span v-else>{{ t('inspection.templates.noMatches') }}</span>
           </template>
         </el-table>
       </div>
       <div class="overview-table-note">
-        “—”表示暂无可核实计数；结果状态不代表任务运行状态。
-        配置主机数为模板当前配置数量，不代表关联报告实际覆盖主机数；时间来自模板记录。
+        {{ t('inspection.overview.countNote') }}
       </div>
     </section>
 
@@ -190,6 +189,7 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
 import { computed, ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { templateApi } from '../api'
@@ -227,21 +227,23 @@ const editTemplateId = ref('')
 const runDialogVisible = ref(false)
 const runTemplateId = ref('')
 const resultColumns = [
-  { field: 'failed', label: '失败' },
-  { field: 'unreachable', label: '数据缺失' },
-  { field: 'check', label: '人工' },
-  { field: 'skipping', label: '跳过' },
-  { field: 'ok', label: '通过' }
+  { field: 'failed', get label() { return t('inspection.status.failed') } },
+  { field: 'unreachable', get label() { return t('inspection.status.missingData') } },
+  { field: 'check', get label() { return t('inspection.overview.manualShort') } },
+  { field: 'skipping', get label() { return t('inspection.overview.skippedShort') } },
+  { field: 'ok', get label() { return t('inspection.overview.passedShort') } }
 ]
 
 const summaryCoverage = computed(() => {
-  if (loading.value) return '正在读取模板…'
-  if (listError.value) return '模板读取失败，暂无可核实汇总'
+  if (loading.value) return t('inspection.overview.loadingSummary')
+  if (listError.value) return t('inspection.overview.summaryUnavailable')
   const { total, loaded, failed, pending } = statisticsProgress.value
-  if (!total) return '暂无关联报告'
-  const prefix = failed || pending ? '部分汇总 · ' : ''
-  const errors = failed ? ` · ${failed} 个统计未读取成功` : ''
-  return `${prefix}统计已读取 ${loaded} / ${total} 个有报告模板${errors}`
+  if (!total) return t('inspection.overview.noReport')
+  const parts = []
+  if (failed || pending) parts.push(t('inspection.overview.partialSummary'))
+  parts.push(t('inspection.overview.statisticsCoverage', { loaded, total, count: total }))
+  if (failed) parts.push(t('inspection.overview.statisticsFailedCount', { failed, count: failed }))
+  return parts.join(' · ')
 })
 
 function hasReport(template) {
@@ -250,17 +252,17 @@ function hasReport(template) {
 
 function getResultState(template) {
   const states = {
-    'not-run': { label: '暂无关联报告', type: 'info' },
-    loading: { label: '统计读取中', type: 'info' },
-    error: { label: '统计读取失败', type: 'danger' },
-    interrupted: { label: '统计读取已中断', type: 'warning' },
-    empty: { label: '暂无检查统计', type: 'info' }
+    'not-run': { get label() { return t('inspection.overview.noReport') }, type: 'info' },
+    loading: { get label() { return t('inspection.overview.statisticsLoading') }, type: 'info' },
+    error: { get label() { return t('inspection.overview.statisticsFailed') }, type: 'danger' },
+    interrupted: { get label() { return t('inspection.overview.statisticsInterrupted') }, type: 'warning' },
+    empty: { get label() { return t('inspection.overview.noStatistics') }, type: 'info' }
   }
   if (states[template.statisticsState]) return states[template.statisticsState]
-  if (template.stats?.failed > 0) return { label: '有失败结果', type: 'danger' }
-  if (template.stats?.unreachable > 0) return { label: '存在数据缺失', type: 'warning' }
-  if (template.stats?.check > 0) return { label: '需人工检查', type: 'warning' }
-  return { label: '已有检查结果', type: 'info' }
+  if (template.stats?.failed > 0) return { get label() { return t('inspection.overview.failedResults') }, type: 'danger' }
+  if (template.stats?.unreachable > 0) return { get label() { return t('inspection.overview.missingResults') }, type: 'warning' }
+  if (template.stats?.check > 0) return { get label() { return t('inspection.overview.manualRequired') }, type: 'warning' }
+  return { get label() { return t('inspection.overview.hasResults') }, type: 'info' }
 }
 
 function formatRecordedTime(value) {
@@ -277,13 +279,13 @@ function formatRecordedTime(value) {
 async function handleViewReport(template) {
   if (!isTemplateCurrent(template)) return
   if (!hasReport(template)) {
-    ElMessage.warning('该模板暂无关联报告')
+    ElMessage.warning(t('inspection.overview.templateNoReport'))
     return
   }
   try {
     await openReport(template)
   } catch {
-    if (isTemplateCurrent(template)) ElMessage.error('无法打开报告，请重试')
+    if (isTemplateCurrent(template)) ElMessage.error(t('inspection.overview.openReportFailed'))
   }
 }
 
@@ -310,23 +312,23 @@ async function deleteTemplate(template) {
   const id = template.id
   const name = template.templateName
   try {
-    await ElMessageBox.confirm(`确定要删除模板「${name}」吗？`, '删除确认', {
+    await ElMessageBox.confirm(t('inspection.templates.deleteConfirm', { name }), t('inspection.templates.deleteTitle'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
-      confirmButtonText: '删除',
-      cancelButtonText: '取消',
+      confirmButtonText: t('common.delete'),
+      cancelButtonText: t('common.cancel'),
       type: 'warning'
     })
     if (!isCurrent()) return
     await templateApi.deleteTemplate(id)
     if (!isCurrent()) return
-    ElMessage.success('删除成功')
+    ElMessage.success(t('inspection.templates.deleteSucceeded'))
     refreshAll()
   } catch (error) {
     if (!isCurrent()) return
     if (error !== 'cancel' && error !== 'close') {
       console.error('Failed to delete template:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(t('inspection.templates.deleteFailed'))
     }
   }
 }

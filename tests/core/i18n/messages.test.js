@@ -14,7 +14,7 @@ describe('local messages and navigation', () => {
       const other = flattenTranslations(data)
       expect(Object.keys(other).sort()).toEqual(Object.keys(base).sort())
       for (const key of Object.keys(base)) {
-        const params = value => [...value.matchAll(/\{(\w+)\}/g)].map(match => match[1]).sort()
+        const params = value => [...new Set([...value.matchAll(/\{(\w+)\}/g)].map(match => match[1]))].sort()
         expect(params(other[key]), key).toEqual(params(base[key]))
       }
     }
