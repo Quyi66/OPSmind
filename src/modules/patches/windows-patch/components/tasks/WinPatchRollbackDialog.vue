@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visibleModel"
-    title="补丁回滚向导"
+    :title="t('patches.windows.rollbackWizard')"
     width="1000px"
     destroy-on-close
     append-to-body
@@ -27,9 +27,9 @@
     <WinPatchInstallWizardScriptStep
       v-show="currentStepKey === 'pre-check'"
       :model-value="preScriptConfig"
-      title="预检查脚本"
-      description="支持手动编辑或上传 PowerShell 脚本。未配置时，预检查步骤会在回滚流程中自动跳过。"
-      placeholder="例如：Write-Host 'pre rollback check'"
+      :title="t('patches.windows.preCheckScript')" run-title-key="pre-check"
+      :description="t('patches.windows.rollbackPreScriptHint')"
+      :placeholder="t('patches.windows.rollbackPreScriptExample')"
       :disabled="Boolean(currentTaskId) || dialogBusy"
       :status="pipelineItemMap.PRE_CHECK?.uiStatus || 'idle'"
       :run-id="pipelineItemMap.PRE_CHECK?.runId || ''"
@@ -41,9 +41,9 @@
     <WinPatchInstallWizardScriptStep
       v-show="currentStepKey === 'validate'"
       :model-value="validateScriptConfig"
-      title="校验脚本"
-      description="用于确认补丁回滚效果。支持手动编辑或上传 PowerShell 脚本，未配置时会在执行流程中自动跳过。"
-      placeholder="例如：Get-HotFix | Where-Object { $_.HotFixID -eq 'KB5031364' }"
+      :title="t('patches.linux.validationScript')" run-title-key="validate"
+      :description="t('patches.windows.rollbackValidateScriptHint')"
+      :placeholder="t('patches.windows.validateScriptExample')"
       :disabled="Boolean(currentTaskId) || dialogBusy"
       :status="pipelineItemMap.VALIDATE?.uiStatus || 'idle'"
       :run-id="pipelineItemMap.VALIDATE?.runId || ''"
@@ -56,11 +56,11 @@
       v-show="currentStepKey === 'restart'"
       :model-value="rollbackOptions"
       confirm-mode
-      title="重启与重扫策略"
-      alert-title="这里统一配置回滚任务中的重启与自动重扫策略。"
-      alert-description="当前向导会在校验脚本之后展示这一页，未启用的项会在任务推进时自动跳过。"
-      reboot-hint="启用后，任务进入重启环节时会继续执行主机重启。"
-      rescan-hint="启用后，回滚完成时会自动重新扫描补丁。扫描需要一些时间，请稍后查看最新补丁状态。"
+      :title="t('patches.windows.restartRescanStrategy')"
+      :alert-title="t('patches.windows.rollbackRestartHint')"
+      :alert-description="t('patches.windows.restartStepHint')"
+      :reboot-hint="t('patches.windows.rebootHint')"
+      :rescan-hint="t('patches.windows.rollbackRescanHint')"
       @update:model-value="updateRollbackOptions"
     />
 
@@ -82,14 +82,14 @@
 
     <template #footer>
       <div class="dialog-footer win-patch-rollback-wizard__footer">
-        <el-button v-if="canGoBack" @click="goBack">上一步</el-button>
+        <el-button v-if="canGoBack" @click="goBack">{{ t('patches.linux.previousStep') }}</el-button>
 
         <el-button
           v-if="currentStepKey !== 'execute' && currentStepSkippable"
           :disabled="dialogBusy || Boolean(currentTaskId)"
           @click="skipCurrentStep"
         >
-          跳过此步
+          {{ t('patches.linux.skipStep') }}
         </el-button>
 
         <el-button
@@ -98,13 +98,13 @@
           :disabled="!canGoNext"
           @click="goNext"
         >
-          下一步
+          {{ t('patches.linux.nextStep') }}
         </el-button>
 
-        <el-button v-else-if="dialogBusy" type="primary" loading disabled>执行中...</el-button>
+        <el-button v-else-if="dialogBusy" type="primary" loading disabled>{{ t('patches.linux.executingEllipsis') }}</el-button>
 
         <el-button v-else-if="pipelineStatus === 'paused'" type="primary" @click="startExecution">
-          继续查询
+          {{ t('patches.linux.resumeQuery') }}
         </el-button>
 
         <el-button
@@ -127,6 +127,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { computed, toRef } from 'vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import WinPatchInstallWizardRestartStep from '../install-wizard/WinPatchInstallWizardRestartStep.vue'
@@ -203,9 +204,9 @@ const {
 })
 
 const primaryButtonText = computed(() => {
-  if (pipelineStatus.value === 'success') return '完成'
-  if (pipelineStatus.value === 'failed') return '关闭'
-  return '开始执行回滚'
+  if (pipelineStatus.value === 'success') return t('execution.jobStatus.COMPLETED')
+  if (pipelineStatus.value === 'failed') return t('common.close')
+  return t('patches.windows.startRollback')
 })
 
 function handleBeforeClose(done) {

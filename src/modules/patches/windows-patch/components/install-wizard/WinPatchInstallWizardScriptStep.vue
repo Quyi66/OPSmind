@@ -12,8 +12,8 @@
           :disabled="disabled"
           @update:model-value="handleModeChange"
         >
-          <el-radio-button value="edit">手动编辑</el-radio-button>
-          <el-radio-button value="upload">上传脚本</el-radio-button>
+          <el-radio-button value="edit">{{ t('patches.linux.manualEdit') }}</el-radio-button>
+          <el-radio-button value="upload">{{ t('patches.linux.uploadScript') }}</el-radio-button>
         </el-radio-group>
       </div>
 
@@ -27,7 +27,7 @@
           :disabled="disabled"
           @update:model-value="value => updateModel({ content: value })"
         />
-        <div class="task-step-editor__hint">留空则在执行流程中自动跳过该步骤。</div>
+        <div class="task-step-editor__hint">{{ t('patches.windows.emptyScriptHint') }}</div>
       </div>
 
       <div v-else class="script-upload-panel">
@@ -41,16 +41,16 @@
         <div class="script-upload-actions">
           <el-button type="primary" plain :disabled="disabled" @click="triggerFileSelect">
             <i class="fa fa-upload" style="margin-right: 4px"></i>
-            {{ resolvedModel.fileName ? '重新选择脚本' : '选择脚本文件' }}
+            {{ resolvedModel.fileName ? t('patches.windows.reselectScript') : t('automation.flow.selectScript') }}
           </el-button>
-          <span class="script-upload-file">{{ resolvedModel.fileName || '未选择文件' }}</span>
+          <span class="script-upload-file">{{ resolvedModel.fileName || t('patches.linux.noFileSelected') }}</span>
         </div>
-        <div class="task-step-editor__hint">脚本文件会在开始执行时上传到当前安装任务。</div>
+        <div class="task-step-editor__hint">{{ t('patches.windows.scriptUploadHint') }}</div>
         <el-input
           type="textarea"
           :model-value="resolvedModel.content"
           :autosize="{ minRows: 8, maxRows: 24 }"
-          placeholder="上传后将在这里显示脚本内容预览"
+          :placeholder="t('patches.windows.scriptPreviewHint')"
           readonly
           class="script-input"
         />
@@ -67,8 +67,8 @@
         class="task-step-alert"
       >
         <template #default>
-          <el-button v-if="runId" type="primary" link @click="emit('view-run', runId, title)">
-            查看执行详情
+          <el-button v-if="runId" type="primary" link @click="emit('view-run', runId, title, runTitleKey)">
+            {{ t('patches.linux.viewExecution') }}
           </el-button>
         </template>
       </el-alert>
@@ -77,6 +77,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 
@@ -85,6 +86,7 @@ const props = defineProps({
     type: Object,
     default: () => ({})
   },
+  runTitleKey: { type: String, default: '' },
   title: {
     type: String,
     required: true
@@ -134,10 +136,10 @@ const statusType = computed(() => {
 })
 
 const statusTitle = computed(() => {
-  if (props.status === 'success') return `${props.title}已执行完成`
-  if (props.status === 'skipped') return `${props.title}已跳过`
+  if (props.status === 'success') return t('patches.windows.stepCompleted', { p0: props.title })
+  if (props.status === 'skipped') return t('patches.windows.stepSkipped', { p0: props.title })
   if (props.status === 'failed')
-    return `执行失败：${props.errorMessage || `${props.title}执行失败`}`
+    return t('patches.windows.executionFailedReason', { p0: props.errorMessage || t('patches.windows.stepFailed', { p0: props.title }) })
   return ''
 })
 
@@ -190,7 +192,7 @@ async function handleFileChange(event) {
     })
   } catch (error) {
     console.error('读取脚本文件失败:', error)
-    ElMessage.error('读取脚本文件失败，请检查文件内容后重试')
+    ElMessage.error(t('patches.windows.readScriptFailed'))
   } finally {
     if (event.target) {
       event.target.value = ''

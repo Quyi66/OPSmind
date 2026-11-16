@@ -1,7 +1,7 @@
 <template>
   <el-drawer
     v-model="visibleModel"
-    title="主机补丁详情"
+    :title="t('patches.windows.hostPatchDetails')"
     direction="rtl"
     size="85%"
     destroy-on-close
@@ -18,34 +18,34 @@
         size="small"
         class="win-patch-descriptions"
       >
-        <el-descriptions-item label="主机">
+        <el-descriptions-item :label="t('execution.ui.host')">
           {{ resolveHostKey(hostSummary) }}
         </el-descriptions-item>
-        <el-descriptions-item label="主机 ID">
+        <el-descriptions-item :label="t('patches.windows.hostId')">
           {{ resolveHostId(hostSummary) || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item label="操作系统">
+        <el-descriptions-item :label="t('patches.linux.os')">
           {{ pickValue(hostSummary, ['osDistro', 'os_distro'], '-') }}
         </el-descriptions-item>
-        <el-descriptions-item label="版本 / 架构">
+        <el-descriptions-item :label="t('patches.windows.versionArchitecture')">
           {{ pickValue(hostSummary, ['osVersion', 'os_version'], '-') }} /
           {{ pickValue(hostSummary, ['osArch', 'os_arch'], '-') }}
         </el-descriptions-item>
-        <el-descriptions-item label="缺失补丁数">
+        <el-descriptions-item :label="t('patches.windows.missingPatchCount')">
           {{ pickValue(hostSummary, ['totalMissing', 'total_missing'], 0) }}
         </el-descriptions-item>
-        <el-descriptions-item label="最后扫描时间">
+        <el-descriptions-item :label="t('patches.linux.lastScanTime')">
           {{ formatDateTime(pickValue(hostSummary, ['lastScanDate', 'last_scan_date'], '')) }}
         </el-descriptions-item>
       </el-descriptions>
 
       <div class="ops-filter-bar">
         <el-form :inline="true" size="small">
-          <el-form-item label="严重级别">
+          <el-form-item :label="t('patches.catalog.severity')">
             <el-select
               v-model="filters.severity"
               clearable
-              placeholder="全部"
+              :placeholder="t('common.all')"
               style="width: 140px"
               @change="handleSearch"
             >
@@ -57,12 +57,12 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="补丁状态">
+          <el-form-item :label="t('patches.linux.patchStatus')">
             <el-select
               v-model="filters.patchStatus"
               @change="handleSearch"
               clearable
-              placeholder="全部"
+              :placeholder="t('common.all')"
               style="width: 140px"
             >
               <el-option
@@ -73,10 +73,10 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="关键字">
+          <el-form-item :label="t('patches.cve.keyword')">
             <el-input
               v-model="filters.keyword"
-              placeholder="按 KB 编号或标题过滤"
+              :placeholder="t('patches.windows.filterKbTitle')"
               clearable
               style="width: 220px"
               @keyup.enter="handleSearch"
@@ -84,8 +84,8 @@
             />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" :loading="loading" @click="handleSearch">搜索</el-button>
-            <el-button @click="handleReset">重置</el-button>
+            <el-button type="primary" :loading="loading" @click="handleSearch">{{ t('common.search') }}</el-button>
+            <el-button @click="handleReset">{{ t('common.reset') }}</el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -96,7 +96,7 @@
           :disabled="!resolveHostId(hostSummary)"
           @click="emit('view-history', resolveHostId(hostSummary))"
         >
-          安装历史
+          {{ t('patches.windows.installationHistory') }}
         </el-button>
         <el-button
           type="primary"
@@ -104,10 +104,10 @@
           :disabled="loading || installableSelection.length === 0"
           @click="openInstallWizard"
         >
-          安装选中补丁
+          {{ t('patches.windows.installSelected') }}
         </el-button>
         <span class="win-patch-selection-text">
-          已选 {{ installableSelection.length }} 条可安装补丁
+          {{ t('patches.cve.alreadySelected') }} {{ installableSelection.length }} {{ t('patches.windows.installableUnit') }}
         </span>
         <span style="flex: 1"></span>
         <el-button
@@ -122,7 +122,7 @@
       </div>
 
       <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
-        <el-button link type="primary" @click="loadPatches()">重试</el-button>
+        <el-button link type="primary" @click="loadPatches()">{{ t('common.retry') }}</el-button>
       </el-alert>
 
       <div class="ops-table-wrapper win-patch-host-table">
@@ -133,28 +133,28 @@
           @selection-change="selection => (selectedRows = selection)"
         >
           <el-table-column type="selection" width="48" :selectable="isPatchActionable" />
-          <el-table-column label="KB 编号" width="130">
+          <el-table-column :label="t('patches.windows.kbId')" width="130">
             <template #default="{ row }">
               <WindowsKbLinkList
                 :kb-numbers="resolveKbNumbers(row)"
                 :has-cve="resolveCveIds(row).length > 0"
                 :kb-detail="row"
-                dialog-title="关联 KB"
+                :dialog-title="t('patches.windows.relatedKb')"
                 @select-kb="openKbDetail"
               />
             </template>
           </el-table-column>
-          <el-table-column label="标题" min-width="280" show-overflow-tooltip>
+          <el-table-column :label="t('automation.job.title')" min-width="280" show-overflow-tooltip>
             <template #default="{ row }">
               {{ pickValue(row, ['title'], '-') }}
             </template>
           </el-table-column>
-          <el-table-column label="大小" width="110">
+          <el-table-column :label="t('automation.library.size')" width="110">
             <template #default="{ row }">
               {{ formatBytes(pickValue(row, ['sizeBytes', 'size_bytes'], 0)) }}
             </template>
           </el-table-column>
-          <el-table-column label="严重级别" width="120">
+          <el-table-column :label="t('patches.catalog.severity')" width="120">
             <template #default="{ row }">
               <el-tag
                 :type="getSeverityTagType(pickValue(row, ['severity']))"
@@ -165,24 +165,24 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="关联漏洞" min-width="220">
+          <el-table-column :label="t('patches.catalog.associatedVulnerabilities')" min-width="220">
             <template #default="{ row }">
               <CveLinkList :cves="resolveCveIds(row)" :url-resolver="getWinCveUrl" />
             </template>
           </el-table-column>
-          <el-table-column label="分类" min-width="150" show-overflow-tooltip>
+          <el-table-column :label="t('patches.windows.classification')" min-width="150" show-overflow-tooltip>
             <template #default="{ row }">
               {{ pickValue(row, ['categoryName', 'category_name', 'classification'], '-') }}
             </template>
           </el-table-column>
-          <el-table-column label="补丁状态" width="120">
+          <el-table-column :label="t('patches.linux.patchStatus')" width="120">
             <template #default="{ row }">
               <el-tag :type="getPatchStatusTagType(row)" size="small">
                 {{ getPatchStatusLabel(row) }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="已忽略" width="90" align="center">
+          <el-table-column :label="t('patches.windows.ignored')" width="90" align="center">
             <template #default="{ row }">
               <el-tag
                 :type="
@@ -195,18 +195,18 @@
               >
                 {{
                   normalizeBoolean(pickValue(row, ['isIgnore', 'isIgnored', 'is_ignored'], false))
-                    ? '是'
-                    : '否'
+                    ? t('patches.catalog.yes')
+                    : t('patches.catalog.no')
                 }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="扫描时间" width="190" class-name="win-patch-table__time-column">
+          <el-table-column :label="t('patches.linux.scanTime')" width="190" class-name="win-patch-table__time-column">
             <template #default="{ row }">
               {{ formatDateTime(pickValue(row, ['scanDate', 'scan_date'], '')) }}
             </template>
           </el-table-column>
-          <el-table-column label="安装时间" width="190" class-name="win-patch-table__time-column">
+          <el-table-column :label="t('patches.windows.installedAt')" width="190" class-name="win-patch-table__time-column">
             <template #default="{ row }">
               {{ formatDateTime(pickValue(row, ['installDate', 'install_date'], '')) }}
             </template>
@@ -241,6 +241,9 @@
 </template>
 
 <script setup>
+import { message as localMessage, messageRef } from '@/core/i18n/feedback'
+import { t } from '@/core/i18n'
+
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
@@ -291,7 +294,7 @@ const visibleModel = computed({
 })
 
 const loading = ref(false)
-const loadError = ref('')
+const loadError = messageRef('')
 let loadRequestId = 0
 const patchList = ref([])
 const selectedRows = ref([])
@@ -431,9 +434,9 @@ async function loadPatches(options = {}) {
     selectedRows.value = []
   } catch (error) {
     if (!isCurrentRequest()) return
-    loadError.value = '加载主机补丁详情失败，请重试'
+    loadError.value = localMessage('patches.windows.hostDetailLoadRetry')
     console.error('加载主机补丁详情失败:', error)
-    ElMessage.error('加载主机补丁详情失败')
+    ElMessage.error(t('patches.windows.hostDetailLoadFailed'))
   } finally {
     if (isCurrentRequest()) loading.value = false
   }

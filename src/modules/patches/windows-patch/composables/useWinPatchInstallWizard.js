@@ -1,3 +1,9 @@
+
+import { createPatchTaskError } from '@/modules/patches/utils/patchTaskFeedback'
+
+import { message as localMessage, messageRef } from '@/core/i18n/feedback'
+import { t } from '@/core/i18n'
+import { createWinPatchError, getWinPatchErrorFeedback, getWinPatchRunTitle } from '../feedback'
 import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { winPatchApi } from '../api'
@@ -105,16 +111,6 @@ function resolveUploadedScriptFile(scriptConfig = {}) {
   }
 
   return scriptConfig.file || null
-}
-
-function resolveApiErrorMessage(error, fallback = '安装任务执行失败，请稍后重试') {
-  return (
-    error?.response?.data?.error ||
-    error?.response?.data?.message ||
-    error?.response?.data?.msg ||
-    error?.message ||
-    fallback
-  )
 }
 
 function getAuditStepKey(step) {
@@ -424,11 +420,11 @@ export function useWinPatchInstallWizard({
   const taskHosts = ref([])
   const taskAuditSteps = ref([])
   const taskAuditLogs = ref([])
-  const taskErrorMessage = ref('')
+  const taskErrorMessage = messageRef('')
   const pipelineStatus = ref('idle')
   const showRunResultDialog = ref(false)
   const currentRunId = ref('')
-  const currentRunTitle = ref('')
+  const currentRunTitle = messageRef('')
 
   const { start, stop } = useWinPatchPolling(3000)
 
@@ -520,23 +516,28 @@ export function useWinPatchInstallWizard({
   const availableRunItems = computed(() => {
     const candidates = [
       {
-        label: '主任务执行',
+        key: 'main',
+        get label() { return t('patches.windows.mainExecution') },
         runId: String(pickValue(taskDetail.value, ['runId', 'run_id'], '')).trim()
       },
       {
-        label: '预检查',
+        key: 'PRE_CHECK',
+        get label() { return t('patches.linux.precheck') },
         runId: String(pickValue(taskDetail.value, ['preCheckRunId', 'pre_check_run_id'], '')).trim()
       },
       {
-        label: '执行安装',
+        key: 'INSTALL',
+        get label() { return t('patches.windows.executeInstall') },
         runId: String(pickValue(taskDetail.value, ['executeRunId', 'execute_run_id'], '')).trim()
       },
       {
-        label: '执行重启',
+        key: 'RESTART',
+        get label() { return t('patches.linux.executeRestart') },
         runId: String(pickValue(taskDetail.value, ['restartRunId', 'restart_run_id'], '')).trim()
       },
       {
-        label: '执行校验',
+        key: 'VALIDATE',
+        get label() { return t('patches.windows.executeValidation') },
         runId: String(pickValue(taskDetail.value, ['validateRunId', 'validate_run_id'], '')).trim()
       }
     ]
@@ -610,7 +611,7 @@ export function useWinPatchInstallWizard({
       return mergedTask
     } catch (error) {
       if (!options.silent) {
-        ElMessage.error('加载 Windows 安装任务详情失败')
+        ElMessage.error(t('patches.windows.installDetailLoadFailed'))
       }
       throw error
     } finally {
@@ -644,11 +645,11 @@ export function useWinPatchInstallWizard({
     }
 
     if (!selectedPatchStatusIds.value.length) {
-      throw new Error('当前选择中没有可安装的补丁记录')
+      throw createPatchTaskError('patches.windows.noInstallableSelection')
     }
 
     if (!selectedHostIds.value.length) {
-      throw new Error('当前选择中缺少主机信息，无法创建安装任务')
+      throw createPatchTaskError('patches.windows.missingInstallHost')
     }
 
     const response = await winPatchApi.createInstallTask({
@@ -661,7 +662,7 @@ export function useWinPatchInstallWizard({
     const taskId = String(pickValue(task, ['id'], '')).trim()
 
     if (!taskId) {
-      throw new Error('创建安装任务失败，请稍后重试')
+      throw createPatchTaskError('patches.windows.createInstallFailed')
     }
 
     createdTask.value = task
@@ -697,8 +698,7 @@ export function useWinPatchInstallWizard({
         String(scriptConfig.content || '')
       )
     } catch (error) {
-      const actionLabel = scriptConfig.mode === 'upload' ? `${label}上传失败` : `${label}保存失败`
-      throw new Error(resolveApiErrorMessage(error, actionLabel))
+      throw createWinPatchError(error, scriptConfig.mode === 'upload' ? 'patches.windows.stepUploadFailed' : 'patches.windows.stepSaveFailed', () => ({ p0: label() }))
     }
   }
 
@@ -734,7 +734,7 @@ export function useWinPatchInstallWizard({
           return
         }
 
-        reject(error || new Error(`${actionLabel}失败`))
+        reject(error || createWinPatchError(null, 'patches.windows.operationFailed', () => ({ p0: actionLabel() })))
       }
 
       const evaluate = () => {
@@ -774,7 +774,7 @@ export function useWinPatchInstallWizard({
             failedStatuses.includes(taskStatus) ||
             ['FAILED', 'ERROR'].includes(stepStatus)
           ) {
-            finalize(false, new Error(taskErrorMessage.value || `${actionLabel}失败`))
+            finalize(false, createWinPatchError(taskErrorMessage.value ? new Error(taskErrorMessage.value) : null, 'patches.windows.operationFailed', () => ({ p0: actionLabel() })))
             return
           }
 
@@ -799,7 +799,7 @@ export function useWinPatchInstallWizard({
           failedStatuses.includes(taskStatus) ||
           failedStatuses.includes(rawTaskStatus)
         ) {
-          finalize(false, new Error(taskErrorMessage.value || `${actionLabel}失败`))
+          finalize(false, createWinPatchError(taskErrorMessage.value ? new Error(taskErrorMessage.value) : null, 'patches.windows.operationFailed', () => ({ p0: actionLabel() })))
           return
         }
       }
@@ -836,19 +836,19 @@ export function useWinPatchInstallWizard({
       ['RUNNING', 'IN_PROGRESS'].includes(currentStatus) ||
       (normalizedStepKey === 'RESTART' && ['RESTARTING', 'RESTART_RUNNING'].includes(rawTaskStatus))
     ) {
-      const stepLabel =
+      const stepLabel = () =>
         WIN_PATCH_INSTALL_PIPELINE_STEPS.find(item => item.key === stepKey)?.label || stepKey
       await waitForStepCompletion(stepKey, stepLabel)
       return
     }
 
     if (!currentTaskId.value) {
-      throw new Error('安装任务尚未创建，无法继续执行')
+      throw createPatchTaskError('patches.windows.installNotCreated')
     }
 
-    const stepLabel =
+    const stepLabel = () =>
       WIN_PATCH_INSTALL_PIPELINE_STEPS.find(item => item.key === stepKey)?.label || stepKey
-    const actionLabel = action === 'skip' ? `跳过${stepLabel}` : stepLabel
+    const actionLabel = () => action === 'skip' ? t('patches.windows.skipNamedStep', { p0: stepLabel() }) : stepLabel()
 
     try {
       const response =
@@ -878,7 +878,7 @@ export function useWinPatchInstallWizard({
       }
       await waitForStepCompletion(stepKey, actionLabel)
     } catch (error) {
-      throw new Error(resolveApiErrorMessage(error, `${actionLabel}失败`))
+      throw createWinPatchError(error, 'patches.windows.operationFailed', () => ({ p0: actionLabel() }))
     }
   }
 
@@ -895,10 +895,10 @@ export function useWinPatchInstallWizard({
     try {
       await ensureTaskCreated()
       if (!skippedSteps.value['pre-check']) {
-        await syncScriptConfig('pre-check', preScriptConfig.value, '预检查脚本')
+        await syncScriptConfig('pre-check', preScriptConfig.value, () => t('patches.windows.preCheckScript'))
       }
       if (!skippedSteps.value.validate) {
-        await syncScriptConfig('validate', validateScriptConfig.value, '校验脚本')
+        await syncScriptConfig('validate', validateScriptConfig.value, () => t('patches.linux.validationScript'))
       }
 
       await triggerTaskStep(
@@ -922,14 +922,14 @@ export function useWinPatchInstallWizard({
       await loadTaskRuntime({ silent: true })
 
       pipelineStatus.value = 'success'
-      ElMessage.success('Windows 补丁安装流程已完成')
+      ElMessage.success(t('patches.windows.installCompleted'))
 
       if (typeof onSuccess === 'function') {
         onSuccess(taskDetail.value || createdTask.value || null)
       }
     } catch (error) {
       pipelineStatus.value = 'failed'
-      taskErrorMessage.value = resolveApiErrorMessage(error, 'Windows 补丁安装流程执行失败')
+      taskErrorMessage.value = getWinPatchErrorFeedback(error, localMessage('patches.windows.installFailed'))
       ElMessage.error(taskErrorMessage.value)
     } finally {
       executionSubmitting.value = false
@@ -992,13 +992,13 @@ export function useWinPatchInstallWizard({
     activeStep.value += 1
   }
 
-  function openRunResult(runId, title = '') {
+  function openRunResult(runId, title = '', titleKey = '') {
     if (!runId) {
       return
     }
 
     currentRunId.value = runId
-    currentRunTitle.value = title || 'Windows 补丁任务'
+    currentRunTitle.value = getWinPatchRunTitle(titleKey, title || localMessage('patches.windows.windowsPatchTask'))
     showRunResultDialog.value = true
   }
 

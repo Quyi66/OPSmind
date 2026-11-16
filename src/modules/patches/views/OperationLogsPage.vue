@@ -3,51 +3,51 @@
     <!-- 操作记录 -->
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small" @submit.prevent>
-        <el-form-item label="时间范围">
+        <el-form-item :label="t('automation.records.timeRange')">
           <el-select v-model="dayFilter" style="width: 100px" @change="handleFilterChange">
-            <el-option label="今天" :value="1" />
-            <el-option label="近3天" :value="3" />
-            <el-option label="近7天" :value="7" />
-            <el-option label="近30天" :value="30" />
-            <el-option label="近一年" :value="365" />
+            <el-option :label="t('automation.workbench.today')" :value="1" />
+            <el-option :label="t('patches.linux.last3Days')" :value="3" />
+            <el-option :label="t('patches.linux.last7Days')" :value="7" />
+            <el-option :label="t('patches.linux.last30Days')" :value="30" />
+            <el-option :label="t('patches.logs.lastYear')" :value="365" />
           </el-select>
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item :label="t('common.status')">
           <el-select
             v-model="statusFilter"
-            placeholder="状态"
+            :placeholder="t('common.status')"
             style="width: 80px"
             clearable
             @change="handleFilterChange"
           >
-            <el-option label="全部" value="all" />
-            <el-option label="完成" value="COMPLETED" />
-            <el-option label="失败" value="FAILED" />
-            <el-option label="运行中" value="RUNNING" />
+            <el-option :label="t('common.all')" value="all" />
+            <el-option :label="t('execution.jobStatus.COMPLETED')" value="COMPLETED" />
+            <el-option :label="t('execution.taskStatus.failed')" value="FAILED" />
+            <el-option :label="t('execution.taskStatus.running')" value="RUNNING" />
           </el-select>
         </el-form-item>
-        <el-form-item label="操作类型">
+        <el-form-item :label="t('patches.logs.operationType')">
           <el-select
             v-model="actionFilter"
-            placeholder="操作类型"
+            :placeholder="t('patches.logs.operationType')"
             style="width: 150px"
             clearable
             @change="handleFilterChange"
           >
-            <el-option label="全部" value="all" />
-            <el-option label="补丁扫描" value="#{app_vap.menu.patch_scan.title}" />
-            <el-option label="补丁安装" value="补丁安装" />
-            <el-option label="补丁回滚" value="补丁回滚" />
-            <el-option label="Windows补丁扫描" value="Windows补丁扫描" />
-            <el-option label="Windows补丁安装" value="Windows补丁安装" />
-            <el-option label="Windows补丁回滚" value="Windows补丁回滚" />
-            <el-option label="定时导入补丁库" value="#{app_vap.menu.import_patch_library_time}" />
+            <el-option :label="t('common.all')" value="all" />
+            <el-option :label="t('patches.actions.scan')" value="#{app_vap.menu.patch_scan.title}" />
+            <el-option :label="t('patches.linux.patchInstall')" value="补丁安装" />
+            <el-option :label="t('patches.linux.patchRollback')" value="补丁回滚" />
+            <el-option :label="t('execution.tools.Fteqeo')" value="Windows补丁扫描" />
+            <el-option :label="t('execution.tools.EAsxlK')" value="Windows补丁安装" />
+            <el-option :label="t('execution.tools.HiuT3F')" value="Windows补丁回滚" />
+            <el-option :label="t('patches.linux.scheduledLibraryImport')" value="#{app_vap.menu.import_patch_library_time}" />
           </el-select>
         </el-form-item>
-        <el-form-item label="关键词">
+        <el-form-item :label="t('automation.workbench.keyword')">
           <el-input
             v-model="searchText"
-            placeholder="搜索"
+            :placeholder="t('common.search')"
             style="width: 250px"
             clearable
             @keyup.enter="handleFilterChange"
@@ -65,13 +65,13 @@
             <el-icon>
               <Search />
             </el-icon>
-            搜索
+            {{ t('common.search') }}
           </el-button>
           <el-button @click="handleReset">
             <el-icon>
               <RefreshRight />
             </el-icon>
-            重置
+            {{ t('common.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -85,7 +85,7 @@
         size="small"
         :loading="loading"
         @click="loadData"
-        title="刷新"
+        :title="t('common.refresh')"
       >
         <el-icon v-show="!loading">
           <Refresh />
@@ -94,26 +94,26 @@
     </div>
 
     <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
-      <el-button link type="primary" @click="loadData">重试</el-button>
+      <el-button link type="primary" @click="loadData">{{ t('common.retry') }}</el-button>
     </el-alert>
     <div class="ops-table-wrapper">
       <el-table
         v-loading="loading"
         :data="visibleRows"
         max-height="calc(100vh - 314px)"
-        :empty-text="loading ? '正在读取变更日志…' : loadError || '暂无符合条件的变更日志'"
+        :empty-text="loading ? t('patches.logs.loading') : loadError || t('patches.logs.noMatching')"
       >
-        <el-table-column prop="start_time" label="开始时间" width="180" sortable>
+        <el-table-column prop="start_time" :label="t('automation.workbench.startedAt')" width="180" sortable>
           <template #default="{ row }">
             {{ formatTimestamp(row.start_time) }}
           </template>
         </el-table-column>
-        <el-table-column prop="action" label="操作" width="160" show-overflow-tooltip>
+        <el-table-column prop="action" :label="t('common.actions')" width="160" show-overflow-tooltip>
           <template #default="{ row }">
             {{ translateAction(row.action) }}
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="110">
+        <el-table-column prop="status" :label="t('common.status')" width="110">
           <template #default="{ row }">
             <RunLogStatusTag
               :type="getStatusType(row.status)"
@@ -125,8 +125,8 @@
             </RunLogStatusTag>
           </template>
         </el-table-column>
-        <el-table-column prop="executor_node" label="执行节点" width="120" />
-        <el-table-column prop="target_hosts" label="目标节点" width="240">
+        <el-table-column prop="executor_node" :label="t('automation.records.executionNodes')" width="120" />
+        <el-table-column prop="target_hosts" :label="t('patches.logs.targetNodes')" width="240">
           <template #default="{ row }">
             <div v-if="row.target_hosts" class="host-tags-wrapper" @click="handleShowAllHosts(row)">
               <div class="host-tags">
@@ -157,27 +157,27 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="message" label="结果" min-width="300" show-overflow-tooltip>
+        <el-table-column prop="message" :label="t('patches.linux.result')" min-width="300" show-overflow-tooltip>
           <template #default="{ row }">
             {{ translateMessage(row.message) }}
           </template>
         </el-table-column>
-        <el-table-column prop="username" label="用户" width="100" sortable />
-        <el-table-column prop="end_time" label="结束时间" width="180" sortable>
+        <el-table-column prop="username" :label="t('common.user')" width="100" sortable />
+        <el-table-column prop="end_time" :label="t('automation.workbench.endedAt')" width="180" sortable>
           <template #default="{ row }">
             {{ formatTimestamp(row.end_time) }}
           </template>
         </el-table-column>
-        <el-table-column label="耗时" width="90">
+        <el-table-column :label="t('automation.workbench.duration')" width="90">
           <template #default="{ row }">
             {{ calculateDuration(row.start_time, row.end_time) }}
           </template>
         </el-table-column>
-        <el-table-column :width="actionColumnWidth" fixed="right" label="操作">
+        <el-table-column :width="actionColumnWidth" fixed="right" :label="t('common.actions')">
           <template #default="{ row }">
             <div class="action-buttons">
               <el-button text type="primary" size="small" @click="handleViewRunResult(row)">
-                详情
+                {{ t('automation.records.details') }}
               </el-button>
               <!-- <el-button
                   v-if="canShowWindowsScanReport(row)"
@@ -195,7 +195,7 @@
                 type="primary"
                 @click="handleScanReport(row)"
               >
-                扫描报告
+                {{ t('patches.linux.scanReport') }}
               </el-button>
               <el-button
                 v-if="canShowInstallReport(row)"
@@ -204,7 +204,7 @@
                 type="primary"
                 @click="handleInstallReport(row)"
               >
-                安装报告
+                {{ t('patches.linux.installReport') }}
               </el-button>
               <el-button
                 v-if="canShowRollbackReport(row)"
@@ -213,7 +213,7 @@
                 type="primary"
                 @click="handleRollbackReport(row)"
               >
-                回滚报告
+                {{ t('patches.linux.rollbackReport') }}
               </el-button>
             </div>
           </template>
@@ -257,9 +257,9 @@
     >
       <template #header>
         <div class="hosts-dialog-header">
-          <span class="hosts-dialog-title">目标节点</span>
+          <span class="hosts-dialog-title">{{ t('patches.logs.targetNodes') }}</span>
           <el-tag size="small" type="info" effect="light" round class="hosts-count-badge">
-            共 {{ hostsDialogList.length }} 台主机
+            {{ t('patches.linux.totalPrefix') }} {{ hostsDialogList.length }} {{ t('patches.windows.hostUnit') }}
           </el-tag>
         </div>
       </template>
@@ -268,7 +268,7 @@
         <div class="hosts-dialog-toolbar">
           <el-input
             v-model="hostSearchKey"
-            placeholder="搜索 IP 或主机名..."
+            :placeholder="t('patches.logs.searchNodes')"
             clearable
             size="default"
             :prefix-icon="Search"
@@ -281,7 +281,7 @@
             <el-tooltip
               v-for="(host, idx) in filteredHostsDialogList"
               :key="idx"
-              content="点击复制 IP"
+              :content="t('patches.logs.copyIp')"
               placement="top"
               :show-after="300"
             >
@@ -293,10 +293,10 @@
           </div>
           <el-empty
             v-else-if="hostsDialogList.length && !filteredHostsDialogList.length"
-            description="未找到匹配的目标节点"
+            :description="t('patches.logs.noMatchingNodes')"
             :image-size="70"
           />
-          <el-empty v-else description="暂无目标节点数据" :image-size="70" />
+          <el-empty v-else :description="t('patches.logs.noNodes')" :image-size="70" />
         </el-scrollbar>
       </div>
 
@@ -304,10 +304,10 @@
         <div class="hosts-dialog-footer">
           <span class="hosts-filter-info">
             <template v-if="hostSearchKey && hostsDialogList.length">
-              已筛选 {{ filteredHostsDialogList.length }} / 共 {{ hostsDialogList.length }} 项
+              {{ t('patches.logs.filtered') }} {{ filteredHostsDialogList.length }} {{ t('patches.logs.totalFragment') }} {{ hostsDialogList.length }} {{ t('patches.logs.items') }}
             </template>
           </span>
-          <el-button @click="hostsDialogVisible = false">关闭</el-button>
+          <el-button @click="hostsDialogVisible = false">{{ t('common.close') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -315,6 +315,10 @@
 </template>
 
 <script setup>
+import { createPatchTaskError } from '@/modules/patches/utils/patchTaskFeedback'
+import { message as localMessage, messageRef } from '@/core/i18n/feedback'
+
+import { t } from '@/core/i18n'
 import {
   ref,
   reactive,
@@ -339,7 +343,7 @@ import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
 
 // ========== 操作记录 ==========
 const loading = ref(false)
-const loadError = ref('')
+const loadError = messageRef('')
 const active = ref(true)
 let listRequest = 0
 let lastQueryKey = ''
@@ -371,7 +375,8 @@ const filters = reactive({
 // 运行结果对话框状态
 const runResultDialogVisible = ref(false)
 const selectedRunId = ref('')
-const selectedJobTitle = ref('')
+const selectedRunAction = ref('')
+const selectedJobTitle = computed(() => translateAction(selectedRunAction.value))
 
 const scanReportVisible = ref(false)
 const scanReportRunId = ref('')
@@ -419,11 +424,11 @@ function getStatusType(status) {
 
 function getStatusLabel(status) {
   const map = {
-    COMPLETED: '完成',
-    FAILED: '失败',
-    RUNNING: '运行中',
-    PENDING: '等待中',
-    ERROR: '错误'
+    COMPLETED: t('execution.jobStatus.COMPLETED'),
+    FAILED: t('execution.taskStatus.failed'),
+    RUNNING: t('execution.taskStatus.running'),
+    PENDING: t('execution.jobStatus.WAITING'),
+    ERROR: t('automation.flow.error')
   }
   return map[status] || status
 }
@@ -453,14 +458,14 @@ function translateAction(action) {
   if (translated === action && action.startsWith('#{')) {
     // 硬编码的常用翻译映射
     const staticMap = {
-      '#{app_vap.menu.patch_scan.title}': '补丁扫描',
-      '#{app_vap.menu.patch_install.title}': '补丁安装',
-      '#{app_vap.menu.patch_rollback.title}': '补丁回滚',
-      '#{app_vap.menu.win_patch_scan.title}': 'Windows漏洞扫描',
-      '#{app_vap.menu.import_patch_library_time}': '定时导入补丁库',
-      '#{app_vap.menu.import_patch_library.title}': '导入补丁库',
-      '#{app_vap.common.tab.repo_list_scan}': 'YUM源列表扫描',
-      '#{app_vap.common.tab.custom_repo}': '自定义YUM源'
+      '#{app_vap.menu.patch_scan.title}': t('patches.actions.scan'),
+      '#{app_vap.menu.patch_install.title}': t('patches.linux.patchInstall'),
+      '#{app_vap.menu.patch_rollback.title}': t('patches.linux.patchRollback'),
+      '#{app_vap.menu.win_patch_scan.title}': t('patches.linux.windowsScan'),
+      '#{app_vap.menu.import_patch_library_time}': t('patches.linux.scheduledLibraryImport'),
+      '#{app_vap.menu.import_patch_library.title}': t('patches.linux.libraryImport'),
+      '#{app_vap.common.tab.repo_list_scan}': t('patches.linux.yumScan'),
+      '#{app_vap.common.tab.custom_repo}': t('patches.linux.customYum')
     }
 
     if (staticMap[action]) {
@@ -519,9 +524,9 @@ async function copyToClipboard(text) {
 async function handleCopyHost(host) {
   const success = await copyToClipboard(host)
   if (success) {
-    ElMessage.success(`已复制 IP: ${host}`)
+    ElMessage.success(t('patches.logs.ipCopied', { p0: host }))
   } else {
-    ElMessage.error('复制失败')
+    ElMessage.error(t('automation.file.copyFailed'))
   }
 }
 
@@ -581,9 +586,9 @@ async function loadData() {
     pagination.total = response?.total || 0
   } catch (error) {
     if (!isCurrent()) return
-    loadError.value = '加载变更日志失败，请重试'
+    loadError.value = localMessage('patches.logs.loadRetry')
     console.error('Failed to load logs:', error)
-    ElMessage.error('加载数据失败')
+    ElMessage.error(t('patches.logs.loadFailed'))
   } finally {
     if (isCurrent()) loading.value = false
   }
@@ -642,11 +647,11 @@ function handleSizeChange(size) {
 // 查看运行结果
 function handleViewRunResult(row) {
   if (!row.run_id) {
-    ElMessage.warning('无运行记录')
+    ElMessage.warning(t('patches.linux.noRun'))
     return
   }
   selectedRunId.value = row.run_id
-  selectedJobTitle.value = translateAction(row.action)
+  selectedRunAction.value = row.action
   runResultDialogVisible.value = true
 }
 
@@ -654,7 +659,7 @@ function isPatchScan(row) {
   return (
     row?.action === ACTION_KEYS.patchScan ||
     row?.action === '补丁扫描' ||
-    translateAction(row?.action) === '补丁扫描'
+    translateText(row?.action, 'zh-CN') === '补丁扫描'
   )
 }
 
@@ -662,7 +667,7 @@ function isWindowsScan(row) {
   return (
     row?.action === ACTION_KEYS.winPatchScan ||
     row?.action === 'Windows漏洞扫描' ||
-    translateAction(row?.action) === 'Windows漏洞扫描'
+    translateText(row?.action, 'zh-CN') === 'Windows漏洞扫描'
   )
 }
 
@@ -671,7 +676,7 @@ function isPatchInstall(row) {
     row?.action === ACTION_KEYS.patchInstall ||
     row?.action === '补丁安装' ||
     row?.action === 'Windows补丁安装' ||
-    translateAction(row?.action) === '补丁安装'
+    translateText(row?.action, 'zh-CN') === '补丁安装'
   )
 }
 
@@ -681,8 +686,8 @@ function isPatchRollback(row) {
     row?.action === '补丁回滚' ||
     row?.action === 'Windows补丁回滚' ||
     row?.action === '补丁回退' ||
-    translateAction(row?.action) === '补丁回滚' ||
-    translateAction(row?.action) === '补丁回退'
+    translateText(row?.action, 'zh-CN') === '补丁回滚' ||
+    translateText(row?.action, 'zh-CN') === '补丁回退'
   )
 }
 
@@ -772,7 +777,7 @@ async function downloadFromUri(downloadUri, filename) {
   })
   const blob = response?.data || response
   if (!blob) {
-    throw new Error('下载文件失败')
+    throw createPatchTaskError('patches.linux.downloadFailed')
   }
   const objectUrl = window.URL.createObjectURL(blob)
   const link = document.createElement('a')
@@ -786,24 +791,24 @@ async function downloadFromUri(downloadUri, filename) {
 
 async function downloadReport(row, dir, extension) {
   if (!row.run_id) {
-    ElMessage.warning('无运行记录')
+    ElMessage.warning(t('patches.linux.noRun'))
     return
   }
   try {
     const filePath = await fetchReportPath(row.run_id, dir)
     if (!filePath) {
-      throw new Error('未找到报告文件')
+      throw createPatchTaskError('patches.linux.reportMissing')
     }
     const filename = `${dir}_${formatFilenameTimestamp(row.start_time)}.${extension}`
     downloadFile('staticfs', null, `SECOPS_EXPORT_DATA/${dir}/${filePath}`, filename)
   } catch (error) {
-    ElMessage.error(`下载报告失败: ${error.message || '未知错误'}`)
+    ElMessage.error(t('patches.logs.reportDownloadFailed', { p0: error.message || t('patches.linux.unknownError') }))
   }
 }
 
 function handleWindowsScanReport(row) {
   if (!row.run_id) {
-    ElMessage.warning('无运行记录')
+    ElMessage.warning(t('patches.linux.noRun'))
     return
   }
   winScanReportRunId.value = row.run_id
@@ -812,7 +817,7 @@ function handleWindowsScanReport(row) {
 
 function handleScanReport(row) {
   if (!row.run_id) {
-    ElMessage.warning('无运行记录')
+    ElMessage.warning(t('patches.linux.noRun'))
     return
   }
   scanReportRunId.value = row.run_id
@@ -829,7 +834,7 @@ function handleRollbackReport(row) {
 
 async function downloadInstallReport(row) {
   if (!row.run_id) {
-    ElMessage.warning('无运行记录')
+    ElMessage.warning(t('patches.linux.noRun'))
     return
   }
   try {
@@ -837,21 +842,21 @@ async function downloadInstallReport(row) {
     const reportPath = buildReportPath('patch_install', filePath)
     const fileInfo = await fetchReportFileInfo(reportPath)
     if (fileInfo?.detail) {
-      throw new Error(fileInfo.message || '未找到报告文件')
+      throw new Error(fileInfo.message || t('patches.linux.reportMissing'))
     }
     const downloadUri = fileInfo?.fileContent?.downloadUri || fileInfo?.downloadUri
     const filename = resolveDownloadFilename(fileInfo, 'patch_install', row.start_time, filePath)
     if (!downloadUri) {
-      throw new Error('未找到下载地址')
+      throw createPatchTaskError('patches.linux.downloadUrlMissing')
     }
     await downloadFromUri(`${downloadUri}?cacheBuster=${Date.now()}`, filename)
   } catch (error) {
-    ElMessage.error(`下载安装报告失败: ${error.message || '未知错误'}`)
+    ElMessage.error(t('patches.logs.installReportFailed', { p0: error.message || t('patches.linux.unknownError') }))
   }
 }
 
 function buildReportPath(dir, filePath) {
-  if (!filePath) throw new Error('未找到报告文件')
+  if (!filePath) throw createPatchTaskError('patches.linux.reportMissing')
   const normalized = filePath.startsWith(`${dir}/`)
     ? `SECOPS_EXPORT_DATA/${filePath}`
     : `SECOPS_EXPORT_DATA/${dir}/${filePath}`
@@ -866,7 +871,7 @@ function resolveDownloadFilename(fileInfo, fallbackBase, timestamp, filePath) {
 
 async function downloadRollbackReport(row) {
   if (!row.run_id) {
-    ElMessage.warning('无运行记录')
+    ElMessage.warning(t('patches.linux.noRun'))
     return
   }
   try {
@@ -874,16 +879,16 @@ async function downloadRollbackReport(row) {
     const reportPath = buildReportPath('patch_rollback', filePath)
     const fileInfo = await fetchReportFileInfo(reportPath)
     if (fileInfo?.detail) {
-      throw new Error(fileInfo.message || '未找到报告文件')
+      throw new Error(fileInfo.message || t('patches.linux.reportMissing'))
     }
     const downloadUri = fileInfo?.fileContent?.downloadUri || fileInfo?.downloadUri
     if (!downloadUri) {
-      throw new Error('未找到下载地址')
+      throw createPatchTaskError('patches.linux.downloadUrlMissing')
     }
     const filename = resolveDownloadFilename(fileInfo, 'patch_rollback', row.start_time, filePath)
     await downloadFromUri(`${downloadUri}?cacheBuster=${Date.now()}`, filename)
   } catch (error) {
-    ElMessage.error(`下载回滚报告失败: ${error.message || '未知错误'}`)
+    ElMessage.error(t('patches.logs.rollbackReportFailed', { p0: error.message || t('patches.linux.unknownError') }))
   }
 }
 
@@ -894,7 +899,7 @@ onMounted(() => {
 function invalidateListRead() {
   active.value = false
   listRequest += 1
-  if (loading.value) loadError.value = '变更日志读取已中断，请刷新重试'
+  if (loading.value) loadError.value = localMessage('patches.logs.interrupted')
   loading.value = false
   runResultDialogVisible.value = false
   scanReportVisible.value = false

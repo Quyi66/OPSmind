@@ -3,7 +3,7 @@
     <div v-if="showBreadcrumb" class="ops-breadcrumb-bar">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item>
-          <a @click.prevent="goBack">Windows KB 知识库</a>
+          <a @click.prevent="goBack">{{ t('patches.windows.kbLibrary') }}</a>
         </el-breadcrumb-item>
         <el-breadcrumb-item>{{ kbNumber }}</el-breadcrumb-item>
       </el-breadcrumb>
@@ -13,7 +13,7 @@
 
     <div v-else-if="detail" class="win-kb-detail__content">
       <el-tabs v-model="activeTab" class="ops-tabs">
-        <el-tab-pane name="basic" label="基本信息">
+        <el-tab-pane name="basic" :label="t('automation.file.baseInfo')">
           <div class="win-kb-detail__scroll">
             <div class="win-kb-card win-kb-card--header">
               <div class="win-kb-detail__title-row">
@@ -30,10 +30,10 @@
             </div>
 
             <div class="win-kb-card">
-              <div class="win-kb-card__title">基本信息</div>
+              <div class="win-kb-card__title">{{ t('automation.file.baseInfo') }}</div>
               <div class="win-kb-detail-grid">
                 <div class="win-kb-detail-cell">
-                  <span>KB 编号</span>
+                  <span>{{ t('patches.windows.kbId') }}</span>
                   <strong>
                     <a
                       v-if="currentKbExternalUrl"
@@ -41,7 +41,7 @@
                       target="_blank"
                       rel="noopener noreferrer"
                       class="win-kb-external-link"
-                      title="打开 Microsoft Support"
+                      :title="t('patches.windows.openMicrosoftSupport')"
                     >
                       {{ detail.kbNumber || kbNumber }}
                     </a>
@@ -49,7 +49,7 @@
                   </strong>
                 </div>
                 <div class="win-kb-detail-cell">
-                  <span>严重等级</span>
+                  <span>{{ t('patches.cve.severity') }}</span>
                   <strong>
                     <el-tag
                       :type="getSeverityType(detail.msrcSeverity)"
@@ -62,30 +62,30 @@
                   </strong>
                 </div>
                 <div class="win-kb-detail-cell">
-                  <span>分类</span>
+                  <span>{{ t('patches.windows.classification') }}</span>
                   <strong>{{ detail.classification || '-' }}</strong>
                 </div>
                 <div class="win-kb-detail-cell">
-                  <span>发布日期</span>
+                  <span>{{ t('patches.catalog.publishDate') }}</span>
                   <strong>{{ formatDate(detail.publishDate) }}</strong>
                 </div>
                 <div class="win-kb-detail-cell">
-                  <span>大小</span>
+                  <span>{{ t('automation.library.size') }}</span>
                   <strong>{{ formatBytes(detail.sizeBytes) }}</strong>
                 </div>
                 <div class="win-kb-detail-cell">
-                  <span>关联漏洞</span>
+                  <span>{{ t('patches.catalog.associatedVulnerabilities') }}</span>
                   <strong>{{ detail.totalCves ?? cves.length }}</strong>
                 </div>
                 <div class="win-kb-detail-cell win-kb-detail-cell--wide">
-                  <span>产品</span>
+                  <span>{{ t('patches.windows.product') }}</span>
                   <strong>{{ detail.products || '-' }}</strong>
                 </div>
               </div>
             </div>
 
             <div class="win-kb-card">
-              <div class="win-kb-card__title">描述</div>
+              <div class="win-kb-card__title">{{ t('automation.job.description') }}</div>
               <div
                 class="win-kb-detail__description"
                 v-html="renderDescription(detail.description)"
@@ -93,13 +93,13 @@
             </div>
 
             <div class="win-kb-card win-kb-card--relations">
-              <div class="win-kb-card__title">补丁取代关系</div>
+              <div class="win-kb-card__title">{{ t('patches.windows.supersedence') }}</div>
               <div class="win-kb-relation-grid">
                 <div class="win-kb-relation-panel">
-                  <div class="win-kb-relation-title">取代此补丁的更新</div>
+                  <div class="win-kb-relation-title">{{ t('patches.windows.supersedingUpdates') }}</div>
                   <el-empty
                     v-if="supersededBy.length === 0"
-                    description="当前知识库未发现取代此补丁的更新"
+                    :description="t('patches.windows.noSupersedingUpdates')"
                     :image-size="56"
                   />
                   <div v-else class="win-kb-relation-list">
@@ -118,8 +118,8 @@
                   </div>
                 </div>
                 <div class="win-kb-relation-panel">
-                  <div class="win-kb-relation-title">此补丁取代的历史更新</div>
-                  <el-empty v-if="supersedes.length === 0" description="无" :image-size="56" />
+                  <div class="win-kb-relation-title">{{ t('patches.windows.supersededUpdates') }}</div>
+                  <el-empty v-if="supersedes.length === 0" :description="t('patches.linux.none')" :image-size="56" />
                   <div v-else class="win-kb-relation-list">
                     <div
                       v-for="item in supersedes"
@@ -139,7 +139,7 @@
 
               <div class="win-kb-chain" v-if="supersedesChain.length">
                 <div class="win-kb-chain__header">
-                  <span class="win-kb-chain__label">主要历史替代链</span>
+                  <span class="win-kb-chain__label">{{ t('patches.windows.supersedenceChain') }}</span>
                 </div>
                 <div class="win-kb-chain__flow">
                   <template v-for="(item, index) in supersedesChain" :key="`${item}-${index}`">
@@ -147,7 +147,7 @@
                       <span class="win-kb-chain__node-kb">
                         {{ normalizeKbNumber(item) || item }}
                       </span>
-                      <span v-if="isCurrentKb(item)" class="win-kb-chain__current">当前</span>
+                      <span v-if="isCurrentKb(item)" class="win-kb-chain__current">{{ t('automation.flow.current') }}</span>
                     </span>
                     <span v-if="index < supersedesChain.length - 1" class="win-kb-chain__arrow">
                       →
@@ -161,17 +161,17 @@
 
         <el-tab-pane name="cves">
           <template #label>
-            关联漏洞
+            {{ t('patches.catalog.associatedVulnerabilities') }}
             <span class="ops-tab-count" v-if="cves.length">{{ cves.length }}</span>
           </template>
           <div class="win-kb-table-pane">
             <el-table :data="cves" height="100%">
-              <el-table-column prop="cveId" label="漏洞编号" width="180">
+              <el-table-column prop="cveId" :label="t('patches.linux.vulnId')" width="180">
                 <template #default="{ row }">
                   <CveLinkList :cves="[row.cveId]" :url-resolver="getCveUrl" />
                 </template>
               </el-table-column>
-              <el-table-column label="严重等级" width="110">
+              <el-table-column :label="t('patches.cve.severity')" width="110">
                 <template #default="{ row }">
                   <el-tag
                     :type="getSeverityType(row.severity)"
@@ -185,15 +185,15 @@
               <el-table-column label="CVSS" width="90">
                 <template #default="{ row }">
                   {{
-                    formatCvssScore(row.cvss3Score) === '未评分'
+                    toKnownNumber(row.cvss3Score, { max: 10 }) === null
                       ? '-'
                       : formatCvssScore(row.cvss3Score)
                   }}
                 </template>
               </el-table-column>
-              <el-table-column prop="title" label="标题" min-width="220" show-overflow-tooltip />
-              <el-table-column prop="products" label="产品" min-width="220" show-overflow-tooltip />
-              <el-table-column label="发布日期" width="200">
+              <el-table-column prop="title" :label="t('automation.job.title')" min-width="220" show-overflow-tooltip />
+              <el-table-column prop="products" :label="t('patches.windows.product')" min-width="220" show-overflow-tooltip />
+              <el-table-column :label="t('patches.catalog.publishDate')" width="200">
                 <template #default="{ row }">{{ formatDateTime(row.publicDate) }}</template>
               </el-table-column>
             </el-table>
@@ -202,33 +202,33 @@
 
         <el-tab-pane name="hosts">
           <template #label>
-            受影响主机
+            {{ t('patches.linux.affectedHostsTitle') }}
             <span class="ops-tab-count" v-if="affectedHostsTotal">{{ affectedHostsTotal }}</span>
           </template>
           <div class="win-kb-table-pane">
             <div class="win-kb-host-summary">
-              <el-tag type="danger" effect="plain">待修复 {{ missingHosts }}</el-tag>
-              <el-tag effect="plain">总计 {{ affectedHostsTotal }}</el-tag>
+              <el-tag type="danger" effect="plain">{{ t('patches.windows.pendingRepair') }} {{ missingHosts }}</el-tag>
+              <el-tag effect="plain">{{ t('patches.linux.total') }} {{ affectedHostsTotal }}</el-tag>
             </div>
             <el-table :data="affectedHosts" height="100%" v-loading="hostsLoading">
-              <el-table-column label="主机标识" width="160" show-overflow-tooltip>
+              <el-table-column :label="t('patches.cve.hostIdentity')" width="160" show-overflow-tooltip>
                 <template #default="{ row }">
                   {{ pickValue(row, ['hostKey', 'host_key', 'hostId', 'host_id'], '-') }}
                 </template>
               </el-table-column>
-              <el-table-column label="系统" min-width="220" show-overflow-tooltip>
+              <el-table-column :label="t('patches.cve.system')" min-width="220" show-overflow-tooltip>
                 <template #default="{ row }">
                   {{ getHostOsDisplay(row) }}
                 </template>
               </el-table-column>
-              <el-table-column label="状态" width="130">
+              <el-table-column :label="t('common.status')" width="130">
                 <template #default="{ row }">
                   <el-tag :type="getPatchStatusTagType(row)" size="small">
                     {{ row.patchStatusLabel || getPatchStatusLabel(row) }}
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="扫描时间" width="180">
+              <el-table-column :label="t('patches.linux.scanTime')" width="180">
                 <template #default="{ row }">{{ formatDateTime(row.scanDate) }}</template>
               </el-table-column>
             </el-table>
@@ -237,16 +237,17 @@
       </el-tabs>
     </div>
 
-    <el-empty v-else description="无法获取 KB 详情">
-      <el-button v-if="showBreadcrumb" type="primary" @click="goBack">返回列表</el-button>
+    <el-empty v-else :description="t('patches.windows.kbUnavailable')">
+      <el-button v-if="showBreadcrumb" type="primary" @click="goBack">{{ t('automation.library.backToList') }}</el-button>
     </el-empty>
   </div>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { computed, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { formatCvssScore } from '@/utils/workspacePresentation'
+import { formatCvssScore, toKnownNumber } from '@/utils/workspacePresentation'
 import { winKbApi } from '../../../api'
 import CveLinkList from '../../../components/common/CveLinkList.vue'
 import {
@@ -477,7 +478,7 @@ function escapeHtml(value) {
 
 function renderDescription(value) {
   const content = String(value || '').trim()
-  if (!content) return '<p>暂无描述信息。</p>'
+  if (!content) return t('patches.windows.noDescriptionHtml')
   return `<p>${escapeHtml(content).replace(/\n/g, '<br>')}</p>`
 }
 
@@ -519,7 +520,7 @@ async function loadDetail() {
     await loadAffectedHosts()
   } catch (error) {
     console.error('Failed to load Windows KB detail:', error)
-    ElMessage.error(error?.response?.data?.error || '加载 KB 详情失败')
+    ElMessage.error(error?.response?.data?.error || t('patches.windows.kbLoadFailed'))
     detail.value = null
   } finally {
     loading.value = false

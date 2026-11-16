@@ -1,5 +1,6 @@
 import { apiService } from '@/core/api'
 import { patchInstallApi } from '../api'
+import { createPatchTaskError } from '../utils/patchTaskFeedback'
 
 const WIN_PATCH_API_PREFIX = '/secops/api/secops/win-patch'
 const WIN_PATCH_ACTION_API_PREFIX = '/secops/api/secops/win/patch'
@@ -125,6 +126,7 @@ export const winPatchApi = {
     }
 
     if (stepKey === 'RESTART') {
+      // This Chinese confirmation token belongs to the backend protocol.
       const confirmText = String(options.confirmText || '确认重启').trim() || '确认重启'
       return patchInstallApi
         .confirmRestart(taskId, true, confirmText)
@@ -135,7 +137,7 @@ export const winPatchApi = {
       return patchInstallApi.executeValidate(taskId)
     }
 
-    throw new Error(`不支持执行当前步骤：${stepKey || taskType || 'UNKNOWN'}`)
+    throw createPatchTaskError('patches.windows.unsupportedStep', { step: stepKey || taskType || 'UNKNOWN' })
   },
 
   skipTaskStep(taskId, task = null, options = {}) {
@@ -153,7 +155,7 @@ export const winPatchApi = {
       return patchInstallApi.skipValidate(taskId)
     }
 
-    throw new Error(`当前步骤不支持跳过：${stepKey || 'UNKNOWN'}`)
+    throw createPatchTaskError('patches.windows.unsupportedSkip', { step: stepKey || 'UNKNOWN' })
   },
 
   getHosts(params = {}) {

@@ -3,37 +3,37 @@
     <div class="task-step-editor">
       <div class="task-step-editor__title">
         <i class="fa fa-refresh" style="margin-right: 6px"></i>
-        {{ title }}
+        {{ displayProps.title }}
       </div>
       <el-alert
-        :title="alertTitle"
+        :title="displayProps.alertTitle"
         type="info"
         show-icon
         :closable="false"
         style="margin-bottom: 16px; line-height: 1.4; width: 100%"
       >
         <template #default>
-          {{ alertDescription }}
+          {{ displayProps.alertDescription }}
         </template>
       </el-alert>
 
       <div class="install-summary-card">
         <div class="install-summary-row">
-          <div class="install-summary-label">自动重启</div>
+          <div class="install-summary-label">{{ t('patches.windows.autoRestart') }}</div>
           <div class="install-summary-value win-patch-restart-step__summary-value">
-            <span class="win-patch-restart-step__summary-text">{{ rebootHint }}</span>
+            <span class="win-patch-restart-step__summary-text">{{ displayProps.rebootHint }}</span>
             <template v-if="confirmMode">
               <div class="win-patch-restart-step__confirm">
                 <div class="win-patch-restart-step__confirm-label">
-                  请输入
+                  {{ t('automation.flow.enterValue') }}
                   <span class="win-patch-restart-step__confirm-keyword">
-                    {{ rebootConfirmKeyword }}
+                    {{ displayProps.rebootConfirmKeyword }}
                   </span>
-                  进行确认
+                  {{ t('patches.windows.confirmSuffix') }}
                 </div>
                 <el-input
                   :model-value="rebootConfirmText"
-                  :placeholder="rebootConfirmKeyword"
+                  :placeholder="displayProps.rebootConfirmKeyword"
                   clearable
                   style="width: 320px"
                   @update:model-value="value => updateConfirmField('reboot', value)"
@@ -48,21 +48,21 @@
           </div>
         </div>
         <div class="install-summary-row">
-          <div class="install-summary-label">自动重扫</div>
+          <div class="install-summary-label">{{ t('patches.windows.autoRescan') }}</div>
           <div class="install-summary-value win-patch-restart-step__summary-value">
-            <span class="win-patch-restart-step__summary-text">{{ rescanHint }}</span>
+            <span class="win-patch-restart-step__summary-text">{{ displayProps.rescanHint }}</span>
             <template v-if="confirmMode">
               <div class="win-patch-restart-step__confirm">
                 <div class="win-patch-restart-step__confirm-label">
-                  请输入
+                  {{ t('automation.flow.enterValue') }}
                   <span class="win-patch-restart-step__confirm-keyword">
-                    {{ rescanConfirmKeyword }}
+                    {{ displayProps.rescanConfirmKeyword }}
                   </span>
-                  进行确认
+                  {{ t('patches.windows.confirmSuffix') }}
                 </div>
                 <el-input
                   :model-value="rescanConfirmText"
-                  :placeholder="rescanConfirmKeyword"
+                  :placeholder="displayProps.rescanConfirmKeyword"
                   clearable
                   style="width: 320px"
                   @update:model-value="value => updateConfirmField('rescanAfter', value)"
@@ -82,7 +82,8 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { t } from '@/core/i18n'
+import { computed, reactive, ref, watch } from 'vue'
 
 const props = defineProps({
   modelValue: {
@@ -94,23 +95,23 @@ const props = defineProps({
   },
   title: {
     type: String,
-    default: '重启与重扫策略'
+    default: undefined
   },
   alertTitle: {
     type: String,
-    default: '这里统一配置安装任务中的重启与自动重扫策略。'
+    default: undefined
   },
   alertDescription: {
     type: String,
-    default: '当前向导会在校验脚本之后展示这一页，未启用的项会在任务推进时自动跳过。'
+    default: undefined
   },
   rebootHint: {
     type: String,
-    default: '启用后，任务进入重启环节时会继续执行主机重启。'
+    default: undefined
   },
   rescanHint: {
     type: String,
-    default: '启用后，任务收尾阶段会自动刷新当前主机的补丁状态。'
+    default: undefined
   },
   confirmMode: {
     type: Boolean,
@@ -118,13 +119,49 @@ const props = defineProps({
   },
   rebootConfirmKeyword: {
     type: String,
-    default: '确认重启'
+    default: undefined
   },
   rescanConfirmKeyword: {
     type: String,
-    default: '确认重扫'
+    default: undefined
   }
 })
+
+const displayProps = reactive({
+  get title() { return props.title ?? t('patches.windows.restartRescanStrategy') },
+  get alertTitle() { return props.alertTitle ?? t('patches.windows.installRestartHint') },
+  get alertDescription() { return props.alertDescription ?? t('patches.windows.restartStepHint') },
+  get rebootHint() { return props.rebootHint ?? t('patches.windows.rebootHint') },
+  get rescanHint() { return props.rescanHint ?? t('patches.windows.rescanHint') },
+  get rebootConfirmKeyword() { return props.rebootConfirmKeyword ?? t('patches.linux.confirmRestart') },
+  get rescanConfirmKeyword() { return props.rescanConfirmKeyword ?? t('patches.windows.confirmRescan') }
+})
+
+const shownKeywords = { reboot: new Set(), rescanAfter: new Set() }
+// Language changes retain the phrases shown for this configuration. A caller's
+// explicit keyword change starts a new configuration for that field.
+watch(
+  () => [props.rebootConfirmKeyword, props.rescanConfirmKeyword],
+  ([reboot, rescan], [previousReboot, previousRescan]) => {
+    if (reboot !== previousReboot) {
+      shownKeywords.reboot.clear()
+      shownKeywords.reboot.add(displayProps.rebootConfirmKeyword)
+    }
+    if (rescan !== previousRescan) {
+      shownKeywords.rescanAfter.clear()
+      shownKeywords.rescanAfter.add(displayProps.rescanConfirmKeyword)
+    }
+  },
+  { flush: 'sync' }
+)
+watch(
+  () => [displayProps.rebootConfirmKeyword, displayProps.rescanConfirmKeyword],
+  ([reboot, rescan]) => {
+    shownKeywords.reboot.add(reboot)
+    shownKeywords.rescanAfter.add(rescan)
+  },
+  { immediate: true, flush: 'sync' }
+)
 
 const emit = defineEmits(['update:modelValue'])
 
@@ -137,19 +174,19 @@ const resolvedValue = computed(() => ({
 }))
 
 watch(
-  () => [props.confirmMode, props.modelValue?.reboot, props.modelValue?.rescanAfter],
+  () => [props.confirmMode, props.modelValue?.reboot, props.modelValue?.rescanAfter, displayProps.rebootConfirmKeyword, displayProps.rescanConfirmKeyword],
   () => {
     if (!props.confirmMode) return
 
     if (resolvedValue.value.reboot) {
-      rebootConfirmText.value = props.rebootConfirmKeyword
-    } else if (rebootConfirmText.value === props.rebootConfirmKeyword) {
+      rebootConfirmText.value = displayProps.rebootConfirmKeyword
+    } else if (rebootConfirmText.value === displayProps.rebootConfirmKeyword) {
       rebootConfirmText.value = ''
     }
 
     if (resolvedValue.value.rescanAfter) {
-      rescanConfirmText.value = props.rescanConfirmKeyword
-    } else if (rescanConfirmText.value === props.rescanConfirmKeyword) {
+      rescanConfirmText.value = displayProps.rescanConfirmKeyword
+    } else if (rescanConfirmText.value === displayProps.rescanConfirmKeyword) {
       rescanConfirmText.value = ''
     }
   },
@@ -165,11 +202,11 @@ function updateField(field, value) {
 
 function updateConfirmField(field, value) {
   const text = String(value || '')
-  const keyword = field === 'reboot' ? props.rebootConfirmKeyword : props.rescanConfirmKeyword
+  const keyword = field === 'reboot' ? displayProps.rebootConfirmKeyword : displayProps.rescanConfirmKeyword
   const textRef = field === 'reboot' ? rebootConfirmText : rescanConfirmText
   textRef.value = text
 
-  if (text === keyword) {
+  if (text && (text === keyword || shownKeywords[field].has(text))) {
     if (!resolvedValue.value[field]) {
       updateField(field, true)
     }

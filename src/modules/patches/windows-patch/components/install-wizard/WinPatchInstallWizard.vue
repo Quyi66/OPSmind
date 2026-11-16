@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visibleModel"
-    title="补丁安装向导"
+    :title="t('patches.linux.installWizard')"
     width="1000px"
     destroy-on-close
     append-to-body
@@ -27,9 +27,9 @@
     <WinPatchInstallWizardScriptStep
       v-show="currentStepKey === 'pre-check'"
       :model-value="preScriptConfig"
-      title="预检查脚本"
-      description="支持手动编辑或上传 PowerShell 脚本。未配置时，预检查步骤会在执行流程中自动跳过。"
-      placeholder="例如：Write-Host 'pre check'"
+      :title="t('patches.windows.preCheckScript')" run-title-key="pre-check"
+      :description="t('patches.windows.installPreScriptHint')"
+      :placeholder="t('patches.windows.preScriptExample')"
       :disabled="Boolean(currentTaskId) || dialogBusy"
       :status="pipelineItemMap.PRE_CHECK?.uiStatus || 'idle'"
       :run-id="pipelineItemMap.PRE_CHECK?.runId || ''"
@@ -41,9 +41,9 @@
     <WinPatchInstallWizardScriptStep
       v-show="currentStepKey === 'validate'"
       :model-value="validateScriptConfig"
-      title="校验脚本"
-      description="用于确认补丁安装效果。支持手动编辑或上传 PowerShell 脚本，未配置时会在执行流程中自动跳过。"
-      placeholder="例如：Get-HotFix | Where-Object { $_.HotFixID -eq 'KB5031364' }"
+      :title="t('patches.linux.validationScript')" run-title-key="validate"
+      :description="t('patches.windows.installValidateScriptHint')"
+      :placeholder="t('patches.windows.validateScriptExample')"
       :disabled="Boolean(currentTaskId) || dialogBusy"
       :status="pipelineItemMap.VALIDATE?.uiStatus || 'idle'"
       :run-id="pipelineItemMap.VALIDATE?.runId || ''"
@@ -79,14 +79,14 @@
     <template #footer>
       <div class="dialog-footer win-patch-install-wizard__footer">
         <!-- <el-button v-if="!dialogBusy && pipelineStatus === 'idle'" @click="visibleModel = false">取消</el-button> -->
-        <el-button v-if="canGoBack" @click="goBack">上一步</el-button>
+        <el-button v-if="canGoBack" @click="goBack">{{ t('patches.linux.previousStep') }}</el-button>
 
         <el-button
           v-if="currentStepKey !== 'execute' && currentStepSkippable"
           :disabled="dialogBusy || Boolean(currentTaskId)"
           @click="skipCurrentStep"
         >
-          跳过此步
+          {{ t('patches.linux.skipStep') }}
         </el-button>
 
         <el-button
@@ -95,10 +95,10 @@
           :disabled="!canGoNext"
           @click="goNext"
         >
-          下一步
+          {{ t('patches.linux.nextStep') }}
         </el-button>
 
-        <el-button v-else-if="dialogBusy" type="primary" loading disabled>执行中...</el-button>
+        <el-button v-else-if="dialogBusy" type="primary" loading disabled>{{ t('patches.linux.executingEllipsis') }}</el-button>
 
         <el-button
           v-else
@@ -122,6 +122,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { computed, toRef } from 'vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import WinPatchInstallWizardExecuteStep from './WinPatchInstallWizardExecuteStep.vue'
@@ -198,9 +199,9 @@ const {
 })
 
 const primaryButtonText = computed(() => {
-  if (pipelineStatus.value === 'success') return '完成'
-  if (pipelineStatus.value === 'failed') return '关闭'
-  return '开始执行安装'
+  if (pipelineStatus.value === 'success') return t('execution.jobStatus.COMPLETED')
+  if (pipelineStatus.value === 'failed') return t('common.close')
+  return t('patches.windows.startInstallation')
 })
 
 async function handlePrimaryAction() {

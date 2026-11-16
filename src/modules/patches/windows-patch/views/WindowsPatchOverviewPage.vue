@@ -2,20 +2,20 @@
   <div class="ops-page-layout win-patch-page">
     <div class="ops-filter-bar">
       <el-form :model="filters" :inline="true" size="small" @submit.prevent>
-        <el-form-item label="主机">
+        <el-form-item :label="t('execution.ui.host')">
           <el-input
             v-model="filters.hostKeyword"
-            placeholder="主机地址或主机 ID"
+            :placeholder="t('patches.windows.hostAddressId')"
             clearable
             style="width: 190px"
             @keyup.enter="handleSearch"
             @clear="handleSearch"
           />
         </el-form-item>
-        <el-form-item label="操作系统">
+        <el-form-item :label="t('patches.linux.os')">
           <el-select
             v-model="filters.osDistro"
-            placeholder="全部，可输入自定义值"
+            :placeholder="t('patches.windows.allOrCustom')"
             clearable
             filterable
             allow-create
@@ -30,10 +30,10 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="版本">
+        <el-form-item :label="t('common.version')">
           <el-select
             v-model="filters.osVersion"
-            placeholder="全部，可输入自定义值"
+            :placeholder="t('patches.windows.allOrCustom')"
             clearable
             filterable
             allow-create
@@ -48,10 +48,10 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="标签">
+        <el-form-item :label="t('automation.job.tag')">
           <el-select
             v-model="filters.tags"
-            placeholder="全部标签"
+            :placeholder="t('patches.linux.allTags')"
             multiple
             collapse-tags
             collapse-tags-tooltip
@@ -67,11 +67,11 @@
         <el-form-item>
           <el-button type="primary" @click="handleSearch">
             <el-icon><Search /></el-icon>
-            搜索
+            {{ t('common.search') }}
           </el-button>
           <el-button @click="handleReset">
             <el-icon><RefreshRight /></el-icon>
-            重置
+            {{ t('common.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -79,7 +79,7 @@
 
     <div class="ops-action-bar">
       <el-button type="primary" size="small" @click="openScanDialog(selectedHostRows)">
-        创建扫描任务
+        {{ t('patches.windows.createScan') }}
       </el-button>
       <el-button
         type="success"
@@ -87,17 +87,17 @@
         :disabled="!canUseHostRows || selectedHostRows.length === 0"
         @click="openBatchInstallDrawer(selectedHostRows)"
       >
-        安装补丁
+        {{ t('patches.linux.installPatches') }}
       </el-button>
-      <el-button size="small" @click="openReportDialog(selectedHostRows)">导出报告</el-button>
-      <span class="win-patch-selection-text">已选 {{ selectedHostRows.length }} 台主机</span>
+      <el-button size="small" @click="openReportDialog(selectedHostRows)">{{ t('patches.cve.exportReport') }}</el-button>
+      <span class="win-patch-selection-text">{{ t('patches.cve.alreadySelected') }} {{ selectedHostRows.length }} {{ t('patches.windows.hostUnit') }}</span>
       <span style="flex: 1"></span>
       <el-button
         class="toolbar-icon-btn"
         circle
         size="small"
         :loading="loading"
-        aria-label="刷新主机列表"
+        :aria-label="t('patches.windows.refreshHosts')"
         @click="loadPageData()"
       >
         <el-icon v-show="!loading"><Refresh /></el-icon>
@@ -105,7 +105,7 @@
     </div>
 
     <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
-      <el-button link type="primary" @click="loadPageData()">重试</el-button>
+      <el-button link type="primary" @click="loadPageData()">{{ t('common.retry') }}</el-button>
     </el-alert>
 
     <div class="ops-table-wrapper">
@@ -113,13 +113,13 @@
         v-loading="loading"
         :data="hostList"
         :empty-text="
-          loading ? '正在加载主机列表…' : loadError ? '主机列表未加载' : '暂无符合条件的主机'
+          loading ? t('patches.windows.loadingHosts') : loadError ? t('patches.windows.hostsNotLoaded') : t('patches.windows.noMatchingHosts')
         "
         max-height="calc(100vh - 354px)"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="48" :selectable="isCurrentHostRow" />
-        <el-table-column label="主机" min-width="150" show-overflow-tooltip>
+        <el-table-column :label="t('execution.ui.host')" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
             <el-link
               type="primary"
@@ -136,7 +136,7 @@
             {{ resolveHostId(row) || '-' }}
           </template>
         </el-table-column> -->
-        <el-table-column label="操作系统" min-width="220">
+        <el-table-column :label="t('patches.linux.os')" min-width="220">
           <template #default="{ row }">
             {{ pickValue(row, ['osDistro', 'os_distro'], '-') }}
           </template>
@@ -144,7 +144,7 @@
         <el-table-column width="80" align="center">
           <template #header>
             <span class="win-patch-severity-header">
-              严重
+              {{ t('patches.catalog.critical') }}
               <span class="win-patch-severity-dot win-patch-severity-dot--critical"></span>
             </span>
           </template>
@@ -154,8 +154,8 @@
               class="win-patch-severity-link"
               :class="{ 'is-clickable': resolveSeverityCount(row, 'Critical') > 0 }"
               :disabled="resolveSeverityCount(row, 'Critical') <= 0"
-              :title="resolveSeverityCount(row, 'Critical') > 0 ? '查看严重级别补丁' : ''"
-              aria-label="查看严重级别补丁"
+              :title="resolveSeverityCount(row, 'Critical') > 0 ? t('patches.windows.viewCritical') : ''"
+              :aria-label="t('patches.windows.viewCritical')"
               @click="openHostDrawerWithSeverity(row, 'Critical')"
             >
               {{ resolveSeverityCount(row, 'Critical') }}
@@ -165,7 +165,7 @@
         <el-table-column width="80" align="center">
           <template #header>
             <span class="win-patch-severity-header">
-              重要
+              {{ t('patches.catalog.important') }}
               <span class="win-patch-severity-dot win-patch-severity-dot--important"></span>
             </span>
           </template>
@@ -175,8 +175,8 @@
               class="win-patch-severity-link"
               :class="{ 'is-clickable': resolveSeverityCount(row, 'Important') > 0 }"
               :disabled="resolveSeverityCount(row, 'Important') <= 0"
-              :title="resolveSeverityCount(row, 'Important') > 0 ? '查看重要级别补丁' : ''"
-              aria-label="查看重要级别补丁"
+              :title="resolveSeverityCount(row, 'Important') > 0 ? t('patches.windows.viewImportant') : ''"
+              :aria-label="t('patches.windows.viewImportant')"
               @click="openHostDrawerWithSeverity(row, 'Important')"
             >
               {{ resolveSeverityCount(row, 'Important') }}
@@ -186,7 +186,7 @@
         <el-table-column width="80" align="center">
           <template #header>
             <span class="win-patch-severity-header">
-              中等
+              {{ t('patches.catalog.moderate') }}
               <span class="win-patch-severity-dot win-patch-severity-dot--moderate"></span>
             </span>
           </template>
@@ -196,8 +196,8 @@
               class="win-patch-severity-link"
               :class="{ 'is-clickable': resolveSeverityCount(row, 'Moderate') > 0 }"
               :disabled="resolveSeverityCount(row, 'Moderate') <= 0"
-              :title="resolveSeverityCount(row, 'Moderate') > 0 ? '查看中等级别补丁' : ''"
-              aria-label="查看中等级别补丁"
+              :title="resolveSeverityCount(row, 'Moderate') > 0 ? t('patches.windows.viewModerate') : ''"
+              :aria-label="t('patches.windows.viewModerate')"
               @click="openHostDrawerWithSeverity(row, 'Moderate')"
             >
               {{ resolveSeverityCount(row, 'Moderate') }}
@@ -207,7 +207,7 @@
         <el-table-column width="80" align="center">
           <template #header>
             <span class="win-patch-severity-header">
-              低危
+              {{ t('patches.catalog.low') }}
               <span class="win-patch-severity-dot win-patch-severity-dot--low"></span>
             </span>
           </template>
@@ -217,8 +217,8 @@
               class="win-patch-severity-link"
               :class="{ 'is-clickable': resolveSeverityCount(row, 'Low') > 0 }"
               :disabled="resolveSeverityCount(row, 'Low') <= 0"
-              :title="resolveSeverityCount(row, 'Low') > 0 ? '查看低危级别补丁' : ''"
-              aria-label="查看低危级别补丁"
+              :title="resolveSeverityCount(row, 'Low') > 0 ? t('patches.windows.viewLow') : ''"
+              :aria-label="t('patches.windows.viewLow')"
               @click="openHostDrawerWithSeverity(row, 'Low')"
             >
               {{ resolveSeverityCount(row, 'Low') }}
@@ -228,7 +228,7 @@
         <el-table-column width="90" align="center">
           <template #header>
             <span class="win-patch-severity-header">
-              未分级
+              {{ t('patches.windows.unclassified') }}
               <span class="win-patch-severity-dot win-patch-severity-dot--unspecified"></span>
             </span>
           </template>
@@ -238,32 +238,32 @@
               class="win-patch-severity-link"
               :class="{ 'is-clickable': resolveSeverityCount(row, 'Unspecified') > 0 }"
               :disabled="resolveSeverityCount(row, 'Unspecified') <= 0"
-              :title="resolveSeverityCount(row, 'Unspecified') > 0 ? '查看未分级补丁' : ''"
-              aria-label="查看未分级补丁"
+              :title="resolveSeverityCount(row, 'Unspecified') > 0 ? t('patches.windows.viewUnclassified') : ''"
+              :aria-label="t('patches.windows.viewUnclassified')"
               @click="openHostDrawerWithSeverity(row, 'Unspecified')"
             >
               {{ resolveSeverityCount(row, 'Unspecified') }}
             </button>
           </template>
         </el-table-column>
-        <el-table-column label="已安装" width="80">
+        <el-table-column :label="t('patches.windows.installed')" width="80">
           <template #default="{ row }">
             <span class="win-patch-metric">
               {{ pickValue(row, ['installedCount', 'installed_count'], 0) }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="版本" min-width="120">
+        <el-table-column :label="t('common.version')" min-width="120">
           <template #default="{ row }">
             {{ pickValue(row, ['osVersion', 'os_version'], '-') }}
           </template>
         </el-table-column>
-        <el-table-column label="架构" min-width="90">
+        <el-table-column :label="t('patches.cve.architecture')" min-width="90">
           <template #default="{ row }">
             {{ pickValue(row, ['osArch', 'os_arch'], '-') }}
           </template>
         </el-table-column>
-        <el-table-column label="标签" min-width="140">
+        <el-table-column :label="t('automation.job.tag')" min-width="140">
           <template #default="{ row }">
             <div v-if="getRowTags(row).length" class="win-patch-host-tags">
               <el-tag
@@ -278,7 +278,7 @@
             <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="内存" width="170">
+        <el-table-column :label="t('patches.windows.memory')" width="170">
           <template #default="{ row }">
             <div v-if="row.memoryOverview" class="memory-overview">
               <div
@@ -288,7 +288,7 @@
               >
                 <div
                   class="memory-usage__track"
-                  :title="`已使用 ${row.memoryOverview.usedPercent}%`"
+                  :title="t('patches.windows.memoryUsed', { p0: row.memoryOverview.usedPercent })"
                 >
                   <div
                     class="memory-usage__fill"
@@ -296,7 +296,7 @@
                   />
                 </div>
                 <div class="memory-usage__desc">
-                  {{ row.memoryOverview.freeGb }} GB 可用, 共 {{ row.memoryOverview.totalGb }} GB
+                  {{ t('patches.windows.memorySummary', { free: row.memoryOverview.freeGb, total: row.memoryOverview.totalGb }) }}
                 </div>
               </div>
               <div v-else class="memory-usage memory-usage--unknown">
@@ -304,12 +304,12 @@
                 <div class="memory-usage__desc">
                   {{
                     row.memoryOverview.freeGb !== null
-                      ? `${row.memoryOverview.freeGb} GB 可用`
+                      ? t('patches.windows.memoryAvailable', { p0: row.memoryOverview.freeGb })
                       : '-'
                   }}{{
                     row.memoryOverview.totalGb !== null
-                      ? `, 共 ${row.memoryOverview.totalGb} GB`
-                      : ', 总量未知'
+                      ? t('patches.windows.memoryTotal', { p0: row.memoryOverview.totalGb })
+                      : t('patches.windows.memoryUnknownTotal')
                   }}
                 </div>
               </div>
@@ -324,15 +324,15 @@
             </span>
           </template>
         </el-table-column> -->
-        <el-table-column label="最后扫描时间" width="190" class-name="win-patch-table__time-column">
+        <el-table-column :label="t('patches.linux.lastScanTime')" width="190" class-name="win-patch-table__time-column">
           <template #default="{ row }">
             {{ formatDateTime(pickValue(row, ['lastScanDate', 'last_scan_date'], '')) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="110" fixed="right">
+        <el-table-column :label="t('common.actions')" width="110" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="openHostDrawer(row)">
-              查看补丁
+              {{ t('patches.windows.viewPatches') }}
             </el-button>
           </template>
         </el-table-column>
@@ -384,6 +384,10 @@
 </template>
 
 <script setup>
+import { createPatchTaskError } from '@/modules/patches/utils/patchTaskFeedback'
+import { message as localMessage, messageRef } from '@/core/i18n/feedback'
+
+import { t } from '@/core/i18n'
 import {
   computed,
   onActivated,
@@ -418,7 +422,7 @@ const router = useRouter()
 const WIN_PATCH_TAG_CI_TYPES = ['host', 'windows']
 
 const loading = ref(false)
-const loadError = ref('')
+const loadError = messageRef('')
 const pageActive = ref(true)
 let loadRequestId = 0
 const tagLoading = ref(false)
@@ -523,14 +527,14 @@ async function loadPageData() {
           correctedTotal !== null &&
           query.page > Math.max(0, Math.ceil(correctedTotal / query.size) - 1)
         ) {
-          throw new Error('主机列表分页已变化，请重试')
+          throw createPatchTaskError('patches.windows.hostPageChanged')
         }
       }
     }
 
     const hostPage = parsePageResponse(hostResponse)
     if (!Number.isSafeInteger(hostPage.total) || hostPage.total < 0) {
-      throw new Error('主机列表总数无效')
+      throw createPatchTaskError('patches.windows.invalidHostTotal')
     }
     hostList.value = hostPage.content.map(row => ({
       ...row,
@@ -540,7 +544,7 @@ async function loadPageData() {
     selectedHostRows.value = []
   } catch {
     if (!isCurrentRequest()) return
-    loadError.value = '加载主机列表失败，请重试'
+    loadError.value = localMessage('patches.windows.hostLoadRetry')
   } finally {
     if (isCurrentRequest()) loading.value = false
   }
@@ -778,7 +782,7 @@ onActivated(() => {
 function invalidateHostRequest() {
   pageActive.value = false
   loadRequestId += 1
-  if (loading.value) loadError.value = '主机列表加载已中断，请重试'
+  if (loading.value) loadError.value = localMessage('patches.windows.hostLoadInterrupted')
   loading.value = false
 }
 

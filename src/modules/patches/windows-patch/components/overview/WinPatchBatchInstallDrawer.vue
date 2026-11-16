@@ -1,7 +1,7 @@
 <template>
   <el-drawer
     v-model="visibleModel"
-    title="批量安装补丁"
+    :title="t('patches.windows.batchInstallation')"
     direction="rtl"
     size="85%"
     destroy-on-close
@@ -19,7 +19,7 @@
           label-width="80px"
           class="win-patch-descriptions"
         >
-          <el-descriptions-item label="选中主机">
+          <el-descriptions-item :label="t('patches.windows.selectedHosts')">
             <div class="win-patch-batch-hosts-list">
               <el-tag
                 v-for="host in hostSummaries"
@@ -36,8 +36,8 @@
 
       <div class="ops-filter-bar">
         <el-form :inline="true" size="small">
-          <el-form-item label="严重级别">
-            <el-select v-model="filters.severity" clearable placeholder="全部" style="width: 140px">
+          <el-form-item :label="t('patches.catalog.severity')">
+            <el-select v-model="filters.severity" clearable :placeholder="t('common.all')" style="width: 140px">
               <el-option
                 v-for="item in WIN_PATCH_SEVERITY_OPTIONS"
                 :key="item.value"
@@ -46,11 +46,11 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="补丁状态">
+          <el-form-item :label="t('patches.linux.patchStatus')">
             <el-select
               v-model="filters.patchStatus"
               clearable
-              placeholder="全部"
+              :placeholder="t('common.all')"
               style="width: 140px"
             >
               <el-option
@@ -61,18 +61,18 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="关键字">
+          <el-form-item :label="t('patches.cve.keyword')">
             <el-input
               v-model="filters.keyword"
-              placeholder="按 KB 编号或标题过滤"
+              :placeholder="t('patches.windows.filterKbTitle')"
               clearable
               style="width: 220px"
               @keyup.enter="handleSearch"
             />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" :loading="loading" @click="handleSearch">搜索</el-button>
-            <el-button @click="handleReset">重置</el-button>
+            <el-button type="primary" :loading="loading" @click="handleSearch">{{ t('common.search') }}</el-button>
+            <el-button @click="handleReset">{{ t('common.reset') }}</el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -84,10 +84,10 @@
           :disabled="loading || installableSelection.length === 0"
           @click="openInstallWizard"
         >
-          安装选中补丁
+          {{ t('patches.windows.installSelected') }}
         </el-button>
         <span class="win-patch-selection-text">
-          已选 {{ installableSelection.length }} 条可安装补丁（跨页、跨筛选保留）
+          {{ t('patches.cve.alreadySelected') }} {{ installableSelection.length }} {{ t('patches.windows.retainedInstallableUnit') }}
         </span>
         <span style="flex: 1"></span>
         <el-button
@@ -116,12 +116,12 @@
             :selectable="isPatchActionable"
             reserve-selection
           />
-          <el-table-column label="主机" width="130">
+          <el-table-column :label="t('execution.ui.host')" width="130">
             <template #default="{ row }">
               {{ row._hostKey || '-' }}
             </template>
           </el-table-column>
-          <el-table-column label="KB 编号" width="130">
+          <el-table-column :label="t('patches.windows.kbId')" width="130">
             <template #default="{ row }">
               <WindowsKbLinkList
                 :kb-numbers="
@@ -144,17 +144,17 @@
               />
             </template>
           </el-table-column>
-          <el-table-column label="标题" min-width="280" show-overflow-tooltip>
+          <el-table-column :label="t('automation.job.title')" min-width="280" show-overflow-tooltip>
             <template #default="{ row }">
               {{ pickValue(row, ['title'], '-') }}
             </template>
           </el-table-column>
-          <el-table-column label="大小" width="110">
+          <el-table-column :label="t('automation.library.size')" width="110">
             <template #default="{ row }">
               {{ formatBytes(pickValue(row, ['sizeBytes', 'size_bytes'], 0)) }}
             </template>
           </el-table-column>
-          <el-table-column label="严重级别" width="120">
+          <el-table-column :label="t('patches.catalog.severity')" width="120">
             <template #default="{ row }">
               <el-tag
                 :type="getSeverityTagType(pickValue(row, ['severity']))"
@@ -165,14 +165,14 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="补丁状态" width="120">
+          <el-table-column :label="t('patches.linux.patchStatus')" width="120">
             <template #default="{ row }">
               <el-tag :type="getPatchStatusTagType(row)" size="small">
                 {{ getPatchStatusLabel(row) }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="扫描时间" width="190" class-name="win-patch-table__time-column">
+          <el-table-column :label="t('patches.linux.scanTime')" width="190" class-name="win-patch-table__time-column">
             <template #default="{ row }">
               {{ formatDateTime(pickValue(row, ['scanDate', 'scan_date'], '')) }}
             </template>
@@ -213,6 +213,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
@@ -401,9 +402,9 @@ async function loadAllPatches() {
 
     const failedCount = results.filter(r => r.status === 'rejected').length
     if (failedCount > 0 && failedCount < hosts.length) {
-      ElMessage.warning(`${failedCount} 台主机的补丁加载失败，已展示其余主机的补丁`)
+      ElMessage.warning(t('patches.windows.partialHostPatchesFailed', { p0: failedCount }))
     } else if (failedCount === hosts.length) {
-      ElMessage.error('所有主机的补丁加载失败')
+      ElMessage.error(t('patches.windows.allHostPatchesFailed'))
     }
 
     allPatchList.value = mergedPatches
@@ -411,7 +412,7 @@ async function loadAllPatches() {
   } catch (error) {
     if (requestId !== loadRequestId) return
     console.error('批量加载主机补丁失败:', error)
-    ElMessage.error('批量加载主机补丁失败')
+    ElMessage.error(t('patches.windows.batchHostLoadFailed'))
   } finally {
     if (requestId === loadRequestId) loading.value = false
   }

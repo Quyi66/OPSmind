@@ -16,12 +16,13 @@
       />
     </div>
     <template #footer>
-      <el-button @click="visibleModel = false">关闭</el-button>
+      <el-button @click="visibleModel = false">{{ t('common.close') }}</el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { computed, ref, watch } from 'vue'
 import WindowsKbDetail from './WindowsKbDetail.vue'
 
@@ -46,7 +47,7 @@ const visibleModel = computed({
 })
 
 const dialogTitle = computed(() =>
-  currentKbNumber.value ? `Windows KB 详情 - ${currentKbNumber.value}` : 'Windows KB 详情'
+  currentKbNumber.value ? t('patches.windows.kbDetailTitle', { p0: currentKbNumber.value }) : t('patches.windows.kbDetails')
 )
 
 function normalizeKbNumber(value) {

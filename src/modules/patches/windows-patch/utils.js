@@ -1,6 +1,7 @@
+import { t, currentLocale } from '@/core/i18n'
+
 export { formatDateTime } from '@/utils/date'
 import {
-  WIN_PATCH_EXPORT_DEFAULT_FILENAME,
   WIN_PATCH_INSTALL_ACTION_LABELS,
   WIN_PATCH_INSTALL_ACTION_TAG_TYPES,
   WIN_PATCH_INSTALL_RESULT_LABELS,
@@ -75,7 +76,7 @@ export function normalizeUpper(value) {
 }
 
 export function formatNumber(value) {
-  return new Intl.NumberFormat('zh-CN').format(Number(value || 0))
+  return new Intl.NumberFormat(currentLocale.value).format(Number(value || 0))
 }
 
 
@@ -428,7 +429,7 @@ export function parseContentDispositionFilename(headerValue) {
   return plainMatch?.[1] || ''
 }
 
-export function downloadBlobResponse(response, fallbackName = WIN_PATCH_EXPORT_DEFAULT_FILENAME) {
+export function downloadBlobResponse(response, fallbackName = t('patches.windows.reportFilename')) {
   const blob = new Blob([response?.data ?? response])
   const filename =
     parseContentDispositionFilename(response?.headers?.['content-disposition']) || fallbackName

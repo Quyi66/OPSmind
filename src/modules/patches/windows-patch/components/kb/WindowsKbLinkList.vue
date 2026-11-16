@@ -27,7 +27,7 @@
     <el-dialog
       v-if="overflowCount > 0"
       v-model="dialogVisible"
-      :title="dialogTitle"
+      :title="dialogTitle ?? t('patches.windows.relatedKb')"
       width="560px"
       append-to-body
       destroy-on-close
@@ -56,7 +56,7 @@
         </template>
       </div>
       <template #footer>
-        <el-button @click="dialogVisible = false">关闭</el-button>
+        <el-button @click="dialogVisible = false">{{ t('common.close') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -64,6 +64,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { computed, ref } from 'vue'
 
 const props = defineProps({
@@ -77,7 +78,7 @@ const props = defineProps({
   },
   dialogTitle: {
     type: String,
-    default: '关联 KB'
+    default: undefined
   },
   emptyText: {
     type: String,

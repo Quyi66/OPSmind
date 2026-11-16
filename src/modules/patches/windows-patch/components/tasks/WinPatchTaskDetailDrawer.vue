@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visibleModel"
-    title="任务详情"
+    :title="t('patches.windows.taskDetails')"
     width="1100px"
     destroy-on-close
     append-to-body
@@ -11,7 +11,7 @@
   >
     <div class="win-patch-task-detail">
       <div class="ops-action-bar win-patch-task-detail__actions">
-        <el-switch v-model="autoPollingEnabled" active-text="自动轮询 3 秒" />
+        <el-switch v-model="autoPollingEnabled" :active-text="t('patches.windows.pollEveryThreeSeconds')" />
         <span style="flex: 1"></span>
         <el-button
           class="toolbar-icon-btn"
@@ -31,24 +31,24 @@
         size="small"
         class="win-patch-descriptions"
       >
-        <el-descriptions-item label="任务类型">
+        <el-descriptions-item :label="t('patches.windows.taskType')">
           <el-tag :type="getTaskTypeTagType(taskDetail)" size="small" effect="plain">
             {{ getTaskTypeLabel(taskDetail) }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="任务状态">
+        <el-descriptions-item :label="t('patches.linux.taskStatus')">
           <el-tag
             :type="getTaskStatusTagType(taskDetail)"
             size="small"
             :class="{ 'clickable-tag': taskRunId }"
             @click="
-              taskRunId && handleViewRunResult(taskRunId, `${getTaskTypeLabel(taskDetail)}任务`)
+              taskRunId && handleViewRunResult(taskRunId, t('patches.windows.namedTask', { p0: getTaskTypeLabel(taskDetail) }), 'task')
             "
           >
             {{ getTaskStatusLabel(taskDetail) }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="当前步骤">
+        <el-descriptions-item :label="t('patches.windows.currentStep')">
           <el-tag
             v-if="getTaskStepLabel(taskDetail) !== '-'"
             :type="getTaskStepTagType(taskDetail)"
@@ -59,25 +59,25 @@
           </el-tag>
           <span v-else>-</span>
         </el-descriptions-item>
-        <el-descriptions-item label="主机数">
+        <el-descriptions-item :label="t('automation.command.hostCount')">
           {{ pickValue(taskDetail, ['hostCount', 'host_count'], 0) }}
         </el-descriptions-item>
-        <el-descriptions-item label="创建人">
+        <el-descriptions-item :label="t('automation.command.createdBy')">
           {{ pickValue(taskDetail, ['createdBy', 'created_by'], '-') }}
         </el-descriptions-item>
-        <el-descriptions-item label="创建时间">
+        <el-descriptions-item :label="t('automation.command.createdAt')">
           {{ formatDateTime(pickValue(taskDetail, ['createdDate', 'created_date'], '')) }}
         </el-descriptions-item>
-        <el-descriptions-item label="完成时间">
+        <el-descriptions-item :label="t('patches.windows.completedAt')">
           {{ formatDateTime(pickValue(taskDetail, ['completedDate', 'completed_date'], '')) }}
         </el-descriptions-item>
-        <el-descriptions-item label="错误信息" :span="2">
+        <el-descriptions-item :label="t('patches.windows.errorInfo')" :span="2">
           {{ pickValue(taskDetail, ['errorMessage', 'error_message'], '-') }}
         </el-descriptions-item>
       </el-descriptions>
 
       <div v-if="availableExecuteRuns.length" class="win-patch-task-runs">
-        <div class="win-patch-task-runs__title">执行结果</div>
+        <div class="win-patch-task-runs__title">{{ t('patches.windows.executionResults') }}</div>
         <div class="win-patch-task-runs__actions">
           <el-tag
             v-for="item in availableExecuteRuns"
@@ -85,7 +85,7 @@
             size="small"
             effect="plain"
             class="clickable-tag"
-            @click="handleViewRunResult(item.runId, item.label)"
+            @click="handleViewRunResult(item.runId, item.label, item.key)"
           >
             {{ item.label }}
           </el-tag>
@@ -94,23 +94,23 @@
 
       <div v-if="showStepActions" class="win-patch-task-scripts">
         <div class="win-patch-task-scripts__header">
-          <div class="win-patch-task-scripts__title">脚本配置</div>
+          <div class="win-patch-task-scripts__title">{{ t('patches.windows.scriptSettings') }}</div>
           <div class="win-patch-task-scripts__hint">
-            预检查和校验脚本可按需上传，再执行对应步骤。
+            {{ t('patches.windows.optionalScriptsHint') }}
           </div>
         </div>
         <div class="win-patch-task-scripts__list">
           <WinPatchTaskScriptUploader
             :task-id="currentTaskId"
             script-type="pre-check"
-            label="预检查脚本"
+            :label="t('patches.windows.preCheckScript')"
             :script-content="pickValue(taskDetail, ['preCheckScript', 'pre_check_script'], '')"
             @uploaded="handleScriptUploaded"
           />
           <WinPatchTaskScriptUploader
             :task-id="currentTaskId"
             script-type="validate"
-            label="校验脚本"
+            :label="t('patches.linux.validationScript')"
             :script-content="pickValue(taskDetail, ['validateScript', 'validate_script'], '')"
             @uploaded="handleScriptUploaded"
           />
@@ -119,7 +119,7 @@
 
       <div v-if="showStepActions" class="win-patch-task-step">
         <div class="win-patch-task-step__header">
-          <div class="win-patch-task-step__title">步骤控制</div>
+          <div class="win-patch-task-step__title">{{ t('patches.windows.stepControls') }}</div>
           <div class="win-patch-task-step__hint">{{ stepActionHint }}</div>
         </div>
         <div class="win-patch-task-step__actions">
@@ -138,25 +138,25 @@
             :disabled="!canSkipCurrentStep"
             @click="handleSkipStep"
           >
-            跳过当前步骤
+            {{ t('patches.windows.skipCurrent') }}
           </el-button>
         </div>
       </div>
 
-      <div class="win-patch-section-title">主机执行状态</div>
+      <div class="win-patch-section-title">{{ t('patches.windows.hostExecutionStatus') }}</div>
       <div class="ops-filter-bar">
         <el-form :inline="true" size="small" @submit.prevent>
-          <el-form-item label="关键字">
+          <el-form-item :label="t('patches.cve.keyword')">
             <el-input
               v-model="hostKeyword"
-              placeholder="主机标识或错误原因"
+              :placeholder="t('patches.windows.hostOrError')"
               clearable
               style="width: 220px"
             />
           </el-form-item>
-          <el-form-item label="状态">
-            <el-select v-model="hostStatus" style="width: 140px" aria-label="主机执行状态筛选">
-              <el-option label="全部" value="all" />
+          <el-form-item :label="t('common.status')">
+            <el-select v-model="hostStatus" style="width: 140px" :aria-label="t('patches.windows.filterHostExecutionStatus')">
+              <el-option :label="t('common.all')" value="all" />
               <el-option
                 v-for="option in hostStatusOptions"
                 :key="option.value"
@@ -166,12 +166,12 @@
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button @click="resetHostFilters">重置</el-button>
+            <el-button @click="resetHostFilters">{{ t('common.reset') }}</el-button>
           </el-form-item>
         </el-form>
       </div>
       <div role="status" aria-live="polite">
-        显示 {{ filteredTaskHosts.length }} / 已加载 {{ taskHosts.length }} 条主机记录
+        {{ t('patches.windows.showing') }} {{ filteredTaskHosts.length }} {{ t('patches.windows.loadedFragment') }} {{ taskHosts.length }} {{ t('patches.windows.hostRecordsUnit') }}
       </div>
       <div class="ops-table-wrapper win-patch-task-detail__table">
         <el-table
@@ -180,33 +180,33 @@
           max-height="420"
           :empty-text="
             taskHosts.length && hasHostFilters
-              ? '未匹配到主机或错误原因，请调整或重置筛选'
-              : '暂无数据'
+              ? t('patches.windows.noHostErrorMatch')
+              : t('common.noData')
           "
         >
-          <el-table-column label="主机" width="140" show-overflow-tooltip>
+          <el-table-column :label="t('execution.ui.host')" width="140" show-overflow-tooltip>
             <template #default="{ row }">
               {{ pickValue(row, ['hostKey', 'host_key'], '-') }}
             </template>
           </el-table-column>
-          <el-table-column label="状态" width="100">
+          <el-table-column :label="t('common.status')" width="100">
             <template #default="{ row }">
               <el-tag :type="getTaskStatusTagType(row)" size="small">
                 {{ getTaskStatusLabel(row) }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="开始时间" width="180" class-name="win-patch-table__time-column">
+          <el-table-column :label="t('automation.workbench.startedAt')" width="180" class-name="win-patch-table__time-column">
             <template #default="{ row }">
               {{ formatDateTime(pickValue(row, ['startedDate', 'started_date'], '')) }}
             </template>
           </el-table-column>
-          <el-table-column label="完成时间" width="180" class-name="win-patch-table__time-column">
+          <el-table-column :label="t('patches.windows.completedAt')" width="180" class-name="win-patch-table__time-column">
             <template #default="{ row }">
               {{ formatDateTime(pickValue(row, ['completedDate', 'completed_date'], '')) }}
             </template>
           </el-table-column>
-          <el-table-column label="错误信息" min-width="240" show-overflow-tooltip>
+          <el-table-column :label="t('patches.windows.errorInfo')" min-width="240" show-overflow-tooltip>
             <template #default="{ row }">
               {{ pickValue(row, ['errorMessage', 'error_message'], '-') }}
             </template>
@@ -224,6 +224,10 @@
 </template>
 
 <script setup>
+import { message as localMessage, messageRef } from '@/core/i18n/feedback'
+import { t } from '@/core/i18n'
+import { getWinPatchRunTitle } from '../../feedback'
+
 import { computed, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
@@ -279,7 +283,7 @@ const taskAuditLogs = ref([])
 const stepSubmitting = ref(false)
 const showRunResultDialog = ref(false)
 const currentRunId = ref('')
-const currentRunJobTitle = ref('')
+const currentRunJobTitle = messageRef('')
 
 const currentTaskId = computed(() => String(props.taskId || '').trim())
 const taskRunId = computed(() =>
@@ -439,26 +443,31 @@ function mergeTaskDetail(baseTask = null, auditTask = null, hosts = [], steps = 
 }
 
 const availableExecuteRuns = computed(() => {
-  const executeLabel = getTaskTypeLabel(taskDetail.value) === '回滚' ? '执行回滚' : '执行安装'
+  const executeLabel = normalizeUpper(pickValue(taskDetail.value, ['taskType', 'task_type'], '')) === 'ROLLBACK' ? t('patches.windows.executeRollback') : t('patches.windows.executeInstall')
   const candidates = [
     {
-      label: '主任务执行',
+      key: 'main',
+      get label() { return t('patches.windows.mainExecution') },
       runId: taskRunId.value
     },
     {
-      label: '预检查',
+      key: 'PRE_CHECK',
+      get label() { return t('patches.linux.precheck') },
       runId: String(pickValue(taskDetail.value, ['preCheckRunId', 'pre_check_run_id'], '')).trim()
     },
     {
+      key: normalizeUpper(pickValue(taskDetail.value, ['taskType', 'task_type'], '')) === 'ROLLBACK' ? 'ROLLBACK' : 'INSTALL',
       label: executeLabel,
       runId: String(pickValue(taskDetail.value, ['executeRunId', 'execute_run_id'], '')).trim()
     },
     {
-      label: '执行重启',
+      key: 'RESTART',
+      get label() { return t('patches.linux.executeRestart') },
       runId: String(pickValue(taskDetail.value, ['restartRunId', 'restart_run_id'], '')).trim()
     },
     {
-      label: '执行验证',
+      key: 'verification',
+      get label() { return t('patches.windows.executeVerification') },
       runId: String(pickValue(taskDetail.value, ['validateRunId', 'validate_run_id'], '')).trim()
     }
   ]
@@ -496,19 +505,19 @@ const canSkipCurrentStep = computed(
   () => canExecuteCurrentStep.value && canSkipTaskStep(taskDetail.value)
 )
 const executeButtonText = computed(() => {
-  if (currentStepValue.value === 'PRE_CHECK') return '执行预检查'
+  if (currentStepValue.value === 'PRE_CHECK') return t('patches.windows.executePreCheck')
   if (isExecutePhase.value) {
-    return getTaskTypeLabel(taskDetail.value) === '回滚' ? '执行回滚' : '执行安装'
+    return normalizeUpper(pickValue(taskDetail.value, ['taskType', 'task_type'], '')) === 'ROLLBACK' ? t('patches.windows.executeRollback') : t('patches.windows.executeInstall')
   }
-  if (currentStepValue.value === 'RESTART') return '执行重启'
-  if (currentStepValue.value === 'VALIDATE') return '执行验证'
-  return '执行当前步骤'
+  if (currentStepValue.value === 'RESTART') return t('patches.linux.executeRestart')
+  if (currentStepValue.value === 'VALIDATE') return t('patches.windows.executeVerification')
+  return t('patches.windows.executeCurrent')
 })
 const stepActionHint = computed(() => {
   if (!showStepActions.value) return ''
 
   if (['COMPLETED', 'SUCCESS', 'PASS'].includes(currentTaskStatusValue.value)) {
-    return '任务已完成，无需继续处理。'
+    return t('patches.windows.taskAlreadyCompleted')
   }
 
   if (
@@ -521,18 +530,18 @@ const stepActionHint = computed(() => {
       'VALIDATE_FAILED'
     ].includes(currentTaskStatusValue.value)
   ) {
-    return '任务执行失败，请结合错误信息确认是否需要重试。'
+    return t('patches.windows.taskFailedHint')
   }
 
   if (isTaskRunning(taskDetail.value)) {
-    return '当前步骤执行中；开启自动轮询后可持续查询状态，也可手动刷新。'
+    return t('patches.windows.taskRunningHint')
   }
 
   if (isExecutePhase.value) {
-    return '执行步骤不可跳过，需要由用户明确触发。'
+    return t('patches.windows.executionCannotSkip')
   }
 
-  return '安装与回滚任务需要按步骤推进，当前步骤可在此继续处理。'
+  return t('patches.windows.stepControlHint')
 })
 
 const { isPolling, start, stop } = useWinPatchPolling(3000)
@@ -606,7 +615,7 @@ async function loadTaskDetail(options = {}) {
     stop()
 
     if (!options.silent) {
-      ElMessage.error('加载任务详情失败')
+      ElMessage.error(t('patches.windows.taskLoadFailed'))
     }
   } finally {
     if (requestId === loadTaskDetailRequestId) {
@@ -624,14 +633,14 @@ async function handleExecuteStep() {
       confirmText: '确认重启'
     })
     applyTaskSnapshot(unwrapResponse(response))
-    ElMessage.success(`${executeButtonText.value}已发起`)
+    ElMessage.success(t('patches.windows.stepStarted', { p0: executeButtonText.value }))
 
     if (autoPollingEnabled.value && isTaskRunning(taskDetail.value)) {
       start(() => loadTaskDetail({ silent: true }))
     }
   } catch (error) {
     console.error('执行任务步骤失败:', error)
-    ElMessage.error('执行任务步骤失败')
+    ElMessage.error(t('patches.windows.executeStepFailed'))
   } finally {
     stepSubmitting.value = false
   }
@@ -642,8 +651,8 @@ async function handleSkipStep() {
 
   try {
     await ElMessageBox.confirm(
-      `确定跳过“${getTaskStepLabel(taskDetail.value)}”步骤吗？`,
-      '跳过步骤',
+      t('patches.windows.skipStepConfirm', { p0: getTaskStepLabel(taskDetail.value) }),
+      t('patches.windows.skipStep'),
       {
         closeOnClickModal: false,
         closeOnPressEscape: false,
@@ -658,14 +667,14 @@ async function handleSkipStep() {
   try {
     const response = await winPatchApi.skipTaskStep(currentTaskId.value, taskDetail.value)
     applyTaskSnapshot(unwrapResponse(response))
-    ElMessage.success(`${getTaskStepLabel(taskDetail.value)}已跳过`)
+    ElMessage.success(t('patches.windows.stepSkipped', { p0: getTaskStepLabel(taskDetail.value) }))
 
     if (autoPollingEnabled.value && isTaskRunning(taskDetail.value)) {
       start(() => loadTaskDetail({ silent: true }))
     }
   } catch (error) {
     console.error('跳过任务步骤失败:', error)
-    ElMessage.error('跳过任务步骤失败')
+    ElMessage.error(t('patches.windows.skipStepFailed'))
   } finally {
     stepSubmitting.value = false
   }
@@ -675,11 +684,13 @@ function handleScriptUploaded(taskSnapshot) {
   applyTaskSnapshot(taskSnapshot)
 }
 
-function handleViewRunResult(runId, jobTitle = '') {
+function handleViewRunResult(runId, jobTitle = '', titleKey = '') {
   if (!runId) return
 
   currentRunId.value = runId
-  currentRunJobTitle.value = jobTitle || `${getTaskTypeLabel(taskDetail.value)}任务`
+  currentRunJobTitle.value = titleKey === 'task' || !jobTitle
+    ? localMessage('patches.windows.namedTask', () => ({ p0: getTaskTypeLabel(taskDetail.value) }))
+    : getWinPatchRunTitle(titleKey, jobTitle)
   showRunResultDialog.value = true
 }
 

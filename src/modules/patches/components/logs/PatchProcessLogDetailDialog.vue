@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="流程操作详情"
+    :title="t('patches.logs.processDetails')"
     width="1000px"
     :close-on-click-modal="true"
     destroy-on-close
@@ -11,21 +11,21 @@
   >
     <div v-loading="loading" class="process-detail">
       <template v-if="detailTask">
-        <section v-if="isRejected" class="rejection-banner" role="status" aria-label="审批已驳回，安装未执行">
+        <section v-if="isRejected" class="rejection-banner" role="status" :aria-label="t('patches.logs.installRejected')">
           <div class="rejection-banner__content">
             <div class="rejection-banner__summary">
-              <span class="rejection-banner__title">审批已驳回，安装未执行</span>
-              <span class="rejection-banner__reason">{{ detailTask.approvalComment || detailTask.errorMessage || '管理员未通过本次安装申请。' }}</span>
+              <span class="rejection-banner__title">{{ t('patches.logs.installRejected') }}</span>
+              <span class="rejection-banner__reason">{{ detailTask.approvalComment || detailTask.errorMessage || t('patches.logs.adminRejected') }}</span>
             </div>
-            <div class="rejection-banner__hint">以下为申请时的配置信息。如需安装，请修改后重新提交申请。</div>
+            <div class="rejection-banner__hint">{{ t('patches.logs.requestSettingsHint') }}</div>
           </div>
         </section>
         <el-descriptions v-if="detailTask.scheduledTime" :column="2" border>
-          <el-descriptions-item label="任务状态">{{ detailTask.status === 'CREATED' ? '等待定时执行' : formatTaskStatus(detailTask.status) }}</el-descriptions-item>
-          <el-descriptions-item label="计划执行时间">{{ formatDateTime(detailTask.scheduledTime) }}</el-descriptions-item>
-          <el-descriptions-item label="申请人">{{ detailTask.createdBy || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="审批人">{{ detailTask.approvedBy || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="审批时间">{{ formatDateTime(detailTask.approvedTime) }}</el-descriptions-item>
+          <el-descriptions-item :label="t('patches.linux.taskStatus')">{{ detailTask.status === 'CREATED' ? t('patches.linux.waitingScheduledExecution') : formatTaskStatus(detailTask.status) }}</el-descriptions-item>
+          <el-descriptions-item :label="t('patches.linux.scheduledTime')">{{ formatDateTime(detailTask.scheduledTime) }}</el-descriptions-item>
+          <el-descriptions-item :label="t('automation.approval.applicant')">{{ detailTask.createdBy || '-' }}</el-descriptions-item>
+          <el-descriptions-item :label="t('automation.approval.approver')">{{ detailTask.approvedBy || '-' }}</el-descriptions-item>
+          <el-descriptions-item :label="t('automation.approval.approvedAt')">{{ formatDateTime(detailTask.approvedTime) }}</el-descriptions-item>
         </el-descriptions>
         <PatchTaskStepper
           class="process-detail__stepper"
@@ -49,11 +49,11 @@
           </template>
           <template #hosts>
             <div class="card-body card-body--scroll">
-              <div class="selection-item__primary">共 {{ hosts.length }} 台</div>
+              <div class="selection-item__primary">{{ t('patches.linux.totalPrefix') }} {{ hosts.length }} {{ t('patches.linux.hostUnit') }}</div>
               <div v-for="host in hosts" :key="host" class="selection-item">
                 <div class="selection-item__primary">{{ host }}</div>
               </div>
-              <div v-if="hosts.length === 0" class="no-data">暂无数据</div>
+              <div v-if="hosts.length === 0" class="no-data">{{ t('common.noData') }}</div>
             </div>
           </template>
         </PatchTaskSelectionOverview>
@@ -61,11 +61,11 @@
         <div v-show="currentStepKey === 'pre'" class="task-step-content">
           <ScriptStepContent
             icon="fa-code"
-            title="预执行脚本"
+            :title="t('patches.linux.preScript')"
             :alert="isRejected ? rejectedStepAlert : preCheckAlert"
             :run-id="preCheckRunId"
             :script-content="preCheckScript"
-            @show-result="openExecuteResult($event, '预执行脚本')"
+            @show-result="openExecuteResult($event, '', 'preScript')"
           />
 
           <PatchTaskPreCheckResult :result="parsedPreCheckResult" />
@@ -74,18 +74,18 @@
         <ScriptStepContent
           v-show="currentStepKey === 'validate'"
           icon="fa-check-square-o"
-          title="校验脚本"
+          :title="t('patches.linux.validationScript')"
           :alert="isRejected ? rejectedStepAlert : validateAlert"
           :run-id="validateRunId"
           :script-content="validateScript"
-          @show-result="openExecuteResult($event, '校验脚本')"
+          @show-result="openExecuteResult($event, '', 'validationScript')"
         />
 
         <div v-show="currentStepKey === 'restart'" class="task-step-content">
           <div class="task-step-editor">
             <div class="task-step-editor__title">
               <i class="fa fa-refresh" />
-              重启策略
+              {{ t('patches.linux.restartPolicy') }}
             </div>
             <el-alert
               :type="isRejected ? 'info' : restartAlert.type"
@@ -96,15 +96,15 @@
             >
               <template #default>
                 <div class="task-detail-info">
-                  <div>{{ detailTask.restartReason || '未提供重启说明' }}</div>
+                  <div>{{ detailTask.restartReason || t('patches.logs.noRestartDescription') }}</div>
                   <el-button
                     v-if="restartRunId"
                     type="primary"
                     link
                     class="execute-result-link"
-                    @click="openExecuteResult(restartRunId, '执行重启')"
+                    @click="openExecuteResult(restartRunId, '', 'restartRun')"
                   >
-                    查看执行详情
+                    {{ t('patches.linux.viewExecution') }}
                   </el-button>
                 </div>
               </template>
@@ -123,13 +123,13 @@
               <PatchTaskSummaryRow
                 :label="operationConfig.selectionSummaryLabel"
                 :items="selectionItems"
-                empty-text="暂无数据"
+                :empty-text="t('common.noData')"
               />
-              <PatchTaskSummaryRow label="目标主机" :items="hosts" empty-text="暂无主机" />
+              <PatchTaskSummaryRow :label="t('execution.ui.targetHost')" :items="hosts" :empty-text="t('patches.linux.noHosts')" />
               <PatchTaskSummaryRow
                 :label="operationConfig.packageSummaryLabel"
                 :items="affectedPackages"
-                empty-text="暂无软件包"
+                :empty-text="t('patches.linux.noPackages')"
                 package-style
               />
             </div>
@@ -149,14 +149,12 @@
               type="error"
               :closable="false"
               show-icon
-              :title="`执行任务中断${taskErrorMessage ? '：' + taskErrorMessage : ''}`"
+              :title="taskErrorMessage ? t('patches.logs.interruptedReason', { error: taskErrorMessage }) : t('patches.logs.interruptedTask')"
               class="task-step-alert mt-3"
             >
               <template #default>
                 <div style="font-size: 13px">
-                  由于部分环节出现异常{{
-                    taskErrorMessage ? `（${taskErrorMessage}）` : ''
-                  }}，任务已停止。请检查原因。
+                  {{ taskErrorMessage ? t('patches.logs.stoppedReason', { error: taskErrorMessage }) : t('patches.logs.stopped') }}
                 </div>
               </template>
             </el-alert>
@@ -167,14 +165,14 @@
 
     <template #footer>
       <div class="dialog-footer process-detail__footer">
-        <el-button @click="visible = false">关闭</el-button>
-        <el-button :disabled="currentStep === 0" @click="currentStep -= 1">上一步</el-button>
+        <el-button @click="visible = false">{{ t('common.close') }}</el-button>
+        <el-button :disabled="currentStep === 0" @click="currentStep -= 1">{{ t('patches.linux.previousStep') }}</el-button>
         <el-button
           :disabled="currentStep >= wizardSteps.length - 1"
           type="primary"
           @click="currentStep += 1"
         >
-          下一步
+          {{ t('patches.linux.nextStep') }}
         </el-button>
       </div>
     </template>
@@ -188,6 +186,8 @@
 </template>
 
 <script setup>
+
+import { t } from '@/core/i18n'
 import { computed, ref, toRef } from 'vue'
 import { formatDateTime, formatTaskStatus } from '../../utils/patchProcessLogs'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
@@ -221,7 +221,13 @@ const visible = computed({
 const sourceTask = toRef(props, 'task')
 const executeResultVisible = ref(false)
 const executeRunId = ref('')
-const executeJobTitle = ref('')
+const executeJobKey = ref('')
+const executeJobFallback = ref('')
+const executeJobTitle = computed(() => {
+  const directKeys = { preScript: 'patches.linux.preScript', validationScript: 'patches.linux.validationScript', restartRun: 'patches.linux.executeRestart' }
+  const key = directKeys[executeJobKey.value]
+  return key ? t(key) : pipelineItems.value.find(item => item.key === executeJobKey.value)?.label || executeJobFallback.value
+})
 
 const {
   loading,
@@ -252,12 +258,12 @@ const {
 } = usePatchProcessLogDetail(sourceTask)
 
 const isRejected = computed(() => String(detailTask.value?.status || '').trim().toUpperCase() === 'REJECTED')
-const rejectedStepAlert = { type: 'info', title: '审批已驳回，本环节未执行；以下仅展示申请配置。' }
+const rejectedStepAlert = { type: 'info', get title() { return t('patches.logs.rejectedStepHint') } }
 const detailStepStates = computed(() =>
   wizardSteps.value.map(step => isRejected.value ? 'idle' : getWizardStepState(step.key))
 )
 const detailPipelineItems = computed(() => isRejected.value
-  ? pipelineItems.value.map(item => ({ ...item, state: 'idle', runId: '', text: '审批驳回，未执行' }))
+  ? pipelineItems.value.map(item => ({ ...item, state: 'idle', runId: '', text: t('patches.logs.rejectedNotExecuted') }))
   : pipelineItems.value
 )
 
@@ -268,10 +274,11 @@ useActiveTaskListPolling({
   activeStatuses: ['PENDING_APPROVAL', 'CREATED', 'PRE_CHECKING', 'INSTALLING', 'ROLLING_BACK', 'RESTARTING', 'VALIDATING']
 })
 
-function openExecuteResult(runId, jobTitle) {
+function openExecuteResult(runId, jobTitle = '', titleKey = '') {
   if (!runId) return
   executeRunId.value = runId
-  executeJobTitle.value = jobTitle
+  executeJobKey.value = titleKey
+  executeJobFallback.value = jobTitle
   executeResultVisible.value = true
 }
 
@@ -279,7 +286,8 @@ function handleClosed() {
   reset()
   executeResultVisible.value = false
   executeRunId.value = ''
-  executeJobTitle.value = ''
+  executeJobKey.value = ''
+  executeJobFallback.value = ''
 }
 </script>
 

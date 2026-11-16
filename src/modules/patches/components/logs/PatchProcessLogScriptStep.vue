@@ -20,20 +20,22 @@
               class="execute-result-link"
               @click="$emit('show-result', runId)"
             >
-              查看执行详情
+              {{ t('patches.linux.viewExecution') }}
             </el-button>
           </div>
         </template>
       </el-alert>
       <div class="detail-block">
-        <div class="detail-block__title">脚本内容</div>
-        <pre class="detail-block__content">{{ scriptContent || '未配置脚本' }}</pre>
+        <div class="detail-block__title">{{ t('automation.library.scriptContents') }}</div>
+        <pre class="detail-block__content">{{ scriptContent || t('automation.flow.noScript') }}</pre>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+
 defineProps({
   icon: {
     type: String,

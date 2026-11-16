@@ -2,10 +2,10 @@
   <div class="ops-page-layout win-patch-page">
     <div class="ops-filter-bar">
       <el-form :inline="true" size="small" @submit.prevent>
-        <el-form-item label="主机 ID">
+        <el-form-item :label="t('patches.windows.hostId')">
           <el-input
             v-model="filters.hostId"
-            placeholder="按主机 ID 过滤"
+            :placeholder="t('patches.windows.filterHostId')"
             clearable
             style="width: 220px"
             @keyup.enter="handleSearch"
@@ -13,8 +13,8 @@
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :loading="loading" @click="handleSearch">搜索</el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <el-button type="primary" :loading="loading" @click="handleSearch">{{ t('common.search') }}</el-button>
+          <el-button @click="handleReset">{{ t('common.reset') }}</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -26,10 +26,10 @@
         :disabled="loading || selectedRows.length === 0"
         @click="rollbackDialogVisible = true"
       >
-        回滚选中记录
+        {{ t('patches.windows.rollbackSelected') }}
       </el-button>
-      <span class="win-patch-selection-text">安装历史（按时间倒序）</span>
-      <span class="win-patch-selection-text">已选 {{ selectedRows.length }} 条可回滚记录</span>
+      <span class="win-patch-selection-text">{{ t('patches.windows.installationHistoryNewestFirst') }}</span>
+      <span class="win-patch-selection-text">{{ t('patches.cve.alreadySelected') }} {{ selectedRows.length }} {{ t('patches.windows.rollbackableUnit') }}</span>
       <span style="flex: 1"></span>
       <el-button
         class="toolbar-icon-btn"
@@ -43,7 +43,7 @@
     </div>
 
     <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
-      <el-button link type="primary" @click="loadLogs()">重试</el-button>
+      <el-button link type="primary" @click="loadLogs()">{{ t('common.retry') }}</el-button>
     </el-alert>
 
     <div class="ops-table-wrapper">
@@ -54,17 +54,17 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="48" :selectable="isRollbackRowSelectable" />
-        <el-table-column label="主机" min-width="150" show-overflow-tooltip>
+        <el-table-column :label="t('execution.ui.host')" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
             {{ pickValue(row, ['hosts', 'hostKey', 'host_key'], '-') }}
           </template>
         </el-table-column>
-        <el-table-column label="KB 编号" min-width="160" show-overflow-tooltip>
+        <el-table-column :label="t('patches.windows.kbId')" min-width="160" show-overflow-tooltip>
           <template #default="{ row }">
             {{ resolveKbNumbers(row).join(', ') || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="更新时间" min-width="190" class-name="win-patch-table__time-column">
+        <el-table-column :label="t('automation.command.updatedAt')" min-width="190" class-name="win-patch-table__time-column">
           <template #default="{ row }">
             {{
               formatDateTime(
@@ -73,7 +73,7 @@
             }}
           </template>
         </el-table-column>
-        <el-table-column label="安装历史" min-width="110" align="center">
+        <el-table-column :label="t('patches.windows.installationHistory')" min-width="110" align="center">
           <template #default="{ row }">
             <el-button
               v-if="resolveRunId(row)"
@@ -81,7 +81,7 @@
               link
               @click.stop="openRunResult(row)"
             >
-              查看
+              {{ t('common.view') }}
             </el-button>
             <span v-else>-</span>
           </template>
@@ -103,7 +103,7 @@
         @current-change="handlePageChange"
       />
       <span v-else-if="!loadError" class="win-patch-selection-text">
-        总数暂不可核实，请刷新重试
+        {{ t('patches.windows.totalUnverified') }}
       </span>
     </div>
 
@@ -122,6 +122,10 @@
 </template>
 
 <script setup>
+import { createPatchTaskError } from '@/modules/patches/utils/patchTaskFeedback'
+import { message as localMessage, messageRef } from '@/core/i18n/feedback'
+
+import { t } from '@/core/i18n'
 import { onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { Refresh } from '@element-plus/icons-vue'
@@ -133,7 +137,7 @@ import { formatDateTime, isRollbackSelectable, parsePageResponse, pickValue } fr
 
 const route = useRoute()
 const loading = ref(false)
-const loadError = ref('')
+const loadError = messageRef('')
 const totalKnown = ref(true)
 let loadRequestId = 0
 const logList = ref([])
@@ -141,7 +145,7 @@ const selectedRows = ref([])
 const rollbackDialogVisible = ref(false)
 const runResultDialogVisible = ref(false)
 const currentRunId = ref('')
-const currentRunTitle = ref('')
+const currentRunTitle = messageRef('')
 
 const filters = reactive({
   hostId: ''
@@ -184,13 +188,13 @@ async function loadLogs() {
           correctedTotal !== null &&
           query.page > Math.max(0, Math.ceil(correctedTotal / query.size) - 1)
         ) {
-          throw new Error('安装历史分页已变化，请重试')
+          throw createPatchTaskError('patches.windows.historyPageChanged')
         }
       }
     }
     const page = parsePageResponse(response)
     if (!Number.isSafeInteger(page.total) || page.total < 0) {
-      throw new Error('安装历史总数无效')
+      throw createPatchTaskError('patches.windows.invalidHistoryTotal')
     }
     logList.value = page.content
     totalKnown.value = getExplicitTotal(response) !== null
@@ -200,7 +204,7 @@ async function loadLogs() {
     if (!isCurrentRequest()) return
     totalKnown.value = false
     pagination.total = 0
-    loadError.value = '加载安装历史失败，请重试'
+    loadError.value = localMessage('patches.windows.historyLoadRetry')
   } finally {
     if (isCurrentRequest()) loading.value = false
   }
@@ -231,11 +235,11 @@ function openRunResult(row) {
   if (!runId) return
 
   currentRunId.value = runId
-  currentRunTitle.value = `补丁安装历史：${pickValue(
+  currentRunTitle.value = localMessage('patches.windows.hostHistoryTitle', { p0: pickValue(
     row,
     ['updateKbNumbers', 'update_kb_numbers', 'kbNumber', 'kb_number'],
     runId
-  )}`
+  ) })
   runResultDialogVisible.value = true
 }
 

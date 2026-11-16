@@ -3,11 +3,11 @@
     <div class="install-card">
       <div class="card-header">
         <i class="fa fa-desktop" />
-        目标主机
+        {{ t('execution.ui.targetHost') }}
       </div>
       <div class="card-body card-body--scroll">
         <div v-if="hostItems.length === 0" class="selection-item">
-          <div class="selection-item__primary">暂无主机</div>
+          <div class="selection-item__primary">{{ t('patches.linux.noHosts') }}</div>
         </div>
         <div
           v-for="item in hostItems"
@@ -15,10 +15,10 @@
           class="selection-item"
         >
           <div class="selection-item__primary">{{ item.hostKey || '-' }}</div>
-          <div class="selection-item__secondary">主机 ID：{{ item.hostId || '-' }}</div>
+          <div class="selection-item__secondary">{{ t('patches.windows.hostIdLabel') }}{{ item.hostId || '-' }}</div>
         </div>
         <div class="selection-item">
-          <div class="selection-item__primary">待回滚补丁 {{ rollbackItems.length }} 条</div>
+          <div class="selection-item__primary">{{ t('patches.windows.patchesToRollback') }} {{ rollbackItems.length }} {{ t('patches.windows.itemUnit') }}</div>
         </div>
       </div>
     </div>
@@ -26,22 +26,22 @@
     <div class="install-card">
       <div class="card-header">
         <i class="fa fa-list" />
-        待回滚补丁
+        {{ t('patches.windows.patchesToRollback') }}
       </div>
       <div class="card-body">
         <div class="ops-table-wrapper win-patch-summary-step__table">
           <el-table :data="rollbackItems" max-height="320">
-            <el-table-column label="主机" width="150" show-overflow-tooltip>
+            <el-table-column :label="t('execution.ui.host')" width="150" show-overflow-tooltip>
               <template #default="{ row }">
                 {{ row.hostKey || '-' }}
               </template>
             </el-table-column>
-            <el-table-column label="KB 编号" width="140" show-overflow-tooltip>
+            <el-table-column :label="t('patches.windows.kbId')" width="140" show-overflow-tooltip>
               <template #default="{ row }">
                 {{ row.kbNumber || '-' }}
               </template>
             </el-table-column>
-            <el-table-column label="更新时间" width="190">
+            <el-table-column :label="t('automation.command.updatedAt')" width="190">
               <template #default="{ row }">
                 {{ formatDateTime(row.updateTime) }}
               </template>
@@ -59,6 +59,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { computed } from 'vue'
 import { formatDateTime } from '../../utils'
 

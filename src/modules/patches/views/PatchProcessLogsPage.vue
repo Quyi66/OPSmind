@@ -2,38 +2,38 @@
   <div class="ops-page-layout">
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small" @submit.prevent>
-        <el-form-item label="任务类型">
+        <el-form-item :label="t('patches.windows.taskType')">
           <el-select
             v-model="filters.taskType"
             clearable
-            placeholder="全部"
+            :placeholder="t('common.all')"
             class="task-type-filter"
             @change="handleSearch"
           >
-            <el-option label="全部" value="" />
-            <el-option label="补丁安装" value="install" />
-            <el-option label="变更回滚" value="rollback" />
-            <el-option label="软件包更新" value="pkg_update" />
-            <el-option label="漏洞修复" value="vuln_fix" />
+            <el-option :label="t('common.all')" value="" />
+            <el-option :label="t('patches.linux.patchInstall')" value="install" />
+            <el-option :label="t('patches.linux.changeRollback')" value="rollback" />
+            <el-option :label="t('patches.linux.packageUpdate')" value="pkg_update" />
+            <el-option :label="t('patches.linux.vulnFix')" value="vuln_fix" />
           </el-select>
         </el-form-item>
-        <el-form-item label="操作人">
+        <el-form-item :label="t('patches.logs.operator')">
           <el-input
             v-model="filters.operator"
-            placeholder="请输入"
+            :placeholder="t('automation.flow.enterValue')"
             clearable
             class="operator-filter"
             @keyup.enter="handleSearch"
             @clear="handleSearch"
           />
         </el-form-item>
-        <el-form-item label="时间范围">
+        <el-form-item :label="t('automation.records.timeRange')">
           <el-date-picker
             v-model="filters.timeRange"
             type="daterange"
-            range-separator="至"
-            start-placeholder="开始时间"
-            end-placeholder="结束时间"
+            :range-separator="t('patches.logs.to')"
+            :start-placeholder="t('automation.workbench.startedAt')"
+            :end-placeholder="t('automation.workbench.endedAt')"
             value-format="YYYY-MM-DD"
             class="time-range-filter"
             @change="handleSearch"
@@ -42,11 +42,11 @@
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleSearch">
             <el-icon><Search /></el-icon>
-            搜索
+            {{ t('common.search') }}
           </el-button>
           <el-button @click="handleReset">
             <el-icon><RefreshRight /></el-icon>
-            重置
+            {{ t('common.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -59,7 +59,7 @@
         circle
         size="small"
         :loading="loading"
-        title="刷新"
+        :title="t('common.refresh')"
         @click="loadData"
       >
         <el-icon v-show="!loading"><Refresh /></el-icon>
@@ -67,7 +67,7 @@
     </div>
 
     <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon>
-      <el-button link type="primary" @click="loadData">重试</el-button>
+      <el-button link type="primary" @click="loadData">{{ t('common.retry') }}</el-button>
     </el-alert>
 
     <div class="ops-table-wrapper">
@@ -75,14 +75,14 @@
         v-loading="loading"
         :data="visibleRows"
         max-height="calc(100vh - 314px)"
-        :empty-text="loading ? '正在读取流程操作记录…' : loadError || '暂无符合条件的流程操作记录'"
+        :empty-text="loading ? t('patches.logs.processLoading') : loadError || t('patches.logs.noProcesses')"
       >
-        <el-table-column prop="createdTime" label="记录时间" width="180">
+        <el-table-column prop="createdTime" :label="t('patches.logs.recordedAt')" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.createdTime) }}
           </template>
         </el-table-column>
-        <el-table-column prop="taskType" label="任务类型" width="120">
+        <el-table-column prop="taskType" :label="t('patches.windows.taskType')" width="120">
           <template #default="{ row }">
             <el-tag
               :type="getTaskTypeTagType(row.taskType)"
@@ -94,7 +94,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="150">
+        <el-table-column prop="status" :label="t('common.status')" width="150">
           <template #default="{ row }">
             <RunLogStatusTag
               :type="getTaskStatusTagType(row.status)"
@@ -104,13 +104,13 @@
             >
               {{
                 row.status === 'CREATED' && row.scheduledTime
-                  ? '等待定时执行'
+                  ? t('patches.linux.waitingScheduledExecution')
                   : formatTaskStatus(row.status)
               }}
             </RunLogStatusTag>
           </template>
         </el-table-column>
-        <el-table-column prop="osType" label="系统类型" width="120">
+        <el-table-column prop="osType" :label="t('patches.logs.systemType')" width="120">
           <template #default="{ row }">
             <span class="os-type-cell">
               <i v-if="getOsIcon(row.osType)" :class="[getOsIcon(row.osType), 'os-brand-icon']" />
@@ -118,15 +118,15 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="createdBy" label="操作人" width="120" show-overflow-tooltip />
-        <el-table-column label="涉及软件包" min-width="220" show-overflow-tooltip>
+        <el-table-column prop="createdBy" :label="t('patches.logs.operator')" width="120" show-overflow-tooltip />
+        <el-table-column :label="t('patches.logs.packages')" min-width="220" show-overflow-tooltip>
           <template #default="{ row }">
             {{ formatJsonArray(row.patchPkgs) || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="170" fixed="right">
+        <el-table-column :label="t('common.actions')" width="170" fixed="right">
           <template #default="{ row }">
-            <el-button text type="primary" size="small" @click="openDetail(row)">详情</el-button>
+            <el-button text type="primary" size="small" @click="openDetail(row)">{{ t('automation.records.details') }}</el-button>
             <el-button
               v-if="row.taskType !== 'rollback'"
               text
@@ -134,7 +134,7 @@
               size="small"
               @click="openFailedHosts(row)"
             >
-              失败主机
+              {{ t('patches.linux.failedHosts') }}
             </el-button>
           </template>
         </el-table-column>
@@ -161,6 +161,9 @@
 </template>
 
 <script setup>
+import { message as localMessage, messageRef } from '@/core/i18n/feedback'
+import { t } from '@/core/i18n'
+
 import {
   computed,
   onMounted,
@@ -194,7 +197,7 @@ const DEFAULT_PAGE_SIZE = 20
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100]
 
 const loading = ref(false)
-const loadError = ref('')
+const loadError = messageRef('')
 const active = ref(true)
 let listRequest = 0
 let lastQueryKey = ''
@@ -261,9 +264,9 @@ async function loadData() {
     pagination.total = data.totalElements || 0
   } catch (error) {
     if (!isCurrent()) return
-    loadError.value = '加载流程操作记录失败，请重试'
+    loadError.value = localMessage('patches.logs.processLoadRetry')
     console.error('Failed to load process logs:', error)
-    ElMessage.error('加载流程操作记录失败')
+    ElMessage.error(t('patches.logs.processLoadFailed'))
   } finally {
     if (isCurrent()) loading.value = false
   }
@@ -332,7 +335,7 @@ onMounted(loadData)
 function invalidateListRead() {
   active.value = false
   listRequest += 1
-  if (loading.value) loadError.value = '流程操作记录读取已中断，请刷新重试'
+  if (loading.value) loadError.value = localMessage('patches.logs.processInterrupted')
   loading.value = false
   detailVisible.value = false
   failedHostsVisible.value = false

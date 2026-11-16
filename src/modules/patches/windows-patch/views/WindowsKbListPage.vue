@@ -11,19 +11,19 @@
         <!-- 卡片1：KB 知识库总览 -->
         <div class="stat-card win-kb-overview-card">
           <div class="compact-card-header">
-            <div class="card-title">Windows KB 知识库</div>
+            <div class="card-title">{{ t('patches.windows.kbLibrary') }}</div>
             <button
               type="button"
               class="win-kb-total-badge"
-              title="查看全部 KB"
+              :title="t('patches.windows.viewAllKb')"
               @click="filterBySeverity('all')"
             >
               <strong>{{ formatNumber(statistics.totalKbs) }}</strong>
-              <span>KB 总数</span>
+              <span>{{ t('patches.windows.kbTotal') }}</span>
             </button>
           </div>
           <div class="card-subtitle">
-            来自 Microsoft Update Catalog 的全局 KB 数据，结合租户扫描结果。
+            {{ t('patches.windows.kbDataSourceHint') }}
           </div>
           <div class="win-kb-severity-bars">
             <button
@@ -55,39 +55,39 @@
         <!-- 卡片2：未指定等级 -->
         <div class="stat-card win-kb-unspecified-card">
           <div class="compact-card-header">
-            <div class="card-title">未指定等级</div>
-            <div class="card-subtitle">仅展示统计</div>
+            <div class="card-title">{{ t('patches.windows.unspecifiedSeverity') }}</div>
+            <div class="card-subtitle">{{ t('patches.windows.statisticsOnly') }}</div>
           </div>
           <div class="win-kb-metric">
             <div class="metric-number">{{ formatNumber(unspecifiedCount) }}</div>
-            <div class="metric-label">个</div>
+            <div class="metric-label">{{ t('patches.linux.itemUnit') }}</div>
           </div>
           <div class="metric-hint">
             <i class="el-icon"><InfoFilled /></i>
-            等级未由 Microsoft 指定
+            {{ t('patches.windows.microsoftUnspecifiedSeverity') }}
           </div>
         </div>
 
         <!-- 卡片3：修复状态 -->
         <div class="stat-card win-kb-repair-card">
           <div class="compact-card-header">
-            <div class="card-title">修复状态</div>
-            <div class="card-subtitle">当前租户统计</div>
+            <div class="card-title">{{ t('patches.linux.fixStatus') }}</div>
+            <div class="card-subtitle">{{ t('patches.windows.tenantStatistics') }}</div>
           </div>
           <div class="win-kb-repair-items">
             <div class="repair-item is-repaired">
               <div class="repair-header">
-                <span class="repair-label">已修补</span>
+                <span class="repair-label">{{ t('patches.windows.patched') }}</span>
                 <span class="repair-value">
-                  {{ formatNumber(statistics.repairedKbCount) }} 个 KB
+                  {{ formatNumber(statistics.repairedKbCount) }} {{ t('patches.windows.kbUnit') }}
                 </span>
               </div>
             </div>
             <div class="repair-item is-missing">
               <div class="repair-header">
-                <span class="repair-label">待修复</span>
+                <span class="repair-label">{{ t('patches.windows.pendingRepair') }}</span>
                 <span class="repair-value">
-                  {{ formatNumber(statistics.missingKbCount) }} 个 KB
+                  {{ formatNumber(statistics.missingKbCount) }} {{ t('patches.windows.kbUnit') }}
                 </span>
               </div>
             </div>
@@ -97,29 +97,29 @@
 
       <div class="ops-filter-bar">
         <el-form :model="searchParams" inline @submit.prevent>
-          <el-form-item label="关键字">
+          <el-form-item :label="t('patches.cve.keyword')">
             <el-input
               v-model="searchParams.keyword"
-              placeholder="输入漏洞编号 / KB 号 / 标题"
+              :placeholder="t('patches.windows.searchVulnerabilityKbTitle')"
               clearable
               style="width: 220px"
               @keyup.enter="search"
             @clear="search" />
           </el-form-item>
-          <el-form-item label="严重等级">
+          <el-form-item :label="t('patches.cve.severity')">
             <el-select v-model="searchParams.severity" style="width: 120px" @change="search">
-              <el-option value="all" label="全部" />
-              <el-option value="Critical" label="严重" />
-              <el-option value="Important" label="重要" />
-              <el-option value="Moderate" label="中等" />
-              <el-option value="Low" label="低危" />
+              <el-option value="all" :label="t('common.all')" />
+              <el-option value="Critical" :label="t('patches.catalog.critical')" />
+              <el-option value="Important" :label="t('patches.catalog.important')" />
+              <el-option value="Moderate" :label="t('patches.catalog.moderate')" />
+              <el-option value="Low" :label="t('patches.catalog.low')" />
             </el-select>
           </el-form-item>
-          <el-form-item label="发布日期">
+          <el-form-item :label="t('patches.catalog.publishDate')">
             <el-date-picker
               v-model="searchParams.startDate"
               type="date"
-              placeholder="开始日期"
+              :placeholder="t('patches.cve.startDate')"
               format="YYYY-MM-DD"
               value-format="YYYY-MM-DD"
               style="width: 150px"
@@ -129,7 +129,7 @@
             <el-date-picker
               v-model="searchParams.endDate"
               type="date"
-              placeholder="结束日期"
+              :placeholder="t('patches.cve.endDate')"
               format="YYYY-MM-DD"
               value-format="YYYY-MM-DD"
               style="width: 150px"
@@ -139,25 +139,25 @@
           <el-form-item>
             <el-button type="primary" @click="search">
               <el-icon><Search /></el-icon>
-              搜索
+              {{ t('common.search') }}
             </el-button>
             <el-button @click="resetFilters">
               <el-icon><RefreshRight /></el-icon>
-              重置
+              {{ t('common.reset') }}
             </el-button>
           </el-form-item>
         </el-form>
       </div>
 
       <div class="ops-action-bar">
-        <span class="win-kb-page__hint">列表按发布日期倒序展示，最新补丁在前。</span>
+        <span class="win-kb-page__hint">{{ t('patches.windows.newestPatchFirst') }}</span>
         <span style="flex: 1"></span>
         <el-button
           class="toolbar-icon-btn"
           circle
           size="small"
           :loading="loading"
-          title="刷新"
+          :title="t('common.refresh')"
           @click="loadData"
         >
           <el-icon v-show="!loading"><Refresh /></el-icon>
@@ -166,14 +166,14 @@
 
       <div class="ops-table-wrapper" v-loading="loading">
         <el-table :data="kbList" class="natural-height-table" style="width: 100%">
-          <el-table-column prop="kbNumber" label="KB 编号" width="140">
+          <el-table-column prop="kbNumber" :label="t('patches.windows.kbId')" width="140">
             <template #default="{ row }">
               <el-link type="primary" underline="never" @click="viewDetail(row)">
                 {{ row.kbNumber }}
               </el-link>
             </template>
           </el-table-column>
-          <el-table-column label="严重等级" width="110">
+          <el-table-column :label="t('patches.cve.severity')" width="110">
             <template #default="{ row }">
               <el-tag
                 :type="getSeverityType(row.msrcSeverity)"
@@ -184,36 +184,36 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="title" label="标题" min-width="260" show-overflow-tooltip />
-          <el-table-column prop="classification" label="分类" width="150" show-overflow-tooltip />
-          <el-table-column prop="products" label="产品" min-width="180" show-overflow-tooltip />
-          <el-table-column label="关联漏洞" min-width="220">
+          <el-table-column prop="title" :label="t('automation.job.title')" min-width="260" show-overflow-tooltip />
+          <el-table-column prop="classification" :label="t('patches.windows.classification')" width="150" show-overflow-tooltip />
+          <el-table-column prop="products" :label="t('patches.windows.product')" min-width="180" show-overflow-tooltip />
+          <el-table-column :label="t('patches.catalog.associatedVulnerabilities')" min-width="220">
             <template #default="{ row }">
               <CveLinkList
                 :cves="resolveCveIds(row)"
                 :url-resolver="getWinCveUrl"
-                dialog-title="关联漏洞"
+                :dialog-title="t('patches.catalog.associatedVulnerabilities')"
               />
             </template>
           </el-table-column>
-          <el-table-column label="最高 CVSS" width="110" align="center">
+          <el-table-column :label="t('patches.windows.highestCvss')" width="110" align="center">
             <template #default="{ row }">
               {{
-                formatCvssScore(row.maxCvss3Score) === '未评分'
+                toKnownNumber(row.maxCvss3Score, { max: 10 }) === null
                   ? '-'
                   : formatCvssScore(row.maxCvss3Score)
               }}
             </template>
           </el-table-column>
-          <el-table-column label="大小" width="110">
+          <el-table-column :label="t('automation.library.size')" width="110">
             <template #default="{ row }">{{ formatBytes(row.sizeBytes) }}</template>
           </el-table-column>
-          <el-table-column label="发布日期" width="110">
+          <el-table-column :label="t('patches.catalog.publishDate')" width="110">
             <template #default="{ row }">{{ formatDate(row.publishDate) }}</template>
           </el-table-column>
-          <el-table-column label="操作" width="90" fixed="right">
+          <el-table-column :label="t('common.actions')" width="90" fixed="right">
             <template #default="{ row }">
-              <el-button link type="primary" @click="viewDetail(row)">详情</el-button>
+              <el-button link type="primary" @click="viewDetail(row)">{{ t('automation.records.details') }}</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -236,10 +236,11 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { computed, onMounted, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { formatCvssScore } from '@/utils/workspacePresentation'
+import { formatCvssScore, toKnownNumber } from '@/utils/workspacePresentation'
 import { InfoFilled, Refresh, RefreshRight, Search } from '@element-plus/icons-vue'
 import { winKbApi } from '../../api'
 import { formatNumber, getSeverityLabel } from '../utils'
@@ -289,35 +290,35 @@ const severityStats = computed(() => [
   {
     key: 'critical',
     value: 'Critical',
-    label: '严重',
+    get label() { return t('patches.catalog.critical') },
     count: getSeverityCount('Critical', '严重'),
     clickable: true
   },
   {
     key: 'important',
     value: 'Important',
-    label: '重要',
+    get label() { return t('patches.catalog.important') },
     count: getSeverityCount('Important', '重要'),
     clickable: true
   },
   {
     key: 'moderate',
     value: 'Moderate',
-    label: '中等',
+    get label() { return t('patches.catalog.moderate') },
     count: getSeverityCount('Moderate', '中等'),
     clickable: true
   },
   {
     key: 'low',
     value: 'Low',
-    label: '低危',
+    get label() { return t('patches.catalog.low') },
     count: getSeverityCount('Low', '低危'),
     clickable: true
   },
   {
     key: 'unspecified',
     value: '',
-    label: '未指定',
+    get label() { return t('patches.windows.unspecified') },
     count: getSeverityCount('Unspecified', '未指定'),
     clickable: false
   }
@@ -455,7 +456,7 @@ async function loadData() {
   } catch (error) {
     if (requestId !== listRequestId) return
     console.error('Failed to load Windows KB list:', error)
-    ElMessage.error('查询 KB 知识库失败，请稍后重试')
+    ElMessage.error(t('patches.windows.kbQueryFailed'))
     kbList.value = []
     pagination.totalElements = 0
   } finally {
@@ -469,7 +470,7 @@ function validateDateRange() {
     searchParams.endDate &&
     searchParams.startDate > searchParams.endDate
   ) {
-    ElMessage.warning('开始日期不能晚于结束日期')
+    ElMessage.warning(t('patches.cve.invalidDateRange'))
     return false
   }
   return true

@@ -1,17 +1,17 @@
 <template>
   <el-dialog
     v-model="visibleModel"
-    :title="form.id ? '编辑 WSUS 配置' : '新建 WSUS 配置'"
+    :title="form.id ? t('patches.windows.editWsus') : t('patches.windows.createWsus')"
     width="560px"
     destroy-on-close
     :close-on-click-modal="false"
     :close-on-press-escape="false"
   >
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="110px" @submit.prevent>
-      <el-form-item label="WSUS 地址" prop="wsusUrl">
-        <el-input v-model="form.wsusUrl" placeholder="请输入 WSUS 地址" clearable />
+    <el-form ref="formRef" :model="form" :rules="rules" :validate-on-rule-change="false" label-width="110px" @submit.prevent>
+      <el-form-item :label="t('patches.windows.wsusAddress')" prop="wsusUrl">
+        <el-input v-model="form.wsusUrl" :placeholder="t('patches.windows.enterWsusAddress')" clearable />
       </el-form-item>
-      <el-form-item label="端口" prop="wsusPort">
+      <el-form-item :label="t('patches.windows.port')" prop="wsusPort">
         <el-input-number
           v-model="form.wsusPort"
           :min="1"
@@ -20,28 +20,31 @@
           style="width: 100%"
         />
       </el-form-item>
-      <el-form-item label="启用 HTTPS">
+      <el-form-item :label="t('patches.windows.enableHttps')">
         <el-switch v-model="form.useSsl" />
       </el-form-item>
-      <el-form-item label="描述">
+      <el-form-item :label="t('automation.job.description')">
         <el-input
           v-model="form.description"
           type="textarea"
           :rows="3"
           maxlength="512"
           show-word-limit
-          placeholder="请输入描述"
+          :placeholder="t('patches.windows.enterDescription')"
         />
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="visibleModel = false">取消</el-button>
-      <el-button type="primary" :loading="submitting" @click="handleSubmit">保存</el-button>
+      <el-button @click="visibleModel = false">{{ t('common.cancel') }}</el-button>
+      <el-button type="primary" :loading="submitting" @click="handleSubmit">{{ t('common.save') }}</el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { useLocalizedValidation } from '@/core/i18n/validation'
+
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { winPatchApi } from '../../api'
@@ -75,10 +78,12 @@ const form = reactive({
   description: ''
 })
 
-const rules = {
-  wsusUrl: [{ required: true, message: '请输入 WSUS 地址', trigger: 'blur' }],
-  wsusPort: [{ required: true, message: '请输入端口', trigger: 'change' }]
-}
+useLocalizedValidation(formRef)
+
+const rules = computed(() => ({
+  wsusUrl: [{ required: true, message: t('patches.windows.enterWsusAddress'), trigger: 'blur' }],
+  wsusPort: [{ required: true, message: t('patches.windows.enterPort'), trigger: 'change' }]
+}))
 
 function resetForm(data = null) {
   form.id = pickValue(data, ['id'], '')
@@ -111,12 +116,12 @@ async function handleSubmit() {
     }
 
     const response = await winPatchApi.saveWsusConfig(payload)
-    ElMessage.success(form.id ? 'WSUS 配置已更新' : 'WSUS 配置已创建')
+    ElMessage.success(form.id ? t('patches.windows.wsusUpdated') : t('patches.windows.wsusCreated'))
     visibleModel.value = false
     emit('saved', unwrapResponse(response))
   } catch (error) {
     console.error('保存 WSUS 配置失败:', error)
-    ElMessage.error('保存 WSUS 配置失败')
+    ElMessage.error(t('patches.windows.wsusSaveFailed'))
   } finally {
     submitting.value = false
   }

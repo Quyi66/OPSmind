@@ -2,7 +2,7 @@
   <div class="task-step-content win-patch-execute-step">
     <el-alert
       v-if="!taskId"
-      title="所有安装参数已经配置完成。点击“开始执行安装”后，系统会自动创建任务并按步骤推进。"
+      :title="t('patches.windows.installReady')"
       type="info"
       :closable="false"
       show-icon
@@ -12,13 +12,13 @@
       <div class="task-step-editor">
         <div class="task-step-editor__title">
           <i class="fa fa-download" style="margin-right: 6px"></i>
-          执行安装
+          {{ t('patches.windows.executeInstall') }}
         </div>
         <div class="install-summary-card">
           <div class="install-summary-row">
-            <span class="install-summary-label">待安装补丁</span>
+            <span class="install-summary-label">{{ t('patches.linux.patchesToInstall') }}</span>
             <div class="install-summary-list">
-              <div v-if="selectedPatches.length === 0" class="install-summary-empty">暂无数据</div>
+              <div v-if="selectedPatches.length === 0" class="install-summary-empty">{{ t('common.noData') }}</div>
               <div
                 v-for="item in selectedPatches"
                 :key="item.id || item.kbNumber"
@@ -30,10 +30,10 @@
             </div>
           </div>
           <div class="install-summary-row">
-            <span class="install-summary-label">目标主机</span>
+            <span class="install-summary-label">{{ t('execution.ui.targetHost') }}</span>
             <div class="install-summary-list">
               <template v-if="isMultiHost">
-                <div class="install-summary-item">共 {{ hostSummaries.length }} 台主机</div>
+                <div class="install-summary-item">{{ t('patches.linux.totalPrefix') }} {{ hostSummaries.length }} {{ t('patches.windows.hostUnit') }}</div>
                 <div v-for="host in hostSummaries" :key="resolveHostId(host)" class="install-summary-subtext">
                   {{ resolveHostKey(host) }}（{{ resolveHostId(host) || '-' }}）
                 </div>
@@ -41,7 +41,7 @@
               <template v-else>
                 <div class="install-summary-item">{{ resolveHostKey(hostSummary) }}</div>
                 <div class="install-summary-subtext">
-                  主机 ID：{{ resolveHostId(hostSummary) || '-' }}
+                  {{ t('patches.windows.hostIdLabel') }}{{ resolveHostId(hostSummary) || '-' }}
                 </div>
                 <div class="install-summary-subtext">
                   {{ pickValue(hostSummary, ['osDistro', 'os_distro'], '-') }} /
@@ -52,18 +52,18 @@
             </div>
           </div>
           <div class="install-summary-row">
-            <span class="install-summary-label">脚本配置</span>
+            <span class="install-summary-label">{{ t('patches.windows.scriptSettings') }}</span>
             <div class="install-summary-list">
               <div class="install-summary-item">
-                预检查脚本：{{ getScriptSummary(preScriptConfig, 'pre-check') }}
+                {{ t('patches.windows.preCheckLabel') }}{{ getScriptSummary(preScriptConfig, 'pre-check') }}
               </div>
               <div class="install-summary-item">
-                校验脚本：{{ getScriptSummary(validateScriptConfig, 'validate') }}
+                {{ t('patches.windows.validateLabel') }}{{ getScriptSummary(validateScriptConfig, 'validate') }}
               </div>
             </div>
           </div>
           <div class="install-summary-row">
-            <span class="install-summary-label">执行策略</span>
+            <span class="install-summary-label">{{ t('automation.approval.executionPolicy') }}</span>
             <div class="install-summary-list">
               <div class="install-summary-item">
                 {{ getInstallStrategySummary(installOptions, skippedSteps) }}
@@ -71,7 +71,7 @@
             </div>
           </div>
           <div v-if="availableRunItems.length" class="install-summary-row">
-            <span class="install-summary-label">执行结果</span>
+            <span class="install-summary-label">{{ t('patches.windows.executionResults') }}</span>
             <div class="win-patch-execute-step__runs-list">
               <el-tag
                 v-for="item in availableRunItems"
@@ -79,7 +79,7 @@
                 size="small"
                 effect="plain"
                 class="clickable-tag"
-                @click="emit('view-run', item.runId, item.label)"
+                @click="emit('view-run', item.runId, item.label, item.key)"
               >
                 {{ item.label }}
               </el-tag>
@@ -122,9 +122,9 @@
                   type="primary"
                   link
                   size="small"
-                  @click="emit('view-run', item.runId, item.label)"
+                  @click="emit('view-run', item.runId, item.label, item.key)"
                 >
-                  查看详情
+                  {{ t('automation.flow.details') }}
                 </el-button>
               </div>
             </div>
@@ -136,17 +136,15 @@
           :type="pipelineStatus === 'success' ? 'success' : 'error'"
           :closable="false"
           show-icon
-          :title="pipelineStatus === 'success' ? '所有任务已全部完成' : '执行任务中断'"
+          :title="pipelineStatus === 'success' ? t('patches.linux.allCompleted') : t('patches.linux.taskInterrupted')"
           class="task-step-alert"
         >
           <template #default>
             <div v-if="pipelineStatus === 'success'" class="timeline-status-text">
-              Windows 补丁安装流程已按既定步骤执行完成，可关闭向导或查看步骤详情确认结果。
+              {{ t('patches.windows.installCompletedDetail') }}
             </div>
             <div v-else class="timeline-status-text">
-              由于部分环节出现异常（{{
-                errorMessage || '未知错误'
-              }}），任务已停止。请检查原因并重试。
+              {{ t('patches.windows.taskStopped', { error: errorMessage || t('patches.linux.unknownError') }) }}
             </div>
           </template>
         </el-alert>
@@ -156,6 +154,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { computed } from 'vue'
 import { pickValue, resolveHostId, resolveHostKey } from '../../utils'
 
@@ -220,7 +219,7 @@ const pipelineFinished = computed(() => ['success', 'failed'].includes(props.pip
 
 function getScriptSummary(scriptConfig = {}, stepKey = '') {
   if (props.skippedSteps?.[stepKey]) {
-    return '已设置为跳过，执行时会调用跳过接口'
+    return t('patches.windows.skipConfigured')
   }
 
   const mode = scriptConfig?.mode === 'upload' ? 'upload' : 'edit'
@@ -229,26 +228,26 @@ function getScriptSummary(scriptConfig = {}, stepKey = '') {
       ? Boolean(scriptConfig?.file || scriptConfig?.fileName)
       : Boolean(String(scriptConfig?.content || '').trim())
 
-  if (!hasContent) return '未配置，执行时会自动跳过'
-  return mode === 'upload' ? '已上传脚本文件' : '手动编辑脚本'
+  if (!hasContent) return t('patches.windows.skipUnconfigured')
+  return mode === 'upload' ? t('patches.windows.scriptFileUploaded') : t('patches.windows.scriptEdited')
 }
 
 function getInstallStrategySummary(installOptions = {}, skippedSteps = {}) {
   const restartText = skippedSteps?.restart
-    ? '已设置为跳过重启步骤'
+    ? t('patches.windows.skipRestartConfigured')
     : installOptions?.reboot
-      ? '安装后自动重启'
-      : '安装后不重启'
-  const rescanText = installOptions?.rescanAfter ? '任务完成后自动重扫' : '任务完成后不自动重扫'
+      ? t('patches.windows.rebootAfterInstall')
+      : t('patches.windows.noRebootAfterInstall')
+  const rescanText = installOptions?.rescanAfter ? t('patches.windows.rescanAfterCompletion') : t('patches.windows.noRescanAfterCompletion')
   return `${restartText}；${rescanText}`
 }
 
 function resolveStatusText(item) {
-  if (item.uiStatus === 'running') return '正在执行中...'
-  if (item.uiStatus === 'success') return '任务执行成功'
-  if (item.uiStatus === 'skipped') return '系统已跳过执行'
-  if (item.uiStatus === 'failed') return '任务执行失败，请检查'
-  return '等待调度中'
+  if (item.uiStatus === 'running') return t('patches.linux.executing')
+  if (item.uiStatus === 'success') return t('common.pollingSuccess')
+  if (item.uiStatus === 'skipped') return t('patches.linux.systemSkipped')
+  if (item.uiStatus === 'failed') return t('patches.linux.taskFailedCheck')
+  return t('patches.linux.waitingSchedule')
 }
 </script>
 

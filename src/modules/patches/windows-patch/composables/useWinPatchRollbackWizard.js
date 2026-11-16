@@ -1,3 +1,9 @@
+
+import { createPatchTaskError } from '@/modules/patches/utils/patchTaskFeedback'
+
+import { message as localMessage, messageRef } from '@/core/i18n/feedback'
+import { t } from '@/core/i18n'
+import { createWinPatchError, getWinPatchErrorFeedback, getWinPatchRunTitle } from '../feedback'
 import { computed, onUnmounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { winPatchApi } from '../api'
@@ -109,7 +115,7 @@ function resolveUploadedScriptFile(scriptConfig = {}) {
   return scriptConfig.file || null
 }
 
-function resolveApiErrorMessage(error, fallback = '回滚任务执行失败，请稍后重试') {
+function resolveApiErrorMessage(error, fallback = t('patches.windows.rollbackTaskFailedRetry')) {
   return (
     error?.response?.data?.error ||
     error?.response?.data?.message ||
@@ -421,11 +427,11 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
   const taskHosts = ref([])
   const taskAuditSteps = ref([])
   const taskAuditLogs = ref([])
-  const taskErrorMessage = ref('')
+  const taskErrorMessage = messageRef('')
   const pipelineStatus = ref('idle')
   const showRunResultDialog = ref(false)
   const currentRunId = ref('')
-  const currentRunTitle = ref('')
+  const currentRunTitle = messageRef('')
   let sessionId = 0
   let cancelWait = null
   let resumeStep = 0
@@ -435,7 +441,7 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
   let taskHostIds = []
 
   function checkSession(session) {
-    if (session !== sessionId) throw new Error('回滚向导已关闭')
+    if (session !== sessionId) throw createPatchTaskError('patches.windows.rollbackWizardClosed')
   }
 
   const { start, stop } = useWinPatchPolling(3000)
@@ -550,23 +556,28 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
   const availableRunItems = computed(() => {
     const candidates = [
       {
-        label: '主任务执行',
+        key: 'main',
+        get label() { return t('patches.windows.mainExecution') },
         runId: String(pickValue(taskDetail.value, ['runId', 'run_id'], '')).trim()
       },
       {
-        label: '预检查',
+        key: 'PRE_CHECK',
+        get label() { return t('patches.linux.precheck') },
         runId: String(pickValue(taskDetail.value, ['preCheckRunId', 'pre_check_run_id'], '')).trim()
       },
       {
-        label: '执行回滚',
+        key: 'ROLLBACK',
+        get label() { return t('patches.windows.executeRollback') },
         runId: String(pickValue(taskDetail.value, ['executeRunId', 'execute_run_id'], '')).trim()
       },
       {
-        label: '执行重启',
+        key: 'RESTART',
+        get label() { return t('patches.linux.executeRestart') },
         runId: String(pickValue(taskDetail.value, ['restartRunId', 'restart_run_id'], '')).trim()
       },
       {
-        label: '执行校验',
+        key: 'VALIDATE',
+        get label() { return t('patches.windows.executeValidation') },
         runId: String(pickValue(taskDetail.value, ['validateRunId', 'validate_run_id'], '')).trim()
       }
     ]
@@ -642,9 +653,9 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
       return mergedTask
     } catch (error) {
       if (!options.silent) {
-        ElMessage.error('加载 Windows 回滚任务详情失败')
+        ElMessage.error(t('patches.windows.rollbackDetailLoadFailed'))
       }
-      const queryError = new Error(resolveApiErrorMessage(error, '查询回滚任务状态失败'))
+      const queryError = createWinPatchError(error, 'patches.windows.rollbackQueryFailed')
       queryError.queryInterrupted = true
       throw queryError
     } finally {
@@ -679,11 +690,11 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
     }
 
     if (!selectedHistUpdateIds.value.length) {
-      throw new Error('当前选择中没有可回滚的历史记录')
+      throw createPatchTaskError('patches.windows.noRollbackableSelection')
     }
 
     if (!selectedHostIds.value.length) {
-      throw new Error('当前选择中缺少主机信息，无法创建回滚任务')
+      throw createPatchTaskError('patches.windows.missingRollbackHost')
     }
 
     taskHostIds = [...selectedHostIds.value]
@@ -698,7 +709,7 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
     const taskId = String(pickValue(task, ['id'], '')).trim()
 
     if (!taskId) {
-      throw new Error('创建回滚任务失败，请稍后重试')
+      throw createPatchTaskError('patches.windows.createRollbackFailed')
     }
 
     createdTask.value = task
@@ -734,8 +745,7 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
         String(scriptConfig.content || '')
       )
     } catch (error) {
-      const actionLabel = scriptConfig.mode === 'upload' ? `${label}上传失败` : `${label}保存失败`
-      throw new Error(resolveApiErrorMessage(error, actionLabel))
+      throw createWinPatchError(error, scriptConfig.mode === 'upload' ? 'patches.windows.stepUploadFailed' : 'patches.windows.stepSaveFailed', () => ({ p0: label() }))
     }
   }
 
@@ -774,9 +784,9 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
           return
         }
 
-        reject(error || new Error(`${actionLabel}失败`))
+        reject(error || createWinPatchError(null, 'patches.windows.operationFailed', () => ({ p0: actionLabel() })))
       }
-      cancelWait = () => finalize(false, new Error('回滚向导已关闭'))
+      cancelWait = () => finalize(false, createPatchTaskError('patches.windows.rollbackWizardClosed'))
 
       const evaluate = () => {
         const stepStatus = getAuditStepStatus(stepKey)
@@ -815,7 +825,7 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
             failedStatuses.includes(taskStatus) ||
             ['FAILED', 'ERROR'].includes(stepStatus)
           ) {
-            finalize(false, new Error(taskErrorMessage.value || `${actionLabel}失败`))
+            finalize(false, createWinPatchError(taskErrorMessage.value ? new Error(taskErrorMessage.value) : null, 'patches.windows.operationFailed', () => ({ p0: actionLabel() })))
             return
           }
 
@@ -840,7 +850,7 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
           failedStatuses.includes(taskStatus) ||
           failedStatuses.includes(rawTaskStatus)
         ) {
-          finalize(false, new Error(taskErrorMessage.value || `${actionLabel}失败`))
+          finalize(false, createWinPatchError(taskErrorMessage.value ? new Error(taskErrorMessage.value) : null, 'patches.windows.operationFailed', () => ({ p0: actionLabel() })))
           return
         }
       }
@@ -856,7 +866,7 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
             if (session !== sessionId || settled) return
             queryFailures += 1
             if (queryFailures >= 3) {
-              const queryError = new Error('连续三次查询任务状态失败')
+              const queryError = createPatchTaskError('patches.windows.threeQueriesFailed')
               queryError.queryInterrupted = true
               finalize(false, queryError)
             }
@@ -886,19 +896,19 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
       ['RUNNING', 'IN_PROGRESS'].includes(currentStatus) ||
       (normalizedStepKey === 'RESTART' && ['RESTARTING', 'RESTART_RUNNING'].includes(rawTaskStatus))
     ) {
-      const stepLabel =
+      const stepLabel = () =>
         WIN_PATCH_ROLLBACK_PIPELINE_STEPS.find(item => item.key === stepKey)?.label || stepKey
       await waitForStepCompletion(stepKey, stepLabel)
       return
     }
 
     if (!currentTaskId.value) {
-      throw new Error('回滚任务尚未创建，无法继续执行')
+      throw createPatchTaskError('patches.windows.rollbackNotCreated')
     }
 
-    const stepLabel =
+    const stepLabel = () =>
       WIN_PATCH_ROLLBACK_PIPELINE_STEPS.find(item => item.key === stepKey)?.label || stepKey
-    const actionLabel = action === 'skip' ? `跳过${stepLabel}` : stepLabel
+    const actionLabel = () => action === 'skip' ? t('patches.windows.skipNamedStep', { p0: stepLabel() }) : stepLabel()
 
     try {
       const response =
@@ -930,7 +940,7 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
       await waitForStepCompletion(stepKey, actionLabel)
     } catch (error) {
       if (error.queryInterrupted) throw error
-      throw new Error(resolveApiErrorMessage(error, `${actionLabel}失败`))
+      throw createWinPatchError(error, 'patches.windows.operationFailed', () => ({ p0: actionLabel() }))
     }
   }
 
@@ -953,11 +963,11 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
       await ensureTaskCreated()
       checkSession(session)
       if (!scriptsSynced && !skippedSteps.value['pre-check']) {
-        await syncScriptConfig('pre-check', preScriptConfig.value, '预检查脚本')
+        await syncScriptConfig('pre-check', preScriptConfig.value, () => t('patches.windows.preCheckScript'))
         checkSession(session)
       }
       if (!scriptsSynced && !skippedSteps.value.validate) {
-        await syncScriptConfig('validate', validateScriptConfig.value, '校验脚本')
+        await syncScriptConfig('validate', validateScriptConfig.value, () => t('patches.linux.validationScript'))
         checkSession(session)
       }
       scriptsSynced = true
@@ -1005,17 +1015,15 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
         try {
           await winPatchApi.createScanTask(taskHostIds)
         } catch (error) {
-          throw new Error(
-            `回滚已完成，但提交补丁重扫失败：${resolveApiErrorMessage(error, '请稍后重新扫描')}`
-          )
+          throw createWinPatchError(null, 'patches.windows.rollbackRescanFailed', () => ({ p0: resolveApiErrorMessage(error, t('patches.windows.rescanLater')) }))
         }
         checkSession(session)
         scanSubmitted = true
-        ElMessage.info('回滚已完成，系统将重新扫描补丁，请稍后查看最新补丁状态')
+        ElMessage.info(t('patches.windows.rollbackCompletedRescan'))
       }
 
       pipelineStatus.value = 'success'
-      ElMessage.success('Windows 补丁回滚流程已完成')
+      ElMessage.success(t('patches.windows.rollbackCompleted'))
 
       if (typeof onSuccess === 'function') {
         onSuccess(taskDetail.value || createdTask.value || null)
@@ -1023,7 +1031,7 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
     } catch (error) {
       if (session !== sessionId) return
       pipelineStatus.value = error.queryInterrupted ? 'paused' : 'failed'
-      taskErrorMessage.value = resolveApiErrorMessage(error, 'Windows 补丁回滚流程执行失败')
+      taskErrorMessage.value = getWinPatchErrorFeedback(error, localMessage('patches.windows.rollbackFailed'))
       ElMessage.error(taskErrorMessage.value)
     } finally {
       if (session === sessionId) {
@@ -1088,13 +1096,13 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
     activeStep.value += 1
   }
 
-  function openRunResult(runId, title = '') {
+  function openRunResult(runId, title = '', titleKey = '') {
     if (!runId) {
       return
     }
 
     currentRunId.value = runId
-    currentRunTitle.value = title || 'Windows 补丁回滚任务'
+    currentRunTitle.value = getWinPatchRunTitle(titleKey, title || localMessage('patches.windows.windowsRollbackTask'))
     showRunResultDialog.value = true
   }
 

@@ -1,3 +1,4 @@
+import { t } from '@/core/i18n'
 import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { patchInstallApi } from '../api'
@@ -163,7 +164,7 @@ export function usePatchProcessLogDetail(sourceTask) {
     const errMsg = taskErrorMessage.value
 
     return [
-      buildPipelineItem('pre-check', '预检查', preCheckRecords.value, {
+      buildPipelineItem('pre-check', t('patches.linux.precheck'), preCheckRecords.value, {
         fallbackRunId: task.value?.preCheckRunId || '',
         stepStatus: isPreCheckFailed.value ? 'FAILED' : getStepStatus(PRE_CHECK_STEP),
         stepRunId: getStepRunId(PRE_CHECK_STEP),
@@ -181,14 +182,14 @@ export function usePatchProcessLogDetail(sourceTask) {
           taskErrorMessage: errMsg
         }
       ),
-      buildPipelineItem('restart', '重启策略', restartRecords.value, {
+      buildPipelineItem('restart', t('patches.linux.restartPolicy'), restartRecords.value, {
         treatNoneAsSuccess: task.value?.restartType === 'none',
         fallbackRunId: task.value?.restartRunId || '',
         stepStatus: getStepStatus(RESTART_STEP),
         stepRunId: getStepRunId(RESTART_STEP),
         taskErrorMessage: errMsg
       }),
-      buildPipelineItem('validate', '脚本校验', validateRecords.value, {
+      buildPipelineItem('validate', t('patches.linux.scriptValidation'), validateRecords.value, {
         fallbackRunId: task.value?.validateRunId || '',
         stepStatus: getStepStatus(VALIDATE_STEP),
         stepRunId: getStepRunId(VALIDATE_STEP),
@@ -275,7 +276,7 @@ export function usePatchProcessLogDetail(sourceTask) {
       history.value = Array.isArray(historyData) ? historyData : []
     }
     if (taskResult.status === 'rejected' || historyResult.status === 'rejected') {
-      ElMessage.warning('部分详情数据加载失败，已展示当前可用信息')
+      ElMessage.warning(t('patches.logs.partialDetails'))
     }
   }
 

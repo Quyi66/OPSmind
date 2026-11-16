@@ -3,12 +3,12 @@
     <div class="win-patch-script-uploader__meta">
       <div class="win-patch-script-uploader__label">{{ label }}</div>
       <div class="win-patch-script-uploader__hint">
-        支持上传 .ps1 脚本，再次上传会覆盖当前内容。
+        {{ t('patches.windows.ps1UploadHint') }}
       </div>
     </div>
     <div class="win-patch-script-uploader__actions">
       <el-tag :type="hasScript ? 'success' : 'info'" size="small" effect="plain">
-        {{ hasScript ? '已上传' : '未上传' }}
+        {{ hasScript ? t('patches.windows.uploaded') : t('patches.windows.notUploaded') }}
       </el-tag>
       <el-upload
         :show-file-list="false"
@@ -18,7 +18,7 @@
         :disabled="isDisabled"
       >
         <el-button size="small" :loading="uploading" :disabled="isDisabled">
-          {{ hasScript ? '重新上传' : '上传脚本' }}
+          {{ hasScript ? t('patches.windows.uploadAgain') : t('patches.linux.uploadScript') }}
         </el-button>
       </el-upload>
     </div>
@@ -26,6 +26,9 @@
 </template>
 
 <script setup>
+import { createPatchTaskError } from '@/modules/patches/utils/patchTaskFeedback'
+import { t } from '@/core/i18n'
+
 import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { winPatchApi } from '../../api'
@@ -66,7 +69,7 @@ const isDisabled = computed(() => props.disabled || !normalizedTaskId.value)
 async function handleUpload(option) {
   const file = option?.file
   if (!file || isDisabled.value) {
-    option?.onError?.(new Error('上传条件不满足'))
+    option?.onError?.(createPatchTaskError('patches.windows.uploadUnavailable'))
     return
   }
 
@@ -77,12 +80,12 @@ async function handleUpload(option) {
       props.scriptType,
       file
     )
-    ElMessage.success(`${props.label}已上传`)
+    ElMessage.success(t('patches.windows.stepUploaded', { p0: props.label }))
     option?.onSuccess?.({}, file)
     emit('uploaded', unwrapResponse(response))
   } catch (error) {
     console.error(`上传${props.label}失败:`, error)
-    ElMessage.error(`上传${props.label}失败`)
+    ElMessage.error(t('patches.windows.uploadStepFailed', { p0: props.label }))
     option?.onError?.(error)
   } finally {
     uploading.value = false

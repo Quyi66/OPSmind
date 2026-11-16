@@ -3,28 +3,28 @@
     <div class="install-card">
       <div class="card-header">
         <i class="fa fa-desktop" />
-        目标主机
+        {{ t('execution.ui.targetHost') }}
       </div>
       <div class="card-body card-body--scroll">
         <template v-if="isMultiHost">
           <div class="selection-item">
-            <div class="selection-item__primary">共 {{ hostSummaries.length }} 台主机</div>
+            <div class="selection-item__primary">{{ t('patches.linux.totalPrefix') }} {{ hostSummaries.length }} {{ t('patches.windows.hostUnit') }}</div>
           </div>
           <div v-for="host in hostSummaries" :key="resolveHostId(host)" class="selection-item">
             <div class="selection-item__primary">{{ resolveHostKey(host) }}</div>
             <div class="selection-item__secondary">
-              主机 ID：{{ resolveHostId(host) || '-' }} · {{ pickValue(host, ['osDistro', 'os_distro'], '-') }}
+              {{ t('patches.windows.hostIdLabel') }}{{ resolveHostId(host) || '-' }} · {{ pickValue(host, ['osDistro', 'os_distro'], '-') }}
             </div>
           </div>
           <div class="selection-item">
-            <div class="selection-item__primary">待安装补丁 {{ patchItems.length }} 条</div>
+            <div class="selection-item__primary">{{ t('patches.linux.patchesToInstall') }} {{ patchItems.length }} {{ t('patches.windows.itemUnit') }}</div>
           </div>
         </template>
         <template v-else>
           <div class="selection-item">
             <div class="selection-item__primary">{{ resolveHostKey(hostSummary) }}</div>
             <div class="selection-item__secondary">
-              主机 ID：{{ resolveHostId(hostSummary) || '-' }}
+              {{ t('patches.windows.hostIdLabel') }}{{ resolveHostId(hostSummary) || '-' }}
             </div>
           </div>
           <div class="selection-item">
@@ -32,12 +32,12 @@
               {{ pickValue(hostSummary, ['osDistro', 'os_distro'], '-') }}
             </div>
             <div class="selection-item__secondary">
-              版本 / 架构：{{ pickValue(hostSummary, ['osVersion', 'os_version'], '-') }} /
+              {{ t('patches.windows.versionArchitectureLabel') }}{{ pickValue(hostSummary, ['osVersion', 'os_version'], '-') }} /
               {{ pickValue(hostSummary, ['osArch', 'os_arch'], '-') }}
             </div>
           </div>
           <div class="selection-item">
-            <div class="selection-item__primary">待安装补丁 {{ patchItems.length }} 条</div>
+            <div class="selection-item__primary">{{ t('patches.linux.patchesToInstall') }} {{ patchItems.length }} {{ t('patches.windows.itemUnit') }}</div>
           </div>
         </template>
       </div>
@@ -46,34 +46,34 @@
     <div class="install-card">
       <div class="card-header">
         <i class="fa fa-list" />
-        待安装补丁
+        {{ t('patches.linux.patchesToInstall') }}
       </div>
       <div class="card-body">
         <div class="ops-table-wrapper win-patch-summary-step__table">
           <el-table :data="patchItems" max-height="320">
-            <el-table-column label="KB 编号" width="140">
+            <el-table-column :label="t('patches.windows.kbId')" width="140">
               <template #default="{ row }">
                 {{ row.kbNumber }}
               </template>
             </el-table-column>
-            <el-table-column label="标题" min-width="320" show-overflow-tooltip>
+            <el-table-column :label="t('automation.job.title')" min-width="320" show-overflow-tooltip>
               <template #default="{ row }">
                 {{ row.title }}
               </template>
             </el-table-column>
-            <el-table-column label="大小" width="110">
+            <el-table-column :label="t('automation.library.size')" width="110">
               <template #default="{ row }">
                 {{ formatBytes(pickValue(row, ['sizeBytes', 'size_bytes'], 0)) }}
               </template>
             </el-table-column>
-            <el-table-column label="严重级别" width="120">
+            <el-table-column :label="t('patches.catalog.severity')" width="120">
               <template #default="{ row }">
                 <el-tag :type="getSeverityTagType(row.severity)" size="small" effect="plain">
                   {{ row.severityLabel || getSeverityLabel(row.severity) }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="关联漏洞" min-width="200" show-overflow-tooltip>
+            <el-table-column :label="t('patches.catalog.associatedVulnerabilities')" min-width="200" show-overflow-tooltip>
               <template #default="{ row }">
                 <template v-if="resolveCveIds(row).length">
                   <el-tag
@@ -97,6 +97,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { computed } from 'vue'
 import {
   getSeverityLabel,

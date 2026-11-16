@@ -4,9 +4,9 @@
     ci-types="windows"
     :initial-selection="selection"
     :options="selectorOptions"
-    title="选择设备 · Windows 补丁扫描"
+    :title="t('patches.windows.selectScanDevices')"
     :confirm-text="submitButtonText"
-    description="点击“提交扫描任务”后将立即扫描所选 Windows 主机，扫描结果可在主机列表中查看。"
+    :description="t('patches.windows.scanSelectionHint')"
     :allow-empty="false"
     :close-on-confirm="false"
     :submitting="submitting"
@@ -16,11 +16,12 @@
     v-if="resultVisible"
     v-model:visible="resultVisible"
     :run-id="currentRunId"
-    job-title="Windows 补丁扫描"
+    :job-title="t('patches.windows.windowsScan')"
   />
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { computed, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
@@ -45,7 +46,7 @@ const emit = defineEmits(['update:modelValue', 'submitted', 'completed'])
 const selectorOptions = {
   selectMode: 'host,input,recently',
   selector: 'multiple',
-  label: '选择 Windows 主机'
+  get label() { return t('patches.windows.selectWindowsHosts') }
 }
 
 const visibleModel = computed({
@@ -63,7 +64,7 @@ const selection = ref([])
 
 const hostIds = computed(() => extractHostIds(selection.value))
 
-const submitButtonText = computed(() => (submitting.value ? '提交中…' : '提交扫描任务'))
+const submitButtonText = computed(() => (submitting.value ? t('patches.windows.submitting') : t('patches.windows.submitScan')))
 
 function resetForm() {
   selection.value = buildSelectorHostItems(props.preselectedHosts)
@@ -74,7 +75,7 @@ function resolveScanErrorMessage(error) {
     error?.response?.data?.message ||
     error?.response?.data?._status ||
     error?.message ||
-    '提交扫描任务失败'
+    t('patches.windows.submitScanFailed')
   )
 }
 
@@ -82,7 +83,7 @@ async function handleSubmit(nextSelection = selection.value) {
   if (submitting.value) return
   selection.value = nextSelection
   if (!hostIds.value.length) {
-    ElMessage.warning('请先选择至少一台主机')
+    ElMessage.warning(t('patches.windows.selectHostFirst'))
     return
   }
 
@@ -92,7 +93,7 @@ async function handleSubmit(nextSelection = selection.value) {
     const payload = unwrapResponse(response)
     const scanResult = Array.isArray(payload) ? payload[0] : payload
     if (['FAILED', 'ERROR'].includes(scanResult?.status)) {
-      throw new Error(scanResult.error || '提交扫描任务失败')
+      throw new Error(scanResult.error || t('patches.windows.submitScanFailed'))
     }
     const runId = scanResult?.runId || scanResult?.run_id
 
@@ -102,9 +103,9 @@ async function handleSubmit(nextSelection = selection.value) {
       currentRunId.value = String(runId)
       trackScan(currentRunId.value)
       resultVisible.value = true
-      ElMessage.success('扫描任务已提交，可在执行结果中查看进度；关闭窗口不会取消后台扫描')
+      ElMessage.success(t('patches.windows.scanSubmittedProgress'))
     } else {
-      ElMessage.success('扫描任务已提交，请稍后刷新主机列表查看结果')
+      ElMessage.success(t('patches.windows.scanSubmittedRefresh'))
     }
   } catch (error) {
     console.error('提交扫描任务失败:', error)

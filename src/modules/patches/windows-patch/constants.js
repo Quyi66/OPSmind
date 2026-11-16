@@ -1,106 +1,107 @@
+import { t } from '@/core/i18n'
 export const WIN_PATCH_PAGE_SIZE_OPTIONS = [10, 20, 50, 100]
 
 export const WIN_PATCH_SCAN_MODE_OPTIONS = [
   {
-    label: '自动判断',
+    get label() { return t('patches.windows.automaticMode') },
     value: 'auto',
-    description: '默认模式，有 WSUS 配置时优先走 WSUS，否则走 Microsoft Update'
+    get description() { return t('patches.windows.automaticModeHint') }
   },
   {
-    label: '在线模式',
+    get label() { return t('patches.windows.onlineMode') },
     value: 'online',
-    description: '忽略 WSUS，强制走 Microsoft Windows Update 在线源'
+    get description() { return t('patches.windows.onlineModeHint') }
   },
   {
-    label: 'WSUS 模式',
+    get label() { return t('patches.windows.wsusMode') },
     value: 'wsus',
-    description: '强制使用 WSUS 扫描，没有配置时后端会返回错误'
+    get description() { return t('patches.windows.wsusModeHint') }
   }
 ]
 
 export const WIN_PATCH_CATEGORY_OPTIONS = [
-  { label: '安全更新', value: 'SecurityUpdates' },
-  { label: '关键更新', value: 'CriticalUpdates' },
-  { label: '更新汇总', value: 'UpdateRollups' },
-  { label: '常规更新', value: 'Updates' },
-  { label: '定义更新', value: 'DefinitionUpdates' },
-  { label: '功能包', value: 'FeaturePacks' },
-  { label: '服务包', value: 'ServicePacks' },
-  { label: '工具', value: 'Tools' },
-  { label: '升级', value: 'Upgrades' },
-  { label: '应用程序', value: 'Application' },
-  { label: '连接器', value: 'Connectors' },
-  { label: '开发工具包', value: 'DeveloperKits' },
-  { label: '指南', value: 'Guidance' }
+  { get label() { return t('patches.windows.securityUpdates') }, value: 'SecurityUpdates' },
+  { get label() { return t('patches.windows.criticalUpdates') }, value: 'CriticalUpdates' },
+  { get label() { return t('patches.windows.updateRollups') }, value: 'UpdateRollups' },
+  { get label() { return t('patches.windows.updates') }, value: 'Updates' },
+  { get label() { return t('patches.windows.definitionUpdates') }, value: 'DefinitionUpdates' },
+  { get label() { return t('patches.windows.featurePacks') }, value: 'FeaturePacks' },
+  { get label() { return t('patches.windows.servicePacks') }, value: 'ServicePacks' },
+  { get label() { return t('patches.windows.tools') }, value: 'Tools' },
+  { get label() { return t('patches.windows.upgrades') }, value: 'Upgrades' },
+  { get label() { return t('patches.windows.application') }, value: 'Application' },
+  { get label() { return t('patches.windows.connectors') }, value: 'Connectors' },
+  { get label() { return t('patches.windows.developerKits') }, value: 'DeveloperKits' },
+  { get label() { return t('patches.windows.guidance') }, value: 'Guidance' }
 ]
 
 export const WIN_PATCH_SEVERITY_OPTIONS = [
-  { label: '严重', value: 'Critical' },
-  { label: '重要', value: 'Important' },
-  { label: '中等', value: 'Moderate' },
-  { label: '低危', value: 'Low' },
-  { label: '未分级', value: 'Unspecified' }
+  { get label() { return t('patches.catalog.critical') }, value: 'Critical' },
+  { get label() { return t('patches.catalog.important') }, value: 'Important' },
+  { get label() { return t('patches.catalog.moderate') }, value: 'Moderate' },
+  { get label() { return t('patches.catalog.low') }, value: 'Low' },
+  { get label() { return t('patches.windows.unclassified') }, value: 'Unspecified' }
 ]
 
 export const WIN_PATCH_SEVERITY_LABELS = {
-  CRITICAL: '严重',
-  IMPORTANT: '重要',
-  MODERATE: '中等',
-  MEDIUM: '中等',
-  LOW: '低危',
-  UNSPECIFIED: '未分级',
-  NONE: '未分级'
+  get CRITICAL() { return t('patches.catalog.critical') },
+  get IMPORTANT() { return t('patches.catalog.important') },
+  get MODERATE() { return t('patches.catalog.moderate') },
+  get MEDIUM() { return t('patches.catalog.moderate') },
+  get LOW() { return t('patches.catalog.low') },
+  get UNSPECIFIED() { return t('patches.windows.unclassified') },
+  get NONE() { return t('patches.windows.unclassified') }
 }
 
 export const WIN_PATCH_STATUS_OPTIONS = [
-  { label: '待修复', value: 'no_repair' },
-  { label: '已修复', value: 'is_repair' },
-  { label: '人工已修复', value: 'is_repair_artificial' },
-  { label: '修复中', value: 'repairing' },
-  { label: '修复待重启', value: 'REPAIR_PENDING_REBOOT' },
-  { label: '修复失败', value: 'repair_faild' }
+  { get label() { return t('patches.windows.pendingRepair') }, value: 'no_repair' },
+  { get label() { return t('patches.linux.fixed') }, value: 'is_repair' },
+  { get label() { return t('patches.windows.manuallyFixed') }, value: 'is_repair_artificial' },
+  { get label() { return t('patches.linux.fixing') }, value: 'repairing' },
+  { get label() { return t('patches.windows.repairRebootPending') }, value: 'REPAIR_PENDING_REBOOT' },
+  { get label() { return t('patches.linux.fixFailed') }, value: 'repair_faild' }
 ]
 
 export const WIN_PATCH_TASK_TYPE_OPTIONS = [
-  { label: '扫描任务', value: 'SCAN' },
-  { label: '安装任务', value: 'INSTALL' },
-  { label: '回滚任务', value: 'ROLLBACK' }
+  { get label() { return t('patches.windows.scanTask') }, value: 'SCAN' },
+  { get label() { return t('patches.windows.installTask') }, value: 'INSTALL' },
+  { get label() { return t('patches.windows.rollbackTask') }, value: 'ROLLBACK' }
 ]
 
 export const WIN_PATCH_TASK_TYPE_LABELS = {
-  SCAN: '扫描',
-  INSTALL: '安装',
-  ROLLBACK: '回滚',
-  CONN_TEST: '连通性测试',
-  CONNECTIVITY: '连通性测试',
-  CONNECTIVITY_TEST: '连通性测试'
+  get SCAN() { return t('patches.linux.scan') },
+  get INSTALL() { return t('patches.windows.install') },
+  get ROLLBACK() { return t('patches.linux.rollback') },
+  get CONN_TEST() { return t('patches.windows.connectivityTest') },
+  get CONNECTIVITY() { return t('patches.windows.connectivityTest') },
+  get CONNECTIVITY_TEST() { return t('patches.windows.connectivityTest') }
 }
 
 export const WIN_PATCH_TASK_STATUS_LABELS = {
-  PENDING: '待执行',
-  CREATED: '待执行',
-  PRE_CHECK_DONE: '待执行',
-  INSTALL_DONE: '待执行',
-  ROLLBACK_DONE: '待执行',
-  RESTART_PENDING: '待执行',
-  RUNNING: '执行中',
-  IN_PROGRESS: '执行中',
-  PRE_CHECKING: '执行中',
-  INSTALLING: '执行中',
-  ROLLING_BACK: '执行中',
-  RESTARTING: '执行中',
-  VALIDATING: '执行中',
-  COMPLETED: '已完成',
-  RESTART_DONE: '已完成',
-  SUCCESS: '成功',
-  PASS: '通过',
-  PRE_CHECK_FAILED: '失败',
-  INSTALL_FAILED: '失败',
-  ROLLBACK_FAILED: '失败',
-  VALIDATE_FAILED: '失败',
-  FAILED: '失败',
-  ERROR: '失败',
-  PARTIAL_SUCCESS: '部分成功'
+  get PENDING() { return t('automation.flow.pending') },
+  get CREATED() { return t('automation.flow.pending') },
+  get PRE_CHECK_DONE() { return t('automation.flow.pending') },
+  get INSTALL_DONE() { return t('automation.flow.pending') },
+  get ROLLBACK_DONE() { return t('automation.flow.pending') },
+  get RESTART_PENDING() { return t('automation.flow.pending') },
+  get RUNNING() { return t('patches.linux.running') },
+  get IN_PROGRESS() { return t('patches.linux.running') },
+  get PRE_CHECKING() { return t('patches.linux.running') },
+  get INSTALLING() { return t('patches.linux.running') },
+  get ROLLING_BACK() { return t('patches.linux.running') },
+  get RESTARTING() { return t('patches.linux.running') },
+  get VALIDATING() { return t('patches.linux.running') },
+  get COMPLETED() { return t('automation.workbench.completed') },
+  get RESTART_DONE() { return t('automation.workbench.completed') },
+  get SUCCESS() { return t('execution.taskStatus.changed') },
+  get PASS() { return t('patches.linux.pass') },
+  get PRE_CHECK_FAILED() { return t('execution.taskStatus.failed') },
+  get INSTALL_FAILED() { return t('execution.taskStatus.failed') },
+  get ROLLBACK_FAILED() { return t('execution.taskStatus.failed') },
+  get VALIDATE_FAILED() { return t('execution.taskStatus.failed') },
+  get FAILED() { return t('execution.taskStatus.failed') },
+  get ERROR() { return t('execution.taskStatus.failed') },
+  get PARTIAL_SUCCESS() { return t('execution.jobStatus.PARTIAL_SUCCESS') }
 }
 
 export const WIN_PATCH_TASK_STATUS_TAG_TYPES = {
@@ -131,13 +132,13 @@ export const WIN_PATCH_TASK_STATUS_TAG_TYPES = {
 }
 
 export const WIN_PATCH_TASK_STEP_LABELS = {
-  PRE_CHECK: '预检查',
-  EXECUTE: '执行',
-  INSTALL: '执行安装',
-  ROLLBACK: '执行回滚',
-  RESTART: '重启',
-  VALIDATE: '验证',
-  COMPLETED: '已完成'
+  get PRE_CHECK() { return t('patches.linux.precheck') },
+  get EXECUTE() { return t('automation.workbench.execute') },
+  get INSTALL() { return t('patches.windows.executeInstall') },
+  get ROLLBACK() { return t('patches.windows.executeRollback') },
+  get RESTART() { return t('patches.windows.restart') },
+  get VALIDATE() { return t('patches.windows.verify') },
+  get COMPLETED() { return t('automation.workbench.completed') }
 }
 
 export const WIN_PATCH_TASK_STEP_TAG_TYPES = {
@@ -151,54 +152,54 @@ export const WIN_PATCH_TASK_STEP_TAG_TYPES = {
 }
 
 export const WIN_PATCH_INSTALL_WIZARD_STEPS = [
-  { key: 'summary', title: '安装确认' },
-  { key: 'pre-check', title: '预检查脚本' },
-  { key: 'validate', title: '校验脚本' },
-  { key: 'restart', title: '重启与重扫' },
-  { key: 'execute', title: '执行安装' }
+  { key: 'summary', get title() { return t('patches.windows.installationConfirmation') } },
+  { key: 'pre-check', get title() { return t('patches.windows.preCheckScript') } },
+  { key: 'validate', get title() { return t('patches.linux.validationScript') } },
+  { key: 'restart', get title() { return t('patches.windows.restartRescan') } },
+  { key: 'execute', get title() { return t('patches.windows.executeInstall') } }
 ]
 
 export const WIN_PATCH_ROLLBACK_WIZARD_STEPS = [
-  { key: 'summary', title: '回滚确认' },
-  { key: 'pre-check', title: '预检查脚本' },
-  { key: 'validate', title: '校验脚本' },
-  { key: 'restart', title: '重启与重扫' },
-  { key: 'execute', title: '执行回滚' }
+  { key: 'summary', get title() { return t('patches.windows.rollbackConfirmation') } },
+  { key: 'pre-check', get title() { return t('patches.windows.preCheckScript') } },
+  { key: 'validate', get title() { return t('patches.linux.validationScript') } },
+  { key: 'restart', get title() { return t('patches.windows.restartRescan') } },
+  { key: 'execute', get title() { return t('patches.windows.executeRollback') } }
 ]
 
 export const WIN_PATCH_INSTALL_PIPELINE_STEPS = [
-  { key: 'PRE_CHECK', label: '预检查' },
-  { key: 'INSTALL', label: '执行安装' },
-  { key: 'RESTART', label: '重启' },
-  { key: 'VALIDATE', label: '校验' }
+  { key: 'PRE_CHECK', get label() { return t('patches.linux.precheck') } },
+  { key: 'INSTALL', get label() { return t('patches.windows.executeInstall') } },
+  { key: 'RESTART', get label() { return t('patches.windows.restart') } },
+  { key: 'VALIDATE', get label() { return t('patches.windows.validation') } }
 ]
 
 export const WIN_PATCH_ROLLBACK_PIPELINE_STEPS = [
-  { key: 'PRE_CHECK', label: '预检查' },
-  { key: 'ROLLBACK', label: '执行回滚' },
-  { key: 'RESTART', label: '重启' },
-  { key: 'VALIDATE', label: '校验' }
+  { key: 'PRE_CHECK', get label() { return t('patches.linux.precheck') } },
+  { key: 'ROLLBACK', get label() { return t('patches.windows.executeRollback') } },
+  { key: 'RESTART', get label() { return t('patches.windows.restart') } },
+  { key: 'VALIDATE', get label() { return t('patches.windows.validation') } }
 ]
 
 export const WIN_PATCH_TASK_SKIPPABLE_STEPS = ['PRE_CHECK', 'RESTART', 'VALIDATE']
 
 export const WIN_PATCH_PATCH_STATUS_LABELS = {
-  NO_REPAIR: '待修复',
-  IS_REPAIR: '已修复',
-  IS_REPAIR_ARTIFICIAL: '人工已修复',
-  REPAIRING: '修复中',
-  REPAIR_PENDING_REBOOT: '修复待重启',
-  REPAIRD: '已修复',
-  REPAIR_FAILD: '修复失败',
+  get NO_REPAIR() { return t('patches.windows.pendingRepair') },
+  get IS_REPAIR() { return t('patches.linux.fixed') },
+  get IS_REPAIR_ARTIFICIAL() { return t('patches.windows.manuallyFixed') },
+  get REPAIRING() { return t('patches.linux.fixing') },
+  get REPAIR_PENDING_REBOOT() { return t('patches.windows.repairRebootPending') },
+  get REPAIRD() { return t('patches.linux.fixed') },
+  get REPAIR_FAILD() { return t('patches.linux.fixFailed') },
   // 兼容旧枚举
-  MISSING: '待安装',
-  INSTALLED: '已安装',
-  INSTALLING: '安装中',
-  INSTALL_FAILED: '安装失败',
-  ROLLING_BACK: '回滚中',
-  ROLLBACK_PENDING_REBOOT: '回滚待重启',
-  ROLLBACK_FAILED: '回滚失败',
-  ROLLBACK_SUCCESS: '已回滚'
+  get MISSING() { return t('patches.windows.pendingInstall') },
+  get INSTALLED() { return t('patches.windows.installed') },
+  get INSTALLING() { return t('patches.windows.installing') },
+  get INSTALL_FAILED() { return t('patches.linux.installFailed') },
+  get ROLLING_BACK() { return t('patches.linux.rollingBack') },
+  get ROLLBACK_PENDING_REBOOT() { return t('patches.windows.rollbackRebootPending') },
+  get ROLLBACK_FAILED() { return t('patches.linux.rollbackFailed') },
+  get ROLLBACK_SUCCESS() { return t('patches.windows.rolledBack') }
 }
 
 export const WIN_PATCH_PATCH_STATUS_TAG_TYPES = {
@@ -221,8 +222,8 @@ export const WIN_PATCH_PATCH_STATUS_TAG_TYPES = {
 }
 
 export const WIN_PATCH_INSTALL_ACTION_LABELS = {
-  INSTALL: '安装',
-  ROLLBACK: '回滚'
+  get INSTALL() { return t('patches.windows.install') },
+  get ROLLBACK() { return t('patches.linux.rollback') }
 }
 
 export const WIN_PATCH_INSTALL_ACTION_TAG_TYPES = {
@@ -231,10 +232,10 @@ export const WIN_PATCH_INSTALL_ACTION_TAG_TYPES = {
 }
 
 export const WIN_PATCH_INSTALL_RESULT_LABELS = {
-  SUCCESS: '成功',
-  FAILED: '失败',
-  RUNNING: '执行中',
-  PENDING: '待执行'
+  get SUCCESS() { return t('execution.taskStatus.changed') },
+  get FAILED() { return t('execution.taskStatus.failed') },
+  get RUNNING() { return t('patches.linux.running') },
+  get PENDING() { return t('automation.flow.pending') }
 }
 
 export const WIN_PATCH_INSTALL_RESULT_TAG_TYPES = {
@@ -244,4 +245,5 @@ export const WIN_PATCH_INSTALL_RESULT_TAG_TYPES = {
   PENDING: 'info'
 }
 
+// Keep the legacy exported filename stable; resolve the localized default at download time.
 export const WIN_PATCH_EXPORT_DEFAULT_FILENAME = 'Windows补丁扫描报告.xlsx'
