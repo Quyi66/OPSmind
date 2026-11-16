@@ -12,9 +12,10 @@
  * 检测到版本不一致时，通过 Element Plus ElNotification 提示用户刷新，
  * 并停止后续轮询。
  */
-import { ref, onUnmounted } from 'vue'
+import { h, ref, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElNotification } from 'element-plus'
+import { t } from '@/core/i18n'
 
 /* eslint-disable no-undef */
 const BUILD_HASH = typeof __APP_BUILD_HASH__ !== 'undefined' ? __APP_BUILD_HASH__ : ''
@@ -47,8 +48,11 @@ function showUpdateNotification() {
   notified = true
 
   ElNotification({
-    title: '发现新版本',
-    message: '系统已更新，请刷新页面以获取最新功能。',
+    // A slot keeps this persistent notification reactive without closing/reopening it.
+    message: () => [
+      h('h2', { class: 'el-notification__title' }, t('common.updateAvailable')),
+      h('p', { class: 'update-notification__message' }, t('common.updateAvailableDescription'))
+    ],
     type: 'warning',
     duration: 0, // 不自动关闭
     position: 'top-left',

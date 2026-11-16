@@ -69,5 +69,7 @@
   "pollingTimeout": "Task timed out",
   "pollingStatusFailed": "Unable to retrieve task status",
   "view": "View",
-  "copy": "Copy"
+  "copy": "Copy",
+  "updateAvailable": "Update available",
+  "updateAvailableDescription": "The system has been updated. Refresh the page to get the latest features."
 }

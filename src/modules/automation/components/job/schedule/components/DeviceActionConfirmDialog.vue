@@ -12,20 +12,21 @@
     <p>{{ description }}</p>
     <DeviceSelectionSummary :selection="selection" show-targets />
     <template #footer>
-      <el-button :disabled="submitting" @click="close()">取消</el-button>
-      <el-button :disabled="submitting" @click="$emit('change-devices')">更改设备</el-button>
+      <el-button :disabled="submitting" @click="close()">{{ t('common.cancel') }}</el-button>
+      <el-button :disabled="submitting" @click="$emit('change-devices')">{{ t('selection.changeDevices') }}</el-button>
       <el-button
         type="primary"
         :loading="submitting"
         :disabled="submitting || !selection.length"
         @click="$emit('confirm', selection)"
       >
-        开始扫描
+        {{ t('selection.startScan') }}
       </el-button>
     </template>
   </el-dialog>
 </template>
 <script setup>
+import { t } from '@/core/i18n'
 import DeviceSelectionSummary from './DeviceSelectionSummary.vue'
 const props = defineProps({
   modelValue: Boolean,

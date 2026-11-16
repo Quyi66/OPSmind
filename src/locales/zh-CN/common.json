@@ -69,5 +69,7 @@
   "pollingTimeout": "任务执行超时",
   "pollingStatusFailed": "获取任务状态失败",
   "view": "查看",
-  "copy": "复制"
+  "copy": "复制",
+  "updateAvailable": "发现新版本",
+  "updateAvailableDescription": "系统已更新，请刷新页面以获取最新功能。"
 }

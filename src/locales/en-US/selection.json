@@ -76,5 +76,7 @@
   "summary": "Selected: {items}",
   "noTargets": "No targets selected",
   "listSeparator": ", ",
-  "viewExecution": "View execution details"
+  "viewExecution": "View execution details",
+  "changeDevices": "Change devices",
+  "startScan": "Start scan"
 }

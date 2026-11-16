@@ -76,5 +76,7 @@
   "summary": "已选 {items}",
   "noTargets": "未选择目标",
   "listSeparator": "、",
-  "viewExecution": "点击查看运行详情"
+  "viewExecution": "点击查看运行详情",
+  "changeDevices": "更改设备",
+  "startScan": "开始扫描"
 }

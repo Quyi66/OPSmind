@@ -333,4 +333,12 @@
 // ========================================
 .el-notification.update-notification {
   width: 360px !important;
+
+  .el-notification__group > .el-notification__title:empty {
+    display: none;
+  }
+
+  .update-notification__message {
+    margin-top: 6px;
+  }
 }
