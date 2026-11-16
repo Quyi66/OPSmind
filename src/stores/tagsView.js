@@ -77,7 +77,7 @@ export const useTagsViewStore = defineStore('tagsView', () => {
     if (iframeViews.value.some(v => v.path === view.path)) return
     iframeViews.value.push(
       Object.assign({}, view, {
-        title: view.meta?.title || 'no-name'
+        title: view.title || view.meta?.title || 'no-name'
       })
     )
   }
@@ -86,8 +86,8 @@ export const useTagsViewStore = defineStore('tagsView', () => {
     if (isRetiredSettingsView(view)) return
     if (visitedViews.value.some(v => v.path === view.path)) return
     
-    // 确保有正确的 title
-    const title = view.meta?.title || view.title || 'no-name'
+    // 保留显式的用户/后端标题；静态路由标题仍由展示层按 titleKey 翻译。
+    const title = view.title || view.meta?.title || 'no-name'
     visitedViews.value.push(
       Object.assign({}, view, {
         title
@@ -98,7 +98,7 @@ export const useTagsViewStore = defineStore('tagsView', () => {
 
   const addAffixView = (view) => {
     if (visitedViews.value.some(v => v.path === view.path)) return
-    const title = view.meta?.title || view.title || 'no-name'
+    const title = view.title || view.meta?.title || 'no-name'
     visitedViews.value.unshift(
       Object.assign({}, view, {
         title
