@@ -3,23 +3,23 @@
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small" @submit.prevent>
-        <el-form-item label="巡检模板">
+        <el-form-item :label="t('inspection.results.template')">
           <el-select
             :key="templateSelectVersion"
             v-model="selectedTemplateId"
             filterable
             clearable
             :loading="templateLoading"
-            placeholder="全部模板"
-            aria-label="筛选巡检模板"
+            :placeholder="t('inspection.results.allTemplates')"
+            :aria-label="t('inspection.results.filterTemplate')"
             class="result-template-select"
-            no-match-text="没有匹配的模板"
+            :no-match-text="t('inspection.templates.noMatches')"
             @change="selectTemplate"
           >
-            <el-option label="全部模板" value="" />
+            <el-option :label="t('inspection.results.allTemplates')" value="" />
             <el-option
               v-if="missingSelectedTemplate"
-              :label="`当前模板（ID：${selectedTemplateId}）`"
+              :label="t('inspection.results.missingTemplate', { id: selectedTemplateId })"
               :value="selectedTemplateId"
             />
             <el-option
@@ -30,7 +30,7 @@
             />
           </el-select>
           <span v-if="templateError" class="template-load-error" role="status">
-            模板列表读取失败
+            {{ t('inspection.results.templatesFailed') }}
             <el-button
               link
               type="primary"
@@ -38,14 +38,14 @@
               :loading="templateLoading"
               @click="loadTemplates"
             >
-              重试
+              {{ t('common.retry') }}
             </el-button>
           </span>
         </el-form-item>
-        <el-form-item label="关键词">
+        <el-form-item :label="t('inspection.templates.keyword')">
           <el-input
             v-model="filters.keyword"
-            placeholder="搜索执行记录"
+            :placeholder="t('inspection.results.search')"
             clearable
             style="width: 200px"
             @keyup.enter="handleSearch"
@@ -56,17 +56,17 @@
             </template>
           </el-input>
           <span v-if="filters.keyword !== appliedKeyword" class="pending-keyword" role="status">
-            关键词尚未应用
+            {{ t('inspection.results.pendingKeyword') }}
           </span>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleSearch">
             <el-icon><Search /></el-icon>
-            搜索
+            {{ t('common.search') }}
           </el-button>
-          <el-button title="清除模板和关键词，恢复默认分页" @click="handleReset">
+          <el-button :title="t('inspection.results.resetHint')" @click="handleReset">
             <el-icon><RefreshRight /></el-icon>
-            重置
+            {{ t('common.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -82,7 +82,7 @@
         :loading="loading"
         :disabled="readError === 'auth'"
         @click="loadResults"
-        title="刷新"
+        :title="t('common.refresh')"
       >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
@@ -97,7 +97,7 @@
         :disabled="loading"
         @click="retryRead"
       >
-        重试读取
+        {{ t('inspection.templates.retryRead') }}
       </el-button>
     </el-alert>
 
@@ -114,19 +114,19 @@
       >
         <el-table-column
           prop="templateName"
-          label="模板"
+          :label="t('inspection.templates.template')"
           min-width="200"
           show-overflow-tooltip
           sortable="custom"
         />
-        <el-table-column label="配置主机数" min-width="110" align="right" show-overflow-tooltip>
+        <el-table-column :label="t('inspection.templates.configuredHosts')" min-width="110" align="right" show-overflow-tooltip>
           <template #default="{ row }">
             <span class="configuration-count" :title="configurationCounts.get(row).summary">
               {{ configurationCounts.get(row).hostCount ?? '—' }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="脚本数" min-width="90" align="right" show-overflow-tooltip>
+        <el-table-column :label="t('inspection.templates.scriptCount')" min-width="90" align="right" show-overflow-tooltip>
           <template #default="{ row }">
             <span class="configuration-count" :title="configurationCounts.get(row).summary">
               {{ configurationCounts.get(row).scriptCount ?? '—' }}
@@ -135,7 +135,7 @@
         </el-table-column>
         <el-table-column
           prop="createdAt"
-          label="开始时间"
+          :label="t('inspection.results.startTime')"
           min-width="190"
           sortable="custom"
           show-overflow-tooltip
@@ -146,7 +146,7 @@
         </el-table-column>
         <el-table-column
           prop="endedAt"
-          label="结束时间"
+          :label="t('inspection.results.endTime')"
           min-width="190"
           sortable="custom"
           show-overflow-tooltip
@@ -155,8 +155,8 @@
             {{ formatDateTime(row.endedAt) }}
           </template>
         </el-table-column>
-        <el-table-column prop="createdBy" label="执行人" min-width="110" show-overflow-tooltip />
-        <el-table-column label="执行状态" min-width="110" align="left">
+        <el-table-column prop="createdBy" :label="t('inspection.templates.operator')" min-width="110" show-overflow-tooltip />
+        <el-table-column :label="t('inspection.results.executionStatus')" min-width="110" align="left">
           <template #default="{ row }">
             <RunLogStatusTag
               :type="getStatusType(row.jobStatus)"
@@ -167,7 +167,7 @@
             </RunLogStatusTag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="140" align="left" fixed="right">
+        <el-table-column :label="t('common.actions')" min-width="240" align="left" fixed="right">
           <template #default="{ row }">
             <div
               class="result-row-actions"
@@ -182,7 +182,7 @@
                 :disabled="!canViewReport(row)"
                 @click="viewStructuralDiagram(row)"
               >
-                架构图
+                {{ t('inspection.results.diagram') }}
               </el-button>
               <el-button
                 text
@@ -191,18 +191,18 @@
                 :disabled="!canViewReport(row)"
                 @click="viewResult(row)"
               >
-                检查结果
+                {{ t('inspection.results.checkResults') }}
               </el-button>
             </div>
           </template>
         </el-table-column>
         <template #empty>
-          <span v-if="loading">正在读取执行记录…</span>
+          <span v-if="loading">{{ t('inspection.results.loading') }}</span>
           <span v-else-if="readError">{{ readMessage }}</span>
           <span v-else-if="hasResult">
-            {{ selectedTemplateId || appliedKeyword ? '没有匹配的执行记录' : '暂无执行记录' }}
+            {{ selectedTemplateId || appliedKeyword ? t('inspection.results.noMatches') : t('inspection.results.empty') }}
           </span>
-          <span v-else>尚未读取执行记录</span>
+          <span v-else>{{ t('inspection.results.notLoaded') }}</span>
         </template>
       </el-table>
     </div>
@@ -210,10 +210,10 @@
     <!-- 分页 -->
     <div class="ops-pagination-wrapper">
       <span class="result-list-note">
-        数量为配置条目，悬浮查看各配置组；不代表报告覆盖或检查结果。
+        {{ t('inspection.results.countNote') }}
       </span>
       <span v-if="hasResult && pagination.total === null" class="result-list-note">
-        总数暂不可核实
+        {{ t('inspection.results.totalUnknown') }}
       </span>
       <el-pagination
         v-if="hasResult && pagination.total !== null"
@@ -238,6 +238,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import {
   ref,
   reactive,
@@ -314,12 +315,12 @@ onActivated(() => {
 })
 const available = () => !disposed && pageActive.value && isResultsRoute()
 const readMessage = computed(() => {
-  if (readError.value === 'auth') return '登录已失效或无权读取执行记录，请重新登录或联系管理员。'
+  if (readError.value === 'auth') return t('inspection.results.authRequired')
   if (!readError.value) return ''
-  const reason = readError.value === 'interrupted' ? '读取已中断' : '读取失败'
+  const reason = readError.value === 'interrupted' ? t('inspection.results.readInterrupted') : t('inspection.results.readFailed')
   return hasResult.value
-    ? `${reason}，当前显示上次成功结果，可能已过期。请重试。`
-    : `${reason}，请重试读取执行记录。`
+    ? t('inspection.results.staleResult', { reason })
+    : t('inspection.results.retryResult', { reason })
 })
 const configurationCounts = computed(
   () => new Map(tableData.value.map(row => [row, summarizeResultConfiguration(row.auditParams)]))
@@ -404,10 +405,10 @@ function getStatusType(status) {
  */
 function getStatusText(status) {
   const statusMap = {
-    OK: '完成',
-    ERROR: '失败',
-    WAITING: '等待中',
-    RUNNING: '运行中'
+    OK: t('inspection.status.completed'),
+    ERROR: t('inspection.status.failed'),
+    WAITING: t('inspection.status.waiting'),
+    RUNNING: t('inspection.status.running')
   }
   return statusMap[status] || status || '-'
 }
@@ -699,7 +700,7 @@ async function showJobLog(row) {
   } catch (error) {
     if (!isCurrent()) return
     console.error('获取任务详情失败:', error)
-    ElMessage.error('获取任务详情失败')
+    ElMessage.error(t('inspection.results.jobFailed'))
   }
 }
 
@@ -738,8 +739,8 @@ function canViewReport(row) {
   return available() && tableData.value.includes(row) && ['OK', 'ERROR'].includes(row.jobStatus)
 }
 function reportActionReason(row) {
-  if (!['OK', 'ERROR'].includes(row.jobStatus)) return '任务结束后可查看架构图和检查结果'
-  return readError.value ? '当前显示上次成功结果，可能已过期' : ''
+  if (!['OK', 'ERROR'].includes(row.jobStatus)) return t('inspection.results.waitForCompletion')
+  return readError.value ? t('inspection.results.staleActions') : ''
 }
 function isResultsRoute() {
   return route.path === `${getBasePath()}/results`

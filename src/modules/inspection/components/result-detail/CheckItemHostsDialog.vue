@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="visible"
-    title="检查项跨主机比对"
+    :title="t('inspection.report.compareHosts')"
     width="920px"
     destroy-on-close
     @close="$emit('close')"
@@ -14,21 +14,23 @@
           <i class="fas fa-clipboard-check" aria-hidden="true"></i>
         </div>
         <div class="header-meta">
-          <span class="meta-label">当前检查项</span>
+          <span class="meta-label">{{ t('inspection.report.currentItem') }}</span>
           <strong class="meta-title">{{ itemName || '—' }}</strong>
         </div>
         <span class="header-count-pill">
-          关联主机 <strong>{{ (data || []).length }}</strong> 台
+          <I18nT keypath="inspection.report.associatedHosts" :plural="(data || []).length" :i18n="i18n.global">
+            <template #count><strong>{{ (data || []).length }}</strong></template>
+          </I18nT>
         </span>
       </div>
 
       <!-- 状态筛选栏 -->
       <div class="dialog-toolbar">
         <div class="toolbar-left">
-          <span class="filter-label">结果状态筛选：</span>
+          <span class="filter-label">{{ t('inspection.report.filterStatus') }}</span>
           <el-select
             :model-value="statusFilter"
-            placeholder="全部状态"
+            :placeholder="t('inspection.report.allStatuses')"
             size="small"
             style="width: 150px"
             @update:model-value="$emit('filter-change', $event)"
@@ -45,8 +47,8 @@
 
       <!-- 表格 -->
       <el-table v-loading="loading" :data="data" max-height="380" class="hosts-compare-table">
-        <el-table-column prop="host_key" label="目标主机" min-width="220" />
-        <el-table-column label="检查状态" width="140" align="left">
+        <el-table-column prop="host_key" :label="t('inspection.report.targetHost')" min-width="220" />
+        <el-table-column :label="t('inspection.report.checkStatus')" width="140" align="left">
           <template #default="{ row }">
             <el-tag :type="getKpiStatusTagType(row.status)" effect="light" round size="small">
               <i :class="['fa', getKpiStatusIcon(row.status)]" style="margin-right: 5px"></i>
@@ -54,10 +56,10 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="90" align="left">
+        <el-table-column :label="t('common.actions')" width="90" align="left">
           <template #default="{ row }">
             <el-button type="primary" text size="small" @click="$emit('show-detail', row)">
-              详情
+              {{ t('inspection.report.details') }}
             </el-button>
           </template>
         </el-table-column>
@@ -67,6 +69,8 @@
 </template>
 
 <script setup>
+import { t, i18n } from '@/core/i18n'
+import { I18nT } from 'vue-i18n'
 import { STATUS_FILTER_OPTIONS } from '../../constants/status'
 import { getKpiStatusTagType, getKpiStatusIcon, getKpiStatusLabel } from '../../constants/status'
 

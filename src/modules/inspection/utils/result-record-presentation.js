@@ -1,6 +1,7 @@
+import { t } from '@/core/i18n'
 // Configured entries in each original audit group, not observed report coverage or deduplicated hosts.
 export function summarizeResultConfiguration(value) {
-  const unknown = { hostCount: null, scriptCount: null, summary: '配置信息无法核实' }
+  const unknown = { hostCount: null, scriptCount: null, get summary() { return t('inspection.results.configurationUnknown') } }
   if (value == null || value === '') return unknown
   try {
     const groups = typeof value === 'string' ? JSON.parse(value) : value
@@ -15,9 +16,15 @@ export function summarizeResultConfiguration(value) {
         group.scripts == null ? 0 : Array.isArray(group.scripts) ? group.scripts.length : null
       hostCount = hostCount === null || hosts === null ? null : hostCount + hosts
       scriptCount = scriptCount === null || scripts === null ? null : scriptCount + scripts
-      summaries.push(`配置组 ${index + 1}：主机 ${hosts ?? '—'}，脚本 ${scripts ?? '—'}`)
+      summaries.push({ group: index + 1, hosts: hosts ?? '—', scripts: scripts ?? '—' })
     }
-    return { hostCount, scriptCount, summary: summaries.join('\n') || '暂无配置条目' }
+    return {
+      hostCount,
+      scriptCount,
+      get summary() {
+        return summaries.map(({ group, hosts, scripts }) => t('inspection.results.groupSummary', { group, hosts, scripts })).join('\n') || t('inspection.results.noConfiguration')
+      }
+    }
   } catch {
     return unknown
   }

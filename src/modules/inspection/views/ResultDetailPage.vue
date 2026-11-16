@@ -11,7 +11,7 @@
                 {{ reportReturn.label }}
               </a>
             </el-breadcrumb-item>
-            <el-breadcrumb-item>{{ jobInfo.templateName || '检查结果' }}</el-breadcrumb-item>
+            <el-breadcrumb-item>{{ jobInfo.templateName || t('inspection.results.checkResults') }}</el-breadcrumb-item>
           </el-breadcrumb>
           <el-tag
             v-if="jobInfo.jobStatus"
@@ -23,10 +23,10 @@
         </div>
         <div class="navbar-right">
           <el-button size="small" @click="assetModelConfigVisible = true">
-            导出列配置
+            {{ t('inspection.report.exportColumns') }}
           </el-button>
           <el-button type="primary" size="small" @click="exportResult">
-            导出结果
+            {{ t('inspection.report.exportResults') }}
           </el-button>
         </div>
       </nav>
@@ -35,33 +35,35 @@
       <div v-loading="loading" class="report-overview-body">
         <div class="job-meta-panel">
           <div class="meta-item">
-            <span class="meta-label">开始时间</span>
+            <span class="meta-label">{{ t('inspection.results.startTime') }}</span>
             <span class="meta-value meta-value--mono">{{ formatDateTime(jobInfo.createdAt) || '—' }}</span>
           </div>
           <div class="meta-item">
-            <span class="meta-label">结束时间</span>
+            <span class="meta-label">{{ t('inspection.results.endTime') }}</span>
             <span class="meta-value meta-value--mono">{{ formatDateTime(jobInfo.endedAt) || '—' }}</span>
           </div>
           <div
             class="meta-item"
-            :title="hostList.map(item => item.hostKey).join('、')"
+            :title="hostList.map(item => item.hostKey).join(t('common.listSeparator'))"
           >
-            <span class="meta-label">配置主机</span>
+            <span class="meta-label">{{ t('inspection.report.configuredHosts') }}</span>
             <span class="meta-value">
-              <strong>{{ hostList.length }}</strong> 台
+              <I18nT keypath="inspection.report.hostCount" :plural="hostList.length" :i18n="i18n.global">
+                <template #count><strong>{{ hostList.length }}</strong></template>
+              </I18nT>
               <span v-if="hostList.length" class="meta-subtext">
-                （{{ hostList.slice(0, 2).map(item => item.hostKey).join('、') }}{{ hostList.length > 2 ? ' 等' : '' }}）
+                {{ t(hostList.length > 2 ? 'inspection.report.moreHosts' : 'inspection.report.hostPreview', { hosts: hostList.slice(0, 2).map(item => item.hostKey).join(t('common.listSeparator')) }) }}
               </span>
             </span>
           </div>
           <div
             class="meta-item"
-            :title="scriptList.map(item => item.scriptPath || getInspectionScriptLabel(item)).join('、')"
+            :title="scriptList.map(item => item.scriptPath || getInspectionScriptLabel(item)).join(t('common.listSeparator'))"
           >
-            <span class="meta-label">执行脚本</span>
+            <span class="meta-label">{{ t('inspection.report.runScripts') }}</span>
             <span class="meta-value meta-value--ellipsis">
               <template v-if="scriptList.length">
-                {{ scriptList.map(item => getInspectionScriptLabel(item)).join('、') }}
+                {{ scriptList.map(item => getInspectionScriptLabel(item)).join(t('common.listSeparator')) }}
               </template>
               <template v-else>—</template>
             </span>
@@ -83,7 +85,7 @@
           <el-tab-pane name="host">
             <template #label>
               <span class="tab-label-item">
-                主机明细
+                {{ t('inspection.report.hostDetails') }}
                 <span v-if="pagination.total" class="tab-count-pill">{{ pagination.total }}</span>
               </span>
             </template>
@@ -91,7 +93,7 @@
           <el-tab-pane name="overview">
             <template #label>
               <span class="tab-label-item">
-                检查项汇总
+                {{ t('inspection.report.itemSummary') }}
                 <span v-if="overviewPagination.total" class="tab-count-pill">
                   {{ overviewPagination.total }}
                 </span>
@@ -105,17 +107,17 @@
           <template v-if="activeTab === 'host'">
             <div class="toolbar-batch-actions">
               <el-button size="small" :disabled="selectedHostIds.length === 0" @click="addToWhitelist">
-                添加黑名单
+                {{ t('inspection.report.addBlacklist') }}
               </el-button>
               <el-button
                 size="small"
                 :disabled="selectedHostIds.length === 0"
                 @click="removeFromWhitelist"
               >
-                移除黑名单
+                {{ t('inspection.report.removeBlacklist') }}
               </el-button>
               <el-button size="small" @click="dialogs.showWhitelistDialog()">
-                黑名单列表
+                {{ t('inspection.report.blacklistList') }}
               </el-button>
             </div>
           </template>
@@ -123,7 +125,7 @@
             <el-input
               v-if="activeTab === 'host'"
               v-model="hostSearchText"
-              placeholder="搜索主机"
+              :placeholder="t('inspection.report.searchHost')"
               clearable
               size="small"
               style="width: 200px"
@@ -137,7 +139,7 @@
             <el-input
               v-else
               v-model="overviewSearchText"
-              placeholder="搜索检查项"
+              :placeholder="t('inspection.report.searchItem')"
               clearable
               size="small"
               style="width: 200px"
@@ -148,12 +150,12 @@
                 <i class="fa fa-search" aria-hidden="true"></i>
               </template>
             </el-input>
-            <el-button type="primary" size="small" @click="handleSearch">搜索</el-button>
+            <el-button type="primary" size="small" @click="handleSearch">{{ t('common.search') }}</el-button>
             <el-button
               class="toolbar-icon-btn"
               size="small"
               circle
-              title="刷新"
+              :title="t('common.refresh')"
               @click="refreshData"
             >
               <i class="fa fa-sync-alt" aria-hidden="true"></i>
@@ -173,24 +175,24 @@
             @selection-change="handleSelectionChange"
           >
             <el-table-column type="selection" width="46" />
-            <el-table-column prop="host_key" label="主机" min-width="150">
+            <el-table-column prop="host_key" :label="t('inspection.report.host')" min-width="150">
               <template #default="{ row }">
                 <el-button type="primary" link class="host-link-btn" @click="handleHostClick(row)">
                   {{ row.host_key }}
                 </el-button>
               </template>
             </el-table-column>
-            <el-table-column prop="os_distro" label="操作系统" min-width="160" show-overflow-tooltip />
-            <el-table-column prop="os_version" label="系统版本" width="110" />
-            <el-table-column label="黑名单" width="100" align="left">
+            <el-table-column prop="os_distro" :label="t('inspection.report.os')" min-width="160" show-overflow-tooltip />
+            <el-table-column prop="os_version" :label="t('inspection.report.osVersion')" width="110" />
+            <el-table-column :label="t('inspection.report.blacklist')" width="100" align="left">
               <template #default="{ row }">
                 <el-tag v-if="row.black_count > 0" type="warning" size="small">
-                  是
+                  {{ t('inspection.report.yes') }}
                 </el-tag>
-                <el-tag v-else type="info" size="small" effect="plain">否</el-tag>
+                <el-tag v-else type="info" size="small" effect="plain">{{ t('inspection.report.no') }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="失败" width="90" align="right">
+            <el-table-column :label="t('inspection.status.failed')" width="90" align="right">
               <template #default="{ row }">
                 <el-button
                   :type="row.failed_count > 0 ? 'danger' : 'info'"
@@ -202,7 +204,7 @@
                 </el-button>
               </template>
             </el-table-column>
-            <el-table-column label="数据缺失" width="100" align="right">
+            <el-table-column :label="t('inspection.status.missingData')" min-width="120" align="right">
               <template #default="{ row }">
                 <el-button
                   :type="row.unreachable_count > 0 ? 'warning' : 'info'"
@@ -214,7 +216,7 @@
                 </el-button>
               </template>
             </el-table-column>
-            <el-table-column label="人工检查" width="100" align="right">
+            <el-table-column :label="t('inspection.status.manual')" min-width="130" align="right">
               <template #default="{ row }">
                 <el-button
                   :type="row.check_count > 0 ? 'primary' : 'info'"
@@ -226,7 +228,7 @@
                 </el-button>
               </template>
             </el-table-column>
-            <el-table-column label="已跳过" width="90" align="right">
+            <el-table-column :label="t('inspection.status.skipped')" width="90" align="right">
               <template #default="{ row }">
                 <el-button
                   type="info"
@@ -238,7 +240,7 @@
                 </el-button>
               </template>
             </el-table-column>
-            <el-table-column label="检查通过" width="100" align="right">
+            <el-table-column :label="t('inspection.status.passed')" min-width="130" align="right">
               <template #default="{ row }">
                 <el-button
                   :type="row.ok_count > 0 ? 'success' : 'info'"
@@ -250,7 +252,7 @@
                 </el-button>
               </template>
             </el-table-column>
-            <el-table-column prop="check_item_count" label="检查项" width="90" align="right">
+            <el-table-column prop="check_item_count" :label="t('inspection.report.checkItem')" min-width="110" align="right">
               <template #default="{ row }">
                 <el-button
                   type="primary"
@@ -268,7 +270,7 @@
         <!-- 分页 -->
         <div class="ops-pagination-wrapper workspace-footer">
           <span class="workspace-note">
-            点击主机可管理单机检查项黑名单；点击各状态数值可查看该主机对应的检查项输出。
+            {{ t('inspection.report.hostTableHint') }}
           </span>
           <el-pagination
             v-model:current-page="pagination.page"
@@ -292,14 +294,14 @@
             style="width: 100%"
             height="100%"
           >
-            <el-table-column prop="name" label="检查项名称" min-width="320">
+            <el-table-column prop="name" :label="t('inspection.report.itemName')" min-width="320">
               <template #default="{ row }">
                 <el-button type="primary" link @click="dialogs.showCheckItemHostsDialog(row)">
                   {{ row.name }}
                 </el-button>
               </template>
             </el-table-column>
-            <el-table-column prop="check_host_count" label="覆盖主机数" width="140" align="right">
+            <el-table-column prop="check_host_count" :label="t('inspection.report.coveredHosts')" width="140" align="right">
               <template #default="{ row }">
                 <el-button
                   type="primary"
@@ -316,7 +318,7 @@
 
         <!-- 分页 -->
         <div class="ops-pagination-wrapper workspace-footer">
-          <span class="workspace-note">点击检查项名称或覆盖主机数，可查看所有主机在该检查项上的检查结果。</span>
+          <span class="workspace-note">{{ t('inspection.report.itemTableHint') }}</span>
           <el-pagination
             v-model:current-page="overviewPagination.page"
             v-model:page-size="overviewPagination.size"
@@ -334,7 +336,7 @@
     <!-- 巡检项详情弹窗 -->
     <el-dialog
       v-model="inspectionDetailVisible"
-      :title="`主机检查项明细${selectedHost ? ' · ' + selectedHost.host_key : ''}`"
+      :title="selectedHost ? t('inspection.report.hostItemsForHost', { host: selectedHost.host_key }) : t('inspection.report.hostItemsTitle')"
       width="1160px"
       class="inspection-detail-dialog"
       append-to-body
@@ -345,20 +347,20 @@
         <div class="inspection-dialog-filters">
           <el-select
             v-model="inspectionResultFilter"
-            placeholder="全部状态"
+            :placeholder="t('inspection.report.allStatuses')"
             clearable
             size="small"
             style="width: 130px"
           >
-            <el-option label="通过" value="OK" />
-            <el-option label="失败" value="FAILED" />
-            <el-option label="人工检查" value="CHECK" />
-            <el-option label="已跳过" value="SKIPPING" />
-            <el-option label="无数据" value="UNREACHABLE" />
+            <el-option :label="t('inspection.report.passed')" value="OK" />
+            <el-option :label="t('inspection.status.failed')" value="FAILED" />
+            <el-option :label="t('inspection.status.manual')" value="CHECK" />
+            <el-option :label="t('inspection.status.skipped')" value="SKIPPING" />
+            <el-option :label="t('inspection.status.noData')" value="UNREACHABLE" />
           </el-select>
           <el-input
             v-model="inspectionSearchText"
-            placeholder="输入检查项或输出内容搜索"
+            :placeholder="t('inspection.report.searchOutput')"
             clearable
             size="small"
             style="width: 240px"
@@ -370,13 +372,13 @@
         </div>
         <el-button size="small" @click="dialogs.showItemWhitelist()">
           <i class="fa fa-list-ul" aria-hidden="true"></i>
-          检查项黑名单列表
+          {{ t('inspection.report.itemBlacklistList') }}
         </el-button>
       </div>
       <div v-if="inspectionRefreshFailed" class="inspection-refresh-alert" role="alert">
-        <span>检查项刷新失败，当前列表可能不是最新数据。</span>
+        <span>{{ t('inspection.report.itemsStale') }}</span>
         <el-button link type="primary" :disabled="inspectionDetailLoading" @click="retryInspection">
-          重试刷新
+          {{ t('inspection.report.retryRefresh') }}
         </el-button>
       </div>
       <el-table
@@ -385,23 +387,23 @@
         style="width: 100%"
         max-height="calc(100vh - 350px)"
       >
-        <el-table-column prop="hostKey" label="主机" width="140" />
-        <el-table-column prop="name" label="检查项" min-width="180" show-overflow-tooltip />
-        <el-table-column label="检查结果" width="104" align="left">
+        <el-table-column prop="hostKey" :label="t('inspection.report.host')" width="140" />
+        <el-table-column prop="name" :label="t('inspection.report.checkItem')" min-width="180" show-overflow-tooltip />
+        <el-table-column :label="t('inspection.results.checkResults')" min-width="140" align="left">
           <template #default="{ row }">
-            <el-tag v-if="row.status === 'OK'" type="success" size="small">通过</el-tag>
-            <el-tag v-else-if="row.status === 'FAILED'" type="danger" size="small">失败</el-tag>
-            <el-tag v-else-if="row.status === 'CHECK'" type="warning" size="small">人工检查</el-tag>
-            <el-tag v-else-if="row.status === 'SKIPPING'" type="info" size="small">已跳过</el-tag>
-            <el-tag v-else type="info" size="small">无数据</el-tag>
+            <el-tag v-if="row.status === 'OK'" type="success" size="small">{{ t('inspection.report.passed') }}</el-tag>
+            <el-tag v-else-if="row.status === 'FAILED'" type="danger" size="small">{{ t('inspection.status.failed') }}</el-tag>
+            <el-tag v-else-if="row.status === 'CHECK'" type="warning" size="small">{{ t('inspection.status.manual') }}</el-tag>
+            <el-tag v-else-if="row.status === 'SKIPPING'" type="info" size="small">{{ t('inspection.status.skipped') }}</el-tag>
+            <el-tag v-else type="info" size="small">{{ t('inspection.status.noData') }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="output" label="原始输出摘要" min-width="320" show-overflow-tooltip>
+        <el-table-column prop="output" :label="t('inspection.report.rawOutputSummary')" min-width="320" show-overflow-tooltip>
           <template #default="{ row }">
-            <span class="output-snippet">{{ row.output || '无' }}</span>
+            <span class="output-snippet">{{ row.output || t('inspection.report.none') }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="120" fixed="right">
+        <el-table-column :label="t('common.actions')" width="120" fixed="right">
           <template #default="{ row }">
             <el-button
               v-if="!isInWhitelist(row)"
@@ -410,7 +412,7 @@
               :disabled="inspectionDetailLoading || inspectionRefreshFailed"
               @click="handleAddToWhitelist(row)"
             >
-              添加黑名单
+              {{ t('inspection.report.addBlacklist') }}
             </el-button>
             <el-button
               v-else
@@ -419,7 +421,7 @@
               :disabled="inspectionDetailLoading || inspectionRefreshFailed"
               @click="handleRemoveFromWhitelist(row)"
             >
-              移出黑名单
+              {{ t('inspection.report.removeItemBlacklist') }}
             </el-button>
           </template>
         </el-table-column>
@@ -513,6 +515,8 @@
 </template>
 
 <script setup>
+import { t, i18n } from '@/core/i18n'
+import { I18nT } from 'vue-i18n'
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -729,7 +733,7 @@ async function refreshInspection(context, afterMutation = false) {
     inspectionRefreshFailed.value = true
     console.error('加载巡检项详情失败:', error)
     ElMessage.error(
-      afterMutation ? '黑名单操作已成功，但检查项刷新失败，请重试刷新' : '加载巡检项详情失败'
+      afterMutation ? t('inspection.report.mutationRefreshFailed') : t('inspection.report.itemsFailed')
     )
   } finally {
     if (isCurrent()) inspectionReadLoading.value = false
@@ -763,7 +767,7 @@ async function handleAddToWhitelist(item) {
   inspectionMutationLoading.value = true
 
   try {
-    await ElMessageBox.confirm('确定要将此检查项添加到黑名单吗？', '确认', {
+    await ElMessageBox.confirm(t('inspection.report.addItemConfirm'), t('common.confirm'), {
       closeOnClickModal: false,
       closeOnPressEscape: false
     })
@@ -772,13 +776,13 @@ async function handleAddToWhitelist(item) {
     await whitelistApi.saveWhitelist(payload)
     if (!isCurrentInspection(context)) return
 
-    ElMessage.success('添加黑名单成功')
+    ElMessage.success(t('inspection.report.addSucceeded'))
     loadStatistics(() => isCurrentInspection(context))
     await refreshInspection(context, true)
   } catch (e) {
     if (isCurrentInspection(context) && e !== 'cancel' && e !== 'close') {
       console.error('添加黑名单失败:', e)
-      ElMessage.error('添加黑名单失败')
+      ElMessage.error(t('inspection.report.addFailed'))
     }
   } finally {
     if (isCurrentInspection(context)) inspectionMutationLoading.value = false
@@ -795,7 +799,7 @@ async function handleRemoveFromWhitelist(item) {
   inspectionMutationLoading.value = true
 
   try {
-    await ElMessageBox.confirm('确定要将此检查项从黑名单移除吗？', '确认', {
+    await ElMessageBox.confirm(t('inspection.report.removeItemConfirm'), t('common.confirm'), {
       closeOnClickModal: false,
       closeOnPressEscape: false
     })
@@ -804,16 +808,16 @@ async function handleRemoveFromWhitelist(item) {
     if (whitelistId) {
       await whitelistApi.deleteWhitelist(whitelistId)
       if (!isCurrentInspection(context)) return
-      ElMessage.success('移除黑名单成功')
+      ElMessage.success(t('inspection.report.removeSucceeded'))
       loadStatistics(() => isCurrentInspection(context))
       await refreshInspection(context, true)
     } else {
-      ElMessage.error('无法获取黑名单ID')
+      ElMessage.error(t('inspection.report.blacklistIdMissing'))
     }
   } catch (e) {
     if (isCurrentInspection(context) && e !== 'cancel' && e !== 'close') {
       console.error('移除黑名单失败:', e)
-      ElMessage.error('移除黑名单失败')
+      ElMessage.error(t('inspection.report.removeFailed'))
     }
   } finally {
     if (isCurrentInspection(context)) inspectionMutationLoading.value = false
@@ -921,13 +925,13 @@ function handleCheckItemFilterChange(status) {
 
 async function addToWhitelist() {
   if (selectedHostIds.value.length === 0) {
-    ElMessage.warning('请先选择主机')
+    ElMessage.warning(t('inspection.report.selectHostFirst'))
     return
   }
   try {
     await ElMessageBox.confirm(
-      `确定要将选中的 ${selectedHostIds.value.length} 台主机添加到黑名单吗？`,
-      '确认',
+      t('inspection.report.addHostsConfirm', { count: selectedHostIds.value.length }),
+      t('common.confirm'),
       { closeOnClickModal: false, closeOnPressEscape: false }
     )
 
@@ -940,28 +944,28 @@ async function addToWhitelist() {
       result[0]?.status === 'COMPLETED' &&
       result[0]?.data?.result === 'ok'
     ) {
-      ElMessage.success('添加黑名单成功')
+      ElMessage.success(t('inspection.report.addSucceeded'))
       refreshData()
     } else {
-      ElMessage.error('添加黑名单失败')
+      ElMessage.error(t('inspection.report.addFailed'))
     }
   } catch (e) {
     if (e !== 'cancel') {
       console.error('添加黑名单失败:', e)
-      ElMessage.error('添加黑名单失败')
+      ElMessage.error(t('inspection.report.addFailed'))
     }
   }
 }
 
 async function removeFromWhitelist() {
   if (selectedHostIds.value.length === 0) {
-    ElMessage.warning('请先选择主机')
+    ElMessage.warning(t('inspection.report.selectHostFirst'))
     return
   }
   try {
     await ElMessageBox.confirm(
-      `确定要将选中的 ${selectedHostIds.value.length} 台主机从黑名单移除吗？`,
-      '确认',
+      t('inspection.report.removeHostsCountConfirm', { count: selectedHostIds.value.length }),
+      t('common.confirm'),
       { closeOnClickModal: false, closeOnPressEscape: false }
     )
 
@@ -974,21 +978,21 @@ async function removeFromWhitelist() {
       result[0]?.status === 'COMPLETED' &&
       result[0]?.data?.result === 'ok'
     ) {
-      ElMessage.success('移除黑名单成功')
+      ElMessage.success(t('inspection.report.removeSucceeded'))
       refreshData()
     } else {
-      ElMessage.error('移除黑名单失败')
+      ElMessage.error(t('inspection.report.removeFailed'))
     }
   } catch (e) {
     if (e !== 'cancel') {
       console.error('移除黑名单失败:', e)
-      ElMessage.error('移除黑名单失败')
+      ElMessage.error(t('inspection.report.removeFailed'))
     }
   }
 }
 
 function exportTable() {
-  ElMessage.info('导出功能开发中')
+  ElMessage.info(t('inspection.report.exportDevelopment'))
 }
 
 async function exportResult() {
@@ -1002,7 +1006,7 @@ async function exportResult() {
       headers: authHeaders
     })
 
-    if (!response.ok) throw new Error('下载失败')
+    if (!response.ok) throw new Error(t('inspection.report.downloadFailed'))
 
     const blob = await response.blob()
     const downloadUrl = window.URL.createObjectURL(blob)
@@ -1011,16 +1015,16 @@ async function exportResult() {
 
     const link = document.createElement('a')
     link.href = downloadUrl
-    link.download = `${jobInfo.value.templateName || '巡检结果'}_${datetime}.xlsx`
+    link.download = `${jobInfo.value.templateName || t('inspection.report.results')}_${datetime}.xlsx`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     window.URL.revokeObjectURL(downloadUrl)
 
-    ElMessage.success('导出成功')
+    ElMessage.success(t('inspection.report.exportSucceeded'))
   } catch (error) {
     console.error('导出失败:', error)
-    ElMessage.error('导出失败')
+    ElMessage.error(t('inspection.report.exportFailed'))
   }
 }
 
@@ -1075,7 +1079,7 @@ watch(activeTab, newTab => {
 onMounted(() => {
   const id = extractJobId()
   if (!id) {
-    ElMessage.error('缺少任务ID')
+    ElMessage.error(t('inspection.report.jobIdMissing'))
     return
   }
   initData(id)

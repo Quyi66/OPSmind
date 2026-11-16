@@ -10,7 +10,7 @@
     <div class="kpi-filter-bar">
       <el-input
         v-model="filterText"
-        placeholder="搜索主机或检查项名称..."
+        :placeholder="t('inspection.report.searchHostItem')"
         clearable
         size="small"
         style="width: 280px"
@@ -20,14 +20,14 @@
         </template>
       </el-input>
       <span class="kpi-count-badge">
-        匹配 {{ filteredData.length }} / 共 {{ (data || []).length }} 条
+        {{ t('inspection.report.matches', { matched: filteredData.length, total: (data || []).length, count: (data || []).length }) }}
       </span>
     </div>
 
     <el-table v-loading="loading" :data="filteredData" max-height="calc(100vh - 300px)">
-      <el-table-column prop="host_key" label="目标主机" min-width="140" />
-      <el-table-column prop="name" label="检查项名称" min-width="220" show-overflow-tooltip />
-      <el-table-column label="检查状态" width="130">
+      <el-table-column prop="host_key" :label="t('inspection.report.targetHost')" min-width="140" />
+      <el-table-column prop="name" :label="t('inspection.report.itemName')" min-width="220" show-overflow-tooltip />
+      <el-table-column :label="t('inspection.report.checkStatus')" width="130">
         <template #default="{ row }">
           <el-tag :type="getKpiStatusTagType(row.status)" effect="light" round size="small">
             <i :class="['fa', getKpiStatusIcon(row.status)]" style="margin-right: 5px"></i>
@@ -35,10 +35,10 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="80" fixed="right">
+      <el-table-column :label="t('common.actions')" width="80" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" text size="small" @click="$emit('show-detail', row)">
-            详情
+            {{ t('inspection.report.details') }}
           </el-button>
         </template>
       </el-table-column>
@@ -47,6 +47,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { ref, computed, watch } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import { getKpiStatusTagType, getKpiStatusIcon, getKpiStatusLabel } from '../../constants/status'

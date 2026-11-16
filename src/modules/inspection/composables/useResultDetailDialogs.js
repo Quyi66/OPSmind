@@ -1,6 +1,8 @@
 /**
  * 弹窗管理 Composable
  */
+import { t } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
 import { onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { dtsApi, whitelistApi } from '../api'
@@ -112,7 +114,7 @@ export function useResultDetailDialogs(jobId, jobInfo, contextKey = () => '') {
     } catch (error) {
       if (!isCurrent()) return
       console.error('加载检查项列表失败:', error)
-      ElMessage.error('加载检查项失败')
+      ElMessage.error(t('inspection.report.loadItemsFailed'))
     } finally {
       if (isCurrent()) hostCheckItemsLoading.value = false
     }
@@ -120,7 +122,7 @@ export function useResultDetailDialogs(jobId, jobInfo, contextKey = () => '') {
 
   // ===== KPI 详情弹窗 =====
   const kpiDialogVisible = ref(false)
-  const kpiDialogTitle = ref('')
+  const kpiDialogTitle = messageRef('')
   const kpiDialogData = ref([])
   const kpiDialogLoading = ref(false)
   const beginKpiRead = createReadGuard(kpiDialogVisible, kpiDialogLoading, () => {
@@ -129,14 +131,16 @@ export function useResultDetailDialogs(jobId, jobInfo, contextKey = () => '') {
 
   async function showKpiDialog(status) {
     const titleMap = {
-      OK: '检查通过',
-      FAILED: '检查失败',
-      CHECK: '人工检查',
-      SKIPPING: '已跳过',
-      UNREACHABLE: '数据缺失'
+      OK: 'inspection.status.passed',
+      FAILED: 'inspection.status.checkFailed',
+      CHECK: 'inspection.status.manual',
+      SKIPPING: 'inspection.status.skipped',
+      UNREACHABLE: 'inspection.status.missingData'
     }
 
-    kpiDialogTitle.value = `${titleMap[status]} - 详情`
+    kpiDialogTitle.value = message('inspection.report.kpiTitle', () => ({
+      statusLabel: titleMap[status] ? t(titleMap[status]) : status
+    }))
     kpiDialogVisible.value = true
     kpiDialogLoading.value = true
     kpiDialogData.value = []
@@ -150,7 +154,7 @@ export function useResultDetailDialogs(jobId, jobInfo, contextKey = () => '') {
     } catch (error) {
       if (!isCurrent()) return
       console.error('获取 KPI 详情失败:', error)
-      ElMessage.error('获取详情失败')
+      ElMessage.error(t('inspection.report.detailsFailed'))
     } finally {
       if (isCurrent()) kpiDialogLoading.value = false
     }
@@ -239,7 +243,7 @@ export function useResultDetailDialogs(jobId, jobInfo, contextKey = () => '') {
     } catch (error) {
       if (!isCurrent()) return
       console.error('获取检查项关联主机失败:', error)
-      ElMessage.error('获取关联主机失败')
+      ElMessage.error(t('inspection.report.linkedHostsFailed'))
     } finally {
       if (isCurrent()) checkItemHostsLoading.value = false
     }
@@ -262,7 +266,7 @@ export function useResultDetailDialogs(jobId, jobInfo, contextKey = () => '') {
       whitelistData.value = data.records || []
     } catch (error) {
       console.error('加载黑名单失败:', error)
-      ElMessage.error('加载黑名单失败')
+      ElMessage.error(t('inspection.report.blacklistFailed'))
     } finally {
       whitelistLoading.value = false
     }
@@ -274,17 +278,17 @@ export function useResultDetailDialogs(jobId, jobInfo, contextKey = () => '') {
 
   async function removeSelectedWhitelist() {
     if (selectedWhitelistIds.value.length === 0) {
-      ElMessage.warning('请先选择要移除的主机')
+      ElMessage.warning(t('inspection.report.selectRemovalHosts'))
       return
     }
 
     try {
-      await ElMessageBox.confirm('确定要将选中的主机从黑名单移除吗？', '确认', {
+      await ElMessageBox.confirm(t('inspection.report.removeHostsConfirm'), t('common.confirm'), {
         closeOnClickModal: false,
         closeOnPressEscape: false
       })
       await whitelistApi.removeBlackHost(selectedWhitelistIds.value)
-      ElMessage.success('移除成功')
+      ElMessage.success(t('inspection.report.removed'))
       showWhitelistDialog()
     } catch (e) {
       if (e !== 'cancel') {
@@ -311,7 +315,7 @@ export function useResultDetailDialogs(jobId, jobInfo, contextKey = () => '') {
       }
     } catch (error) {
       console.error('加载检查项黑名单失败:', error)
-      ElMessage.error('加载黑名单失败')
+      ElMessage.error(t('inspection.report.blacklistFailed'))
     } finally {
       itemWhitelistLoading.value = false
     }
@@ -319,12 +323,12 @@ export function useResultDetailDialogs(jobId, jobInfo, contextKey = () => '') {
 
   async function deleteItemWhitelist(item) {
     try {
-      await ElMessageBox.confirm('确定要删除此黑名单项吗？', '确认', {
+      await ElMessageBox.confirm(t('inspection.report.deleteRuleConfirm'), t('common.confirm'), {
         closeOnClickModal: false,
         closeOnPressEscape: false
       })
       await whitelistApi.deleteWhitelist(item.id)
-      ElMessage.success('删除成功')
+      ElMessage.success(t('inspection.report.deleted'))
       showItemWhitelist()
     } catch (e) {
       if (e !== 'cancel') {

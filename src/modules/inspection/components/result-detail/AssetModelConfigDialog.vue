@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="visible"
-    title="报告导出列配置"
+    :title="t('inspection.exportColumns.title')"
     width="940px"
     destroy-on-close
     @close="$emit('close')"
@@ -14,8 +14,8 @@
           <i class="fas fa-columns" aria-hidden="true"></i>
         </div>
         <div class="banner-text">
-          <strong>导出资产属性列配置</strong>
-          <p>勾选需要在 Excel 巡检报告中附带导出的 CMDB 资产模型字段，修改后点击保存即可生效。</p>
+          <strong>{{ t('inspection.exportColumns.heading') }}</strong>
+          <p>{{ t('inspection.exportColumns.hint') }}</p>
         </div>
       </div>
 
@@ -34,7 +34,7 @@
                   {{ modelType }}
                 </span>
                 <el-tag type="primary" effect="light" size="small">
-                  已选 {{ getSelectedCount(modelType) }} / {{ assetModelData[modelType]?.length || 0 }} 项
+                  {{ t('inspection.exportColumns.selectedCount', { selected: getSelectedCount(modelType), total: assetModelData[modelType]?.length || 0, count: assetModelData[modelType]?.length || 0 }) }}
                 </el-tag>
               </div>
             </template>
@@ -56,25 +56,26 @@
           </el-card>
         </template>
 
-        <el-empty v-else-if="!loading" description="暂无资产模型配置" />
+        <el-empty v-else-if="!loading" :description="t('inspection.exportColumns.empty')" />
       </div>
     </div>
 
     <template #footer>
-      <el-button :disabled="saving" @click="$emit('close')">关闭</el-button>
+      <el-button :disabled="saving" @click="$emit('close')">{{ t('common.close') }}</el-button>
       <el-button
         type="primary"
         :loading="saving"
         :disabled="loading || !hasPendingChanges"
         @click="handleSave"
       >
-        保存
+        {{ t('common.save') }}
       </el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { assetModelApi } from '../../api'
@@ -160,7 +161,7 @@ async function loadAssetModelTypes() {
     syncOriginalCheckedStates()
   } catch (error) {
     console.error('加载资产模型类型失败:', error)
-    ElMessage.error('加载资产模型类型失败')
+    ElMessage.error(t('inspection.exportColumns.typesFailed'))
   } finally {
     loading.value = false
   }
@@ -183,7 +184,7 @@ async function loadSelectedModels() {
     })
   } catch (error) {
     console.error('加载已选择的资产模型失败:', error)
-    ElMessage.error('加载已选择的资产模型失败')
+    ElMessage.error(t('inspection.exportColumns.selectionFailed'))
   }
 }
 
@@ -236,16 +237,16 @@ async function handleSave() {
     }
 
     if (failedCount === 0) {
-      ElMessage.success('保存成功')
+      ElMessage.success(t('inspection.exportColumns.saved'))
       return
     }
 
     if (failedCount < changes.length) {
-      ElMessage.warning('部分保存失败，请重试')
+      ElMessage.warning(t('inspection.exportColumns.partialFailure'))
       return
     }
 
-    ElMessage.error('保存失败，请重试')
+    ElMessage.error(t('inspection.exportColumns.saveFailed'))
   } finally {
     saving.value = false
   }

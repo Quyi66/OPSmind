@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="visible"
-    :title="`${host?.host_key || ''} - 巡检项详情`"
+    :title="t('inspection.report.hostTitle', { host: host?.host_key || '' })"
     width="920px"
     destroy-on-close
     @close="$emit('close')"
@@ -15,8 +15,7 @@
         <div class="host-info-main">
           <span class="host-name">{{ host.host_key }}</span>
           <span class="host-os">
-            操作系统：{{ machineInfo.os_distro || host.os_distro || '未知' }}
-            {{ machineInfo.os_version || host.os_version || '' }}
+            {{ t('inspection.report.osDescription', { os: machineInfo.os_distro || host.os_distro || t('common.unknown'), version: machineInfo.os_version || host.os_version || '' }) }}
           </span>
         </div>
       </div>
@@ -24,7 +23,7 @@
       <div class="host-detail-toolbar">
         <el-select
           :model-value="statusFilter"
-          placeholder="检查状态"
+          :placeholder="t('inspection.report.checkStatus')"
           size="small"
           style="width: 150px"
           @update:model-value="$emit('filter-change', $event)"
@@ -38,13 +37,13 @@
         </el-select>
         <el-input
           v-model="filterText"
-          placeholder="搜索检查项名称"
+          :placeholder="t('inspection.report.searchItemName')"
           clearable
           size="small"
           style="width: 240px"
         />
         <span class="match-count-badge">
-          匹配 {{ filteredCheckItems.length }} / 已加载 {{ checkItems?.length || 0 }} 条
+          {{ t('inspection.report.loadedMatches', { matched: filteredCheckItems.length, total: checkItems?.length || 0, count: checkItems?.length || 0 }) }}
         </span>
       </div>
 
@@ -52,10 +51,10 @@
         v-loading="loading"
         :data="filteredCheckItems"
         max-height="400"
-        :empty-text="filterText.trim() ? '没有匹配的已加载检查项' : '暂无检查项'"
+        :empty-text="filterText.trim() ? t('inspection.report.noLoadedMatches') : t('inspection.report.noItems')"
       >
-        <el-table-column prop="name" label="检查项" min-width="220" />
-        <el-table-column label="状态" width="130" align="left">
+        <el-table-column prop="name" :label="t('inspection.report.checkItem')" min-width="220" />
+        <el-table-column :label="t('common.status')" width="130" align="left">
           <template #default="{ row }">
             <el-tag :type="getKpiStatusTagType(row.status)" effect="light" round size="small">
               <i :class="['fa', getKpiStatusIcon(row.status)]" style="margin-right: 5px"></i>
@@ -63,10 +62,10 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="84" align="left">
+        <el-table-column :label="t('common.actions')" width="84" align="left">
           <template #default="{ row }">
             <el-button type="primary" text size="small" @click="$emit('show-detail', row)">
-              详情
+              {{ t('inspection.report.details') }}
             </el-button>
           </template>
         </el-table-column>
@@ -76,6 +75,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { computed, ref, watch } from 'vue'
 import { STATUS_FILTER_OPTIONS } from '../../constants/status'
 import { getKpiStatusTagType, getKpiStatusIcon, getKpiStatusLabel } from '../../constants/status'

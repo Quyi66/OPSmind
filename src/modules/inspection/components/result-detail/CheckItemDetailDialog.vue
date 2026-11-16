@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="visible"
-    :title="item?.hostKey || item?.host_key || '巡检结果'"
+    :title="item?.hostKey || item?.host_key || t('inspection.report.results')"
     width="740px"
     destroy-on-close
     @close="$emit('close')"
@@ -10,11 +10,11 @@
     <div v-loading="loading" class="check-item-detail-dialog">
       <div class="meta-summary-card">
         <div class="result-item">
-          <span class="result-label">检查项名称</span>
+          <span class="result-label">{{ t('inspection.report.itemName') }}</span>
           <strong class="result-value">{{ item?.name || '-' }}</strong>
         </div>
         <div class="result-item">
-          <span class="result-label">诊断结果</span>
+          <span class="result-label">{{ t('inspection.report.diagnosis') }}</span>
           <el-tag v-if="item" :type="getKpiStatusTagType(item.status)" size="small" effect="light">
             {{ getKpiStatusLabel(item.status) }}
           </el-tag>
@@ -22,7 +22,7 @@
       </div>
 
       <div class="output-section-header">
-        <span class="result-label">原始执行输出</span>
+        <span class="result-label">{{ t('inspection.report.rawOutput') }}</span>
       </div>
       <div
         v-if="item?.output !== null && item?.output !== undefined && item?.output !== ''"
@@ -31,7 +31,7 @@
         <pre>{{ item.output }}</pre>
       </div>
       <div v-else class="output-content">
-        <pre class="empty">无输出内容</pre>
+        <pre class="empty">{{ t('inspection.report.noOutput') }}</pre>
       </div>
     </div>
 
@@ -48,7 +48,7 @@
               :loading="whitelistLoading"
             >
               <i class="fa fa-plus"></i>
-              添加黑名单
+              {{ t('inspection.report.addBlacklist') }}
             </el-button>
             <el-button
               v-else
@@ -58,12 +58,12 @@
               :loading="whitelistLoading"
             >
               <i class="fa fa-trash-alt"></i>
-              移除黑名单
+              {{ t('inspection.report.removeBlacklist') }}
             </el-button>
           </template>
         </div>
         <div class="footer-right">
-          <el-button @click="$emit('close')">关闭</el-button>
+          <el-button @click="$emit('close')">{{ t('common.close') }}</el-button>
         </div>
       </div>
     </template>
@@ -71,6 +71,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { ref, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getKpiStatusTagType, getKpiStatusLabel } from '../../constants/status'
@@ -106,7 +107,7 @@ async function handleAddToWhitelist() {
   if (!props.item) return
 
   try {
-    await ElMessageBox.confirm('确定要将此检查项添加到黑名单吗？', '确认', {
+    await ElMessageBox.confirm(t('inspection.report.addItemConfirm'), t('common.confirm'), {
       closeOnClickModal: false,
       closeOnPressEscape: false
     })
@@ -121,13 +122,13 @@ async function handleAddToWhitelist() {
       checkName: props.item.name
     })
 
-    ElMessage.success('添加黑名单成功')
+    ElMessage.success(t('inspection.report.addSucceeded'))
     emit('whitelist-changed')
     emit('close')
   } catch (e) {
     if (e !== 'cancel') {
       console.error('添加黑名单失败:', e)
-      ElMessage.error('添加黑名单失败')
+      ElMessage.error(t('inspection.report.addFailed'))
     }
   } finally {
     whitelistLoading.value = false
@@ -141,7 +142,7 @@ async function handleRemoveFromWhitelist() {
   if (!props.item) return
 
   try {
-    await ElMessageBox.confirm('确定要将此检查项从黑名单移除吗？', '确认', {
+    await ElMessageBox.confirm(t('inspection.report.removeItemConfirm'), t('common.confirm'), {
       closeOnClickModal: false,
       closeOnPressEscape: false
     })
@@ -155,16 +156,16 @@ async function handleRemoveFromWhitelist() {
 
     if (whitelistId) {
       await whitelistApi.deleteWhitelist(whitelistId)
-      ElMessage.success('移除黑名单成功')
+      ElMessage.success(t('inspection.report.removeSucceeded'))
       emit('whitelist-changed')
       emit('close')
     } else {
-      ElMessage.error('无法获取黑名单ID')
+      ElMessage.error(t('inspection.report.blacklistIdMissing'))
     }
   } catch (e) {
     if (e !== 'cancel') {
       console.error('移除黑名单失败:', e)
-      ElMessage.error('移除黑名单失败')
+      ElMessage.error(t('inspection.report.removeFailed'))
     }
   } finally {
     whitelistLoading.value = false

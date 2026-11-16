@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="visible"
-    title="主机豁免黑名单列表"
+    :title="t('inspection.report.hostBlacklistTitle')"
     width="720px"
     destroy-on-close
     @close="$emit('close')"
@@ -12,7 +12,7 @@
       <div class="whitelist-header-bar">
         <div class="whitelist-hint">
           <i class="fas fa-info-circle" aria-hidden="true"></i>
-          <span>已加入黑名单的主机将在巡检任务中自动豁免跳过检查。</span>
+          <span>{{ t('inspection.report.hostBlacklistHint') }}</span>
         </div>
         <el-button
           type="danger"
@@ -22,7 +22,7 @@
           @click="$emit('remove-selected')"
         >
           <i class="fa fa-trash-alt" aria-hidden="true"></i>
-          移除黑名单 ({{ selectedIds.length }})
+          {{ t('inspection.report.removeSelected', { count: selectedIds.length }) }}
         </el-button>
       </div>
       <el-table
@@ -32,13 +32,14 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="50" />
-        <el-table-column prop="host_key" label="已豁免主机标识" min-width="200" />
+        <el-table-column prop="host_key" :label="t('inspection.report.exemptHost')" min-width="200" />
       </el-table>
     </div>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { ref, watch } from 'vue'
 
 const props = defineProps({

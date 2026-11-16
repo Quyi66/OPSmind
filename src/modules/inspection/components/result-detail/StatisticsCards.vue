@@ -1,8 +1,8 @@
 <template>
-  <div class="stats-strip" aria-label="检查项结果统计">
+  <div class="stats-strip" :aria-label="t('inspection.report.statisticsAria')">
     <div class="stats-strip-header">
-      <span class="stats-strip-title">检查结果统计</span>
-      <span class="stats-strip-hint">点击数值查看明细 · 共 {{ totalCount.toLocaleString() }} 项</span>
+      <span class="stats-strip-title">{{ t('inspection.report.statisticsTitle') }}</span>
+      <span class="stats-strip-hint">{{ t('inspection.report.statisticsHint', { count: totalCount, total: totalCount.toLocaleString(currentLocale.value) }) }}</span>
     </div>
 
     <div class="stats-strip-items">
@@ -19,7 +19,7 @@
           <span>{{ stat.label }}</span>
         </span>
         <span class="stat-metric-numbers">
-          <strong class="stat-value">{{ stat.value.toLocaleString() }}</strong>
+          <strong class="stat-value">{{ stat.value.toLocaleString(currentLocale.value) }}</strong>
           <span class="stat-percent">{{ stat.percent }}%</span>
         </span>
       </button>
@@ -28,6 +28,7 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
 import { computed } from 'vue'
 import { STATISTICS_CARD_CONFIG } from '../../constants/status'
 

@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="visible"
-    title="检查项豁免黑名单列表"
+    :title="t('inspection.report.itemBlacklistTitle')"
     width="920px"
     destroy-on-close
     @close="$emit('close')"
@@ -11,7 +11,7 @@
     <div class="search-bar">
       <el-input
         v-model="searchText"
-        placeholder="搜索主机、检查项、模板名称..."
+        :placeholder="t('inspection.report.searchRules')"
         clearable
         size="small"
         style="width: 300px"
@@ -22,19 +22,19 @@
         </template>
       </el-input>
       <span class="whitelist-count">
-        共 {{ filteredData.length }} 项豁免规则
+        {{ t('inspection.report.ruleCount', { count: filteredData.length }) }}
       </span>
     </div>
 
     <!-- 表格 -->
     <el-table v-loading="loading" :data="paginatedData" max-height="360">
-      <el-table-column prop="hostKey" label="目标主机" width="140" />
-      <el-table-column prop="checkName" label="豁免检查项" min-width="180" show-overflow-tooltip />
-      <el-table-column prop="templateName" label="所属模板" min-width="150" show-overflow-tooltip />
-      <el-table-column prop="scriptPath" label="关联脚本路径" min-width="240" show-overflow-tooltip />
-      <el-table-column label="操作" width="84" align="left" fixed="right">
+      <el-table-column prop="hostKey" :label="t('inspection.report.targetHost')" width="140" />
+      <el-table-column prop="checkName" :label="t('inspection.report.exemptItem')" min-width="180" show-overflow-tooltip />
+      <el-table-column prop="templateName" :label="t('inspection.report.ruleTemplate')" min-width="150" show-overflow-tooltip />
+      <el-table-column prop="scriptPath" :label="t('inspection.report.ruleScript')" min-width="240" show-overflow-tooltip />
+      <el-table-column :label="t('common.actions')" width="84" align="left" fixed="right">
         <template #default="{ row }">
-          <el-button text type="danger" size="small" @click="$emit('delete', row)">删除</el-button>
+          <el-button text type="danger" size="small" @click="$emit('delete', row)">{{ t('common.delete') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -57,6 +57,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { ref, computed, watch } from 'vue'
 
 const props = defineProps({

@@ -1,6 +1,7 @@
 /**
  * 结果详情页面数据加载 Composable
  */
+import { t } from '@/core/i18n'
 import { ref, watch, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import { jobApi, dtsApi, whitelistApi } from '../api'
@@ -64,7 +65,7 @@ export function useResultDetailData() {
       scriptList.value = parsed.scripts
     } catch (error) {
       console.error('加载任务信息失败:', error)
-      ElMessage.error('加载任务信息失败')
+      ElMessage.error(t('inspection.report.jobFailed'))
     } finally {
       loading.value = false
     }
@@ -127,7 +128,7 @@ export function useResultDetailData() {
       pagination.value.total = data.total ?? machineData.value.length
     } catch (error) {
       console.error('加载主机数据失败:', error)
-      ElMessage.error('加载主机数据失败')
+      ElMessage.error(t('inspection.report.hostsFailed'))
     } finally {
       tableLoading.value = false
     }
@@ -150,7 +151,7 @@ export function useResultDetailData() {
       overviewPagination.value.total = data.total ?? overviewData.value.length
     } catch (error) {
       console.error('加载巡检概览数据失败:', error)
-      ElMessage.error('加载巡检概览数据失败')
+      ElMessage.error(t('inspection.report.overviewFailed'))
     } finally {
       overviewLoading.value = false
     }
