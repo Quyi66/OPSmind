@@ -21,6 +21,7 @@ import automation from './automation.json'
 import yumRepo from './yumRepo.json'
 
 import patches from './patches.json'
+import inspection from './inspection.json'
 
 export default {
   common,
@@ -37,5 +38,6 @@ export default {
   asset,
   automation,
   yumRepo,
-  patches
+  patches,
+  inspection
 }

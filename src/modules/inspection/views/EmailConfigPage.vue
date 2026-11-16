@@ -3,10 +3,10 @@
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
       <el-form inline size="small" @submit.prevent="handleSearch">
-        <el-form-item label="模板名称">
+        <el-form-item :label="t('inspection.email.templateName')">
           <el-input
             v-model="searchKeyword"
-            placeholder="搜索模板名称"
+            :placeholder="t('inspection.email.searchTemplates')"
             clearable
             size="small"
             style="width: 220px"
@@ -22,7 +22,7 @@
         <el-form-item>
           <el-button type="primary" size="small" :loading="loading" @click="handleSearch">
             <el-icon><Search /></el-icon>
-            搜索
+            {{ t('common.search') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -34,7 +34,7 @@
         <el-switch
           v-model="emailEnabled"
           :loading="switchLoading"
-          active-text="启用邮件通知"
+          :active-text="t('inspection.email.enableNotifications')"
           @change="handleSwitchChange"
         />
         <span
@@ -42,17 +42,17 @@
           :class="emailEnabled ? 'global-status-pill--active' : 'global-status-pill--muted'"
         >
           <span class="status-dot"></span>
-          {{ emailEnabled ? '全局邮件通知已开启' : '全局邮件通知已关闭' }}
+          {{ emailEnabled ? t('inspection.email.globallyEnabled') : t('inspection.email.globallyDisabled') }}
         </span>
       </div>
-      <span class="email-template-count">共 {{ templateList.length }} 个模板</span>
+      <span class="email-template-count">{{ t('inspection.email.templateCount', { count: templateList.length }) }}</span>
       <span style="flex: 1"></span>
       <el-button
         class="toolbar-icon-btn"
         circle
         size="small"
         :loading="loading"
-        title="刷新"
+        :title="t('common.refresh')"
         @click="loadTemplates"
       >
         <el-icon v-show="!loading"><Refresh /></el-icon>
@@ -64,32 +64,32 @@
       <el-table v-loading="loading" :data="pagedTemplates" height="100%">
         <el-table-column
           prop="template_name"
-          label="模板名称"
+          :label="t('inspection.email.templateName')"
           min-width="220"
           show-overflow-tooltip
         />
-        <el-table-column prop="executed_at" label="上次检查时间" width="200">
+        <el-table-column prop="executed_at" :label="t('inspection.email.lastChecked')" width="200">
           <template #default="{ row }">
             <span class="time-text">{{ formatDateTime(row.executed_at) || '—' }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="邮件通知状态" width="150">
+        <el-table-column :label="t('inspection.email.notificationStatus')" width="150">
           <template #default>
             <span
               class="channel-pill"
               :class="emailEnabled ? 'channel-pill--active' : 'channel-pill--paused'"
             >
-              {{ emailEnabled ? '已启用通知' : '随总开关暂停' }}
+              {{ emailEnabled ? t('inspection.email.notificationsEnabled') : t('inspection.email.pausedGlobally') }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" align="left" fixed="right">
+        <el-table-column :label="t('common.actions')" min-width="260" align="left" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="showRecipientDialog(row)">
-              收件人列表
+              {{ t('inspection.email.recipients') }}
             </el-button>
             <el-button text type="primary" size="small" @click="showCustomContentDialog(row)">
-              自定义内容
+              {{ t('inspection.email.customContent') }}
             </el-button>
           </template>
         </el-table-column>
@@ -113,7 +113,7 @@
     <!-- 收件人列表弹窗 -->
     <el-dialog
       :model-value="recipientDialogVisible"
-      title="收件人列表"
+      :title="t('inspection.email.recipients')"
       width="840px"
       destroy-on-close
       @close="recipientDialogVisible = false"
@@ -126,13 +126,13 @@
               <i class="fa fa-users"></i>
             </div>
             <div class="banner-text">
-              <span class="banner-label">当前配置巡检模板</span>
+              <span class="banner-label">{{ t('inspection.email.currentTemplate') }}</span>
               <strong class="banner-value">{{ currentTemplate?.template_name || '-' }}</strong>
             </div>
           </div>
           <div class="banner-stats">
             <span class="stat-pill">
-              收件人数 <strong>{{ recipientTableData.length }}</strong>
+              {{ t('inspection.email.recipientCount') }} <strong>{{ recipientTableData.length }}</strong>
             </span>
           </div>
         </div>
@@ -141,7 +141,7 @@
           <div class="toolbar-search">
             <el-input
               v-model="recipientSearchKeyword"
-              placeholder="搜索姓名、邮箱或备注..."
+              :placeholder="t('inspection.email.searchRecipients')"
               clearable
               size="small"
               style="width: 240px"
@@ -154,33 +154,33 @@
           <div class="toolbar-actions">
             <el-button size="small" @click="loadRecipientList">
               <i class="fa fa-sync-alt" style="margin-right: 4px"></i>
-              刷新
+              {{ t('common.refresh') }}
             </el-button>
             <el-button type="primary" size="small" @click="showAddRecipientDialog">
               <i class="fa fa-plus" style="margin-right: 4px"></i>
-              新增收件人
+              {{ t('inspection.email.addRecipient') }}
             </el-button>
           </div>
         </div>
 
         <!-- 收件人表格 -->
         <el-table :data="filteredRecipientTableData" max-height="400" border>
-          <el-table-column prop="name" label="姓名" min-width="120" />
-          <el-table-column prop="email" label="邮箱" min-width="200" />
-          <el-table-column prop="status" label="状态" width="100" align="left">
+          <el-table-column prop="name" :label="t('inspection.email.name')" min-width="120" />
+          <el-table-column prop="email" :label="t('inspection.email.email')" min-width="200" />
+          <el-table-column prop="status" :label="t('common.status')" width="100" align="left">
             <template #default="{ row }">
-              <el-tag v-if="row.status === '0'" type="success" size="small">启用</el-tag>
-              <el-tag v-else type="danger" size="small">禁用</el-tag>
+              <el-tag v-if="row.status === '0'" type="success" size="small">{{ t('yumRepo.enable') }}</el-tag>
+              <el-tag v-else type="danger" size="small">{{ t('yumRepo.disable') }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="remarks" label="备注" min-width="160" show-overflow-tooltip />
-          <el-table-column label="操作" width="120" align="left" fixed="right">
+          <el-table-column prop="remarks" :label="t('hostUser.notes')" min-width="160" show-overflow-tooltip />
+          <el-table-column :label="t('common.actions')" width="120" align="left" fixed="right">
             <template #default="{ row }">
               <el-button text type="primary" size="small" @click="editRecipient(row)">
-                编辑
+                {{ t('common.edit') }}
               </el-button>
               <el-button text type="danger" size="small" @click="deleteRecipient(row)">
-                删除
+                {{ t('common.delete') }}
               </el-button>
             </template>
           </el-table-column>
@@ -188,14 +188,14 @@
       </div>
 
       <template #footer>
-        <el-button @click="recipientDialogVisible = false">关闭</el-button>
+        <el-button @click="recipientDialogVisible = false">{{ t('common.close') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 新增/编辑收件人弹窗 -->
     <el-dialog
       :model-value="recipientFormVisible"
-      :title="recipientFormData.id ? '编辑收件人' : '新增收件人'"
+      :title="recipientFormData.id ? t('inspection.email.editRecipient') : t('inspection.email.addRecipient')"
       width="500px"
       destroy-on-close
       @close="recipientFormVisible = false"
@@ -206,44 +206,45 @@
         ref="recipientFormRef"
         :model="recipientFormData"
         :rules="recipientFormRules"
+        :validate-on-rule-change="false"
         label-width="80px"
       >
-        <el-form-item label="姓名" prop="name">
-          <el-input v-model="recipientFormData.name" placeholder="请输入姓名" maxlength="50" />
+        <el-form-item :label="t('inspection.email.name')" prop="name">
+          <el-input v-model="recipientFormData.name" :placeholder="t('inspection.email.enterName')" maxlength="50" />
         </el-form-item>
-        <el-form-item label="邮箱" prop="email">
+        <el-form-item :label="t('inspection.email.email')" prop="email">
           <el-input
             v-model="recipientFormData.email"
-            placeholder="请输入邮箱地址"
+            :placeholder="t('inspection.email.enterEmail')"
             maxlength="100"
           />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
+        <el-form-item :label="t('common.status')" prop="status">
           <el-radio-group v-model="recipientFormData.status">
-            <el-radio value="0">启用</el-radio>
-            <el-radio value="1">禁用</el-radio>
+            <el-radio value="0">{{ t('yumRepo.enable') }}</el-radio>
+            <el-radio value="1">{{ t('yumRepo.disable') }}</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="备注">
+        <el-form-item :label="t('hostUser.notes')">
           <el-input
             v-model="recipientFormData.remarks"
             type="textarea"
             :rows="3"
-            placeholder="请输入备注"
+            :placeholder="t('inspection.email.enterNotes')"
           />
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="recipientFormVisible = false">取消</el-button>
-        <el-button type="primary" :loading="recipientSaving" @click="saveRecipient">保存</el-button>
+        <el-button @click="recipientFormVisible = false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="recipientSaving" @click="saveRecipient">{{ t('common.save') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 自定义内容弹窗 -->
     <el-dialog
       :model-value="customContentDialogVisible"
-      title="自定义邮件内容"
+      :title="t('inspection.email.customEmailContent')"
       width="620px"
       destroy-on-close
       @close="customContentDialogVisible = false"
@@ -257,41 +258,41 @@
               <i class="fa fa-envelope-open-text"></i>
             </div>
             <div class="banner-text">
-              <span class="banner-label">当前配置巡检模板</span>
+              <span class="banner-label">{{ t('inspection.email.currentTemplate') }}</span>
               <strong class="banner-value">{{ currentTemplate?.template_name || '-' }}</strong>
             </div>
           </div>
         </div>
 
         <el-form label-position="top" class="custom-content-form">
-          <el-form-item label="自定义标题">
+          <el-form-item :label="t('inspection.email.customTitle')">
             <el-input
               v-model="customContentData.title"
-              placeholder="请输入自定义邮件标题（留空则使用系统默认标题）"
+              :placeholder="t('inspection.email.titlePlaceholder')"
               clearable
             />
           </el-form-item>
-          <el-form-item label="自定义内容">
+          <el-form-item :label="t('inspection.email.customContent')">
             <el-input
               v-model="customContentData.content"
               type="textarea"
               :rows="4"
-              placeholder="请输入自定义邮件内容"
+              :placeholder="t('inspection.email.contentPlaceholder')"
             />
           </el-form-item>
-          <el-form-item label="状态">
+          <el-form-item :label="t('common.status')">
             <el-radio-group v-model="customContentData.state">
-              <el-radio value="0">启用</el-radio>
-              <el-radio value="1">禁用</el-radio>
+              <el-radio value="0">{{ t('yumRepo.enable') }}</el-radio>
+              <el-radio value="1">{{ t('yumRepo.disable') }}</el-radio>
             </el-radio-group>
           </el-form-item>
         </el-form>
       </div>
 
       <template #footer>
-        <el-button @click="customContentDialogVisible = false">取消</el-button>
+        <el-button @click="customContentDialogVisible = false">{{ t('common.cancel') }}</el-button>
         <el-button type="primary" :loading="customContentSaving" @click="saveCustomContent">
-          保存
+          {{ t('common.save') }}
         </el-button>
       </template>
     </el-dialog>
@@ -299,6 +300,9 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { useLocalizedValidation } from '@/core/i18n/validation'
+
 import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh } from '@element-plus/icons-vue'
@@ -347,14 +351,16 @@ const recipientFormData = ref({
   remarks: ''
 })
 
-const recipientFormRules = {
-  name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
+useLocalizedValidation(recipientFormRef)
+
+const recipientFormRules = computed(() => ({
+  name: [{ required: true, message: t('inspection.email.enterName'), trigger: 'blur' }],
   email: [
-    { required: true, message: '请输入邮箱地址', trigger: 'blur' },
-    { type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }
+    { required: true, message: t('inspection.email.enterEmail'), trigger: 'blur' },
+    { type: 'email', message: t('inspection.email.validEmail'), trigger: 'blur' }
   ],
-  status: [{ required: true, message: '请选择状态', trigger: 'change' }]
-}
+  status: [{ required: true, message: t('inspection.email.selectStatus'), trigger: 'change' }]
+}))
 
 // 自定义内容弹窗
 const customContentDialogVisible = ref(false)
@@ -384,7 +390,7 @@ async function loadEmailSwitch() {
     emailEnabled.value = data.isTheEmailEnabled === 'yes'
   } catch (error) {
     console.error('加载邮件配置失败:', error)
-    ElMessage.error('加载邮件配置失败')
+    ElMessage.error(t('inspection.email.loadConfigurationFailed'))
   }
 }
 
@@ -402,7 +408,7 @@ async function loadTemplates() {
     templateList.value = data.records || []
   } catch (error) {
     console.error('加载模板列表失败:', error)
-    ElMessage.error('加载模板列表失败')
+    ElMessage.error(t('inspection.email.loadTemplatesFailed'))
   } finally {
     loading.value = false
   }
@@ -447,11 +453,11 @@ async function handleSwitchChange(value) {
     }
     await emailConfigApi.saveEmailSwitch(data)
     emailConfig.value = data
-    ElMessage.success(value ? '已启用邮件通知' : '已禁用邮件通知')
+    ElMessage.success(value ? t('inspection.email.enabled') : t('inspection.email.disabled'))
   } catch (error) {
     emailEnabled.value = !value
     console.error('保存邮件配置失败:', error)
-    ElMessage.error('保存失败，请重试')
+    ElMessage.error(t('inspection.email.saveFailed'))
   } finally {
     switchLoading.value = false
   }
@@ -471,7 +477,7 @@ async function loadRecipientList() {
     filterRecipientsByTemplate()
   } catch (error) {
     console.error('加载收件人列表失败:', error)
-    ElMessage.error('加载收件人列表失败')
+    ElMessage.error(t('inspection.email.loadRecipientsFailed'))
   } finally {
     recipientLoading.value = false
   }
@@ -569,12 +575,12 @@ async function saveRecipient() {
       remarks: recipientFormData.value.remarks,
       templateId: currentTemplate.value.template_id
     })
-    ElMessage.success('保存成功')
+    ElMessage.success(t('profile.saved'))
     recipientFormVisible.value = false
     await loadRecipientList()
   } catch (error) {
     console.error('保存收件人失败:', error)
-    ElMessage.error('保存失败，请重试')
+    ElMessage.error(t('inspection.email.saveFailed'))
   } finally {
     recipientSaving.value = false
   }
@@ -585,18 +591,18 @@ async function saveRecipient() {
  */
 async function deleteRecipient(row) {
   try {
-    await ElMessageBox.confirm('确定要删除该收件人吗？', '确认删除', {
+    await ElMessageBox.confirm(t('inspection.email.deleteRecipientConfirm'), t('automation.list.confirmDelete'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning'
     })
     await emailConfigApi.deleteRecipient(row._dataId)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('hostUser.deletedSuccessfully'))
     await loadRecipientList()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除收件人失败:', error)
-      ElMessage.error('删除失败，请重试')
+      ElMessage.error(t('inspection.email.deleteFailed'))
     }
   }
 }
@@ -639,7 +645,7 @@ async function loadCustomContent() {
     }
   } catch (error) {
     console.error('加载自定义内容失败:', error)
-    ElMessage.error('加载自定义内容失败')
+    ElMessage.error(t('inspection.email.loadContentFailed'))
   } finally {
     customContentLoading.value = false
   }
@@ -667,11 +673,11 @@ async function saveCustomContent() {
       state: customContentData.value.state,
       templateId: currentTemplate.value.template_id
     })
-    ElMessage.success('保存成功')
+    ElMessage.success(t('profile.saved'))
     customContentDialogVisible.value = false
   } catch (error) {
     console.error('保存自定义内容失败:', error)
-    ElMessage.error('保存失败，请重试')
+    ElMessage.error(t('inspection.email.saveFailed'))
   } finally {
     customContentSaving.value = false
   }
