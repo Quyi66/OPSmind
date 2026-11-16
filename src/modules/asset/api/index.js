@@ -163,6 +163,55 @@ export const overviewApi = {
  */
 export const assetApi = {
   /**
+   * 导出设备为 Excel（不传 ids 表示导出 ciType 下全部设备）
+   * POST /cmdb/api/cmdb/ci/export-assets
+   * 失败时后端返回 400 + JSON { error }，此处统一抛出带 message 的 Error
+   */
+  async exportAssets({ ciType, ids } = {}) {
+    const body = {}
+    if (ciType) body.ciType = ciType
+    if (Array.isArray(ids) && ids.length > 0) body.ids = ids
+    try {
+      const res = await apiService.post(`${ACM_BASE}/ci/export-assets`, body, {
+        responseType: 'blob'
+      })
+      const match = /filename\*=utf-8''([^;]+)/i.exec(res.headers?.['content-disposition'] || '')
+      let fileName = '资产导出.xlsx'
+      if (match) {
+        try {
+          fileName = decodeURIComponent(match[1])
+        } catch {
+          // 保持默认文件名
+        }
+      }
+      const url = window.URL.createObjectURL(res.data)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = fileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      return fileName
+    } catch (error) {
+      const blob = error?.response?.data
+      let message = '导出失败'
+      if (blob instanceof Blob) {
+        try {
+          message = JSON.parse(await blob.text()).error || message
+        } catch {
+          // 非 JSON 响应，使用默认提示
+        }
+      } else if (error?.message) {
+        message = error.message
+      }
+      throw new Error(message)
+    }
+  },
+
+  /**
+   * 下载当前租户的资产导入模板
+   /**
    * 下载当前租户的资产导入模板（含网段区域 sheet）
    * GET /cmdb/api/cmdb/cit/template2/{tenantId}
    */
