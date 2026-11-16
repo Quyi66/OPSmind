@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout">
+  <div class="ops-page-layout" :class="{ 'is-english': currentLocale === 'en-US' }">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
@@ -112,7 +112,7 @@
         <el-table-column
           prop="patch_id"
           :label="t('patches.linux.fixedPatchId')"
-          min-width="140"
+          :min-width="currentLocale === 'en-US' ? 200 : 140"
           show-overflow-tooltip
         />
         <el-table-column prop="update_id" :label="t('patches.linux.updateDimension')" width="310">
@@ -123,7 +123,7 @@
             />
           </template>
         </el-table-column>
-        <el-table-column prop="update_pkgs" :label="t('patches.linux.updatedSoftware')" min-width="300">
+        <el-table-column prop="update_pkgs" :label="t('patches.linux.updatedSoftware')" :min-width="currentLocale === 'en-US' ? 420 : 300">
           <template #default="{ row }">
             <div class="update-pkgs-cell">
               <div
@@ -146,7 +146,7 @@
                     +{{ parseUpdatePkgs(row.update_pkgs).length - 2 }} {{ t('automation.flow.more') }}
                   </span>
                 </template>
-                <div class="pkgs-popover">
+                <div class="pkgs-popover" :class="{ 'is-english': currentLocale === 'en-US' }">
                   <div
                     v-for="(pkg, idx) in parseUpdatePkgs(row.update_pkgs)"
                     :key="idx"
@@ -166,7 +166,7 @@
             {{ formatDateTime(row.update_time) }}
           </template>
         </el-table-column>
-        <el-table-column :label="t('common.actions')" width="120" fixed="right">
+        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 180 : 120" :class-name="currentLocale === 'en-US' ? 'rollback-actions-cell' : undefined" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="handleRollback(row)">
               {{ t('patches.linux.rollback') }}
@@ -206,7 +206,7 @@
 </template>
 
 <script setup>
-import { t, i18n } from '@/core/i18n'
+import { t, i18n, currentLocale } from '@/core/i18n'
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDateTime } from '@/utils/date'
@@ -750,5 +750,38 @@ defineExpose({ refresh })
   font-size: 13px;
   color: var(--el-text-color-regular);
   white-space: nowrap;
+}
+.ops-page-layout.is-english {
+  :deep(.el-table .cell) {
+    word-break: normal;
+    overflow-wrap: break-word;
+  }
+
+  :deep(.rollback-actions-cell .cell) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+
+    .el-button {
+      margin-left: 0;
+    }
+  }
+}
+
+.ops-page-layout.is-english .pkg-update,
+.pkgs-popover.is-english .pkg-update {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 16px minmax(0, 1fr);
+  align-items: start;
+  column-gap: 4px;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: anywhere;
+
+  .arrow {
+    margin: 0;
+    text-align: center;
+  }
 }
 </style>

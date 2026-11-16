@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout ops-page-layout--page-scroll win-kb-page">
+  <div class="ops-page-layout ops-page-layout--page-scroll win-kb-page" :class="{ 'is-english': currentLocale === 'en-US' }">
     <WindowsKbDetail
       v-if="currentView === 'detail'"
       :kb-number="selectedKbNumber"
@@ -173,7 +173,7 @@
               </el-link>
             </template>
           </el-table-column>
-          <el-table-column :label="t('patches.cve.severity')" width="110">
+          <el-table-column :label="t('patches.cve.severity')" :width="currentLocale === 'en-US' ? 136 : 110">
             <template #default="{ row }">
               <el-tag
                 :type="getSeverityType(row.msrcSeverity)"
@@ -196,7 +196,7 @@
               />
             </template>
           </el-table-column>
-          <el-table-column :label="t('patches.windows.highestCvss')" width="110" align="center">
+          <el-table-column :label="t('patches.windows.highestCvss')" :width="currentLocale === 'en-US' ? 144 : 110" align="center">
             <template #default="{ row }">
               {{
                 toKnownNumber(row.maxCvss3Score, { max: 10 }) === null
@@ -208,7 +208,7 @@
           <el-table-column :label="t('automation.library.size')" width="110">
             <template #default="{ row }">{{ formatBytes(row.sizeBytes) }}</template>
           </el-table-column>
-          <el-table-column :label="t('patches.catalog.publishDate')" width="110">
+          <el-table-column :label="t('patches.catalog.publishDate')" :width="currentLocale === 'en-US' ? 144 : 110">
             <template #default="{ row }">{{ formatDate(row.publishDate) }}</template>
           </el-table-column>
           <el-table-column :label="t('common.actions')" width="90" fixed="right">
@@ -236,7 +236,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 import { computed, onMounted, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -894,6 +894,55 @@ watch(
 @media (max-width: 1280px) {
   .win-kb-dashboard {
     grid-template-columns: 1fr;
+  }
+}
+.win-kb-page.is-english {
+  .stat-card {
+    min-width: 0;
+  }
+
+  .compact-card-header,
+  .repair-header {
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+
+  .card-subtitle,
+  .metric-hint {
+    white-space: normal;
+    overflow-wrap: break-word;
+  }
+
+  .metric-hint .el-icon {
+    flex-shrink: 0;
+  }
+
+  .win-kb-severity-bars {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 120px), 1fr));
+  }
+
+  .severity-bar__meta {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .severity-bar__label {
+    white-space: normal;
+    overflow-wrap: break-word;
+  }
+
+  .severity-bar__value {
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .repair-value {
+    margin-left: auto;
+  }
+
+  .ops-filter-bar :deep(.el-form-item:first-child .el-input) {
+    width: 320px !important;
+    max-width: 100%;
   }
 }
 </style>

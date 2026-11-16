@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout">
+  <div class="ops-page-layout" :class="{ 'is-english': currentLocale === 'en-US' }">
     <!-- 资产类型标签页 (使用 el-tabs 提升视觉与易用性) -->
     <div class="type-tabs-wrapper">
       <el-tabs v-model="currentType" class="modern-tabs" @tab-change="handleTypeChange">
@@ -350,7 +350,7 @@
             -->
 
             <!-- 4. 重启建议 -->
-            <el-table-column :label="t('asset.rebootAdvice')" width="110" align="left">
+            <el-table-column :label="t('asset.rebootAdvice')" :width="currentLocale === 'en-US' ? 188 : 110" align="left">
               <template #default="{ row }">
                 <el-tag
                   v-if="row.needReboot == 1"
@@ -376,7 +376,7 @@
             </el-table-column>
 
             <!-- 系统环境 -->
-            <el-table-column :label="t('asset.systemEnvironment')" min-width="160" show-overflow-tooltip>
+            <el-table-column :label="t('asset.systemEnvironment')" :min-width="currentLocale === 'en-US' ? 240 : 160" show-overflow-tooltip>
               <template #default="{ row }">
                 <div class="os-env-cell">
                   <i :class="[getOsIcon(row.os_distro), 'os-brand-icon']"></i>
@@ -1923,5 +1923,39 @@ watch([() => route.path, () => route.query.ip], ([path, ip]) => {
 .slide-fade-leave-to {
   transform: translateY(-10px);
   opacity: 0;
+}
+.ops-page-layout.is-english {
+  .os-env-cell {
+    min-width: 0;
+
+    .os-brand-icon {
+      flex-shrink: 0;
+    }
+
+    .os-text-wrapper {
+      min-width: 0;
+    }
+  }
+
+  .reboot-tag,
+  .reboot-tag-none {
+    max-width: 100%;
+    min-height: 20px;
+    height: auto;
+    white-space: normal;
+
+    :deep(.el-tag__content) {
+      white-space: normal;
+      overflow-wrap: break-word;
+    }
+  }
+
+  .os-distro-name {
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: break-word;
+    overflow: visible;
+    text-overflow: clip;
+  }
 }
 </style>

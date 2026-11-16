@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout">
+  <div class="ops-page-layout" :class="{ 'is-english': currentLocale === 'en-US' }">
     <!-- 筛选栏 -->
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
@@ -139,7 +139,7 @@
             {{ getAutomationToolDescription(row) || '-' }}
           </template>
         </el-table-column>
-        <el-table-column :label="t('automation.job.type')" width="140">
+        <el-table-column :label="t('automation.job.type')" :width="currentLocale === 'en-US' ? 170 : 140">
           <template #default="{ row }">
             <el-tag
               v-if="row.type"
@@ -154,18 +154,18 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="updatedBy" :label="t('automation.list.updatedBy')" width="100" />
-        <el-table-column prop="updatedAt" :label="t('automation.list.modifiedAt')" width="180" sortable="custom">
+        <el-table-column prop="updatedBy" :label="t('automation.list.updatedBy')" :width="currentLocale === 'en-US' ? 140 : 100" />
+        <el-table-column prop="updatedAt" :label="t('automation.list.modifiedAt')" :width="currentLocale === 'en-US' ? 240 : 180" :class-name="currentLocale === 'en-US' ? 'job-date-cell' : undefined" sortable="custom">
           <template #default="{ row }">
             {{ formatDate(row.updatedAt) }}
           </template>
         </el-table-column>
-        <el-table-column prop="lastRunTime" :label="t('automation.list.lastRun')" width="180" sortable="custom">
+        <el-table-column prop="lastRunTime" :label="t('automation.list.lastRun')" :width="currentLocale === 'en-US' ? 240 : 180" :class-name="currentLocale === 'en-US' ? 'job-date-cell' : undefined" sortable="custom">
           <template #default="{ row }">
             {{ formatDate(row.lastRunTime) }}
           </template>
         </el-table-column>
-        <el-table-column :label="t('common.actions')" fixed="right" width="230">
+        <el-table-column :label="t('common.actions')" fixed="right" :width="currentLocale === 'en-US' ? 320 : 230" :class-name="currentLocale === 'en-US' ? 'job-actions-cell' : undefined">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="handleViewJob(row)">{{ t('automation.workbench.execute') }}</el-button>
             <el-button text type="primary" size="small" @click="handleCopy(row)">{{ t('automation.workbench.copy') }}</el-button>
@@ -992,6 +992,34 @@ onMounted(() => {
 
   .job-context-strip {
     gap: 10px;
+  }
+}
+.ops-page-layout.is-english {
+  .ops-filter-bar :deep(.el-input) {
+    width: 320px !important;
+    max-width: 100%;
+  }
+
+  .ops-action-bar :deep(.el-button > span),
+  .job-type-tag :deep(.el-tag__content) {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  :deep(.job-date-cell .cell) {
+    white-space: nowrap;
+  }
+
+  :deep(.job-actions-cell .cell) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+
+    .el-button {
+      margin-left: 0;
+    }
   }
 }
 </style>

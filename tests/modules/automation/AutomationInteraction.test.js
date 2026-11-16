@@ -8,6 +8,7 @@ import ExecuteHistoryDialog from '@/modules/automation/components/job/JobListVie
 import CronJobFormDialog from '@/modules/automation/components/job/components/CronJobFormDialog.vue'
 import NextExecutionTimeDialog from '@/modules/automation/components/job/components/NextExecutionTimeDialog.vue'
 import * as api from '@/modules/automation/api/jao'
+import { setLocale } from '@/core/i18n'
 
 vi.mock('@/modules/automation/api/jao', () => ({
   appList: vi.fn(),
@@ -87,7 +88,7 @@ const Table = defineComponent({
   }
 })
 const Column = defineComponent({
-  props: ['prop'],
+  props: ['prop', 'label', 'width', 'minWidth', 'className'],
   setup(props, { slots }) {
     const rows = inject(
       'rows',
@@ -186,15 +187,49 @@ beforeEach(() => {
   api.fetchJobsByType.mockResolvedValue({ data: [job] })
   api.fetchJobById.mockResolvedValue({ data: { params: [] } })
 })
-afterEach(() => {
+afterEach(async () => {
   wrappers.splice(0).forEach(wrapper => {
     if (wrapper.exists()) wrapper.unmount()
   })
   vi.useRealTimers()
   vi.restoreAllMocks()
+  await setLocale('zh-CN', { persist: false })
 })
 
 describe('AUTO-1 列表执行与本次结果', () => {
+  it('英文日期与动作增宽后恢复中文列宽，保留列表、选择和原始时间', async () => {
+    const row = { ...job, updatedAt: '2026-11-05T09:46:04Z', lastRunTime: '2026-11-06T00:00:00Z' }
+    api.appTableList.mockResolvedValueOnce({ data: [row] })
+    const wrapper = mount(JobListPage)
+    await flushPromises()
+    const vm = stateOf(wrapper)
+    vm.handleSelectionChange([row])
+    vm.filters.keyword = '未应用查询'
+    vm.currentPage = 3
+    const column = prop => wrapper.findAllComponents(Column).find(item => item.props('prop') === prop)
+    const originalDate = vm.formatDate(row.updatedAt)
+    const requests = api.appTableList.mock.calls.length
+    expect(Number(column('updatedAt').props('width'))).toBe(180)
+    expect(Number(column('updatedBy').props('width'))).toBe(100)
+    await setLocale('en-US', { persist: false })
+    await flushPromises()
+    expect(Number(column('updatedAt').props('width'))).toBe(240)
+    expect(Number(column('lastRunTime').props('width'))).toBe(240)
+    expect(Number(column('updatedBy').props('width'))).toBe(140)
+    expect(vm.formatDate(row.updatedAt)).toMatch(/\b(AM|PM)\b/)
+    expect(vm.selectedIds).toEqual(['real-tool'])
+    expect(vm.currentPage).toBe(3)
+    expect(vm.filters.keyword).toBe('未应用查询')
+    await setLocale('zh-CN', { persist: false })
+    await flushPromises()
+    expect(Number(column('updatedAt').props('width'))).toBe(180)
+    expect(Number(column('lastRunTime').props('width'))).toBe(180)
+    expect(vm.formatDate(row.updatedAt)).toBe(originalDate)
+    expect(row.updatedAt).toBe('2026-11-05T09:46:04Z')
+    expect(api.appTableList).toHaveBeenCalledTimes(requests)
+    expect(api.executeJob).not.toHaveBeenCalled()
+  })
+
   async function openExecution() {
     const wrapper = mount(JobListPage)
     await flushPromises()

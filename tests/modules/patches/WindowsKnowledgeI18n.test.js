@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { ElTable, ElTableColumn } from 'element-plus'
-import { setLocale } from '@/core/i18n'
+import { setLocale, t } from '@/core/i18n'
 import CveList from '@/modules/patches/windows-patch/views/WindowsCveListPage.vue'
 import KbList from '@/modules/patches/windows-patch/views/WindowsKbListPage.vue'
 import CveDetail from '@/modules/patches/windows-patch/components/cve/details/WindowsCveDetail.vue'
@@ -59,6 +59,37 @@ afterEach(async () => {
 })
 
 describe('Windows knowledge and task detail language changes', () => {
+  it('英文 KB 统计保留完整数量与严重级别协议，表格宽度可恢复中文', async () => {
+    api.kbStats.mockResolvedValueOnce({ data: { totalKbs: 3628, bySeverity: { 严重: 1407, 重要: 1984, 中等: 38, 低危: 7, 未指定: 192 } } })
+    const { wrapper, vm } = await open(KbList)
+    const table = wrapper.findComponent(ElTable)
+    const highest = table.findAllComponents(ElTableColumn).find(item => item.props('label') === t('patches.windows.highestCvss'))
+    const instance = table.vm.$.uid
+    vm.searchParams.keyword = '保留查询'
+    vm.searchParams.page = 2
+    const counts = JSON.stringify(vm.statistics.bySeverity)
+    const reads = api.kbList.mock.calls.length
+    expect(Number(highest.props('width'))).toBe(110)
+    await setLocale('en-US', { persist: false })
+    await flushPromises()
+    expect(Number(highest.props('width'))).toBe(144)
+    expect(table.vm.$.uid).toBe(instance)
+    const important = wrapper.findAll('.severity-bar').find(item => item.find('.severity-bar__label').text() === 'Important')
+    expect(important.find('.severity-bar__value strong').text()).toBe('1,984')
+    expect(important.find('.severity-bar__value em').text()).toMatch(/%$/)
+    expect(JSON.stringify(vm.statistics.bySeverity)).toBe(counts)
+    expect(vm.searchParams).toMatchObject({ keyword: '保留查询', page: 2 })
+    expect(api.kbList).toHaveBeenCalledTimes(reads)
+    await important.trigger('click')
+    await flushPromises()
+    expect(vm.searchParams.severity).toBe('Important')
+    expect(api.kbList.mock.lastCall[0]).toMatchObject({ severity: 'Important' })
+    await setLocale('zh-CN', { persist: false })
+    await flushPromises()
+    expect(Number(highest.props('width'))).toBe(110)
+    expect(api.kbStats).toHaveBeenCalledTimes(1)
+  })
+
   it.each([[CveList, 'cveList'], [KbList, 'kbList']])('keeps Chinese severity counts, pagination, filters and zero CVSS after switching', async (component, request) => {
     const { wrapper, vm } = await open(component)
     vm.searchParams.page = 2

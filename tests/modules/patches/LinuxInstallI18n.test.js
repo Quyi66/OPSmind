@@ -54,7 +54,7 @@ vi.mock('@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue
 const wrappers = []
 const Slot = { template: '<div><slot /><slot name="footer" /></div>' }
 const Table = { methods: { clearSelection() {}, toggleRowSelection() {} }, template: '<div />' }
-async function open(component, props = {}, realForm = false) {
+async function open(component, props = {}, realForm = false, inspectColumns = false) {
   const wrapper = (realForm ? mount : shallowMount)(component, {
     props,
     global: {
@@ -67,8 +67,8 @@ async function open(component, props = {}, realForm = false) {
         'el-input': true,
         ElSelect: Slot,
         ElOption: true,
-        ElTable: Table,
-        ElTableColumn: true,
+        ElTable: inspectColumns ? { ...Table, template: '<div><slot /></div>' } : Table,
+        ElTableColumn: inspectColumns ? { name: 'ColumnMetadata', props: ['prop', 'label', 'width', 'minWidth', 'fixed'], template: '<i />' } : true,
         'el-button': Slot,
         ElTooltip: Slot,
         ElTag: Slot,
@@ -152,6 +152,35 @@ afterEach(async () => {
 })
 
 describe('Linux install and rollback language changes', () => {
+  it('回滚英文列宽变化保留历史、包版本及目标，恢复中文布局声明', async () => {
+    const { wrapper, vm } = await open(Rollback, {}, false, true)
+    const column = prop => wrapper.findAllComponents({ name: 'ColumnMetadata' }).find(item => item.props('prop') === prop)
+    const action = () => wrapper.findAllComponents({ name: 'ColumnMetadata' }).find(item => item.props('fixed') === 'right')
+    const records = vm.allData
+    const rawPackages = JSON.stringify(records[0].update_pkgs)
+    vm.selectedRows = [records[0]]
+    const reads = api.getHistUpdatePkgs.mock.calls.length
+    expect(Number(column('patch_id').props('minWidth'))).toBe(140)
+    expect(Number(column('update_pkgs').props('minWidth'))).toBe(300)
+    expect(Number(action().props('width'))).toBe(120)
+    await setLocale('en-US', { persist: false })
+    await flushPromises()
+    expect(Number(column('patch_id').props('minWidth'))).toBe(200)
+    expect(Number(column('update_pkgs').props('minWidth'))).toBe(420)
+    expect(Number(action().props('width'))).toBe(180)
+    expect(vm.allData).toBe(records)
+    expect(vm.selectedIds).toEqual(['history-id'])
+    expect(JSON.stringify(records[0].update_pkgs)).toBe(rawPackages)
+    await setLocale('zh-CN', { persist: false })
+    await flushPromises()
+    expect(Number(column('patch_id').props('minWidth'))).toBe(140)
+    expect(Number(column('update_pkgs').props('minWidth'))).toBe(300)
+    expect(Number(action().props('width'))).toBe(120)
+    expect(api.getHistUpdatePkgs).toHaveBeenCalledTimes(reads)
+    expect(api.deleteHistUpdatePkgs).not.toHaveBeenCalled()
+    expect(api.createAndRunTask).not.toHaveBeenCalled()
+  })
+
   it('refreshes only existing real form errors, keeps package set drafts, and saves original values', async () => {
     const { vm } = await open(PackageSet, {}, true)
     vm.handleCreatePackageSet()

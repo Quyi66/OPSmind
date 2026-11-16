@@ -4,6 +4,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 import { ElForm, ElMessage, ElTable, ElTableColumn } from 'element-plus'
 import Page from '@/modules/asset/views/AssetInfoPage.vue'
+import { setLocale, t } from '@/core/i18n'
 
 const api = vi.hoisted(() => ({
   getAssetTypes: vi.fn(),
@@ -128,13 +129,42 @@ beforeEach(() => {
     }
   )
 })
-afterEach(() => {
+afterEach(async () => {
   root?.unmount()
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
+  await setLocale('zh-CN', { persist: false })
 })
 
 describe('设备清单只消费自身路由IP', () => {
+  it('英文重启建议与系统列增宽不重查或清除勾选，切回恢复中文宽度', async () => {
+    await setLocale('zh-CN', { persist: false })
+    await open()
+    await selectFirst()
+    const table = page().findAllComponents(ElTable).find(item => item.props('height') === '100%')
+    const columns = table.findAllComponents(ElTableColumn)
+    const reboot = columns.find(item => item.props('label') === t('asset.rebootAdvice'))
+    const system = columns.find(item => item.props('label') === t('asset.systemEnvironment'))
+    const instance = table.vm.$.uid
+    const reads = api.getAssetList.mock.calls.length
+    expect(Number(reboot.props('width'))).toBe(110)
+    expect(Number(system.props('minWidth'))).toBe(160)
+    await setLocale('en-US', { persist: false })
+    await flushPromises()
+    expect(Number(reboot.props('width'))).toBe(188)
+    expect(Number(system.props('minWidth'))).toBe(240)
+    expect(table.vm.$.uid).toBe(instance)
+    expect(state().selectedRows.map(row => row.id)).toEqual(['original-a'])
+    await setLocale('zh-CN', { persist: false })
+    await flushPromises()
+    expect(Number(reboot.props('width'))).toBe(110)
+    expect(Number(system.props('minWidth'))).toBe(160)
+    expect(api.getAssetList).toHaveBeenCalledTimes(reads)
+    expect(state().selectedRows.map(row => row.id)).toEqual(['original-a'])
+    expect(router.currentRoute.value.path).toBe('/acm/info')
+    expect(api.post).not.toHaveBeenCalled()
+  })
+
   it('缓存切到带IP的凭据/日志页面不读取设备，也不清真实勾选与原搜索页码', async () => {
     await open({ ip: '192.0.2.1' })
     await selectFirst()
