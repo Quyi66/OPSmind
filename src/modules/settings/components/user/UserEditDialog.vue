@@ -12,7 +12,7 @@
     <el-alert v-if="saveIssue" :title="saveIssue" type="warning" :closable="false" show-icon />
     <el-alert
       v-if="loadFailed"
-      title="用户配置加载失败，请重试后保存"
+      :title="t('settings.user.configFailed')"
       type="error"
       :closable="false"
     >
@@ -20,23 +20,24 @@
         :disabled="saving || detailsLoading || rolesLoading || appletsLoading"
         @click="retryLoad"
       >
-        重试加载
+        {{ t('settings.user.retryLoad') }}
       </el-button>
     </el-alert>
     <el-tabs v-model="activeTab">
       <!-- 基本信息 -->
-      <el-tab-pane label="基本信息" name="basic">
+      <el-tab-pane :label="t('settings.user.basic')" name="basic">
         <el-form
           ref="formRef"
           :model="form"
           :rules="formRules"
-          label-width="100px"
+          :validate-on-rule-change="false"
+          label-width="150px"
           :disabled="isViewMode || saving || !!createdUser || detailsLoading"
         >
-          <el-form-item label="用户名" prop="login">
+          <el-form-item :label="t('common.username')" prop="login">
             <el-input v-model="form.login" :disabled="!!form.id" maxlength="50" />
           </el-form-item>
-          <el-form-item label="姓名" prop="fullName">
+          <el-form-item :label="t('settings.user.fullName')" prop="fullName">
             <el-input v-model="form.fullName" maxlength="50" />
           </el-form-item>
 
@@ -44,13 +45,13 @@
           <template v-if="form.id && !isViewMode">
             <el-form-item>
               <el-link type="primary" @click="showPasswordEdit = !showPasswordEdit">
-                {{ showPasswordEdit ? '取消修改密码' : '修改密码' }}
+                {{ showPasswordEdit ? t('settings.user.cancelPassword') : t('settings.user.changePassword') }}
               </el-link>
             </el-form-item>
           </template>
 
           <template v-if="!createdUser && (showPasswordEdit || !form.id)">
-            <el-form-item label="密码" prop="password">
+            <el-form-item :label="t('common.password')" prop="password">
               <el-input
                 v-model="form.password"
                 type="password"
@@ -59,7 +60,7 @@
                 maxlength="32"
               />
             </el-form-item>
-            <el-form-item label="确认密码" prop="confirmPassword">
+            <el-form-item :label="t('settings.user.confirmPassword')" prop="confirmPassword">
               <el-input
                 v-model="form.confirmPassword"
                 type="password"
@@ -72,33 +73,33 @@
 
           <!-- 其他信息 -->
           <el-collapse v-model="expandedInfo">
-            <el-collapse-item title="其他信息" name="other">
-              <el-form-item label="邮箱" prop="email">
+            <el-collapse-item :title="t('settings.user.otherInfo')" name="other">
+              <el-form-item :label="t('settings.user.email')" prop="email">
                 <el-input v-model="form.email" type="email" maxlength="100" />
               </el-form-item>
-              <el-form-item label="部门">
+              <el-form-item :label="t('settings.user.department')">
                 <el-input v-model="form.department" maxlength="100" />
               </el-form-item>
-              <el-form-item label="手机">
+              <el-form-item :label="t('settings.user.mobile')">
                 <el-input v-model="form.mobile" maxlength="20" />
               </el-form-item>
-              <el-form-item label="电话">
+              <el-form-item :label="t('settings.user.phone')">
                 <el-input v-model="form.telephoneNumber" maxlength="30" />
               </el-form-item>
-              <el-form-item label="状态">
+              <el-form-item :label="t('common.status')">
                 <el-switch
                   v-model="form.activated"
                   :disabled="!form.id"
-                  active-text="已激活"
-                  inactive-text="已禁用"
+                  :active-text="t('settings.user.activated')"
+                  :inactive-text="t('settings.user.disabled')"
                 />
               </el-form-item>
-              <el-form-item label="认证方式">
+              <el-form-item :label="t('settings.user.authMode')">
                 <el-radio-group v-model="form.authMode">
-                  <el-radio value="LOCAL">本地认证</el-radio>
+                  <el-radio value="LOCAL">{{ t('settings.user.localAuth') }}</el-radio>
                   <el-radio value="AD">Active Directory</el-radio>
-                  <el-radio value="UN">统一认证</el-radio>
-                  <el-radio value="MIX">混合认证</el-radio>
+                  <el-radio value="UN">{{ t('settings.user.unifiedAuth') }}</el-radio>
+                  <el-radio value="MIX">{{ t('settings.user.mixedAuth') }}</el-radio>
                 </el-radio-group>
               </el-form-item>
             </el-collapse-item>
@@ -107,7 +108,7 @@
       </el-tab-pane>
 
       <!-- 角色 -->
-      <el-tab-pane label="角色" name="roles">
+      <el-tab-pane :label="t('settings.user.roles')" name="roles">
         <el-checkbox-group
           v-model="selectedRoleIds"
           class="checkbox-grid"
@@ -125,7 +126,7 @@
       </el-tab-pane>
 
       <!-- 应用 -->
-      <el-tab-pane label="应用" name="applets">
+      <el-tab-pane :label="t('settings.user.applications')" name="applets">
         <div class="checkbox-grid" v-loading="appletsLoading">
           <el-checkbox
             v-for="applet in allApplets"
@@ -151,18 +152,18 @@
           <img v-else-if="qrcodeStatus === 'existed'" :src="qrcodeUrl" class="qrcode-image" />
           <div v-else-if="qrcodeStatus === 'unexisted'" class="qrcode-missing">
             <el-link v-if="!isViewMode" type="primary" @click="generateQRCode">
-              二维码不存在，点击重新生成
+              {{ t('settings.user.qrRegenerateHint') }}
             </el-link>
-            <span v-else>二维码不存在</span>
+            <span v-else>{{ t('settings.user.qrMissing') }}</span>
           </div>
           <div v-if="qrcodeStatus === 'existed' && !isViewMode" class="qrcode-actions">
-            <el-button type="primary" @click="generateQRCode">重新生成OTP二维码</el-button>
+            <el-button type="primary" @click="generateQRCode">{{ t('settings.user.regenerateQr') }}</el-button>
           </div>
         </div>
       </el-tab-pane>
 
       <!-- 权限 (仅查看模式) -->
-      <el-tab-pane v-if="isViewMode" label="权限" name="permissions">
+      <el-tab-pane v-if="isViewMode" :label="t('settings.user.permissions')" name="permissions">
         <div class="permissions-grid">
           <el-tag
             v-for="(perm, idx) in userPermissions"
@@ -178,17 +179,17 @@
       <!-- API Keys (仅查看模式) -->
       <el-tab-pane v-if="isViewMode" label="ApiKey" name="apikeys">
         <el-table :data="apiKeys" size="small" max-height="450px">
-          <el-table-column prop="name" label="名称" />
-          <el-table-column prop="targetApi" label="目标API" min-width="200" />
-          <el-table-column prop="expireTime" label="过期时间" width="180">
+          <el-table-column prop="name" :label="t('common.name')" />
+          <el-table-column prop="targetApi" :label="t('settings.user.targetApi')" min-width="200" />
+          <el-table-column prop="expireTime" :label="t('settings.user.expiresAt')" width="180">
             <template #default="{ row }">
               {{ formatTime(row.expireTime) }}
             </template>
           </el-table-column>
-          <el-table-column prop="enabled" label="状态" width="80" align="left">
+          <el-table-column prop="enabled" :label="t('common.status')" width="80" align="left">
             <template #default="{ row }">
               <el-tag :type="row.enabled ? 'success' : 'danger'" size="small">
-                {{ row.enabled ? '启用' : '禁用' }}
+                {{ row.enabled ? t('settings.user.enable') : t('settings.user.disable') }}
               </el-tag>
             </template>
           </el-table-column>
@@ -199,7 +200,7 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button :disabled="saving" @click="handleClose">
-          {{ isViewMode || createdUser ? '关闭' : '取消' }}
+          {{ isViewMode || createdUser ? t('common.close') : t('common.cancel') }}
         </el-button>
         <el-button
           v-if="!isViewMode"
@@ -208,7 +209,7 @@
           :disabled="saveDisabled"
           @click="handleSave"
         >
-          {{ createdUser ? '仅重试应用保存' : '保存' }}
+          {{ createdUser ? t('settings.user.retryApps') : t('common.save') }}
         </el-button>
       </div>
     </template>
@@ -216,6 +217,9 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+import { useLocalizedValidation } from '@/core/i18n/validation'
+import { message, messageRef } from '@/core/i18n/feedback'
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as settingsApi from '@/modules/settings/api'
@@ -240,9 +244,9 @@ const visible = computed({
 const isViewMode = computed(() => props.mode === 'view')
 
 const dialogTitle = computed(() => {
-  if (props.mode === 'view') return '用户详情'
-  if (props.mode === 'create') return '添加用户'
-  return '编辑用户'
+  if (props.mode === 'view') return t('settings.user.details')
+  if (props.mode === 'create') return t('settings.user.add')
+  return t('settings.user.edit')
 })
 
 const formRef = ref(null)
@@ -256,7 +260,7 @@ const rolesError = ref(false)
 const appletsError = ref(false)
 const loadFailed = computed(() => detailsError.value || rolesError.value || appletsError.value)
 const createdUser = ref(null)
-const saveIssue = ref('')
+const saveIssue = messageRef('')
 let session = 0
 let contextTenantId = ''
 const currentTenantId = () => authService.getCurrentUser()?.tenantId || ''
@@ -307,13 +311,13 @@ const qrcodeUrl = ref('')
 
 // 应用标题翻译映射
 const appletTitleMap = {
-  '#{cac.index.square}': '系统巡检',
-  '#{app_pms.title}': '密码管理',
-  '#{app_sudo.title}': 'sudo权限管理',
-  '#{acm.title}': '资产管理',
-  '#{app_vap.title}': '补丁管理',
-  '#{app_spm.title}': 'Yum仓库管理',
-  '#{app_uim.name}': '用户管理'
+  get '#{cac.index.square}'() { return t('settings.user.appInspection') },
+  get '#{app_pms.title}'() { return t('settings.user.appPassword') },
+  get '#{app_sudo.title}'() { return t('settings.user.appSudo') },
+  get '#{acm.title}'() { return t('settings.user.appAsset') },
+  get '#{app_vap.title}'() { return t('settings.user.appPatch') },
+  get '#{app_spm.title}'() { return t('settings.user.appYum') },
+  get '#{app_uim.name}'() { return t('settings.user.appUsers') }
 }
 
 function validatePasswordComplexity(rule, value, callback) {
@@ -332,30 +336,32 @@ function validatePasswordComplexity(rule, value, callback) {
     return
   }
 
-  callback(new Error('密码需包含大小写字母、数字和特殊符号'))
+  callback(new Error(t('settings.user.passwordComplexity')))
 }
 
 // 表单验证
-const formRules = {
+useLocalizedValidation(formRef)
+
+const formRules = computed(() => ({
   login: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 1, max: 50, message: '用户名长度在 1 到 50 个字符', trigger: 'blur' },
+    { required: true, message: t('settings.user.enterLogin'), trigger: 'blur' },
+    { min: 1, max: 50, message: t('settings.user.loginLength'), trigger: 'blur' },
     {
       pattern: /^[_'.A-Za-z0-9-]*$/,
-      message: '用户名只能包含字母、数字和特殊字符',
+      message: t('settings.user.loginCharacters'),
       trigger: 'blur'
     }
   ],
   fullName: [
-    { required: true, message: '请输入姓名', trigger: 'blur' },
-    { max: 50, message: '姓名不能超过 50 个字符', trigger: 'blur' }
+    { required: true, message: t('settings.user.enterName'), trigger: 'blur' },
+    { max: 50, message: t('settings.user.nameLength'), trigger: 'blur' }
   ],
   password: [
-    { min: 8, max: 32, message: '密码长度在 8 到 32 个字符', trigger: 'blur' },
+    { min: 8, max: 32, message: t('settings.user.passwordLength'), trigger: 'blur' },
     { validator: validatePasswordComplexity, trigger: 'blur' }
   ],
-  email: [{ type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }]
-}
+  email: [{ type: 'email', message: t('settings.user.validEmail'), trigger: 'blur' }]
+}))
 
 watch([() => props.modelValue, () => props.user, () => props.mode, currentTenantId], () => {
   session++
@@ -547,7 +553,7 @@ async function loadApiKeys(token) {
 function formatTime(time) {
   if (!time) return '-'
   try {
-    return new Date(time).toLocaleString('zh-CN')
+    return new Date(time).toLocaleString(currentLocale.value)
   } catch {
     return time
   }
@@ -585,7 +591,7 @@ async function generateQRCode() {
   qrcodeStatus.value = 'loading'
   try {
     // TODO: 调用生成二维码的API
-    ElMessage.info('正在生成二维码...')
+    ElMessage.info(t('settings.user.generatingQr'))
     // 模拟异步操作
     setTimeout(() => {
       qrcodeStatus.value = 'existed'
@@ -593,7 +599,7 @@ async function generateQRCode() {
     }, 1000)
   } catch (error) {
     console.error('Failed to generate QR code:', error)
-    ElMessage.error('生成二维码失败')
+    ElMessage.error(t('settings.user.qrFailed'))
     qrcodeStatus.value = 'unexisted'
   }
 }
@@ -609,11 +615,11 @@ async function handleSave() {
     try {
       await settingsApi.saveUserApplets(createdUser.value.tenantUserId, applets)
       if (!isCurrent(token)) return
-      ElMessage.success('用户和应用配置保存成功')
+      ElMessage.success(t('settings.user.savedWithApps'))
       handleClose()
     } catch {
       if (!isCurrent(token)) return
-      saveIssue.value = '用户已创建，应用保存失败。请仅重试应用保存，或关闭后在用户列表编辑应用。'
+      saveIssue.value = message('settings.user.appsFailedAfterCreate')
     } finally {
       if (isCurrent(token)) saving.value = false
     }
@@ -625,7 +631,7 @@ async function handleSave() {
   } catch {
     if (!isCurrent(token)) return
     saving.value = false
-    ElMessage.warning('请检查表单填写')
+    ElMessage.warning(t('settings.user.checkForm'))
     return
   }
   if (!isCurrent(token)) return
@@ -633,7 +639,7 @@ async function handleSave() {
   // 密码确认
   if (showPasswordEdit.value || !form.value.id) {
     if (form.value.password && form.value.password !== form.value.confirmPassword) {
-      ElMessage.warning('两次输入的密码不一致')
+      ElMessage.warning(t('settings.user.passwordMismatch'))
       saving.value = false
       return
     }
@@ -691,7 +697,7 @@ async function handleSave() {
         activeTab.value = 'applets'
         if (!identity) {
           saveIssue.value =
-            '用户已创建，但未取得当前租户的唯一用户身份，应用未保存。请关闭后在用户列表编辑应用。'
+            message('settings.user.createdIdentityMissing')
           return
         }
         try {
@@ -699,12 +705,12 @@ async function handleSave() {
         } catch {
           if (!isCurrent(token)) return
           saveIssue.value =
-            '用户已创建，应用保存失败。请仅重试应用保存，或关闭后在用户列表编辑应用。'
+            message('settings.user.appsFailedAfterCreate')
           return
         }
         if (!isCurrent(token)) return
       }
-      ElMessage.success(applets.length ? '用户和应用配置保存成功' : '用户创建成功')
+      ElMessage.success(applets.length ? t('settings.user.savedWithApps') : t('settings.user.created'))
       handleClose()
       return
     } else {
@@ -735,13 +741,13 @@ async function handleSave() {
       }
     }
 
-    ElMessage.success('保存成功')
+    ElMessage.success(t('settings.user.saved'))
     emit('saved')
     handleClose()
   } catch (error) {
     if (!isCurrent(token)) return
     console.error('Failed to save user:', error)
-    ElMessage.error('保存失败')
+    ElMessage.error(t('settings.user.saveFailed'))
   } finally {
     if (isCurrent(token)) saving.value = false
   }

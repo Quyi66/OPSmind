@@ -3,10 +3,10 @@
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
-        <el-form-item label="关键词">
+        <el-form-item :label="t('settings.user.keyword')">
           <el-input
             v-model="filters.keyword"
-            placeholder="搜索用户名/姓名"
+            :placeholder="t('settings.user.search')"
             clearable
             style="width: 200px" @keyup.enter="handleSearch" @clear="handleSearch">
             <template #prefix>
@@ -14,20 +14,20 @@
             </template>
           </el-input>
         </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="filters.status" placeholder="状态" clearable style="width: 120px" @change="handleSearch">
-            <el-option label="已激活" value="activated" />
-            <el-option label="已禁用" value="disabled" />
+        <el-form-item :label="t('common.status')">
+          <el-select v-model="filters.status" :placeholder="t('common.status')" clearable style="width: 120px" @change="handleSearch">
+            <el-option :label="t('settings.user.activated')" value="activated" />
+            <el-option :label="t('settings.user.disabled')" value="disabled" />
           </el-select>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleSearch">
             <el-icon><Search /></el-icon>
-            搜索
+            {{ t('common.search') }}
           </el-button>
           <el-button @click="handleReset">
             <el-icon><RefreshRight /></el-icon>
-            重置
+            {{ t('common.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -37,11 +37,11 @@
     <div class="ops-action-bar">
       <el-button type="primary" size="small" @click="handleCreateUser">
         <i class="fa fa-plus"></i>
-        添加用户
+        {{ t('settings.user.add') }}
       </el-button>
       <el-button size="small" @click="handleAllocateRole">
         <i class="fa fa-user-tag"></i>
-        分配角色
+        {{ t('settings.roles.assign') }}
       </el-button>
       <span style="flex: 1"></span>
       <el-button
@@ -50,7 +50,7 @@
         size="small"
         :loading="loading"
         @click="loadData"
-        title="刷新"
+        :title="t('common.refresh')"
       >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
@@ -64,28 +64,28 @@
         style="width: 100%"
         max-height="calc(100vh - 314px)"
       >
-        <el-table-column prop="login" label="用户名" width="120" />
-        <el-table-column prop="fullName" label="姓名" min-width="120" />
-        <el-table-column prop="department" label="部门" min-width="120">
+        <el-table-column prop="login" :label="t('common.username')" width="120" />
+        <el-table-column prop="fullName" :label="t('settings.user.fullName')" min-width="120" />
+        <el-table-column prop="department" :label="t('settings.user.department')" min-width="120">
           <template #default="{ row }">
             {{ row.department || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="activated" label="状态" width="100" align="left">
+        <el-table-column prop="activated" :label="t('common.status')" width="100" align="left">
           <template #default="{ row }">
             <el-tag :type="row.activated ? 'success' : 'danger'" size="small">
-              {{ row.activated ? '已激活' : '已禁用' }}
+              {{ row.activated ? t('settings.user.activated') : t('settings.user.disabled') }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="authMode" label="认证方式" width="120" align="left">
+        <el-table-column prop="authMode" :label="t('settings.user.authMode')" width="120" align="left">
           <template #default="{ row }">
             <el-tag :type="getAuthModeType(row.authMode)" size="small">
               {{ getAuthModeLabel(row.authMode) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="roles" label="角色" min-width="250">
+        <el-table-column prop="roles" :label="t('settings.user.roles')" min-width="250">
           <template #default="{ row }">
             <div class="roles-cell">
               <el-tag
@@ -100,15 +100,15 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="lastModifiedDate" label="最后修改时间" width="180">
+        <el-table-column prop="lastModifiedDate" :label="t('settings.user.modifiedAt')" width="180">
           <template #default="{ row }">
             {{ formatTime(row.lastModifiedDate) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column :label="t('common.actions')" min-width="320" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" text type="primary" @click="handleView(row)">查看</el-button>
-            <el-button size="small" text type="primary" @click="handleEdit(row)">编辑</el-button>
+            <el-button size="small" text type="primary" @click="handleView(row)">{{ t('common.view') }}</el-button>
+            <el-button size="small" text type="primary" @click="handleEdit(row)">{{ t('common.edit') }}</el-button>
             <el-button
               size="small"
               text
@@ -117,7 +117,7 @@
               :disabled="isCurrentUser(row) || togglingUserId === row.tenantUserId"
               :loading="togglingUserId === row.tenantUserId"
             >
-              {{ row.activated ? '禁用' : '启用' }}
+              {{ row.activated ? t('settings.user.disable') : t('settings.user.enable') }}
             </el-button>
             <el-button
               size="small"
@@ -127,7 +127,7 @@
               :disabled="isCurrentUser(row) || deletingUserId === row.tenantUserId"
               :loading="deletingUserId === row.tenantUserId"
             >
-              删除
+              {{ t('common.delete') }}
             </el-button>
           </template>
         </el-table-column>
@@ -160,6 +160,7 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
@@ -250,7 +251,7 @@ async function loadData() {
     pagination.total = tableData.value.length
   } catch (error) {
     console.error('Failed to load users:', error)
-    ElMessage.error('加载用户列表失败')
+    ElMessage.error(t('settings.user.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -291,13 +292,13 @@ function getAuthModeLabel(authMode) {
     case 'AD':
       return 'Active Directory'
     case 'MIX':
-      return '混合认证'
+      return t('settings.user.mixedAuth')
     case 'UN':
-      return '统一认证'
+      return t('settings.user.unifiedAuth')
     case 'LOCAL':
-      return '本地认证'
+      return t('settings.user.localAuth')
     default:
-      return authMode || '本地'
+      return authMode || t('settings.user.local')
   }
 }
 
@@ -305,7 +306,7 @@ function formatTime(time) {
   if (!time) return '-'
   try {
     const date = new Date(time)
-    return date.toLocaleString('zh-CN', {
+    return date.toLocaleString(currentLocale.value, {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -326,7 +327,7 @@ const togglingUserId = ref(null)
 
 async function handleToggleActivation(row) {
   if (isCurrentUser(row)) {
-    ElMessage.warning('不能修改当前登录用户的状态')
+    ElMessage.warning(t('settings.user.cannotChangeSelf'))
     return
   }
 
@@ -336,12 +337,11 @@ async function handleToggleActivation(row) {
   }
 
   const newStatus = !row.activated
-  const action = newStatus ? '激活' : '禁用'
 
   try {
     await ElMessageBox.confirm(
-      `确定要${action}用户 "${row.fullName || row.login}" 吗？`,
-      '确认操作',
+      t(newStatus ? 'settings.user.activateConfirm' : 'settings.user.disableConfirm', { name: row.fullName || row.login }),
+      t('settings.user.confirmAction'),
       {
         closeOnClickModal: false,
         closeOnPressEscape: false,
@@ -351,12 +351,12 @@ async function handleToggleActivation(row) {
 
     togglingUserId.value = row.tenantUserId
     await settingsApi.toggleUserActivation(row, newStatus)
-    ElMessage.success(`${action}成功`)
+    ElMessage.success(t(newStatus ? 'settings.user.activationSucceeded' : 'settings.user.disableSucceeded'))
     loadData()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('Failed to toggle user activation:', error)
-      ElMessage.error(`${action}失败`)
+      ElMessage.error(t(newStatus ? 'settings.user.activationFailed' : 'settings.user.disableFailed'))
     }
   } finally {
     togglingUserId.value = null
@@ -390,7 +390,7 @@ const deletingUserId = ref(null)
 
 async function handleDelete(row) {
   if (isCurrentUser(row)) {
-    ElMessage.warning('不能删除当前登录用户')
+    ElMessage.warning(t('settings.user.cannotDeleteSelf'))
     return
   }
 
@@ -400,7 +400,7 @@ async function handleDelete(row) {
   }
 
   try {
-    await ElMessageBox.confirm(`确定要删除用户 "${row.fullName || row.login}" 吗？`, '确认删除', {
+    await ElMessageBox.confirm(t('settings.user.deleteConfirm', { name: row.fullName || row.login }), t('settings.user.confirmDelete'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning'
@@ -408,12 +408,12 @@ async function handleDelete(row) {
 
     deletingUserId.value = row.tenantUserId
     await settingsApi.deleteUser(row.tenantUserId)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('settings.user.deleted'))
     loadData()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('Failed to delete user:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(t('settings.user.deleteFailed'))
     }
   } finally {
     deletingUserId.value = null

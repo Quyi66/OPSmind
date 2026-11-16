@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    :title="isCreate ? '创建团队' : '编辑团队'"
+    :title="isCreate ? t('settings.team.create') : t('settings.team.edit')"
     width="600px"
     destroy-on-close
     @close="handleClose"
@@ -9,43 +9,44 @@
     :close-on-click-modal="false"
   >
     <el-alert v-if="usersError" :title="usersError" type="error" :closable="false" show-icon>
-      <el-button link type="primary" :loading="usersLoading" @click="loadUsers">重试读取</el-button>
+      <el-button link type="primary" :loading="usersLoading" @click="loadUsers">{{ t('settings.team.retryMembers') }}</el-button>
     </el-alert>
     <el-tabs v-model="activeTab">
       <!-- 基本信息 -->
-      <el-tab-pane label="基本信息" name="basic">
+      <el-tab-pane :label="t('settings.user.basic')" name="basic">
         <el-form
           ref="formRef"
           :model="form"
           :rules="rules"
-          label-width="100px"
+          :validate-on-rule-change="false"
+          label-width="140px"
           v-loading="loading"
           @submit.prevent
         >
-          <el-form-item label="团队名称" prop="name">
-            <el-input v-model="form.name" maxlength="50" placeholder="请输入团队名称" />
+          <el-form-item :label="t('settings.team.name')" prop="name">
+            <el-input v-model="form.name" maxlength="50" :placeholder="t('settings.team.enterName')" />
           </el-form-item>
-          <el-form-item label="团队代码" prop="code">
-            <el-input v-model="form.code" maxlength="50" placeholder="请输入团队代码（可选）" />
+          <el-form-item :label="t('settings.team.teamCode')" prop="code">
+            <el-input v-model="form.code" maxlength="50" :placeholder="t('settings.team.optionalCode')" />
           </el-form-item>
-          <el-form-item label="描述" prop="description">
+          <el-form-item :label="t('settings.team.description')" prop="description">
             <el-input
               v-model="form.description"
               type="textarea"
               maxlength="100"
               :rows="3"
-              placeholder="请输入团队描述"
+              :placeholder="t('settings.team.enterDescription')"
             />
           </el-form-item>
         </el-form>
       </el-tab-pane>
 
       <!-- 用户 -->
-      <el-tab-pane label="用户" name="users">
+      <el-tab-pane :label="t('common.user')" name="users">
         <div v-loading="usersLoading" class="users-container">
           <el-alert
             v-if="!usersError && allUsers.length === 0 && !usersLoading"
-            title="暂无可选用户"
+            :title="t('settings.team.noUsers')"
             type="info"
             :closable="false"
             show-icon
@@ -66,14 +67,14 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose">取消</el-button>
+        <el-button @click="handleClose">{{ t('common.cancel') }}</el-button>
         <el-button
           type="primary"
           :loading="saving"
           :disabled="usersLoading || Boolean(usersError)"
           @click="handleSave"
         >
-          保存
+          {{ t('common.save') }}
         </el-button>
       </div>
     </template>
@@ -81,6 +82,9 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { useLocalizedValidation } from '@/core/i18n/validation'
+import { message, messageRef } from '@/core/i18n/feedback'
 import { ref, computed, watch, onBeforeUnmount, onActivated, onDeactivated } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as teamApi from '@/modules/settings/api/team'
@@ -109,7 +113,7 @@ const activeTab = ref('basic')
 const loading = ref(false)
 const saving = ref(false)
 const usersLoading = ref(false)
-const usersError = ref('')
+const usersError = messageRef('')
 let active = true
 let readRequestId = 0
 const formRef = ref(null)
@@ -123,16 +127,18 @@ const form = ref({
 
 const allUsers = ref([])
 
-const rules = {
+useLocalizedValidation(formRef)
+
+const rules = computed(() => ({
   name: [
-    { required: true, message: '请输入团队名称', trigger: 'blur' },
-    { max: 50, message: '团队名称不能超过50个字符', trigger: 'blur' }
+    { required: true, message: t('settings.team.enterName'), trigger: 'blur' },
+    { max: 50, message: t('settings.team.nameLength'), trigger: 'blur' }
   ],
   description: [
-    { required: true, message: '请输入团队描述', trigger: 'blur' },
-    { max: 100, message: '描述不能超过100个字符', trigger: 'blur' }
+    { required: true, message: t('settings.team.enterDescription'), trigger: 'blur' },
+    { max: 100, message: t('settings.team.descriptionLength'), trigger: 'blur' }
   ]
-}
+}))
 
 watch(
   [() => props.modelValue, () => props.team?.id, () => props.mode],
@@ -219,7 +225,7 @@ async function loadUsers() {
   } catch (error) {
     if (!active || !props.modelValue || request !== readRequestId) return
     console.error('Failed to load users:', error)
-    usersError.value = '团队成员未完整读取，暂不可保存，请重试读取'
+    usersError.value = message('settings.team.membersIncomplete')
     allUsers.value = []
   } finally {
     if (active && props.modelValue && request === readRequestId) usersLoading.value = false
@@ -233,7 +239,7 @@ async function handleSave() {
   try {
     await formRef.value.validate()
   } catch {
-    ElMessage.warning('请检查表单填写')
+    ElMessage.warning(t('settings.user.checkForm'))
     return
   }
 
@@ -266,12 +272,12 @@ async function handleSave() {
       await teamApi.updateTeam(updateData)
     }
 
-    ElMessage.success('保存成功')
+    ElMessage.success(t('settings.user.saved'))
     emit('saved')
     handleClose()
   } catch (error) {
     console.error('Failed to save team:', error)
-    ElMessage.error('保存失败')
+    ElMessage.error(t('settings.user.saveFailed'))
   } finally {
     saving.value = false
   }
@@ -286,7 +292,7 @@ function handleClose() {
 function pauseReading() {
   active = false
   readRequestId += 1
-  if (usersLoading.value) usersError.value = '成员读取已中断，请重试读取'
+  if (usersLoading.value) usersError.value = message('settings.team.membersInterrupted')
   usersLoading.value = false
 }
 onDeactivated(pauseReading)

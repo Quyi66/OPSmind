@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="分配角色"
+    :title="t('settings.roles.assign')"
     width="1150px"
     destroy-on-close
     @close="handleClose"
@@ -13,7 +13,7 @@
       <div class="search-bar">
         <el-input
           v-model="searchKeyword"
-          placeholder="搜索用户名/登录名"
+          :placeholder="t('settings.roles.search')"
           clearable
           style="width: 250px"
         >
@@ -21,27 +21,27 @@
             <el-icon><Search /></el-icon>
           </template>
         </el-input>
-        <el-checkbox v-model="onlyChanged">仅看变更</el-checkbox>
-        <span aria-live="polite">已变更 {{ roleChanges.length }} 位用户</span>
+        <el-checkbox v-model="onlyChanged">{{ t('settings.roles.onlyChanged') }}</el-checkbox>
+        <span aria-live="polite">{{ t('settings.roles.changedCount', { count: roleChanges.length }) }}</span>
       </div>
 
       <el-alert
         v-if="loadError"
-        title="加载失败，请重试后再分配角色"
+        :title="t('settings.roles.loadFailed')"
         type="error"
         :closable="false"
       >
-        <el-button :disabled="loading" @click="loadData">重试</el-button>
+        <el-button :disabled="loading" @click="loadData">{{ t('common.retry') }}</el-button>
       </el-alert>
-      <section v-if="roleChanges.length" class="change-summary" aria-label="角色变更摘要">
-        <p>以下为全部待保存变更，不受搜索条件影响</p>
+      <section v-if="roleChanges.length" class="change-summary" :aria-label="t('settings.roles.summary')">
+        <p>{{ t('settings.roles.summaryHint') }}</p>
         <div v-for="change in roleChanges" :key="change.user.tenantUserId" class="change-item">
           <strong>
-            {{ change.user.fullName || change.user.login }}（{{ change.user.login }}）
+            {{ t('settings.roles.userIdentity', { name: change.user.fullName || change.user.login, login: change.user.login }) }}
           </strong>
-          <span v-if="change.added.length">新增：{{ change.added.map(roleLabel).join('、') }}</span>
+          <span v-if="change.added.length">{{ t('settings.roles.added', { roles: change.added.map(roleLabel).join(t('common.listSeparator')) }) }}</span>
           <span v-if="change.removed.length">
-            移除：{{ change.removed.map(roleLabel).join('、') }}
+            {{ t('settings.roles.removed', { roles: change.removed.map(roleLabel).join(t('common.listSeparator')) }) }}
           </span>
         </div>
       </section>
@@ -52,7 +52,7 @@
         style="width: 100%"
         max-height="calc(100vh - 350px)"
       >
-        <el-table-column prop="fullName" label="用户" min-width="150" fixed>
+        <el-table-column prop="fullName" :label="t('common.user')" min-width="150" fixed>
           <template #default="{ row }">
             {{ row.fullName || row.login }}
             <div class="user-login">{{ row.login }}</div>
@@ -69,7 +69,7 @@
             <el-checkbox
               v-model="row.roleMap[role.name]"
               :disabled="loading || loadError || saving"
-              :aria-label="`${row.fullName || row.login}（${row.login}）：${roleLabel(role)}`"
+              :aria-label="t('settings.roles.checkboxLabel', { name: row.fullName || row.login, login: row.login, role: roleLabel(role) })"
             />
           </template>
         </el-table-column>
@@ -78,14 +78,14 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose">取消</el-button>
+        <el-button @click="handleClose">{{ t('common.cancel') }}</el-button>
         <el-button
           type="primary"
           :loading="saving"
           :disabled="loading || loadError || saving || !roleChanges.length"
           @click="handleSave"
         >
-          保存
+          {{ t('common.save') }}
         </el-button>
       </div>
     </template>
@@ -93,6 +93,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
@@ -213,7 +214,7 @@ async function loadData() {
     roles.value = []
     userData.value = []
     console.error('Failed to load data:', error)
-    ElMessage.error('加载数据失败')
+    ElMessage.error(t('settings.roles.readFailed'))
   } finally {
     if (isCurrent()) loading.value = false
   }
@@ -226,7 +227,7 @@ async function handleSave() {
   const changedUsers = roleChanges.value.map(change => change.user)
 
   if (changedUsers.length === 0) {
-    ElMessage.warning('没有修改任何角色分配')
+    ElMessage.warning(t('settings.roles.noChanges'))
     return
   }
 
@@ -242,13 +243,13 @@ async function handleSave() {
     await settingsApi.updateUserRoles(updateData)
     if (!isCurrent()) return
 
-    ElMessage.success('保存成功')
+    ElMessage.success(t('settings.user.saved'))
     emit('saved')
     handleClose()
   } catch (error) {
     if (!isCurrent()) return
     console.error('Failed to save roles:', error)
-    ElMessage.error('保存失败')
+    ElMessage.error(t('settings.user.saveFailed'))
   } finally {
     if (isCurrent()) saving.value = false
   }

@@ -1,7 +1,7 @@
 <template>
   <el-drawer
     :model-value="visible"
-    title="分配补丁给用户"
+    :title="t('settings.patchAssignment.title')"
     size="min(1400px, 92vw)"
     direction="rtl"
     append-to-body
@@ -13,7 +13,7 @@
   >
     <el-alert v-if="assignedError" :title="assignedError" type="error" :closable="false">
       <el-button :disabled="loadingAssigned" @click="loadAssignedPatches">
-        重试读取已有分配
+        {{ t('settings.patchAssignment.retryAssignments') }}
       </el-button>
     </el-alert>
     <el-form
@@ -23,25 +23,25 @@
       label-width="80px"
       :disabled="locked"
     >
-      <el-form-item label="目标用户"><el-input :model-value="username" disabled /></el-form-item>
-      <el-form-item label="过期时间">
+      <el-form-item :label="t('settings.patchAssignment.targetUser')"><el-input :model-value="username" disabled /></el-form-item>
+      <el-form-item :label="t('settings.user.expiresAt')">
         <el-date-picker
           v-model="assignForm.expireTime"
           type="datetime"
-          placeholder="不填表示永久有效"
+          :placeholder="t('settings.patchAssignment.permanentHint')"
           value-format="YYYY-MM-DD HH:mm:ss"
         />
       </el-form-item>
-      <el-form-item label="备注">
-        <el-input v-model="assignForm.remark" placeholder="填写分配说明（选填）" />
+      <el-form-item :label="t('settings.patchAssignment.notes')">
+        <el-input v-model="assignForm.remark" :placeholder="t('settings.patchAssignment.notesPlaceholder')" />
       </el-form-item>
     </el-form>
-    <div class="selected-patches" aria-label="已选补丁">
-      <span>已选 {{ selectedPatches.length }} 项，待配置机器 {{ pendingPatchCount }} 项</span>
+    <div class="selected-patches" :aria-label="t('settings.patchAssignment.selectedPatches')">
+      <span>{{ t('settings.patchAssignment.draftCounts', { selected: selectedPatches.length, pending: pendingPatchCount }) }}</span>
       <el-button text :disabled="locked || !selectedPatches.length" @click="clearSelectedPatches">
-        清空所选补丁
+        {{ t('settings.patchAssignment.clear') }}
       </el-button>
-      <span class="hint">移除或清空仅影响当前草稿，不撤销已有分配。</span>
+      <span class="hint">{{ t('settings.patchAssignment.draftRemovalHint') }}</span>
       <div class="selected-patch-list">
         <div
           v-for="patch in selectedPatches"
@@ -56,7 +56,7 @@
             :aria-pressed="activePatchId === patch.patch_id"
             @click="activatePatch(patch)"
           >
-            {{ patch.patch_id }} · {{ patch.selectedHosts.length }} 台
+            {{ t('settings.patchAssignment.patchMachines', { patch: patch.patch_id, count: patch.selectedHosts.length }) }}
           </el-button>
           <el-button
             text
@@ -64,19 +64,19 @@
             class="remove-patch-button"
             :icon="Close"
             :disabled="locked"
-            :aria-label="`移除补丁 ${patch.patch_id}`"
-            :title="`移除补丁 ${patch.patch_id}`"
+            :aria-label="t('settings.patchAssignment.removePatch', { patch: patch.patch_id })"
+            :title="t('settings.patchAssignment.removePatch', { patch: patch.patch_id })"
             @click="removePatch(patch.patch_id)"
           />
         </div>
       </div>
     </div>
     <div class="assignment-workspace" v-loading="loadingAssigned">
-      <section class="patch-pane" aria-label="选择补丁">
+      <section class="patch-pane" :aria-label="t('settings.patchAssignment.choosePatch')">
         <div class="pane-toolbar patch-filter-toolbar">
           <el-input
             v-model="patchFilters.keyword"
-            placeholder="搜索补丁编号"
+            :placeholder="t('settings.patchAssignment.searchPatch')"
             clearable
             :disabled="locked"
             @keyup.enter="handlePatchSearch"
@@ -87,13 +87,13 @@
             :disabled="locked"
             @click="handlePatchSearch"
           >
-            搜索
+            {{ t('common.search') }}
           </el-button>
-          <el-button :disabled="locked" @click="handlePatchReset">重置</el-button>
+          <el-button :disabled="locked" @click="handlePatchReset">{{ t('common.reset') }}</el-button>
         </div>
         <el-alert
           v-if="patchListError"
-          title="可分配补丁读取失败，请重新搜索"
+          :title="t('settings.patchAssignment.patchesFailed')"
           type="error"
           :closable="false"
         />
@@ -106,26 +106,26 @@
           @selection-change="onPatchSelectionChange"
         >
           <el-table-column type="selection" :selectable="canSelectPatch" width="45" />
-          <el-table-column prop="patch_id" label="补丁编号" min-width="170" show-overflow-tooltip />
+          <el-table-column prop="patch_id" :label="t('settings.patchAssignment.patchId')" min-width="170" show-overflow-tooltip />
           <el-table-column
             prop="patch_name"
-            label="补丁名称"
+            :label="t('settings.patchAssignment.patchName')"
             min-width="180"
             show-overflow-tooltip
           />
-          <el-table-column label="严重级别" width="90">
+          <el-table-column :label="t('settings.patchAssignment.severity')" width="90">
             <template #default="{ row }">
               {{ severityLabels[row.severity] || row.severity || '-' }}
             </template>
           </el-table-column>
-          <el-table-column prop="effect_host_count" label="影响机器" width="90" />
-          <el-table-column label="机器配置" width="120" fixed="right">
+          <el-table-column prop="effect_host_count" :label="t('settings.patchAssignment.affectedMachines')" width="90" />
+          <el-table-column :label="t('settings.patchAssignment.machineConfig')" width="120" fixed="right">
             <template #default="{ row }">
               <el-button link type="primary" :disabled="locked" @click="activatePatch(row)">
                 {{
                   getHostCount(row.patch_id)
-                    ? `${getHostCount(row.patch_id)} 台 · 修改`
-                    : '选择机器'
+                    ? t('settings.patchAssignment.editHosts', { count: getHostCount(row.patch_id) })
+                    : t('settings.patchAssignment.selectMachines')
                 }}
               </el-button>
             </template>
@@ -143,13 +143,13 @@
           @size-change="handlePatchSizeChange"
         />
       </section>
-      <section class="host-pane" aria-label="配置当前补丁机器">
+      <section class="host-pane" :aria-label="t('settings.patchAssignment.configureMachines')">
         <template v-if="activePatch">
           <div class="pane-toolbar">
             <strong>{{ activePatch.patch_id }}</strong>
-            <span>已选 {{ activePatch.selectedHosts.length }} 台</span>
+            <span>{{ t('settings.patchAssignment.selectedMachines', { count: activePatch.selectedHosts.length }) }}</span>
           </div>
-          <p class="hint">仅可新增该补丁扫描结果中的机器，勾选即时保留在当前草稿。</p>
+          <p class="hint">{{ t('settings.patchAssignment.machineHint') }}</p>
           <div class="selected-hosts">
             <el-tag
               v-for="(host, index) in activePatch.selectedHosts"
@@ -159,13 +159,13 @@
               :title="hostLabel(host)"
               @close="removeHost(index)"
             >
-              {{ hostLabel(host) }}{{ host.host_id ? '' : '（需重新确认机器）' }}
+              {{ hostLabel(host) }}{{ host.host_id ? '' : t('settings.patchAssignment.confirmMachines') }}
             </el-tag>
           </div>
           <div class="pane-toolbar">
             <el-input
               v-model="hostFilters.keyword"
-              placeholder="搜索主机 / IP"
+              :placeholder="t('settings.patchAssignment.searchHost')"
               clearable
               :disabled="locked"
               @input="handleHostSearch"
@@ -174,11 +174,11 @@
           </div>
           <el-alert
             v-if="activePatch.hostsStatus === 'error'"
-            title="机器候选读取失败，未改变已有选择"
+            :title="t('settings.patchAssignment.hostsFailed')"
             type="error"
             :closable="false"
           >
-            <el-button :disabled="locked" @click="retryHosts">重试机器读取</el-button>
+            <el-button :disabled="locked" @click="retryHosts">{{ t('settings.patchAssignment.retryHosts') }}</el-button>
           </el-alert>
           <el-table
             ref="hostTableRef"
@@ -186,12 +186,12 @@
             :data="paginatedHosts"
             row-key="host_id"
             height="100%"
-            empty-text="当前没有匹配的可分配机器"
+            :empty-text="t('settings.patchAssignment.noHosts')"
             @select="onHostSelectionChange"
             @select-all="onHostSelectionChange"
           >
             <el-table-column type="selection" :selectable="canSelectHost" width="45" />
-            <el-table-column label="主机/IP" min-width="180" show-overflow-tooltip>
+            <el-table-column :label="t('settings.patchAssignment.hostIp')" min-width="180" show-overflow-tooltip>
               <template #default="{ row }">{{ hostLabel(row) }}</template>
             </el-table-column>
           </el-table>
@@ -207,25 +207,25 @@
             @size-change="handleHostSizeChange"
           />
         </template>
-        <el-empty v-else description="选择补丁后，在这里配置对应机器" />
+        <el-empty v-else :description="t('settings.patchAssignment.chooseToConfigure')" />
       </section>
     </div>
-    <section v-if="activePatch" class="reuse-panel" aria-label="复用机器选择">
-      <strong>复用 {{ activePatch.patch_id }} 的机器选择</strong>
-      <p class="hint">选择目标补丁后先预览。仅追加各补丁可用的机器，保留已有选择。</p>
-      <p v-if="!reuseTargets.length" class="hint">请先在补丁列表勾选其他目标补丁。</p>
+    <section v-if="activePatch" class="reuse-panel" :aria-label="t('settings.patchAssignment.reuse')">
+      <strong>{{ t('settings.patchAssignment.reuseSource', { patch: activePatch.patch_id }) }}</strong>
+      <p class="hint">{{ t('settings.patchAssignment.reuseHint') }}</p>
+      <p v-if="!reuseTargets.length" class="hint">{{ t('settings.patchAssignment.reuseTargetsHint') }}</p>
       <el-checkbox-group v-model="reuseTargetIds" :disabled="locked || previewLoading">
         <el-checkbox v-for="patch in reuseTargets" :key="patch.patch_id" :value="patch.patch_id">
           {{ patch.patch_id }}
         </el-checkbox>
       </el-checkbox-group>
       <el-button :disabled="!canPreviewReuse" :loading="previewLoading" @click="previewReuse">
-        预览复用结果
+        {{ t('settings.patchAssignment.preview') }}
       </el-button>
       <template v-if="reusePreview.length">
         <el-table :data="reusePreview" max-height="240">
-          <el-table-column prop="patchId" label="目标补丁" min-width="170" />
-          <el-table-column label="匹配 / 新增 / 最终机器数" min-width="170">
+          <el-table-column prop="patchId" :label="t('settings.patchAssignment.targetPatch')" min-width="170" />
+          <el-table-column :label="t('settings.patchAssignment.previewCounts')" min-width="170">
             <template #default="{ row }">
               {{
                 row.error
@@ -234,39 +234,41 @@
               }}
             </template>
           </el-table-column>
-          <el-table-column label="将新增的机器" min-width="200">
+          <el-table-column :label="t('settings.patchAssignment.newMachines')" min-width="200">
             <template #default="{ row }">
-              {{ row.added.map(hostLabel).join('、') || '无' }}
+              {{ row.added.map(hostLabel).join(t('common.listSeparator')) || t('settings.patchAssignment.none') }}
             </template>
           </el-table-column>
-          <el-table-column label="不适用机器 / 读取问题" min-width="240">
+          <el-table-column :label="t('settings.patchAssignment.unavailable')" min-width="240">
             <template #default="{ row }">
-              {{ row.error || row.unavailable.map(hostLabel).join('、') || '无' }}
+              {{ row.error || row.unavailable.map(hostLabel).join(t('common.listSeparator')) || t('settings.patchAssignment.none') }}
             </template>
           </el-table-column>
         </el-table>
         <el-button type="primary" :disabled="!canApplyReuse" @click="applyReuse">
-          确认追加到所选补丁
+          {{ t('settings.patchAssignment.applyReuse') }}
         </el-button>
-        <el-button :disabled="locked" @click="clearPreview">取消预览</el-button>
+        <el-button :disabled="locked" @click="clearPreview">{{ t('settings.patchAssignment.cancelPreview') }}</el-button>
       </template>
     </section>
     <template #footer>
-      <span class="hint">配置仅保留在草稿中，点击“确定分配”后提交。</span>
-      <el-button :disabled="assignLoading" @click="closeDialog">取消</el-button>
+      <span class="hint">{{ t('settings.patchAssignment.submitHint') }}</span>
+      <el-button :disabled="assignLoading" @click="closeDialog">{{ t('common.cancel') }}</el-button>
       <el-button
         type="primary"
         :loading="assignLoading"
         :disabled="saveDisabled"
         @click="submitAssign"
       >
-        确定分配
+        {{ t('settings.patchAssignment.confirm') }}
       </el-button>
     </template>
   </el-drawer>
 </template>
 
 <script setup>
+import { t, i18n, currentLocale } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
 import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Close } from '@element-plus/icons-vue'
@@ -276,10 +278,10 @@ import { authService } from '@/core/auth'
 const props = defineProps({ visible: Boolean, username: { type: String, default: '' } })
 const emit = defineEmits(['update:visible', 'success'])
 const baseUrl = '/secops/api/secops/v2/patch/assignment'
-const severityLabels = { Critical: '严重', Important: '重要', Moderate: '中等', Low: '低危' }
+const severityLabels = { get Critical() { return t('settings.patchAssignment.critical') }, get Important() { return t('settings.patchAssignment.important') }, get Moderate() { return t('settings.patchAssignment.moderate') }, get Low() { return t('settings.patchAssignment.low') } }
 const assignLoading = ref(false)
 const loadingAssigned = ref(false)
-const assignedError = ref('')
+const assignedError = messageRef('')
 const availablePatchesLoading = ref(false)
 const patchListError = ref(false)
 const selectedPatches = ref([])
@@ -290,6 +292,9 @@ const hostTableRef = ref(null)
 const patchFilters = reactive({ keyword: '' })
 const patchPagination = reactive({ page: 1, pageSize: 20, total: 0 })
 const hostFilters = reactive({ keyword: '' })
+// Search generated fallback labels in the language in which the query was entered.
+const hostSearchLocale = ref(currentLocale.value)
+watch(() => hostFilters.keyword, () => { hostSearchLocale.value = currentLocale.value }, { flush: 'sync' })
 const hostPagination = reactive({ page: 1, pageSize: 20 })
 const assignForm = ref(defaultForm())
 const reuseTargetIds = ref([])
@@ -328,7 +333,7 @@ const reuseTargets = computed(() =>
 const filteredHosts = computed(() => {
   const keyword = hostFilters.keyword.trim().toLowerCase()
   return (activePatch.value?.availableHosts || []).filter(
-    host => !keyword || hostLabel(host).toLowerCase().includes(keyword)
+    host => !keyword || (rawHostLabel(host) || i18n.global.t('settings.patchAssignment.noHost', {}, { locale: hostSearchLocale.value })).toLowerCase().includes(keyword)
   )
 })
 const paginatedHosts = computed(() =>
@@ -381,8 +386,11 @@ const id = value =>
   (typeof value === 'number' && Number.isFinite(value))
     ? String(value)
     : ''
+function rawHostLabel(host) {
+  return host.host_key && host.host_key !== host.host_id ? host.host_key : ''
+}
 function hostLabel(host) {
-  return host.host_key && host.host_key !== host.host_id ? host.host_key : '未提供主机/IP'
+  return rawHostLabel(host) || t('settings.patchAssignment.noHost')
 }
 function normalizeHost(host, assigned = false) {
   // 已有分配记录的id是记录ID，不能当作机器ID；显示地址不能替代真实身份。
@@ -439,10 +447,10 @@ function normalizePatch(item) {
 }
 function responsePatches(response) {
   const data = response?.data?.content ?? response?.data?.records ?? response?.data
-  if (!Array.isArray(data)) throw new Error('补丁列表格式不正确')
+  if (!Array.isArray(data)) throw new Error(t('settings.patchAssignment.invalidList'))
   const patches = data.map(normalizePatch).filter(patch => patch.patch_id)
   if (new Set(patches.map(patch => patch.patch_id)).size !== patches.length)
-    throw new Error('补丁编号不唯一')
+    throw new Error(t('settings.patchAssignment.duplicatePatch'))
   return patches
 }
 
@@ -489,14 +497,14 @@ async function loadAssignedPatches() {
     if (!isCurrent(token)) return
     const rows = response?.data?.content
     if (!Array.isArray(rows) || (response.data.totalElements || 0) > rows.length)
-      throw new Error('已有分配未完整读取')
+      throw new Error(t('settings.patchAssignment.incompleteAssignments'))
     const groups = new Map()
     rows.forEach(row => {
       const patchId = id(row.patchId)
-      if (!patchId) throw new Error('已有分配缺少补丁编号')
+      if (!patchId) throw new Error(t('settings.patchAssignment.missingPatch'))
       const patch = groups.get(patchId) || normalizePatch({ patchId })
       const host = normalizeHost(row, true)
-      if (!host.host_id && !host.host_key) throw new Error('已有分配缺少机器身份')
+      if (!host.host_id && !host.host_key) throw new Error(t('settings.patchAssignment.missingHost'))
       patch.selectedHosts.push(host)
       groups.set(patchId, patch)
     })
@@ -507,7 +515,7 @@ async function loadAssignedPatches() {
     await syncPatchSelection()
   } catch {
     if (isCurrent(token))
-      assignedError.value = '已有分配读取失败或不完整，请重试后配置，避免遗漏原机器。'
+      assignedError.value = message('settings.patchAssignment.assignedFailed')
   } finally {
     if (isCurrent(token)) loadingAssigned.value = false
   }
@@ -641,7 +649,7 @@ async function readHosts(patch) {
         ).filter(item => item.patch_id === patch.patch_id)
     if (!isCurrent(token) || !selectedPatches.value.includes(patch)) return false
     if (matches.length !== 1 || matches[0].hostsStatus !== 'ready')
-      throw new Error('缺少唯一补丁的机器候选')
+      throw new Error(t('settings.patchAssignment.noUniqueCandidate'))
     patch.availableHosts = matches[0].availableHosts
     patch.hostsStatus = 'ready'
     return true
@@ -714,10 +722,10 @@ async function previewReuse() {
       clearPreview()
       return
     }
-    const error = !loaded
-      ? '机器候选读取失败或缺少唯一补丁，未追加'
+    const errorKey = !loaded
+      ? 'settings.patchAssignment.reuseReadFailed'
       : patch.selectedHosts.some(host => !host.host_id)
-        ? '已有机器信息不完整，请先重新选择'
+        ? 'settings.patchAssignment.reselectHosts'
         : ''
     const candidates = new Map(patch.availableHosts.map(host => [host.host_id, host]))
     const matched = source
@@ -732,7 +740,7 @@ async function previewReuse() {
       added,
       unavailable: source.filter(host => !candidates.has(host.host_id)),
       finalHosts: uniqueHosts([...patch.selectedHosts, ...matched]),
-      error
+      get error() { return errorKey ? t(errorKey) : '' }
     })
   }
   previewSignature = signature
@@ -748,7 +756,7 @@ function applyReuse() {
       row.finalHosts.map(host => ({ ...host }))
   })
   clearPreview()
-  ElMessage.success('已追加到补丁草稿，尚未提交分配')
+  ElMessage.success(t('settings.patchAssignment.addedDraft'))
 }
 function closeDialog() {
   if (assignLoading.value) return
@@ -759,14 +767,14 @@ function closeDialog() {
 async function submitAssign() {
   if (!isCurrent(session) || saveDisabled.value) return
   if (!selectedPatches.value.length) {
-    ElMessage.warning('请至少选择一个补丁')
+    ElMessage.warning(t('settings.patchAssignment.selectPatchFirst'))
     return
   }
   const invalid = selectedPatches.value.find(
     patch => !patch.selectedHosts.length || patch.selectedHosts.some(host => !host.host_id)
   )
   if (invalid) {
-    ElMessage.warning(`请为补丁 ${invalid.patch_id} 重新确认机器选择，至少选择一台机器`)
+    ElMessage.warning(t('settings.patchAssignment.reconfirm', { patch: invalid.patch_id }))
     await activatePatch(invalid)
     return
   }
@@ -784,12 +792,12 @@ async function submitAssign() {
   try {
     const response = await apiService.post(baseUrl, payload)
     if (!isCurrent(token)) return
-    ElMessage.success(`分配成功，共处理 ${response?.data?.count || payload.items.length} 条记录`)
+    ElMessage.success(t('settings.patchAssignment.assigned', { count: response?.data?.count || payload.items.length }))
     emit('success')
     assignLoading.value = false
     closeDialog()
   } catch (error) {
-    if (isCurrent(token)) ElMessage.error(error?.response?.data?.error || '分配失败')
+    if (isCurrent(token)) ElMessage.error(error?.response?.data?.error || t('settings.patchAssignment.failed'))
   } finally {
     if (isCurrent(token)) assignLoading.value = false
   }

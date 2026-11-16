@@ -2,10 +2,10 @@
   <div class="ops-page-layout">
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
-        <el-form-item label="关键词">
+        <el-form-item :label="t('settings.user.keyword')">
           <el-input
             v-model="filters.keyword"
-            placeholder="搜索用户名/姓名"
+            :placeholder="t('settings.user.search')"
             clearable
             style="width: 200px" @keyup.enter="handleSearch" @clear="handleSearch">
             <template #prefix>
@@ -13,20 +13,20 @@
             </template>
           </el-input>
         </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="filters.status" placeholder="状态" clearable style="width: 120px" @change="handleSearch">
-            <el-option label="已激活" value="activated" />
-            <el-option label="已禁用" value="disabled" />
+        <el-form-item :label="t('common.status')">
+          <el-select v-model="filters.status" :placeholder="t('common.status')" clearable style="width: 120px" @change="handleSearch">
+            <el-option :label="t('settings.user.activated')" value="activated" />
+            <el-option :label="t('settings.user.disabled')" value="disabled" />
           </el-select>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleSearch">
             <el-icon><Search /></el-icon>
-            搜索
+            {{ t('common.search') }}
           </el-button>
           <el-button @click="handleReset">
             <el-icon><RefreshRight /></el-icon>
-            重置
+            {{ t('common.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -35,7 +35,7 @@
     <div class="ops-action-bar">
       <el-button size="small" @click="handleCleanExpired">
         <i class="fa fa-broom"></i>
-        清理过期分配
+        {{ t('settings.patchAssignment.clean') }}
       </el-button>
       <span style="flex: 1"></span>
       <el-button
@@ -44,7 +44,7 @@
         size="small"
         :loading="loading"
         @click="loadData"
-        title="刷新"
+        :title="t('common.refresh')"
       >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
@@ -57,17 +57,17 @@
         style="width: 100%"
         max-height="calc(100vh - 314px)"
       >
-        <el-table-column prop="login" label="用户名" width="120" />
-        <el-table-column prop="fullName" label="姓名" min-width="120" />
-        <el-table-column prop="department" label="部门" min-width="120">
+        <el-table-column prop="login" :label="t('common.username')" width="120" />
+        <el-table-column prop="fullName" :label="t('settings.user.fullName')" min-width="120" />
+        <el-table-column prop="department" :label="t('settings.user.department')" min-width="120">
           <template #default="{ row }">
             {{ row.department || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="activated" label="状态" width="100" align="left">
+        <el-table-column prop="activated" :label="t('common.status')" width="100" align="left">
           <template #default="{ row }">
             <el-tag :type="row.activated ? 'success' : 'danger'" size="small">
-              {{ row.activated ? '已激活' : '已禁用' }}
+              {{ row.activated ? t('settings.user.activated') : t('settings.user.disabled') }}
             </el-tag>
           </template>
         </el-table-column>
@@ -78,7 +78,7 @@
             </el-tag>
           </template>
         </el-table-column> -->
-        <el-table-column prop="roles" label="角色" min-width="250">
+        <el-table-column prop="roles" :label="t('settings.user.roles')" min-width="250">
           <template #default="{ row }">
             <div class="roles-cell">
               <el-tag
@@ -98,13 +98,13 @@
             {{ formatTime(row.lastModifiedDate) }}
           </template>
         </el-table-column> -->
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column :label="t('common.actions')" min-width="300" fixed="right">
           <template #default="{ row }">
             <el-button size="small" text type="primary" @click="handleAssignPatch(row)">
-              分配补丁
+              {{ t('settings.patchAssignment.assign') }}
             </el-button>
             <el-button size="small" text type="primary" @click="handleViewPatchRecords(row)">
-              分配记录
+              {{ t('settings.patchAssignment.records') }}
             </el-button>
           </template>
         </el-table-column>
@@ -129,6 +129,7 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
@@ -201,7 +202,7 @@ async function loadData() {
     pagination.total = tableData.value.length
   } catch (error) {
     console.error('Failed to load users:', error)
-    ElMessage.error('加载用户列表失败')
+    ElMessage.error(t('settings.user.loadFailed'))
     tableData.value = []
     pagination.total = 0
   } finally {
@@ -242,13 +243,13 @@ function getAuthModeLabel(authMode) {
     case 'AD':
       return 'Active Directory'
     case 'MIX':
-      return '混合认证'
+      return t('settings.user.mixedAuth')
     case 'UN':
-      return '统一认证'
+      return t('settings.user.unifiedAuth')
     case 'LOCAL':
-      return '本地认证'
+      return t('settings.user.localAuth')
     default:
-      return authMode || '本地'
+      return authMode || t('settings.user.local')
   }
 }
 
@@ -256,7 +257,7 @@ function formatTime(time) {
   if (!time) return '-'
   try {
     const date = new Date(time)
-    return date.toLocaleString('zh-CN', {
+    return date.toLocaleString(currentLocale.value, {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -274,7 +275,7 @@ function resolvePatchUserLogin(row) {
 
 async function handleCleanExpired() {
   try {
-    await ElMessageBox.confirm('确认要清理系统中所有已经过期的补丁分配记录吗？', '清理警告', {
+    await ElMessageBox.confirm(t('settings.patchAssignment.cleanConfirm'), t('settings.patchAssignment.cleanWarning'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning'
@@ -282,11 +283,11 @@ async function handleCleanExpired() {
 
     const res = await patchAssignmentApi.cleanExpired()
     const count = res?.data?.cleaned || 0
-    ElMessage.success(`清理成功，共清理了 ${count} 条记录`)
+    ElMessage.success(t('settings.patchAssignment.cleaned', { count }))
   } catch (error) {
     if (error !== 'cancel') {
       console.error('Failed to clean expired patch assignments:', error)
-      ElMessage.error('清理失败')
+      ElMessage.error(t('settings.patchAssignment.cleanFailed'))
     }
   }
 }
@@ -294,7 +295,7 @@ async function handleCleanExpired() {
 function handleAssignPatch(row) {
   const login = resolvePatchUserLogin(row)
   if (!login) {
-    ElMessage.warning('当前用户缺少登录名，无法分配补丁')
+    ElMessage.warning(t('settings.patchAssignment.noLoginAssign'))
     return
   }
 
@@ -305,7 +306,7 @@ function handleAssignPatch(row) {
 function handleViewPatchRecords(row) {
   const login = resolvePatchUserLogin(row)
   if (!login) {
-    ElMessage.warning('当前用户缺少登录名，无法查看补丁分配记录')
+    ElMessage.warning(t('settings.patchAssignment.noLoginRecords'))
     return
   }
 
