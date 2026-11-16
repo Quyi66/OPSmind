@@ -1,5 +1,5 @@
 <template>
-  <div class="module-side-menu-wrapper" :class="{ 'is-collapsed': isCollapsed }">
+  <div class="module-side-menu-wrapper" :class="{ 'is-collapsed': isCollapsed, 'is-english': isEnglish }">
     <!-- 头部插槽区域 -->
     <slot name="header" />
 
@@ -14,7 +14,10 @@
       <!-- 首页（可选） -->
       <el-menu-item v-if="showHome" index="home" @click="handleHomeClick">
         <el-icon><i class="fas fa-home" /></el-icon>
-        <template #title>{{ t('common.home') }}</template>
+        <template #title>
+          <span v-if="isEnglish" class="menu-label">{{ t('common.home') }}</span>
+          <template v-else>{{ t('common.home') }}</template>
+        </template>
       </el-menu-item>
 
       <!-- 单一分组模式：直接展示子菜单作为一级菜单 -->
@@ -25,7 +28,10 @@
           :index="`${menuGroups[0].code}::${item.key}`"
         >
           <el-icon><i :class="item.icon" /></el-icon>
-          <template #title>{{ item.label }}</template>
+          <template #title>
+            <span v-if="isEnglish" class="menu-label">{{ item.label }}</span>
+            <template v-else>{{ item.label }}</template>
+          </template>
         </el-menu-item>
       </template>
 
@@ -36,7 +42,7 @@
           <el-sub-menu v-if="group.children && group.children.length > 1" :index="group.code">
             <template #title>
               <el-icon><i :class="group.icon" /></el-icon>
-              <span>{{ group.name }}</span>
+              <span :class="isEnglish ? 'menu-label' : undefined">{{ group.name }}</span>
               <span
                 v-if="getGroupBadgeCount(group) > 0"
                 class="menu-badge-pill"
@@ -54,21 +60,24 @@
               >
                 <template #title>
                   <el-icon v-if="item.icon"><i :class="item.icon" /></el-icon>
-                  <span>{{ item.label }}</span>
+                  <span :class="isEnglish ? 'menu-label' : undefined">{{ item.label }}</span>
                 </template>
                 <el-menu-item
                   v-for="sub in item.children"
                   :key="sub.key"
                   :index="`${group.code}::${item.key}::${sub.key}`"
                 >
-                  <template #title>{{ sub.label }}</template>
+                  <template #title>
+                    <span v-if="isEnglish" class="menu-label">{{ sub.label }}</span>
+                    <template v-else>{{ sub.label }}</template>
+                  </template>
                 </el-menu-item>
               </el-sub-menu>
 
               <!-- 正常的二级菜单 -->
               <el-menu-item v-else :index="`${group.code}::${item.key}`">
                 <template #title>
-                  <span>{{ item.label }}</span>
+                  <span :class="isEnglish ? 'menu-label' : undefined">{{ item.label }}</span>
                   <span
                     v-if="badgeCounts[`${group.code}::${item.key}`] > 0"
                     class="menu-badge-pill"
@@ -86,13 +95,19 @@
             :index="`${group.code}::${group.children[0].key}`"
           >
             <el-icon><i :class="group.icon || group.children[0].icon" /></el-icon>
-            <template #title>{{ group.name }}</template>
+            <template #title>
+              <span v-if="isEnglish" class="menu-label">{{ group.name }}</span>
+              <template v-else>{{ group.name }}</template>
+            </template>
           </el-menu-item>
 
           <!-- 没有子菜单的情况：直接使用 el-menu-item -->
           <el-menu-item v-else :index="group.code">
             <el-icon><i :class="group.icon" /></el-icon>
-            <template #title>{{ group.name }}</template>
+            <template #title>
+              <span v-if="isEnglish" class="menu-label">{{ group.name }}</span>
+              <template v-else>{{ group.name }}</template>
+            </template>
           </el-menu-item>
         </template>
       </template>
@@ -111,7 +126,7 @@ import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import { useMenuStore } from '@/stores/menu.js'
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 
 const props = defineProps({
   // 菜单组数据
@@ -142,6 +157,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['select', 'home-click', 'collapse-change'])
+const isEnglish = computed(() => currentLocale.value === 'en-US')
 
 const route = useRoute()
 const router = useRouter()
@@ -316,6 +332,37 @@ function getGroupBadgeCount(group) {
   &.is-collapsed {
     width: 64px;
     min-width: 64px;
+  }
+
+  &.is-english:not(.is-collapsed) {
+    width: 256px;
+    min-width: 256px;
+
+    .module-side-menu :deep(.el-menu-item),
+    .module-side-menu :deep(.el-sub-menu__title) {
+      height: auto;
+      min-height: 44px;
+      line-height: 1.5;
+      padding-top: 10px;
+      padding-bottom: 10px;
+      white-space: normal;
+    }
+
+    .module-side-menu :deep(.el-sub-menu__title) {
+      padding-right: 30px;
+    }
+
+    :deep(.el-icon) {
+      flex-shrink: 0;
+    }
+
+    .menu-label {
+      flex: 1;
+      min-width: 0;
+      white-space: normal;
+      word-break: normal;
+      overflow-wrap: break-word;
+    }
   }
 }
 

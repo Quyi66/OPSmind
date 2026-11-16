@@ -145,6 +145,66 @@
   margin-bottom: 8px;
 }
 
+// Long English labels need room to wrap within the shared inline toolbars.
+html[lang='en-US'] {
+  .ops-filter-bar {
+    min-width: 0;
+
+    .el-form--inline {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .el-form--inline > .el-form-item {
+      flex-wrap: wrap;
+      margin-right: 0;
+      max-width: 100%;
+      min-width: 0;
+    }
+
+    .el-form-item__label {
+      width: auto !important;
+      height: auto;
+      min-height: 32px;
+      align-items: center;
+      white-space: normal;
+      word-break: normal;
+      line-height: 1.5 !important;
+    }
+
+    .el-form-item__content {
+      min-width: 0;
+    }
+
+    .el-input,
+    .el-select {
+      max-width: 100%;
+    }
+  }
+
+  .ops-action-bar > .el-button {
+    margin-left: 0;
+    max-width: 100%;
+    min-height: 32px;
+    height: auto !important;
+    white-space: normal;
+
+    > span {
+      min-width: 0;
+      gap: 6px;
+      white-space: normal;
+    }
+
+    .el-icon,
+    i {
+      flex-shrink: 0;
+    }
+  }
+}
+
 // 表格区域
 .ops-table-wrapper {
   flex: 1;

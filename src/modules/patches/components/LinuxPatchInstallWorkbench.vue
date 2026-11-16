@@ -1,7 +1,7 @@
 <template>
   <div
     class="ops-page-layout linux-patch-install-page"
-    :class="embedded ? 'linux-patch-install-page--embedded' : 'ops-page-layout--page-scroll'"
+    :class="[embedded ? 'linux-patch-install-page--embedded' : 'ops-page-layout--page-scroll', { 'is-english': isEnglish }]"
   >
     <!-- 顶部 Tab 导航 -->
     <div class="nav-tabs">
@@ -170,6 +170,7 @@
           v-loading="hostLoading"
           :data="hostTableData"
           class="natural-height-table"
+          :class="{ 'host-inventory-table': isEnglish }"
           style="width: 100%"
           @select="handleHostTableSelect"
           @select-all="handleHostTableSelect"
@@ -182,10 +183,16 @@
               </el-link>
             </template>
           </el-table-column>
-          <el-table-column prop="num_critical" width="80">
+          <el-table-column prop="num_critical" :width="isEnglish ? undefined : 80" :min-width="isEnglish ? 128 : undefined">
             <template #header>
-              {{ t('patches.catalog.critical') }}
-              <i class="fa fa-circle text-danger" />
+              <span v-if="isEnglish" class="severity-heading">
+                {{ t('patches.catalog.critical') }}
+                <i class="fa fa-circle text-danger" />
+              </span>
+              <template v-else>
+                {{ t('patches.catalog.critical') }}
+                <i class="fa fa-circle text-danger" />
+              </template>
             </template>
             <template #default="{ row }">
               <button
@@ -199,10 +206,16 @@
               </button>
             </template>
           </el-table-column>
-          <el-table-column prop="num_important" width="80">
+          <el-table-column prop="num_important" :width="isEnglish ? undefined : 80" :min-width="isEnglish ? 128 : undefined">
             <template #header>
-              {{ t('patches.catalog.important') }}
-              <i class="fa fa-circle text-warning" />
+              <span v-if="isEnglish" class="severity-heading">
+                {{ t('patches.catalog.important') }}
+                <i class="fa fa-circle text-warning" />
+              </span>
+              <template v-else>
+                {{ t('patches.catalog.important') }}
+                <i class="fa fa-circle text-warning" />
+              </template>
             </template>
             <template #default="{ row }">
               <button
@@ -216,10 +229,16 @@
               </button>
             </template>
           </el-table-column>
-          <el-table-column prop="num_moderate" width="80">
+          <el-table-column prop="num_moderate" :width="isEnglish ? undefined : 80" :min-width="isEnglish ? 128 : undefined">
             <template #header>
-              {{ t('patches.catalog.moderate') }}
-              <i class="fa fa-circle text-dark" />
+              <span v-if="isEnglish" class="severity-heading">
+                {{ t('patches.catalog.moderate') }}
+                <i class="fa fa-circle text-dark" />
+              </span>
+              <template v-else>
+                {{ t('patches.catalog.moderate') }}
+                <i class="fa fa-circle text-dark" />
+              </template>
             </template>
             <template #default="{ row }">
               <button
@@ -233,10 +252,16 @@
               </button>
             </template>
           </el-table-column>
-          <el-table-column prop="num_low" width="80">
+          <el-table-column prop="num_low" :width="isEnglish ? undefined : 80" :min-width="isEnglish ? 96 : undefined">
             <template #header>
-              {{ t('patches.linux.low') }}
-              <i class="fa fa-circle text-info" />
+              <span v-if="isEnglish" class="severity-heading">
+                {{ t('patches.linux.low') }}
+                <i class="fa fa-circle text-info" />
+              </span>
+              <template v-else>
+                {{ t('patches.linux.low') }}
+                <i class="fa fa-circle text-info" />
+              </template>
             </template>
             <template #default="{ row }">
               <button
@@ -250,7 +275,7 @@
               </button>
             </template>
           </el-table-column>
-          <el-table-column :label="t('patches.linux.restartRequirement')" width="100">
+          <el-table-column :label="t('patches.linux.restartRequirement')" :width="isEnglish ? undefined : 100" :min-width="isEnglish ? 168 : undefined">
             <template #default="{ row }">
               {{ row.need_reboot === 1 ? t('patches.linux.restartRequired') : row.need_reboot === 0 ? t('patches.linux.noRestartRequired') : t('common.unknown') }}
             </template>
@@ -283,9 +308,28 @@
               {{ formatDateTime(row.scan_timestamp) }}
             </template>
           </el-table-column>
-          <el-table-column :label="t('common.actions')" width="130" fixed="right">
+          <el-table-column :label="t('common.actions')" :width="isEnglish ? 200 : 130" fixed="right">
             <template #default="{ row }">
+              <div v-if="isEnglish" class="host-row-actions">
+                <el-button
+                  text
+                  type="primary"
+                  :disabled="hostLoading"
+                  @click="handleInstallHost(row)"
+                >
+                  {{ t('patches.linux.installPatches') }}
+                </el-button>
+                <el-button
+                  text
+                  type="primary"
+                  :disabled="hostLoading || rescanLoading || scanLoading"
+                  @click="handleScanHost(row)"
+                >
+                  {{ t('patches.linux.scan') }}
+                </el-button>
+              </div>
               <el-button
+                v-if="!isEnglish"
                 text
                 type="primary"
                 :disabled="hostLoading"
@@ -294,6 +338,7 @@
                 {{ t('patches.linux.installPatches') }}
               </el-button>
               <el-button
+                v-if="!isEnglish"
                 text
                 type="primary"
                 :disabled="hostLoading || rescanLoading || scanLoading"
@@ -579,7 +624,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 import { message, messageRef } from '@/core/i18n/feedback'
 import { ref, reactive, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -615,6 +660,7 @@ const props = defineProps({
   sourceRouteName: { type: String, default: 'patches-machineScan' }
 })
 const emit = defineEmits(['installed', 'scan-host'])
+const isEnglish = computed(() => currentLocale.value === 'en-US')
 
 // Router & Route
 const route = useRoute()
@@ -1519,6 +1565,43 @@ defineExpose({ refresh, refreshHosts: loadHostData })
   &.is-low {
     background-color: #6c757d;
     color: #fff;
+  }
+}
+.linux-patch-install-page.is-english {
+  .secondary-actions {
+    max-width: 100%;
+  }
+
+  .nav-tabs {
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .nav-tab {
+    max-width: 100%;
+  }
+
+  .host-inventory-table :deep(.cell) {
+    word-break: normal;
+    overflow-wrap: break-word;
+  }
+
+  .severity-heading {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  .host-row-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+
+    .el-button {
+      margin-left: 0;
+    }
   }
 }
 </style>

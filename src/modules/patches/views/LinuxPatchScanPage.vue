@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout ops-page-layout--page-scroll linux-patch-scan-page">
+  <div class="ops-page-layout ops-page-layout--page-scroll linux-patch-scan-page" :class="{ 'is-english': isEnglish }">
     <!-- 内容区域 -->
     <div class="page-content">
       <div class="stats-dashboard">
@@ -304,8 +304,8 @@
                 </a>
               </template>
             </el-table-column>
-            <el-table-column prop="os_distro" :label="t('patches.linux.os')" width="90" />
-            <el-table-column prop="os_major_version" :label="t('patches.linux.osVersion')" width="90" />
+            <el-table-column prop="os_distro" :label="t('patches.linux.os')" :width="isEnglish ? undefined : 90" :min-width="isEnglish ? 160 : undefined" />
+            <el-table-column prop="os_major_version" :label="t('patches.linux.osVersion')" :width="isEnglish ? undefined : 90" :min-width="isEnglish ? 128 : undefined" />
             <el-table-column
               prop="affected_pkgs"
               :label="t('patches.linux.affectedPackages')"
@@ -469,7 +469,7 @@
                 </el-tooltip>
               </template>
             </el-table-column>
-            <el-table-column prop="is_kernel" :label="t('patches.linux.kernel')" width="70">
+            <el-table-column prop="is_kernel" :label="t('patches.linux.kernel')" :width="isEnglish ? undefined : 70" :min-width="isEnglish ? 96 : undefined">
               <template #default="{ row }">
                 <el-tag :type="row.is_kernel === '是' ? 'primary' : 'info'" size="small" round>
                   <i :class="row.is_kernel === '是' ? 'fa fa-check' : 'fa fa-times'" />
@@ -488,12 +488,12 @@
                 </RunLogStatusTag>
               </template>
             </el-table-column>
-            <el-table-column prop="scan_date" :label="t('patches.linux.scanTime')" width="110">
+            <el-table-column prop="scan_date" :label="t('patches.linux.scanTime')" :width="isEnglish ? undefined : 110" :min-width="isEnglish ? 144 : undefined">
               <template #default="{ row }">
                 {{ formatDate(row.scan_date) }}
               </template>
             </el-table-column>
-            <el-table-column :label="t('common.actions')" width="80" fixed="right">
+            <el-table-column :label="t('common.actions')" :width="isEnglish ? 128 : 80" fixed="right">
               <template #default="{ row }">
                 <el-button
                   text
@@ -730,7 +730,7 @@
 </template>
 
 <script setup>
-import { t, i18n } from '@/core/i18n'
+import { t, i18n, currentLocale } from '@/core/i18n'
 import { message, messageRef } from '@/core/i18n/feedback'
 import { ref, reactive, onMounted, computed, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
@@ -779,6 +779,7 @@ import VChart from 'vue-echarts'
 use([CanvasRenderer, BarChart, TooltipComponent, GridComponent])
 
 // Router
+const isEnglish = computed(() => currentLocale.value === 'en-US')
 const router = useRouter()
 const route = useRoute()
 
@@ -821,8 +822,8 @@ const chartOption = computed(() => {
       top: 2,
       right: 42,
       bottom: 2,
-      left: 42,
-      containLabel: false
+      left: isEnglish.value ? 0 : 42,
+      containLabel: isEnglish.value
     },
     tooltip: {
       trigger: 'axis',
@@ -3071,6 +3072,61 @@ defineExpose({
   &:hover {
     color: #66b1ff;
     text-decoration: underline;
+  }
+}
+// English layout overrides leave the verified default layout and breakpoints intact.
+.linux-patch-scan-page.is-english {
+  .stats-dashboard {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  }
+
+  .stat-card {
+    min-width: 0;
+  }
+
+  .compact-card-header {
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+
+  .card-subtitle {
+    margin-left: auto;
+    text-align: right;
+    white-space: normal;
+    overflow-wrap: break-word;
+  }
+
+  .patch-card {
+    grid-template-columns: minmax(0, 1fr) max-content;
+  }
+
+  .vul-card {
+    .vul-content {
+      flex-wrap: wrap;
+    }
+
+    .metric-main {
+      flex-shrink: 0;
+    }
+
+    .vul-sub-metric {
+      min-width: 0;
+      max-width: 100%;
+      white-space: normal;
+      overflow-wrap: break-word;
+
+      i {
+        flex-shrink: 0;
+      }
+    }
+  }
+
+  .host-card .impact-item .impact-header {
+    flex-wrap: wrap;
+
+    .value {
+      margin-left: auto;
+    }
   }
 }
 </style>

@@ -176,12 +176,27 @@ describe('Linux 默认概览直接安装', () => {
     overview.kpiStats.criticalPatchPercent = 20
     overview.kpiStats.importantPatchPercent = 80
     const table = workbench().findAllComponents(ElTable)[0]
+    const tableInstance = table.vm.$.uid
+    const criticalColumn = () => workbench().findAllComponents(ElTableColumn).find(column => column.props('prop') === 'num_critical')
+    const criticalWidth = Number(criticalColumn().props('width'))
+    expect(criticalWidth).toBe(80)
+    expect(criticalColumn().props('minWidth')).toBe('')
+    expect(state().hostTableRef.columns.find(column => column.property === 'num_critical').width).toBe(80)
+    expect(table.find('.severity-heading').exists()).toBe(false)
+    expect(table.find('.host-row-actions').exists()).toBe(false)
+    expect(overview.chartOption.grid).toMatchObject({ left: 42, containLabel: false })
     const selected = table.props('data')[0]
     await table.find('tbody input[type="checkbox"]').setValue(true)
     await nextTick()
     const requests = [api.hosts.mock.calls.length, api.stats.mock.calls.length, api.tags.mock.calls.length]
     await setLocale('en-US', { persist: false })
     await flushPromises()
+    expect(workbench().findAllComponents(ElTable)[0].vm.$.uid).toBe(tableInstance)
+    expect(Number(criticalColumn().props('minWidth'))).toBeGreaterThan(criticalWidth)
+    expect(criticalColumn().props('width')).toBe('')
+    expect(state().hostTableRef.columns.find(column => column.property === 'num_critical').width).toBe('')
+    expect(overview.chartOption.grid).toMatchObject({ left: 0, containLabel: true })
+    expect(table.findAll('.severity-heading').map(heading => heading.text())).toEqual(['Critical', 'Important', 'Moderate', 'Low'])
     expect(overview.chartOption.yAxis.data).toEqual(['Critical', 'High'])
     expect(overview.chartOption.tooltip.formatter([{ dataIndex: 0, name: 'Critical', value: 2 }])).toBe('Critical: 2 (20%)')
     expect(overview.chartOption.tooltip.formatter([{ dataIndex: 1, name: 'High', value: 8 }])).toBe('High: 8 (80%)')
@@ -190,7 +205,56 @@ describe('Linux 默认概览直接安装', () => {
     expect(workbench().text()).toContain('Install patches on selected hosts (1)')
     expect([api.hosts.mock.calls.length, api.stats.mock.calls.length, api.tags.mock.calls.length]).toEqual(requests)
     expect(api.execute).not.toHaveBeenCalled()
+    await table.find('.severity-count').trigger('click')
+    expect(workbench().findComponent({ name: 'HostSeverityPatchDialog' }).props()).toMatchObject({
+      visible: true,
+      host: { host_id: 'host/A' },
+      severity: 'Critical'
+    })
+    await setLocale('zh-CN', { persist: false })
+    await flushPromises()
+    expect(Number(criticalColumn().props('width'))).toBe(criticalWidth)
+    expect(criticalColumn().props('minWidth')).toBe('')
+    expect(state().hostTableRef.columns.find(column => column.property === 'num_critical').width).toBe(80)
+    expect(table.find('.severity-heading').exists()).toBe(false)
+    expect(table.find('.host-row-actions').exists()).toBe(false)
+    expect(overview.chartOption.grid).toMatchObject({ left: 42, containLabel: false })
+    expect(state().hostTableRef.getSelectionRows()).toEqual([selected])
+    expect([api.hosts.mock.calls.length, api.stats.mock.calls.length, api.tags.mock.calls.length]).toEqual(requests)
   })
+  it('漏洞明细的中文固定列宽在英文往返后恢复，筛选和主机选择保持', async () => {
+    await open()
+    await button('一键全选').trigger('click')
+    await button('漏洞明细').trigger('click')
+    await flushPromises()
+    const table = wrapper.findAllComponents(ElTable).find(item => item.classes().includes('header-border-only-table'))
+    const columns = () => table.findAllComponents(ElTableColumn)
+    const column = prop => columns().find(item => item.props('prop') === prop)
+    const widths = { os_distro: 90, os_major_version: 90, is_kernel: 70, scan_date: 110 }
+    for (const [prop, width] of Object.entries(widths)) {
+      expect(Number(column(prop).props('width'))).toBe(width)
+      expect(column(prop).props('minWidth')).toBe('')
+    }
+    const rows = state().batchSelectedHosts
+    const filters = { ...wrapper.vm.$.setupState.vulnFilters }
+    const reads = api.vulnerabilities.mock.calls.length
+    await setLocale('en-US', { persist: false })
+    await flushPromises()
+    for (const [prop, width] of Object.entries(widths)) {
+      expect(column(prop).props('width')).toBe('')
+      expect(Number(column(prop).props('minWidth'))).toBeGreaterThan(width)
+    }
+    await setLocale('zh-CN', { persist: false })
+    await flushPromises()
+    for (const [prop, width] of Object.entries(widths)) {
+      expect(Number(column(prop).props('width'))).toBe(width)
+      expect(column(prop).props('minWidth')).toBe('')
+    }
+    expect(state().batchSelectedHosts).toBe(rows)
+    expect(wrapper.vm.$.setupState.vulnFilters).toEqual(filters)
+    expect(api.vulnerabilities).toHaveBeenCalledTimes(reads)
+  })
+
   it('通用标签保留全部名称并支持多选查询与重置，不提供集群专属筛选', async () => {
     api.tags.mockResolvedValue({ records: ['production', { name: '集群 A' }] })
     await open()
