@@ -6,32 +6,32 @@
         <div class="navbar-left">
           <el-breadcrumb separator="/">
             <el-breadcrumb-item>
-              <a @click="goBack">执行记录</a>
+              <a @click="goBack">{{ t('navigation.pages.cac.results') }}</a>
             </el-breadcrumb-item>
-            <el-breadcrumb-item>{{ jobInfo.templateName || '业务拓扑分析' }}</el-breadcrumb-item>
+            <el-breadcrumb-item>{{ jobInfo.templateName || t('inspection.topology.title') }}</el-breadcrumb-item>
           </el-breadcrumb>
         </div>
         <div class="navbar-right">
           <el-button size="small" @click="downloadImage">
             <i class="fa fa-image" aria-hidden="true"></i>
-            保存拓扑图
+            {{ t('inspection.topology.saveTopology') }}
           </el-button>
           <el-button type="primary" plain size="small" @click="exportExcel">
             <i class="fa fa-file-export" aria-hidden="true"></i>
-            导出报告 (Excel)
+            {{ t('inspection.topology.exportReport') }}
           </el-button>
         </div>
       </nav>
 
       <!-- KPI 指标卡片 -->
       <el-alert v-if="kpiError" :title="kpiError" type="error" :closable="false" show-icon>
-        <el-button link type="primary" @click="loadKpiData">重试</el-button>
+        <el-button link type="primary" @click="loadKpiData">{{ t('common.retry') }}</el-button>
       </el-alert>
 
       <div v-loading="kpiLoading" class="kpi-section-body">
         <div class="kpi-section-heading">
-          <span class="kpi-heading-title">检查指标汇总</span>
-          <span class="kpi-heading-hint">点击任意指标数值可查看对应清单</span>
+          <span class="kpi-heading-title">{{ t('inspection.topology.kpiHeading') }}</span>
+          <span class="kpi-heading-hint">{{ t('inspection.topology.kpiHint') }}</span>
         </div>
         <div class="kpi-container">
           <div
@@ -55,25 +55,25 @@
 
     <!-- 结构图区域 -->
     <el-alert v-if="diagramError" :title="diagramError" type="error" :closable="false" show-icon>
-      <el-button link type="primary" @click="loadDiagramData">重试</el-button>
+      <el-button link type="primary" @click="loadDiagramData">{{ t('common.retry') }}</el-button>
     </el-alert>
 
     <section v-loading="loading" class="diagram-container">
       <div class="diagram-toolbar">
         <div class="diagram-title">
-          <h2>业务服务异常传导拓扑</h2>
+          <h2>{{ t('inspection.topology.diagramHeading') }}</h2>
           <span class="diagram-subtitle">
-            展示一级业务、二级系统与异常巡检项的关联关系（红色胶囊数字代表异常计数）
+            {{ t('inspection.topology.diagramHint') }}
           </span>
         </div>
         <div class="diagram-legend">
           <span class="legend-chip">
             <i class="fas fa-mouse-pointer" aria-hidden="true"></i>
-            双击一级业务节点：查看二级业务汇总
+            {{ t('inspection.topology.primaryHint') }}
           </span>
           <span class="legend-chip">
             <i class="fas fa-hand-pointer" aria-hidden="true"></i>
-            单击二级业务节点：查看异常检查项与主机
+            {{ t('inspection.topology.secondaryHint') }}
           </span>
         </div>
       </div>
@@ -97,13 +97,13 @@
           show-icon
         >
           <el-button link type="primary" @click="showPrimaryDialog(currentPrimaryService, true)">
-            重试
+            {{ t('common.retry') }}
           </el-button>
         </el-alert>
         <div class="filter-bar" style="margin-bottom: 12px">
           <el-input
             v-model="primaryFilterText"
-            placeholder="搜索二级业务名称..."
+            :placeholder="t('inspection.topology.searchServices')"
             clearable
             style="width: 260px"
           >
@@ -114,22 +114,25 @@
         </div>
         <div class="primary-stats">
           <span class="stat-item">
-            二级业务:
-            <strong>{{ primaryStats.count }}</strong>
+            <I18nT keypath="inspection.topology.secondaryCount" :plural="primaryStats.count" :i18n="i18n.global">
+              <template #count><strong>{{ primaryStats.count }}</strong></template>
+            </I18nT>
           </span>
           <span class="stat-item">
-            检查项:
-            <strong>{{ primaryStats.itemTotal }}</strong>
+            <I18nT keypath="inspection.topology.itemCountLabel" :plural="primaryStats.itemTotal" :i18n="i18n.global">
+              <template #count><strong>{{ primaryStats.itemTotal }}</strong></template>
+            </I18nT>
           </span>
           <span class="stat-item">
-            主机:
-            <strong>{{ primaryStats.hostTotal }}</strong>
+            <I18nT keypath="inspection.topology.hostCountSummary" :plural="primaryStats.hostTotal" :i18n="i18n.global">
+              <template #count><strong>{{ primaryStats.hostTotal }}</strong></template>
+            </I18nT>
           </span>
         </div>
         <el-table :data="filteredPrimaryData" max-height="450">
-          <el-table-column prop="name" label="二级业务名称" />
-          <el-table-column prop="contItem" label="检查项失败数" width="120" align="left" />
-          <el-table-column prop="contHost" label="主机数" width="100" align="left" />
+          <el-table-column prop="name" :label="t('inspection.topology.secondaryName')" />
+          <el-table-column prop="contItem" :label="t('inspection.topology.failedItemCount')" min-width="160" align="left" />
+          <el-table-column prop="contHost" :label="t('inspection.topology.hostCountLabel')" width="100" align="left" />
         </el-table>
       </div>
     </el-dialog>
@@ -160,11 +163,11 @@
             )
           "
         >
-          重试
+          {{ t('common.retry') }}
         </el-button>
       </el-alert>
       <el-tabs v-model="secondaryActiveTab" v-loading="secondaryLoading">
-        <el-tab-pane label="按检查项" name="item">
+        <el-tab-pane :label="t('inspection.topology.byItem')" name="item">
           <div
             class="tab-header"
             style="
@@ -174,10 +177,10 @@
               margin-bottom: 10px;
             "
           >
-            <div class="tab-stats">共 {{ itemData.length }} 个检查项</div>
+            <div class="tab-stats">{{ t('inspection.topology.itemCount', { count: itemData.length }) }}</div>
             <el-input
               v-model="secondaryItemFilterText"
-              placeholder="搜索检查项名称..."
+              :placeholder="t('inspection.topology.searchItems')"
               clearable
               style="width: 220px"
               size="small"
@@ -188,8 +191,8 @@
             </el-input>
           </div>
           <el-table :data="filteredItemData" max-height="400">
-            <el-table-column prop="item" label="检查项名称" />
-            <el-table-column label="失败主机数" width="120" align="left">
+            <el-table-column prop="item" :label="t('inspection.report.itemName')" />
+            <el-table-column :label="t('inspection.topology.failedHostCount')" width="120" align="left">
               <template #default="{ row }">
                 <el-button type="danger" size="small" @click="showHostList(row.host)">
                   {{ row.count }}
@@ -198,7 +201,7 @@
             </el-table-column>
           </el-table>
         </el-tab-pane>
-        <el-tab-pane label="按主机" name="host">
+        <el-tab-pane :label="t('inspection.topology.byHost')" name="host">
           <div
             class="tab-header"
             style="
@@ -208,10 +211,10 @@
               margin-bottom: 10px;
             "
           >
-            <div class="tab-stats">共 {{ hostData.length }} 台主机</div>
+            <div class="tab-stats">{{ t('inspection.topology.hostCount', { count: hostData.length }) }}</div>
             <el-input
               v-model="secondaryHostFilterText"
-              placeholder="搜索主机名称..."
+              :placeholder="t('inspection.topology.searchHosts')"
               clearable
               style="width: 220px"
               size="small"
@@ -222,8 +225,8 @@
             </el-input>
           </div>
           <el-table :data="filteredHostData" max-height="400">
-            <el-table-column prop="host" label="主机名" />
-            <el-table-column label="失败检查项数" width="120" align="left">
+            <el-table-column prop="host" :label="t('inspection.topology.hostName')" />
+            <el-table-column :label="t('inspection.topology.failedItems')" min-width="160" align="left">
               <template #default="{ row }">
                 <el-button type="danger" size="small" @click="showItemList(row.item)">
                   {{ row.count }}
@@ -282,7 +285,7 @@
           :closable="false"
           show-icon
         >
-          <el-button link type="primary" @click="handleKpiClick(currentKpi, true)">重试</el-button>
+          <el-button link type="primary" @click="handleKpiClick(currentKpi, true)">{{ t('common.retry') }}</el-button>
         </el-alert>
         <el-table
           v-loading="kpiDialogLoading"
@@ -291,13 +294,13 @@
         >
           <!-- 检查项总数类型 (itemAll): 只显示检查项名称 -->
           <template v-if="kpiDialogType === 'itemAll'">
-            <el-table-column prop="name" label="检查项" min-width="200" />
+            <el-table-column prop="name" :label="t('inspection.report.checkItem')" min-width="200" />
           </template>
 
           <!-- 主机总数类型 (hostAll): 主机 + 成功/失败检查项数 -->
           <template v-else-if="kpiDialogType === 'hostAll'">
-            <el-table-column prop="host_key" label="主机" min-width="180" />
-            <el-table-column label="成功检查项" width="140" align="left">
+            <el-table-column prop="host_key" :label="t('inspection.report.host')" min-width="180" />
+            <el-table-column :label="t('inspection.topology.passedItems')" width="140" align="left">
               <template #default="{ row }">
                 <el-tag type="success" effect="dark" round>
                   <i class="fa fa-check" style="margin-right: 5px"></i>
@@ -305,7 +308,7 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="失败检查项" width="140" align="left">
+            <el-table-column :label="t('inspection.topology.failedItemsLabel')" min-width="160" align="left">
               <template #default="{ row }">
                 <el-tag type="danger" effect="dark" round>
                   <i class="fa fa-times" style="margin-right: 5px"></i>
@@ -319,8 +322,8 @@
           <template
             v-else-if="['hostOkAll', 'hostFailedAll', 'hostCheckAll'].includes(kpiDialogType)"
           >
-            <el-table-column prop="host_key" label="主机" min-width="180" />
-            <el-table-column label="检查状态" width="140" align="left">
+            <el-table-column prop="host_key" :label="t('inspection.report.host')" min-width="180" />
+            <el-table-column :label="t('inspection.report.checkStatus')" width="140" align="left">
               <template #default="{ row }">
                 <el-tag :type="getStatusTagType(row.status)" effect="dark" round>
                   <i :class="['fa', getStatusIcon(row.status)]" style="margin-right: 5px"></i>
@@ -332,9 +335,9 @@
 
           <!-- 检查通过/失败/人工检查 类型 (OK, FAILED, CHECK): 主机 + 检查项 + 状态 + 详情 -->
           <template v-else>
-            <el-table-column prop="host_key" label="主机" min-width="150" />
-            <el-table-column prop="name" label="检查项" min-width="200" />
-            <el-table-column label="检查状态" width="120" align="left">
+            <el-table-column prop="host_key" :label="t('inspection.report.host')" min-width="150" />
+            <el-table-column prop="name" :label="t('inspection.report.checkItem')" min-width="200" />
+            <el-table-column :label="t('inspection.report.checkStatus')" width="120" align="left">
               <template #default="{ row }">
                 <el-tag :type="getStatusTagType(row.status)" effect="dark" round>
                   <i :class="['fa', getStatusIcon(row.status)]" style="margin-right: 5px"></i>
@@ -342,10 +345,10 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="60" align="left" fixed="right">
+            <el-table-column :label="t('common.actions')" min-width="90" align="left" fixed="right">
               <template #default="{ row }">
                 <el-button text type="primary" size="small" @click="showCheckItemDetail(row)">
-                  详情
+                  {{ t('inspection.report.details') }}
                 </el-button>
               </template>
             </el-table-column>
@@ -357,7 +360,7 @@
     <!-- 巡检结果详情弹窗 -->
     <el-dialog
       v-model="checkItemDetailVisible"
-      title="巡检结果"
+      :title="t('inspection.report.results')"
       width="700px"
       destroy-on-close
       :close-on-click-modal="true"
@@ -371,11 +374,11 @@
           show-icon
         >
           <el-button link type="primary" @click="showCheckItemDetail(selectedCheckItem)">
-            重试
+            {{ t('common.retry') }}
           </el-button>
         </el-alert>
         <div class="result-item">
-          <span class="result-label">结果：</span>
+          <span class="result-label">{{ t('inspection.topology.resultLabel') }}</span>
           <el-tag
             v-if="currentCheckItem"
             :type="getStatusTagType(currentCheckItem.status)"
@@ -385,11 +388,11 @@
           </el-tag>
         </div>
         <div class="result-item">
-          <span class="result-label">检查项：</span>
+          <span class="result-label">{{ t('inspection.topology.itemLabel') }}</span>
           <span class="result-value">{{ currentCheckItem?.name || '-' }}</span>
         </div>
         <div class="result-item">
-          <span class="result-label">结果输出：</span>
+          <span class="result-label">{{ t('inspection.topology.outputLabel') }}</span>
         </div>
         <div
           v-if="currentCheckItem?.output != null && currentCheckItem.output !== ''"
@@ -398,7 +401,7 @@
           <pre>{{ currentCheckItem.output }}</pre>
         </div>
         <div v-else class="output-content">
-          <pre class="empty">无输出内容</pre>
+          <pre class="empty">{{ t('inspection.report.noOutput') }}</pre>
         </div>
       </div>
     </el-dialog>
@@ -406,6 +409,9 @@
 </template>
 
 <script setup>
+import { t, i18n, currentLocale } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
+import { I18nT } from 'vue-i18n'
 import {
   ref,
   computed,
@@ -446,8 +452,8 @@ const currentJobId = ref('')
 const jobInfo = ref({})
 const diagramData = ref([])
 const kpiList = ref([])
-const kpiError = ref('')
-const diagramError = ref('')
+const kpiError = messageRef('')
+const diagramError = messageRef('')
 const reads = { job: 0, kpi: 0, diagram: 0, primary: 0, secondary: 0, kpiDetail: 0, item: 0 }
 let disposed = false
 let active = true
@@ -462,15 +468,17 @@ function beginRead(key) {
 // 图表相关
 const chartRef = ref(null)
 let chartInstance = null
+const expansionChanges = new Set()
+let restoringExpansion = false
 
 // 一级业务弹窗
 const primaryDialogVisible = ref(false)
-const primaryDialogTitle = ref('')
+const primaryDialogTitle = messageRef('')
 const primaryData = ref([])
 const primaryStats = ref({ count: 0, itemTotal: 0, hostTotal: 0 })
 const primaryFilterText = ref('')
 const primaryLoading = ref(false)
-const primaryError = ref('')
+const primaryError = messageRef('')
 const currentPrimaryService = ref('')
 
 /**
@@ -484,14 +492,14 @@ const filteredPrimaryData = computed(() => {
 
 // 二级业务弹窗
 const secondaryDialogVisible = ref(false)
-const secondaryDialogTitle = ref('')
+const secondaryDialogTitle = messageRef('')
 const secondaryActiveTab = ref('item')
 const itemData = ref([])
 const hostData = ref([])
 const secondaryItemFilterText = ref('')
 const secondaryHostFilterText = ref('')
 const secondaryLoading = ref(false)
-const secondaryError = ref('')
+const secondaryError = messageRef('')
 const currentSecondaryContext = ref({ primaryService: '', secondaryService: '' })
 
 /**
@@ -514,17 +522,17 @@ const filteredHostData = computed(() => {
 
 // 列表弹窗
 const listDialogVisible = ref(false)
-const listDialogTitle = ref('')
+const listDialogTitle = messageRef('')
 const listData = ref([])
 
 // KPI 详情弹窗
 const kpiDialogVisible = ref(false)
-const kpiDialogTitle = ref('')
+const kpiDialogTitle = messageRef('')
 const kpiDialogData = ref([])
 const kpiDialogLoading = ref(false)
 const kpiDialogType = ref('') // KPI 类型，用于动态显示不同列
 const kpiFilterText = ref('')
-const kpiDialogError = ref('')
+const kpiDialogError = messageRef('')
 const currentKpi = ref(null)
 
 /**
@@ -552,14 +560,14 @@ const filteredKpiDialogData = computed(() => {
 const kpiSearchPlaceholder = computed(() => {
   switch (kpiDialogType.value) {
     case 'itemAll':
-      return '输入检查项名称...'
+      return t('inspection.topology.enterItem')
     case 'hostAll':
     case 'hostOkAll':
     case 'hostFailedAll':
     case 'hostCheckAll':
-      return '输入主机 IP 或名称...'
+      return t('inspection.topology.enterHost')
     default:
-      return '输入主机 IP 或 检查项名称...'
+      return t('inspection.topology.enterHostItem')
   }
 })
 
@@ -567,11 +575,11 @@ const kpiSearchPlaceholder = computed(() => {
  * 动态搜索标签
  */
 const kpiSearchLabel = computed(() => {
-  if (kpiDialogType.value === 'itemAll') return '检查项'
+  if (kpiDialogType.value === 'itemAll') return t('inspection.report.checkItem')
   if (['hostAll', 'hostOkAll', 'hostFailedAll', 'hostCheckAll'].includes(kpiDialogType.value)) {
-    return '主机'
+    return t('inspection.report.host')
   }
-  return '关键词'
+  return t('inspection.templates.keyword')
 })
 
 // 巡检结果详情弹窗
@@ -579,7 +587,7 @@ const checkItemDetailVisible = ref(false)
 const checkItemDetailLoading = ref(false)
 const currentCheckItem = ref(null)
 const selectedCheckItem = ref(null)
-const checkItemError = ref('')
+const checkItemError = messageRef('')
 
 for (const [visible, key, pending] of [
   [primaryDialogVisible, 'primary', primaryLoading],
@@ -601,14 +609,14 @@ for (const [visible, key, pending] of [
 
 // KPI 定义
 const kpiDefs = {
-  hostAll: { title: '主机总数', icon: 'fa-laptop', order: 1 },
-  hostOkAll: { title: '主机成功', icon: 'fa-check', order: 2 },
-  hostFailedAll: { title: '主机失败', icon: 'fa-times', order: 3 },
-  hostCheckAll: { title: '主机待检', icon: 'fa-user-md', order: 4 },
-  itemAll: { title: '检查项', icon: 'fa-angle-double-right', order: 5 },
-  OK: { title: '检查通过', icon: 'fa-check', order: 6 },
-  FAILED: { title: '检查失败', icon: 'fa-times', order: 7 },
-  CHECK: { title: '人工检查', icon: 'fa-user-md', order: 8 }
+  hostAll: { get title() { return t('inspection.topology.hostAll') }, icon: 'fa-laptop', order: 1 },
+  hostOkAll: { get title() { return t('inspection.topology.hostOk') }, icon: 'fa-check', order: 2 },
+  hostFailedAll: { get title() { return t('inspection.topology.hostFailed') }, icon: 'fa-times', order: 3 },
+  hostCheckAll: { get title() { return t('inspection.topology.hostCheck') }, icon: 'fa-user-md', order: 4 },
+  itemAll: { get title() { return t('inspection.report.checkItem') }, icon: 'fa-angle-double-right', order: 5 },
+  OK: { get title() { return t('inspection.status.passed') }, icon: 'fa-check', order: 6 },
+  FAILED: { get title() { return t('inspection.status.checkFailed') }, icon: 'fa-times', order: 7 },
+  CHECK: { get title() { return t('inspection.status.manual') }, icon: 'fa-user-md', order: 8 }
 }
 
 /**
@@ -658,11 +666,11 @@ function getStatusIcon(status) {
  */
 function getStatusLabel(status) {
   const labelMap = {
-    OK: '检查通过',
-    FAILED: '检查失败',
-    CHECK: '人工检查',
-    SKIPPING: '已跳过',
-    UNREACHABLE: '无数据'
+    OK: t('inspection.status.passed'),
+    FAILED: t('inspection.status.checkFailed'),
+    CHECK: t('inspection.status.manual'),
+    SKIPPING: t('inspection.status.skipped'),
+    UNREACHABLE: t('inspection.status.noData')
   }
   return labelMap[status] || status || '-'
 }
@@ -702,7 +710,7 @@ async function loadKpiData() {
       const def = kpiDefs[rec.name]
       if (def) {
         list.push({
-          name: def.title,
+          get name() { return def.title },
           value: rec.value,
           icon: def.icon,
           pageParam: rec.name,
@@ -716,7 +724,7 @@ async function loadKpiData() {
     kpiList.value = list
   } catch (error) {
     if (!isCurrent()) return
-    kpiError.value = '加载架构图统计失败，请重试'
+    kpiError.value = message('inspection.topology.kpiFailed')
     console.error('加载 KPI 数据失败:', error)
   } finally {
     if (isCurrent()) kpiLoading.value = false
@@ -740,9 +748,9 @@ async function loadDiagramData() {
     renderChart()
   } catch (error) {
     if (!isCurrent()) return
-    diagramError.value = '加载架构图失败，请重试'
+    diagramError.value = message('inspection.topology.diagramFailed')
     console.error('加载结构图失败:', error)
-    ElMessage.error('加载结构图失败')
+    ElMessage.error(t('inspection.topology.diagramLoadFailed'))
   } finally {
     if (isCurrent()) loading.value = false
   }
@@ -751,6 +759,50 @@ async function loadDiagramData() {
 /**
  * 渲染 ECharts 图表
  */
+function createChartToolbox() {
+  return {
+    show: true,
+    feature: {
+      restore: { show: true, title: t('inspection.topology.restore') },
+      saveAsImage: {
+        show: true,
+        title: t('inspection.topology.saveImage'),
+        lang: [t('inspection.topology.saveImageHint')]
+      }
+    }
+  }
+}
+
+function rememberExpansion(event) {
+  if (restoringExpansion) return
+  for (const payload of event.batch || [event]) {
+    if (payload.seriesIndex != null && payload.seriesIndex !== 0) continue
+    const index = payload.dataIndex
+    if (!Number.isInteger(index)) continue
+    if (expansionChanges.has(index)) expansionChanges.delete(index)
+    else expansionChanges.add(index)
+  }
+}
+
+// ECharts rebuilds tree data even for a toolbox-only option update. Replay the
+// user's expansion changes through public actions without changing backend nodes.
+watch(currentLocale, () => {
+  if (chartInstance && active && !disposed) {
+    chartInstance.setOption({ toolbox: createChartToolbox() })
+    if (expansionChanges.size) {
+      restoringExpansion = true
+      try {
+        chartInstance.dispatchAction({
+          type: 'treeExpandAndCollapse',
+          batch: [...expansionChanges].map(dataIndex => ({ seriesIndex: 0, dataIndex }))
+        })
+      } finally {
+        restoringExpansion = false
+      }
+    }
+  }
+})
+
 function renderChart() {
   if (!chartRef.value) return
 
@@ -784,13 +836,7 @@ function renderChart() {
   }
 
   const option = {
-    toolbox: {
-      show: true,
-      feature: {
-        restore: { show: true },
-        saveAsImage: { show: true }
-      }
-    },
+    toolbox: createChartToolbox(),
     series: [
       {
         type: 'tree',
@@ -898,11 +944,16 @@ function renderChart() {
     ]
   }
 
+  expansionChanges.clear()
   chartInstance.setOption(option)
 
   // 绑定事件
   chartInstance.off('click')
   chartInstance.off('dblclick')
+  chartInstance.off('treeExpandAndCollapse')
+  chartInstance.off('restore')
+  chartInstance.on('treeExpandAndCollapse', rememberExpansion)
+  chartInstance.on('restore', () => expansionChanges.clear())
 
   // 双击一级业务节点
   chartInstance.on('dblclick', params => {
@@ -929,7 +980,7 @@ async function showPrimaryDialog(primaryService, preserveSearch = false) {
   currentPrimaryService.value = primaryService
   // 重置搜索
   if (!preserveSearch) primaryFilterText.value = ''
-  primaryDialogTitle.value = `${primaryService} - 二级业务列表`
+  primaryDialogTitle.value = message('inspection.topology.primaryTitle', { service: primaryService })
   primaryDialogVisible.value = true
   primaryLoading.value = true
   primaryError.value = ''
@@ -951,9 +1002,9 @@ async function showPrimaryDialog(primaryService, preserveSearch = false) {
     }
   } catch (error) {
     if (!isCurrent() || !primaryDialogVisible.value) return
-    primaryError.value = '获取一级业务详情失败，请重试'
+    primaryError.value = message('inspection.topology.primaryFailed')
     console.error('获取一级业务详情失败:', error)
-    ElMessage.error('获取详情失败')
+    ElMessage.error(t('inspection.report.detailsFailed'))
   } finally {
     if (isCurrent() && primaryDialogVisible.value) primaryLoading.value = false
   }
@@ -971,7 +1022,7 @@ async function showSecondaryDialog(primaryService, secondaryService, preserveSea
     secondaryHostFilterText.value = ''
     secondaryActiveTab.value = 'item'
   }
-  secondaryDialogTitle.value = `${secondaryService} - 详情`
+  secondaryDialogTitle.value = message('inspection.topology.detailsTitle', { name: secondaryService })
   secondaryDialogVisible.value = true
   secondaryLoading.value = true
   secondaryError.value = ''
@@ -990,9 +1041,9 @@ async function showSecondaryDialog(primaryService, secondaryService, preserveSea
     hostData.value = data.hostLists || []
   } catch (error) {
     if (!isCurrent() || !secondaryDialogVisible.value) return
-    secondaryError.value = '获取二级业务详情失败，请重试'
+    secondaryError.value = message('inspection.topology.secondaryFailed')
     console.error('获取二级业务详情失败:', error)
-    ElMessage.error('获取详情失败')
+    ElMessage.error(t('inspection.report.detailsFailed'))
   } finally {
     if (isCurrent() && secondaryDialogVisible.value) secondaryLoading.value = false
   }
@@ -1004,7 +1055,7 @@ async function showSecondaryDialog(primaryService, secondaryService, preserveSea
 function showHostList(hostStr) {
   if (!hostStr) return
   const hosts = hostStr.split(',').map(h => ({ name: h.trim() }))
-  listDialogTitle.value = '主机列表'
+  listDialogTitle.value = message('inspection.topology.hostList')
   listData.value = hosts
   listDialogVisible.value = true
 }
@@ -1015,7 +1066,7 @@ function showHostList(hostStr) {
 function showItemList(itemStr) {
   if (!itemStr) return
   const items = itemStr.split(',').map(i => ({ name: i.trim() }))
-  listDialogTitle.value = '检查项列表'
+  listDialogTitle.value = message('inspection.topology.itemList')
   listData.value = items
   listDialogVisible.value = true
 }
@@ -1036,7 +1087,7 @@ async function handleKpiClick(item, preserveSearch = false) {
   kpiDialogError.value = ''
 
   kpiDialogType.value = item.pageParam
-  kpiDialogTitle.value = `${item.name} - 详情`
+  kpiDialogTitle.value = message('inspection.topology.detailsTitle', () => ({ name: item.name }))
   kpiDialogVisible.value = true
   kpiDialogLoading.value = true
   kpiDialogData.value = []
@@ -1063,9 +1114,9 @@ async function handleKpiClick(item, preserveSearch = false) {
     kpiDialogData.value = data.records || []
   } catch (error) {
     if (!isCurrent() || !kpiDialogVisible.value) return
-    kpiDialogError.value = '获取统计详情失败，请重试'
+    kpiDialogError.value = message('inspection.topology.kpiDetailFailed')
     console.error('获取 KPI 详情失败:', error)
-    ElMessage.error('获取详情失败')
+    ElMessage.error(t('inspection.report.detailsFailed'))
   } finally {
     if (isCurrent() && kpiDialogVisible.value) kpiDialogLoading.value = false
   }
@@ -1105,7 +1156,7 @@ async function showCheckItemDetail(row) {
     }
   } catch (error) {
     if (!isCurrent() || !checkItemDetailVisible.value) return
-    checkItemError.value = '获取检查项详情失败，当前仅显示已有信息，请重试'
+    checkItemError.value = message('inspection.topology.itemFailed')
     console.error('获取检查项详情失败:', error)
     // 即使失败也显示基本信息
   } finally {
@@ -1127,7 +1178,7 @@ function downloadImage() {
 
   const link = document.createElement('a')
   link.href = url
-  link.download = `${jobInfo.value.templateName || '架构图'}.png`
+  link.download = `${jobInfo.value.templateName || t('inspection.topology.imageName')}.png`
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
@@ -1152,7 +1203,7 @@ async function exportExcel() {
     })
 
     if (!response.ok) {
-      throw new Error('下载失败')
+      throw new Error(t('inspection.report.downloadFailed'))
     }
 
     const blob = await response.blob()
@@ -1163,16 +1214,16 @@ async function exportExcel() {
 
     const link = document.createElement('a')
     link.href = downloadUrl
-    link.download = `${jobInfo.value.templateName || '巡检结果'}${datetime}.xlsx`
+    link.download = `${jobInfo.value.templateName || t('inspection.report.results')}${datetime}.xlsx`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     window.URL.revokeObjectURL(downloadUrl)
 
-    ElMessage.success('导出成功')
+    ElMessage.success(t('inspection.report.exportSucceeded'))
   } catch (error) {
     console.error('导出 Excel 失败:', error)
-    ElMessage.error('导出失败')
+    ElMessage.error(t('inspection.report.exportFailed'))
   }
 }
 
@@ -1247,7 +1298,7 @@ function extractJobId() {
  */
 function initData() {
   if (!currentJobId.value) {
-    ElMessage.error('缺少任务ID')
+    ElMessage.error(t('inspection.report.jobIdMissing'))
     goBack()
     return
   }
@@ -1258,6 +1309,7 @@ function initData() {
   diagramData.value = []
   kpiError.value = ''
   diagramError.value = ''
+  expansionChanges.clear()
   chartInstance?.clear()
 
   // 加载数据
