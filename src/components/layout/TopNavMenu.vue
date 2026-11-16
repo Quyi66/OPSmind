@@ -1,5 +1,5 @@
 <template>
-  <div class="top-nav-wrapper" :class="{ 'is-home': props.isHomeRoute }">
+  <div class="top-nav-wrapper" :class="{ 'is-home': props.isHomeRoute, 'is-english': isEnglish }">
     <!-- Header -->
     <header class="top-nav-header">
       <div class="nav-container">
@@ -10,8 +10,20 @@
             <span class="brand-name">KoreOPS</span>
           </div>
 
+          <button
+            v-if="isEnglish && navigationOverflows"
+            type="button"
+            class="nav-scroll-arrow"
+            :disabled="navigationAtStart"
+            :aria-label="t('common.previousNavigationItems')"
+            aria-controls="primary-desktop-navigation"
+            @click="scrollDesktopNavigation(-1)"
+          >
+            <el-icon><ArrowLeft /></el-icon>
+          </button>
+
           <!-- Navigation Menu -->
-          <nav class="nav-menu">
+          <nav id="primary-desktop-navigation" ref="desktopNavigation" class="nav-menu" @scroll="updateNavigationBounds">
             <!-- 首页菜单项 -->
             <a
               href="#"
@@ -53,6 +65,18 @@
             </a>
           </nav>
 
+          <button
+            v-if="isEnglish && navigationOverflows"
+            type="button"
+            class="nav-scroll-arrow"
+            :disabled="navigationAtEnd"
+            :aria-label="t('common.nextNavigationItems')"
+            aria-controls="primary-desktop-navigation"
+            @click="scrollDesktopNavigation(1)"
+          >
+            <el-icon><ArrowRight /></el-icon>
+          </button>
+
           <!-- Mobile Menu Button -->
           <button
             @click="toggleMobileMenu"
@@ -72,7 +96,6 @@
 
         <!-- Right Side User Area -->
         <div class="nav-right">
-          <LanguageSwitcher />
           <!-- AI OPS Button -->
           <el-tooltip
             content="AI OPS"
@@ -160,6 +183,8 @@
               </el-icon>
             </button>
           </el-tooltip>
+
+          <LanguageSwitcher class="header-language-switcher" />
 
           <!-- About Dropdown: hover/click 展开，包含“帮助”和“关于” -->
           <!-- <el-dropdown trigger="hover" @command="handleAboutCommand" class="about-dropdown">
@@ -266,7 +291,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { appUrlManager } from '@/config/module-urls.config'
@@ -283,12 +308,14 @@ import {
   Check,
   QuestionFilled,
   Sunny,
-  Moon
+  Moon,
+  ArrowLeft,
+  ArrowRight
 } from '@element-plus/icons-vue'
 import NotificationPopover from '@/components/layout/NotificationPopover.vue'
 import { useTheme } from '@/composables/useTheme'
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher.vue'
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 import { toggleAiOpsPanel, prewarmAiOpsPanel, disposeAiOpsPanel } from '@/utils/ai-ops-panel'
 
 // 导入菜单图标
@@ -323,6 +350,50 @@ const props = defineProps({
 const homeMenu = computed(() => menuStore.homeMenu)
 const menuGroups = computed(() => menuStore.menuGroups)
 const activeGroup = computed(() => menuStore.activeGroup)
+const isEnglish = computed(() => currentLocale.value === 'en-US')
+const desktopNavigation = ref(null)
+const navigationOverflows = ref(false)
+const navigationAtStart = ref(true)
+const navigationAtEnd = ref(true)
+let navigationResizeObserver
+
+function updateNavigationBounds() {
+  const nav = desktopNavigation.value
+  if (!isEnglish.value || !nav?.clientWidth) {
+    navigationOverflows.value = false
+    navigationAtStart.value = true
+    navigationAtEnd.value = true
+    return
+  }
+  navigationOverflows.value = nav.scrollWidth > nav.clientWidth + 1
+  navigationAtStart.value = nav.scrollLeft <= 1
+  navigationAtEnd.value = nav.scrollLeft + nav.clientWidth >= nav.scrollWidth - 1
+}
+
+function scrollDesktopNavigation(direction) {
+  const nav = desktopNavigation.value
+  if (nav) nav.scrollBy({ left: direction * nav.clientWidth * 0.75, behavior: 'smooth' })
+}
+
+watch([currentLocale, menuGroups, activeGroup], async () => {
+  await nextTick()
+  if (isEnglish.value) desktopNavigation.value?.querySelector('.nav-item-active')?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
+  updateNavigationBounds()
+})
+
+onMounted(() => {
+  if (typeof ResizeObserver === 'function') {
+    navigationResizeObserver = new ResizeObserver(updateNavigationBounds)
+    if (desktopNavigation.value) navigationResizeObserver.observe(desktopNavigation.value)
+  }
+  window.addEventListener('resize', updateNavigationBounds)
+  void nextTick(updateNavigationBounds)
+})
+
+onUnmounted(() => {
+  navigationResizeObserver?.disconnect()
+  window.removeEventListener('resize', updateNavigationBounds)
+})
 
 const accountFullName = ref('')
 const userAvatarUrl = ref('')
@@ -1207,6 +1278,53 @@ onUnmounted(() => {
 
   .ai-ops-simple {
     height: 1.75rem;
+  }
+}
+.header-language-switcher {
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+  padding-left: 0.5rem;
+  border-left: 1px solid var(--el-border-color-light);
+}
+
+.top-nav-wrapper.is-english {
+  .nav-left {
+    gap: 0.625rem;
+  }
+
+  .nav-item {
+    gap: 0.375rem;
+    margin: 0 0.0625rem;
+    padding: 0.3rem 0.375rem;
+  }
+
+  .nav-text {
+    font-size: 0.875rem;
+  }
+
+  .nav-scroll-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 24px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid var(--el-border-color-light);
+    border-radius: 4px;
+    color: var(--el-text-color-primary);
+    background: var(--el-bg-color);
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--el-color-primary);
+      outline-offset: 2px;
+    }
   }
 }
 </style>

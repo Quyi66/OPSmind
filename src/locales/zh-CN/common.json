@@ -71,5 +71,7 @@
   "view": "查看",
   "copy": "复制",
   "updateAvailable": "发现新版本",
-  "updateAvailableDescription": "系统已更新，请刷新页面以获取最新功能。"
+  "updateAvailableDescription": "系统已更新，请刷新页面以获取最新功能。",
+  "previousNavigationItems": "查看前面的导航项",
+  "nextNavigationItems": "查看后面的导航项"
 }

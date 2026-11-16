@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { defineComponent, ref } from 'vue'
-import { setLocale } from '@/core/i18n'
+import { setLocale, t } from '@/core/i18n'
 import { useAssetWorkbenchDrawers } from '@/modules/asset/composables/useAssetWorkbenchDrawers'
 import OsVersionDialog from '@/modules/asset/components/overview/OsVersionDialog.vue'
 import Page from '@/modules/asset/views/AssetOverviewPage.vue'
@@ -147,6 +147,15 @@ describe('asset workbench language changes', () => {
       series: [{ name: 'Version distribution', data: [17] }]
     })
   })
+  it('uses singular English quantities for one asset type or team', async () => {
+    await setLocale('en-US', { persist: false })
+    expect(t('asset.assetTypeCount', { count: 1 })).toBe('1 asset type')
+    expect(t('asset.assetTypeCount', { count: 2 })).toBe('2 asset types')
+    expect(t('asset.teamCount', { count: 1 })).toBe('1 team')
+    expect(t('asset.teamCount', { count: 0 })).toBe('0 teams')
+    expect(t('asset.teamCount', { count: 2 })).toBe('2 teams')
+  })
+
   it('keeps workbench selection, drawer search and raw operation codes when switching language', async () => {
     const wrapper = mount(Page, { shallow: true, global: { directives: { loading() {} } } })
     wrappers.push(wrapper)

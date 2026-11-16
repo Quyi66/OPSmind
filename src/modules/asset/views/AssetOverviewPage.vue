@@ -2527,6 +2527,60 @@ html.dark .asset-workbench .aw-asset-card {
     gap: 6px;
   }
 }
+.asset-workbench--english {
+  .aw-metrics-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  }
+
+  .aw-metric-item {
+    min-width: 0;
+    justify-content: flex-start;
+  }
+
+  .aw-metric-item__label {
+    min-height: 2.8em;
+    line-height: 1.4;
+    text-transform: none;
+    overflow-wrap: break-word;
+  }
+
+  .aw-metric-item__value-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .aw-panel__header,
+  .aw-panel__title-group,
+  .aw-panel__header-actions,
+  .aw-asset-card__head {
+    flex-wrap: wrap;
+  }
+
+  .aw-inline-action :deep(> span) {
+    gap: 6px;
+  }
+
+  .aw-recent-assets__grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+    grid-template-rows: none;
+    grid-auto-rows: minmax(148px, auto);
+    align-content: start;
+    min-height: 100%;
+    height: auto;
+  }
+
+  .aw-recent-assets__grid .aw-asset-card {
+    min-height: 148px;
+  }
+
+  .aw-asset-card__os,
+  .aw-asset-card__os-distro {
+    white-space: normal;
+    overflow-wrap: break-word;
+  }
+}
 </style>
 
 <style lang="scss">

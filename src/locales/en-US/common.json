@@ -71,5 +71,7 @@
   "view": "View",
   "copy": "Copy",
   "updateAvailable": "Update available",
-  "updateAvailableDescription": "The system has been updated. Refresh the page to get the latest features."
+  "updateAvailableDescription": "The system has been updated. Refresh the page to get the latest features.",
+  "previousNavigationItems": "Show previous navigation items",
+  "nextNavigationItems": "Show next navigation items"
 }

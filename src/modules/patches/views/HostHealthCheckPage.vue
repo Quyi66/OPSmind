@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout">
+  <div class="ops-page-layout" :class="{ 'is-english': currentLocale === 'en-US' }">
     <!-- 1. 健康概览与状态分布卡片 -->
     <HostHealthSummaryBar
       :summary="summary"
@@ -143,7 +143,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="status" :label="t('asset.health.status')" width="105">
+        <el-table-column prop="status" :label="t('asset.health.status')" :width="currentLocale === 'en-US' ? 160 : 105">
           <template #default="{ row }">
             <el-tag
               :type="getHealthStatusMeta(row.status).tagType"
@@ -161,7 +161,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="score" :label="t('asset.health.score')" width="90">
+        <el-table-column prop="score" :label="t('asset.health.score')" :width="currentLocale === 'en-US' ? 128 : 90">
           <template #default="{ row }">
             <span
               v-if="row.status === 'UNREACHABLE'"
@@ -195,13 +195,13 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="checkTime" :label="t('asset.health.lastCheckTime')" width="180" show-overflow-tooltip>
+        <el-table-column prop="checkTime" :label="t('asset.health.lastCheckTime')" :width="currentLocale === 'en-US' ? 200 : 180" show-overflow-tooltip>
           <template #default="{ row }">
             {{ formatHealthDateTime(row.checkTime) }}
           </template>
         </el-table-column>
 
-        <el-table-column :label="t('common.actions')" width="140" fixed="right">
+        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 196 : 140" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="openHostDetail(row)">
               {{ t('asset.health.details') }}
@@ -260,7 +260,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 
 import { ref, computed, onMounted } from 'vue'
 import { ElMessageBox } from 'element-plus'
@@ -463,6 +463,13 @@ onMounted(() => {
     background-color: #f8fafc;
     border-color: #e2e8f0;
     color: #64748b;
+  }
+}
+.ops-page-layout.is-english {
+  :deep(.el-table .cell),
+  .risk-summary-clamp {
+    word-break: normal;
+    overflow-wrap: break-word;
   }
 }
 </style>

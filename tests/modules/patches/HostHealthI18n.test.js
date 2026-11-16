@@ -61,21 +61,22 @@ afterEach(async () => {
   vi.unstubAllGlobals()
   await setLocale('zh-CN', { persist: false })
 })
-async function open() {
+async function open(realTable = false) {
   const Slot = { template: '<div><slot /><slot name="footer" /></div>' }
   wrapper = mount(Page, {
     shallow: true,
     global: {
+      components: { ElTable, ElTableColumn },
       stubs: {
         HostHealthSummaryBar: false,
         HostHealthDetailDrawer: false,
-        ElTable: defineComponent({
+        'el-table': realTable ? ElTable : defineComponent({
           setup(_, { expose }) {
             expose({ clearSelection: vi.fn() })
             return () => null
           }
         }),
-        ElTableColumn: true,
+        'el-table-column': realTable ? ElTableColumn : true,
         'el-drawer': Slot,
         'el-alert': { props: ['title'], template: '<p>{{ title }}</p>' },
         'el-descriptions': Slot,
@@ -91,6 +92,34 @@ async function open() {
   await flushPromises()
 }
 describe('host health inspection localization', () => {
+  it('restores Chinese health columns after English widening without replacing table, filters or selection', async () => {
+    await open(true)
+    const table = wrapper.findComponent(ElTable)
+    const instance = table.vm.$.uid
+    const vm = wrapper.vm.$.setupState
+    vm.handleSelectionChange(vm.hostList)
+    vm.filters.keyword = '保留查询'
+    const column = prop => table.findAllComponents(ElTableColumn).find(item => item.props('prop') === prop)
+    const widths = { status: 105, score: 90, checkTime: 180 }
+    for (const [prop, width] of Object.entries(widths)) expect(Number(column(prop).props('width'))).toBe(width)
+    expect(wrapper.find('.health-overview').classes()).not.toContain('is-english')
+    await setLocale('en-US', { persist: false })
+    await flushPromises()
+    for (const [prop, width] of Object.entries(widths)) expect(Number(column(prop).props('width'))).toBeGreaterThan(width)
+    expect(wrapper.find('.health-overview').classes()).toContain('is-english')
+    expect(wrapper.find('.meta-title').text()).toBe('Average score of inspected hosts')
+    expect(table.vm.$.uid).toBe(instance)
+    await setLocale('zh-CN', { persist: false })
+    await flushPromises()
+    for (const [prop, width] of Object.entries(widths)) expect(Number(column(prop).props('width'))).toBe(width)
+    expect(vm.filters.keyword).toBe('保留查询')
+    expect(vm.selectedHostIds).toEqual(['原始主机ID'])
+    expect(wrapper.find('.health-overview').classes()).not.toContain('is-english')
+    expect(api.hosts).toHaveBeenCalledTimes(1)
+    expect(api.summary).toHaveBeenCalledTimes(1)
+    expect(api.run).not.toHaveBeenCalled()
+  })
+
   it('updates the real rules table while retaining canonical rule names, thresholds and deductions', async () => {
     wrapper = mount(RulesDialog, {
       global: {

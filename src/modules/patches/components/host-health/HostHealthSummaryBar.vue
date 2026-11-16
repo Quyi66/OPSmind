@@ -1,5 +1,5 @@
 <template>
-  <section v-loading="loading" class="health-overview mb-3" :aria-label="t('asset.health.overview')">
+  <section v-loading="loading" class="health-overview mb-3" :class="{ 'is-english': currentLocale === 'en-US' }" :aria-label="t('asset.health.overview')">
     <!-- 主体：左侧健康评分仪表盘卡片 + 右侧资产统计卡片 -->
     <div class="overview-grid">
       <!-- 1. 顶部健康概览卡片 (仅环形仪表盘使用渐变，其余保持纯净白底) -->
@@ -1053,6 +1053,88 @@ function handleCardClick(value) {
 @media (max-width: 480px) {
   .status-metrics-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.health-overview.is-english {
+  .overview-grid {
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.55fr);
+  }
+
+  .health-score-card,
+  .health-distrib-card {
+    min-width: 0;
+  }
+
+  .score-number-group {
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+
+    .score-dial-unit {
+      margin-left: 0;
+      font-size: 10px;
+      line-height: 1;
+    }
+  }
+
+  .meta-row-header,
+  .meta-row-hosts,
+  .meta-row-run,
+  .distrib-header,
+  .distrib-title-wrap {
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+
+  .meta-title {
+    flex: 1 1 180px;
+    min-width: 0;
+    white-space: normal;
+    line-height: 1.4;
+    overflow-wrap: break-word;
+  }
+
+  .grade-pill-tag {
+    white-space: nowrap;
+  }
+
+  .score-rule-tip-icon {
+    flex-shrink: 0;
+  }
+
+  .hosts-sep {
+    display: none;
+  }
+
+  .meta-row-run {
+    overflow: visible;
+    gap: 4px 6px;
+  }
+
+  .distrib-badge-wrap {
+    max-width: 100%;
+    margin-left: auto;
+  }
+
+  .risk-badge,
+  .safe-badge {
+    white-space: normal;
+    overflow-wrap: break-word;
+  }
+
+  .status-metrics-row {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+  }
+
+  .pill-top-row,
+  .pill-name-wrap {
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 1320px) {
+    .overview-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 }
 </style>
