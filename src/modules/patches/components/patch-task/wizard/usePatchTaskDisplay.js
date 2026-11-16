@@ -27,7 +27,8 @@ export function usePatchTaskDisplay(props) {
       return props.selectionSummaryItems.map((item, index) => ({
         key: item.key || `${props.operationType}-${index}`,
         primary: item.primary || item.patch_id || item.patchId || '-',
-        secondary: item.secondary || ''
+        get secondary() { return item.secondary || '' },
+        getSearchText: item.getSearchText ? locale => item.getSearchText(locale) : undefined
       }))
     }
 

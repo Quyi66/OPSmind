@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    title="安装任务失败主机"
+    :title="t('patches.linux.failedHostsTitle')"
     width="1000px"
     destroy-on-close
     :close-on-click-modal="true"
@@ -9,9 +9,9 @@
   >
     <div v-loading="loading">
       <div class="ops-action-bar">
-        <span v-if="result">失败主机共 {{ failedHostCount }} 台（去重）</span>
+        <span v-if="result">{{ t('patches.linux.failedHostCount', { count: failedHostCount }) }}</span>
         <span class="action-spacer" />
-        <el-button size="small" :loading="loading" @click="load">刷新</el-button>
+        <el-button size="small" :loading="loading" @click="load">{{ t('common.refresh') }}</el-button>
       </div>
       <el-alert
         v-if="errorMessage"
@@ -21,32 +21,32 @@
         show-icon
       />
       <template v-else-if="result">
-        <div class="failed-host-filters" role="search" aria-label="筛选当前任务主机清单">
+        <div class="failed-host-filters" role="search" :aria-label="t('patches.linux.filterTaskHosts')">
           <el-input
             v-model="keyword"
             class="failed-host-search"
             size="small"
-            placeholder="搜索主机/IP或原因"
-            aria-label="搜索主机/IP或原因"
+            :placeholder="t('patches.linux.searchHostReason')"
+            :aria-label="t('patches.linux.searchHostReason')"
             clearable
           />
           <el-select
             v-model="selectedGroup"
             class="failed-host-category"
             size="small"
-            aria-label="主机分类"
+            :aria-label="t('patches.linux.hostCategory')"
           >
-            <el-option label="全部分类" value="all" />
-            <el-option label="预检失败" value="preCheckFailed" />
-            <el-option label="安装失败" value="installFailed" />
-            <el-option label="未下发（无可更新包）" value="skipped" />
+            <el-option :label="t('patches.linux.allCategories')" value="all" />
+            <el-option :label="t('patches.linux.precheckFailed')" value="preCheckFailed" />
+            <el-option :label="t('patches.linux.installFailed')" value="installFailed" />
+            <el-option :label="t('patches.linux.notDispatched')" value="skipped" />
           </el-select>
-          <el-button size="small" :disabled="!hasFilters" @click="clearFilters">清除筛选</el-button>
+          <el-button size="small" :disabled="!hasFilters" @click="clearFilters">{{ t('patches.linux.clearFilters') }}</el-button>
         </div>
         <section v-for="group in filteredGroups" :key="group.key" class="failed-host-group">
-          <h3>{{ group.label }}（显示 {{ group.rows.length }} / 共 {{ group.total }}）</h3>
+          <h3>{{ t('patches.linux.groupShown', { label: group.label, shown: group.rows.length, total: group.total }) }}</h3>
           <p v-if="group.key === 'skipped'" class="skipped-host-hint">
-            未下发主机不计入失败，不参与重新建任务。
+            {{ t('patches.linux.notDispatchedHint') }}
           </p>
           <el-table
             :data="group.rows"
@@ -54,18 +54,18 @@
             size="small"
             :empty-text="
               group.total > 0
-                ? '未匹配到主机或原因，请调整或清除筛选'
+                ? t('patches.linux.noHostReasonMatches')
                 : group.key === 'skipped'
-                  ? '暂无未下发主机'
-                  : '暂无失败主机'
+                  ? t('patches.linux.noUndispatchedHosts')
+                  : t('patches.linux.noFailedHosts')
             "
           >
-            <el-table-column prop="hostKey" label="主机" min-width="160">
+            <el-table-column prop="hostKey" :label="t('execution.ui.host')" min-width="160">
               <template #default="{ row }">{{ row.hostKey || '-' }}</template>
             </el-table-column>
             <el-table-column
               prop="reason"
-              :label="group.key === 'skipped' ? '未下发原因' : '失败原因'"
+              :label="group.key === 'skipped' ? t('patches.linux.notDispatchedReason') : t('patches.linux.failureReason')"
               min-width="360"
             >
               <template #default="{ row }">
@@ -77,12 +77,14 @@
       </template>
     </div>
     <template #footer>
-      <el-button @click="emit('update:modelValue', false)">关闭</el-button>
+      <el-button @click="emit('update:modelValue', false)">{{ t('common.close') }}</el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { patchInstallApi } from '../../../api'
 
@@ -93,18 +95,18 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 const loading = ref(false)
 const result = ref(null)
-const errorMessage = ref('')
+const errorMessage = messageRef('')
 const keyword = ref('')
 const selectedGroup = ref('all')
 let requestId = 0
 
 const failureGroups = computed(() => [
-  { key: 'preCheckFailed', label: '预检失败', rows: result.value?.preCheckFailed || [] },
-  { key: 'installFailed', label: '安装失败', rows: result.value?.installFailed || [] }
+  { key: 'preCheckFailed', get label() { return t('patches.linux.precheckFailed') }, rows: result.value?.preCheckFailed || [] },
+  { key: 'installFailed', get label() { return t('patches.linux.installFailed') }, rows: result.value?.installFailed || [] }
 ])
 const groups = computed(() => [
   ...failureGroups.value,
-  { key: 'skipped', label: '未下发（无可更新包）', rows: result.value?.skipped || [] }
+  { key: 'skipped', get label() { return t('patches.linux.notDispatched') }, rows: result.value?.skipped || [] }
 ])
 const searchTerm = computed(() => keyword.value.trim().toLowerCase())
 const hasFilters = computed(() => Boolean(searchTerm.value) || selectedGroup.value !== 'all')
@@ -141,7 +143,7 @@ async function load() {
   result.value = null
   errorMessage.value = ''
   if (!props.taskId) {
-    errorMessage.value = '当前任务信息不完整，无法查询失败主机'
+    errorMessage.value = message('patches.linux.failedHostsTaskMissing')
     loading.value = false
     return
   }
@@ -153,7 +155,7 @@ async function load() {
   } catch (error) {
     if (id !== requestId) return
     errorMessage.value =
-      error?.response?.status === 404 ? '任务不存在或已删除' : '加载失败主机失败，请点击刷新重试'
+      error?.response?.status === 404 ? message('patches.linux.taskDeleted') : t('patches.linux.failedHostsLoadFailed')
   } finally {
     if (id === requestId) loading.value = false
   }

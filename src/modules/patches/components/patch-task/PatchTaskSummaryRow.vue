@@ -2,17 +2,17 @@
   <div class="patch-task-summary-row">
     <span class="patch-task-summary-row__label">{{ label }}</span>
     <div class="patch-task-summary-row__content">
-      <div v-if="totalCount === 0" class="patch-task-summary-row__empty">{{ emptyText }}</div>
+      <div v-if="totalCount === 0" class="patch-task-summary-row__empty">{{ emptyText ?? t('common.noData') }}</div>
       <template v-else>
         <div v-if="totalCount > searchThreshold" class="patch-task-summary-row__toolbar">
           <el-input
             :model-value="searchText"
-            :placeholder="searchPlaceholder"
+            :placeholder="searchPlaceholder ?? t('patches.linux.searchContent')"
             size="small"
             clearable
             @update:model-value="$emit('update:searchText', $event)"
           />
-          <span>共 {{ totalCount }} {{ unit }}，已显示 {{ items.length }} {{ unit }}</span>
+          <span>{{ t('patches.linux.shownCount', { total: totalCount, unit: unit ?? t('patches.linux.itemUnit'), shown: items.length }) }}</span>
         </div>
         <div
           class="patch-task-summary-row__list"
@@ -36,11 +36,11 @@
             v-if="normalizedItems.length === 0"
             class="patch-task-summary-row__empty is-filtered"
           >
-            {{ noMatchText }}
+            {{ noMatchText ?? t('patches.linux.noMatches') }}
           </div>
           <div v-if="hasMore" class="patch-task-summary-row__more">
             <el-button link type="primary" size="small" @click="$emit('load-more')">
-              加载更多 (已显示 {{ items.length }}/{{ filteredCount }})
+              {{ t('patches.linux.moreShown', { shown: items.length, total: filteredCount }) }}
             </el-button>
           </div>
         </div>
@@ -50,6 +50,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { computed } from 'vue'
 
 const props = defineProps({
@@ -71,11 +72,11 @@ const props = defineProps({
   },
   emptyText: {
     type: String,
-    default: '暂无数据'
+    default: undefined
   },
   noMatchText: {
     type: String,
-    default: '未匹配到相关内容'
+    default: undefined
   },
   searchText: {
     type: String,
@@ -83,7 +84,7 @@ const props = defineProps({
   },
   searchPlaceholder: {
     type: String,
-    default: '搜索内容...'
+    default: undefined
   },
   searchThreshold: {
     type: Number,
@@ -91,7 +92,7 @@ const props = defineProps({
   },
   unit: {
     type: String,
-    default: '个'
+    default: undefined
   },
   hasMore: {
     type: Boolean,

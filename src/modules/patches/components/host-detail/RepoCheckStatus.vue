@@ -11,18 +11,18 @@
       :popper-style="{ maxWidth: 'calc(100vw - 32px)' }"
     >
       <template #reference>
-        <button type="button" class="repo-check-details" aria-label="查看仓库软件包差异详情">
+        <button type="button" class="repo-check-details" :aria-label="t('patches.linux.viewRepoDiff')">
           {{ issueSummary }}
           <el-icon><InfoFilled /></el-icon>
         </button>
       </template>
       <div class="repo-check-popover">
-        <div class="repo-check-heading">仓库软件包检查</div>
+        <div class="repo-check-heading">{{ t('patches.linux.repoPackageCheck') }}</div>
         <div class="repo-check-scroll">
           <section v-if="missingPkgs.length" class="repo-check-section">
             <div class="repo-check-section-title">
-              缺失软件包
-              <span>{{ missingPkgs.length }} 个</span>
+              {{ t('patches.linux.missingPackages') }}
+              <span>{{ missingPkgs.length }} {{ t('patches.linux.itemUnit') }}</span>
             </div>
             <div class="repo-check-packages">
               <span v-for="(pkg, index) in missingPkgs" :key="index" class="repo-check-package">
@@ -32,8 +32,8 @@
           </section>
           <section v-if="outdatedPkgs.length" class="repo-check-section">
             <div class="repo-check-section-title">
-              版本过低
-              <span>{{ outdatedPkgs.length }} 个</span>
+              {{ t('patches.linux.versionsTooOld') }}
+              <span>{{ outdatedPkgs.length }} {{ t('patches.linux.itemUnit') }}</span>
             </div>
             <table class="repo-check-versions">
               <colgroup>
@@ -43,9 +43,9 @@
               </colgroup>
               <thead>
                 <tr>
-                  <th scope="col">软件包</th>
-                  <th scope="col">所需版本</th>
-                  <th scope="col">仓库版本</th>
+                  <th scope="col">{{ t('patches.linux.package') }}</th>
+                  <th scope="col">{{ t('patches.linux.requiredVersion') }}</th>
+                  <th scope="col">{{ t('patches.linux.repoVersion') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -66,6 +66,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { computed } from 'vue'
 import { InfoFilled } from '@element-plus/icons-vue'
 
@@ -82,14 +83,14 @@ const hasIssues = computed(
 )
 const issueSummary = computed(() => {
   const parts = []
-  if (missingPkgs.value.length) parts.push(`缺失 ${missingPkgs.value.length}`)
-  if (outdatedPkgs.value.length) parts.push(`版本过低 ${outdatedPkgs.value.length}`)
+  if (missingPkgs.value.length) parts.push(t('patches.linux.missingCount', { count: missingPkgs.value.length }))
+  if (outdatedPkgs.value.length) parts.push(t('patches.linux.oldVersionCount', { count: outdatedPkgs.value.length }))
   return parts.join(' · ')
 })
 
 const label = computed(() => {
-  if (props.check?.status === 'INSTALLABLE') return '可安装'
-  if (props.check?.status === 'NOT_INSTALLABLE') return '不可安装'
+  if (props.check?.status === 'INSTALLABLE') return t('patches.linux.installable')
+  if (props.check?.status === 'NOT_INSTALLABLE') return t('patches.linux.notInstallable')
   return props.check?.label || '-'
 })
 const tagType = computed(() => {

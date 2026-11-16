@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
+import { setLocale } from '@/core/i18n'
 import { ref } from 'vue'
 import { usePackageList } from '@/modules/patches/composables/usePackageList'
 import PackagesTab from '@/modules/patches/components/host-detail/tabs/PackagesTab.vue'
@@ -55,7 +56,10 @@ async function loadList() {
 }
 
 beforeEach(() => vi.resetAllMocks())
-afterEach(() => wrappers.splice(0).forEach(wrapper => wrapper.unmount()))
+afterEach(async () => {
+  wrappers.splice(0).forEach(wrapper => wrapper.unmount())
+  await setLocale('zh-CN', { persist: false })
+})
 
 describe('主机软件包安装版本与补丁映射', () => {
   it('保留两条真实安装版本，只为匹配版本补充更新信息', async () => {
@@ -157,5 +161,13 @@ describe('主机软件包安装版本与补丁映射', () => {
     await wrapper.vm.$nextTick()
     await wrapper.vm.$nextTick()
     expect(toggleRowSelection.mock.calls).toEqual([[second, true]])
+    const reads = [api.scan.mock.calls.length, api.compatibility.mock.calls.length]
+    const selectedBefore = state.selectedPackages.map(row => row.installedPkg)
+    const rowsBefore = state.packageTableData.map(row => row.installedPkg)
+    await setLocale('en-US', { persist: false })
+    await flushPromises()
+    expect(state.selectedPackages.map(row => row.installedPkg)).toEqual(selectedBefore)
+    expect(state.packageTableData.map(row => row.installedPkg)).toEqual(rowsBefore)
+    expect([api.scan.mock.calls.length, api.compatibility.mock.calls.length]).toEqual(reads)
   })
 })

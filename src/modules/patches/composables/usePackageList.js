@@ -1,3 +1,4 @@
+import { t } from '@/core/i18n'
 import { onBeforeUnmount, ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { patchScanApi, rpmInfoApi } from '../api'
@@ -325,7 +326,7 @@ export function usePackageList(hostId) {
       }
 
       console.error('Failed to load package list:', error)
-      ElMessage.error('获取软件包列表失败')
+      ElMessage.error(t('patches.linux.packageListFailed'))
       packageTableDataAll.value = []
       packageTableData.value = []
       packagePagination.total = 0

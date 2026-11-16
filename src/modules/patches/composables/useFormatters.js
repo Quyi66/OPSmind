@@ -4,7 +4,6 @@
 
 import { formatDateTime as formatDateTimeGlobal } from '@/utils/date'
 import { t } from '@/core/i18n'
-
 // 格式化日期
 export function formatDate(dateStr) {
   if (!dateStr) return '-'
@@ -83,7 +82,7 @@ export function getCveSourceLabel(source) {
   const key = normalizeCveSourceKey(source)
   const labelMap = {
     redhat: 'Red Hat',
-    kylin: t('common.kylin'),
+    get kylin() { return t('common.kylin') },
     suse: 'SUSE',
     ubuntu: 'Ubuntu',
     oracle: 'Oracle',
@@ -127,7 +126,7 @@ export function buildCveSourceOptions(sourceList = [], options = {}) {
   const seen = new Set()
 
   if (includeAll) {
-    items.push({ value: 'all', label: '全部' })
+    items.push({ value: 'all', get label() { return t('common.all') } })
     seen.add('all')
   }
 
@@ -216,10 +215,10 @@ export function getSeverityClass(severity) {
 export function getSeverityLabel(severity) {
   const key = normalizeSeverityKey(severity)
   const labelMap = {
-    critical: t('patches.catalog.critical'),
-    important: t('patches.catalog.important'),
-    moderate: t('patches.catalog.moderate'),
-    low: t('patches.catalog.low')
+    get critical() { return t('patches.catalog.critical') },
+    get important() { return t('patches.catalog.important') },
+    get moderate() { return t('patches.catalog.moderate') },
+    get low() { return t('patches.catalog.low') }
   }
 
   return labelMap[key] || severity || '-'
@@ -243,14 +242,14 @@ export function getPatchStatusType(status) {
 // 获取补丁状态文本
 export function getPatchStatusText(status) {
   const textMap = {
-    已修复: '已修复',
-    未修复: '未修复',
-    修复中: '修复中',
-    修复失败: '修复失败',
-    回滚中: '回滚中',
-    回滚失败: '回滚失败',
-    回滚成功: '回滚成功',
-    '已修复(手动)': '已修复(手动)'
+    get 已修复() { return t('patches.linux.fixed') },
+    get 未修复() { return t('patches.linux.unfixed') },
+    get 修复中() { return t('patches.linux.fixing') },
+    get 修复失败() { return t('patches.linux.fixFailed') },
+    get 回滚中() { return t('patches.linux.rollingBack') },
+    get 回滚失败() { return t('patches.linux.rollbackFailed') },
+    get 回滚成功() { return t('patches.linux.rollbackSucceeded') },
+    get '已修复(手动)'() { return t('patches.linux.manualFixed') }
   }
   return textMap[status] || status
 }

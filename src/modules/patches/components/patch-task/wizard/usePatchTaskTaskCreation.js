@@ -1,4 +1,6 @@
+import { t } from '@/core/i18n'
 import { patchInstallApi } from '../../../api'
+import { createPatchTaskError } from '../../../utils/patchTaskFeedback'
 
 function getPatchStatusIds(patches) {
   return patches.flatMap(patch => {
@@ -81,7 +83,7 @@ export function usePatchTaskTaskCreation({
       const data = res?.data || null
       const taskId = data?.id || ''
       if (!taskId) {
-        throw new Error('任务创建失败，请稍后重试')
+        throw createPatchTaskError('patches.linux.taskCreateFailed')
       }
 
       createdTaskId.value = taskId
@@ -92,7 +94,9 @@ export function usePatchTaskTaskCreation({
       }
       backendRestartReason.value = data.restartReason || ''
     } catch (error) {
-      throw new Error(resolveApiErrorMessage(error, '任务创建失败，请稍后重试'))
+      const failure = new Error(resolveApiErrorMessage(error, t('patches.linux.taskCreateFailed')))
+      failure.localMessage = error.localMessage
+      throw failure
     }
   }
 

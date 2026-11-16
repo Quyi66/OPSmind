@@ -4,17 +4,18 @@
       {{ packageName }}
     </div>
     <div v-if="items.length === 0" class="patch-task-package-list__empty">
-      {{ emptyText }}
+      {{ emptyText ?? t('common.noData') }}
     </div>
     <div v-if="hasMore" class="patch-task-package-list__more">
       <el-button link type="primary" size="small" @click="$emit('load-more')">
-        加载更多 (已显示 {{ items.length }}/{{ total }})
+        {{ t('patches.linux.moreShown', { shown: items.length, total }) }}
       </el-button>
     </div>
   </div>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 defineProps({
   items: {
     type: Array,
@@ -22,7 +23,7 @@ defineProps({
   },
   emptyText: {
     type: String,
-    default: '暂无数据'
+    default: undefined
   },
   loading: {
     type: Boolean,

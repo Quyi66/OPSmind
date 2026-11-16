@@ -6,7 +6,7 @@
         {{ selectionTitle }}
       </div>
       <div class="card-body card-body--scroll">
-        <div v-if="selectionItems.length === 0" class="no-data">{{ selectionEmptyText }}</div>
+        <div v-if="selectionItems.length === 0" class="no-data">{{ selectionEmptyText ?? t('common.noData') }}</div>
         <div v-for="item in selectionItems" :key="item.key" class="selection-item">
           <div class="selection-item__primary">{{ item.primary }}</div>
           <div v-if="item.secondary" class="selection-item__secondary">
@@ -38,6 +38,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 defineProps({
   loading: {
     type: Boolean,
@@ -53,7 +54,7 @@ defineProps({
   },
   selectionEmptyText: {
     type: String,
-    default: '暂无数据'
+    default: undefined
   },
   packageTitle: {
     type: String,

@@ -1,3 +1,4 @@
+import { t } from '@/core/i18n'
 import { reactive, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { patchInstallApi } from '../../../api'
@@ -18,7 +19,7 @@ export function usePatchTaskScripts({ installConfig, createdTaskId, invalidatePr
   }
 
   function getScriptLabel(type) {
-    return type === 'pre' ? '预执行脚本' : '校验脚本'
+    return type === 'pre' ? t('patches.linux.preScript') : t('patches.linux.validationScript')
   }
 
   async function uploadScriptToTask(type, file, silent = false) {
@@ -26,11 +27,11 @@ export function usePatchTaskScripts({ installConfig, createdTaskId, invalidatePr
     try {
       await patchInstallApi.uploadScript(createdTaskId.value, getScriptType(type), file)
       if (!silent) {
-        ElMessage.success(`${getScriptLabel(type)}已上传`)
+        ElMessage.success(t('patches.linux.scriptUploaded', { script: getScriptLabel(type) }))
       }
       return true
     } catch {
-      ElMessage.error(`${getScriptLabel(type)}上传失败`)
+      ElMessage.error(t('patches.linux.scriptUploadError', { script: getScriptLabel(type) }))
       return false
     }
   }
@@ -50,7 +51,7 @@ export function usePatchTaskScripts({ installConfig, createdTaskId, invalidatePr
       await patchInstallApi.updateScript(createdTaskId.value, getScriptType(type), content || '')
       return true
     } catch {
-      ElMessage.error(`${getScriptLabel(type)}保存失败`)
+      ElMessage.error(t('patches.linux.scriptSaveError', { script: getScriptLabel(type) }))
       return false
     }
   }
@@ -71,7 +72,7 @@ export function usePatchTaskScripts({ installConfig, createdTaskId, invalidatePr
         scriptUploadFiles.post = file
       }
     } catch {
-      ElMessage.error('脚本读取失败，请检查文件内容后重试')
+      ElMessage.error(t('patches.linux.scriptReadFailed'))
     } finally {
       event.target.value = ''
     }

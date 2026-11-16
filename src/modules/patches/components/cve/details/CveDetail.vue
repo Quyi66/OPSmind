@@ -4,7 +4,7 @@
     <div v-if="!hideBreadcrumb" class="cve-detail-breadcrumb">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item>
-          <a @click.prevent="goBack">漏洞详情</a>
+          <a @click.prevent="goBack">{{ t('patches.cve.vulnerabilityDetails') }}</a>
         </el-breadcrumb-item>
         <el-breadcrumb-item>{{ cveId }}</el-breadcrumb-item>
       </el-breadcrumb>
@@ -16,7 +16,7 @@
     <!-- 详情内容 -->
     <div v-else-if="cveDetail" class="cve-content-wrapper">
       <el-tabs v-model="activeTab" class="ops-tabs">
-        <el-tab-pane name="basic" label="基本信息">
+        <el-tab-pane name="basic" :label="t('automation.file.baseInfo')">
           <div class="tab-scroll-box">
             <!-- 头部信息 -->
             <div class="modern-header mb-4">
@@ -32,12 +32,12 @@
               </div>
               <div class="header-meta">
                 <div class="meta-item">
-                  <span class="label">发布时间:</span>
+                  <span class="label">{{ t('patches.cve.publishedAtLabel') }}</span>
                   <span class="value">{{ formatDateTime(cveDetail.publicDate) }}</span>
                 </div>
                 <div class="meta-separator"></div>
                 <div class="meta-item data-source-item" v-if="sources.length > 0">
-                  <span class="label">数据来源:</span>
+                  <span class="label">{{ t('patches.cve.sourceLabel') }}</span>
                   <el-radio-group
                     v-model="currentSourceId"
                     size="small"
@@ -58,10 +58,10 @@
 
             <!-- 详细信息卡片 -->
             <div class="modern-card mb-4">
-              <div class="card-title">基础信息</div>
+              <div class="card-title">{{ t('automation.flow.basicInfo') }}</div>
               <div class="details-grid two-col inline">
                 <div class="detail-cell">
-                  <span class="label">漏洞编号</span>
+                  <span class="label">{{ t('patches.linux.vulnId') }}</span>
                   <div class="value">
                     <el-link
                       v-if="cveDetail.webUrl"
@@ -78,7 +78,7 @@
                   </div>
                 </div>
                 <div class="detail-cell">
-                  <span class="label">严重等级</span>
+                  <span class="label">{{ t('patches.cve.severity') }}</span>
                   <div class="value">
                     <el-tag
                       :type="getSeverityType(cveDetail.severity)"
@@ -91,11 +91,11 @@
                   </div>
                 </div>
                 <div class="detail-cell">
-                  <span class="label">CVSS 评分</span>
+                  <span class="label">{{ t('patches.cve.cvssScore') }}</span>
                   <div class="value">
                     <span :class="cveDetail.cvss3Score ? 'text-danger fw-bold' : 'text-muted'">
                       {{
-                        formatCvssScore(cveDetail.cvss3Score) === '未评分'
+                        toKnownNumber(cveDetail.cvss3Score, { max: 10 }) === null
                           ? '-'
                           : formatCvssScore(cveDetail.cvss3Score)
                       }}
@@ -106,7 +106,7 @@
                   </div>
                 </div>
                 <div class="detail-cell">
-                  <span class="label">系统</span>
+                  <span class="label">{{ t('patches.cve.system') }}</span>
                   <div class="value">
                     <el-tag size="small" effect="plain">
                       {{ getSourceLabel(cveDetail.source) }}
@@ -114,19 +114,19 @@
                   </div>
                 </div>
                 <div class="detail-cell">
-                  <span class="label">发布日期</span>
+                  <span class="label">{{ t('patches.catalog.publishDate') }}</span>
                   <div class="value">{{ formatDateTime(cveDetail.publicDate) }}</div>
                 </div>
                 <div class="detail-cell">
-                  <span class="label">修改日期</span>
+                  <span class="label">{{ t('automation.library.modifiedDate') }}</span>
                   <div class="value">{{ formatDateTime(cveDetail.modifiedDate) }}</div>
                 </div>
                 <div class="detail-cell">
-                  <span class="label">CWE 编号</span>
+                  <span class="label">{{ t('patches.cve.cweId') }}</span>
                   <div class="value code-font text-primary">{{ cveDetail.cweId || '-' }}</div>
                 </div>
                 <div class="detail-cell">
-                  <span class="label">公告编号</span>
+                  <span class="label">{{ t('patches.cve.advisoryId') }}</span>
                   <div class="value code-font">{{ cveDetail.advisoryId || '-' }}</div>
                 </div>
               </div>
@@ -134,7 +134,7 @@
 
             <!-- 影响统计卡片 -->
             <div class="modern-card mb-4">
-              <div class="card-title">影响统计</div>
+              <div class="card-title">{{ t('patches.cve.impactStatistics') }}</div>
               <div class="impact-overview-content">
                 <div class="chart-wrapper">
                   <div ref="impactChartRef" class="impact-chart"></div>
@@ -145,7 +145,7 @@
                     :key="item.key"
                     class="modern-stat-block"
                     :class="'is-' + (item.type || 'default')"
-                    @click="setPackageFilter(item.label)"
+                    @click="setPackageFilter(item.key)"
                   >
                     <div class="stat-header">
                       <div class="stat-label">{{ item.label }}</div>
@@ -163,14 +163,14 @@
 
             <!-- 描述信息卡片 -->
             <div class="modern-card mb-4">
-              <div class="card-title">漏洞描述</div>
+              <div class="card-title">{{ t('patches.cve.description') }}</div>
               <div class="card-text description-text">
-                {{ cveDetail.description || '暂无详细描述信息。' }}
+                {{ cveDetail.description || t('patches.cve.noDescription') }}
               </div>
             </div>
 
             <div class="modern-card mb-4" v-if="cveDetail.mitigation">
-              <div class="card-title">缓解措施</div>
+              <div class="card-title">{{ t('patches.cve.mitigation') }}</div>
               <div class="card-text mitigation-text">
                 {{ cveDetail.mitigation }}
               </div>
@@ -180,7 +180,7 @@
 
         <el-tab-pane name="packages">
           <template #label>
-            软件包详情
+            {{ t('patches.catalog.packageDetails') }}
             <span class="ops-tab-count" v-if="allPackages.length">{{ allPackages.length }}</span>
           </template>
           <div class="tab-content-container">
@@ -196,12 +196,12 @@
               </el-radio-group>
 
               <el-radio-group v-model="packageFilter" size="small">
-                <el-radio-button value="全部">全部</el-radio-button>
-                <el-radio-button value="受影响">受影响</el-radio-button>
-                <el-radio-button value="延迟修复">延迟修复</el-radio-button>
-                <el-radio-button value="已修复">已修复</el-radio-button>
-                <el-radio-button value="不受影响">不受影响</el-radio-button>
-                <el-radio-button value="不修复">不修复</el-radio-button>
+                <el-radio-button value="all">{{ t('common.all') }}</el-radio-button>
+                <el-radio-button value="affected">{{ t('patches.cve.affected') }}</el-radio-button>
+                <el-radio-button value="fix_deferred">{{ t('patches.cve.deferred') }}</el-radio-button>
+                <el-radio-button value="fixed">{{ t('patches.linux.fixed') }}</el-radio-button>
+                <el-radio-button value="not_affected">{{ t('patches.cve.notAffected') }}</el-radio-button>
+                <el-radio-button value="will_not_fix">{{ t('patches.cve.willNotFix') }}</el-radio-button>
               </el-radio-group>
 
               <el-select
@@ -209,7 +209,7 @@
                 size="small"
                 clearable
                 filterable
-                placeholder="产品名称"
+                :placeholder="t('patches.cve.productName')"
                 style="width: 220px"
               >
                 <el-option
@@ -225,7 +225,7 @@
                 size="small"
                 clearable
                 filterable
-                placeholder="修复版本"
+                :placeholder="t('patches.cve.fixedVersion')"
                 style="width: 220px"
               >
                 <el-option
@@ -245,13 +245,13 @@
               >
                 <el-table-column
                   prop="productName"
-                  label="产品名称"
+                  :label="t('patches.cve.productName')"
                   min-width="200"
                   show-overflow-tooltip
                 />
                 <el-table-column
                   prop="packageName"
-                  label="软件包名称"
+                  :label="t('patches.cve.packageName')"
                   min-width="130"
                   show-overflow-tooltip
                 >
@@ -268,8 +268,8 @@
                     <span v-else>{{ row.packageName }}</span>
                   </template>
                 </el-table-column>
-                <el-table-column prop="architecture" label="架构" width="130" />
-                <el-table-column prop="normalizedStatus" label="状态" width="120">
+                <el-table-column prop="architecture" :label="t('patches.cve.architecture')" width="130" />
+                <el-table-column prop="normalizedStatus" :label="t('common.status')" width="120">
                   <template #default="{ row }">
                     <el-tag :type="getStatusType(row.normalizedStatus)" size="small">
                       {{ getStatusLabel(row.normalizedStatus) }}
@@ -278,7 +278,7 @@
                 </el-table-column>
                 <el-table-column
                   prop="fixedVersion"
-                  label="修复版本"
+                  :label="t('patches.cve.fixedVersion')"
                   min-width="150"
                   show-overflow-tooltip
                 >
@@ -287,14 +287,14 @@
                     <span v-else class="text-muted">-</span>
                   </template>
                 </el-table-column>
-                <el-table-column prop="source" label="系统" width="90">
+                <el-table-column prop="source" :label="t('patches.cve.system')" width="90">
                   <template #default="{ row }">
                     <el-tag size="small" effect="plain" :type="getSourceType(row.source)">
                       {{ getSourceLabel(row.source) }}
                     </el-tag>
                   </template>
                 </el-table-column>
-                <el-table-column label="关联服务" min-width="200">
+                <el-table-column :label="t('patches.catalog.associatedServices')" min-width="200">
                   <template #default="{ row }">
                     <div class="service-cell">
                       <div
@@ -313,7 +313,7 @@
                       >
                         <template #reference>
                           <span class="more-link">
-                            +{{ getPackageServiceDisplay(row).restCount }} 更多
+                            +{{ getPackageServiceDisplay(row).restCount }} {{ t('automation.flow.more') }}
                           </span>
                         </template>
                         <div class="services-popover">
@@ -352,40 +352,40 @@
 
         <el-tab-pane name="hosts">
           <template #label>
-            受影响机器
+            {{ t('patches.cve.affectedMachines') }}
             <span class="ops-tab-count" v-if="affectedHostsTotal">{{ affectedHostsTotal }}</span>
           </template>
           <div class="tab-content-container">
             <div class="ops-table-wrapper" v-loading="affectedHostsLoading">
               <el-table :data="affectedHosts" height="100%" stripe style="width: 100%">
-                <el-table-column prop="hostKey" label="主机标识" width="150">
+                <el-table-column prop="hostKey" :label="t('patches.cve.hostIdentity')" width="150">
                   <template #default="{ row }">
                     <a href="javascript:void(0)" class="host-link" @click="viewHostDetail(row)">
                       {{ row.hostKey || row.hostId || '-' }}
                     </a>
                   </template>
                 </el-table-column>
-                <el-table-column prop="osDistro" label="系统发行版" width="120">
+                <el-table-column prop="osDistro" :label="t('patches.cve.osDistribution')" width="120">
                   <template #default="{ row }">
                     <el-tag size="small" effect="plain" :type="getSourceType(row.osDistro)">
                       {{ getSourceLabel(row.osDistro) }}
                     </el-tag>
                   </template>
                 </el-table-column>
-                <el-table-column prop="osVersion" label="系统版本" min-width="120" />
+                <el-table-column prop="osVersion" :label="t('patches.linux.osVersion')" min-width="120" />
                 <el-table-column
                   prop="patchId"
-                  label="补丁ID"
+                  :label="t('patches.cve.patchId')"
                   min-width="140"
                   show-overflow-tooltip
                 />
                 <el-table-column
                   prop="affectedPkgs"
-                  label="受影响包"
+                  :label="t('patches.cve.affectedPackages')"
                   min-width="250"
                   show-overflow-tooltip
                 />
-                <el-table-column prop="severity" label="严重等级" width="110">
+                <el-table-column prop="severity" :label="t('patches.cve.severity')" width="110">
                   <template #default="{ row }">
                     <el-tag
                       effect="dark"
@@ -396,7 +396,7 @@
                     </el-tag>
                   </template>
                 </el-table-column>
-                <el-table-column prop="patchStatus" label="补丁状态" width="120">
+                <el-table-column prop="patchStatus" :label="t('patches.linux.patchStatus')" width="120">
                   <template #default="{ row }">
                     <el-tag
                       size="small"
@@ -407,12 +407,12 @@
                     </el-tag>
                   </template>
                 </el-table-column>
-                <el-table-column prop="scanDate" label="扫描时间" width="180">
+                <el-table-column prop="scanDate" :label="t('patches.linux.scanTime')" width="180">
                   <template #default="{ row }">
                     <span class="text-muted">{{ formatDateTime(row.scanDate) }}</span>
                   </template>
                 </el-table-column>
-                <el-table-column label="操作" width="180" fixed="right">
+                <el-table-column :label="t('common.actions')" width="180" fixed="right">
                   <template #default="{ row }">
                     <el-button
                       text
@@ -420,7 +420,7 @@
                       size="small"
                       :disabled="!hasRebootAction(row) || !canRebootHost(row)"
                       :loading="isRebootSubmitting(row)"
-                      :title="isRebootRecommended(row) ? '建议重启' : ''"
+                      :title="isRebootRecommended(row) ? t('patches.cve.rebootRecommended') : ''"
                       @click="handleHostReboot(row)"
                     >
                       {{ getRebootButtonLabel(row) }}
@@ -432,7 +432,7 @@
                       size="small"
                       @click="openRebootResult(row)"
                     >
-                      查看结果
+                      {{ t('automation.job.viewResult') }}
                     </el-button>
                   </template>
                 </el-table-column>
@@ -445,8 +445,8 @@
 
     <!-- 错误状态 -->
     <div v-else class="detail-section error-container">
-      <el-empty description="无法获取详细信息">
-        <el-button type="primary" @click="goBack">返回列表</el-button>
+      <el-empty :description="t('patches.cve.detailUnavailable')">
+        <el-button type="primary" @click="goBack">{{ t('automation.library.backToList') }}</el-button>
       </el-empty>
     </div>
 
@@ -466,11 +466,13 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDateTime as formatDateTimeGlobal } from '@/utils/date'
-import { formatCvssScore } from '@/utils/workspacePresentation'
+import { formatCvssScore, toKnownNumber } from '@/utils/workspacePresentation'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import * as echarts from 'echarts'
 import { useTheme } from '@/composables/useTheme'
@@ -506,7 +508,7 @@ const props = defineProps({
   },
   hostBackLabel: {
     type: String,
-    default: '漏洞详情'
+    default: undefined
   },
   hostBackRouteName: {
     type: String,
@@ -523,12 +525,12 @@ const emit = defineEmits(['back'])
 
 // 状态标签和样式
 const statusLabels = {
-  fixed: '已修复',
-  affected: '受影响',
-  not_affected: '不受影响',
-  will_not_fix: '不修复',
-  fix_deferred: '延迟修复',
-  out_of_support: '超出支持'
+  get fixed() { return t('patches.linux.fixed') },
+  get affected() { return t('patches.cve.affected') },
+  get not_affected() { return t('patches.cve.notAffected') },
+  get will_not_fix() { return t('patches.cve.willNotFix') },
+  get fix_deferred() { return t('patches.cve.deferred') },
+  get out_of_support() { return t('patches.cve.outOfSupport') }
 }
 
 const statusTypes = {
@@ -548,7 +550,7 @@ const currentSource = ref(null)
 const allPackages = ref([])
 const loading = ref(true)
 const activeTab = ref('basic')
-const packageFilter = ref('全部')
+const packageFilter = ref('all')
 const systemFilter = ref('all')
 const productNameFilter = ref('')
 const fixedVersionFilter = ref('')
@@ -556,7 +558,7 @@ const affectedHosts = ref([])
 const affectedHostsTotal = ref(0)
 const affectedHostsLoading = ref(false)
 const affectedHostsLoaded = ref(false)
-const affectedHostsError = ref('')
+const affectedHostsError = messageRef('')
 const rebootSubmittingHostKey = ref('')
 const rebootResultDialogVisible = ref(false)
 const rebootResultRunId = ref('')
@@ -603,7 +605,7 @@ const filteredPackages = computed(() => {
   }
 
   // 状态筛选
-  if (packageFilter.value !== '全部') {
+  if (packageFilter.value !== 'all') {
     list = list.filter(pkg => pkg.normalizedStatus === packageFilter.value)
   }
 
@@ -622,33 +624,33 @@ const filteredPackages = computed(() => {
 const impactLegendItems = computed(() => {
   const s = cveDetail.value?.summary || {}
   return [
-    { key: 'all', label: '总计', value: s.total || 0, icon: TrendCharts, type: '' },
-    { key: 'affected', label: '受影响', value: s.affected || 0, icon: Warning, type: 'danger' },
+    { key: 'all', get label() { return t('patches.linux.total') }, value: s.total || 0, icon: TrendCharts, type: '' },
+    { key: 'affected', get label() { return t('patches.cve.affected') }, value: s.affected || 0, icon: Warning, type: 'danger' },
     {
       key: 'fix_deferred',
-      label: '延迟修复',
+      get label() { return t('patches.cve.deferred') },
       value: s.fixDeferred || 0,
       icon: Clock,
       type: 'primary'
     },
-    { key: 'fixed', label: '已修复', value: s.fixed || 0, icon: Check, type: 'success' },
+    { key: 'fixed', get label() { return t('patches.linux.fixed') }, value: s.fixed || 0, icon: Check, type: 'success' },
     {
       key: 'not_affected',
-      label: '不受影响',
+      get label() { return t('patches.cve.notAffected') },
       value: s.notAffected || 0,
       icon: Operation,
       type: 'info'
     },
     {
       key: 'will_not_fix',
-      label: '不修复',
+      get label() { return t('patches.cve.willNotFix') },
       value: s.willNotFix || 0,
       icon: CircleClose,
       type: 'warning'
     },
     {
       key: 'out_of_support',
-      label: '超出支持',
+      get label() { return t('patches.cve.outOfSupport') },
       value: s.outOfSupport || 0,
       icon: RefreshLeft,
       type: ''
@@ -676,10 +678,10 @@ function getSeverityType(severity) {
 function getSeverityLabel(severity) {
   const key = normalizeSeverityKey(severity)
   const labelMap = {
-    critical: '严重',
-    important: '重要',
-    moderate: '中等',
-    low: '低危'
+    get critical() { return t('patches.catalog.critical') },
+    get important() { return t('patches.catalog.important') },
+    get moderate() { return t('patches.catalog.moderate') },
+    get low() { return t('patches.catalog.low') }
   }
   return labelMap[key] || severity
 }
@@ -776,8 +778,8 @@ function handleViewPackageDetail(row) {
   if (!hasPackageDetail(row)) {
     ElMessage.warning(
       hasPackageVersion(row)
-        ? '当前软件包暂无 RPM 详情'
-        : '当前软件包缺少版本信息，无法查看 RPM 详情'
+        ? t('patches.linux.noRpmDetails')
+        : t('patches.cve.packageVersionMissing')
     )
     return
   }
@@ -791,6 +793,12 @@ function normalizeStatusKey(status) {
   if (!status) return ''
   const s = `${status}`.toLowerCase().trim()
   const statusMap = {
+    受影响: 'affected',
+    已修复: 'fixed',
+    不受影响: 'not_affected',
+    不修复: 'will_not_fix',
+    延迟修复: 'fix_deferred',
+    超出支持: 'out_of_support',
     affected: 'affected',
     fixed: 'fixed',
     not_affected: 'not_affected',
@@ -818,7 +826,7 @@ function goBack() {
 
 // 设置软件包筛选条件
 function setPackageFilter(filter) {
-  packageFilter.value = filter === '总计' ? '全部' : filter
+  packageFilter.value = ['all', '总计', '全部'].includes(filter) ? 'all' : normalizeStatusKey(filter)
   activeTab.value = 'packages'
 }
 
@@ -835,7 +843,7 @@ function viewHostDetail(host) {
       os_distro: host.osDistro || host.os_distro || '',
       os_version: host.osVersion || host.os_version || '',
       hostname: host.hostname || '',
-      fromLabel: props.hostBackLabel,
+      fromLabel: props.hostBackLabel ?? t('patches.cve.vulnerabilityDetails'),
       fromRouteName: props.hostBackRouteName,
       fromRouteQuery:
         props.hostBackRouteQuery ||
@@ -871,7 +879,7 @@ function isRebootRecommended(host) {
 
 function getRebootButtonLabel(host) {
   const rebootType = getRebootAction(host)?.rebootType || getRebootAction(host)?.reboot_type
-  return rebootType === 'service_reboot' ? '服务重启' : '主机重启'
+  return rebootType === 'service_reboot' ? t('patches.linux.serviceRestart') : t('patches.cve.hostRestart')
 }
 
 function isRebootSubmitting(host) {
@@ -891,7 +899,7 @@ function shouldShowRebootResultButton(host) {
 function openRebootResult(host) {
   const runId = getHostRebootRunId(host)
   if (!runId) {
-    ElMessage.warning('暂无运行结果')
+    ElMessage.warning(t('patches.cve.noRunResult'))
     return
   }
 
@@ -934,24 +942,24 @@ async function handleHostReboot(host) {
   const action = getRebootAction(host)
   if (!action || !canRebootHost(host)) return
 
-  const hostLabel = host?.hostKey || host?.hostId || host?.host_key || host?.host_id || '当前主机'
+  const hostLabel = host?.hostKey || host?.hostId || host?.host_key || host?.host_id || t('patches.linux.currentHost')
   const payload = buildHostRebootPayload(host)
 
   if (!payload.hostId && !payload.hostIp) {
-    ElMessage.error('缺少主机标识，无法执行重启')
+    ElMessage.error(t('patches.cve.hostIdentityMissing'))
     return
   }
 
   const message = isRebootRecommended(host)
-    ? `确认对主机 ${hostLabel} 执行${getRebootButtonLabel(host)}？当前接口建议重启。`
-    : `确认对主机 ${hostLabel} 执行${getRebootButtonLabel(host)}？`
+    ? t('patches.cve.rebootRecommendedConfirm', { host: hostLabel, action: getRebootButtonLabel(host) })
+    : t('patches.cve.rebootConfirm', { host: hostLabel, action: getRebootButtonLabel(host) })
 
-  await ElMessageBox.confirm(message, '确认重启', {
+  await ElMessageBox.confirm(message, t('patches.linux.confirmRestart'), {
     closeOnClickModal: false,
     closeOnPressEscape: false,
     type: 'warning',
-    confirmButtonText: '确认重启',
-    cancelButtonText: '取消'
+    get confirmButtonText() { return t('patches.linux.confirmRestart') },
+    get cancelButtonText() { return t('common.cancel') }
   })
 
   host.__rebootRunId = ''
@@ -966,14 +974,14 @@ async function handleHostReboot(host) {
     host.__rebootStatus = result?.status || ''
 
     if (result?.success === false) {
-      ElMessage.warning(result?.message || '重启任务未成功完成')
+      ElMessage.warning(result?.message || t('patches.cve.rebootIncomplete'))
       if (host.__rebootRunId) {
         openRebootResult(host)
       }
       return
     }
 
-    ElMessage.success(result?.message || '重启完成')
+    ElMessage.success(result?.message || t('patches.linux.restartDone'))
     if (host.__rebootRunId) {
       openRebootResult(host)
     }
@@ -983,7 +991,7 @@ async function handleHostReboot(host) {
     }
 
     console.error('主机重启失败:', error)
-    ElMessage.error(error?.response?.data?.error || error?.message || '主机重启失败，请稍后重试')
+    ElMessage.error(error?.response?.data?.error || error?.message || t('patches.cve.hostRestartFailed'))
   } finally {
     rebootSubmittingHostKey.value = ''
   }
@@ -1074,7 +1082,7 @@ function buildCveDetail(source) {
     summary,
     mitigation: source.mitigation,
     references:
-      source.references || (source.webUrl ? [{ url: source.webUrl, title: '官方链接' }] : [])
+      source.references || (source.webUrl ? [{ url: source.webUrl, get title() { return t('patches.cve.officialLink') } }] : [])
   }
 
   // 延迟初始化图表，确保 DOM 已渲染且尺寸稳定
@@ -1129,30 +1137,28 @@ function calculateSummaryFromPackages(packages) {
 // 初始化影响统计图表
 function initImpactChart() {
   if (!impactChartRef.value) return
-  if (impactChart) impactChart.dispose()
-
-  impactChart = echarts.init(impactChartRef.value, isDark.value ? 'dark' : '')
+  if (!impactChart) impactChart = echarts.init(impactChartRef.value, isDark.value ? 'dark' : '')
   const summary = cveDetail.value?.summary || {}
   const total = summary.total || 0
 
   const data = []
   if (summary.affected > 0)
-    data.push({ value: summary.affected, name: '受影响', itemStyle: { color: '#F53F3F' } })
+    data.push({ value: summary.affected, get name() { return t('patches.cve.affected') }, itemStyle: { color: '#F53F3F' } })
   if (summary.fixDeferred > 0)
-    data.push({ value: summary.fixDeferred, name: '延迟修复', itemStyle: { color: '#409eff' } })
+    data.push({ value: summary.fixDeferred, get name() { return t('patches.cve.deferred') }, itemStyle: { color: '#409eff' } })
   if (summary.fixed > 0)
-    data.push({ value: summary.fixed, name: '已修复', itemStyle: { color: '#67c23a' } })
+    data.push({ value: summary.fixed, get name() { return t('patches.linux.fixed') }, itemStyle: { color: '#67c23a' } })
   if (summary.notAffected > 0)
-    data.push({ value: summary.notAffected, name: '不受影响', itemStyle: { color: '#909399' } })
+    data.push({ value: summary.notAffected, get name() { return t('patches.cve.notAffected') }, itemStyle: { color: '#909399' } })
   if (summary.willNotFix > 0)
-    data.push({ value: summary.willNotFix, name: '不修复', itemStyle: { color: '#e6a23c' } })
+    data.push({ value: summary.willNotFix, get name() { return t('patches.cve.willNotFix') }, itemStyle: { color: '#e6a23c' } })
   if (summary.outOfSupport > 0)
-    data.push({ value: summary.outOfSupport, name: '超出支持', itemStyle: { color: '#8c8c8c' } })
+    data.push({ value: summary.outOfSupport, get name() { return t('patches.cve.outOfSupport') }, itemStyle: { color: '#8c8c8c' } })
 
   if (data.length === 0) {
     data.push({
       value: 1,
-      name: '暂无数据',
+      get name() { return t('common.noData') },
       itemStyle: { color: isDark.value ? '#4c4d4f' : '#ebeef5' }
     })
   }
@@ -1187,7 +1193,7 @@ function initImpactChart() {
           {
             type: 'text',
             style: {
-              text: '总计',
+              get text() { return t('patches.linux.total') },
               textAlign: 'center',
               fill: isDark.value ? '#a3a6ad' : '#6c757d',
               fontSize: 12
@@ -1215,7 +1221,7 @@ function initImpactChart() {
     ]
   }
 
-  impactChart.setOption(option)
+  impactChart.setOption(option, { notMerge: true })
 
   // 强制延迟重绘，确保容器尺寸已生效
   setTimeout(() => {
@@ -1244,7 +1250,7 @@ async function loadAffectedHosts() {
     affectedHostsLoaded.value = true
   } catch (error) {
     console.error('加载受影响主机失败:', error)
-    affectedHostsError.value = '加载失败'
+    affectedHostsError.value = message('patches.cve.loadFailed')
   } finally {
     affectedHostsLoading.value = false
   }
@@ -1271,7 +1277,7 @@ watch(
   newId => {
     if (newId) {
       affectedHostsLoaded.value = false
-      packageFilter.value = '全部'
+      packageFilter.value = 'all'
       systemFilter.value = 'all'
       productNameFilter.value = ''
       fixedVersionFilter.value = ''
@@ -1291,6 +1297,10 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (impactChart) impactChart.dispose()
+})
+
+watch(currentLocale, () => {
+  if (cveDetail.value) nextTick(() => initImpactChart())
 })
 
 // 监听主题切换，重建图表

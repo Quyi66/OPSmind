@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
+import { setLocale } from '@/core/i18n'
 import { flushPromises, mount } from '@vue/test-utils'
 import { ElTable, ElTableColumn, ElSelect } from 'element-plus'
 import Overview from '@/modules/patches/views/LinuxPatchScanPage.vue'
@@ -140,7 +141,8 @@ async function open(component = Overview) {
   })
   await flushPromises()
 }
-beforeEach(() => {
+beforeEach(async () => {
+  await setLocale('zh-CN', { persist: false })
   vi.stubGlobal(
     'ResizeObserver',
     class {
@@ -161,12 +163,34 @@ beforeEach(() => {
   api.vulnerabilities.mockResolvedValue({ data: { content: [] } })
   api.tags.mockReset().mockResolvedValue({ records: [] })
 })
-afterEach(() => {
+afterEach(async () => {
   wrapper?.unmount()
   vi.unstubAllGlobals()
+  await setLocale('zh-CN', { persist: false })
 })
 
 describe('Linux 默认概览直接安装', () => {
+  it('切换英文后保留真实表格勾选，图表按稳定数据位置选择百分比且不重新加载', async () => {
+    await open()
+    const overview = wrapper.vm.$.setupState
+    overview.kpiStats.criticalPatchPercent = 20
+    overview.kpiStats.importantPatchPercent = 80
+    const table = workbench().findAllComponents(ElTable)[0]
+    const selected = table.props('data')[0]
+    await table.find('tbody input[type="checkbox"]').setValue(true)
+    await nextTick()
+    const requests = [api.hosts.mock.calls.length, api.stats.mock.calls.length, api.tags.mock.calls.length]
+    await setLocale('en-US', { persist: false })
+    await flushPromises()
+    expect(overview.chartOption.yAxis.data).toEqual(['Critical', 'High'])
+    expect(overview.chartOption.tooltip.formatter([{ dataIndex: 0, name: 'Critical', value: 2 }])).toBe('Critical: 2 (20%)')
+    expect(overview.chartOption.tooltip.formatter([{ dataIndex: 1, name: 'High', value: 8 }])).toBe('High: 8 (80%)')
+    expect(state().hostTableRef.getSelectionRows()).toEqual([selected])
+    expect(state().batchSelectedHosts.map(row => row.host_id)).toEqual(['host/A'])
+    expect(workbench().text()).toContain('Install patches on selected hosts (1)')
+    expect([api.hosts.mock.calls.length, api.stats.mock.calls.length, api.tags.mock.calls.length]).toEqual(requests)
+    expect(api.execute).not.toHaveBeenCalled()
+  })
   it('通用标签保留全部名称并支持多选查询与重置，不提供集群专属筛选', async () => {
     api.tags.mockResolvedValue({ records: ['production', { name: '集群 A' }] })
     await open()

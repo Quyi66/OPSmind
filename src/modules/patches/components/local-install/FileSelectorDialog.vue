@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    :title="title"
+    :title="title ?? t('automation.library.selectFiles')"
     width="1320px"
     :close-on-click-modal="false"
     destroy-on-close
@@ -32,14 +32,14 @@
             </li>
           </ol>
           <div class="actions">
-            <el-button circle size="small" title="刷新" @click="refresh">
+            <el-button circle size="small" :title="t('common.refresh')" @click="refresh">
               <i class="fa fa-sync-alt" />
             </el-button>
             <el-input
               v-model="searchText"
               size="small"
               class="search-input"
-              placeholder="搜索..."
+              :placeholder="t('patches.linux.searchEllipsis')"
               clearable
             >
               <template #prefix>
@@ -57,10 +57,10 @@
                 <div v-if="multiSelect || singleSelect" class="opx-table-th checkbox-col">
                   <el-checkbox v-if="multiSelect" v-model="allChecked" @change="selectAll" />
                 </div>
-                <div class="opx-table-th name-col sorting" @click="sortBy('name')">名称</div>
-                <div class="opx-table-th size-col sorting" @click="sortBy('size')">大小</div>
+                <div class="opx-table-th name-col sorting" @click="sortBy('name')">{{ t('common.name') }}</div>
+                <div class="opx-table-th size-col sorting" @click="sortBy('size')">{{ t('automation.library.size') }}</div>
                 <div class="opx-table-th time-col sorting" @click="sortBy('lastModified')">
-                  修改时间
+                  {{ t('automation.list.modifiedAt') }}
                 </div>
               </div>
             </div>
@@ -98,7 +98,7 @@
 
               <div v-if="emptyFolder && !loading" class="empty-state">
                 <i class="fa fa-inbox fa-3x" />
-                <p>暂无文件</p>
+                <p>{{ t('automation.flow.noFiles') }}</p>
               </div>
             </div>
           </div>
@@ -108,7 +108,7 @@
       <!-- 右侧：已选列表区域 -->
       <div class="selected-column">
         <div class="column-header">
-          <span class="title">已选择 ({{ Object.keys(selectionMap).length }})</span>
+          <span class="title">{{ t('patches.linux.selectedCount', { count: Object.keys(selectionMap).length }) }}</span>
           <el-button
             v-if="Object.keys(selectionMap).length > 0"
             link
@@ -116,12 +116,12 @@
             size="small"
             @click="clearSelection"
           >
-            清空
+            {{ t('automation.file.clear') }}
           </el-button>
         </div>
         <div class="selected-list scroll-y">
           <div v-if="Object.keys(selectionMap).length === 0" class="empty-selection">
-            <p>请点击左侧文件进行选择</p>
+            <p>{{ t('patches.linux.clickFileToSelect') }}</p>
           </div>
           <div v-for="(file, key) in selectionMap" :key="key" class="selected-item">
             <div class="item-info">
@@ -131,7 +131,7 @@
               </div>
             </div>
             <div class="item-actions">
-              <i class="fa fa-times remove-btn" title="移除" @click="removeSelectedFile(key)" />
+              <i class="fa fa-times remove-btn" :title="t('common.remove')" @click="removeSelectedFile(key)" />
             </div>
           </div>
         </div>
@@ -139,19 +139,20 @@
     </div>
 
     <template #footer>
-      <el-button @click="handleClose">取消</el-button>
+      <el-button @click="handleClose">{{ t('common.cancel') }}</el-button>
       <el-button
         type="primary"
         :disabled="Object.keys(selectionMap).length === 0"
         @click="handleConfirm"
       >
-        确定 ({{ Object.keys(selectionMap).length }})
+        {{ t('patches.linux.confirmCount', { count: Object.keys(selectionMap).length }) }}
       </el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
 import { ref, reactive, computed, watch } from 'vue'
 import { apiService } from '@/core/api'
 import { ElMessage } from 'element-plus'
@@ -170,7 +171,7 @@ const props = defineProps({
   },
   title: {
     type: String,
-    default: '选择文件'
+    default: undefined
   },
   // 仓库类型: git, staticfs
   repoType: {
@@ -548,15 +549,15 @@ function formatFromNow(timestamp) {
   const days = Math.floor(hours / 24)
 
   if (days > 30) {
-    return date.toLocaleDateString('zh-CN')
+    return date.toLocaleDateString(currentLocale.value)
   } else if (days > 0) {
-    return `${days}天前`
+    return t('patches.linux.daysAgo', { count: days })
   } else if (hours > 0) {
-    return `${hours}小时前`
+    return t('patches.linux.hoursAgo', { count: hours })
   } else if (minutes > 0) {
-    return `${minutes}分钟前`
+    return t('patches.linux.minutesAgo', { count: minutes })
   } else {
-    return '刚刚'
+    return t('automation.file.justNow')
   }
 }
 
@@ -655,7 +656,7 @@ function search() {
  */
 function refresh() {
   listFiles(props.repo, currentDir.value)
-  ElMessage.success('刷新成功')
+  ElMessage.success(t('automation.library.refreshed'))
 }
 
 /**
@@ -691,7 +692,7 @@ function downloadFiles() {
   const paths = Object.values(selectionMap).map(file => file.path)
   if (paths.length === 0) return
   // TODO: 实现下载逻辑
-  ElMessage.info('下载功能待实现')
+  ElMessage.info(t('patches.linux.downloadNotImplemented'))
 }
 
 /**

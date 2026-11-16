@@ -1,3 +1,4 @@
+import { t } from '@/core/i18n'
 import { onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 
@@ -19,6 +20,7 @@ export function usePatchTaskFlow({
   isSkipped,
   restartConfirmText,
   restartConfirmKeyword,
+  restartConfirmationValid,
   currentStepKey,
   stepTransitionLoading,
   selectedHosts,
@@ -75,7 +77,7 @@ export function usePatchTaskFlow({
 
   async function prepareTaskForExecution(isCurrent = () => true) {
     if (confirmedHosts.value.length === 0) {
-      ElMessage.warning('请先选择目标主机')
+      ElMessage.warning(t('patches.linux.selectTargetFirst'))
       installStep.value = getStepIndex('select')
       return false
     }
@@ -107,10 +109,10 @@ export function usePatchTaskFlow({
     if (
       requiresRestartConfirm.value &&
       !isSkipped.restart &&
-      restartConfirmText.value !== restartConfirmKeyword.value
+      !(restartConfirmationValid?.value ?? (restartConfirmText.value === restartConfirmKeyword.value))
     ) {
       installStep.value = getStepIndex('restart')
-      ElMessage.warning('后端评估结果要求确认重启，请完成确认后再开始执行')
+      ElMessage.warning(t('patches.linux.restartConfirmationRequired'))
       return false
     }
 
@@ -211,7 +213,7 @@ export function usePatchTaskFlow({
       if (!isCurrent() || !taskPrepared) return
       await startPipeline()
     } catch (error) {
-      if (isCurrent()) ElMessage.error(resolveApiErrorMessage(error, '任务准备失败，请稍后重试'))
+      if (isCurrent()) ElMessage.error(resolveApiErrorMessage(error, t('patches.linux.taskPreparationFailed')))
     } finally {
       if (isCurrent()) executionSubmitting.value = false
     }

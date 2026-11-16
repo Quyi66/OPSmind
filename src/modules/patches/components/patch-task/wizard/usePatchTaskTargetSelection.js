@@ -1,3 +1,4 @@
+import { t } from '@/core/i18n'
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { patchInstallApi } from '../../../api'
@@ -53,10 +54,10 @@ export function usePatchTaskTargetSelection({
 
   const packageEmptyText = computed(() => {
     if (!hasFixedHosts.value && selectedHosts.value.length === 0) {
-      return '请选择目标主机后查看匹配的软件包'
+      return t('patches.linux.selectForMatchingPackages')
     }
 
-    return affectedPackages.value.length === 0 ? '暂无数据' : '未匹配到相关软件包'
+    return affectedPackages.value.length === 0 ? t('common.noData') : t('patches.linux.noPackageMatches')
   })
 
   const filteredHostList = computed(() => {
@@ -207,7 +208,7 @@ export function usePatchTaskTargetSelection({
       hostsToSync = currentHosts
     }
 
-    ElMessage.warning('目标主机选择变化较频繁，请确认选择后重试')
+    ElMessage.warning(t('patches.linux.selectionChangedOften'))
     return false
   }
 
@@ -217,7 +218,7 @@ export function usePatchTaskTargetSelection({
       return validateAgentCapability(resolvedHosts, isRollbackTask.value ? 'rollback' : 'patch', [])
     } catch (error) {
       console.error('Failed to refresh Agent capability data:', error)
-      ElMessage.error(error?.message || '无法确认目标主机的 Agent 状态，已阻止继续操作')
+      ElMessage.error(error?.message || t('patches.linux.agentStatusUnknown'))
       return false
     }
   }
@@ -367,7 +368,7 @@ export function usePatchTaskTargetSelection({
         console.error('Failed to load affected packages:', error)
         const currentQueryKey = buildAffectedPackageQuery(selectedHosts.value).key
         if (currentQueryKey === queryKey) {
-          ElMessage.error('获取所选主机的受影响软件包失败，请重试')
+          ElMessage.error(t('patches.linux.selectedHostsPackagesFailed'))
         }
         return AFFECTED_PACKAGE_LOAD_STATUS.FAILED
       } finally {

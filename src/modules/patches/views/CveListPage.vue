@@ -10,11 +10,11 @@
         <!-- 头部区域 -->
         <div class="cve-stats-header">
           <div class="cve-stats-title">
-            <h3 class="cve-stats-main-title">系统漏洞概览</h3>
+            <h3 class="cve-stats-main-title">{{ t('patches.cve.overview') }}</h3>
           </div>
-          <div class="cve-stats-total" @click="filterBySeverity('all')" title="查看全部">
+          <div class="cve-stats-total" @click="filterBySeverity('all')" :title="t('common.viewAll')">
             <div class="cve-stats-total-number">{{ formatNumber(statistics.totalCves) }}</div>
-            <div class="cve-stats-total-label">漏洞信息总计</div>
+            <div class="cve-stats-total-label">{{ t('patches.cve.totalVulnerabilityInfo') }}</div>
           </div>
         </div>
 
@@ -25,25 +25,25 @@
               class="cve-progress-segment cve-progress-critical"
               :style="{ width: getProgressWidth('critical') }"
               @click="filterBySeverity('critical')"
-              title="严重"
+              :title="t('patches.catalog.critical')"
             ></div>
             <div
               class="cve-progress-segment cve-progress-important"
               :style="{ width: getProgressWidth('important') }"
               @click="filterBySeverity('important')"
-              title="重要"
+              :title="t('patches.catalog.important')"
             ></div>
             <div
               class="cve-progress-segment cve-progress-moderate"
               :style="{ width: getProgressWidth('moderate') }"
               @click="filterBySeverity('moderate')"
-              title="中等"
+              :title="t('patches.catalog.moderate')"
             ></div>
             <div
               class="cve-progress-segment cve-progress-low"
               :style="{ width: getProgressWidth('low') }"
               @click="filterBySeverity('low')"
-              title="低危"
+              :title="t('patches.catalog.low')"
             ></div>
           </div>
         </div>
@@ -52,38 +52,38 @@
         <div class="cve-stats-grid">
           <div class="cve-stats-item" @click="filterBySeverity('critical')">
             <div class="cve-stats-content">
-              <div class="cve-stats-label">严重</div>
+              <div class="cve-stats-label">{{ t('patches.catalog.critical') }}</div>
               <div class="cve-stats-value cve-value-critical">
                 {{ formatNumber(getSeverityCount('critical')) }}
               </div>
-              <div class="cve-stats-desc">需立即响应 →</div>
+              <div class="cve-stats-desc">{{ t('patches.cve.respondImmediately') }}</div>
             </div>
           </div>
           <div class="cve-stats-item" @click="filterBySeverity('important')">
             <div class="cve-stats-content">
-              <div class="cve-stats-label">重要</div>
+              <div class="cve-stats-label">{{ t('patches.catalog.important') }}</div>
               <div class="cve-stats-value cve-value-important">
                 {{ formatNumber(getSeverityCount('important')) }}
               </div>
-              <div class="cve-stats-desc">24小时内修复</div>
+              <div class="cve-stats-desc">{{ t('patches.cve.fixWithinDay') }}</div>
             </div>
           </div>
           <div class="cve-stats-item" @click="filterBySeverity('moderate')">
             <div class="cve-stats-content">
-              <div class="cve-stats-label">中等</div>
+              <div class="cve-stats-label">{{ t('patches.catalog.moderate') }}</div>
               <div class="cve-stats-value cve-value-moderate">
                 {{ formatNumber(getSeverityCount('moderate')) }}
               </div>
-              <div class="cve-stats-desc">列入计划任务</div>
+              <div class="cve-stats-desc">{{ t('patches.cve.scheduleRemediation') }}</div>
             </div>
           </div>
           <div class="cve-stats-item" @click="filterBySeverity('low')">
             <div class="cve-stats-content">
-              <div class="cve-stats-label">低危</div>
+              <div class="cve-stats-label">{{ t('patches.catalog.low') }}</div>
               <div class="cve-stats-value cve-value-low">
                 {{ formatNumber(getSeverityCount('low')) }}
               </div>
-              <div class="cve-stats-desc">建议定期审阅</div>
+              <div class="cve-stats-desc">{{ t('patches.cve.reviewRegularly') }}</div>
             </div>
           </div>
         </div>
@@ -92,16 +92,16 @@
       <!-- 筛选区域 -->
       <div class="ops-filter-bar mb-3">
         <el-form :model="searchParams" inline size="small" @submit.prevent>
-          <el-form-item label="关键字">
+          <el-form-item :label="t('patches.cve.keyword')">
             <el-input
               v-model="searchParams.keyword"
-              placeholder="漏洞编号或描述关键字"
+              :placeholder="t('patches.cve.searchIdDescription')"
               clearable
               style="width: 200px"
               @keyup.enter="search"
             @clear="search" />
           </el-form-item>
-          <el-form-item label="系统">
+          <el-form-item :label="t('patches.cve.system')">
             <el-select v-model="searchParams.source" style="width: 100px" @change="search">
               <el-option
                 v-for="option in sourceOptions"
@@ -111,20 +111,20 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="严重等级">
+          <el-form-item :label="t('patches.cve.severity')">
             <el-select v-model="searchParams.severity" style="width: 100px" @change="search">
-              <el-option value="all" label="全部" />
-              <el-option value="critical" label="严重" />
-              <el-option value="important" label="重要" />
-              <el-option value="moderate" label="中等" />
-              <el-option value="low" label="低危" />
+              <el-option value="all" :label="t('common.all')" />
+              <el-option value="critical" :label="t('patches.catalog.critical')" />
+              <el-option value="important" :label="t('patches.catalog.important')" />
+              <el-option value="moderate" :label="t('patches.catalog.moderate')" />
+              <el-option value="low" :label="t('patches.catalog.low')" />
             </el-select>
           </el-form-item>
-          <el-form-item label="发布日期">
+          <el-form-item :label="t('patches.catalog.publishDate')">
             <el-date-picker
               v-model="searchParams.startDateObj"
               type="date"
-              placeholder="开始日期"
+              :placeholder="t('patches.cve.startDate')"
               format="YYYY-MM-DD"
               value-format="YYYY-MM-DD"
               style="width: 150px"
@@ -134,7 +134,7 @@
             <el-date-picker
               v-model="searchParams.endDateObj"
               type="date"
-              placeholder="结束日期"
+              :placeholder="t('patches.cve.endDate')"
               format="YYYY-MM-DD"
               value-format="YYYY-MM-DD"
               style="width: 150px"
@@ -144,11 +144,11 @@
           <el-form-item>
             <el-button type="primary" @click="search">
               <el-icon><Search /></el-icon>
-              搜索
+              {{ t('common.search') }}
             </el-button>
             <el-button @click="resetFilters">
               <el-icon><RefreshRight /></el-icon>
-              重置
+              {{ t('common.reset') }}
             </el-button>
           </el-form-item>
         </el-form>
@@ -156,8 +156,8 @@
 
       <!-- 操作栏 -->
       <div class="ops-action-bar" style="display: flex; align-items: center; margin-bottom: 12px">
-        <el-button type="primary" @click="openManualExportDialog">导出报告</el-button>
-        <el-button @click="openFeedbackTemplateDialog">导出反馈模板</el-button>
+        <el-button type="primary" @click="openManualExportDialog">{{ t('patches.cve.exportReport') }}</el-button>
+        <el-button @click="openFeedbackTemplateDialog">{{ t('patches.cve.exportFeedback') }}</el-button>
         <span style="flex: 1"></span>
         <el-button
           class="toolbar-icon-btn"
@@ -165,7 +165,7 @@
           size="small"
           :loading="loading"
           @click="loadData"
-          title="刷新"
+          :title="t('common.refresh')"
         >
           <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
@@ -179,7 +179,7 @@
           style="width: 100%"
           @sort-change="handleSortChange"
         >
-          <el-table-column prop="cveId" label="漏洞编号" width="180" sortable="custom">
+          <el-table-column prop="cveId" :label="t('patches.linux.vulnId')" width="180" sortable="custom">
             <!-- <template #default="{ row }">
               <el-link type="primary" underline="never" @click="viewDetail(row)">
                 {{ row.cveId }}
@@ -197,7 +197,7 @@
               </el-link>
             </template> -->
           </el-table-column>
-          <el-table-column prop="severity" label="严重等级" width="90">
+          <el-table-column prop="severity" :label="t('patches.cve.severity')" width="90">
             <template #default="{ row }">
               <el-tag
                 :type="getSeverityType(row.severity)"
@@ -208,20 +208,20 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="cvss3Score" label="CVSS 评分" width="120" sortable="custom">
+          <el-table-column prop="cvss3Score" :label="t('patches.cve.cvssScore')" width="120" sortable="custom">
             <template #default="{ row }">
-              <span v-if="formatCvssScore(row.cvss3Score) !== '未评分'" style="font-weight: 600">
+              <span v-if="toKnownNumber(row.cvss3Score, { max: 10 }) !== null" style="font-weight: 600">
                 {{ formatCvssScore(row.cvss3Score) }}
               </span>
               <span v-else class="text-muted">-</span>
             </template>
           </el-table-column>
-          <el-table-column prop="description" label="描述" min-width="300" show-overflow-tooltip>
+          <el-table-column prop="description" :label="t('automation.job.description')" min-width="300" show-overflow-tooltip>
             <template #default="{ row }">
               {{ row.description || '-' }}
             </template>
           </el-table-column>
-          <el-table-column prop="sources" label="系统" width="140">
+          <el-table-column prop="sources" :label="t('patches.cve.system')" width="140">
             <template #default="{ row }">
               <template v-if="row.sources && row.sources.length > 0">
                 <el-tag
@@ -244,14 +244,14 @@
               <span v-else class="text-muted">-</span>
             </template>
           </el-table-column>
-          <el-table-column prop="publicDate" label="发布日期" width="180" sortable="custom">
+          <el-table-column prop="publicDate" :label="t('patches.catalog.publishDate')" width="180" sortable="custom">
             <template #default="{ row }">
               <span class="text-muted">{{ formatDate(row.publicDate) }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="80" fixed="right">
+          <el-table-column :label="t('common.actions')" width="80" fixed="right">
             <template #default="{ row }">
-              <el-button link type="primary" @click="viewDetail(row)">详情</el-button>
+              <el-button link type="primary" @click="viewDetail(row)">{{ t('automation.records.details') }}</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -275,21 +275,22 @@
     <ManualExportDialog v-model="manualExportVisible" />
     <ManualExportDialog
       v-model="feedbackTemplateVisible"
-      dialog-title="导出漏洞排查反馈模板"
-      export-filename="漏洞排查结果反馈表.xlsx"
-      success-message="反馈模板导出成功"
+      :dialog-title="t('patches.cve.exportFeedbackTitle')"
+      :export-filename="t('patches.cve.feedbackFilename')"
+      :success-message="t('patches.cve.feedbackExported')"
       :export-handler="exportFeedbackTemplate"
     />
   </div>
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
 import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { cveApi } from '../api'
 import { ElMessage } from 'element-plus'
-import { formatCvssScore } from '@/utils/workspacePresentation'
+import { formatCvssScore, toKnownNumber } from '@/utils/workspacePresentation'
 import {
   buildCveSourceOptions,
   getCveSourceLabel,
@@ -352,7 +353,7 @@ const sourceOptions = computed(() => {
 
 // 格式化数字
 function formatNumber(num) {
-  return (num || 0).toLocaleString()
+  return (num || 0).toLocaleString(currentLocale.value)
 }
 
 // 格式化日期
@@ -360,7 +361,7 @@ function formatDate(dateStr) {
   if (!dateStr) return '-'
   const date = new Date(dateStr)
   if (isNaN(date.getTime())) return dateStr
-  return date.toLocaleString('zh-CN', {
+  return date.toLocaleString(currentLocale.value, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -430,10 +431,10 @@ function getSeverityType(severity) {
 function getSeverityLabel(severity) {
   const key = normalizeSeverityKey(severity)
   const labelMap = {
-    critical: '严重',
-    important: '重要',
-    moderate: '中等',
-    low: '低危'
+    get critical() { return t('patches.catalog.critical') },
+    get important() { return t('patches.catalog.important') },
+    get moderate() { return t('patches.catalog.moderate') },
+    get low() { return t('patches.catalog.low') }
   }
   return labelMap[key] || severity
 }
@@ -490,7 +491,7 @@ async function loadData() {
     if (requestId !== latestListRequestId) return
 
     console.error('CVE列表查询失败:', error)
-    ElMessage.error('查询失败，请稍后重试')
+    ElMessage.error(t('patches.cve.queryFailed'))
     cveList.value = []
     pagination.totalElements = 0
   } finally {
@@ -506,7 +507,7 @@ function validateDateRange() {
     searchParams.endDate &&
     searchParams.startDate > searchParams.endDate
   ) {
-    ElMessage.warning('开始日期不能晚于结束日期')
+    ElMessage.warning(t('patches.cve.invalidDateRange'))
     return false
   }
   return true

@@ -21,7 +21,7 @@
         @fix-patches="handleFixPatches"
       />
     </template>
-    <el-empty v-else description="当前主机缺少补丁查询条件，无法加载补丁列表" />
+    <el-empty v-else :description="t('patches.linux.hostPatchQueryMissing')" />
   </el-dialog>
 
   <PatchInstallWizard
@@ -35,6 +35,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import PatchesTab from '../tabs/PatchesTab.vue'
@@ -58,10 +59,10 @@ const props = defineProps({
 const emit = defineEmits(['update:visible', 'patch-click', 'install-success'])
 
 const severityLabelMap = {
-  Critical: '严重',
-  Important: '重要',
-  Moderate: '中等',
-  Low: '低危'
+  get Critical() { return t('patches.catalog.critical') },
+  get Important() { return t('patches.catalog.important') },
+  get Moderate() { return t('patches.catalog.moderate') },
+  get Low() { return t('patches.catalog.low') }
 }
 
 const patchesTabRef = ref(null)
@@ -81,9 +82,9 @@ const dialogSeverities = computed(() =>
   props.severity ? [props.severity] : ['Critical', 'Important', 'Moderate', 'Low']
 )
 const dialogTitle = computed(() => {
-  const hostLabel = resolvedHostKey.value || resolvedHostname.value || '当前主机'
-  const severityLabel = severityLabelMap[props.severity] || '可用补丁'
-  return `${hostLabel} · ${severityLabel}补丁列表`
+  const hostLabel = resolvedHostKey.value || resolvedHostname.value || t('patches.linux.currentHost')
+  const severityLabel = severityLabelMap[props.severity] || t('patches.linux.availablePatches')
+  return t('patches.linux.hostSeverityTitle', { host: hostLabel, severity: severityLabel })
 })
 const patchesTabKey = computed(
   () =>
@@ -113,12 +114,12 @@ function handlePatchClick(row) {
 
 function handleFixPatches(patches) {
   if (!patches || patches.length === 0) {
-    ElMessage.warning('请选择要安装的补丁')
+    ElMessage.warning(t('patches.linux.selectPatches'))
     return
   }
 
   if (!resolvedHostId.value) {
-    ElMessage.warning('当前主机缺少 hostId，无法安装选中的补丁')
+    ElMessage.warning(t('patches.linux.hostIdMissingInstall'))
     return
   }
 

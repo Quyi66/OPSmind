@@ -23,9 +23,9 @@
             type="primary"
             link
             size="small"
-            @click="$emit('show-result', item.runId, item.label)"
+            @click="$emit('show-result', item.runId, item.label, item.key)"
           >
-            查看详情
+            {{ t('automation.flow.details') }}
           </el-button>
         </div>
       </div>
@@ -34,6 +34,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 defineProps({
   items: {
     type: Array,

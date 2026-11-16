@@ -6,8 +6,8 @@
         <!-- 1. 补丁统计卡片 -->
         <div class="stat-card patch-card">
           <div class="compact-card-header">
-            <div class="card-title">补丁统计</div>
-            <div class="card-subtitle">总计 {{ kpiStats.totalPatchCount }} 个</div>
+            <div class="card-title">{{ t('patches.linux.patchStats') }}</div>
+            <div class="card-subtitle">{{ t('patches.linux.total') }} {{ kpiStats.totalPatchCount }} {{ t('patches.linux.itemUnit') }}</div>
           </div>
           <div class="patch-chart-container">
             <div class="chart-wrapper">
@@ -18,12 +18,12 @@
             <div class="progress-labels">
               <div class="stat-label critical">
                 <i class="fa fa-circle"></i>
-                致命
+                {{ t('patches.linux.fatal') }}
                 <span class="count">{{ kpiStats.criticalPatchPercent }}%</span>
               </div>
               <div class="stat-label important">
                 <i class="fa fa-circle"></i>
-                严重
+                {{ t('patches.linux.high') }}
                 <span class="count">{{ kpiStats.importantPatchPercent }}%</span>
               </div>
             </div>
@@ -33,17 +33,17 @@
         <!-- 2. 漏洞统计卡片 -->
         <div class="stat-card vul-card">
           <div class="compact-card-header">
-            <div class="card-title">漏洞统计</div>
-            <div class="card-subtitle">漏洞总数</div>
+            <div class="card-title">{{ t('patches.linux.vulnStats') }}</div>
+            <div class="card-subtitle">{{ t('patches.linux.totalVulns') }}</div>
           </div>
           <div class="vul-content">
             <div class="metric-main">
               <div class="vul-number">{{ kpiStats.vulCount.toLocaleString() }}</div>
-              <div class="vul-label">个</div>
+              <div class="vul-label">{{ t('patches.linux.itemUnit') }}</div>
             </div>
             <div class="vul-sub-metric compact">
               <i class="fa fa-bug"></i>
-              平均每主机 {{ kpiStats.avgVulPerHost }} 个
+              {{ t('patches.linux.averagePerHost') }} {{ kpiStats.avgVulPerHost }} {{ t('patches.linux.itemUnit') }}
             </div>
           </div>
         </div>
@@ -51,24 +51,24 @@
         <!-- 3. 主机影响卡片 -->
         <div class="stat-card host-card">
           <div class="compact-card-header">
-            <div class="card-title">主机影响</div>
-            <div class="card-subtitle">扫描主机 {{ kpiStats.hostCount }} 台</div>
+            <div class="card-title">{{ t('patches.linux.hostImpact') }}</div>
+            <div class="card-subtitle">{{ t('patches.linux.scannedHosts') }} {{ kpiStats.hostCount }} {{ t('patches.linux.hostUnit') }}</div>
           </div>
           <div class="host-content">
             <div class="impact-item">
               <div class="impact-header">
-                <span class="label-critical">致命影响</span>
+                <span class="label-critical">{{ t('patches.linux.criticalImpact') }}</span>
                 <span class="value">
-                  {{ kpiStats.criticalHostCount }} 台 ({{ kpiStats.criticalHostPercent }}%)
+                  {{ kpiStats.criticalHostCount }} {{ t('patches.linux.hostUnit') }} ({{ kpiStats.criticalHostPercent }}%)
                 </span>
               </div>
             </div>
 
             <div class="impact-item">
               <div class="impact-header">
-                <span class="label-important">严重影响</span>
+                <span class="label-important">{{ t('patches.linux.highImpact') }}</span>
                 <span class="value">
-                  {{ kpiStats.importantHostCount }} 台 ({{ kpiStats.importantHostPercent }}%)
+                  {{ kpiStats.importantHostCount }} {{ t('patches.linux.hostUnit') }} ({{ kpiStats.importantHostPercent }}%)
                 </span>
               </div>
             </div>
@@ -82,7 +82,7 @@
         embedded
         :initial-tab="initialInstallTab"
         :scan-loading="rescanLoading"
-        source-label="主机概览"
+        :source-label="t('patches.linux.hostOverview')"
         source-route-name="patches-machineScan"
         @installed="handleWorkbenchInstalled"
         @scan-host="host => handleRescan([host])"
@@ -95,7 +95,7 @@
             @click="activeTab = 'vulnerability'"
           >
             <el-icon><Warning /></el-icon>
-            <span>漏洞明细</span>
+            <span>{{ t('patches.linux.vulnDetails') }}</span>
             <el-icon><ArrowRight /></el-icon>
           </el-button>
         </template>
@@ -107,13 +107,13 @@
             @click="handleRescan(hosts)"
           >
             <el-icon><Search /></el-icon>
-            {{ hosts.length ? `扫描选中主机 (${hosts.length})` : '扫描补丁' }}
+            {{ hosts.length ? t('patches.linux.scanSelectedHosts', { count: hosts.length }) : t('patches.linux.scanPatches') }}
           </el-button>
         </template>
         <template #host-export-action>
           <el-button size="small" @click="handleVulnExport">
             <i class="fa fa-download" />
-            导出漏洞报表
+            {{ t('patches.linux.exportVulns') }}
           </el-button>
         </template>
       </LinuxPatchInstallWorkbench>
@@ -121,26 +121,26 @@
       <!-- 漏洞明细保留独立修复流程，不进入常规安装主路径。 -->
       <div v-if="activeTab === 'vulnerability'" class="tab-content ops-page-layout">
         <div class="vulnerability-heading">
-          <strong>漏洞明细</strong>
-          <el-button @click="activeTab = 'host'">返回补丁安装</el-button>
+          <strong>{{ t('patches.linux.vulnDetails') }}</strong>
+          <el-button @click="activeTab = 'host'">{{ t('patches.linux.backToInstall') }}</el-button>
         </div>
         <!-- 筛选栏 -->
         <div class="ops-filter-bar">
           <el-form :model="vulnFilters" inline size="small">
-            <el-form-item label="主机IP" label-width="60">
+            <el-form-item :label="t('patches.catalog.hostIp')" label-width="60">
               <el-input
                 v-model="vulnFilters.host_key"
-                placeholder="输入主机IP"
+                :placeholder="t('patches.catalog.hostIpPlaceholder')"
                 style="width: 140px"
                 clearable
                 @keyup.enter="handleVulnFilterChange"
                 @clear="handleVulnFilterChange"
               />
             </el-form-item>
-            <el-form-item label="漏洞编号" label-width="70">
+            <el-form-item :label="t('patches.linux.vulnId')" label-width="70">
               <el-input
                 v-model="vulnFilters.vul_id"
-                placeholder="输入漏洞编号"
+                :placeholder="t('patches.linux.enterVulnId')"
                 style="width: 140px"
                 clearable
                 @keyup.enter="handleVulnFilterChange"
@@ -148,44 +148,44 @@
               />
             </el-form-item>
 
-            <el-form-item label="严重程度" label-width="70">
+            <el-form-item :label="t('patches.linux.severity')" label-width="70">
               <el-select v-model="vulnFilters.severity" clearable style="width: 80px" @change="handleVulnFilterChange">
-                <el-option label="所有" value="all" />
-                <el-option label="严重" value="Critical" />
-                <el-option label="重要" value="Important" />
-                <el-option label="中等" value="Moderate" />
-                <el-option label="低" value="Low" />
+                <el-option :label="t('patches.linux.all')" value="all" />
+                <el-option :label="t('patches.catalog.critical')" value="Critical" />
+                <el-option :label="t('patches.catalog.important')" value="Important" />
+                <el-option :label="t('patches.catalog.moderate')" value="Moderate" />
+                <el-option :label="t('patches.linux.low')" value="Low" />
               </el-select>
             </el-form-item>
-            <el-form-item label="补丁状态" label-width="70">
+            <el-form-item :label="t('patches.linux.patchStatus')" label-width="70">
               <el-select v-model="vulnFilters.patch_status" clearable style="width: 110px" @change="handleVulnFilterChange">
-                <el-option label="所有" value="all" />
-                <el-option label="未修复" value="no_repair" />
-                <el-option label="已修复" value="is_repair" />
-                <el-option label="已修复(手动)" value="is_repair_artificial" />
-                <el-option label="修复中" value="repairing" />
-                <el-option label="修复失败" value="repair_faild" />
-                <el-option label="回滚中" value="rolling_back" />
-                <el-option label="回滚失败" value="rolling_back_faild" />
-                <el-option label="回滚成功" value="rolling_back_success" />
+                <el-option :label="t('patches.linux.all')" value="all" />
+                <el-option :label="t('patches.linux.unfixed')" value="no_repair" />
+                <el-option :label="t('patches.linux.fixed')" value="is_repair" />
+                <el-option :label="t('patches.linux.manualFixed')" value="is_repair_artificial" />
+                <el-option :label="t('patches.linux.fixing')" value="repairing" />
+                <el-option :label="t('patches.linux.fixFailed')" value="repair_faild" />
+                <el-option :label="t('patches.linux.rollingBack')" value="rolling_back" />
+                <el-option :label="t('patches.linux.rollbackFailed')" value="rolling_back_faild" />
+                <el-option :label="t('patches.linux.rollbackSucceeded')" value="rolling_back_success" />
               </el-select>
             </el-form-item>
-            <el-form-item label="内核漏洞" label-width="70">
+            <el-form-item :label="t('patches.linux.kernelVuln')" label-width="70">
               <el-select v-model="vulnFilters.is_kernel" clearable style="width: 80px" @change="handleVulnFilterChange">
-                <el-option label="所有" value="all" />
-                <el-option label="是" value="is_kernel" />
-                <el-option label="否" value="no_kernel" />
+                <el-option :label="t('patches.linux.all')" value="all" />
+                <el-option :label="t('patches.catalog.yes')" value="is_kernel" />
+                <el-option :label="t('patches.catalog.no')" value="no_kernel" />
               </el-select>
             </el-form-item>
-            <el-form-item label="操作系统" label-width="70">
+            <el-form-item :label="t('patches.linux.os')" label-width="70">
               <el-select v-model="vulnFilters.os_distro" clearable style="width: 80px" @change="handleVulnFilterChange">
-                <el-option label="所有" value="all" />
+                <el-option :label="t('patches.linux.all')" value="all" />
                 <el-option v-for="item in osDistroList" :key="item" :label="item" :value="item" />
               </el-select>
             </el-form-item>
-            <el-form-item label="系统版本" label-width="70" style="margin-right: 16px">
+            <el-form-item :label="t('patches.linux.osVersion')" label-width="70" style="margin-right: 16px">
               <el-select v-model="vulnFilters.os_major_version" clearable style="width: 80px" @change="handleVulnFilterChange">
-                <el-option label="所有" value="all" />
+                <el-option :label="t('patches.linux.all')" value="all" />
                 <el-option v-for="item in osVersionList" :key="item" :label="item" :value="item" />
               </el-select>
             </el-form-item>
@@ -194,13 +194,13 @@
                 <el-icon>
                   <Search />
                 </el-icon>
-                搜索
+                {{ t('common.search') }}
               </el-button>
               <el-button @click="handleVulnReset">
                 <el-icon>
                   <RefreshRight />
                 </el-icon>
-                重置
+                {{ t('common.reset') }}
               </el-button>
             </el-form-item>
           </el-form>
@@ -216,7 +216,7 @@
             @click="handleFixSelected"
           >
             <i class="fa fa-tools" />
-            修复选定的漏洞
+            {{ t('patches.linux.fixSelectedVulns') }}
           </el-button>
           <!-- <el-button
             :type="vulnAllSelected ? 'default' : 'primary'"
@@ -225,11 +225,11 @@
             @click="handleToggleVulnSelectAll"
           >
             <i :class="`fa fa-${vulnAllSelected ? 'times' : 'check-double'} me-1`" />
-            {{ vulnAllSelected ? '一键取消' : '一键全选' }}
+            {{ vulnAllSelected ? t('patches.linux.clearAll') : t('patches.linux.selectAll') }}
           </el-button> -->
           <el-button size="small" @click="handleVulnExport">
             <i class="fa fa-download" />
-            导出
+            {{ t('patches.catalog.export') }}
           </el-button>
           <span style="flex: 1"></span>
           <el-button
@@ -238,7 +238,7 @@
             size="small"
             :loading="vulnLoading"
             @click="loadVulnData"
-            title="刷新"
+            :title="t('common.refresh')"
           >
             <el-icon v-show="!vulnLoading">
               <Refresh />
@@ -259,7 +259,7 @@
             border
           >
             <el-table-column type="selection" width="45" :reserve-selection="true" />
-            <el-table-column prop="patch_id" label="补丁编号" min-width="180" show-overflow-tooltip>
+            <el-table-column prop="patch_id" :label="t('patches.catalog.patchId')" min-width="180" show-overflow-tooltip>
               <template #default="{ row }">
                 <div class="patch-list">
                   <a
@@ -279,7 +279,7 @@
                   >
                     <template #reference>
                       <span class="more-link">
-                        +{{ getPatchIdList(row.patch_id).length - 2 }} 更多
+                        +{{ getPatchIdList(row.patch_id).length - 2 }} {{ t('automation.flow.more') }}
                       </span>
                     </template>
                     <div class="patch-list-popover">
@@ -297,18 +297,18 @@
                 </div>
               </template>
             </el-table-column>
-            <el-table-column prop="host_key" label="主机" width="130">
+            <el-table-column prop="host_key" :label="t('execution.ui.host')" width="130">
               <template #default="{ row }">
                 <a href="javascript:void(0)" class="host-link" @click="handleHostClick(row)">
                   {{ row.host_key }}
                 </a>
               </template>
             </el-table-column>
-            <el-table-column prop="os_distro" label="操作系统" width="90" />
-            <el-table-column prop="os_major_version" label="系统版本" width="90" />
+            <el-table-column prop="os_distro" :label="t('patches.linux.os')" width="90" />
+            <el-table-column prop="os_major_version" :label="t('patches.linux.osVersion')" width="90" />
             <el-table-column
               prop="affected_pkgs"
-              label="影响的软件包"
+              :label="t('patches.linux.affectedPackages')"
               min-width="260"
               class-name="vulnerability-layout-top-cell"
             >
@@ -354,7 +354,7 @@
                     :width="400"
                   >
                     <template #reference>
-                      <span class="more-link">+{{ getAffectedPackages(row).length - 2 }} 更多</span>
+                      <span class="more-link">+{{ getAffectedPackages(row).length - 2 }} {{ t('automation.flow.more') }}</span>
                     </template>
                     <div class="affected-packages-popover">
                       <div
@@ -398,7 +398,7 @@
                 <span v-else class="text-muted">-</span>
               </template>
             </el-table-column>
-            <el-table-column prop="vul_id" label="漏洞编号" width="150">
+            <el-table-column prop="vul_id" :label="t('patches.linux.vulnId')" width="150">
               <template #default="{ row }">
                 <CveLinkList
                   :cves="[row.vul_id]"
@@ -408,7 +408,7 @@
             </el-table-column>
             <el-table-column
               prop="severity"
-              label="严重程度"
+              :label="t('patches.linux.severity')"
               width="100"
               class-name="vulnerability-layout-top-cell"
             >
@@ -420,7 +420,7 @@
             </el-table-column>
             <el-table-column
               prop="reboot_status"
-              label="重启要求"
+              :label="t('patches.linux.restartRequirement')"
               min-width="260"
               class-name="vulnerability-layout-top-cell"
             >
@@ -438,7 +438,7 @@
                         size="small"
                       >
                         <i class="fa fa-power-off"></i>
-                        系统重启
+                        {{ t('patches.linux.systemRestart') }}
                       </el-tag>
                       <el-tag
                         v-else-if="getDisplayRebootStatus(row) === '服务重启'"
@@ -446,7 +446,7 @@
                         size="small"
                       >
                         <i class="fa fa-server"></i>
-                        服务重启
+                        {{ t('patches.linux.serviceRestart') }}
                       </el-tag>
                       <span v-else-if="row.reboot_status !== '服务重启'" class="text-muted">-</span>
                     </span>
@@ -469,14 +469,14 @@
                 </el-tooltip>
               </template>
             </el-table-column>
-            <el-table-column prop="is_kernel" label="内核" width="70">
+            <el-table-column prop="is_kernel" :label="t('patches.linux.kernel')" width="70">
               <template #default="{ row }">
                 <el-tag :type="row.is_kernel === '是' ? 'primary' : 'info'" size="small" round>
                   <i :class="row.is_kernel === '是' ? 'fa fa-check' : 'fa fa-times'" />
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="patch_status" label="状态" width="110">
+            <el-table-column prop="patch_status" :label="t('common.status')" width="110">
               <template #default="{ row }">
                 <RunLogStatusTag
                   :type="getPatchStatusType(row.patch_status)"
@@ -488,12 +488,12 @@
                 </RunLogStatusTag>
               </template>
             </el-table-column>
-            <el-table-column prop="scan_date" label="扫描时间" width="110">
+            <el-table-column prop="scan_date" :label="t('patches.linux.scanTime')" width="110">
               <template #default="{ row }">
                 {{ formatDate(row.scan_date) }}
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="80" fixed="right">
+            <el-table-column :label="t('common.actions')" width="80" fixed="right">
               <template #default="{ row }">
                 <el-button
                   text
@@ -502,7 +502,7 @@
                   :disabled="row.patch_status !== '已修复' && row.patch_status !== '回滚失败'"
                   @click="handleRollback(row)"
                 >
-                  回滚
+                  {{ t('patches.linux.rollback') }}
                 </el-button>
               </template>
             </el-table-column>
@@ -527,8 +527,8 @@
 
     <DeviceActionConfirmDialog
       v-model="rescanConfirmVisible"
-      title="确认补丁扫描"
-      description="将对以下目标提交补丁扫描任务，可在运行记录中查看进度。"
+      :title="t('patches.linux.confirmScan')"
+      :description="t('patches.linux.scanDescription')"
       :selection="selectedHosts"
       :submitting="rescanLoading"
       @confirm="executeRescan"
@@ -540,9 +540,9 @@
       ci-types="linux"
       :initial-selection="selectedHosts"
       :options="{ selectMode: 'host', selector: 'multiple' }"
-      title="选择设备 · 重新扫描补丁"
-      confirm-text="开始扫描"
-      description="点击“开始扫描”后将立即提交补丁扫描任务，可在运行记录中查看进度。"
+      :title="t('patches.linux.selectScanDevices')"
+      :confirm-text="t('patches.linux.startScan')"
+      :description="t('patches.linux.startScanDescription')"
       :allow-empty="false"
       :close-on-confirm="false"
       :submitting="rescanLoading"
@@ -600,7 +600,7 @@
     <!-- 修复漏洞确认对话框 -->
     <el-dialog
       v-model="fixDialogVisible"
-      title="修复选定的漏洞"
+      :title="t('patches.linux.fixSelectedVulns')"
       width="960px"
       destroy-on-close
       :close-on-click-modal="false"
@@ -609,17 +609,17 @@
       <div v-loading="fixDialogLoading" class="fix-dialog-content">
         <div class="fix-summary-card">
           <div class="fix-summary-item">
-            <span class="fix-summary-label">选中漏洞</span>
+            <span class="fix-summary-label">{{ t('patches.linux.selectedVulns') }}</span>
             <strong class="fix-summary-value">
               {{ fixDialogData.selectedVulnerabilityCount }}
             </strong>
           </div>
           <div class="fix-summary-item">
-            <span class="fix-summary-label">待更新关系</span>
+            <span class="fix-summary-label">{{ t('patches.linux.updateRelations') }}</span>
             <strong class="fix-summary-value">{{ fixDialogData.patchStatusIds.length }}</strong>
           </div>
           <div class="fix-summary-hint">
-            明细默认按需加载，仅预览部分结果，避免一键全选后一次性拉取过大返回。
+            {{ t('patches.linux.previewHint') }}
           </div>
         </div>
         <div class="fix-grid-layout">
@@ -636,9 +636,9 @@
               />
             </div>
             <div class="fix-info-body">
-              <div v-if="fixDialogLoading" class="empty-text">正在汇总更新范围...</div>
+              <div v-if="fixDialogLoading" class="empty-text">{{ t('patches.linux.summarizing') }}</div>
               <div v-else-if="!fixDialogData.patchStatusIds.length" class="empty-text">
-                暂无可更新项
+                {{ t('patches.linux.noUpdates') }}
               </div>
               <div
                 v-else-if="
@@ -647,24 +647,24 @@
                 v-loading="true"
                 class="empty-text fix-info-loading"
               >
-                正在加载预览...
+                {{ t('patches.linux.loadingPreview') }}
               </div>
               <div v-else-if="!fixSectionState[section.key].loaded" class="fix-info-placeholder">
-                <div class="empty-text">明细未加载</div>
+                <div class="empty-text">{{ t('patches.linux.detailsNotLoaded') }}</div>
                 <div class="fix-info-actions">
                   <el-button
                     size="small"
                     :loading="fixSectionState[section.key].loading"
                     @click="loadFixDialogSection(section.key, 'preview')"
                   >
-                    加载预览
+                    {{ t('patches.linux.loadPreview') }}
                   </el-button>
                   <el-button
                     link
                     :disabled="fixSectionState[section.key].loading"
                     @click="loadFixDialogSection(section.key, 'full')"
                   >
-                    加载全部
+                    {{ t('patches.linux.loadAll') }}
                   </el-button>
                 </div>
                 <div v-if="fixSectionState[section.key].error" class="fix-info-hint is-error">
@@ -699,7 +699,7 @@
                     link
                     @click="loadFixDialogSection(section.key, 'full')"
                   >
-                    加载完整数据
+                    {{ t('patches.linux.loadFullData') }}
                   </el-button>
                 </div>
               </div>
@@ -708,7 +708,7 @@
         </div>
       </div>
       <template #footer>
-        <el-button @click="fixDialogVisible = false">取消</el-button>
+        <el-button @click="fixDialogVisible = false">{{ t('common.cancel') }}</el-button>
         <el-button
           type="primary"
           :loading="fixSubmitting"
@@ -716,7 +716,7 @@
           @click="handleConfirmFix"
         >
           <i class="fa fa-chevron-right" />
-          开始更新
+          {{ t('patches.linux.startUpdate') }}
         </el-button>
       </template>
     </el-dialog>
@@ -730,6 +730,8 @@
 </template>
 
 <script setup>
+import { t, i18n } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
 import { ref, reactive, onMounted, computed, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { usePatchScanCompletion } from '../composables/usePatchScanCompletion'
@@ -831,7 +833,7 @@ const chartOption = computed(() => {
         const item = params?.[0]
         if (!item) return ''
         const percent =
-          item.name === '致命' ? kpiStats.criticalPatchPercent : kpiStats.importantPatchPercent
+          item.dataIndex === 0 ? kpiStats.criticalPatchPercent : kpiStats.importantPatchPercent
         return `${item.name}: ${item.value} (${percent}%)`
       }
     },
@@ -843,7 +845,7 @@ const chartOption = computed(() => {
     yAxis: {
       type: 'category',
       inverse: true,
-      data: ['致命', '严重'],
+      data: [t('patches.linux.fatal'), t('patches.linux.high')],
       axisTick: { show: false },
       axisLine: { show: false },
       axisLabel: {
@@ -854,7 +856,7 @@ const chartOption = computed(() => {
     },
     series: [
       {
-        name: '补丁统计',
+        get name() { return t('patches.linux.patchStats') },
         type: 'bar',
         barWidth: 12,
         barGap: '45%',
@@ -993,7 +995,7 @@ const runResultRunId = ref('')
 // 运行记录列表对话框（自动化管理）
 const historyDialogVisible = ref(false)
 const historyJobId = ref('')
-const historyJobTitle = ref('')
+const historyJobTitle = messageRef('')
 
 // 操作记录对话框
 const operationLogsVisible = ref(false)
@@ -1030,7 +1032,7 @@ async function loadPatchDetail(patchId, osDistro, patchRow = null) {
     } else if (patchRow) {
       patchDetailData.value = patchRow
     } else {
-      ElMessage.warning('未找到补丁详情')
+      ElMessage.warning(t('patches.linux.patchNotFound'))
       patchDetailVisible.value = false
     }
   } catch (error) {
@@ -1038,7 +1040,7 @@ async function loadPatchDetail(patchId, osDistro, patchRow = null) {
     if (patchRow) {
       patchDetailData.value = patchRow
     } else {
-      ElMessage.error('获取补丁详情失败')
+      ElMessage.error(t('patches.linux.patchDetailFailed'))
       patchDetailVisible.value = false
     }
   } finally {
@@ -1151,7 +1153,7 @@ function buildRpmDetailCandidates(pkg, row) {
 async function handleViewPackageDetail(pkg, row) {
   const candidates = buildRpmDetailCandidates(pkg, row)
   if (candidates.length === 0) {
-    ElMessage.warning('当前软件包暂无 RPM 详情')
+    ElMessage.warning(t('patches.linux.noRpmDetails'))
     return
   }
 
@@ -1204,7 +1206,7 @@ async function handleViewPackageDetail(pkg, row) {
       }
     }
 
-    ElMessage.warning('当前软件包暂无 RPM 详情')
+    ElMessage.warning(t('patches.linux.noRpmDetails'))
     rpmDetailVisible.value = false
   } finally {
     rpmDetailLoading.value = false
@@ -1218,11 +1220,11 @@ function buildRollbackWizardData(row) {
   const packages = getAffectedPackageList(row)
 
   if (!hostId) {
-    throw new Error('当前记录缺少主机ID，无法创建回滚任务')
+    throw new Error(t('patches.linux.rollbackHostMissing'))
   }
 
   if (patchIds.length === 0) {
-    throw new Error('当前记录缺少补丁编号，无法创建回滚任务')
+    throw new Error(t('patches.linux.rollbackPatchMissing'))
   }
 
   rollbackTargetHosts.value = [
@@ -1239,17 +1241,17 @@ function buildRollbackWizardData(row) {
     patchStatusIds
   }))
   rollbackPackageCandidates.value = packages
+  const secondaryText = (translate = t) => [
+    patchIds.join(', '),
+    row.host_key || row.hostKey || '',
+    packages.length ? translate('patches.linux.packageCount', { count: packages.length }) : ''
+  ].filter(Boolean).join(' / ')
   rollbackSelectionSummary.value = [
     {
       key: row.id || `${hostId}-${patchIds.join(',')}`,
       primary: row.vul_id || patchIds.join(', ') || '-',
-      secondary: [
-        patchIds.join(', '),
-        row.host_key || row.hostKey || '',
-        packages.length ? `${packages.length} 个软件包` : ''
-      ]
-        .filter(Boolean)
-        .join(' / ')
+      get secondary() { return secondaryText() },
+      getSearchText: locale => secondaryText((key, params) => i18n.global.t(key, params, { locale }))
     }
   ]
 }
@@ -1263,31 +1265,31 @@ const FIX_DIALOG_DETAIL_BATCH_SIZE = 1000
 const fixSectionCards = [
   {
     key: 'hosts',
-    label: '待更新的主机',
+    get label() { return t('patches.linux.pendingHosts') },
     icon: 'fa fa-desktop text-muted',
     badgeType: 'primary',
-    emptyText: '暂无主机'
+    get emptyText() { return t('patches.linux.noHosts') }
   },
   {
     key: 'patches',
-    label: '待更新的补丁',
+    get label() { return t('patches.linux.pendingPatches') },
     icon: 'fa fa-briefcase-medical text-muted',
     badgeType: 'warning',
-    emptyText: '暂无补丁'
+    get emptyText() { return t('patches.linux.noPatches') }
   },
   {
     key: 'cves',
-    label: '待更新的漏洞',
+    get label() { return t('patches.linux.pendingVulns') },
     icon: 'fa fa-suitcase text-muted',
     badgeType: 'danger',
-    emptyText: '暂无漏洞'
+    get emptyText() { return t('patches.linux.noVulns') }
   },
   {
     key: 'packages',
-    label: '待更新的软件包',
+    get label() { return t('patches.linux.pendingPackages') },
     icon: 'fa fa-cube text-muted',
     badgeType: 'success',
-    emptyText: '暂无软件包'
+    get emptyText() { return t('patches.linux.noPackages') }
   }
 ]
 const fixDialogData = reactive({
@@ -1299,10 +1301,10 @@ const fixDialogData = reactive({
   selectedVulnerabilityCount: 0
 })
 const fixSectionState = reactive({
-  hosts: { loaded: false, loading: false, mode: 'idle', hasMore: false, error: '' },
-  patches: { loaded: false, loading: false, mode: 'idle', hasMore: false, error: '' },
-  cves: { loaded: false, loading: false, mode: 'idle', hasMore: false, error: '' },
-  packages: { loaded: false, loading: false, mode: 'idle', hasMore: false, error: '' }
+  hosts: { loaded: false, loading: false, mode: 'idle', hasMore: false, error: messageRef('') },
+  patches: { loaded: false, loading: false, mode: 'idle', hasMore: false, error: messageRef('') },
+  cves: { loaded: false, loading: false, mode: 'idle', hasMore: false, error: messageRef('') },
+  packages: { loaded: false, loading: false, mode: 'idle', hasMore: false, error: messageRef('') }
 })
 const fixDialogLoading = ref(false)
 const rollbackWizardVisible = ref(false)
@@ -1440,7 +1442,7 @@ function handleVulnReset() {
 
 async function handleVulnExport() {
   try {
-    ElMessage.info('正在导出，请稍候...')
+    ElMessage.info(t('patches.linux.exporting'))
     const params = buildVulnListParams()
     delete params.page
     delete params.size
@@ -1450,13 +1452,13 @@ async function handleVulnExport() {
     })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
-    a.download = `补丁扫描信息_${new Date().toISOString().slice(0, 10)}.xlsx`
+    a.download = t('patches.linux.scanFilename', { date: new Date().toISOString().slice(0, 10) })
     a.click()
     URL.revokeObjectURL(a.href)
-    ElMessage.success('导出成功！')
+    ElMessage.success(t('patches.linux.exported'))
   } catch (error) {
     console.error('导出失败:', error)
-    ElMessage.error('导出失败，请稍后重试')
+    ElMessage.error(t('patches.linux.exportFailed'))
   }
 }
 
@@ -1480,7 +1482,7 @@ function handleHostClick(row) {
       os_distro: row.os_distro,
       os_version: row.os_version,
       hostname: row.hostname,
-      fromLabel: '主机概览',
+      get fromLabel() { return t('patches.linux.hostOverview') },
       fromRouteName: 'patches-machineScan'
     }
   })
@@ -1515,7 +1517,7 @@ function handleRollback(row) {
     buildRollbackWizardData(row)
     rollbackWizardVisible.value = true
   } catch (error) {
-    ElMessage.error(`打开回滚向导失败: ${error.message || '未知错误'}`)
+    ElMessage.error(t('patches.linux.rollbackOpenFailed', { error: error.message || t('patches.linux.unknownError') }))
   }
 }
 
@@ -1784,7 +1786,7 @@ async function loadFixDialogSection(sectionKey, mode = 'preview') {
     state.hasMore = hasMore
   } catch (error) {
     console.error(`加载${sectionKey}明细失败:`, error)
-    state.error = error.message || '加载失败，请稍后重试'
+    state.error = error.message || message('patches.linux.loadFailed')
   } finally {
     state.loading = false
   }
@@ -1801,7 +1803,7 @@ function getFixSectionBadgeValue(sectionKey) {
   }
 
   if (!state.loaded) {
-    return '待加载'
+    return t('patches.linux.notLoaded')
   }
 
   if (state.mode === 'preview' && state.hasMore) {
@@ -1821,16 +1823,16 @@ function getFixSectionHint(sectionKey) {
 
   if (state.mode === 'preview') {
     if (state.hasMore) {
-      return `当前仅展示前 ${displayCount} 项预览，可按需继续加载完整数据。`
+      return t('patches.linux.previewFirst', { count: displayCount })
     }
-    return `已加载 ${displayCount} 项预览结果。`
+    return t('patches.linux.previewLoaded', { count: displayCount })
   }
 
   if (fixDialogData[sectionKey].length > FIX_DIALOG_PREVIEW_LIMIT) {
-    return `已完整加载 ${fixDialogData[sectionKey].length} 项结果，当前仅展示前 ${displayCount} 项。`
+    return t('patches.linux.fullDataPartialDisplay', { total: fixDialogData[sectionKey].length, count: displayCount })
   }
 
-  return `已完整加载 ${fixDialogData[sectionKey].length} 项结果。`
+  return t('patches.linux.fullDataLoaded', { count: fixDialogData[sectionKey].length })
 }
 
 function resetVulnSelectionState() {
@@ -1851,7 +1853,7 @@ function handleVulnSelectionChange(selection) {
     isAdjustingVulnSelection = true
 
     ElMessage.warning({
-      message: `最多只能选中 ${MAX_VULN_SELECTION_LIMIT} 条数据`,
+      get message() { return t('patches.linux.selectionLimit', { count: MAX_VULN_SELECTION_LIMIT }) },
       grouping: true
     })
 
@@ -1904,7 +1906,7 @@ async function handleToggleVulnSelectAll() {
 // 修复选定的漏洞
 async function handleFixSelected() {
   if (vulnSelectedCount.value === 0) {
-    ElMessage.warning('请先选择要修复的漏洞')
+    ElMessage.warning(t('patches.linux.selectVulnsFirst'))
     return
   }
 
@@ -1917,14 +1919,14 @@ async function handleFixSelected() {
   try {
     const ids = await collectSelectedPatchStatusIdsForFix()
     if (ids.length === 0) {
-      ElMessage.warning('所选漏洞缺少补丁状态ID，无法修复')
+      ElMessage.warning(t('patches.linux.vulnStatusIdMissing'))
       fixDialogVisible.value = false
       return
     }
 
     fixDialogData.patchStatusIds = ids
   } catch (error) {
-    ElMessage.error(`获取补丁信息失败: ${error.message || '未知错误'}`)
+    ElMessage.error(t('patches.linux.patchInfoError', { error: error.message || t('patches.linux.unknownError') }))
     fixDialogVisible.value = false
     return
   } finally {
@@ -1954,17 +1956,17 @@ async function handleConfirmFix() {
 
     const { isSuccess, runId } = parseJobRunResult(response)
     if (!isSuccess) {
-      throw new Error('执行返回异常')
+      throw new Error(t('patches.linux.invalidExecutionResponse'))
     }
 
-    ElMessage.success('修复任务已提交成功')
+    ElMessage.success(t('patches.linux.fixSubmitted'))
     historyJobId.value = 's1r8Hp'
-    historyJobTitle.value = '补丁修复'
+    historyJobTitle.value = message('patches.linux.patchFix')
     historyDialogVisible.value = true
     fixDialogVisible.value = false
     loadVulnData()
   } catch (error) {
-    ElMessage.error(`提交修复任务失败: ${error.message || '未知错误'}`)
+    ElMessage.error(t('patches.linux.fixSubmitError', { error: error.message || t('patches.linux.unknownError') }))
   } finally {
     fixSubmitting.value = false
   }
@@ -2024,7 +2026,7 @@ async function submitRescan(hosts, { closeDialog = false } = {}) {
     .filter(item => item.value)
 
   if (normalizedHosts.length === 0) {
-    ElMessage.warning('请输入或选择至少一个主机')
+    ElMessage.warning(t('patches.linux.enterHost'))
     return false
   }
 
@@ -2039,15 +2041,15 @@ async function submitRescan(hosts, { closeDialog = false } = {}) {
     const data = response?.data || response
     const runResult = Array.isArray(data) ? data[0] : data
     if (['FAILED', 'ERROR'].includes(runResult?.status)) {
-      throw new Error(runResult.error || '扫描任务提交失败')
+      throw new Error(runResult.error || t('patches.linux.scanSubmitFailed'))
     }
     const runId = runResult?.runId
     if (!runId) {
-      ElMessage.error('扫描任务提交失败：未返回运行ID')
+      ElMessage.error(t('patches.linux.scanRunMissing'))
       return false
     }
 
-    ElMessage.success('扫描任务已提交')
+    ElMessage.success(t('patches.linux.scanSubmitted'))
     trackScan(runId)
     if (closeDialog) {
       rescanDialogVisible.value = false
@@ -2056,13 +2058,13 @@ async function submitRescan(hosts, { closeDialog = false } = {}) {
 
     lastSubmittedRunId.value = String(runId)
     historyJobId.value = '0g3GfW'
-    historyJobTitle.value = '补丁扫描'
+    historyJobTitle.value = message('patches.actions.scan')
     historyDialogVisible.value = true
 
     return true
   } catch (error) {
     console.error('Scan failed:', error)
-    ElMessage.error(`扫描任务提交失败: ${error.message || '未知错误'}`)
+    ElMessage.error(t('patches.linux.scanSubmitError', { error: error.message || t('patches.linux.unknownError') }))
     return false
   } finally {
     rescanLoading.value = false

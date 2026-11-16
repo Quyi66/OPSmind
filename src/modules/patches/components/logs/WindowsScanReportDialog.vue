@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="Windows扫描报告"
+    :title="t('patches.linux.windowsScanReport')"
     width="90%"
     destroy-on-close
     class="windows-scan-report-dialog"
@@ -10,11 +10,11 @@
     <div class="dialog-content">
       <div class="summary-card" v-loading="summaryLoading">
         <div class="summary-item">
-          <span class="label">扫描时间：</span>
+          <span class="label">{{ t('patches.linux.scanTimeLabel') }}</span>
           <span class="value">{{ formatDateTime(summary.scan_date) }}</span>
         </div>
         <div class="summary-item">
-          <span class="label">扫描主机数：</span>
+          <span class="label">{{ t('patches.linux.scannedHostsLabel') }}</span>
           <span class="value">{{ summary.machine_count || 0 }}</span>
         </div>
       </div>
@@ -27,7 +27,7 @@
           size="small"
           :loading="loading"
           @click="loadReport"
-          title="刷新"
+          :title="t('common.refresh')"
         >
           <el-icon v-show="!loading">
             <Refresh />
@@ -36,11 +36,11 @@
       </div>
 
       <el-table v-loading="loading" :data="tableData" max-height="500px" size="small">
-        <el-table-column prop="host_key" label="主机" min-width="160" show-overflow-tooltip />
-        <el-table-column prop="os_distro" label="操作系统" min-width="180" show-overflow-tooltip />
-        <el-table-column prop="os_version" label="系统版本" width="140" />
-        <el-table-column prop="kb_count" label="漏洞数量" width="100" />
-        <el-table-column prop="scan_date" label="扫描时间" width="180">
+        <el-table-column prop="host_key" :label="t('execution.ui.host')" min-width="160" show-overflow-tooltip />
+        <el-table-column prop="os_distro" :label="t('patches.linux.os')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="os_version" :label="t('patches.linux.osVersion')" width="140" />
+        <el-table-column prop="kb_count" :label="t('patches.linux.vulnCount')" width="100" />
+        <el-table-column prop="scan_date" :label="t('patches.linux.scanTime')" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.scan_date) }}
           </template>
@@ -65,6 +65,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { formatDateTime } from '@/utils/date'
@@ -117,7 +118,7 @@ async function loadSummary() {
     const records = res.data?.data || []
     summary.value = records[0] || { scan_date: '', machine_count: 0 }
   } catch (error) {
-    ElMessage.error(`加载扫描摘要失败: ${error.message || '未知错误'}`)
+    ElMessage.error(t('patches.linux.scanSummaryError', { error: error.message || t('patches.linux.unknownError') }))
   } finally {
     summaryLoading.value = false
   }
@@ -153,7 +154,7 @@ async function loadDetail() {
     tableData.value = records
     pagination.value.total = total
   } catch (error) {
-    ElMessage.error(`加载扫描详情失败: ${error.message || '未知错误'}`)
+    ElMessage.error(t('patches.linux.scanDetailError', { error: error.message || t('patches.linux.unknownError') }))
   } finally {
     loading.value = false
   }

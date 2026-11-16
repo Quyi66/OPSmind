@@ -28,7 +28,7 @@
           <el-input
             v-if="affectedPackages.length > 10"
             v-model="packageSearchText"
-            placeholder="搜索..."
+            :placeholder="t('patches.linux.searchEllipsis')"
             size="small"
             clearable
             style="width: 240px"
@@ -49,7 +49,7 @@
 
         <template #hosts>
           <div v-if="hasFixedHosts" class="card-body card-body--scroll">
-            <div class="selection-item__primary">共 {{ resolvedFixedHosts.length }} 台</div>
+            <div class="selection-item__primary">{{ t('patches.linux.totalPrefix') }} {{ resolvedFixedHosts.length }} {{ t('patches.linux.hostUnit') }}</div>
             <div
               v-for="host in resolvedFixedHosts"
               :key="host.hostId || host.id || host.hostKey"
@@ -61,7 +61,7 @@
           <div v-else class="card-body">
             <div class="host-toolbar">
               <div class="host-filter">
-              <span class="host-filter__label">分组</span>
+              <span class="host-filter__label">{{ t('patches.linux.group') }}</span>
               <el-select
                 v-model="selectedGroupIds"
                 multiple
@@ -70,8 +70,8 @@
                 collapse-tags
                 collapse-tags-tooltip
                 :loading="groupLoading"
-                placeholder="全部分组"
-                aria-label="按分组筛选主机"
+                :placeholder="t('patches.linux.allGroups')"
+                :aria-label="t('patches.linux.filterHostsGroup')"
                 size="small"
                 style="width: 180px"
                 @change="handleHostGroupChange"
@@ -85,7 +85,7 @@
               </el-select>
               </div>
               <div class="host-filter">
-              <span class="host-filter__label">标签</span>
+              <span class="host-filter__label">{{ t('automation.job.tag') }}</span>
               <el-select
                 v-model="selectedTagNames"
                 multiple
@@ -94,8 +94,8 @@
                 collapse-tags
                 collapse-tags-tooltip
                 :loading="groupLoading"
-                placeholder="全部标签"
-                aria-label="按标签筛选主机"
+                :placeholder="t('patches.linux.allTags')"
+                :aria-label="t('patches.linux.filterHostsTag')"
                 size="small"
                 style="width: 180px"
                 @change="handleHostGroupChange"
@@ -110,7 +110,7 @@
               </div>
               <el-input
                 v-model="hostSearchText"
-                placeholder="搜索"
+                :placeholder="t('common.search')"
                 :prefix-icon="Search"
                 size="small"
                 style="width: 200px"
@@ -122,7 +122,7 @@
                 @click="handleToggleHostSelectAll"
               >
                 <i :class="`fa fa-${hostAllSelected ? 'times' : 'check-double'} me-1`" />
-                {{ hostAllSelected ? '一键取消' : '一键全选' }}
+                {{ hostAllSelected ? t('patches.linux.clearAll') : t('patches.linux.selectAll') }}
               </el-button>
             </div>
             <el-table
@@ -134,14 +134,14 @@
               @select-all="handleHostTableSelect"
             >
               <el-table-column type="selection" width="40" />
-              <el-table-column prop="hostKey" label="主机" min-width="200" sortable>
+              <el-table-column prop="hostKey" :label="t('execution.ui.host')" min-width="200" sortable>
                 <template #default="{ row }">
                   <span class="host-link">{{ row.hostKey }}</span>
                 </template>
               </el-table-column>
               <el-table-column prop="os_distro" label="OS" width="100" sortable />
-              <el-table-column prop="os_version" label="OS版本" width="100" sortable />
-              <el-table-column prop="scan_timestamp" label="上次扫描时间" width="180" sortable>
+              <el-table-column prop="os_version" :label="t('patches.linux.osVersionShort')" width="100" sortable />
+              <el-table-column prop="scan_timestamp" :label="t('patches.linux.previousScan')" width="180" sortable>
                 <template #default="{ row }">
                   {{ formatDateTime(row.scan_timestamp) }}
                 </template>
@@ -169,7 +169,7 @@
         v-show="currentStepKey === 'pre'"
         v-model="installConfig.preScript"
         v-model:mode="scriptModes.pre"
-        title="预执行脚本"
+        :title="t('patches.linux.preScript')"
         icon="fa-code"
         :placeholder="preScriptPlaceholder"
         :state="stepStates[stepIndexes.pre]"
@@ -177,11 +177,11 @@
         :file-name="scriptFiles.pre"
         :run-id="taskDetailData?.preCheckRunId || ''"
         :error-message="taskErrorMessage"
-        success-title="预执行脚本执行完毕"
-        skipped-title="已跳过预执行脚本"
-        failure-prefix="执行失败："
+        :success-title="t('patches.linux.preScriptDone')"
+        :skipped-title="t('patches.linux.preScriptSkipped')"
+        :failure-prefix="t('patches.linux.executionFailurePrefix')"
         @upload="handleScriptUpload('pre', $event)"
-        @show-result="openExecuteResult"
+        @show-result="runId => openExecuteResult(runId, message('patches.linux.preScript'))"
       />
 
       <!-- Step 3: 校验脚本 -->
@@ -189,7 +189,7 @@
         v-show="currentStepKey === 'validate'"
         v-model="installConfig.postScript"
         v-model:mode="scriptModes.post"
-        title="校验脚本"
+        :title="t('patches.linux.validationScript')"
         icon="fa-check-square-o"
         :placeholder="postScriptPlaceholder"
         :state="stepStates[stepIndexes.validate]"
@@ -197,11 +197,11 @@
         :file-name="scriptFiles.post"
         :run-id="taskDetailData?.validateRunId || ''"
         :error-message="taskErrorMessage"
-        success-title="全部校验通过"
-        skipped-title="已跳过校验脚本"
-        failure-prefix="校验失败："
+        :success-title="t('patches.linux.allValidated')"
+        :skipped-title="t('patches.linux.validationSkipped')"
+        :failure-prefix="t('patches.linux.validationFailurePrefix')"
         @upload="handleScriptUpload('post', $event)"
-        @show-result="openExecuteResult"
+        @show-result="runId => openExecuteResult(runId, message('patches.linux.validationScript'))"
       />
 
       <!-- Step 4: 重启策略 -->
@@ -217,7 +217,7 @@
         :skipped="isSkipped.restart"
         :error-message="taskErrorMessage"
         :run-id="taskDetailData?.restartRunId || ''"
-        @show-result="openExecuteResult"
+        @show-result="runId => openExecuteResult(runId, message('patches.linux.executeRestart'))"
       />
 
       <!-- Step 5/6: 执行汇总 -->
@@ -237,23 +237,23 @@
               :has-more="hasMoreSummarySelectionItems"
               :search-threshold="5"
               contained
-              no-match-text="未匹配到相关内容"
+              :no-match-text="t('patches.linux.noMatches')"
               @load-more="loadMoreSummarySelectionItems"
             />
             <PatchTaskSummaryRow
               v-model:search-text="hostSummarySearchText"
-              label="目标主机"
+              :label="t('execution.ui.targetHost')"
               :items="displayedSummaryHosts"
               :total="confirmedHosts.length"
               :filtered-total="filteredSummaryHosts.length"
               :has-more="hasMoreSummaryHosts"
               :search-threshold="5"
               :item-formatter="formatHostDisplay"
-              unit="台"
+              :unit="t('patches.linux.hostUnit')"
               contained
-              empty-text="暂无主机"
-              no-match-text="未匹配到相关主机"
-              search-placeholder="搜索目标主机..."
+              :empty-text="t('patches.linux.noHosts')"
+              :no-match-text="t('patches.linux.noHostMatches')"
+              :search-placeholder="t('patches.linux.searchTargetHosts')"
               @load-more="loadMoreSummaryHosts"
             />
             <PatchTaskSummaryRow
@@ -267,20 +267,20 @@
               max-height="200px"
               contained
               package-style
-              empty-text="暂无软件包"
-              no-match-text="未匹配到相关软件包"
-              search-placeholder="搜索软件包..."
+              :empty-text="t('patches.linux.noPackages')"
+              :no-match-text="t('patches.linux.noPackageMatches')"
+              :search-placeholder="t('patches.linux.searchPackages')"
               @load-more="loadMorePackages"
             />
             <div class="install-summary-row">
-              <span class="install-summary-label">重启策略</span>
+              <span class="install-summary-label">{{ t('patches.linux.restartPolicy') }}</span>
               <span class="install-summary-value">{{ restartStrategySummary }}</span>
             </div>
           </div>
         </div>
         <!-- 任务链执行进度展示 -->
         <div ref="pipelineSectionRef" class="task-step-action" v-if="pipelineStatus !== 'idle'">
-          <PatchTaskPipeline :items="pipelineItems" @show-result="openExecuteResult" />
+          <PatchTaskPipeline :items="pipelineItems" @show-result="openPipelineResult" />
 
           <PatchTaskPreCheckResult
             :result="parsedPreCheckResult"
@@ -295,10 +295,10 @@
             show-icon
             :title="
               pipelineStatus === 'success'
-                ? '所有任务已全部完成'
+                ? t('patches.linux.allCompleted')
                 : pipelineStatus === 'paused'
-                  ? '暂时无法查询任务状态'
-                  : '执行任务中断'
+                  ? t('patches.linux.statusTemporarilyUnavailable')
+                  : t('patches.linux.taskInterrupted')
             "
             class="task-step-alert mt-3"
           >
@@ -307,10 +307,10 @@
                 {{ pipelineSuccessDescription }}
               </div>
               <div v-else-if="pipelineStatus === 'paused'" style="font-size: 13px">
-                {{ taskErrorMessage }}。任务可能仍在执行，请点击“继续查询”查看进度。
+                {{ t('patches.linux.queryMayContinue', { error: taskErrorMessage }) }}
               </div>
               <div v-else style="font-size: 13px">
-                由于部分环节出现异常（{{ taskErrorMessage }}），任务已停止。请检查原因并重试。
+                {{ t('patches.linux.taskStopped', { error: taskErrorMessage }) }}
               </div>
             </template>
           </el-alert>
@@ -320,12 +320,12 @@
       <template #footer>
         <div class="dialog-footer">
           <!-- Step 0 取消 -->
-          <el-button v-if="currentStepKey === 'select'" @click="isVisible = false">取消</el-button>
+          <el-button v-if="currentStepKey === 'select'" @click="isVisible = false">{{ t('common.cancel') }}</el-button>
 
           <!-- 上一步：仅在非执行中时允许回退 -->
           <el-button v-if="installStep > 0 && !configurationLocked" @click="goBack">
             <i class="fa fa-chevron-left" style="margin-right: 4px" />
-            上一步
+            {{ t('patches.linux.previousStep') }}
           </el-button>
 
           <el-button
@@ -334,7 +334,7 @@
             plain
             @click="failedHostsVisible = true"
           >
-            查看失败主机
+            {{ t('patches.linux.viewFailedHosts') }}
           </el-button>
 
           <!-- 正在执行按钮 -->
@@ -346,7 +346,7 @@
             loading
             disabled
           >
-            <span>{{ pipelineStatus === 'running' ? '执行中...' : '准备执行...' }}</span>
+            <span>{{ pipelineStatus === 'running' ? t('patches.linux.executingEllipsis') : t('patches.linux.preparingExecution') }}</span>
           </el-button>
 
           <!-- 跳过按钮：针对 RPM 预检、预执行、校验脚本和重启配置 -->
@@ -355,7 +355,7 @@
             :disabled="configurationLocked"
             @click="handleSkipStep"
           >
-            跳过此步
+            {{ t('patches.linux.skipStep') }}
           </el-button>
 
           <!-- 下一步按钮：配置步骤直接进入下一步 -->
@@ -368,11 +368,11 @@
               (currentStepKey === 'select' && selectedHosts.length === 0) ||
               (currentStepKey === 'restart' &&
                 requiresRestartConfirm &&
-                restartConfirmText !== restartConfirmKeyword)
+                !restartConfirmationValid)
             "
             @click="handleAdvanceStep"
           >
-            下一步
+            {{ t('patches.linux.nextStep') }}
             <i class="fa fa-chevron-right" style="margin-left: 4px" />
           </el-button>
 
@@ -386,7 +386,7 @@
           >
             <el-button type="primary" :loading="executionSubmitting" @click="handleRetryPreCheck">
               <i class="fa fa-refresh" style="margin-right: 4px" />
-              重新检查
+              {{ t('patches.linux.recheck') }}
             </el-button>
             <el-button
               type="danger"
@@ -395,7 +395,7 @@
               @click="handleSkipPreCheck"
             >
               <i class="fa fa-forward" style="margin-right: 4px" />
-              跳过检查并继续
+              {{ t('patches.linux.skipAndContinue') }}
             </el-button>
           </template>
 
@@ -413,10 +413,10 @@
             />
             {{
               pipelineStatus === 'success'
-                ? '完成'
+                ? t('execution.jobStatus.COMPLETED')
                 : pipelineStatus === 'paused'
-                  ? '继续查询'
-                  : '开始执行任务'
+                  ? t('patches.linux.resumeQuery')
+                  : t('patches.linux.startTask')
             }}
           </el-button>
         </div>
@@ -434,6 +434,8 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
 import { ref, reactive, computed, watch, nextTick } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import { formatDateTime } from '@/utils/date'
@@ -581,9 +583,10 @@ const {
 } = useLazyDisplayList(selectionDisplayItems, {
   initialCount: 20,
   stepCount: 50,
-  searchFn: (item, keyword) => {
+  getSearchContext: () => currentLocale.value,
+  searchFn: (item, keyword, locale) => {
     const primary = String(item.primary || '').toLowerCase()
-    const secondary = String(item.secondary || '').toLowerCase()
+    const secondary = String(item.getSearchText?.(locale) ?? item.secondary ?? '').toLowerCase()
     return primary.includes(keyword) || secondary.includes(keyword)
   }
 })
@@ -643,6 +646,7 @@ const {
   restartAdviceSource,
   restartAdviceTitle,
   restartConfirmKeyword,
+  restartConfirmationValid,
   restartConfirmSubmitText,
   restartOptions,
   restartStrategySummary
@@ -651,10 +655,11 @@ const {
   affectedPackages,
   createdTaskId,
   installConfig,
-  isSkipped
+  isSkipped,
+  restartConfirmText
 })
 const taskStatus = ref('') // 后端任务状态
-const taskErrorMessage = ref('') // 错误信息
+const taskErrorMessage = messageRef('') // 错误信息
 const taskDetailData = ref(null) // 从接口返回的任务详情
 const pipelineFinished = ref(false) // 只有通过 startPipeline 的才是真完成
 const { loadRestartOptions, loadRollbackInfo } = usePatchTaskTaskPreparation({
@@ -751,6 +756,7 @@ const {
   isSkipped,
   restartConfirmText,
   restartConfirmKeyword,
+  restartConfirmationValid,
   currentStepKey,
   stepTransitionLoading,
   selectedHosts,
@@ -800,15 +806,15 @@ watch(
 
 const pipelineItems = computed(() => {
   const items = [
-    { key: 'pre', label: '预检查', idx: stepIndexes.value.pre, runKey: 'preCheckRunId' },
+    { key: 'pre', get label() { return t('patches.linux.precheck') }, idx: stepIndexes.value.pre, runKey: 'preCheckRunId' },
     {
       key: 'execute',
       label: executeStepTitle.value,
       idx: stepIndexes.value.execute,
       runKey: 'executeRunId'
     },
-    { key: 'restart', label: '重启策略', idx: stepIndexes.value.restart, runKey: 'restartRunId' },
-    { key: 'validate', label: '脚本校验', idx: stepIndexes.value.validate, runKey: 'validateRunId' }
+    { key: 'restart', get label() { return t('patches.linux.restartPolicy') }, idx: stepIndexes.value.restart, runKey: 'restartRunId' },
+    { key: 'validate', get label() { return t('patches.linux.scriptValidation') }, idx: stepIndexes.value.validate, runKey: 'validateRunId' }
   ]
 
   return items.map(item => {
@@ -816,14 +822,14 @@ const pipelineItems = computed(() => {
     const skipped = Boolean(isSkipped[item.key] && state === 'success')
     const text =
       state === 'running'
-        ? '正在执行中...'
+        ? t('patches.linux.executing')
         : state === 'success'
           ? skipped
-            ? '系统已跳过执行'
-            : '任务执行成功'
+            ? t('patches.linux.systemSkipped')
+            : t('common.pollingSuccess')
           : state === 'failed'
-            ? taskErrorMessage.value || '任务执行失败，请检查'
-            : '等待调度中'
+            ? taskErrorMessage.value || t('patches.linux.taskFailedCheck')
+            : t('patches.linux.waitingSchedule')
 
     return {
       ...item,
@@ -838,7 +844,7 @@ const pipelineItems = computed(() => {
 // 执行详情弹窗
 const executeResultVisible = ref(false)
 const currentExecuteRunId = ref('')
-const currentExecuteJobTitle = ref('')
+const currentExecuteJobTitle = messageRef('')
 
 function openExecuteResult(runId, jobTitle) {
   currentExecuteRunId.value = runId
@@ -846,12 +852,27 @@ function openExecuteResult(runId, jobTitle) {
   executeResultVisible.value = true
 }
 
+function openPipelineResult(runId, _label, step) {
+  const stepKeys = {
+    pre: 'patches.linux.precheck',
+    restart: 'patches.linux.restartPolicy',
+    validate: 'patches.linux.scriptValidation'
+  }
+  const operationKeys = {
+    patch: 'patches.linux.patchInstall',
+    package: 'patches.linux.packageUpdate',
+    vulnerability: 'patches.linux.vulnFix',
+    rollback: 'patches.linux.changeRollback'
+  }
+  openExecuteResult(runId, message(stepKeys[step] || operationKeys[displayOperationType.value]))
+}
+
 function getTaskRunId(taskData, runKey) {
   if (!taskData || !runKey) return ''
   return taskData[runKey] || ''
 }
 
-function resolveApiErrorMessage(error, fallback = '操作失败，请稍后重试') {
+function resolveApiErrorMessage(error, fallback = t('patches.linux.operationFailedRetry')) {
   return (
     error?.response?.data?.error ||
     error?.response?.data?.message ||
@@ -989,13 +1010,13 @@ function handleRetryPreCheck() {
 
 function handleSkipPreCheck() {
   ElMessageBox.confirm(
-    '前置环境检查未通过，跳过检查强行安装可能导致安装失败。是否确认跳过检查并继续？',
-    '提示',
+    t('patches.linux.skipPrecheckConfirm'),
+    t('patches.linux.notice'),
     {
       closeOnClickModal: false,
       closeOnPressEscape: false,
-      confirmButtonText: '确认跳过',
-      cancelButtonText: '取消',
+      get confirmButtonText() { return t('patches.linux.confirmSkip') },
+      get cancelButtonText() { return t('common.cancel') },
       type: 'warning'
     }
   )

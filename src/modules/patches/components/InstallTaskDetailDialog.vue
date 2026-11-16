@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="定时安装任务详情"
+    :title="t('patches.linux.scheduledTaskDetails')"
     width="900px"
     :close-on-click-modal="!canHandlePreCheckFailure && !actionLoading"
     :close-on-press-escape="!canHandlePreCheckFailure && !actionLoading"
@@ -9,7 +9,7 @@
     <div v-loading="loading" class="task-detail-body">
       <div v-if="loadError" class="task-load-error">
         <el-alert :title="loadError" type="error" :closable="false" show-icon />
-        <el-button type="primary" :loading="loading" @click="retryLoadTask">重试加载</el-button>
+        <el-button type="primary" :loading="loading" @click="retryLoadTask">{{ t('patches.linux.retryLoad') }}</el-button>
       </div>
       <template v-if="taskDetail">
         <el-alert
@@ -25,7 +25,7 @@
         <div class="ops-stepper">
           <div class="stepper-item is-success">
             <div class="stepper-icon"><i class="fa fa-check" /></div>
-            <div class="stepper-title">创建任务</div>
+            <div class="stepper-title">{{ t('patches.linux.createTask') }}</div>
           </div>
           <div class="stepper-line is-active" />
           <div class="stepper-item" :class="stepClass(stepStates[1])">
@@ -35,7 +35,7 @@
               <i v-else-if="stepStates[1] === 'active'" class="fa fa-spinner fa-spin" />
               <span v-else>2</span>
             </div>
-            <div class="stepper-title">前置预检查</div>
+            <div class="stepper-title">{{ t('patches.linux.environmentPrecheck') }}</div>
           </div>
           <div class="stepper-line" :class="{ 'is-active': stepStates[2] !== 'idle' }" />
           <div class="stepper-item" :class="stepClass(stepStates[2])">
@@ -45,25 +45,25 @@
               <i v-else-if="stepStates[2] === 'active'" class="fa fa-spinner fa-spin" />
               <span v-else>3</span>
             </div>
-            <div class="stepper-title">分批安装</div>
+            <div class="stepper-title">{{ t('patches.linux.installBatches') }}</div>
           </div>
         </div>
 
         <div class="task-summary">
           <div>
-            <strong>安装内容：</strong>
+            <strong>{{ t('patches.linux.installContentLabel') }}</strong>
             {{ installContent }}
           </div>
           <div>
-            <strong>分批大小：</strong>
-            {{ taskDetail.batchSize || 50 }} 台/批
+            <strong>{{ t('patches.linux.batchSizeLabel') }}</strong>
+            {{ taskDetail.batchSize || 50 }} {{ t('patches.linux.hostsPerBatch') }}
           </div>
           <div>
-            <strong>目标资产数：</strong>
-            {{ targetCount }} 台
+            <strong>{{ t('patches.linux.targetAssetCount') }}</strong>
+            {{ targetCount }} {{ t('patches.linux.hostUnit') }}
           </div>
           <div>
-            <strong>任务状态：</strong>
+            <strong>{{ t('patches.linux.taskStatusLabel') }}</strong>
             <el-tag
               :type="getTaskStatusTagType(taskDetail.status)"
               :style="getTaskStatusTagStyle(taskDetail.status)"
@@ -73,7 +73,7 @@
             >
               {{
                 taskDetail.status === 'CREATED'
-                  ? '等待定时执行'
+                  ? t('patches.linux.waitingScheduledExecution')
                   : formatTaskStatus(taskDetail.status)
               }}
             </el-tag>
@@ -84,39 +84,39 @@
               size="small"
               @click="openExecuteResult"
             >
-              查看执行结果
+              {{ t('patches.linux.viewExecutionResult') }}
             </el-button>
           </div>
           <div>
-            <strong>计划执行时间：</strong>
+            <strong>{{ t('patches.linux.scheduledTimeLabel') }}</strong>
             {{ formatDateTime(taskDetail.scheduledTime) }}
           </div>
           <div>
-            <strong>申请人：</strong>
+            <strong>{{ t('patches.linux.applicantLabel') }}</strong>
             {{ taskDetail.createdBy || '-' }}
           </div>
           <div>
-            <strong>审批人：</strong>
+            <strong>{{ t('patches.linux.approverLabel') }}</strong>
             {{ taskDetail.approvedBy || '-' }}
           </div>
           <div>
-            <strong>审批时间：</strong>
+            <strong>{{ t('patches.linux.approvalTimeLabel') }}</strong>
             {{ formatDateTime(taskDetail.approvedTime) }}
           </div>
           <div class="task-summary__full">
-            <strong>审批意见：</strong>
+            <strong>{{ t('patches.linux.approvalCommentLabel') }}</strong>
             {{ taskDetail.approvalComment || '-' }}
           </div>
           <div class="task-summary__full">
-            <strong>软件包：</strong>
+            <strong>{{ t('patches.linux.packagesLabel') }}</strong>
             {{ formatJsonArray(taskDetail.packages) || '-' }}
           </div>
           <div class="task-summary__full">
-            <strong>目标主机：</strong>
+            <strong>{{ t('patches.linux.targetHostsLabel') }}</strong>
             {{ formatJsonArray(taskDetail.hostIds) || '-' }}
           </div>
           <div v-if="taskDetail.errorMessage" class="task-summary__full task-error">
-            <strong>异常原因：</strong>
+            <strong>{{ t('patches.linux.errorReasonLabel') }}</strong>
             {{ taskDetail.errorMessage }}
           </div>
         </div>
@@ -126,8 +126,8 @@
           <div>
             {{
               taskDetail.status === 'PRE_CHECKING'
-                ? '正在进行前置环境检查，请稍候…'
-                : '正在分批执行安装，请稍候…'
+                ? t('patches.linux.environmentChecking')
+                : t('patches.linux.batchInstalling')
             }}
           </div>
         </div>
@@ -136,9 +136,9 @@
           v-if="taskDetail.status === 'PRE_CHECK_FAILED' && parsedPreCheckResult"
           class="precheck-result"
         >
-          <h4>前置环境检查未通过项</h4>
+          <h4>{{ t('patches.linux.failedPrechecks') }}</h4>
           <div v-if="parsedPreCheckResult.unreachable?.length" class="precheck-unreachable">
-            <strong>不可达主机：</strong>
+            <strong>{{ t('patches.linux.unreachableHostsLabel') }}</strong>
             <el-tag
               v-for="hostId in parsedPreCheckResult.unreachable"
               :key="hostId"
@@ -170,7 +170,7 @@
                   "
                   size="small"
                 >
-                  {{ check.status === 'fail' ? '阻断' : check.status === 'warn' ? '警告' : '通过' }}
+                  {{ check.status === 'fail' ? t('patches.linux.blocked') : check.status === 'warn' ? t('patches.linux.warning') : t('patches.linux.pass') }}
                 </el-tag>
                 <strong>{{ checkTitles[check.id] || check.id }}</strong>
                 <span>{{ check.detail }}</span>
@@ -181,14 +181,14 @@
 
         <el-alert
           v-if="['INSTALL_DONE', 'COMPLETED'].includes(taskDetail.status)"
-          title="分批自动安装任务已完成"
+          :title="t('patches.linux.batchInstallCompleted')"
           type="success"
           :closable="false"
           show-icon
         />
         <el-alert
           v-if="['INSTALL_FAILED', 'FAILED'].includes(taskDetail.status)"
-          title="分批自动安装任务未能完全执行成功"
+          :title="t('patches.linux.batchInstallIncomplete')"
           type="error"
           :closable="false"
           show-icon
@@ -198,10 +198,10 @@
 
     <template v-if="canHandlePreCheckFailure" #footer>
       <el-button type="warning" :loading="actionLoading" @click="handleSkipPreCheck">
-        我已知晓风险，跳过并执行安装
+        {{ t('patches.linux.acknowledgeAndInstall') }}
       </el-button>
       <el-button type="primary" :loading="actionLoading" @click="handleRetryPreCheck">
-        重新预检查
+        {{ t('patches.linux.repeatPrecheck') }}
       </el-button>
     </template>
   </el-dialog>
@@ -209,11 +209,14 @@
   <ExecuteResultDialog
     v-model:visible="executeResultVisible"
     :run-id="taskDetail?.executeRunId || ''"
-    job-title="定时安装执行结果"
+    :job-title="t('patches.linux.scheduledResult')"
   />
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
+import { createPatchTaskError } from '../utils/patchTaskFeedback'
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
@@ -248,7 +251,7 @@ const dialogVisible = computed({
 })
 const loading = ref(false)
 const requestPending = ref(false)
-const loadError = ref('')
+const loadError = messageRef('')
 const actionLoading = ref(false)
 const taskDetail = ref(null)
 const activeCollapseNames = ref([])
@@ -281,9 +284,9 @@ const stepStates = computed(() => {
 
 const statusDescription = computed(() => {
   const status = taskDetail.value?.status
-  if (status === 'PENDING_APPROVAL') return '等待管理员审批，计划时间前未获批准将自动失效。'
-  if (status === 'CREATED') return '等待系统在计划时间自动触发预检查和分批安装，默认不重启。'
-  return '本次任务不会执行，请重新提交安装申请。'
+  if (status === 'PENDING_APPROVAL') return t('patches.linux.awaitApprovalHint')
+  if (status === 'CREATED') return t('patches.linux.awaitScheduleHint')
+  return t('patches.linux.resubmitHint')
 })
 
 const targetCount = computed(() => {
@@ -293,8 +296,8 @@ const targetCount = computed(() => {
 
 const installContent = computed(() => {
   if (taskDetail.value?.packageSetName) return taskDetail.value.packageSetName
-  if (taskDetail.value?.packageSetId) return `软件包集 (${taskDetail.value.packageSetId})`
-  return '自定义软件包 / 补丁'
+  if (taskDetail.value?.packageSetId) return t('patches.linux.packageSetValue', { name: taskDetail.value.packageSetId })
+  return t('patches.linux.customPackagesPatches')
 })
 
 const parsedPreCheckResult = computed(() => {
@@ -312,21 +315,21 @@ const canHandlePreCheckFailure = computed(
 )
 
 const checkTitles = {
-  conn: '连通性',
-  sudo: '提权权限',
-  os: '操作系统识别',
-  pkg_manager: '包管理器',
-  pkg_lock: '包管理器占用',
-  pkg_db: '包数据库健康',
-  disk: '磁盘空间',
-  disk_boot: '/boot 空间',
-  kernel_pending: '待重启内核',
-  repo: '软件仓库',
-  pkg_exists: '目标包存在性',
-  version_ok: '目标版本可用性',
-  depsolve: '依赖解析',
-  already_satisfied: '已是目标版本',
-  exec: '检查执行异常'
+  get conn() { return t('patches.linux.connectivity') },
+  get sudo() { return t('patches.linux.sudo') },
+  get os() { return t('patches.linux.osDetection') },
+  get pkg_manager() { return t('patches.linux.packageManager') },
+  get pkg_lock() { return t('patches.linux.packageManagerLock') },
+  get pkg_db() { return t('patches.linux.packageDatabase') },
+  get disk() { return t('patches.linux.diskSpace') },
+  get disk_boot() { return t('patches.linux.bootSpace') },
+  get kernel_pending() { return t('patches.linux.pendingKernel') },
+  get repo() { return t('patches.linux.softwareRepo') },
+  get pkg_exists() { return t('patches.linux.packageExists') },
+  get version_ok() { return t('patches.linux.targetVersion') },
+  get depsolve() { return t('patches.linux.dependencyResolution') },
+  get already_satisfied() { return t('patches.linux.alreadyTargetVersion') },
+  get exec() { return t('patches.linux.checkExecutionError') }
 }
 
 function stepClass(state) {
@@ -356,7 +359,7 @@ async function loadTask({ silent = false } = {}) {
   try {
     const response = await patchInstallApi.getTask(props.taskId)
     if (currentRequest !== requestId) return false
-    if (!response?.data) throw new Error('任务不存在或已无法访问')
+    if (!response?.data) throw createPatchTaskError('patches.linux.taskNotAccessible')
     taskDetail.value = response.data
     const results = parsedPreCheckResult.value?.results
     activeCollapseNames.value = Array.isArray(results) ? results.map(item => item.host_id) : []
@@ -364,7 +367,7 @@ async function loadTask({ silent = false } = {}) {
     return true
   } catch (error) {
     if (currentRequest === requestId) {
-      loadError.value = error?.response?.data?.message || error?.message || '获取任务详情失败'
+      loadError.value = error?.response?.data?.message || error?.localMessage || error?.message || message('automation.schedule.detailFailed')
       stopPolling()
     }
     return false
@@ -404,10 +407,10 @@ async function handleRetryPreCheck() {
   try {
     const response = await patchInstallApi.executePreCheck(taskDetail.value.id)
     taskDetail.value = response?.data || taskDetail.value
-    ElMessage.success('已重新发起环境预检查')
+    ElMessage.success(t('patches.linux.precheckRestarted'))
     startPolling()
   } catch (error) {
-    ElMessage.error(error?.message || '重新发起预检查失败')
+    ElMessage.error(error?.message || t('patches.linux.precheckRetryFailed'))
   } finally {
     actionLoading.value = false
   }
@@ -415,22 +418,22 @@ async function handleRetryPreCheck() {
 
 async function handleSkipPreCheck() {
   try {
-    await ElMessageBox.confirm('跳过阻断项并强行安装可能导致部署失败，是否继续？', '强制安装确认', {
+    await ElMessageBox.confirm(t('patches.linux.forceInstallConfirm'), t('patches.linux.forceInstallTitle'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
-      confirmButtonText: '确定跳过并安装',
-      cancelButtonText: '取消',
+      get confirmButtonText() { return t('patches.linux.skipAndInstall') },
+      get cancelButtonText() { return t('common.cancel') },
       type: 'warning'
     })
     actionLoading.value = true
     await patchInstallApi.skipPreCheck(taskDetail.value.id)
     const response = await patchInstallApi.executeInstallTask(taskDetail.value.id)
     taskDetail.value = response?.data || taskDetail.value
-    ElMessage.success('已跳过环境检查，开始推送安装')
+    ElMessage.success(t('patches.linux.precheckSkippedInstall'))
     startPolling()
   } catch (error) {
     if (error !== 'cancel' && error !== 'close')
-      ElMessage.error(error?.message || '跳过预检查/启动安装失败')
+      ElMessage.error(error?.message || t('patches.linux.skipPrecheckFailed'))
   } finally {
     actionLoading.value = false
   }

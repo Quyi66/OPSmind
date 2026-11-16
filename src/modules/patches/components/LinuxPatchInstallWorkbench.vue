@@ -12,7 +12,7 @@
         @click="handleTabChange('host')"
       >
         <i class="fa fa-laptop" style="margin-right: 6px" />
-        按主机安装
+        {{ t('patches.linux.installByHost') }}
       </button>
       <button
         type="button"
@@ -21,7 +21,7 @@
         @click="handleTabChange('patch')"
       >
         <i class="fa fa-download" style="margin-right: 6px" />
-        按补丁安装
+        {{ t('patches.linux.installByPatch') }}
       </button>
       <div class="secondary-actions"><slot name="secondary-actions" /></div>
     </div>
@@ -31,10 +31,10 @@
       <!-- 主机筛选栏 -->
       <div class="ops-filter-bar">
         <el-form :model="hostFilters" inline size="small">
-          <el-form-item label="操作系统">
+          <el-form-item :label="t('patches.linux.os')">
             <el-select
               v-model="hostFilters.os_distro"
-              placeholder="全部"
+              :placeholder="t('common.all')"
               clearable
               filterable
               allow-create
@@ -45,10 +45,10 @@
               <el-option v-for="item in osDistroList" :key="item" :label="item" :value="item" />
             </el-select>
           </el-form-item>
-          <el-form-item label="标签">
+          <el-form-item :label="t('automation.job.tag')">
             <el-select
               v-model="hostFilters.tags"
-              placeholder="全部标签"
+              :placeholder="t('patches.linux.allTags')"
               multiple
               collapse-tags
               collapse-tags-tooltip
@@ -61,10 +61,10 @@
               <el-option v-for="tag in hostTagOptions" :key="tag" :label="tag" :value="tag" />
             </el-select>
           </el-form-item>
-          <el-form-item label="系统版本">
+          <el-form-item :label="t('patches.linux.osVersion')">
             <el-select
               v-model="hostVersionFilter"
-              placeholder="全部"
+              :placeholder="t('common.all')"
               clearable
               filterable
               allow-create
@@ -80,10 +80,10 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="关键词">
+          <el-form-item :label="t('automation.workbench.keyword')">
             <el-input
               v-model="hostFilters.keyword"
-              placeholder="主机名 / IP"
+              :placeholder="t('patches.linux.hostNameIp')"
               style="width: 160px"
               clearable
               @keyup.enter="handleHostFilter"
@@ -97,11 +97,11 @@
           <el-form-item>
             <el-button type="primary" :loading="hostLoading" @click="handleHostFilter">
               <el-icon><Search /></el-icon>
-              搜索
+              {{ t('common.search') }}
             </el-button>
             <el-button @click="handleHostReset">
               <el-icon><RefreshRight /></el-icon>
-              重置
+              {{ t('common.reset') }}
             </el-button>
           </el-form-item>
         </el-form>
@@ -116,7 +116,7 @@
           @click="handleOpenBatchInstallDrawer"
         >
           <i class="fa fa-chevron-circle-right" />
-          安装选中主机补丁 ({{ batchSelectedHosts.length }})
+          {{ t('patches.linux.installHostsCount', { count: batchSelectedHosts.length }) }}
         </el-button>
         <slot name="scan-action" :hosts="batchSelectedHosts" :loading="hostLoading">
           <el-button
@@ -127,7 +127,7 @@
             @click="handleRescan"
           >
             <i class="fa fa-bug" />
-            重新扫描补丁 ({{ batchSelectedHosts.length }})
+            {{ t('patches.linux.rescanHostsCount', { count: batchSelectedHosts.length }) }}
           </el-button>
         </slot>
         <slot name="host-export-action" />
@@ -138,7 +138,7 @@
           plain
         >
           <i :class="`fa fa-${hostAllSelected ? 'times' : 'check-double'} me-1`" />
-          {{ hostAllSelected ? '一键取消' : '一键全选' }}
+          {{ hostAllSelected ? t('patches.linux.clearAll') : t('patches.linux.selectAll') }}
         </el-button>
         <el-button
           v-if="batchSelectedHosts.length > 0"
@@ -148,7 +148,7 @@
           @click="handleClearHostSelection"
         >
           <i class="fa fa-times me-1" />
-          清空选择
+          {{ t('automation.file.clearSelection') }}
         </el-button>
         <span style="flex: 1"></span>
         <el-button
@@ -157,7 +157,7 @@
           size="small"
           :loading="hostLoading"
           @click="loadHostData"
-          title="刷新"
+          :title="t('common.refresh')"
         >
           <el-icon v-show="!hostLoading"><Refresh /></el-icon>
         </el-button>
@@ -175,7 +175,7 @@
           @select-all="handleHostTableSelect"
         >
           <el-table-column type="selection" width="45" />
-          <el-table-column prop="host_key" label="主机" width="140">
+          <el-table-column prop="host_key" :label="t('execution.ui.host')" width="140">
             <template #default="{ row }">
               <el-link type="primary" underline="never" @click="handleHostClick(row)">
                 {{ row.host_key }}
@@ -184,7 +184,7 @@
           </el-table-column>
           <el-table-column prop="num_critical" width="80">
             <template #header>
-              严重
+              {{ t('patches.catalog.critical') }}
               <i class="fa fa-circle text-danger" />
             </template>
             <template #default="{ row }">
@@ -192,7 +192,7 @@
                 type="button"
                 class="severity-count"
                 :disabled="!(row.num_critical > 0)"
-                title="查看严重补丁"
+                :title="t('patches.linux.criticalPatches')"
                 @click="handleSeverityCountClick(row, 'Critical')"
               >
                 {{ row.num_critical }}
@@ -201,7 +201,7 @@
           </el-table-column>
           <el-table-column prop="num_important" width="80">
             <template #header>
-              重要
+              {{ t('patches.catalog.important') }}
               <i class="fa fa-circle text-warning" />
             </template>
             <template #default="{ row }">
@@ -209,7 +209,7 @@
                 type="button"
                 class="severity-count"
                 :disabled="!(row.num_important > 0)"
-                title="查看重要补丁"
+                :title="t('patches.linux.importantPatches')"
                 @click="handleSeverityCountClick(row, 'Important')"
               >
                 {{ row.num_important }}
@@ -218,7 +218,7 @@
           </el-table-column>
           <el-table-column prop="num_moderate" width="80">
             <template #header>
-              中等
+              {{ t('patches.catalog.moderate') }}
               <i class="fa fa-circle text-dark" />
             </template>
             <template #default="{ row }">
@@ -226,7 +226,7 @@
                 type="button"
                 class="severity-count"
                 :disabled="!(row.num_moderate > 0)"
-                title="查看中等补丁"
+                :title="t('patches.linux.moderatePatches')"
                 @click="handleSeverityCountClick(row, 'Moderate')"
               >
                 {{ row.num_moderate }}
@@ -235,7 +235,7 @@
           </el-table-column>
           <el-table-column prop="num_low" width="80">
             <template #header>
-              低
+              {{ t('patches.linux.low') }}
               <i class="fa fa-circle text-info" />
             </template>
             <template #default="{ row }">
@@ -243,20 +243,20 @@
                 type="button"
                 class="severity-count"
                 :disabled="!(row.num_low > 0)"
-                title="查看低危补丁"
+                :title="t('patches.linux.lowPatches')"
                 @click="handleSeverityCountClick(row, 'Low')"
               >
                 {{ row.num_low }}
               </button>
             </template>
           </el-table-column>
-          <el-table-column label="重启要求" width="100">
+          <el-table-column :label="t('patches.linux.restartRequirement')" width="100">
             <template #default="{ row }">
-              {{ row.need_reboot === 1 ? '需重启' : row.need_reboot === 0 ? '无需重启' : '未知' }}
+              {{ row.need_reboot === 1 ? t('patches.linux.restartRequired') : row.need_reboot === 0 ? t('patches.linux.noRestartRequired') : t('common.unknown') }}
             </template>
           </el-table-column>
-          <el-table-column prop="hostname" label="主机名" min-width="120" show-overflow-tooltip />
-          <el-table-column prop="tags" label="标签" min-width="140">
+          <el-table-column prop="hostname" :label="t('patches.linux.hostname')" min-width="120" show-overflow-tooltip />
+          <el-table-column prop="tags" :label="t('automation.job.tag')" min-width="140">
             <template #default="{ row }">
               <div v-if="Array.isArray(row.tags) && row.tags.length" class="host-list-tags">
                 <el-tag
@@ -272,18 +272,18 @@
               <span v-else class="text-muted">-</span>
             </template>
           </el-table-column>
-          <el-table-column label="系统版本" min-width="200">
+          <el-table-column :label="t('patches.linux.osVersion')" min-width="200">
             <template #default="{ row }">
               {{ row.os_distro }}
               {{ [row.os_version, row.os_sp_version].filter(Boolean).join(' ') || '-' }}
             </template>
           </el-table-column>
-          <el-table-column prop="scan_timestamp" label="最后扫描时间" width="200" sortable>
+          <el-table-column prop="scan_timestamp" :label="t('patches.linux.lastScanTime')" width="200" sortable>
             <template #default="{ row }">
               {{ formatDateTime(row.scan_timestamp) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="130" fixed="right">
+          <el-table-column :label="t('common.actions')" width="130" fixed="right">
             <template #default="{ row }">
               <el-button
                 text
@@ -291,7 +291,7 @@
                 :disabled="hostLoading"
                 @click="handleInstallHost(row)"
               >
-                安装补丁
+                {{ t('patches.linux.installPatches') }}
               </el-button>
               <el-button
                 text
@@ -299,7 +299,7 @@
                 :disabled="hostLoading || rescanLoading || scanLoading"
                 @click="handleScanHost(row)"
               >
-                扫描
+                {{ t('patches.linux.scan') }}
               </el-button>
             </template>
           </el-table-column>
@@ -327,24 +327,24 @@
       <!-- 补丁筛选区 -->
       <div class="ops-filter-bar">
         <el-form :model="filters" inline size="small">
-          <el-form-item label="严重程度">
+          <el-form-item :label="t('patches.linux.severity')">
             <el-select
               v-model="filters.severity"
               multiple
-              placeholder="请选择"
+              :placeholder="t('patches.linux.select')"
               style="width: auto"
               @change="handleSearch"
             >
-              <el-option label="严重" value="Critical" />
-              <el-option label="重要" value="Important" />
-              <el-option label="中等" value="Moderate" />
-              <el-option label="低危" value="Low" />
+              <el-option :label="t('patches.catalog.critical')" value="Critical" />
+              <el-option :label="t('patches.catalog.important')" value="Important" />
+              <el-option :label="t('patches.catalog.moderate')" value="Moderate" />
+              <el-option :label="t('patches.catalog.low')" value="Low" />
             </el-select>
           </el-form-item>
-          <el-form-item label="关键词">
+          <el-form-item :label="t('automation.workbench.keyword')">
             <el-input
               v-model="filters.keyword"
-              placeholder="搜索补丁编号、概要、漏洞编号..."
+              :placeholder="t('patches.linux.patchSearch')"
               style="width: 240px"
               clearable
               @keyup.enter="handleSearch"
@@ -358,11 +358,11 @@
           <el-form-item>
             <el-button type="primary" :loading="loading" @click="handleSearch">
               <el-icon><Search /></el-icon>
-              搜索
+              {{ t('common.search') }}
             </el-button>
             <el-button @click="handleReset">
               <el-icon><RefreshRight /></el-icon>
-              重置
+              {{ t('common.reset') }}
             </el-button>
           </el-form-item>
         </el-form>
@@ -377,7 +377,7 @@
           :disabled="selectedPatchIds.length === 0"
           @click="handleInstallSelected"
         >
-          安装选中的补丁 ({{ selectedPatchIds.length }})
+          {{ t('patches.linux.installPatchesCount', { count: selectedPatchIds.length }) }}
         </el-button>
         <el-button
           type="primary"
@@ -387,7 +387,7 @@
           @click="handleScheduleInstallSelected"
         >
           <i class="fa fa-clock-o me-1" />
-          定时安装 ({{ selectedPatchIds.length }})
+          {{ t('patches.linux.schedulePatchesCount', { count: selectedPatchIds.length }) }}
         </el-button>
         <el-button
           size="small"
@@ -396,7 +396,7 @@
           plain
         >
           <i :class="`fa fa-${allSelected ? 'times' : 'check-double'} me-1`" />
-          {{ allSelected ? '一键取消' : '一键全选' }}
+          {{ allSelected ? t('patches.linux.clearAll') : t('patches.linux.selectAll') }}
         </el-button>
         <el-button
           v-if="selectedPatchIds.length > 0"
@@ -406,7 +406,7 @@
           @click="handleClearPatchSelection"
         >
           <i class="fa fa-times me-1" />
-          清空选择
+          {{ t('automation.file.clearSelection') }}
         </el-button>
         <span style="flex: 1"></span>
         <el-button
@@ -415,7 +415,7 @@
           size="small"
           :loading="loading"
           @click="loadData"
-          title="刷新"
+          :title="t('common.refresh')"
         >
           <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
@@ -433,15 +433,15 @@
           @select-all="handleTableSelect"
         >
           <el-table-column type="selection" width="50" />
-          <el-table-column prop="patch_id" label="补丁编号" min-width="160" sortable>
+          <el-table-column prop="patch_id" :label="t('patches.catalog.patchId')" min-width="160" sortable>
             <template #default="{ row }">
               <el-link type="primary" underline="never" @click="handleViewPatchDetail(row)">
                 {{ row.patch_id }}
               </el-link>
             </template>
           </el-table-column>
-          <el-table-column prop="title" label="概要" min-width="220" show-overflow-tooltip />
-          <el-table-column prop="severity" label="严重性" width="100" sortable>
+          <el-table-column prop="title" :label="t('patches.catalog.summary')" min-width="220" show-overflow-tooltip />
+          <el-table-column prop="severity" :label="t('patches.linux.severityAlt')" width="100" sortable>
             <template #default="{ row }">
               <el-tag
                 effect="dark"
@@ -452,12 +452,12 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="publish_date" label="发布时间" width="120" sortable>
+          <el-table-column prop="publish_date" :label="t('patches.catalog.publishedAt')" width="120" sortable>
             <template #default="{ row }">
               {{ formatDate(row.publish_date) }}
             </template>
           </el-table-column>
-          <el-table-column prop="related_vuls" label="关联漏洞" min-width="320">
+          <el-table-column prop="related_vuls" :label="t('patches.catalog.associatedVulnerabilities')" min-width="320">
             <template #default="{ row }">
               <CveLinkList
                 :cves="row.related_vuls"
@@ -465,7 +465,7 @@
               />
             </template>
           </el-table-column>
-          <el-table-column prop="effect_host_count" label="受影响的主机" width="130" align="left">
+          <el-table-column prop="effect_host_count" :label="t('patches.linux.affectedHosts')" width="130" align="left">
             <template #default="{ row }">
               <el-link type="primary" underline="never" @click="handleViewAffectedHosts(row)">
                 {{ row.effect_host_count }}
@@ -504,7 +504,7 @@
     <!-- 补丁详情对话框 -->
     <el-dialog
       v-model="patchDetailVisible"
-      title="补丁详情"
+      :title="t('patches.linux.patchDetails')"
       width="800px"
       :close-on-click-modal="true"
       class="patch-detail-dialog"
@@ -533,31 +533,31 @@
 
     <el-dialog
       v-model="affectedHostsVisible"
-      title="受影响主机"
+      :title="t('patches.linux.affectedHostsTitle')"
       width="900px"
       :close-on-click-modal="true"
     >
       <p>{{ affectedPatch?.patch_id }}</p>
       <div v-if="affectedHostsError" role="alert">
         {{ affectedHostsError }}
-        <el-button @click="loadAffectedHosts">重试</el-button>
+        <el-button @click="loadAffectedHosts">{{ t('common.retry') }}</el-button>
       </div>
       <el-table v-else v-loading="affectedHostsLoading" :data="affectedHosts" max-height="420">
-        <el-table-column prop="hostKey" label="主机" min-width="160" />
-        <el-table-column prop="os_distro" label="操作系统" min-width="120" />
-        <el-table-column prop="os_version" label="系统版本" min-width="100" />
-        <el-table-column prop="scan_timestamp" label="最后扫描时间" min-width="180">
+        <el-table-column prop="hostKey" :label="t('execution.ui.host')" min-width="160" />
+        <el-table-column prop="os_distro" :label="t('patches.linux.os')" min-width="120" />
+        <el-table-column prop="os_version" :label="t('patches.linux.osVersion')" min-width="100" />
+        <el-table-column prop="scan_timestamp" :label="t('patches.linux.lastScanTime')" min-width="180">
           <template #default="{ row }">{{ formatDateTime(row.scan_timestamp) }}</template>
         </el-table-column>
       </el-table>
       <template #footer>
-        <el-button @click="affectedHostsVisible = false">关闭</el-button>
+        <el-button @click="affectedHostsVisible = false">{{ t('common.close') }}</el-button>
         <el-button
           type="primary"
           :disabled="affectedHostsLoading || !!affectedHostsError || affectedHosts.length === 0"
           @click="handleInstallAffectedPatch"
         >
-          安装此补丁
+          {{ t('patches.linux.installThisPatch') }}
         </el-button>
       </template>
     </el-dialog>
@@ -579,6 +579,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
 import { ref, reactive, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -609,7 +611,7 @@ const props = defineProps({
   embedded: { type: Boolean, default: false },
   initialTab: { type: String, default: 'host' },
   scanLoading: { type: Boolean, default: false },
-  sourceLabel: { type: String, default: '主机概览' },
+  sourceLabel: { type: String, default: '' },
   sourceRouteName: { type: String, default: 'patches-machineScan' }
 })
 const emit = defineEmits(['installed', 'scan-host'])
@@ -914,7 +916,7 @@ function handleHostClick(row) {
       os_distro: row.os_distro,
       os_version: row.os_version,
       hostname: row.hostname,
-      fromLabel: props.sourceLabel,
+      fromLabel: props.sourceLabel || t('patches.linux.hostOverview'),
       fromRouteName: props.sourceRouteName
     }
   })
@@ -944,7 +946,7 @@ function handleScanHost(host) {
 
 async function handleRescan() {
   if (batchSelectedHosts.value.length === 0) {
-    ElMessage.warning('请先在列表中勾选要重新扫描的主机')
+    ElMessage.warning(t('patches.linux.selectRescanHosts'))
     return
   }
   await submitRescan(batchSelectedHosts.value)
@@ -984,7 +986,7 @@ async function submitRescan(hosts) {
   const normalizedHosts = resolvedHosts.map(normalizeRescanHost).filter(item => item.value)
 
   if (normalizedHosts.length === 0) {
-    ElMessage.warning('请选择至少一个有效的待扫描主机')
+    ElMessage.warning(t('patches.linux.selectValidScanHosts'))
     return false
   }
 
@@ -998,11 +1000,11 @@ async function submitRescan(hosts) {
 
     const runId = response?.data?.[0]?.runId || response?.[0]?.runId
     if (!runId) {
-      ElMessage.error('扫描任务提交失败：未返回运行ID')
+      ElMessage.error(t('patches.linux.scanRunMissing'))
       return false
     }
 
-    ElMessage.success('扫描任务已提交')
+    ElMessage.success(t('patches.linux.scanSubmitted'))
     trackScan(runId)
 
     lastSubmittedRunId.value = runId
@@ -1012,7 +1014,7 @@ async function submitRescan(hosts) {
     return true
   } catch (error) {
     console.error('Scan failed:', error)
-    ElMessage.error(`扫描任务提交失败: ${error.message || '未知错误'}`)
+    ElMessage.error(t('patches.linux.scanSubmitError', { error: error.message || t('patches.linux.unknownError') }))
     return false
   } finally {
     rescanLoading.value = false
@@ -1070,7 +1072,7 @@ const patchesToInstall = ref([])
 
 const affectedHostsVisible = ref(false)
 const affectedHostsLoading = ref(false)
-const affectedHostsError = ref('')
+const affectedHostsError = messageRef('')
 const affectedHosts = ref([])
 const affectedPatch = ref(null)
 let affectedHostsRequestId = 0
@@ -1098,7 +1100,7 @@ async function loadAffectedHosts() {
     affectedHosts.value = response?.data?.records || []
   } catch {
     if (requestId !== affectedHostsRequestId) return
-    affectedHostsError.value = '加载受影响主机失败，请重试'
+    affectedHostsError.value = message('patches.linux.affectedHostsFailed')
   } finally {
     if (requestId === affectedHostsRequestId) affectedHostsLoading.value = false
   }
@@ -1165,7 +1167,7 @@ async function handleOpenBatchInstallDrawer() {
 
 function handleInstallSelected() {
   if (selectedRows.value.length === 0) {
-    ElMessage.warning('请先选择要安装的补丁')
+    ElMessage.warning(t('patches.linux.selectPatchesFirst'))
     return
   }
   // 注意：selectedRows 是补丁维度记录，Agent 能力校验在安装向导中基于实际目标主机进行
@@ -1183,7 +1185,7 @@ const scheduleSelectedPatches = ref([])
 
 function handleScheduleInstallSelected() {
   if (selectedRows.value.length === 0) {
-    ElMessage.warning('请先选择要安装的补丁')
+    ElMessage.warning(t('patches.linux.selectPatchesFirst'))
     return
   }
   scheduleSelectedPatches.value = [...selectedRows.value]
@@ -1197,10 +1199,10 @@ function handleScheduleInstallSuccess() {
 
 function getSeverityLabel(severity) {
   const map = {
-    Critical: '严重',
-    Important: '重要',
-    Moderate: '中等',
-    Low: '低危'
+    get Critical() { return t('patches.catalog.critical') },
+    get Important() { return t('patches.catalog.important') },
+    get Moderate() { return t('patches.catalog.moderate') },
+    get Low() { return t('patches.catalog.low') }
   }
   return map[severity] || severity
 }
@@ -1254,7 +1256,7 @@ async function loadData({ preserveSelection = false } = {}) {
   } catch (error) {
     if (requestId !== patchLoadRequestId) return
     console.error('Failed to load patches:', error)
-    ElMessage.error('加载可安装补丁失败，请稍后重试')
+    ElMessage.error(t('patches.linux.installablePatchesFailed'))
     allData.value = []
   } finally {
     if (requestId === patchLoadRequestId) {
@@ -1316,7 +1318,7 @@ async function loadPatchDetail(patchId) {
     }
   } catch (error) {
     console.error('Failed to load patch detail:', error)
-    ElMessage.error('加载补丁详情失败，请稍后重试')
+    ElMessage.error(t('patches.linux.patchDetailsFailedRetry'))
     patchDetail.value = null
   } finally {
     patchDetailLoading.value = false

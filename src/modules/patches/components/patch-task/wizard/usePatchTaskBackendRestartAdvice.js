@@ -1,9 +1,11 @@
+import { t } from '@/core/i18n'
+import { message } from '@/core/i18n/feedback'
+import { h } from 'vue'
 import { ElMessage } from 'element-plus'
 import { patchInstallApi } from '../../../api'
 import {
   buildRestartAdviceDescription,
   formatHostDisplay,
-  getRestartLabel,
   getRestartPriority,
   normalizeRestartType,
   resolveHostIp
@@ -53,7 +55,7 @@ export function usePatchTaskBackendRestartAdvice({
     const patchIds = getSelectedPatchIds(props)
 
     if (hostEntries.length === 0 || patchIds.length === 0) {
-      applyLocalRestartAdvice('未获取到完整的主机或补丁信息，已退回本地启发式建议。')
+      applyLocalRestartAdvice(message('patches.linux.restartFallbackIncomplete'))
       return false
     }
 
@@ -112,7 +114,7 @@ export function usePatchTaskBackendRestartAdvice({
           result.reason?.response?.data?.message ||
           result.reason?.response?.data?.error ||
           result.reason?.message ||
-          '请求未知错误'
+          t('patches.linux.unknownRequestError')
         errorMessages.push(`${task.hostLabel}: ${errMsg}`)
       }
     })
@@ -120,13 +122,15 @@ export function usePatchTaskBackendRestartAdvice({
     if (errorMessages.length > 0) {
       ElMessage({
         type: 'error',
-        dangerouslyUseHTMLString: true,
-        message: `获取重启建议失败：<br>${errorMessages.join('<br>')}`
+        message: h('div', [
+          h('div', t('patches.linux.restartAdviceFailed')),
+          ...errorMessages.map(text => h('div', text))
+        ])
       })
     }
 
     if (successfulResults.length === 0) {
-      applyLocalRestartAdvice('后端未返回可用的重启建议，已退回本地启发式建议。')
+      applyLocalRestartAdvice(message('patches.linux.restartFallbackUnavailable'))
       restartAdviceCacheKey.value = ''
       return false
     }
@@ -157,13 +161,17 @@ export function usePatchTaskBackendRestartAdvice({
     restartAdviceCacheKey.value = queryKey
     restartOptions.restartType = overallRestartType
     restartOptions.restartRequired = overallRestartType !== 'none'
-    restartOptions.restartLabel = getRestartLabel(overallRestartType)
-    restartOptions.restartDescription = buildRestartAdviceDescription(
-      hostAdviceList,
-      ignoredCount,
-      failedCount
-    )
-    restartOptions.restartReason = restartOptions.restartDescription
+    const labelKeys = {
+      system: 'patches.linux.systemRestart',
+      service: 'patches.linux.serviceRestart',
+      none: 'patches.linux.noRestartRequired'
+    }
+    restartOptions.restartLabel = message(labelKeys[overallRestartType])
+    const description = message('patches.linux.restartDescription', () => ({
+      description: buildRestartAdviceDescription(hostAdviceList, ignoredCount, failedCount)
+    }))
+    restartOptions.restartDescription = description
+    restartOptions.restartReason = description
     installConfig.restartPolicy = overallRestartType
 
     return true

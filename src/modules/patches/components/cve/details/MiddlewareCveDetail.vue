@@ -4,7 +4,7 @@
     <div class="cve-detail-breadcrumb">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item>
-          <a @click.prevent="goBack">中间件漏洞详情</a>
+          <a @click.prevent="goBack">{{ t('patches.cve.middlewareDetails') }}</a>
         </el-breadcrumb-item>
         <el-breadcrumb-item>{{ cveId }}</el-breadcrumb-item>
       </el-breadcrumb>
@@ -16,14 +16,14 @@
     <!-- 详情内容 -->
     <div v-else-if="cveDetail" class="cve-content-wrapper">
       <el-tabs v-model="activeTab" class="ops-tabs">
-        <el-tab-pane name="basic" label="基本信息">
+        <el-tab-pane name="basic" :label="t('automation.file.baseInfo')">
           <div class="tab-scroll-box">
             <!-- 头部信息 -->
             <div class="modern-header mb-4">
               <div class="header-top">
                 <h1 class="cve-title">{{ cveId }}</h1>
                 <el-button type="primary" plain size="small" @click="affectedHostsVisible = true">
-                  受影响主机
+                  {{ t('patches.linux.affectedHostsTitle') }}
                 </el-button>
                 <el-tag
                   v-if="currentMiddleware"
@@ -38,7 +38,7 @@
               </div>
               <div class="header-meta">
                 <div class="meta-item" v-if="currentMiddleware">
-                  <span class="label">发布时间:</span>
+                  <span class="label">{{ t('patches.cve.publishedAtLabel') }}</span>
                   <span class="value">{{ formatDateTime(currentMiddleware.publicDate) }}</span>
                 </div>
                 <div class="meta-separator"></div>
@@ -46,7 +46,7 @@
                   class="meta-item data-source-item"
                   v-if="cveDetail.middlewares && cveDetail.middlewares.length > 0"
                 >
-                  <span class="label">中间件:</span>
+                  <span class="label">{{ t('patches.cve.middlewareLabel') }}</span>
                   <el-radio-group
                     v-model="currentMiddlewareIndex"
                     size="small"
@@ -67,10 +67,10 @@
 
             <!-- 详细信息卡片 -->
             <div class="modern-card mb-4" v-if="currentMiddleware">
-              <div class="card-title">基础信息</div>
+              <div class="card-title">{{ t('automation.flow.basicInfo') }}</div>
               <div class="details-grid two-col inline">
                 <div class="detail-cell">
-                  <span class="label">漏洞编号</span>
+                  <span class="label">{{ t('patches.linux.vulnId') }}</span>
                   <div class="value">
                     <el-link
                       v-if="currentMiddleware.webUrl"
@@ -87,7 +87,7 @@
                   </div>
                 </div>
                 <div class="detail-cell">
-                  <span class="label">中间件类型</span>
+                  <span class="label">{{ t('patches.cve.middlewareType') }}</span>
                   <div class="value">
                     <el-tag size="small" effect="plain">
                       {{ currentMiddleware.middlewareType }}
@@ -95,7 +95,7 @@
                   </div>
                 </div>
                 <div class="detail-cell">
-                  <span class="label">严重等级</span>
+                  <span class="label">{{ t('patches.cve.severity') }}</span>
                   <div class="value">
                     <el-tag
                       :type="getSeverityType(currentMiddleware.severity)"
@@ -111,13 +111,13 @@
                   </div>
                 </div>
                 <div class="detail-cell">
-                  <span class="label">CVSS 评分</span>
+                  <span class="label">{{ t('patches.cve.cvssScore') }}</span>
                   <div class="value">
                     <span
                       :class="currentMiddleware.cvss3Score ? 'text-danger fw-bold' : 'text-muted'"
                     >
                       {{
-                        formatCvssScore(currentMiddleware.cvss3Score) === '未评分'
+                        toKnownNumber(currentMiddleware.cvss3Score, { max: 10 }) === null
                           ? '-'
                           : formatCvssScore(currentMiddleware.cvss3Score)
                       }}
@@ -128,11 +128,11 @@
                   </div>
                 </div>
                 <div class="detail-cell">
-                  <span class="label">CWE 编号</span>
+                  <span class="label">{{ t('patches.cve.cweId') }}</span>
                   <div class="value code-font text-primary">{{ currentMiddleware.cwe || '-' }}</div>
                 </div>
                 <div class="detail-cell">
-                  <span class="label">数据源</span>
+                  <span class="label">{{ t('patches.catalog.source') }}</span>
                   <div class="value">{{ currentMiddleware.source || '-' }}</div>
                 </div>
               </div>
@@ -140,9 +140,9 @@
 
             <!-- 描述信息卡片 -->
             <div class="modern-card mb-4" v-if="currentMiddleware">
-              <div class="card-title">漏洞描述</div>
+              <div class="card-title">{{ t('patches.cve.description') }}</div>
               <div class="card-text description-text">
-                {{ currentMiddleware.description || '暂无详细描述信息。' }}
+                {{ currentMiddleware.description || t('patches.cve.noDescription') }}
               </div>
             </div>
           </div>
@@ -150,7 +150,7 @@
 
         <el-tab-pane name="versions">
           <template #label>
-            受影响版本
+            {{ t('patches.cve.affectedVersions') }}
             <span class="ops-tab-count" v-if="currentMiddleware?.affectedVersions?.length">
               {{ currentMiddleware.affectedVersions.length }}
             </span>
@@ -162,19 +162,19 @@
                 max-height="calc(100vh - 274px)"
                 style="width: 100%"
               >
-                <el-table-column prop="productName" label="产品名称" min-width="150" />
-                <el-table-column label="受影响版本范围" min-width="180">
+                <el-table-column prop="productName" :label="t('patches.cve.productName')" min-width="150" />
+                <el-table-column :label="t('patches.cve.affectedVersionRange')" min-width="180">
                   <template #default="{ row }">
                     {{ row.versionStart || '*' }} ~ {{ row.versionEnd || '*' }}
                   </template>
                 </el-table-column>
-                <el-table-column prop="fixedVersion" label="修复版本" min-width="120">
+                <el-table-column prop="fixedVersion" :label="t('patches.cve.fixedVersion')" min-width="120">
                   <template #default="{ row }">
                     <span v-if="row.fixedVersion" class="text-success">{{ row.fixedVersion }}</span>
                     <span v-else class="text-muted">-</span>
                   </template>
                 </el-table-column>
-                <el-table-column prop="status" label="状态" width="100">
+                <el-table-column prop="status" :label="t('common.status')" width="100">
                   <template #default="{ row }">
                     <el-tag
                       size="small"
@@ -199,8 +199,8 @@
 
     <!-- 错误状态 -->
     <div v-else class="detail-section error-container">
-      <el-empty description="无法获取详细信息">
-        <el-button type="primary" @click="goBack">返回列表</el-button>
+      <el-empty :description="t('patches.cve.detailUnavailable')">
+        <el-button type="primary" @click="goBack">{{ t('automation.library.backToList') }}</el-button>
       </el-empty>
     </div>
     <MiddlewareAffectedHostsDialog
@@ -212,10 +212,11 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { ref, watch } from 'vue'
 import { TopRight } from '@element-plus/icons-vue'
 import { formatDateTime as formatDateTimeGlobal } from '@/utils/date'
-import { formatCvssScore } from '@/utils/workspacePresentation'
+import { formatCvssScore, toKnownNumber } from '@/utils/workspacePresentation'
 import { middlewareCveApi } from '../../../api'
 import MiddlewareAffectedHostsDialog from '../MiddlewareAffectedHostsDialog.vue'
 
@@ -277,10 +278,10 @@ function getSeverityType(severity) {
 function getSeverityLabel(severity) {
   const key = normalizeSeverityKey(severity)
   const labelMap = {
-    critical: '严重',
-    important: '重要',
-    moderate: '中等',
-    low: '低危'
+    get critical() { return t('patches.catalog.critical') },
+    get important() { return t('patches.catalog.important') },
+    get moderate() { return t('patches.catalog.moderate') },
+    get low() { return t('patches.catalog.low') }
   }
   return labelMap[key] || severity
 }

@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    :title="`${cveId || '中间件 CVE'} · 受影响主机`"
+    :title="t('patches.cve.affectedHostsTitle', { cve: cveId || t('patches.cve.middlewareCve') })"
     width="1200px"
     destroy-on-close
     :close-on-click-modal="true"
@@ -9,10 +9,10 @@
   >
     <div v-loading="loading">
       <div class="ops-action-bar">
-        <span>中间件：{{ middlewareType || '全部' }}</span>
-        <span>共 {{ hosts.length }} 条受影响记录</span>
+        <span>{{ t('patches.cve.middlewareColon') }}{{ middlewareType || t('common.all') }}</span>
+        <span>{{ t('patches.cve.affectedRecordCount', { count: hosts.length }) }}</span>
         <span class="action-spacer" />
-        <el-button size="small" :loading="loading" @click="load">刷新</el-button>
+        <el-button size="small" :loading="loading" @click="load">{{ t('common.refresh') }}</el-button>
       </div>
       <el-alert
         v-if="errorMessage"
@@ -21,45 +21,47 @@
         :closable="false"
         show-icon
       />
-      <el-table v-else :data="hosts" max-height="480" size="small" empty-text="暂无受影响主机">
-        <el-table-column prop="hostKey" label="主机" min-width="150">
+      <el-table v-else :data="hosts" max-height="480" size="small" :empty-text="t('patches.cve.noAffectedHosts')">
+        <el-table-column prop="hostKey" :label="t('execution.ui.host')" min-width="150">
           <template #default="{ row }">{{ row.hostKey || '-' }}</template>
         </el-table-column>
-        <el-table-column prop="middlewareType" label="中间件" min-width="100" />
-        <el-table-column prop="pkgName" label="软件包" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="middlewareType" :label="t('patches.cve.middleware')" min-width="100" />
+        <el-table-column prop="pkgName" :label="t('patches.linux.package')" min-width="120" show-overflow-tooltip />
         <el-table-column
           prop="installedVersion"
-          label="已安装版本"
+          :label="t('patches.cve.installedVersion')"
           min-width="140"
           show-overflow-tooltip
         />
         <el-table-column
           prop="installedPkg"
-          label="已安装软件包"
+          :label="t('patches.cve.installedPackages')"
           min-width="220"
           show-overflow-tooltip
         />
         <el-table-column
           prop="affectedRange"
-          label="受影响范围"
+          :label="t('patches.cve.affectedRange')"
           min-width="220"
           show-overflow-tooltip
         />
-        <el-table-column prop="fixedVersion" label="修复版本" min-width="140" show-overflow-tooltip>
+        <el-table-column prop="fixedVersion" :label="t('patches.cve.fixedVersion')" min-width="140" show-overflow-tooltip>
           <template #default="{ row }">{{ row.fixedVersion || '-' }}</template>
         </el-table-column>
-        <el-table-column prop="osScanStatus" label="OS 补丁扫描状态" min-width="150">
+        <el-table-column prop="osScanStatus" :label="t('patches.cve.osScanStatus')" min-width="150">
           <template #default="{ row }">{{ row.osScanStatus ?? '-' }}</template>
         </el-table-column>
       </el-table>
     </div>
     <template #footer>
-      <el-button @click="emit('update:modelValue', false)">关闭</el-button>
+      <el-button @click="emit('update:modelValue', false)">{{ t('common.close') }}</el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
 import { onBeforeUnmount, ref, watch } from 'vue'
 import { middlewareCveApi } from '../../api'
 
@@ -71,7 +73,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 const loading = ref(false)
 const hosts = ref([])
-const errorMessage = ref('')
+const errorMessage = messageRef('')
 let requestId = 0
 
 async function load() {
@@ -79,7 +81,7 @@ async function load() {
   hosts.value = []
   errorMessage.value = ''
   if (!props.cveId) {
-    errorMessage.value = '缺少 CVE 编号，无法查询受影响主机'
+    errorMessage.value = message('patches.cve.missingCve')
     loading.value = false
     return
   }
@@ -91,7 +93,7 @@ async function load() {
     hosts.value = Array.isArray(data) ? data : []
   } catch {
     if (id !== requestId) return
-    errorMessage.value = '加载受影响主机失败，请点击刷新重试'
+    errorMessage.value = message('patches.cve.affectedHostsFailed')
   } finally {
     if (id === requestId) loading.value = false
   }

@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="定时安装补丁"
+    :title="t('patches.linux.scheduleInstall')"
     width="1080px"
     top="5vh"
     :close-on-click-modal="false"
@@ -24,10 +24,10 @@
         <section class="schedule-card">
           <div class="card-header">
             <i class="fa fa-lock" />
-            已选补丁 ({{ selectedPatches.length }})
+            {{ t('patches.linux.selectedPatchesCount', { count: selectedPatches.length }) }}
           </div>
           <div class="card-body card-body--scroll">
-            <div v-if="selectedPatches.length === 0" class="no-data">暂无数据</div>
+            <div v-if="selectedPatches.length === 0" class="no-data">{{ t('common.noData') }}</div>
             <div
               v-for="patch in selectedPatches"
               :key="patch.patch_id"
@@ -57,12 +57,12 @@
           <div class="card-header card-header--with-actions">
             <div>
               <i class="fa fa-cube" />
-              受影响软件包 ({{ affectedPackagesDisplay.length }})
+              {{ t('patches.linux.affectedPackagesCount', { count: affectedPackagesDisplay.length }) }}
             </div>
             <el-input
               v-if="affectedPackagesDisplay.length > 10"
               v-model="packageSearchText"
-              placeholder="搜索软件包..."
+              :placeholder="t('patches.linux.searchPackages')"
               size="small"
               clearable
               style="width: 180px;"
@@ -83,12 +83,12 @@
         <section class="schedule-card schedule-card--full">
           <div class="card-header">
             <i class="fa fa-server" />
-            目标主机 (已选 {{ selectedHosts.length }} / 共 {{ affectedHosts.length }})
+            {{ t('patches.linux.targetHostsSelected', { selected: selectedHosts.length, total: affectedHosts.length }) }}
           </div>
           <div class="card-body">
             <div class="host-toolbar">
               <div class="host-filter">
-              <span class="host-filter__label">分组</span>
+              <span class="host-filter__label">{{ t('patches.linux.group') }}</span>
               <el-select
                 v-model="selectedGroupIds"
                 multiple
@@ -97,8 +97,8 @@
                 collapse-tags
                 collapse-tags-tooltip
                 :loading="groupLoading"
-                placeholder="全部分组"
-                aria-label="按分组筛选主机"
+                :placeholder="t('patches.linux.allGroups')"
+                :aria-label="t('patches.linux.filterHostsGroup')"
                 size="small"
                 style="width: 180px"
                 @change="loadStep0Data"
@@ -112,7 +112,7 @@
               </el-select>
               </div>
               <div class="host-filter">
-              <span class="host-filter__label">标签</span>
+              <span class="host-filter__label">{{ t('automation.job.tag') }}</span>
               <el-select
                 v-model="selectedTagNames"
                 multiple
@@ -121,8 +121,8 @@
                 collapse-tags
                 collapse-tags-tooltip
                 :loading="groupLoading"
-                placeholder="全部标签"
-                aria-label="按标签筛选主机"
+                :placeholder="t('patches.linux.allTags')"
+                :aria-label="t('patches.linux.filterHostsTag')"
                 size="small"
                 style="width: 180px"
                 @change="loadStep0Data"
@@ -137,7 +137,7 @@
               </div>
               <el-input
                 v-model="hostSearchText"
-                placeholder="搜索主机名/IP/OS"
+                :placeholder="t('patches.linux.searchHostnameIpOs')"
                 :prefix-icon="Search"
                 size="small"
                 style="width: 220px"
@@ -149,7 +149,7 @@
                 @click="handleToggleHostSelectAll"
               >
                 <i :class="`fa fa-${hostAllSelected ? 'times' : 'check-double'} me-1`" />
-                {{ hostAllSelected ? '一键取消' : '一键全选' }}
+                {{ hostAllSelected ? t('patches.linux.clearAll') : t('patches.linux.selectAll') }}
               </el-button>
             </div>
 
@@ -162,14 +162,14 @@
               @select-all="handleHostTableSelect"
             >
               <el-table-column type="selection" width="40" />
-              <el-table-column prop="hostKey" label="主机" min-width="180" sortable>
+              <el-table-column prop="hostKey" :label="t('execution.ui.host')" min-width="180" sortable>
                 <template #default="{ row }">
                   <span class="host-name-cell">{{ row.hostKey || row.host_key || row.hostname }}</span>
                 </template>
               </el-table-column>
               <el-table-column prop="os_distro" label="OS" width="120" sortable />
-              <el-table-column prop="os_version" label="OS版本" width="120" sortable />
-              <el-table-column prop="scan_timestamp" label="上次扫描时间" min-width="160" sortable>
+              <el-table-column prop="os_version" :label="t('patches.linux.osVersionShort')" width="120" sortable />
+              <el-table-column prop="scan_timestamp" :label="t('patches.linux.previousScan')" min-width="160" sortable>
                 <template #default="{ row }">
                   {{ formatDateTime(row.scan_timestamp) }}
                 </template>
@@ -199,22 +199,22 @@
       <!-- 汇总摘要卡片 -->
       <div class="summary-banner">
         <div class="summary-item">
-          <span class="summary-label">已选补丁：</span>
-          <span class="summary-value">{{ selectedPatches.length }} 个</span>
+          <span class="summary-label">{{ t('patches.linux.selectedPatchesLabel') }}</span>
+          <span class="summary-value">{{ selectedPatches.length }} {{ t('patches.linux.itemUnit') }}</span>
         </div>
         <div class="summary-item">
-          <span class="summary-label">目标主机：</span>
-          <span class="summary-value">{{ selectedHosts.length }} 台</span>
+          <span class="summary-label">{{ t('patches.linux.targetHostsLabel') }}</span>
+          <span class="summary-value">{{ selectedHosts.length }} {{ t('patches.linux.hostUnit') }}</span>
         </div>
         <div class="summary-item">
-          <span class="summary-label">待更新包数：</span>
-          <span class="summary-value">{{ resolvedPackages.length }} 个</span>
+          <span class="summary-label">{{ t('patches.linux.updatePackageCount') }}</span>
+          <span class="summary-value">{{ resolvedPackages.length }} {{ t('patches.linux.itemUnit') }}</span>
         </div>
       </div>
 
       <el-form label-position="top" size="default" class="schedule-form">
         <!-- 计划执行时间 -->
-        <el-form-item label="计划执行时间" required>
+        <el-form-item :label="t('patches.linux.scheduledTime')" required>
           <div class="schedule-time-row">
             <el-date-picker
               v-model="scheduleDate"
@@ -222,22 +222,22 @@
               value-format="YYYY-MM-DD"
               :editable="false"
               :disabled-date="disabledScheduleDate"
-              placeholder="选择日期"
+              :placeholder="t('patches.linux.selectDate')"
               style="flex: 1; min-width: 160px;"
             />
             <el-select
               v-model="scheduleHour"
               filterable
               default-first-option
-              placeholder="时"
-              aria-label="执行小时"
-              no-match-text="请输入 00–23"
+              :placeholder="t('automation.schedule.hour')"
+              :aria-label="t('patches.linux.executionHour')"
+              :no-match-text="t('patches.linux.validHours')"
               style="width: 100px;"
             >
               <el-option
                 v-for="hour in scheduleHours"
                 :key="hour"
-                :label="`${hour} 时`"
+                :label="t('patches.linux.hourOption', { hour: hour })"
                 :value="hour"
               />
             </el-select>
@@ -245,27 +245,27 @@
               v-model="scheduleMinute"
               filterable
               default-first-option
-              placeholder="分"
-              aria-label="执行分钟（每 5 分钟）"
-              no-match-text="请选择 00、05 … 55"
+              :placeholder="t('automation.schedule.minute')"
+              :aria-label="t('patches.linux.executionMinutes')"
+              :no-match-text="t('patches.linux.validMinutes')"
               style="width: 100px;"
             >
               <el-option
                 v-for="minute in scheduleMinutes"
                 :key="minute"
-                :label="`${minute} 分`"
+                :label="t('patches.linux.minuteOption', { minute: minute })"
                 :value="minute"
               />
             </el-select>
           </div>
           <div class="form-item-tip form-item-tip--highlight">
-            {{ isAdmin ? '提交后等待计划时间自动执行。' : '提交后须由管理员在计划时间前审批通过，否则申请自动失效。' }}
-            到点自动预检查并分批安装，默认不重启。
+            {{ isAdmin ? t('patches.linux.submitAfterSchedule') : t('patches.linux.approveBeforeSchedule') }}
+            {{ t('patches.linux.scheduleBehavior') }}
           </div>
         </el-form-item>
 
         <!-- 分批大小 -->
-        <el-form-item label="分批大小 (每批主机数)" required>
+        <el-form-item :label="t('patches.linux.batchSize')" required>
           <div style="display: flex; align-items: center; gap: 8px;">
             <el-input-number
               v-model="batchSize"
@@ -275,13 +275,13 @@
               :controls="false"
             />
             <el-tooltip
-              content="目标主机会按照该数值拆分成多个批次，前一批执行完成后接续下一批。"
+              :content="t('patches.linux.batchSizeHint')"
               placement="top"
             >
               <i class="fa fa-info-circle" style="color: var(--el-text-color-secondary); cursor: pointer;" />
             </el-tooltip>
             <span style="font-size: 12px; color: var(--el-text-color-secondary); margin-left: 4px;">
-              默认 50，不填或设空则使用系统参数
+              {{ t('patches.linux.defaultBatchSize') }}
             </span>
           </div>
         </el-form-item>
@@ -292,20 +292,20 @@
     <template #footer>
       <div class="dialog-footer">
         <template v-if="currentStep === 0">
-          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button @click="dialogVisible = false">{{ t('common.cancel') }}</el-button>
           <el-button
             type="primary"
             :disabled="selectedHosts.length === 0 || installDataLoading || affectedPackagesLoading"
             @click="handleGoNextStep"
           >
-            下一步
+            {{ t('patches.linux.nextStep') }}
             <i class="fa fa-chevron-right ms-1" />
           </el-button>
         </template>
         <template v-else>
           <el-button :disabled="submitting" @click="currentStep = 0">
             <i class="fa fa-chevron-left me-1" />
-            上一步
+            {{ t('patches.linux.previousStep') }}
           </el-button>
           <el-button
             type="primary"
@@ -314,7 +314,7 @@
             @click="handleSubmit"
           >
             <i class="fa fa-play-circle me-1" />
-            {{ isAdmin ? '提交定时安装' : '提交安装申请' }}
+            {{ isAdmin ? t('patches.linux.submitScheduledInstall') : t('patches.linux.submitInstallRequest') }}
           </el-button>
         </template>
       </div>
@@ -323,6 +323,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { ref, reactive, computed, watch } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -360,8 +361,8 @@ const dialogVisible = computed({
 
 // 步骤定义
 const wizardSteps = [
-  { key: 'select', title: '1. 选择目标主机' },
-  { key: 'schedule', title: '2. 定时与分批配置' }
+  { key: 'select', get title() { return t('patches.linux.scheduleHostsStep') } },
+  { key: 'schedule', get title() { return t('patches.linux.scheduleConfigStep') } }
 ]
 const currentStep = ref(0)
 const stepStates = computed(() => {
@@ -494,9 +495,9 @@ function loadMorePackages() {
 
 const packageEmptyText = computed(() => {
   if (selectedHosts.value.length === 0) {
-    return '请勾选目标主机后查看匹配的软件包'
+    return t('patches.linux.checkHostsForPackages')
   }
-  return affectedPackagesDisplay.value.length === 0 ? '暂无数据' : '未匹配到相关软件包'
+  return affectedPackagesDisplay.value.length === 0 ? t('common.noData') : t('patches.linux.noPackageMatches')
 })
 
 async function fetchAffectedPackagesImmediate(patchIds, hostIds, requestId) {
@@ -512,7 +513,7 @@ async function fetchAffectedPackagesImmediate(patchIds, hostIds, requestId) {
   } catch (err) {
     if (requestId === packageRequestId) {
       console.error('Failed to load affected packages:', err)
-      ElMessage.error('获取受影响软件包失败，请重试')
+      ElMessage.error(t('patches.linux.affectedPackagesFailed'))
       affectedPackagesRaw.value = []
     }
   } finally {
@@ -578,7 +579,7 @@ async function loadStep0Data() {
   } catch (err) {
     if (requestId !== hostRequestId) return
     console.error('Failed to load affected machines:', err)
-    ElMessage.error('获取受影响主机失败，请稍后重试')
+    ElMessage.error(t('patches.linux.affectedHostsFailedLater'))
   } finally {
     if (requestId === hostRequestId) installDataLoading.value = false
   }
@@ -625,7 +626,7 @@ const isSubmitDisabled = computed(() => {
 
 async function handleGoNextStep() {
   if (selectedHosts.value.length === 0) {
-    ElMessage.warning('请至少勾选一台目标主机')
+    ElMessage.warning(t('patches.linux.checkAtLeastOneHost'))
     return
   }
   if (packageRefreshTimer) {
@@ -642,21 +643,21 @@ async function handleSubmit() {
   if (submitting.value) return
 
   if (scheduledTimeString.value && !/^\d{4}-\d{2}-\d{2} \d{2}:[0-5][05]$/.test(scheduledTimeString.value)) {
-    ElMessage.warning('计划执行时间的分钟只能选择 5 的倍数')
+    ElMessage.warning(t('patches.linux.scheduleMinuteInterval'))
     return
   }
   if (!isFutureSchedule(scheduledTimeString.value)) {
-    ElMessage.warning('请选择晚于当前时间的计划执行时间')
+    ElMessage.warning(t('patches.linux.scheduleMustBeFuture'))
     return
   }
   if (selectedHosts.value.length === 0) {
-    ElMessage.warning('请选择目标主机')
+    ElMessage.warning(t('automation.command.targetHostsRequired'))
     return
   }
 
   const pkgs = resolvedPackages.value
   if (pkgs.length === 0) {
-    ElMessage.warning('未能识别到有效的待更新软件包，请确认所选主机和补丁')
+    ElMessage.warning(t('patches.linux.validPackagesMissing'))
     return
   }
 
@@ -671,19 +672,19 @@ async function handleSubmit() {
   submitting.value = true
   try {
     await ElMessageBox.confirm(
-      `确定对已选中的 ${targets.length} 项目标资产提交定时安装吗？计划时间：${payload.scheduledTime}。${isAdmin.value ? '届时自动执行' : '需管理员提前审批通过'}，自动预检查、分批安装且默认不重启。`,
-      '确认提交定时安装',
+      t('patches.linux.scheduleConfirm', { count: targets.length, time: payload.scheduledTime, approval: isAdmin.value ? t('patches.linux.executeOnSchedule') : t('patches.linux.requiresAdminApproval') }),
+      t('patches.linux.confirmSchedule'),
       {
         closeOnClickModal: false,
         closeOnPressEscape: false,
-        confirmButtonText: '确认提交',
-        cancelButtonText: '取消',
+        get confirmButtonText() { return t('patches.linux.confirmSubmit') },
+        get cancelButtonText() { return t('common.cancel') },
         type: 'info'
       }
     )
 
     if (!isFutureSchedule(payload.scheduledTime)) {
-      ElMessage.warning('计划执行时间已过，请重新选择')
+      ElMessage.warning(t('patches.linux.schedulePassed'))
       return
     }
 
@@ -691,18 +692,18 @@ async function handleSubmit() {
     if (response?.data) {
       ElMessage.success(
         response.data.status === 'PENDING_APPROVAL'
-          ? '安装申请已提交，等待管理员审批'
-          : '定时安装任务已提交，等待计划时间执行'
+          ? t('patches.linux.applicationSubmitted')
+          : t('patches.linux.scheduledTaskSubmitted')
       )
       emit('success', response.data)
       dialogVisible.value = false
     } else {
-      ElMessage.error('创建定时安装任务失败')
+      ElMessage.error(t('patches.linux.scheduledTaskFailed'))
     }
   } catch (error) {
     if (error !== 'cancel' && error !== 'close') {
       console.error('Failed to create scheduled patch install task:', error)
-      ElMessage.error(error?.response?.data?.message || error?.response?.data?.error || error?.message || '创建任务失败，请检查参数')
+      ElMessage.error(error?.response?.data?.message || error?.response?.data?.error || error?.message || t('patches.linux.createTaskCheckParams'))
     }
   } finally {
     submitting.value = false

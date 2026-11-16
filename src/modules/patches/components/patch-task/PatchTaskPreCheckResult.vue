@@ -2,11 +2,11 @@
   <div v-if="result" class="pre-check-result-panel">
     <div class="panel-title">
       <i class="fa fa-heartbeat text-primary" />
-      前置环境检查结果
+      {{ t('patches.linux.precheckResults') }}
     </div>
 
     <div v-if="result.unreachable?.length" class="unreachable-hosts-block">
-      <div class="unreachable-hosts-title">不可达主机 ({{ result.unreachable.length }} 台)：</div>
+      <div class="unreachable-hosts-title">{{ t('patches.linux.unreachableCount', { count: result.unreachable.length }) }}</div>
       <div class="unreachable-hosts-tags">
         <el-tag v-for="hostId in result.unreachable" :key="hostId" type="danger" size="small">
           {{ resolveHostName(hostId) }}
@@ -23,14 +23,14 @@
           <span class="host-name">
             <i class="fa fa-server me-1" />
             {{ resolveHostName(hostResult.host_id) }}
-            <span v-if="isHostUnreachable(hostResult)" class="unreachable-label">(无法连通)</span>
+            <span v-if="isHostUnreachable(hostResult)" class="unreachable-label">({{ t('patches.linux.unreachable') }})</span>
           </span>
           <div class="host-tags">
             <el-tag v-if="hostResult.blockers > 0" type="danger" size="small" effect="dark">
-              阻断项: {{ hostResult.blockers }}
+              {{ t('patches.linux.blockingChecks') }} {{ hostResult.blockers }}
             </el-tag>
             <el-tag v-if="hostResult.warnings > 0" type="warning" size="small" effect="dark">
-              警告项: {{ hostResult.warnings }}
+              {{ t('patches.linux.warningChecks') }} {{ hostResult.warnings }}
             </el-tag>
             <el-tag
               v-if="isHostPassed(hostResult)"
@@ -38,14 +38,14 @@
               size="small"
               effect="dark"
             >
-              检查通过
+              {{ t('patches.linux.checksPassed') }}
             </el-tag>
           </div>
         </div>
 
         <div v-if="shouldShowChecks(hostResult)" class="host-result-body">
           <el-collapse v-model="activeCollapseNames" class="no-border-collapse">
-            <el-collapse-item title="查看检查项明细" :name="hostResult.host_id">
+            <el-collapse-item :title="t('patches.linux.viewChecks')" :name="hostResult.host_id">
               <div class="checks-list">
                 <div
                   v-for="check in sortChecks(hostResult.checks)"
@@ -81,6 +81,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { ref, watch } from 'vue'
 
 const props = defineProps({
@@ -97,21 +98,21 @@ const props = defineProps({
 const activeCollapseNames = ref([])
 
 const checkTitles = {
-  conn: '连通性',
-  sudo: '提权权限',
-  os: '操作系统识别',
-  pkg_manager: '包管理器',
-  pkg_lock: '包管理器占用',
-  pkg_db: '包数据库健康',
-  disk: '磁盘空间',
-  disk_boot: '/boot 空间',
-  kernel_pending: '待重启内核',
-  repo: '软件仓库',
-  pkg_exists: '目标包存在性',
-  version_ok: '目标版本可用性',
-  depsolve: '依赖解析',
-  already_satisfied: '已是目标版本',
-  exec: '检查执行异常'
+  get conn() { return t('patches.linux.connectivity') },
+  get sudo() { return t('patches.linux.sudo') },
+  get os() { return t('patches.linux.osDetection') },
+  get pkg_manager() { return t('patches.linux.packageManager') },
+  get pkg_lock() { return t('patches.linux.packageManagerLock') },
+  get pkg_db() { return t('patches.linux.packageDatabase') },
+  get disk() { return t('patches.linux.diskSpace') },
+  get disk_boot() { return t('patches.linux.bootSpace') },
+  get kernel_pending() { return t('patches.linux.pendingKernel') },
+  get repo() { return t('patches.linux.softwareRepo') },
+  get pkg_exists() { return t('patches.linux.packageExists') },
+  get version_ok() { return t('patches.linux.targetVersion') },
+  get depsolve() { return t('patches.linux.dependencyResolution') },
+  get already_satisfied() { return t('patches.linux.alreadyTargetVersion') },
+  get exec() { return t('patches.linux.checkExecutionError') }
 }
 
 watch(
@@ -187,9 +188,9 @@ function checkTagType(status) {
 }
 
 function checkStatusText(status) {
-  if (status === 'fail') return '阻断'
-  if (status === 'warn') return '警告'
-  return '通过'
+  if (status === 'fail') return t('patches.linux.blocked')
+  if (status === 'warn') return t('patches.linux.warning')
+  return t('patches.linux.pass')
 }
 </script>
 

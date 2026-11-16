@@ -1,3 +1,5 @@
+import { t } from '@/core/i18n'
+import { message as localMessage, messageRef } from '@/core/i18n/feedback'
 import { computed, reactive, ref, watch } from 'vue'
 import { getRestartLabel, normalizeRestartType } from './patchTaskWizardUtils'
 
@@ -6,17 +8,19 @@ export function usePatchTaskRestartAdvice({
   affectedPackages,
   createdTaskId,
   installConfig,
-  isSkipped
+  isSkipped,
+  restartConfirmText
 }) {
+  const localFallbackReason = messageRef('')
   const restartAdviceSource = ref('local')
   const restartAdviceCacheKey = ref('')
   const backendRestartReason = ref('')
   const restartOptions = reactive({
     restartType: 'none',
     restartRequired: false,
-    restartLabel: '',
-    restartDescription: '',
-    restartReason: ''
+    restartLabel: messageRef(''),
+    restartDescription: messageRef(''),
+    restartReason: messageRef('')
   })
 
   const smartRestartType = computed(() => {
@@ -60,17 +64,28 @@ export function usePatchTaskRestartAdvice({
   const requiresRestartConfirm = computed(
     () => restartOptions.restartRequired || installConfig.restartPolicy !== 'none'
   )
+  // The backend confirmation token is a protocol value and stays unchanged.
   const restartConfirmSubmitText = '确认重启'
   const restartConfirmKeyword = computed(() => {
-    if (installConfig.restartPolicy === 'system') return '确认系统重启'
-    if (installConfig.restartPolicy === 'service') return '确认服务重启'
-    return '确认重启'
+    if (installConfig.restartPolicy === 'system') return t('patches.linux.confirmSystemRestart')
+    if (installConfig.restartPolicy === 'service') return t('patches.linux.confirmServiceRestart')
+    return t('patches.linux.confirmRestart')
   })
+  const shownKeywords = new Map()
+  watch(restartConfirmKeyword, keyword => {
+    const policy = installConfig.restartPolicy
+    if (!shownKeywords.has(policy)) shownKeywords.set(policy, new Set())
+    shownKeywords.get(policy).add(keyword)
+  }, { immediate: true, flush: 'sync' })
+  const restartConfirmationValid = computed(() =>
+    restartConfirmText?.value === restartConfirmKeyword.value ||
+    Boolean(shownKeywords.get(installConfig.restartPolicy)?.has(restartConfirmText?.value))
+  )
   const restartAdviceTitle = computed(() => {
     if (restartOptions.restartLabel) return restartOptions.restartLabel
-    if (installConfig.restartPolicy === 'system') return '系统重启建议'
-    if (installConfig.restartPolicy === 'service') return '服务重启建议'
-    return '重启建议'
+    if (installConfig.restartPolicy === 'system') return t('patches.linux.systemRestartAdvice')
+    if (installConfig.restartPolicy === 'service') return t('patches.linux.serviceRestartAdvice')
+    return t('patches.linux.restartAdvice')
   })
   const packageBasedRestartAdvice = computed(() => {
     const restartType = normalizeRestartType(
@@ -80,26 +95,26 @@ export function usePatchTaskRestartAdvice({
 
     const packageNames = Array.from(new Set(affectedPackages.value.filter(Boolean)))
 
-    let packageDescription = '软件包更新'
+    let packageDescription = t('patches.linux.packageUpdate')
     if (packageNames.length > 0) {
       if (packageNames.length > 10) {
-        const preview = packageNames.slice(0, 10).join('、')
-        packageDescription = `软件包更新（${preview} 等共 ${packageNames.length} 个）`
+        const preview = packageNames.slice(0, 10).join(t('common.listSeparator'))
+        packageDescription = t('patches.linux.packageUpdatePreview', { names: preview, count: packageNames.length })
       } else {
-        packageDescription = `软件包更新（${packageNames.join('、')}）`
+        packageDescription = t('patches.linux.packageUpdateNames', { names: packageNames.join(t('common.listSeparator')) })
       }
     }
 
-    return `${packageDescription}，建议${getRestartLabel(restartType)}。`
+    return t('patches.linux.packageRestartAdvice', { packages: packageDescription, restart: getRestartLabel(restartType) })
   })
   const smartRestartGuess = computed(() => {
     if (smartRestartType.value === 'system') {
-      return '根据补丁信息与软件包名称，建议执行系统重启。'
+      return t('patches.linux.systemRestartGuess')
     }
     if (smartRestartType.value === 'service') {
-      return '根据补丁信息与软件包名称，建议执行服务重启。'
+      return t('patches.linux.serviceRestartGuess')
     }
-    return '未识别出明确的重启建议，请结合实际环境确认重启策略。'
+    return t('patches.linux.noRestartGuess')
   })
   const restartAdviceDescription = computed(() => {
     if (packageBasedRestartAdvice.value) {
@@ -114,14 +129,15 @@ export function usePatchTaskRestartAdvice({
     )
   })
   const restartStrategySummary = computed(() => {
-    if (isSkipped.restart) return '已跳过重启'
-    if (installConfig.restartPolicy === 'system') return '系统重启'
-    if (installConfig.restartPolicy === 'service') return '服务重启'
-    return '不重启'
+    if (isSkipped.restart) return t('patches.linux.restartSkipped')
+    if (installConfig.restartPolicy === 'system') return t('patches.linux.systemRestart')
+    if (installConfig.restartPolicy === 'service') return t('patches.linux.serviceRestart')
+    return t('patches.linux.doNotRestart')
   })
 
   function resetRestartOptions() {
     restartAdviceSource.value = 'local'
+    localFallbackReason.value = ''
     restartAdviceCacheKey.value = ''
     restartOptions.restartType = 'none'
     restartOptions.restartRequired = false
@@ -139,7 +155,11 @@ export function usePatchTaskRestartAdvice({
       return
     }
 
-    const description = `${message} ${smartRestartGuess.value}`.trim()
+    localFallbackReason.value = message
+    const description = localMessage('patches.linux.localRestartDescription', () => ({
+      reason: localFallbackReason.value,
+      advice: smartRestartGuess.value
+    }))
     restartOptions.restartType = smartRestartType.value
     restartOptions.restartRequired = smartRestartType.value !== 'none'
     restartOptions.restartLabel = ''
@@ -157,6 +177,7 @@ export function usePatchTaskRestartAdvice({
     restartAdviceSource,
     restartAdviceTitle,
     restartConfirmKeyword,
+    restartConfirmationValid,
     restartConfirmSubmitText,
     restartOptions,
     restartStrategySummary,

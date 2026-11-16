@@ -1,55 +1,56 @@
+import { t } from '@/core/i18n'
 const PATCH_TASK_DISPLAY_CONFIG = {
   patch: {
-    dialogTitle: '补丁安装向导',
-    selectionTitle: '更新补丁',
-    executeTitle: '补丁安装',
-    selectionSummaryLabel: '待安装补丁',
-    packageSummaryLabel: '待更新软件包',
-    packageCardTitle: '待更新软件包',
-    hostCardTitle: '更新主机',
-    successDescription: '补丁安装及其后续脚本配置已全部在目标设备上成功执行完毕。',
-    preScriptPlaceholder: '#!/bin/bash\n# 在此输入升级前需要执行的命令或脚本',
-    postScriptPlaceholder: '#!/bin/bash\n# 在此输入系统升级完成后的校验脚本',
-    finalStepTitle: '安装与执行'
+    get dialogTitle() { return t('patches.linux.installWizard') },
+    get selectionTitle() { return t('patches.linux.updatePatches') },
+    get executeTitle() { return t('patches.linux.patchInstall') },
+    get selectionSummaryLabel() { return t('patches.linux.patchesToInstall') },
+    get packageSummaryLabel() { return t('patches.linux.packagesToUpdate') },
+    get packageCardTitle() { return t('patches.linux.packagesToUpdate') },
+    get hostCardTitle() { return t('patches.linux.updateHosts') },
+    get successDescription() { return t('patches.linux.installSuccessDescription') },
+    get preScriptPlaceholder() { return t('patches.linux.preScriptPlaceholder') },
+    get postScriptPlaceholder() { return t('patches.linux.postScriptPlaceholder') },
+    get finalStepTitle() { return t('patches.linux.installAndExecute') }
   },
   package: {
-    dialogTitle: '软件包更新向导',
-    selectionTitle: '待更新软件包',
-    executeTitle: '软件包更新',
-    selectionSummaryLabel: '待更新软件包',
-    packageSummaryLabel: '更新涉及软件包',
-    packageCardTitle: '待更新软件包',
-    hostCardTitle: '更新主机',
-    successDescription: '软件包更新及其后续脚本配置已全部在目标设备上成功执行完毕。',
-    preScriptPlaceholder: '#!/bin/bash\n# 在此输入升级前需要执行的命令或脚本',
-    postScriptPlaceholder: '#!/bin/bash\n# 在此输入系统升级完成后的校验脚本',
-    finalStepTitle: '安装与执行'
+    get dialogTitle() { return t('patches.linux.packageWizard') },
+    get selectionTitle() { return t('patches.linux.packagesToUpdate') },
+    get executeTitle() { return t('patches.linux.packageUpdate') },
+    get selectionSummaryLabel() { return t('patches.linux.packagesToUpdate') },
+    get packageSummaryLabel() { return t('patches.linux.updateRelatedPackages') },
+    get packageCardTitle() { return t('patches.linux.packagesToUpdate') },
+    get hostCardTitle() { return t('patches.linux.updateHosts') },
+    get successDescription() { return t('patches.linux.packageSuccessDescription') },
+    get preScriptPlaceholder() { return t('patches.linux.preScriptPlaceholder') },
+    get postScriptPlaceholder() { return t('patches.linux.postScriptPlaceholder') },
+    get finalStepTitle() { return t('patches.linux.installAndExecute') }
   },
   vulnerability: {
-    dialogTitle: '漏洞修复向导',
-    selectionTitle: '待修复漏洞',
-    executeTitle: '漏洞修复',
-    selectionSummaryLabel: '待修复漏洞',
-    packageSummaryLabel: '受影响软件包',
-    packageCardTitle: '受影响软件包',
-    hostCardTitle: '更新主机',
-    successDescription: '漏洞修复及其后续脚本配置已全部在目标设备上成功执行完毕。',
-    preScriptPlaceholder: '#!/bin/bash\n# 在此输入升级前需要执行的命令或脚本',
-    postScriptPlaceholder: '#!/bin/bash\n# 在此输入系统升级完成后的校验脚本',
-    finalStepTitle: '安装与执行'
+    get dialogTitle() { return t('patches.linux.vulnWizard') },
+    get selectionTitle() { return t('patches.linux.vulnsToFix') },
+    get executeTitle() { return t('patches.linux.vulnFix') },
+    get selectionSummaryLabel() { return t('patches.linux.vulnsToFix') },
+    get packageSummaryLabel() { return t('patches.linux.affectedPackagesTitle') },
+    get packageCardTitle() { return t('patches.linux.affectedPackagesTitle') },
+    get hostCardTitle() { return t('patches.linux.updateHosts') },
+    get successDescription() { return t('patches.linux.vulnSuccessDescription') },
+    get preScriptPlaceholder() { return t('patches.linux.preScriptPlaceholder') },
+    get postScriptPlaceholder() { return t('patches.linux.postScriptPlaceholder') },
+    get finalStepTitle() { return t('patches.linux.installAndExecute') }
   },
   rollback: {
-    dialogTitle: '变更回滚向导',
-    selectionTitle: '待回滚记录',
-    executeTitle: '变更回滚',
-    selectionSummaryLabel: '待回滚记录',
-    packageSummaryLabel: '待回滚软件包',
-    packageCardTitle: '待回滚软件包',
-    hostCardTitle: '回滚主机',
-    successDescription: '变更回滚及其后续脚本配置已全部在目标设备上成功执行完毕。',
-    preScriptPlaceholder: '#!/bin/bash\n# 在此输入回滚前需要执行的命令或脚本',
-    postScriptPlaceholder: '#!/bin/bash\n# 在此输入系统回滚完成后的校验脚本',
-    finalStepTitle: '回滚与执行'
+    get dialogTitle() { return t('patches.linux.rollbackWizard') },
+    get selectionTitle() { return t('patches.linux.rollbackRecords') },
+    get executeTitle() { return t('patches.linux.changeRollback') },
+    get selectionSummaryLabel() { return t('patches.linux.rollbackRecords') },
+    get packageSummaryLabel() { return t('patches.linux.rollbackPackages') },
+    get packageCardTitle() { return t('patches.linux.rollbackPackages') },
+    get hostCardTitle() { return t('patches.linux.rollbackHosts') },
+    get successDescription() { return t('patches.linux.rollbackSuccessDescription') },
+    get preScriptPlaceholder() { return t('patches.linux.rollbackPreScriptPlaceholder') },
+    get postScriptPlaceholder() { return t('patches.linux.rollbackPostScriptPlaceholder') },
+    get finalStepTitle() { return t('patches.linux.rollbackAndExecute') }
   }
 }
 
@@ -86,10 +87,10 @@ export function getPatchTaskWizardSteps(operationType) {
   const config = getPatchTaskDisplayConfig(operationType)
 
   return [
-    { key: 'select', title: '选择目标主机' },
-    { key: 'pre', title: '预执行脚本配置' },
-    { key: 'validate', title: '脚本校验配置' },
-    { key: 'restart', title: '重启策略配置' },
+    { key: 'select', get title() { return t('patches.linux.selectTargetHosts') } },
+    { key: 'pre', get title() { return t('patches.linux.configurePreScript') } },
+    { key: 'validate', get title() { return t('patches.linux.configureValidation') } },
+    { key: 'restart', get title() { return t('patches.linux.configureRestart') } },
     { key: 'execute', title: config.finalStepTitle }
   ]
 }

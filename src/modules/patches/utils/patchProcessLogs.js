@@ -1,11 +1,12 @@
+import { t } from '@/core/i18n'
 import { formatDateTime } from '@/utils/date'
 export { formatDateTime }
 
 const TASK_TYPE_LABELS = {
-  install: '补丁安装',
-  rollback: '变更回滚',
-  pkg_update: '软件包更新',
-  vuln_fix: '漏洞修复'
+  get install() { return t('patches.linux.patchInstall') },
+  get rollback() { return t('patches.linux.changeRollback') },
+  get pkg_update() { return t('patches.linux.packageUpdate') },
+  get vuln_fix() { return t('patches.linux.vulnFix') }
 }
 
 const TASK_TYPE_TAGS = {
@@ -30,26 +31,26 @@ export function getTaskStatusTagStyle(status) {
 }
 
 const TASK_STATUS_LABELS = {
-  PENDING_APPROVAL: '待管理员审批',
-  REJECTED: '审批驳回',
-  EXPIRED: '已失效',
-  CREATED: '已创建',
-  PRE_CHECKING: '预检查中',
-  PRE_CHECK_DONE: '预检查完成',
-  PRE_CHECK_FAILED: '预检查失败',
-  INSTALLING: '执行中',
-  INSTALL_DONE: '执行完成',
-  INSTALL_FAILED: '执行失败',
-  ROLLING_BACK: '回滚中',
-  ROLLBACK_DONE: '回滚完成',
-  ROLLBACK_FAILED: '回滚失败',
-  RESTART_PENDING: '等待重启',
-  RESTARTING: '重启中',
-  RESTART_DONE: '重启完成',
-  VALIDATING: '校验中',
-  VALIDATE_FAILED: '校验失败',
-  COMPLETED: '已完成',
-  FAILED: '失败'
+  get PENDING_APPROVAL() { return t('patches.linux.pendingApproval') },
+  get REJECTED() { return t('patches.linux.approvalRejected') },
+  get EXPIRED() { return t('patches.linux.expired') },
+  get CREATED() { return t('patches.linux.created') },
+  get PRE_CHECKING() { return t('patches.linux.prechecking') },
+  get PRE_CHECK_DONE() { return t('patches.linux.precheckDone') },
+  get PRE_CHECK_FAILED() { return t('patches.linux.precheckFailedAlt') },
+  get INSTALLING() { return t('patches.linux.running') },
+  get INSTALL_DONE() { return t('patches.linux.executionDone') },
+  get INSTALL_FAILED() { return t('execution.ui.executionFailed') },
+  get ROLLING_BACK() { return t('patches.linux.rollingBack') },
+  get ROLLBACK_DONE() { return t('patches.linux.rollbackDone') },
+  get ROLLBACK_FAILED() { return t('patches.linux.rollbackFailed') },
+  get RESTART_PENDING() { return t('patches.linux.awaitingRestart') },
+  get RESTARTING() { return t('patches.linux.restarting') },
+  get RESTART_DONE() { return t('patches.linux.restartDone') },
+  get VALIDATING() { return t('patches.linux.validating') },
+  get VALIDATE_FAILED() { return t('patches.linux.validationFailed') },
+  get COMPLETED() { return t('automation.workbench.completed') },
+  get FAILED() { return t('execution.taskStatus.failed') }
 }
 
 const SUCCESSFUL_RECORD_ACTIONS = [
@@ -165,7 +166,7 @@ export function buildDetailSelectionItems(task, history = []) {
     return patchIds.map((item, index) => ({
       key: `patch-${index}-${item}`,
       primary: item,
-      secondary: task.taskType === 'vuln_fix' ? '按补丁任务修复' : ''
+      secondary: task.taskType === 'vuln_fix' ? t('patches.linux.fixByPatchTask') : ''
     }))
   }
 
@@ -228,28 +229,28 @@ export function buildScriptAlert(scriptType, record, scriptContent, stepStatus, 
   const isPreCheck = scriptType === 'pre'
   const labels = isPreCheck
     ? {
-        skipped: '已跳过预执行脚本',
-        success: '预执行脚本执行完毕',
-        running: '预执行脚本执行中...',
-        configured: '已配置预执行脚本',
-        empty: '未配置预执行脚本'
+        get skipped() { return t('patches.linux.preScriptSkipped') },
+        get success() { return t('patches.linux.preScriptDone') },
+        get running() { return t('patches.linux.preScriptRunning') },
+        get configured() { return t('patches.linux.preScriptConfigured') },
+        get empty() { return t('patches.linux.preScriptNotConfigured') }
       }
     : {
-        skipped: '已跳过校验脚本',
-        success: '全部校验通过',
-        running: '校验脚本执行中...',
-        configured: '已配置校验脚本',
-        empty: '未配置校验脚本'
+        get skipped() { return t('patches.linux.validationSkipped') },
+        get success() { return t('patches.linux.allValidated') },
+        get running() { return t('patches.linux.validationRunning') },
+        get configured() { return t('patches.linux.validationConfigured') },
+        get empty() { return t('patches.linux.validationNotConfigured') }
       }
 
   if (stepStatus) {
-    if (stepStatus === 'FAILED') return buildFailureAlert('执行失败', record, task)
+    if (stepStatus === 'FAILED') return buildFailureAlert(t('execution.ui.executionFailed'), record, task)
     if (stepStatus === 'SKIPPED') return { type: 'success', title: labels.skipped }
     if (stepStatus === 'SUCCESS') return { type: 'success', title: labels.success }
     if (stepStatus === 'RUNNING') return { type: 'warning', title: labels.running }
   } else {
     if (getRecordDisplayState(record) === 'failed') {
-      return buildFailureAlert('执行失败', record, task)
+      return buildFailureAlert(t('execution.ui.executionFailed'), record, task)
     }
     if (isSkippedRecord(record)) return { type: 'success', title: labels.skipped }
     if (record?.action === 'COMPLETE' || record?.status === 'SUCCESS') {
@@ -265,30 +266,30 @@ export function buildScriptAlert(scriptType, record, scriptContent, stepStatus, 
 
 export function buildRestartAlert(task, record, stepStatus) {
   if (stepStatus) {
-    if (stepStatus === 'FAILED') return buildFailureAlert('重启失败', record, task)
-    if (stepStatus === 'SKIPPED') return { type: 'success', title: '已跳过重启' }
-    if (stepStatus === 'SUCCESS') return { type: 'success', title: '重启完成' }
-    if (stepStatus === 'RUNNING') return { type: 'warning', title: '正在重启中...' }
+    if (stepStatus === 'FAILED') return buildFailureAlert(t('patches.linux.restartFailed'), record, task)
+    if (stepStatus === 'SKIPPED') return { type: 'success', get title() { return t('patches.linux.restartSkipped') } }
+    if (stepStatus === 'SUCCESS') return { type: 'success', get title() { return t('patches.linux.restartDone') } }
+    if (stepStatus === 'RUNNING') return { type: 'warning', get title() { return t('patches.linux.restartRunning') } }
   } else {
     if (getRecordDisplayState(record) === 'failed') {
-      return buildFailureAlert('重启失败', record, task)
+      return buildFailureAlert(t('patches.linux.restartFailed'), record, task)
     }
-    if (isSkippedRecord(record)) return { type: 'success', title: '已跳过重启' }
+    if (isSkippedRecord(record)) return { type: 'success', get title() { return t('patches.linux.restartSkipped') } }
     if (record?.action === 'COMPLETE' || record?.status === 'SUCCESS') {
-      return { type: 'success', title: '重启完成' }
+      return { type: 'success', get title() { return t('patches.linux.restartDone') } }
     }
   }
 
   if (record?.action === 'RESTART_CONFIRM') {
-    return { type: 'success', title: '已确认重启' }
+    return { type: 'success', get title() { return t('patches.linux.restartConfirmed') } }
   }
   if (task?.restartType === 'none' && !record) {
-    return { type: 'info', title: '无需重启' }
+    return { type: 'info', get title() { return t('patches.linux.noRestartRequired') } }
   }
 
   return {
     type: 'info',
-    title: `重启策略：${formatRestartType(task?.restartType)}`
+    get title() { return t('patches.linux.restartPolicyValue', { policy: formatRestartType(task?.restartType) }) }
   }
 }
 
@@ -327,9 +328,9 @@ function parsePackageEntry(entry) {
 }
 
 function formatRestartType(value) {
-  if (value === 'system') return '系统重启'
-  if (value === 'service') return '服务重启'
-  if (value === 'none') return '无需重启'
+  if (value === 'system') return t('patches.linux.systemRestart')
+  if (value === 'service') return t('patches.linux.serviceRestart')
+  if (value === 'none') return t('patches.linux.noRestartRequired')
   return value || '-'
 }
 
@@ -340,7 +341,7 @@ function buildFailureAlert(prefix, record, task) {
     task?.errorMessage ||
     task?.failReason ||
     task?.remark ||
-    '未知错误'
+    t('automation.file.unknownError')
   return {
     type: 'error',
     title: `${prefix}：${errMsg}`
@@ -360,14 +361,14 @@ function resolvePipelineState(latestRecord, records, options) {
 }
 
 function getPipelineText(state, record, options) {
-  if (options.treatNoneAsSuccess && !record) return '当前任务无需重启'
-  if (options.stepStatus === 'SKIPPED' || isSkippedRecord(record)) return '系统已跳过执行'
-  if (state === 'success') return '任务执行成功'
+  if (options.treatNoneAsSuccess && !record) return t('patches.linux.taskNoRestart')
+  if (options.stepStatus === 'SKIPPED' || isSkippedRecord(record)) return t('patches.linux.systemSkipped')
+  if (state === 'success') return t('common.pollingSuccess')
   if (state === 'failed') {
-    return record?.errorMessage || options.taskErrorMessage || record?.remark || '任务执行失败，请检查'
+    return record?.errorMessage || options.taskErrorMessage || record?.remark || t('patches.linux.taskFailedCheck')
   }
-  if (state === 'running') return '正在执行中...'
-  return '等待调度中'
+  if (state === 'running') return t('patches.linux.executing')
+  return t('patches.linux.waitingSchedule')
 }
 
 function toTimestamp(value) {

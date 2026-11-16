@@ -9,43 +9,43 @@
     <template v-else>
       <div class="ops-filter-bar mb-3">
         <el-form :model="searchParams" inline size="small" @submit.prevent>
-          <el-form-item label="关键字">
+          <el-form-item :label="t('patches.cve.keyword')">
             <el-input
               v-model="searchParams.keyword"
-              placeholder="漏洞编号或描述"
+              :placeholder="t('patches.cve.searchIdOrDescription')"
               clearable
               style="width: 200px"
               @keyup.enter="search"
             @clear="search" />
           </el-form-item>
-          <el-form-item label="中间件类型">
+          <el-form-item :label="t('patches.cve.middlewareType')">
             <el-select
               v-model="searchParams.middlewareType"
               style="width: 120px"
               clearable
-              placeholder="全部" @change="search">
-              <el-option label="全部" value="" />
+              :placeholder="t('common.all')" @change="search">
+              <el-option :label="t('common.all')" value="" />
               <el-option v-for="type in middlewareTypes" :key="type" :label="type" :value="type" />
             </el-select>
           </el-form-item>
-          <el-form-item label="严重等级">
+          <el-form-item :label="t('patches.cve.severity')">
             <el-select
               v-model="searchParams.severity"
               style="width: 100px"
               clearable
-              placeholder="全部" @change="search">
-              <el-option value="" label="全部" />
-              <el-option value="critical" label="严重" />
-              <el-option value="important" label="重要" />
-              <el-option value="moderate" label="中等" />
-              <el-option value="low" label="低危" />
+              :placeholder="t('common.all')" @change="search">
+              <el-option value="" :label="t('common.all')" />
+              <el-option value="critical" :label="t('patches.catalog.critical')" />
+              <el-option value="important" :label="t('patches.catalog.important')" />
+              <el-option value="moderate" :label="t('patches.catalog.moderate')" />
+              <el-option value="low" :label="t('patches.catalog.low')" />
             </el-select>
           </el-form-item>
-          <el-form-item label="发布日期">
+          <el-form-item :label="t('patches.catalog.publishDate')">
             <el-date-picker
               v-model="searchParams.startDateObj"
               type="date"
-              placeholder="开始日期"
+              :placeholder="t('patches.cve.startDate')"
               format="YYYY-MM-DD"
               value-format="YYYY-MM-DD"
               style="width: 150px"
@@ -55,7 +55,7 @@
             <el-date-picker
               v-model="searchParams.endDateObj"
               type="date"
-              placeholder="结束日期"
+              :placeholder="t('patches.cve.endDate')"
               format="YYYY-MM-DD"
               value-format="YYYY-MM-DD"
               style="width: 150px"
@@ -65,11 +65,11 @@
           <el-form-item>
             <el-button type="primary" @click="search">
               <el-icon><Search /></el-icon>
-              搜索
+              {{ t('common.search') }}
             </el-button>
             <el-button @click="resetFilters">
               <el-icon><RefreshRight /></el-icon>
-              重置
+              {{ t('common.reset') }}
             </el-button>
           </el-form-item>
         </el-form>
@@ -77,14 +77,14 @@
 
       <div class="ops-table-wrapper" v-loading="loading">
         <el-table :data="cveList" height="100%" style="width: 100%" @sort-change="handleSortChange">
-          <el-table-column prop="cveId" label="漏洞编号" width="180" sortable="custom" />
-          <el-table-column prop="middlewareType" label="中间件" width="120">
+          <el-table-column prop="cveId" :label="t('patches.linux.vulnId')" width="180" sortable="custom" />
+          <el-table-column prop="middlewareType" :label="t('patches.cve.middleware')" width="120">
             <template #default="{ row }">
               <!-- <el-tag size="small" type="info" effect="light">{{ row.middlewareType }}</el-tag> -->
               {{ row.middlewareType }}
             </template>
           </el-table-column>
-          <el-table-column prop="severity" label="严重等级" width="90">
+          <el-table-column prop="severity" :label="t('patches.cve.severity')" width="90">
             <template #default="{ row }">
               <el-tag
                 :type="getSeverityType(row.severity)"
@@ -95,30 +95,30 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="cvss3Score" label="CVSS 评分" width="120" sortable="custom">
+          <el-table-column prop="cvss3Score" :label="t('patches.cve.cvssScore')" width="120" sortable="custom">
             <template #default="{ row }">
-              <span v-if="formatCvssScore(row.cvss3Score) !== '未评分'" style="font-weight: 600">
+              <span v-if="toKnownNumber(row.cvss3Score, { max: 10 }) !== null" style="font-weight: 600">
                 {{ formatCvssScore(row.cvss3Score) }}
               </span>
               <span v-else class="text-muted">-</span>
             </template>
           </el-table-column>
-          <el-table-column prop="description" label="描述" min-width="300" show-overflow-tooltip>
+          <el-table-column prop="description" :label="t('automation.job.description')" min-width="300" show-overflow-tooltip>
             <template #default="{ row }">
               {{ row.description || '-' }}
             </template>
           </el-table-column>
-          <el-table-column prop="affectedCount" label="影响版本数" width="120" />
-          <el-table-column prop="fixedCount" label="修复版本数" width="120" />
-          <el-table-column prop="publicDate" label="发布日期" width="180" sortable="custom">
+          <el-table-column prop="affectedCount" :label="t('patches.cve.affectedVersionCount')" width="120" />
+          <el-table-column prop="fixedCount" :label="t('patches.cve.fixedVersionCount')" width="120" />
+          <el-table-column prop="publicDate" :label="t('patches.catalog.publishDate')" width="180" sortable="custom">
             <template #default="{ row }">
               <span class="text-muted">{{ formatDate(row.publicDate) }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="170" fixed="right">
+          <el-table-column :label="t('common.actions')" width="170" fixed="right">
             <template #default="{ row }">
-              <el-button link type="primary" @click="viewDetail(row)">详情</el-button>
-              <el-button link type="primary" @click="viewAffectedHosts(row)">受影响主机</el-button>
+              <el-button link type="primary" @click="viewDetail(row)">{{ t('automation.records.details') }}</el-button>
+              <el-button link type="primary" @click="viewAffectedHosts(row)">{{ t('patches.linux.affectedHostsTitle') }}</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -146,12 +146,13 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
 import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Search, RefreshRight } from '@element-plus/icons-vue'
 import { middlewareCveApi } from '../api'
 import { ElMessage } from 'element-plus'
-import { formatCvssScore } from '@/utils/workspacePresentation'
+import { formatCvssScore, toKnownNumber } from '@/utils/workspacePresentation'
 import MiddlewareCveDetail from '../components/cve/details/MiddlewareCveDetail.vue'
 import MiddlewareAffectedHostsDialog from '../components/cve/MiddlewareAffectedHostsDialog.vue'
 
@@ -205,7 +206,7 @@ function formatDate(dateStr) {
   if (!dateStr) return '-'
   const date = new Date(dateStr)
   if (isNaN(date.getTime())) return dateStr
-  return date.toLocaleString('zh-CN', {
+  return date.toLocaleString(currentLocale.value, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -245,10 +246,10 @@ function getSeverityType(severity) {
 function getSeverityLabel(severity) {
   const key = normalizeSeverityKey(severity)
   const labelMap = {
-    critical: '严重',
-    important: '重要',
-    moderate: '中等',
-    low: '低危'
+    get critical() { return t('patches.catalog.critical') },
+    get important() { return t('patches.catalog.important') },
+    get moderate() { return t('patches.catalog.moderate') },
+    get low() { return t('patches.catalog.low') }
   }
   return labelMap[key] || severity
 }
@@ -278,7 +279,7 @@ async function loadData() {
     pagination.currentPage = result.number || 0
   } catch (error) {
     console.error('CVE列表查询失败:', error)
-    ElMessage.error('查询失败，请稍后重试')
+    ElMessage.error(t('patches.cve.queryFailed'))
     cveList.value = []
     pagination.totalElements = 0
   } finally {
@@ -292,7 +293,7 @@ function validateDateRange() {
     searchParams.endDate &&
     searchParams.startDate > searchParams.endDate
   ) {
-    ElMessage.warning('开始日期不能晚于结束日期')
+    ElMessage.warning(t('patches.cve.invalidDateRange'))
     return false
   }
   return true

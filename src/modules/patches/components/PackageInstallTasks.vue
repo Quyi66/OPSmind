@@ -1,7 +1,7 @@
 <template>
   <div class="ops-action-bar">
-    <el-select v-model="status" size="small" aria-label="任务状态" style="width: 180px" @change="search">
-      <el-option label="全部任务" value="" />
+    <el-select v-model="status" size="small" :aria-label="t('patches.linux.taskStatus')" style="width: 180px" @change="search">
+      <el-option :label="t('patches.linux.allTasks')" value="" />
       <el-option v-for="item in statuses" :key="item.value" :label="item.label" :value="item.value" />
     </el-select>
     <span style="flex: 1" />
@@ -10,8 +10,8 @@
       circle
       size="small"
       :loading="loading"
-      title="刷新"
-      aria-label="刷新"
+      :title="t('common.refresh')"
+      :aria-label="t('common.refresh')"
       @click="load"
     >
       <el-icon v-show="!loading"><Refresh /></el-icon>
@@ -19,25 +19,25 @@
   </div>
   <div class="ops-table-wrapper">
     <el-table v-loading="loading" :data="rows" height="100%">
-      <el-table-column prop="createdBy" label="申请人" width="120" />
-      <el-table-column label="软件包" min-width="220" show-overflow-tooltip>
+      <el-table-column prop="createdBy" :label="t('automation.approval.applicant')" width="120" />
+      <el-table-column :label="t('patches.linux.package')" min-width="220" show-overflow-tooltip>
         <template #default="{ row }">{{ formatJsonArray(row.packages) || '-' }}</template>
       </el-table-column>
-      <el-table-column label="目标主机" min-width="180" show-overflow-tooltip>
+      <el-table-column :label="t('execution.ui.targetHost')" min-width="180" show-overflow-tooltip>
         <template #default="{ row }">{{ formatJsonArray(row.hostIds) || '-' }}</template>
       </el-table-column>
-      <el-table-column label="计划执行时间" width="180">
+      <el-table-column :label="t('patches.linux.scheduledTime')" width="180">
         <template #default="{ row }">{{ formatDateTime(row.scheduledTime) }}</template>
       </el-table-column>
-      <el-table-column label="状态" width="140">
+      <el-table-column :label="t('common.status')" width="140">
         <template #default="{ row }">
-          <el-tag :type="getTaskStatusTagType(row.status)" :style="getTaskStatusTagStyle(row.status)" size="small" effect="light" round>{{ row.status === 'CREATED' && row.scheduledTime ? '等待定时执行' : formatTaskStatus(row.status) }}</el-tag>
+          <el-tag :type="getTaskStatusTagType(row.status)" :style="getTaskStatusTagStyle(row.status)" size="small" effect="light" round>{{ row.status === 'CREATED' && row.scheduledTime ? t('patches.linux.waitingScheduledExecution') : formatTaskStatus(row.status) }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="errorMessage" label="异常原因" min-width="160" show-overflow-tooltip />
-      <el-table-column label="操作" width="270" fixed="right">
+      <el-table-column prop="errorMessage" :label="t('patches.linux.errorReason')" min-width="160" show-overflow-tooltip />
+      <el-table-column :label="t('common.actions')" width="270" fixed="right">
         <template #default="{ row }">
-          <el-button text type="primary" size="small" @click="$emit('detail', row)">详情</el-button>
+          <el-button text type="primary" size="small" @click="$emit('detail', row)">{{ t('automation.records.details') }}</el-button>
           <el-button
             v-if="row.taskType !== 'rollback'"
             text
@@ -45,11 +45,11 @@
             size="small"
             @click="openFailedHosts(row)"
           >
-            失败主机
+            {{ t('patches.linux.failedHosts') }}
           </el-button>
           <template v-if="isAdmin && row.status === 'PENDING_APPROVAL'">
-            <el-button text type="success" size="small" :disabled="approving || !isFutureSchedule(row.scheduledTime)" @click="approve(row, true)">通过</el-button>
-            <el-button text type="danger" size="small" :disabled="approving" @click="approve(row, false)">驳回</el-button>
+            <el-button text type="success" size="small" :disabled="approving || !isFutureSchedule(row.scheduledTime)" @click="approve(row, true)">{{ t('automation.workbench.approve') }}</el-button>
+            <el-button text type="danger" size="small" :disabled="approving" @click="approve(row, false)">{{ t('patches.linux.reject') }}</el-button>
           </template>
         </template>
       </el-table-column>
@@ -62,6 +62,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { onMounted, onUnmounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
@@ -74,10 +75,10 @@ const props = defineProps({ isAdmin: Boolean })
 defineEmits(['detail'])
 const status = ref('PENDING_APPROVAL')
 const statuses = [
-  { value: 'PENDING_APPROVAL', label: '待管理员审批' },
-  { value: 'CREATED', label: '已创建 / 等待执行' },
-  { value: 'REJECTED', label: '审批驳回' },
-  { value: 'EXPIRED', label: '已失效' }
+  { value: 'PENDING_APPROVAL', get label() { return t('patches.linux.pendingApproval') } },
+  { value: 'CREATED', get label() { return t('patches.linux.createdWaiting') } },
+  { value: 'REJECTED', get label() { return t('patches.linux.approvalRejected') } },
+  { value: 'EXPIRED', get label() { return t('patches.linux.expired') } }
 ]
 const rows = ref([])
 const page = ref(1)
@@ -103,7 +104,7 @@ async function load() {
     rows.value = response?.data?.content || []
     total.value = response?.data?.totalElements || 0
   } catch (error) {
-    if (id === requestId) ElMessage.error(error?.message || '获取安装任务失败')
+    if (id === requestId) ElMessage.error(error?.message || t('patches.linux.installTasksFailed'))
   } finally {
     if (id === requestId) loading.value = false
   }
@@ -119,21 +120,21 @@ async function approve(task, approved) {
   approving.value = true
   try {
     const { value } = await ElMessageBox.prompt(
-      `申请人：${task.createdBy || '-'}；计划执行时间：${formatDateTime(task.scheduledTime)}。请填写审批意见（可选）。`,
-      approved ? '通过安装申请' : '驳回安装申请',
+      t('patches.linux.approvalPrompt', { applicant: task.createdBy || '-', time: formatDateTime(task.scheduledTime) }),
+      approved ? t('patches.linux.approveInstall') : t('patches.linux.rejectInstall'),
       {
         closeOnClickModal: false,
         closeOnPressEscape: false,
-        confirmButtonText: approved ? '确认通过' : '确认驳回',
-        cancelButtonText: '取消',
+        confirmButtonText: approved ? t('patches.linux.confirmApprove') : t('patches.linux.confirmReject'),
+        get cancelButtonText() { return t('common.cancel') },
         inputType: 'textarea'
       }
     )
     await patchInstallApi.approveTask(task.id, { approved, comment: value || '' })
-    ElMessage.success(approved ? '已批准，等待计划时间自动执行' : '已驳回安装申请')
+    ElMessage.success(approved ? t('patches.linux.approvedWaiting') : t('patches.linux.installRejected'))
   } catch (error) {
     if (error !== 'cancel' && error !== 'close') {
-      ElMessage.error(error?.response?.data?.message || error?.response?.data?.error || error?.message || '审批失败')
+      ElMessage.error(error?.response?.data?.message || error?.response?.data?.error || error?.message || t('patches.linux.approvalFailed'))
     }
   } finally {
     approving.value = false

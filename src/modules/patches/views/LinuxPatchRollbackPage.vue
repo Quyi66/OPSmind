@@ -6,7 +6,7 @@
         <el-form-item label="IP">
           <el-input
             v-model="filters.host_key"
-            placeholder="请输入IP"
+            :placeholder="t('patches.linux.enterIp')"
             style="width: 200px"
             clearable @keyup.enter="handleSearch" @clear="handleSearch">
             <template #prefix>
@@ -14,8 +14,8 @@
             </template>
           </el-input>
         </el-form-item>
-        <el-form-item label="漏洞编号">
-          <el-input v-model="filters.vul_id" placeholder="请输入漏洞编号" style="width: 200px" clearable @keyup.enter="handleSearch" @clear="handleSearch">
+        <el-form-item :label="t('patches.linux.vulnId')">
+          <el-input v-model="filters.vul_id" :placeholder="t('patches.linux.enterVulnerabilityId')" style="width: 200px" clearable @keyup.enter="handleSearch" @clear="handleSearch">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
@@ -28,7 +28,7 @@
           </el-button> -->
           <el-button @click="handleReset">
             <el-icon><RefreshRight /></el-icon>
-            重置
+            {{ t('common.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -42,7 +42,7 @@
         :disabled="selectedIds.length === 0"
         @click="handleBatchRollback"
       >
-        批量回滚
+        {{ t('patches.linux.batchRollback') }}
       </el-button>
       <el-button
         type="danger"
@@ -50,7 +50,7 @@
         :disabled="selectedIds.length === 0"
         @click="handleBatchDelete"
       >
-        删除
+        {{ t('common.delete') }}
       </el-button>
       <el-button
         size="small"
@@ -58,7 +58,7 @@
         @click="handleToggleSelectAll"
       >
         <i :class="`fa fa-${allSelected ? 'times' : 'check-double'} me-1`" />
-        {{ allSelected ? '一键取消' : '一键全选' }}
+        {{ allSelected ? t('patches.linux.clearAll') : t('patches.linux.selectAll') }}
       </el-button>
       <span style="flex: 1"></span>
       <el-button
@@ -67,7 +67,7 @@
         size="small"
         :loading="loading"
         @click="loadData"
-        title="刷新"
+        :title="t('common.refresh')"
       >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
@@ -87,7 +87,7 @@
         :default-sort="sortState"
       >
         <el-table-column type="selection" width="40" />
-        <el-table-column prop="hosts" label="主机" min-width="120" sortable="custom">
+        <el-table-column prop="hosts" :label="t('execution.ui.host')" min-width="120" sortable="custom">
           <template #default="{ row }">
             <div class="hosts-cell">
               <div v-for="(host, idx) in parseHosts(row.hosts).slice(0, 2)" :key="idx">
@@ -100,7 +100,7 @@
                 :width="200"
               >
                 <template #reference>
-                  <span class="more-link">+{{ parseHosts(row.hosts).length - 2 }} 更多</span>
+                  <span class="more-link">+{{ parseHosts(row.hosts).length - 2 }} {{ t('automation.flow.more') }}</span>
                 </template>
                 <div class="hosts-popover">
                   <div v-for="(host, idx) in parseHosts(row.hosts)" :key="idx">{{ host }}</div>
@@ -111,11 +111,11 @@
         </el-table-column>
         <el-table-column
           prop="patch_id"
-          label="修复补丁编号"
+          :label="t('patches.linux.fixedPatchId')"
           min-width="140"
           show-overflow-tooltip
         />
-        <el-table-column prop="update_id" label="更新维度（漏洞/软件包）" width="310">
+        <el-table-column prop="update_id" :label="t('patches.linux.updateDimension')" width="310">
           <template #default="{ row }">
             <CveLinkList
               :cves="row.update_id"
@@ -123,7 +123,7 @@
             />
           </template>
         </el-table-column>
-        <el-table-column prop="update_pkgs" label="更新软件" min-width="300">
+        <el-table-column prop="update_pkgs" :label="t('patches.linux.updatedSoftware')" min-width="300">
           <template #default="{ row }">
             <div class="update-pkgs-cell">
               <div
@@ -143,7 +143,7 @@
               >
                 <template #reference>
                   <span class="more-link">
-                    +{{ parseUpdatePkgs(row.update_pkgs).length - 2 }} 更多
+                    +{{ parseUpdatePkgs(row.update_pkgs).length - 2 }} {{ t('automation.flow.more') }}
                   </span>
                 </template>
                 <div class="pkgs-popover">
@@ -161,17 +161,17 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="update_time" label="更新时间" width="180" sortable="custom">
+        <el-table-column prop="update_time" :label="t('automation.command.updatedAt')" width="180" sortable="custom">
           <template #default="{ row }">
             {{ formatDateTime(row.update_time) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="120" fixed="right">
+        <el-table-column :label="t('common.actions')" width="120" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="handleRollback(row)">
-              回滚
+              {{ t('patches.linux.rollback') }}
             </el-button>
-            <el-button text type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+            <el-button text type="danger" size="small" @click="handleDelete(row)">{{ t('common.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -206,6 +206,7 @@
 </template>
 
 <script setup>
+import { t, i18n } from '@/core/i18n'
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDateTime } from '@/utils/date'
@@ -363,10 +364,10 @@ function buildRollbackSelectionSummary(rows) {
   return rows.map((row, index) => {
     const hosts = parseHosts(row.hosts)
     const pkgCount = parseUpdatePkgs(row.update_pkgs).length
-    const secondaryParts = [
+    const secondaryText = (translate = t) => [
       row.patch_id,
-      hosts.length ? `${hosts.length} 台主机` : '',
-      pkgCount ? `${pkgCount} 个软件包` : ''
+      hosts.length ? translate('patches.linux.hostCount', { count: hosts.length }) : '',
+      pkgCount ? translate('patches.linux.packageCount', { count: pkgCount }) : ''
     ]
       .filter(Boolean)
       .join(' / ')
@@ -374,7 +375,8 @@ function buildRollbackSelectionSummary(rows) {
     return {
       key: row.id || `rollback-${index}`,
       primary: row.update_id || row.patch_id || '-',
-      secondary: secondaryParts
+      get secondary() { return secondaryText() },
+      getSearchText: locale => secondaryText((key, params) => i18n.global.t(key, params, { locale }))
     }
   })
 }
@@ -469,7 +471,7 @@ async function enrichRollbackAgentInfo(targetHosts) { return targetHosts } // [A
 
 async function openRollbackWizard(rows) {
   if (!rows.length) {
-    ElMessage.warning('请先选择要回滚的记录')
+    ElMessage.warning(t('patches.linux.selectRollbackRecords'))
     return
   }
 
@@ -479,7 +481,7 @@ async function openRollbackWizard(rows) {
   const patches = buildRollbackTaskPatches(sourceRows)
 
   if (targetHosts.length === 0) {
-    ElMessage.warning('当前记录缺少主机ID，无法创建回滚任务')
+    ElMessage.warning(t('patches.linux.rollbackHostMissing'))
     return
   }
 
@@ -497,12 +499,12 @@ async function openRollbackWizard(rows) {
   // [Agent 功能暂停] }
 
   if (histUpdateIds.length === 0) {
-    ElMessage.warning('当前记录缺少历史更新ID，无法创建回滚任务')
+    ElMessage.warning(t('patches.linux.rollbackHistoryIdMissing'))
     return
   }
 
   if (patches.length === 0) {
-    ElMessage.warning('当前记录缺少补丁信息，无法创建回滚任务')
+    ElMessage.warning(t('patches.linux.rollbackPatchInfoMissing'))
     return
   }
 
@@ -555,7 +557,7 @@ async function loadData() {
     selectedRows.value = []
   } catch (error) {
     console.error('Failed to load rollback history:', error)
-    ElMessage.error('加载回滚历史失败，请稍后重试')
+    ElMessage.error(t('patches.linux.rollbackHistoryFailed'))
     allData.value = []
   } finally {
     loading.value = false
@@ -616,10 +618,10 @@ function handleDelete(row) {
   const recordIds = getRollbackRecordIds([row])
   const message =
     recordIds.length > 1
-      ? `确定要删除该合并记录包含的 ${recordIds.length} 条原始记录吗？`
-      : '确定要删除这条更新记录吗？'
+      ? t('patches.linux.deleteMergedRecord', { count: recordIds.length })
+      : t('patches.linux.deleteUpdateConfirm')
 
-  ElMessageBox.confirm(message, '确认删除', {
+  ElMessageBox.confirm(message, t('automation.list.confirmDelete'), {
     closeOnClickModal: false,
     closeOnPressEscape: false,
     type: 'warning'
@@ -627,10 +629,10 @@ function handleDelete(row) {
     .then(async () => {
       try {
         await patchRollbackApi.deleteHistUpdatePkgs(recordIds)
-        ElMessage.success('删除成功')
+        ElMessage.success(t('automation.workbench.deleted'))
         loadData()
       } catch {
-        ElMessage.error('删除失败')
+        ElMessage.error(t('automation.workbench.deleteFailed'))
       }
     })
     .catch(() => {})
@@ -639,17 +641,17 @@ function handleDelete(row) {
 // 批量删除
 function handleBatchDelete() {
   if (selectedIds.value.length === 0) {
-    ElMessage.warning('请先选择要删除的记录')
+    ElMessage.warning(t('patches.linux.selectDeleteRecords'))
     return
   }
   const groupCount = selectedRows.value.length
   const recordCount = selectedIds.value.length
   const message =
     groupCount === recordCount
-      ? `确定要删除选中的 ${groupCount} 条记录吗？`
-      : `确定要删除选中的 ${groupCount} 条合并记录吗？这将删除其包含的 ${recordCount} 条原始记录。`
+      ? t('patches.linux.deleteRecords', { count: groupCount })
+      : t('patches.linux.deleteMergedRecords', { count: groupCount, total: recordCount })
 
-  ElMessageBox.confirm(message, '确认删除', {
+  ElMessageBox.confirm(message, t('automation.list.confirmDelete'), {
     closeOnClickModal: false,
     closeOnPressEscape: false,
     type: 'warning'
@@ -657,10 +659,10 @@ function handleBatchDelete() {
     .then(async () => {
       try {
         await patchRollbackApi.deleteHistUpdatePkgs(selectedIds.value)
-        ElMessage.success('删除成功')
+        ElMessage.success(t('automation.workbench.deleted'))
         loadData()
       } catch {
-        ElMessage.error('删除失败')
+        ElMessage.error(t('automation.workbench.deleteFailed'))
       }
     })
     .catch(() => {})

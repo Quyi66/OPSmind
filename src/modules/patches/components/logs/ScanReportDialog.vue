@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="扫描报告"
+    :title="t('patches.linux.scanReport')"
     width="90%"
     destroy-on-close
     class="scan-report-dialog"
@@ -10,11 +10,11 @@
     <div class="dialog-content">
       <div class="summary-card" v-loading="summaryLoading">
         <div class="summary-item">
-          <span class="label">扫描时间：</span>
+          <span class="label">{{ t('patches.linux.scanTimeLabel') }}</span>
           <span class="value">{{ formatDateTime(summary.scan_timestamp) }}</span>
         </div>
         <div class="summary-item">
-          <span class="label">扫描主机数：</span>
+          <span class="label">{{ t('patches.linux.scannedHostsLabel') }}</span>
           <span class="value">{{ summary.machine_count || 0 }}</span>
         </div>
         <el-button
@@ -24,7 +24,7 @@
           :loading="exporting"
           @click="handleExport"
         >
-          导出扫描报告
+          {{ t('patches.linux.exportScanReport') }}
         </el-button>
       </div>
 
@@ -36,7 +36,7 @@
           size="small"
           :loading="loading"
           @click="loadReport"
-          title="刷新"
+          :title="t('common.refresh')"
         >
           <el-icon v-show="!loading">
             <Refresh />
@@ -45,7 +45,7 @@
       </div>
 
       <el-table v-loading="loading" :data="tableData" max-height="500px" size="small">
-        <el-table-column prop="host_key" label="主机" min-width="150" show-overflow-tooltip>
+        <el-table-column prop="host_key" :label="t('execution.ui.host')" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
             <el-button v-if="row.host_key" link type="primary" @click="handleViewHost(row)">
               {{ row.host_key }}
@@ -54,10 +54,10 @@
           </template>
         </el-table-column>
         <el-table-column prop="os_distro" label="OS" width="110" />
-        <el-table-column prop="os_version" label="OS版本" width="120" />
+        <el-table-column prop="os_version" :label="t('patches.linux.osVersionShort')" width="120" />
         <el-table-column prop="num_critical" width="90">
           <template #header>
-            严重
+            {{ t('patches.catalog.critical') }}
             <i class="fa fa-circle text-danger" />
           </template>
           <template #default="{ row }">
@@ -68,7 +68,7 @@
         </el-table-column>
         <el-table-column prop="num_important" width="90">
           <template #header>
-            重要
+            {{ t('patches.catalog.important') }}
             <i class="fa fa-circle text-warning" />
           </template>
           <template #default="{ row }">
@@ -79,7 +79,7 @@
         </el-table-column>
         <el-table-column prop="num_moderate" width="90">
           <template #header>
-            中等
+            {{ t('patches.catalog.moderate') }}
             <i class="fa fa-circle text-dark" />
           </template>
           <template #default="{ row }">
@@ -90,7 +90,7 @@
         </el-table-column>
         <el-table-column prop="num_low" width="80">
           <template #header>
-            低
+            {{ t('patches.linux.low') }}
             <i class="fa fa-circle text-info" />
           </template>
           <template #default="{ row }">
@@ -99,7 +99,7 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="scan_timestamp" label="扫描时间" width="180">
+        <el-table-column prop="scan_timestamp" :label="t('patches.linux.scanTime')" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.scan_timestamp) }}
           </template>
@@ -124,7 +124,7 @@
 
   <el-dialog
     v-model="hostDetailVisible"
-    title="扫描详情"
+    :title="t('patches.linux.scanDetails')"
     width="80%"
     destroy-on-close
     class="scan-host-detail-dialog"
@@ -133,12 +133,12 @@
     <div v-loading="hostDetailLoading" class="fix-dialog-content">
       <el-tabs v-model="activeTab" class="detail-tabs">
         <!-- Tab 1: Vulnerability & Patch -->
-        <el-tab-pane label="安全漏洞与补丁" name="security">
+        <el-tab-pane :label="t('patches.linux.securityVulnsPatches')" name="security">
           <div class="tab-pane-grid">
             <!-- CVE Card -->
             <div class="fix-info-card">
               <div class="fix-info-header cve-header">
-                <span>受影响的漏洞</span>
+                <span>{{ t('patches.linux.affectedVulns') }}</span>
                 <el-tag size="small" type="danger" effect="light" round>
                   {{ hostDetail.vuls.length || 0 }}
                 </el-tag>
@@ -163,7 +163,7 @@
                       </el-button>
                     </div>
                   </template>
-                  <el-empty v-else description="无受影响的漏洞" :image-size="48" />
+                  <el-empty v-else :description="t('patches.linux.noAffectedVulns')" :image-size="48" />
                 </div>
               </el-scrollbar>
             </div>
@@ -171,7 +171,7 @@
             <!-- Patches Card -->
             <div class="fix-info-card">
               <div class="fix-info-header patch-header">
-                <span>受影响的补丁编号</span>
+                <span>{{ t('patches.linux.affectedPatchIds') }}</span>
                 <el-tag size="small" type="warning" effect="light" round>
                   {{ hostDetail.patches.length || 0 }}
                 </el-tag>
@@ -196,7 +196,7 @@
                       </el-button>
                     </div>
                   </template>
-                  <el-empty v-else description="无受影响的补丁" :image-size="48" />
+                  <el-empty v-else :description="t('patches.linux.noAffectedPatches')" :image-size="48" />
                 </div>
               </el-scrollbar>
             </div>
@@ -204,12 +204,12 @@
         </el-tab-pane>
 
         <!-- Tab 2: Packages -->
-        <el-tab-pane label="系统软件包清单" name="packages">
+        <el-tab-pane :label="t('patches.linux.systemPackages')" name="packages">
           <div class="tab-pane-grid">
             <!-- Affected Pkgs Card -->
             <div class="fix-info-card">
               <div class="fix-info-header pkg-header">
-                <span>待更新的软件包</span>
+                <span>{{ t('patches.linux.pendingPackages') }}</span>
                 <el-tag size="small" type="primary" effect="light" round>
                   {{ hostDetail.affectedPkgs.length || 0 }}
                 </el-tag>
@@ -234,7 +234,7 @@
                       </el-button>
                     </div>
                   </template>
-                  <el-empty v-else description="无待更新的软件包" :image-size="48" />
+                  <el-empty v-else :description="t('patches.linux.noPackageUpdates')" :image-size="48" />
                 </div>
               </el-scrollbar>
             </div>
@@ -242,7 +242,7 @@
             <!-- Installed Pkgs Card -->
             <div class="fix-info-card">
               <div class="fix-info-header inst-header">
-                <span>当前安装的软件包</span>
+                <span>{{ t('patches.linux.installedPackages') }}</span>
                 <el-tag size="small" type="info" effect="light" round>
                   {{ hostDetail.installedPkgs.length || 0 }}
                 </el-tag>
@@ -267,7 +267,7 @@
                       </el-button>
                     </div>
                   </template>
-                  <el-empty v-else description="无安装的软件包" :image-size="48" />
+                  <el-empty v-else :description="t('patches.linux.noInstalledPackages')" :image-size="48" />
                 </div>
               </el-scrollbar>
             </div>
@@ -279,6 +279,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { formatDateTime } from '@/utils/date'
@@ -383,7 +384,7 @@ async function loadSummary() {
     const records = res.data?.data || []
     summary.value = records[0] || { machine_count: 0, scan_timestamp: '' }
   } catch (error) {
-    ElMessage.error(`加载扫描摘要失败: ${error.message || '未知错误'}`)
+    ElMessage.error(t('patches.linux.scanSummaryError', { error: error.message || t('patches.linux.unknownError') }))
   } finally {
     summaryLoading.value = false
   }
@@ -419,7 +420,7 @@ async function loadDetail() {
     tableData.value = records
     pagination.value.total = total
   } catch (error) {
-    ElMessage.error(`加载扫描详情失败: ${error.message || '未知错误'}`)
+    ElMessage.error(t('patches.linux.scanDetailError', { error: error.message || t('patches.linux.unknownError') }))
   } finally {
     loading.value = false
   }
@@ -477,7 +478,7 @@ async function downloadFromUri(downloadUri, filename) {
   })
   const blob = response?.data || response
   if (!blob) {
-    throw new Error('下载文件失败')
+    throw new Error(t('patches.linux.downloadFailed'))
   }
   const objectUrl = window.URL.createObjectURL(blob)
   const link = document.createElement('a')
@@ -491,25 +492,25 @@ async function downloadFromUri(downloadUri, filename) {
 
 async function handleExport() {
   if (!props.runId) {
-    ElMessage.warning('无运行记录')
+    ElMessage.warning(t('patches.linux.noRun'))
     return
   }
   exporting.value = true
   try {
     const filePath = await fetchReportPath(props.runId, 'patch_scan')
     if (!filePath) {
-      throw new Error('未找到报告文件')
+      throw new Error(t('patches.linux.reportMissing'))
     }
     const reportPath = `SECOPS_EXPORT_DATA/patch_scan/${filePath}`
     const fileInfo = await fetchReportFileInfo(reportPath)
     const downloadUri = fileInfo?.fileContent?.downloadUri
     const filename = `patch_scan_${formatFilenameTimestamp(summary.value.scan_timestamp)}.xlsx`
     if (!downloadUri) {
-      throw new Error('未找到下载地址')
+      throw new Error(t('patches.linux.downloadUrlMissing'))
     }
     await downloadFromUri(`${downloadUri}?cacheBuster=${Date.now()}`, filename)
   } catch (error) {
-    ElMessage.error(`导出扫描报告失败: ${error.message || '未知错误'}`)
+    ElMessage.error(t('patches.linux.scanExportError', { error: error.message || t('patches.linux.unknownError') }))
   } finally {
     exporting.value = false
   }
@@ -530,7 +531,7 @@ function toggleExpand(key) {
 }
 
 function getToggleLabel(key) {
-  return expandedSections.value[key] ? '收起' : `展开(${displayLimit}+)`
+  return expandedSections.value[key] ? t('patches.linux.collapse') : t('patches.linux.expandCount', { count: displayLimit })
 }
 
 function safeJsonArray(value) {
@@ -575,7 +576,7 @@ async function fetchHostDetail({ hostId, runId }) {
 
 async function handleViewHost(row) {
   if (!row?.host_id || !props.runId) {
-    ElMessage.warning('缺少主机信息')
+    ElMessage.warning(t('patches.linux.hostMissing'))
     return
   }
   hostDetailContext.value = { hostId: row.host_id, runId: props.runId }
@@ -591,7 +592,7 @@ async function handleViewHost(row) {
       installedPkgs: false
     }
   } catch (error) {
-    ElMessage.error(`加载主机详情失败: ${error.message || '未知错误'}`)
+    ElMessage.error(t('patches.linux.hostDetailError', { error: error.message || t('patches.linux.unknownError') }))
   } finally {
     hostDetailLoading.value = false
   }

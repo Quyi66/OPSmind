@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    :title="dialogTitle"
+    :title="displayProps.dialogTitle"
     width="900px"
     append-to-body
     destroy-on-close
@@ -10,30 +10,30 @@
     :close-on-click-modal="false"
   >
     <el-tabs v-model="activeTab" class="export-tabs">
-      <el-tab-pane label="批量输入" name="batch">
+      <el-tab-pane :label="t('patches.cve.batchInput')" name="batch">
         <div class="batch-input-container" style="height: calc(100vh - 320px)">
           <div
             class="batch-tips mb-2 text-muted"
             style="font-size: 13px; margin-bottom: 12px; color: var(--el-text-color-secondary)"
           >
-            {{ batchTip }}
+            {{ displayProps.batchTip }}
           </div>
           <el-input
             v-model="batchInputText"
             type="textarea"
             :rows="18"
-            :placeholder="batchPlaceholder"
+            :placeholder="displayProps.batchPlaceholder"
             style="font-family: var(--el-font-family-monospace)"
           ></el-input>
         </div>
       </el-tab-pane>
-      <el-tab-pane label="列表选择" name="list">
+      <el-tab-pane :label="t('patches.cve.selectFromList')" name="list">
         <div class="manual-export-container">
           <div class="export-left">
-            <div class="export-header">{{ searchTitle }}</div>
+            <div class="export-header">{{ displayProps.searchTitle }}</div>
             <el-input
               v-model="exportSearchKeyword"
-              :placeholder="searchPlaceholder"
+              :placeholder="displayProps.searchPlaceholder"
               clearable
               @keyup.enter="doExportSearch"
               @clear="doExportSearch"
@@ -45,7 +45,7 @@
             <div class="export-list" v-loading="exportSearchLoading">
               <el-empty
                 v-if="exportOptions.length === 0"
-                :description="emptyDescription"
+                :description="displayProps.emptyDescription"
                 :image-size="60"
               ></el-empty>
               <div v-else class="export-list-content">
@@ -68,11 +68,11 @@
                     @click="addToExport(item)"
                     :disabled="isItemSelected(getItemKey(item))"
                   >
-                    {{ isItemSelected(getItemKey(item)) ? '已选' : '添加' }}
+                    {{ isItemSelected(getItemKey(item)) ? t('patches.cve.alreadySelected') : t('patches.cve.add') }}
                   </el-button>
                 </div>
                 <div v-if="exportHasMore" class="load-more-btn" @click="exportSearchLoadMore">
-                  加载更多...
+                  {{ t('patches.cve.loadMore') }}
                 </div>
               </div>
             </div>
@@ -80,20 +80,20 @@
 
           <div class="export-right">
             <div class="export-header">
-              {{ selectedTitle }} ({{ exportSelectedList.length }})
+              {{ displayProps.selectedTitle }} ({{ exportSelectedList.length }})
               <el-button
                 type="danger"
                 link
                 @click="clearExportSelected"
                 v-if="exportSelectedList.length > 0"
               >
-                清空
+                {{ t('automation.file.clear') }}
               </el-button>
             </div>
             <div class="export-list" @drop="onDropRightContainer($event)" @dragover.prevent>
               <el-empty
                 v-if="exportSelectedList.length === 0"
-                :description="selectedEmptyDescription"
+                :description="displayProps.selectedEmptyDescription"
                 :image-size="60"
               ></el-empty>
               <div v-else class="export-list-content">
@@ -132,9 +132,9 @@
     </el-tabs>
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="visible = false">取消</el-button>
+        <el-button @click="visible = false">{{ t('common.cancel') }}</el-button>
         <el-button type="primary" :loading="manualExporting" @click="handleManualExportConfirm">
-          {{ activeTab === 'list' ? '导出已选' : '导出输入内容' }}
+          {{ activeTab === 'list' ? t('patches.cve.exportSelected') : t('patches.cve.exportInput') }}
         </el-button>
       </span>
     </template>
@@ -142,7 +142,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { t } from '@/core/i18n'
+import { ref, computed, reactive } from 'vue'
 import { Search, Delete, Rank } from '@element-plus/icons-vue'
 import { cveApi } from '../../../api/index.js'
 import { ElMessage } from 'element-plus'
@@ -173,15 +174,15 @@ const props = defineProps({
   },
   dialogTitle: {
     type: String,
-    default: '导出'
+    default: undefined
   },
   itemName: {
     type: String,
-    default: '漏洞'
+    default: undefined
   },
   itemIdentifierLabel: {
     type: String,
-    default: '漏洞编号'
+    default: undefined
   },
   itemKeyField: {
     type: [String, Function],
@@ -193,39 +194,39 @@ const props = defineProps({
   },
   searchTitle: {
     type: String,
-    default: '搜索漏洞'
+    default: undefined
   },
   searchPlaceholder: {
     type: String,
-    default: '输入漏洞编号或关键字'
+    default: undefined
   },
   selectedTitle: {
     type: String,
-    default: '已选择'
+    default: undefined
   },
   batchTip: {
     type: String,
-    default: '支持使用英文逗号、中文逗号、空格或换行分隔多个漏洞编号'
+    default: undefined
   },
   batchPlaceholder: {
     type: String,
-    default: '请输入完整的漏洞编号，例如：\nCVE-2023-1234\nCVE-2023-1235, CVE-2023-1236'
+    default: undefined
   },
   exportFilename: {
     type: String,
-    default: '漏洞报告.xlsx'
+    default: undefined
   },
   successMessage: {
     type: String,
-    default: '批量导出成功'
+    default: undefined
   },
   emptyDescription: {
     type: String,
-    default: '暂无数据'
+    default: undefined
   },
   selectedEmptyDescription: {
     type: String,
-    default: '暂未选择'
+    default: undefined
   },
   listPageSize: {
     type: Number,
@@ -243,6 +244,21 @@ const props = defineProps({
     type: Function,
     default: null
   }
+})
+
+const displayProps = reactive({
+  get dialogTitle() { return props.dialogTitle ?? t('patches.catalog.export') },
+  get itemName() { return props.itemName ?? t('patches.cve.itemName') },
+  get itemIdentifierLabel() { return props.itemIdentifierLabel ?? t('patches.linux.vulnId') },
+  get searchTitle() { return props.searchTitle ?? t('patches.cve.searchVulns') },
+  get searchPlaceholder() { return props.searchPlaceholder ?? t('patches.cve.searchIdKeyword') },
+  get selectedTitle() { return props.selectedTitle ?? t('patches.cve.selected') },
+  get batchTip() { return props.batchTip ?? t('patches.cve.batchHint') },
+  get batchPlaceholder() { return props.batchPlaceholder ?? t('patches.cve.batchPlaceholder') },
+  get exportFilename() { return props.exportFilename ?? t('patches.cve.reportFilename') },
+  get successMessage() { return props.successMessage ?? t('patches.cve.batchExported') },
+  get emptyDescription() { return props.emptyDescription ?? t('common.noData') },
+  get selectedEmptyDescription() { return props.selectedEmptyDescription ?? t('patches.cve.noneSelected') }
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -369,7 +385,7 @@ async function loadExportOptions() {
       result.totalPages || Math.ceil(result.totalElements / props.listPageSize) || 0
     exportHasMore.value = exportCurrentPage.value < totalPages - 1
   } catch (error) {
-    console.error(`获取${props.itemName}列表失败:`, error)
+    console.error(`获取${displayProps.itemName}列表失败:`, error)
   } finally {
     exportSearchLoading.value = false
   }
@@ -468,13 +484,13 @@ async function handleManualExportConfirm() {
 
   if (activeTab.value === 'list') {
     if (exportSelectedList.value.length === 0) {
-      ElMessage.warning(`请选择要导出的${props.itemName}项目`)
+      ElMessage.warning(t('patches.cve.selectExportItems', { item: displayProps.itemName }))
       return
     }
     exportIds = exportSelectedList.value.map(item => getItemKey(item)).filter(Boolean)
   } else {
     if (!batchInputText.value.trim()) {
-      ElMessage.warning(`请输入要导出的${props.itemIdentifierLabel}`)
+      ElMessage.warning(t('patches.cve.enterExportIds', { item: displayProps.itemIdentifierLabel }))
       return
     }
     exportIds = parseBatchInput(batchInputText.value)
@@ -482,7 +498,7 @@ async function handleManualExportConfirm() {
       .filter(Boolean)
 
     if (exportIds.length === 0) {
-      ElMessage.warning(`未解析到有效的${props.itemIdentifierLabel}`)
+      ElMessage.warning(t('patches.cve.noValidExportIds', { item: displayProps.itemIdentifierLabel }))
       return
     }
 
@@ -492,12 +508,12 @@ async function handleManualExportConfirm() {
   manualExporting.value = true
   try {
     const response = await exportHandler(exportIds)
-    downloadBlob(response, props.exportFilename)
-    ElMessage.success(props.successMessage)
+    downloadBlob(response, displayProps.exportFilename)
+    ElMessage.success(displayProps.successMessage)
     visible.value = false
   } catch (error) {
     console.error('手动导出失败:', error)
-    ElMessage.error('导出失败，请重试')
+    ElMessage.error(t('patches.cve.exportFailed'))
   } finally {
     manualExporting.value = false
   }

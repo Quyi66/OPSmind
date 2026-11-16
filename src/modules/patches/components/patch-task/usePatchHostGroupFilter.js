@@ -1,3 +1,4 @@
+import { t } from '@/core/i18n'
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { dataManageApi } from '@/modules/asset/api'
@@ -40,7 +41,7 @@ export function usePatchHostGroupFilter() {
     } catch (error) {
       if (requestId !== groupRequestId) return
       console.error('加载主机分组失败:', error)
-      ElMessage.error('加载主机分组失败')
+      ElMessage.error(t('patches.linux.groupsLoadFailed'))
       groupOptions.value = []
     } finally {
       if (requestId === groupRequestId) groupLoading.value = false
@@ -58,7 +59,7 @@ export function usePatchHostGroupFilter() {
     } catch (error) {
       if (requestId !== tagRequestId) return
       console.error('加载主机标签失败:', error)
-      ElMessage.error('加载主机标签失败')
+      ElMessage.error(t('patches.linux.tagsLoadFailed'))
       tagOptions.value = []
     }
   }

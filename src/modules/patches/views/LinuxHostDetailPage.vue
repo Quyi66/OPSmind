@@ -6,7 +6,7 @@
         <el-breadcrumb-item>
           <a @click.prevent="handleBack">{{ fromLabel }}</a>
         </el-breadcrumb-item>
-        <el-breadcrumb-item>主机详情</el-breadcrumb-item>
+        <el-breadcrumb-item>{{ t('patches.linux.hostDetails') }}</el-breadcrumb-item>
       </el-breadcrumb>
     </div>
 
@@ -14,7 +14,7 @@
     <div class="host-info-card" v-loading="machineLoading">
       <div class="host-info-body">
         <div class="info-item" v-if="machineInfo.hostKey">
-          <span class="label">主机名：</span>
+          <span class="label">{{ t('patches.linux.hostnameLabel') }}</span>
           <span class="value">{{ machineInfo.hostKey }}</span>
         </div>
         <!-- [Agent 功能暂停]
@@ -44,11 +44,11 @@
           <span class="value">{{ machineInfo.os_distro }} {{ hostInfoRef.os_version }}</span>
         </div>
         <div class="info-item">
-          <span class="label">最后扫描：</span>
+          <span class="label">{{ t('patches.linux.lastScanLabel') }}</span>
           <span class="value">{{ formatDateTime(machineInfo.scan_timestamp) }}</span>
         </div>
         <div class="info-item">
-          <span class="label">已安装软件包：</span>
+          <span class="label">{{ t('patches.linux.installedPackagesLabel') }}</span>
           <span class="value">{{ getInstalledPkgsCount(machineInfo.installed_pkgs) }}</span>
         </div>
 <!-- [Agent 功能暂停]
@@ -109,22 +109,22 @@
 
     <!-- Tab 导航 -->
     <el-tabs v-model="activeTab" class="host-tabs">
-      <el-tab-pane label="可用补丁" name="patches">
+      <el-tab-pane :label="t('patches.linux.availablePatches')" name="patches">
         <template #label>
           <i class="far fa-briefcase-medical"></i>
-          可用补丁
+          {{ t('patches.linux.availablePatches') }}
         </template>
       </el-tab-pane>
-      <el-tab-pane label="软件包" name="packages">
+      <el-tab-pane :label="t('patches.linux.package')" name="packages">
         <template #label>
           <i class="far fa-cube"></i>
-          软件包
+          {{ t('patches.linux.package') }}
         </template>
       </el-tab-pane>
-      <el-tab-pane label="漏洞" name="vulnerabilities">
+      <el-tab-pane :label="t('patches.linux.vulnerabilities')" name="vulnerabilities">
         <template #label>
           <i class="far fa-virus"></i>
-          漏洞
+          {{ t('patches.linux.vulnerabilities') }}
         </template>
       </el-tab-pane>
     </el-tabs>
@@ -190,6 +190,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -240,7 +241,13 @@ const hostOsArch = computed(
     ''
 )
 
-const fromLabel = computed(() => route.query.fromLabel || '主机概览')
+const fromLabel = computed(() => {
+  const label = route.query.fromLabel
+  if (label === '漏洞详情' || label === 'Vulnerability details') return t('patches.cve.vulnerabilityDetails')
+  return !label || label === '主机概览' || label === 'Host overview'
+    ? t('patches.linux.hostOverview')
+    : label
+})
 const fromRouteName = computed(() => route.query.fromRouteName || 'patches-machineScan')
 const fromRouteQuery = computed(() => {
   const raw = route.query.fromRouteQuery
@@ -370,7 +377,7 @@ async function loadPatchDetail(patchId, patchRow = null) {
     } else if (patchRow) {
       patchDetailData.value = patchRow
     } else {
-      ElMessage.warning('未找到补丁详情')
+      ElMessage.warning(t('patches.linux.patchNotFound'))
       patchDetailVisible.value = false
     }
   } catch (error) {
@@ -378,7 +385,7 @@ async function loadPatchDetail(patchId, patchRow = null) {
     if (patchRow) {
       patchDetailData.value = patchRow
     } else {
-      ElMessage.error('获取补丁详情失败')
+      ElMessage.error(t('patches.linux.patchDetailFailed'))
       patchDetailVisible.value = false
     }
   } finally {
@@ -389,11 +396,11 @@ async function loadPatchDetail(patchId, patchRow = null) {
 // 安装补丁
 function handleFixPatches(patches) {
   if (!patches || patches.length === 0) {
-    ElMessage.warning('请选择要安装的补丁')
+    ElMessage.warning(t('patches.linux.selectPatches'))
     return
   }
   if (!hostId.value) {
-    ElMessage.warning('主机信息缺失，无法安装补丁')
+    ElMessage.warning(t('patches.linux.hostMissingInstall'))
     return
   }
   patchesToInstall.value = patches
@@ -476,17 +483,17 @@ function normalizeVulnerabilitySelections(vulnerabilities) {
 
 function handleUpdatePackages(packages) {
   if (!packages || packages.length === 0) {
-    ElMessage.warning('请选择要更新的软件包')
+    ElMessage.warning(t('patches.linux.selectPackagesUpdate'))
     return
   }
   if (!hostId.value) {
-    ElMessage.warning('主机信息缺失，无法更新软件包')
+    ElMessage.warning(t('patches.linux.hostMissingUpdate'))
     return
   }
 
   const normalizedPatches = normalizePackageSelections(packages)
   if (normalizedPatches.length === 0) {
-    ElMessage.warning('所选软件包缺少补丁编号，暂时无法进入更新向导')
+    ElMessage.warning(t('patches.linux.packagePatchIdMissing'))
     return
   }
 
@@ -513,17 +520,17 @@ function handleUpdatePackages(packages) {
 
 function handleFixVulnerabilities(vulnerabilities) {
   if (!vulnerabilities || vulnerabilities.length === 0) {
-    ElMessage.warning('请选择要修复的漏洞')
+    ElMessage.warning(t('patches.linux.selectVulns'))
     return
   }
   if (!hostId.value) {
-    ElMessage.warning('主机信息缺失，无法修复漏洞')
+    ElMessage.warning(t('patches.linux.hostMissingFix'))
     return
   }
 
   const normalizedPatches = normalizeVulnerabilitySelections(vulnerabilities)
   if (normalizedPatches.length === 0) {
-    ElMessage.warning('所选漏洞缺少补丁编号，暂时无法进入修复向导')
+    ElMessage.warning(t('patches.linux.vulnPatchIdMissing'))
     return
   }
 

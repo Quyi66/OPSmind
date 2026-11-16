@@ -1,6 +1,8 @@
+import { t } from '@/core/i18n'
 import { nextTick, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { patchInstallApi } from '../../../api'
+import { createPatchTaskError } from '../../../utils/patchTaskFeedback'
 
 export function usePatchTaskPipeline({
   createdTaskId,
@@ -43,7 +45,7 @@ export function usePatchTaskPipeline({
 
   function checkActive(token, taskId) {
     if (token !== session || createdTaskId.value !== taskId) {
-      throw new Error('任务窗口已关闭')
+      throw new Error(t('patches.linux.taskWindowClosed'))
     }
   }
 
@@ -52,7 +54,7 @@ export function usePatchTaskPipeline({
     const res = await patchInstallApi.getTask(taskId)
     checkActive(token, taskId)
     const data = res?.data
-    if (!data?.status) throw new Error('未获取到任务状态')
+    if (!data?.status) throw createPatchTaskError('patches.linux.taskStatusMissing')
     taskStatus.value = data.status
     taskErrorMessage.value = data.errorMessage || ''
     taskDetailData.value = data
@@ -74,7 +76,7 @@ export function usePatchTaskPipeline({
           resolve()
         }
       }
-      cancelWait = () => finish(new Error('任务窗口已关闭'))
+      cancelWait = () => finish(new Error(t('patches.linux.taskWindowClosed')))
       const tick = async () => {
         let data
         try {
@@ -83,7 +85,8 @@ export function usePatchTaskPipeline({
           if (settled || token !== session) return
           failures += 1
           if (failures >= 3) {
-            const queryError = new Error(resolveApiErrorMessage(error, '任务状态查询失败'))
+            const queryError = new Error(resolveApiErrorMessage(error, t('patches.linux.taskStatusFailed')))
+            queryError.localMessage = error.localMessage
             queryError.queryInterrupted = true
             finish(queryError)
             return
@@ -97,7 +100,7 @@ export function usePatchTaskPipeline({
             return
           }
           if (failedStatuses.includes(data.status)) {
-            finish(new Error(data.errorMessage || '任务执行失败'))
+            finish(data.errorMessage ? new Error(data.errorMessage) : createPatchTaskError('common.pollingFailed'))
             return
           }
         }
@@ -201,7 +204,7 @@ export function usePatchTaskPipeline({
       pipelineFinished.value = true
       pipelineStatus.value = 'success'
       emitSuccess()
-      ElMessage.success('全流程执行完毕')
+      ElMessage.success(t('patches.linux.pipelineCompleted'))
     } catch (error) {
       if (!isCurrent()) return
       pipelineFinished.value = true
@@ -210,11 +213,11 @@ export function usePatchTaskPipeline({
         const runningIdx = stepStates.findIndex(state => state === 'running')
         if (runningIdx !== -1) stepStates[runningIdx] = 'failed'
       }
-      taskErrorMessage.value = resolveApiErrorMessage(error, `${executeStepTitle.value}异常`)
+      taskErrorMessage.value = error.localMessage || resolveApiErrorMessage(error, t('patches.linux.stepError', { step: executeStepTitle.value }))
       ElMessage.error(
         error.queryInterrupted
-          ? '暂时无法查询任务状态，请点击“继续查询”'
-          : '任务执行中断，请查看下方提示或点击“查看详情”'
+          ? t('patches.linux.queryPaused')
+          : t('patches.linux.executionInterrupted')
       )
     }
   }

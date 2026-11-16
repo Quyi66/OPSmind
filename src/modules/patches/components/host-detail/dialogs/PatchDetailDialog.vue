@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="补丁详情"
+    :title="t('patches.linux.patchDetails')"
     width="800px"
     destroy-on-close
     class="patch-detail-dialog"
@@ -17,6 +17,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { computed } from 'vue'
 import PatchDetailContent from '../../common/PatchDetailContent.vue'
 

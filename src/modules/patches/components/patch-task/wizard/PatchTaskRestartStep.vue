@@ -3,7 +3,7 @@
     <div class="task-step-editor">
       <div class="task-step-editor__title">
         <i class="fa fa-refresh" />
-        重启策略
+        {{ t('patches.linux.restartPolicy') }}
       </div>
       <el-alert :title="adviceTitle" type="info" show-icon :closable="false" class="restart-advice">
         <template #default>
@@ -12,9 +12,7 @@
       </el-alert>
       <div v-if="requiresConfirm" class="restart-confirm-field">
         <div class="confirm-label">
-          请输入“
-          <span>{{ confirmKeyword }}</span>
-          ”进行确认操作
+          {{ t('patches.linux.enterConfirmation', { keyword: confirmKeyword }) }}
         </div>
         <el-input
           :model-value="modelValue"
@@ -26,7 +24,7 @@
       </div>
       <el-alert
         v-else
-        title="当前策略为不执行重启，可进入下一步。"
+        :title="t('patches.linux.noRestartNext')"
         type="success"
         :closable="false"
         show-icon
@@ -44,8 +42,8 @@
       >
         <template v-if="runId" #default>
           <div class="task-detail-info">
-            <el-button type="primary" link @click="$emit('show-result', runId, '执行重启')">
-              查看执行详情
+            <el-button type="primary" link @click="$emit('show-result', runId, t('patches.linux.executeRestart'))">
+              {{ t('patches.linux.viewExecution') }}
             </el-button>
           </div>
         </template>
@@ -55,6 +53,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { computed } from 'vue'
 
 const props = defineProps({
@@ -104,8 +103,8 @@ defineEmits(['update:modelValue', 'show-result'])
 
 const disabled = computed(() => ['running', 'success'].includes(props.state))
 const statusTitle = computed(() => {
-  if (props.state === 'failed') return `重启失败：${props.errorMessage}`
-  return props.skipped || props.restartPolicy === 'none' ? '已跳过重启' : '重启完成'
+  if (props.state === 'failed') return t('patches.linux.restartError', { error: props.errorMessage })
+  return props.skipped || props.restartPolicy === 'none' ? t('patches.linux.restartSkipped') : t('patches.linux.restartDone')
 })
 </script>
 

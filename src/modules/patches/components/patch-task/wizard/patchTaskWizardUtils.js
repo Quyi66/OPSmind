@@ -1,5 +1,6 @@
+import { t } from '@/core/i18n'
 export function formatHostDisplay(host) {
-  const hostName = host?.hostKey || host?.hostname || host?.hostId || host?.id || '当前主机'
+  const hostName = host?.hostKey || host?.hostname || host?.hostId || host?.id || t('patches.linux.currentHost')
   const osName = [host?.os_distro, host?.os_version].filter(Boolean).join(' ')
   return osName ? `${hostName} (${osName})` : hostName
 }
@@ -20,9 +21,9 @@ export function getRestartPriority(value) {
 
 export function getRestartLabel(value) {
   const normalized = normalizeRestartType(value)
-  if (normalized === 'system') return '系统重启'
-  if (normalized === 'service') return '服务重启'
-  return '无需重启'
+  if (normalized === 'system') return t('patches.linux.systemRestart')
+  if (normalized === 'service') return t('patches.linux.serviceRestart')
+  return t('patches.linux.noRestartRequired')
 }
 
 export function resolveHostIp(host) {
@@ -47,20 +48,20 @@ export function buildRestartAdviceDescription(hostAdviceList, ignoredCount, fail
     .map(item => `${item.hostLabel}：${getRestartLabel(item.rebootStatus)}`)
 
   const parts = [
-    `后端已基于 ${hostAdviceList.length} 台目标主机的补丁状态生成重启建议。`,
-    `系统重启 ${systemHosts.length} 台，服务重启 ${serviceHosts.length} 台，无需重启 ${noneHosts.length} 台。`
+    t('patches.linux.restartAdviceHostCount', { count: hostAdviceList.length }),
+    t('patches.linux.restartAdviceCounts', { system: systemHosts.length, service: serviceHosts.length, none: noneHosts.length })
   ]
 
   if (highlightedHosts.length > 0) {
-    parts.push(`示例：${highlightedHosts.join('；')}。`)
+    parts.push(t('patches.linux.restartExamples', { examples: highlightedHosts.join('；') }))
   }
 
   if (ignoredCount > 0) {
-    parts.push(`${ignoredCount} 个主机与补丁组合未命中状态记录，已自动忽略。`)
+    parts.push(t('patches.linux.restartIgnored', { count: ignoredCount }))
   }
 
   if (failedCount > 0) {
-    parts.push(`${failedCount} 个主机与补丁组合查询失败，当前结果已按成功返回部分汇总。`)
+    parts.push(t('patches.linux.restartPartial', { count: failedCount }))
   }
 
   return parts.join(' ')

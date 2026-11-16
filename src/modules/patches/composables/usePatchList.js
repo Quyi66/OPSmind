@@ -1,3 +1,4 @@
+import { t } from '@/core/i18n'
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { patchScanApi } from '../api'
@@ -74,7 +75,7 @@ export function usePatchList(hostContext) {
       selectedPatches.value = []
     } catch (error) {
       console.error('Failed to load patch list:', error)
-      ElMessage.error('获取补丁列表失败')
+      ElMessage.error(t('patches.linux.patchListFailed'))
       patchAllData.value = []
       patchTableData.value = []
       patchPagination.total = 0

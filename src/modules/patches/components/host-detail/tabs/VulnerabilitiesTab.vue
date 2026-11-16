@@ -19,11 +19,11 @@
     </div> -->
     <div class="ops-filter-bar" style="margin-bottom: 8px">
       <el-form inline size="small" @submit.prevent>
-        <el-form-item label="关键词" label-width="60">
+        <el-form-item :label="t('automation.workbench.keyword')" label-width="60">
           <el-input
             v-model="vulKeyword"
             size="small"
-            placeholder="搜索漏洞编号/补丁/包名/状态等"
+            :placeholder="t('patches.linux.searchVulnPatchPackage')"
             clearable
             style="width: 260px"
             @input="handleVulKeywordChange"
@@ -34,11 +34,11 @@
             </template>
           </el-input>
         </el-form-item>
-        <el-form-item label="修复状态" label-width="72">
+        <el-form-item :label="t('patches.linux.fixStatus')" label-width="72">
           <el-select
             v-model="vulPatchStatus"
             size="small"
-            placeholder="全部"
+            :placeholder="t('common.all')"
             clearable
             style="width: 140px"
             @change="handleVulPatchStatusChange"
@@ -64,7 +64,7 @@
         @click="handleFixVulnerabilities"
       >
         <i class="fa fa-tools" />
-        修复选中的漏洞 ({{ selectedVuls.length }})
+        {{ t('patches.linux.fixVulnsCount', { count: selectedVuls.length }) }}
       </el-button>
       <el-button
         size="small"
@@ -72,7 +72,7 @@
         @click="handleToggleAllSelection"
       >
         <i :class="`fa fa-${isAllSelected ? 'times' : 'check-double'}`" />
-        {{ isAllSelected ? '取消全选' : '一键全选' }}
+        {{ isAllSelected ? t('patches.linux.cancelSelectAll') : t('patches.linux.selectAll') }}
       </el-button>
       <span style="flex: 1"></span>
       <el-button
@@ -80,7 +80,7 @@
         circle
         size="small"
         :loading="vulLoading"
-        title="刷新"
+        :title="t('common.refresh')"
         @click="loadVulnerabilityList()"
       >
         <el-icon v-show="!vulLoading"><Refresh /></el-icon>
@@ -99,12 +99,12 @@
       border
     >
       <el-table-column type="selection" width="55" />
-      <el-table-column prop="vul_id" label="漏洞编号" width="150">
+      <el-table-column prop="vul_id" :label="t('patches.linux.vulnId')" width="150">
         <template #default="{ row }">
           <CveLinkList :cves="[row.vul_id]" :url-resolver="cve => getCveUrl(cve, osDistro)" />
         </template>
       </el-table-column>
-      <el-table-column prop="patch_id" label="补丁编号" width="180">
+      <el-table-column prop="patch_id" :label="t('patches.catalog.patchId')" width="180">
         <template #default="{ row }">
           <div class="patch-list">
             <a
@@ -123,7 +123,7 @@
               :width="360"
             >
               <template #reference>
-                <span class="more-link">+{{ getPatchIdList(row.patch_id).length - 2 }} 更多</span>
+                <span class="more-link">+{{ getPatchIdList(row.patch_id).length - 2 }} {{ t('automation.flow.more') }}</span>
               </template>
               <div class="patch-list-popover">
                 <a
@@ -142,7 +142,7 @@
       </el-table-column>
       <el-table-column
         prop="affected_pkgs"
-        label="受影响的软件包"
+        :label="t('patches.linux.affectedPackagesAlt')"
         min-width="300"
         align="left"
         class-name="vulnerability-layout-top-cell"
@@ -187,7 +187,7 @@
               :width="400"
             >
               <template #reference>
-                <span class="more-link">+{{ getAffectedPackages(row).length - 2 }} 更多</span>
+                <span class="more-link">+{{ getAffectedPackages(row).length - 2 }} {{ t('automation.flow.more') }}</span>
               </template>
               <div class="affected-packages-popover">
                 <div
@@ -229,7 +229,7 @@
       </el-table-column>
       <el-table-column
         prop="severity"
-        label="严重程度"
+        :label="t('patches.linux.severity')"
         width="80"
         align="left"
         class-name="vulnerability-layout-top-cell"
@@ -246,7 +246,7 @@
       </el-table-column>
       <el-table-column
         prop="reboot_status"
-        label="重启要求"
+        :label="t('patches.linux.restartRequirement')"
         min-width="250"
         align="left"
         class-name="vulnerability-layout-top-cell"
@@ -265,7 +265,7 @@
                   size="small"
                 >
                   <i class="fa fa-power-off"></i>
-                  系统重启
+                  {{ t('patches.linux.systemRestart') }}
                 </el-tag>
                 <el-tag
                   v-else-if="getDisplayRebootStatus(row) === '服务重启'"
@@ -273,7 +273,7 @@
                   size="small"
                 >
                   <i class="fa fa-server"></i>
-                  服务重启
+                  {{ t('patches.linux.serviceRestart') }}
                 </el-tag>
                 <span v-else-if="row.reboot_status !== '服务重启'" class="text-muted">-</span>
               </span>
@@ -293,36 +293,36 @@
           </el-tooltip>
         </template>
       </el-table-column>
-      <el-table-column prop="is_kernel" label="内核漏洞" width="80">
+      <el-table-column prop="is_kernel" :label="t('patches.linux.kernelVuln')" width="80">
         <template #default="{ row }">
           <el-tag v-if="row.is_kernel === '是'" type="primary" size="small">
             <i class="fa fa-check"></i>
-            是
+            {{ t('patches.catalog.yes') }}
           </el-tag>
           <el-tag v-else type="info" size="small">
             <i class="fa fa-times"></i>
-            否
+            {{ t('patches.catalog.no') }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="patch_status" label="修复状态" width="90">
+      <el-table-column prop="patch_status" :label="t('patches.linux.fixStatus')" width="90">
         <template #default="{ row }">
           <el-tag :type="getPatchStatusType(row.patch_status)" size="small">
             {{ getPatchStatusText(row.patch_status) }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="scan_date" label="扫描时间" width="110">
+      <el-table-column prop="scan_date" :label="t('patches.linux.scanTime')" width="110">
         <template #default="{ row }">
           {{ formatDate(row.scan_date) }}
         </template>
       </el-table-column>
-      <el-table-column prop="update_time" label="更新时间" width="110">
+      <el-table-column prop="update_time" :label="t('automation.command.updatedAt')" width="110">
         <template #default="{ row }">
           {{ formatDate(row.update_time) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="90" fixed="right">
+      <el-table-column :label="t('common.actions')" width="90" fixed="right">
         <template #default="{ row }">
           <el-button
             v-if="row.patch_status === '已修复' || row.patch_status === '回滚失败'"
@@ -331,7 +331,7 @@
             @click="handleRollback(row)"
             type="primary"
           >
-            回滚
+            {{ t('patches.linux.rollback') }}
           </el-button>
         </template>
       </el-table-column>
@@ -360,6 +360,7 @@
   </div>
 </template>
 <script setup>
+import { t } from '@/core/i18n'
 import { ref, toRef } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { rpmInfoApi } from '../../../api'
@@ -412,14 +413,14 @@ const props = defineProps({
 const emit = defineEmits(['patch-click', 'fix-vulnerabilities'])
 
 const patchStatusOptions = [
-  { label: '未修复', value: '未修复' },
-  { label: '已修复', value: '已修复' },
-  { label: '已修复(手动)', value: '已修复(手动)' },
-  { label: '修复中', value: '修复中' },
-  { label: '修复失败', value: '修复失败' },
-  { label: '回滚中', value: '回滚中' },
-  { label: '回滚失败', value: '回滚失败' },
-  { label: '回滚成功', value: '回滚成功' }
+  { get label() { return t('patches.linux.unfixed') }, value: '未修复' },
+  { get label() { return t('patches.linux.fixed') }, value: '已修复' },
+  { get label() { return t('patches.linux.manualFixed') }, value: '已修复(手动)' },
+  { get label() { return t('patches.linux.fixing') }, value: '修复中' },
+  { get label() { return t('patches.linux.fixFailed') }, value: '修复失败' },
+  { get label() { return t('patches.linux.rollingBack') }, value: '回滚中' },
+  { get label() { return t('patches.linux.rollbackFailed') }, value: '回滚失败' },
+  { get label() { return t('patches.linux.rollbackSucceeded') }, value: '回滚成功' }
 ]
 
 function getPatchIdList(patchId) {
@@ -519,7 +520,7 @@ function buildDetailCandidates(pkg) {
 async function handleViewPackageDetail(pkg) {
   const candidates = buildDetailCandidates(pkg)
   if (candidates.length === 0) {
-    ElMessage.warning('当前软件包暂无 RPM 详情')
+    ElMessage.warning(t('patches.linux.noRpmDetails'))
     return
   }
 
@@ -572,7 +573,7 @@ async function handleViewPackageDetail(pkg) {
       }
     }
 
-    ElMessage.warning('当前软件包暂无 RPM 详情')
+    ElMessage.warning(t('patches.linux.noRpmDetails'))
     detailVisible.value = false
   } finally {
     detailLoading.value = false
@@ -582,7 +583,7 @@ async function handleViewPackageDetail(pkg) {
 // 修复漏洞
 async function handleFixVulnerabilities() {
   if (selectedVuls.value.length === 0) {
-    ElMessage.warning('请选择要修复的漏洞')
+    ElMessage.warning(t('patches.linux.selectVulns'))
     return
   }
 
@@ -591,16 +592,16 @@ async function handleFixVulnerabilities() {
 
 // 回滚补丁
 function handleRollback(row) {
-  ElMessageBox.confirm(`确认要回滚补丁 ${row.patch_id} 吗？`, '确认回滚', {
+  ElMessageBox.confirm(t('patches.linux.rollbackPatchConfirm', { patch: row.patch_id }), t('patches.linux.confirmRollback'), {
     closeOnClickModal: false,
     closeOnPressEscape: false,
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+    get confirmButtonText() { return t('automation.file.confirm') },
+    get cancelButtonText() { return t('common.cancel') },
     type: 'warning'
   })
     .then(() => {
       // TODO: 调用回滚API
-      ElMessage.success('回滚任务已提交')
+      ElMessage.success(t('patches.linux.rollbackSubmitted'))
     })
     .catch(() => {
       // 用户取消

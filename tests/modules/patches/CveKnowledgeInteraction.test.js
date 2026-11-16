@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { ElMessage, ElTable, ElTableColumn } from 'element-plus'
 import { createMemoryHistory, createRouter } from 'vue-router'
+import { setLocale } from '@/core/i18n'
 import CommonCvePage from '@/modules/patches/views/CveListPage.vue'
 import MiddlewareCvePage from '@/modules/patches/views/MiddlewareCveListPage.vue'
 
@@ -76,7 +77,8 @@ async function date(index, value) {
   picker.vm.$emit('change', value)
   await flushPromises()
 }
-beforeEach(() => {
+beforeEach(async () => {
+  await setLocale('zh-CN', { persist: false })
   Object.values(api).forEach(mock => mock.mockReset())
   api.common.mockResolvedValue(response([]))
   api.middleware.mockResolvedValue(response([]))
@@ -91,16 +93,34 @@ beforeEach(() => {
     }
   )
 })
-afterEach(() => {
+afterEach(async () => {
   wrapper?.unmount()
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
+  await setLocale('zh-CN', { persist: false })
 })
 
 describe.each([
   ['通用漏洞', CommonCvePage, api.common],
   ['中间件漏洞', MiddlewareCvePage, api.middleware]
 ])('%s列表日期与评分', (_, component, getList) => {
+  it('切换英文保留查询条件、分页和真实零分，未知评分仍为占位且不重新请求', async () => {
+    getList.mockResolvedValue(response([{ cveId: 'raw-cve', cvss3Score: null }, { cveId: 'zero-cve', cvss3Score: 0 }]))
+    api.stats.mockResolvedValue({ data: { totalCves: 7, bySeverity: { 严重: 7 }, bySource: { redhat: 7 } } })
+    await open(component)
+    state().searchParams.keyword = '原始查询'
+    state().searchParams.severity = 'critical'
+    state().searchParams.page = 2
+    const requests = getList.mock.calls.length
+    await setLocale('en-US', { persist: false })
+    await flushPromises()
+    expect(state().searchParams).toMatchObject({ keyword: '原始查询', severity: 'critical', page: 2 })
+    const scores = wrapper.findAll('.el-table__body-wrapper tbody tr').map(row => row.findAll('td')[component === CommonCvePage ? 2 : 3].text())
+    expect(scores).toEqual(['-', '0.0'])
+    expect(getList).toHaveBeenCalledTimes(requests)
+    expect(state().getSeverityLabel('critical')).toBe('Critical')
+    if (component === CommonCvePage) expect(state().getSeverityCount('critical')).toBe(7)
+  })
   it('CVSS数值0和数字字符串正确展示，空值/非法值不伪造为分数', async () => {
     getList.mockResolvedValue(
       response(

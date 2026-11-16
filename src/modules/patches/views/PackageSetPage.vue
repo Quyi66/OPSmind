@@ -2,8 +2,8 @@
   <div class="ops-page-layout">
     <!-- Tab 导航 -->
     <el-tabs v-model="activeTab" class="mb-3">
-      <el-tab-pane label="一键分批安装" name="install" />
-      <el-tab-pane label="软件包集管理" name="management" />
+      <el-tab-pane :label="t('patches.linux.batchInstall')" name="install" />
+      <el-tab-pane :label="t('patches.linux.packageSetManagement')" name="management" />
     </el-tabs>
 
     <!-- 一键分批安装 Tab -->
@@ -13,25 +13,25 @@
         <div style="flex: 2; display: flex; flex-direction: column; gap: 16px; background: var(--el-bg-color); border: 1px solid var(--el-border-color-light); border-radius: 8px; padding: 20px; min-width: 0;">
           <h3 class="m-0 mb-3" style="font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
             <i class="fa fa-sliders-h" style="color: var(--el-color-primary);" />
-            1. 安装配置
+            {{ t('patches.linux.installConfigStep') }}
           </h3>
 
           <el-form label-position="top" size="small" style="flex: 1; overflow-y: auto; padding-right: 8px;">
             <!-- 包集选择方式 -->
-            <el-form-item label="软件包来源">
+            <el-form-item :label="t('patches.linux.packageSource')">
               <el-radio-group v-model="installForm.useCustomPackages">
-                <el-radio-button :value="false">选择已有包集</el-radio-button>
-                <el-radio-button :value="true">临时输入包名</el-radio-button>
+                <el-radio-button :value="false">{{ t('patches.linux.chooseExistingSet') }}</el-radio-button>
+                <el-radio-button :value="true">{{ t('patches.linux.enterTemporaryPackages') }}</el-radio-button>
               </el-radio-group>
             </el-form-item>
 
             <!-- 选择已有包集 -->
-            <el-form-item v-if="!installForm.useCustomPackages" label="选择软件包集" required>
+            <el-form-item v-if="!installForm.useCustomPackages" :label="t('patches.linux.choosePackageSet')" required>
               <div style="width: 100%;">
                 <div style="display: flex; gap: 8px; width: 100%;">
                   <el-select
                     v-model="installForm.packageSetId"
-                    placeholder="请选择软件包集"
+                    :placeholder="t('patches.linux.selectPackageSet')"
                     style="flex: 1;"
                     clearable
                     @change="handlePackageSetChange"
@@ -44,7 +44,7 @@
                     >
                       <span style="float: left;">{{ item.name }}</span>
                       <span style="float: right; color: var(--el-text-color-secondary); font-size: 12px; margin-left: 20px;">
-                        {{ item.source === 'headquarters' ? '总行' : '自定义' }}
+                        {{ item.source === 'headquarters' ? t('patches.linux.headquarters') : t('patches.linux.custom') }}
                       </span>
                     </el-option>
                   </el-select>
@@ -53,18 +53,18 @@
                     plain
                     @click="handleCreatePackageSet"
                   >
-                    新建包集
+                    {{ t('patches.linux.newPackageSet') }}
                   </el-button>
                 </div>
 
                 <!-- 已选包集信息展示 -->
                 <div v-if="selectedPackageSet" class="mt-2" style="background: var(--el-fill-color-light); border-radius: 8px; padding: 16px; font-size: 13px; border: 1px solid var(--el-border-color-lighter); width: 100%; box-sizing: border-box;">
                   <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 12px;">
-                    <div><strong>适用系统：</strong><span style="color: var(--el-text-color-regular);">{{ selectedPackageSet.osType }}</span></div>
-                    <div><strong>包集描述：</strong><span style="color: var(--el-text-color-regular);">{{ selectedPackageSet.description || '无' }}</span></div>
+                    <div><strong>{{ t('patches.linux.applicableOsLabel') }}</strong><span style="color: var(--el-text-color-regular);">{{ selectedPackageSet.osType }}</span></div>
+                    <div><strong>{{ t('patches.linux.setDescriptionLabel') }}</strong><span style="color: var(--el-text-color-regular);">{{ selectedPackageSet.description || t('patches.linux.none') }}</span></div>
                   </div>
                   <div>
-                    <strong style="display: block; margin-bottom: 8px;">包含软件包：</strong>
+                    <strong style="display: block; margin-bottom: 8px;">{{ t('patches.linux.includedPackagesLabel') }}</strong>
                     <div style="display: flex; flex-wrap: wrap; gap: 6px; max-height: 350px; overflow-y: auto; padding: 2px;">
                       <el-tag
                         v-for="pkg in parsedSelectedPackages"
@@ -83,40 +83,40 @@
             </el-form-item>
 
             <!-- 临时输入包名 -->
-            <el-form-item v-else label="输入软件包名称" required>
+            <el-form-item v-else :label="t('patches.linux.inputPackageName')" required>
               <el-input
                 v-model="installForm.customPackagesText"
                 type="textarea"
                 :rows="5"
-                placeholder="请输入软件包名称，支持换行/逗号分隔。可直接粘贴 RPM 文件名或带版本号的格式（例如：openssl-1.0.2k-23.el7_9.x86_64.rpm、openssl 1.0.2、openssl==1.0.2）"
+                :placeholder="t('patches.linux.packageNameInput')"
               />
               <div style="font-size: 12px; color: var(--el-text-color-secondary);" class="mt-1">
-                支持直接粘贴包含版本的软件包条目，系统将自动识别包名与版本。
+                {{ t('patches.linux.packageInputHint') }}
               </div>
             </el-form-item>
 
-            <el-form-item label="计划执行时间" required>
+            <el-form-item :label="t('patches.linux.scheduledTime')" required>
               <div style="display: flex; flex-wrap: wrap; gap: 8px; width: 100%;">
                 <el-date-picker v-model="scheduleDate" type="date" value-format="YYYY-MM-DD"
-                  :editable="false" placeholder="选择日期" style="flex: 1; min-width: 150px;" />
-                <el-select v-model="scheduleHour" filterable default-first-option placeholder="时" aria-label="执行小时，可输入筛选" no-match-text="请输入 00–23" style="width: 85px;">
-                  <el-option v-for="hour in scheduleHours" :key="hour" :label="`${hour} 时`" :value="hour" />
+                  :editable="false" :placeholder="t('patches.linux.selectDate')" style="flex: 1; min-width: 150px;" />
+                <el-select v-model="scheduleHour" filterable default-first-option :placeholder="t('automation.schedule.hour')" :aria-label="t('patches.linux.executionHourFilter')" :no-match-text="t('patches.linux.validHours')" style="width: 85px;">
+                  <el-option v-for="hour in scheduleHours" :key="hour" :label="t('patches.linux.hourOption', { hour: hour })" :value="hour" />
                 </el-select>
-                <el-select v-model="scheduleMinute" filterable default-first-option placeholder="分" aria-label="执行分钟，可输入筛选（每 5 分钟）" no-match-text="请选择 00、05 … 55" style="width: 85px;">
-                  <el-option v-for="minute in scheduleMinutes" :key="minute" :label="`${minute} 分`" :value="minute" />
+                <el-select v-model="scheduleMinute" filterable default-first-option :placeholder="t('automation.schedule.minute')" :aria-label="t('patches.linux.executionMinuteFilter')" :no-match-text="t('patches.linux.validMinutes')" style="width: 85px;">
+                  <el-option v-for="minute in scheduleMinutes" :key="minute" :label="t('patches.linux.minuteOption', { minute: minute })" :value="minute" />
                 </el-select>
               </div>
               <div class="mt-1" style="font-size: 12px; color: var(--el-text-color-secondary); width: 100%;">
-                时、分支持输入筛选，按回车选择。每 5 分钟一个执行时间点，分钟可选 00、05、10 … 55。
+                {{ t('patches.linux.scheduleTimeHint') }}
               </div>
               <div class="mt-1" style="font-size: 12px; color: var(--el-text-color-secondary);">
-                {{ isAdmin ? '提交后等待计划时间自动执行。' : '提交后须由管理员在计划时间前审批通过，否则申请自动失效。' }}
-                到点自动预检查并分批安装，默认不重启。
+                {{ isAdmin ? t('patches.linux.submitAfterSchedule') : t('patches.linux.approveBeforeSchedule') }}
+                {{ t('patches.linux.scheduleBehavior') }}
               </div>
             </el-form-item>
 
             <!-- 每批数量 -->
-            <el-form-item label="分批大小 (每批主机数)" required>
+            <el-form-item :label="t('patches.linux.batchSize')" required>
               <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
                 <el-input-number
                   v-model="installForm.batchSize"
@@ -126,13 +126,13 @@
                   :controls="false"
                 />
                 <el-tooltip
-                  content="目标主机会按照该数值拆分成多个批次，前一批执行完成后接续下一批。"
+                  :content="t('patches.linux.batchSizeHint')"
                   placement="top"
                 >
                   <i class="fa fa-info-circle" style="color: var(--el-text-color-secondary); cursor: pointer;" />
                 </el-tooltip>
                 <span style="font-size: 12px; color: var(--el-text-color-secondary); margin-left: 4px;">
-                  默认 50，不填或设空则使用系统参数
+                  {{ t('patches.linux.defaultBatchSize') }}
                 </span>
               </div>
             </el-form-item>
@@ -143,7 +143,7 @@
         <div style="flex: 3; display: flex; flex-direction: column; background: var(--el-bg-color); border: 1px solid var(--el-border-color-light); border-radius: 8px; padding: 20px; min-width: 0;">
           <h3 class="m-0 mb-3" style="font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
             <i class="fa fa-server" style="color: var(--el-color-primary);" />
-            2. 选择目标主机
+            {{ t('patches.linux.selectHostsStep') }}
           </h3>
           <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column; margin-bottom: 20px;">
             <AcmDeviceSelector
@@ -153,7 +153,7 @@
               :options="{
                 selectMode: 'host,group,tag,input,recently',
                 selector: 'multiple',
-                label: '选择目标主机'
+                label: t('patches.linux.selectTargetHosts')
               }"
             />
           </div>
@@ -167,7 +167,7 @@
               @click="handleStartOneClickInstall"
             >
               <i class="fa fa-play-circle me-1" />
-              {{ isAdmin ? '提交定时安装' : '提交安装申请' }}
+              {{ isAdmin ? t('patches.linux.submitScheduledInstall') : t('patches.linux.submitInstallRequest') }}
             </el-button>
           </div>
         </div>
@@ -180,7 +180,7 @@
       <div class="ops-action-bar">
         <el-button type="primary" size="small" @click="handleCreatePackageSet">
           <i class="fa fa-plus me-1" />
-          新建包集
+          {{ t('patches.linux.newPackageSet') }}
         </el-button>
         <span style="flex: 1"></span>
         <el-button
@@ -188,7 +188,7 @@
           circle
           size="small"
           :loading="loadingSets"
-          title="刷新"
+          :title="t('common.refresh')"
           @click="loadPackageSets"
         >
           <el-icon v-show="!loadingSets"><Refresh /></el-icon>
@@ -198,30 +198,30 @@
       <!-- 数据表格 -->
       <div class="ops-table-wrapper">
         <el-table v-loading="loadingSets" :data="packageSets" height="100%">
-          <el-table-column prop="name" label="包集名称" min-width="180" show-overflow-tooltip />
-          <el-table-column prop="osType" label="适用系统" width="100" />
-          <el-table-column prop="source" label="包集来源" width="100">
+          <el-table-column prop="name" :label="t('patches.linux.packageSetName')" min-width="180" show-overflow-tooltip />
+          <el-table-column prop="osType" :label="t('patches.linux.applicableOs')" width="100" />
+          <el-table-column prop="source" :label="t('patches.linux.packageSetSource')" width="100">
             <template #default="{ row }">
               <el-tag :type="row.source === 'headquarters' ? 'warning' : 'info'" size="small" round>
-                {{ row.source === 'headquarters' ? '总行下发' : '分行自定义' }}
+                {{ row.source === 'headquarters' ? t('patches.linux.headquartersDistributed') : t('patches.linux.branchCustom') }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="description" label="包集描述" min-width="200" show-overflow-tooltip />
-          <el-table-column prop="packages" label="包含软件包数" width="120">
+          <el-table-column prop="description" :label="t('patches.linux.setDescription')" min-width="200" show-overflow-tooltip />
+          <el-table-column prop="packages" :label="t('patches.linux.includedPackageCount')" width="120">
             <template #default="{ row }">
-              {{ countPackages(row.packages) }} 个
+              {{ countPackages(row.packages) }} {{ t('patches.linux.itemUnit') }}
             </template>
           </el-table-column>
-          <el-table-column prop="updatedTime" label="更新时间" width="180">
+          <el-table-column prop="updatedTime" :label="t('automation.command.updatedAt')" width="180">
             <template #default="{ row }">
               {{ formatDateTime(row.updatedTime) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="120" fixed="right">
+          <el-table-column :label="t('common.actions')" width="120" fixed="right">
             <template #default="{ row }">
               <el-button text type="primary" size="small" @click="handleEditPackageSet(row)">
-                编辑
+                {{ t('common.edit') }}
               </el-button>
               <el-button
                 v-if="row.source !== 'headquarters'"
@@ -230,7 +230,7 @@
                 size="small"
                 @click="handleDeletePackageSet(row)"
               >
-                删除
+                {{ t('common.delete') }}
               </el-button>
             </template>
           </el-table-column>
@@ -241,38 +241,38 @@
     <!-- 包集编辑对话框 -->
     <el-dialog
       v-model="editDialogVisible"
-      :title="editForm.id ? '编辑软件包集' : '新建软件包集'"
+      :title="editForm.id ? t('patches.linux.editPackageSet') : t('patches.linux.newPackageSetTitle')"
       width="600px"
       :close-on-click-modal="false"
       :close-on-press-escape="false"
     >
-      <el-form ref="editFormRef" :model="editForm" :rules="editRules" label-width="100px" size="small">
-        <el-form-item label="包集名称" prop="name">
-          <el-input v-model="editForm.name" placeholder="请输入包集名称" />
+      <el-form ref="editFormRef" :model="editForm" :rules="editRules" :validate-on-rule-change="false" label-width="100px" size="small">
+        <el-form-item :label="t('patches.linux.packageSetName')" prop="name">
+          <el-input v-model="editForm.name" :placeholder="t('patches.linux.enterPackageSetName')" />
         </el-form-item>
-        <el-form-item label="适用系统" prop="osType">
-          <el-select v-model="editForm.osType" placeholder="请选择适用系统" style="width: 100%;">
+        <el-form-item :label="t('patches.linux.applicableOs')" prop="osType">
+          <el-select v-model="editForm.osType" :placeholder="t('patches.linux.selectApplicableOs')" style="width: 100%;">
             <el-option label="Linux" value="linux" />
             <el-option label="Windows" value="windows" />
           </el-select>
         </el-form-item>
-        <el-form-item label="描述" prop="description">
-          <el-input v-model="editForm.description" type="textarea" :rows="2" placeholder="请输入包集描述" />
+        <el-form-item :label="t('automation.job.description')" prop="description">
+          <el-input v-model="editForm.description" type="textarea" :rows="2" :placeholder="t('patches.linux.enterSetDescription')" />
         </el-form-item>
-        <el-form-item label="软件包列表" prop="packagesText">
+        <el-form-item :label="t('patches.linux.packageList')" prop="packagesText">
           <el-input
             v-model="editForm.packagesText"
             type="textarea"
             :rows="8"
-            placeholder="请输入软件包，支持换行/逗号分隔。可直接粘贴包含版本号的复杂包名或 RPM 文件名（例如：openssl-1.0.2k-23.el7_9.x86_64.rpm、openssl 1.0.2、openssl==1.0.2）"
+            :placeholder="t('patches.linux.packageListInput')"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button size="small" @click="editDialogVisible = false">取消</el-button>
+          <el-button size="small" @click="editDialogVisible = false">{{ t('common.cancel') }}</el-button>
           <el-button type="primary" size="small" :loading="savingSet" @click="submitEditForm">
-            保存
+            {{ t('common.save') }}
           </el-button>
         </div>
       </template>
@@ -282,6 +282,8 @@
 </template>
 
 <script setup>
+import { t, currentLocale } from '@/core/i18n'
+import { useLocalizedValidation } from '@/core/i18n/validation'
 import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
@@ -310,7 +312,7 @@ async function loadPackageSets() {
     packageSets.value = response || []
   } catch (error) {
     console.error('Failed to load package sets:', error)
-    ElMessage.error('获取软件包集列表失败')
+    ElMessage.error(t('patches.linux.packageSetsFailed'))
   } finally {
     loadingSets.value = false
   }
@@ -329,7 +331,7 @@ function countPackages(packagesStr) {
 function formatDateTime(timeStr) {
   if (!timeStr) return '-'
   const date = new Date(timeStr)
-  return date.toLocaleString('zh-CN', {
+  return date.toLocaleString(currentLocale.value, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -355,11 +357,12 @@ const editForm = reactive({
   packagesText: ''
 })
 
-const editRules = {
-  name: [{ required: true, message: '请输入包集名称', trigger: 'blur' }],
-  osType: [{ required: true, message: '请选择适用系统', trigger: 'change' }],
-  packagesText: [{ required: true, message: '请输入软件包列表', trigger: 'blur' }]
-}
+useLocalizedValidation(editFormRef)
+const editRules = computed(() => ({
+  name: [{ required: true, message: t('patches.linux.enterPackageSetName'), trigger: 'blur' }],
+  osType: [{ required: true, message: t('patches.linux.selectApplicableOs'), trigger: 'change' }],
+  packagesText: [{ required: true, message: t('patches.linux.enterPackageList'), trigger: 'blur' }]
+}))
 
 function handleCreatePackageSet() {
   editForm.id = null
@@ -400,21 +403,21 @@ function handleEditPackageSet(row) {
 
 async function handleDeletePackageSet(row) {
   try {
-    await ElMessageBox.confirm(`确定删除软件包集 "${row.name}" 吗？`, '删除确认', {
+    await ElMessageBox.confirm(t('patches.linux.deletePackageSet', { name: row.name }), t('automation.library.deleteTitle'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
-      confirmButtonText: '确认删除',
-      cancelButtonText: '取消',
+      get confirmButtonText() { return t('automation.list.confirmDelete') },
+      get cancelButtonText() { return t('common.cancel') },
       type: 'warning'
     })
 
     await packageSetApi.delete(row.id)
-    ElMessage.success('软件包集删除成功')
+    ElMessage.success(t('patches.linux.packageSetDeleted'))
     loadPackageSets()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('Failed to delete package set:', error)
-      ElMessage.error('删除软件包集失败')
+      ElMessage.error(t('patches.linux.packageSetDeleteFailed'))
     }
   }
 }
@@ -430,7 +433,7 @@ async function submitEditForm() {
       const packageList = parseRawPackagesText(editForm.packagesText)
 
       if (packageList.length === 0) {
-        ElMessage.warning('软件包列表不能为空')
+        ElMessage.warning(t('patches.linux.packageListRequired'))
         savingSet.value = false
         return
       }
@@ -445,12 +448,12 @@ async function submitEditForm() {
       }
 
       await packageSetApi.save(payload)
-      ElMessage.success('保存软件包集成功')
+      ElMessage.success(t('patches.linux.packageSetSaved'))
       editDialogVisible.value = false
       loadPackageSets()
     } catch (error) {
       console.error('Failed to save package set:', error)
-      ElMessage.error('保存软件包集失败')
+      ElMessage.error(t('patches.linux.packageSetSaveFailed'))
     } finally {
       savingSet.value = false
     }
@@ -512,15 +515,15 @@ function handlePackageSetChange() {
 async function handleStartOneClickInstall() {
   if (submitting.value) return
   if (installForm.scheduledTime && !/^\d{4}-\d{2}-\d{2} \d{2}:[0-5][05]$/.test(installForm.scheduledTime)) {
-    ElMessage.warning('计划执行时间的分钟只能选择 5 的倍数')
+    ElMessage.warning(t('patches.linux.scheduleMinuteInterval'))
     return
   }
   if (!isFutureSchedule(installForm.scheduledTime)) {
-    ElMessage.warning('请选择晚于当前时间的计划执行时间')
+    ElMessage.warning(t('patches.linux.scheduleMustBeFuture'))
     return
   }
   if (selectedHosts.value.length === 0) {
-    ElMessage.warning('请选择目标主机')
+    ElMessage.warning(t('automation.command.targetHostsRequired'))
     return
   }
 
@@ -535,13 +538,13 @@ async function handleStartOneClickInstall() {
   if (installForm.useCustomPackages) {
     const pkgs = parseRawPackagesText(installForm.customPackagesText)
     if (pkgs.length === 0) {
-      ElMessage.warning('请输入软件包名称')
+      ElMessage.warning(t('patches.linux.enterPackageName'))
       return
     }
     payload.packages = pkgs
   } else {
     if (!installForm.packageSetId) {
-      ElMessage.warning('请选择软件包集')
+      ElMessage.warning(t('patches.linux.selectPackageSet'))
       return
     }
     payload.packageSetId = installForm.packageSetId
@@ -550,24 +553,24 @@ async function handleStartOneClickInstall() {
   submitting.value = true
   try {
     await ElMessageBox.confirm(
-      `确定对已选中的 ${targets.length} 项目标资产提交定时安装吗？计划时间：${payload.scheduledTime}。${isAdmin.value ? '届时自动执行' : '需管理员提前审批通过'}，自动预检查、分批安装且默认不重启。`,
-      '确认提交定时安装',
+      t('patches.linux.scheduleConfirm', { count: targets.length, time: payload.scheduledTime, approval: isAdmin.value ? t('patches.linux.executeOnSchedule') : t('patches.linux.requiresAdminApproval') }),
+      t('patches.linux.confirmSchedule'),
       {
         closeOnClickModal: false,
         closeOnPressEscape: false,
-        confirmButtonText: '确认提交',
-        cancelButtonText: '取消',
+        get confirmButtonText() { return t('patches.linux.confirmSubmit') },
+        get cancelButtonText() { return t('common.cancel') },
         type: 'info'
       }
     )
 
     if (!isFutureSchedule(payload.scheduledTime)) {
-      ElMessage.warning('计划执行时间已过，请重新选择')
+      ElMessage.warning(t('patches.linux.schedulePassed'))
       return
     }
     const response = await patchInstallApi.createAndRunTask(payload)
     if (response?.data) {
-      ElMessage.success(response.data.status === 'PENDING_APPROVAL' ? '安装申请已提交，等待管理员审批' : '定时安装已提交，等待计划时间执行')
+      ElMessage.success(response.data.status === 'PENDING_APPROVAL' ? t('patches.linux.applicationSubmitted') : t('patches.linux.scheduledInstallSubmitted'))
       selectedHosts.value = []
       if (installForm.useCustomPackages) {
         installForm.customPackagesText = ''
@@ -575,12 +578,12 @@ async function handleStartOneClickInstall() {
         installForm.packageSetId = ''
       }
     } else {
-      ElMessage.error('创建一键安装任务失败')
+      ElMessage.error(t('patches.linux.batchInstallCreateFailed'))
     }
   } catch (error) {
     if (error !== 'cancel' && error !== 'close') {
       console.error('Failed to create and run task:', error)
-      ElMessage.error(error?.response?.data?.message || error?.response?.data?.error || error?.message || '创建任务失败，请检查参数')
+      ElMessage.error(error?.response?.data?.message || error?.response?.data?.error || error?.message || t('patches.linux.createTaskCheckParams'))
     }
   } finally {
     submitting.value = false

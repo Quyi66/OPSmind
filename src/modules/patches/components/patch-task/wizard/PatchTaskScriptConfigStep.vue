@@ -12,8 +12,8 @@
           :disabled="disabled"
           @update:model-value="$emit('update:mode', $event)"
         >
-          <el-radio-button value="edit">手动编辑</el-radio-button>
-          <el-radio-button value="upload">上传脚本</el-radio-button>
+          <el-radio-button value="edit">{{ t('patches.linux.manualEdit') }}</el-radio-button>
+          <el-radio-button value="upload">{{ t('patches.linux.uploadScript') }}</el-radio-button>
         </el-radio-group>
       </div>
 
@@ -39,18 +39,18 @@
         <div class="script-upload-actions">
           <el-button type="primary" plain :disabled="disabled" @click="fileInputRef?.click()">
             <i class="fa fa-upload" />
-            上传脚本
+            {{ t('patches.linux.uploadScript') }}
           </el-button>
-          <span class="script-upload-file">{{ fileName || '未选择文件' }}</span>
+          <span class="script-upload-file">{{ fileName || t('patches.linux.noFileSelected') }}</span>
         </div>
         <div class="task-step-editor__hint">
-          上传后会暂存到当前向导，执行时再同步到补丁安装任务。
+          {{ t('patches.linux.scriptUploadHint') }}
         </div>
         <el-input
           type="textarea"
           :model-value="modelValue"
           :autosize="{ minRows: 8, maxRows: 24 }"
-          placeholder="上传后将在这里预览脚本内容"
+          :placeholder="t('patches.linux.scriptPreviewPlaceholder')"
           class="script-input"
           readonly
         />
@@ -69,7 +69,7 @@
         <template v-if="runId && modelValue" #default>
           <div class="task-detail-info">
             <el-button type="primary" link @click="$emit('show-result', runId, title)">
-              查看执行详情
+              {{ t('patches.linux.viewExecution') }}
             </el-button>
           </div>
         </template>
@@ -79,6 +79,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { computed, ref } from 'vue'
 
 const props = defineProps({

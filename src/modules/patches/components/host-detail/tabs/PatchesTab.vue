@@ -20,32 +20,32 @@
         v-model="selectedSeverities"
         multiple
         size="small"
-        placeholder="选择严重程度"
+        :placeholder="t('patches.linux.selectSeverity')"
         @change="handleFilterChange"
         style="min-width: 150px; max-width: 300px; width: auto"
       >
-        <el-option label="严重" value="Critical">
+        <el-option :label="t('patches.catalog.critical')" value="Critical">
           <!-- <el-tag type="danger" size="small">严重</el-tag> -->
-          严重
+          {{ t('patches.catalog.critical') }}
         </el-option>
-        <el-option label="重要" value="Important">
+        <el-option :label="t('patches.catalog.important')" value="Important">
           <!-- <el-tag type="warning" size="small">重要</el-tag> -->
-          重要
+          {{ t('patches.catalog.important') }}
         </el-option>
-        <el-option label="中等" value="Moderate">
+        <el-option :label="t('patches.catalog.moderate')" value="Moderate">
           <!-- <el-tag type="primary" size="small">中等</el-tag> -->
-          中等
+          {{ t('patches.catalog.moderate') }}
         </el-option>
-        <el-option label="低危" value="Low">
+        <el-option :label="t('patches.catalog.low')" value="Low">
           <!-- <el-tag type="info" size="small">低危</el-tag> -->
-          低危
+          {{ t('patches.catalog.low') }}
         </el-option>
       </el-select>
 
       <el-input
         v-model="patchKeyword"
         size="small"
-        placeholder="搜索补丁编号/摘要/漏洞编号等"
+        :placeholder="t('patches.linux.searchPatchVuln')"
         clearable
         style="width: 260px; margin-left: 12px"
         @input="handlePatchKeywordChange"
@@ -65,7 +65,7 @@
         @click="handleFixPatches"
       >
         <i class="fa fa-chevron-circle-right" />
-        安装选定的补丁 ({{ selectedPatches.length }})
+        {{ t('patches.linux.installSelectionCount', { count: selectedPatches.length }) }}
       </el-button>
       <el-button
         size="small"
@@ -73,7 +73,7 @@
         @click="handleToggleAllSelection"
       >
         <i :class="`fa fa-${isAllSelected ? 'times' : 'check-double'}`" />
-        {{ isAllSelected ? '取消全选' : '一键全选' }}
+        {{ isAllSelected ? t('patches.linux.cancelSelectAll') : t('patches.linux.selectAll') }}
       </el-button>
       <span style="flex: 1"></span>
       <el-button
@@ -81,7 +81,7 @@
         circle
         size="small"
         :loading="patchLoading"
-        title="刷新"
+        :title="t('common.refresh')"
         @click="loadPatchList()"
       >
         <el-icon v-show="!patchLoading"><Refresh /></el-icon>
@@ -97,15 +97,15 @@
       @select-all="handleTableSelect"
     >
       <el-table-column type="selection" width="55" />
-      <el-table-column prop="patch_id" label="补丁编号" width="180">
+      <el-table-column prop="patch_id" :label="t('patches.catalog.patchId')" width="180">
         <template #default="{ row }">
           <a href="javascript:void(0)" class="patch-link" @click="$emit('patch-click', row)">
             {{ row.patch_id }}
           </a>
         </template>
       </el-table-column>
-      <el-table-column prop="title" label="摘要" min-width="250" show-overflow-tooltip />
-      <el-table-column prop="severity" label="严重程度" width="100">
+      <el-table-column prop="title" :label="t('patches.catalog.abstract')" min-width="250" show-overflow-tooltip />
+      <el-table-column prop="severity" :label="t('patches.linux.severity')" width="100">
         <template #default="{ row }">
           <el-tag
             :type="getSeverityType(row.severity)"
@@ -116,14 +116,14 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="publish_date" label="发布时间" width="110" sortable>
+      <el-table-column prop="publish_date" :label="t('patches.catalog.publishedAt')" width="110" sortable>
         <template #default="{ row }">
           {{ formatDate(row.publish_date) }}
         </template>
       </el-table-column>
       <el-table-column
         prop="affected_pkgs"
-        label="影响的软件包"
+        :label="t('patches.linux.affectedPackages')"
         min-width="180"
         show-overflow-tooltip
       >
@@ -131,12 +131,12 @@
           {{ formatPackages(row.affected_pkgs) }}
         </template>
       </el-table-column>
-      <el-table-column label="仓库可安装" width="220">
+      <el-table-column :label="t('patches.linux.repoInstallable')" width="220">
         <template #default="{ row }">
           <RepoCheckStatus :check="row.repo_check" />
         </template>
       </el-table-column>
-      <el-table-column prop="related_vuls" label="关联漏洞" min-width="180">
+      <el-table-column prop="related_vuls" :label="t('patches.catalog.associatedVulnerabilities')" min-width="180">
         <template #default="{ row }">
           <CveLinkList
             :cves="row.related_vuls"
@@ -144,12 +144,12 @@
           />
         </template>
       </el-table-column>
-      <el-table-column prop="related_cnnvds" label="关联CNNVD" min-width="180">
+      <el-table-column prop="related_cnnvds" :label="t('patches.linux.associatedCnnvd')" min-width="180">
         <template #default="{ row }">
           <CveLinkList
             :cves="row.related_cnnvds"
             :url-resolver="cnnvd => getCnnvdUrl(cnnvd)"
-            dialog-title="关联 CNNVD"
+            :dialog-title="t('patches.catalog.associatedCnnvd')"
           />
         </template>
       </el-table-column>
@@ -173,6 +173,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { computed, ref, toRef, onMounted, watch } from 'vue'
 import {
   formatDate,
@@ -304,10 +305,10 @@ function getSeverityClass(severity) {
 
 function getSeverityLabel(severity) {
   const map = {
-    critical: '严重',
-    important: '重要',
-    moderate: '中等',
-    low: '低危'
+    get critical() { return t('patches.catalog.critical') },
+    get important() { return t('patches.catalog.important') },
+    get moderate() { return t('patches.catalog.moderate') },
+    get low() { return t('patches.catalog.low') }
   }
   return map[normalizeSeverity(severity)] || severity || '-'
 }

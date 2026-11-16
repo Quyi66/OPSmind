@@ -5,17 +5,17 @@
       <div class="panel left-panel">
         <div class="panel-header">
           <i class="fa fa-box-open" />
-          <span class="title">1. 选择软件包</span>
+          <span class="title">{{ t('patches.linux.choosePackagesStep') }}</span>
           <el-button type="primary" size="small" link @click="openFileSelector">
             <i class="fa fa-plus" />
-            添加文件
+            {{ t('automation.library.addFiles') }}
           </el-button>
         </div>
 
         <div class="panel-body">
           <div v-if="selectedFiles.length === 0" class="empty-files" @click="openFileSelector">
             <i class="fa fa-folder-open" />
-            <p>点击此处或上方按钮选择软件包</p>
+            <p>{{ t('patches.linux.choosePackagesHint') }}</p>
           </div>
           <div v-else class="selected-files-list scroll-y">
             <div v-for="(file, index) in selectedFiles" :key="index" class="install-file-item">
@@ -37,7 +37,7 @@
         </div>
 
         <div class="panel-footer">
-          <span>共选择 {{ selectedFiles.length }} 个文件</span>
+          <span>{{ t('patches.linux.selectedFilesCount', { count: selectedFiles.length }) }}</span>
         </div>
       </div>
 
@@ -45,7 +45,7 @@
       <div class="panel right-panel">
         <div class="panel-header">
           <i class="fa fa-server" />
-          <span class="title">2. 设置目标主机</span>
+          <span class="title">{{ t('patches.linux.setHostsStep') }}</span>
         </div>
 
         <div class="panel-body panel-body--hosts">
@@ -56,18 +56,18 @@
               :options="{
                 selectMode: 'host,group,tag,input,recently',
                 selector: 'multiple',
-                label: '选择目标主机'
+                label: t('patches.linux.selectTargetHosts')
               }"
               :disabled="installing"
             />
           </div>
 
           <div class="install-desc">
-            <h4>软件包安装说明</h4>
+            <h4>{{ t('patches.linux.installationInstructions') }}</h4>
             <ul>
-              <li>仅支持 .rpm 格式的安装包</li>
-              <li>勾选多个文件将进行批量并行安装</li>
-              <li>安装过程中请勿刷新页面</li>
+              <li>{{ t('patches.linux.rpmPackagesOnly') }}</li>
+              <li>{{ t('patches.linux.parallelInstallHint') }}</li>
+              <li>{{ t('patches.linux.doNotRefresh') }}</li>
             </ul>
           </div>
         </div>
@@ -82,7 +82,7 @@
             @click="handleStartInstall"
           >
             <i class="fa fa-play-circle" />
-            立即开始安装
+            {{ t('patches.linux.installNow') }}
           </el-button>
         </div>
       </div>
@@ -91,7 +91,7 @@
     <!-- 文件选择器弹窗 -->
     <FileSelectorDialog
       v-model="fileSelectorVisible"
-      title="选择软件包"
+      :title="t('patches.linux.choosePackages')"
       :multiple="true"
       :pre-selected="selectedFiles"
       filter="*.rpm"
@@ -102,6 +102,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { localInstallApi } from '../api'
@@ -134,7 +135,7 @@ function handleFilesConfirm(files) {
   })
 
   if (validFiles.length !== (files || []).length) {
-    ElMessage.warning('仅支持选择 .rpm 格式文件')
+    ElMessage.warning(t('patches.linux.rpmOnly'))
   }
 
   selectedFiles.value = validFiles
@@ -146,23 +147,23 @@ function removeFile(index) {
 
 async function handleStartInstall() {
   if (selectedFiles.value.length === 0) {
-    ElMessage.warning('请选择软件包')
+    ElMessage.warning(t('patches.linux.selectPackages'))
     return
   }
   if (selectedHosts.value.length === 0) {
-    ElMessage.warning('请选择目标主机')
+    ElMessage.warning(t('automation.command.targetHostsRequired'))
     return
   }
 
   try {
     await ElMessageBox.confirm(
-      `确定将 ${selectedFiles.value.length} 个软件包安装到 ${selectedHosts.value.length} 台主机吗？`,
-      '确认安装',
+      t('patches.linux.installPackagesConfirm', { packages: selectedFiles.value.length, hosts: selectedHosts.value.length }),
+      t('patches.linux.confirmInstall'),
       {
         closeOnClickModal: false,
         closeOnPressEscape: false,
-        confirmButtonText: '确认',
-        cancelButtonText: '取消',
+        get confirmButtonText() { return t('common.confirm') },
+        get cancelButtonText() { return t('common.cancel') },
         type: 'info'
       }
     )
@@ -188,14 +189,14 @@ async function handleStartInstall() {
       // 使用 composable 开始轮询
       startPolling(runId, {
         interval: 5000,
-        successMessage: '安装任务执行成功',
-        errorMessage: '安装任务执行失败',
+        get successMessage() { return t('patches.linux.installTaskSucceeded') },
+        get errorMessage() { return t('patches.linux.installTaskFailed') },
         onComplete: () => {
           installing.value = false
         }
       })
     } else {
-      ElMessage.success('安装任务已提交')
+      ElMessage.success(t('patches.linux.installSubmitted'))
       installing.value = false
     }
 
@@ -205,7 +206,7 @@ async function handleStartInstall() {
   } catch (error) {
     if (error !== 'cancel') {
       console.error('Failed to start install:', error)
-      ElMessage.error('安装任务提交失败')
+      ElMessage.error(t('patches.linux.installSubmitFailed'))
     }
     installing.value = false
   }
