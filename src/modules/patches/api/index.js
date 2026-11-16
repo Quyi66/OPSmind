@@ -2271,87 +2271,6 @@ export const rpmInfoApi = {
 }
 
 /**
-* R3 · 主机总览自定义视图 API
-*/
-export const viewConfigApi = {
-  /**
-  * 拉取生效视图
-  * GET /cmdb/api/cmdb/ci/view-config?ciType=host&scope=user
-  */
-  getViewConfig(params = {}) {
-    const query = buildGenericQuery({
-      ciType: params.ciType || 'host',
-      scope: params.scope || 'user'
-    })
-    return apiService.get(`/cmdb/api/cmdb/ci/view-config${query}`)
-  },
-
-  /**
-  * 保存视图
-  * PUT /cmdb/api/cmdb/ci/view-config
-  */
-  saveViewConfig(data) {
-    return apiService.put('/cmdb/api/cmdb/ci/view-config', data)
-  },
-
-  /**
-  * 可选属性列表
-  * GET /cmdb/api/cmdb/ci/view-config/attrs?ciType=host
-  */
-  getAttrs(params = {}) {
-    const query = buildGenericQuery({
-      ciType: params.ciType || 'host'
-    })
-    return apiService.get(`/cmdb/api/cmdb/ci/view-config/attrs${query}`)
-  }
-}
-
-/**
-* R4 · 主机端口与区域批量配置 API
-*/
-export const hostBatchApi = {
-  /**
-  * 批量配置端口
-  * POST /cmdb/api/cmdb/ci/batch/apply-ports
-  */
-  applyPorts(data) {
-    return apiService.post('/cmdb/api/cmdb/ci/batch/apply-ports', data)
-  },
-
-  /**
-  * 批量设置单个属性
-  * POST /cmdb/api/cmdb/ci/batch/save/attr
-  */
-  saveAttr(data) {
-    return apiService.post('/cmdb/api/cmdb/ci/batch/save/attr', data)
-  },
-
-  /**
-  * 列出 3 个保留区域名
-  * GET /cmdb/api/cmdb/ci/batch/locations
-  */
-  getLocations() {
-    return apiService.get('/cmdb/api/cmdb/ci/batch/locations')
-  },
-
-  /**
-  * 批量给主机标记区域
-  * POST /cmdb/api/cmdb/ci/batch/set-location
-  */
-  setLocation(data) {
-    return apiService.post('/cmdb/api/cmdb/ci/batch/set-location', data)
-  },
-
-  /**
-  * 查单台主机当前区域
-  * GET /cmdb/api/cmdb/ci/batch/get-location?hostId=...
-  */
-  getLocation(hostId) {
-    return apiService.get(`/cmdb/api/cmdb/ci/batch/get-location?hostId=${hostId}`)
-  }
-}
-
-/**
 * R2 · 漏洞紧急程度看板与规则 API
 */
 export const urgencyApi = {
@@ -2560,8 +2479,6 @@ export default {
   winKb: winKbApi,
   middlewareCve: middlewareCveApi,
   rpmInfo: rpmInfoApi,
-  viewConfig: viewConfigApi,
-  hostBatch: hostBatchApi,
   urgency: urgencyApi,
   cveImport: cveImportApi
 }
