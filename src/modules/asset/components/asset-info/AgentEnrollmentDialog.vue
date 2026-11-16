@@ -1,132 +1,22 @@
 <template>
   <el-dialog
     v-model="visible"
-    :title="page === 'command' ? '生成 Agent 安装命令' : '待处理 Agent'"
+    title="待处理 Agent"
     width="min(1040px, calc(100vw - 32px))"
     :close-on-click-modal="false"
     :close-on-press-escape="false"
     destroy-on-close
   >
-    <template v-if="page === 'command'">
-      <el-alert
-        :title="
-          preboundHostId
-            ? '在目标机执行命令后，Agent 将自动绑定到当前资产。'
-            : '新机器注册后会自动建档并绑定；大多数 Agent 无需人工处理。'
-        "
-        type="info"
-        :closable="false"
-        show-icon
-      />
-      <el-form label-width="110px" class="enroll-form">
-        <el-form-item v-if="preboundHostId" label="预绑定资产">
-          {{ initialAsset.hostname || initialAsset.value || '-' }} /
-          {{ initialAsset.IP || initialAsset.ip || '-' }}
-        </el-form-item>
-        <el-form-item label="操作系统">
-          <el-radio-group
-            v-model="tokenForm.targetOs"
-            :disabled="!!preboundHostId || generating"
-            @change="handleTargetOsChange"
-          >
-            <el-radio-button value="linux">Linux</el-radio-button>
-            <el-radio-button value="windows">Windows</el-radio-button>
-          </el-radio-group>
-          <span v-if="preboundHostId" class="hint">按资产类型自动选择</span>
-        </el-form-item>
-        <el-form-item v-if="!preboundHostId" label="接入节点">
-          <el-select
-            v-model="tokenForm.node"
-            clearable
-            filterable
-            :disabled="generating"
-            :loading="loadingNodes"
-            placeholder="平台直连（默认）"
-            style="width: 280px"
-            @change="handleNodeChange"
-          >
-            <el-option v-for="item in nodeOptions" :key="item" :label="item" :value="item" />
-          </el-select>
-          <span class="hint">多节点部署时选择执行机实例组</span>
-        </el-form-item>
-        <el-form-item label="有效期（分钟）">
-          <el-input-number v-model="tokenForm.ttlMinutes" :min="1" :max="1440" :precision="0" />
-        </el-form-item>
-        <el-form-item label="可用次数">
-          <el-input-number
-            v-model="tokenForm.maxUses"
-            :min="0"
-            :precision="0"
-            :disabled="!!preboundHostId"
-          />
-          <span class="hint">
-            {{ preboundHostId ? '预绑定凭证仅可使用一次' : '0 表示有效期内不限次' }}
-          </span>
-        </el-form-item>
-        <el-form-item label="备注"><el-input v-model="tokenForm.remark" /></el-form-item>
-        <el-form-item>
-          <el-button type="primary" :loading="generating" @click="generateToken">
-            生成安装命令
-          </el-button>
-        </el-form-item>
-      </el-form>
-      <div v-if="token" class="command-result">
-        <div class="command-result__header">
-          <div class="command-result__meta">
-            有效期至 {{ token.expiresAt }} / 剩余
-            {{ token.remainingUses === null ? '不限' : token.remainingUses }} 次
-            <span v-if="token.server"> / 接入地址 {{ token.server }}</span>
-          </div>
-          <div class="command-result__actions">
-            <el-button type="primary" size="small" :disabled="!installCommand || !tokenUsable" @click="copyCommand">
-              复制
-            </el-button>
-            <el-button
-              v-if="token.bootstrapUrl && tokenUsable"
-              size="small"
-              :loading="downloading"
-              @click="downloadScript"
-            >
-              下载安装脚本
-            </el-button>
-            <el-button v-if="tokenUsable" type="danger" size="small" :loading="revoking" @click="revokeToken">
-              撤销凭证
-            </el-button>
-          </div>
-        </div>
-        <pre class="command-box">{{ installCommand }}</pre>
-        <p class="command-tip">
-          <i class="fa fa-info-circle"></i>
-          请在目标机以 root / 管理员身份执行完整命令。
-        </p>
-        <el-alert
-          v-if="!tokenUsable"
-          title="凭证已不可用，请重新生成。"
-          type="warning"
-          :closable="false"
-          class="command-alert"
-        />
-      </div>
-    </template>
-    <template v-else>
       <el-alert
         title="大多数 Agent 会自动绑定；此处仅列需人工判断的。候选资产只作参考，请核对主机名和 IP。"
         type="info"
         :closable="false"
         show-icon
       />
-      <el-alert
-        v-if="token && !tokenUsable"
-        title="凭证已不可用，请回上一步重新生成。已停止轮询。"
-        type="warning"
-        :closable="false"
-        class="enroll-form"
-      />
       <div class="pending-toolbar">
         <el-button
           size="small"
           :loading="loadingPending"
-          :disabled="!!token && !tokenUsable"
           @click="fetchPending"
         >
           <i class="fa fa-refresh" style="margin-right: 4px"></i>
@@ -234,12 +124,8 @@
           <p>{{ targetPreview.hostname || '-' }} / {{ targetPreview.ip || '-' }}</p>
         </div>
       </div>
-    </template>
     <template #footer>
-      <el-button v-if="page === 'pending'" @click="page = 'command'">返回生成凭证</el-button>
-      <el-button v-else @click="page = 'pending'">待处理 Agent</el-button>
       <el-button
-        v-if="page === 'pending'"
         type="primary"
         :loading="binding"
         :disabled="gatewayLoading"
@@ -255,18 +141,11 @@
 import { computed, onUnmounted, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
-import { agentApi, automationApi, getAgentErrorMessage } from '../../api'
+import { agentApi, getAgentErrorMessage } from '../../api'
 import { getAgentPlatformLabel } from '../../utils/agentInfo'
-import {
-  getEnrollmentInstallCommand,
-  isEnrollmentTokenUsable
-} from '../../utils/agentInstallCommand'
 
 const props = defineProps({
-  modelValue: Boolean,
-  initialAsset: { type: Object, default: null },
-  defaultTargetOs: { type: String, default: 'linux' },
-  mode: { type: String, default: 'enroll' }
+  modelValue: Boolean
 })
 const emit = defineEmits(['update:modelValue', 'success'])
 const visible = computed({
@@ -274,25 +153,8 @@ const visible = computed({
   set: value => emit('update:modelValue', value)
 })
 const hostId = host => String(host?.hostId || host?.id || host?.key || host?.host_id || '')
-const preboundHostId = computed(() => hostId(props.initialAsset))
-const page = ref('command')
-const tokenForm = reactive({
-  targetOs: 'linux',
-  ttlMinutes: 1440,
-  maxUses: 0,
-  remark: '',
-  node: ''
-})
-const token = ref(null)
-const tokenUsable = computed(() => isEnrollmentTokenUsable(token.value))
-const installCommand = computed(() => getEnrollmentInstallCommand(token.value))
-const generating = ref(false)
-const revoking = ref(false)
 const loadingPending = ref(false)
 const binding = ref(false)
-const downloading = ref(false)
-const loadingNodes = ref(false)
-const nodeOptions = ref([])
 const pendingAgents = ref([])
 const selectedClient = ref(null)
 const bindMode = ref('local')
@@ -328,17 +190,15 @@ function stopPolling() {
 }
 function schedulePoll() {
   stopPolling()
-  if (visible.value && page.value === 'pending' && (!token.value || tokenUsable.value))
-    timer = setTimeout(fetchPending, 4000)
+  if (visible.value) timer = setTimeout(fetchPending, 4000)
 }
 async function fetchPending() {
-  if (loadingPending.value || !visible.value || (token.value && !tokenUsable.value)) return
+  if (loadingPending.value || !visible.value) return
   const version = session
   loadingPending.value = true
   try {
-    const result = await agentApi.getPendingAgents(token.value?.id)
+    const result = await agentApi.getPendingAgents()
     if (version !== session) return
-    if (result.token) token.value = { ...token.value, ...result.token }
     pendingAgents.value = Array.isArray(result.agents) ? result.agents : []
     if (selectedClient.value)
       selectedClient.value =
@@ -363,108 +223,6 @@ function selectMatchedHost(id) {
   const host = selectedClient.value?.matchedHosts?.find(item => item.hostId === id)
   if (host)
     targetHosts.value = [{ ...host, key: host.hostId, value: host.ip, assetType: host.ciType }]
-}
-function handleTargetOsChange() {
-  return generateToken()
-}
-function handleNodeChange() {
-  token.value = null
-}
-async function loadNodeOptions() {
-  loadingNodes.value = true
-  try {
-    const nodes = await automationApi.getInstanceGroupList()
-    nodeOptions.value = [...new Set((nodes || []).map(item => String(item).trim()).filter(Boolean))]
-  } catch {
-    // 单机部署或实例组接口不可用时保持平台直连，不阻断凭证生成。
-    nodeOptions.value = []
-  } finally {
-    loadingNodes.value = false
-  }
-}
-async function generateToken() {
-  if (generating.value) return
-  const version = ++session
-  stopPolling()
-  loadingPending.value = false
-  token.value = null
-  generating.value = true
-  try {
-    const result = await agentApi.createEnrollmentToken({
-      targetOs: tokenForm.targetOs,
-      ttlMinutes: tokenForm.ttlMinutes,
-      maxUses: preboundHostId.value ? 1 : tokenForm.maxUses,
-      remark: tokenForm.remark,
-      ...(!preboundHostId.value && tokenForm.node ? { node: tokenForm.node } : {}),
-      ...(preboundHostId.value ? { hostId: preboundHostId.value, maxUses: 1 } : {})
-    })
-    if (version !== session) return
-    token.value = result
-    tokenForm.targetOs = result.targetOs
-    if (!installCommand.value) ElMessage.error('接口未返回安装命令')
-  } catch (error) {
-    if (version === session) ElMessage.error(getAgentErrorMessage(error))
-  } finally {
-    if (version === session) generating.value = false
-  }
-}
-async function revokeToken() {
-  const version = session
-  revoking.value = true
-  try {
-    await agentApi.revokeEnrollmentToken(token.value.id)
-    if (version === session) token.value = { ...token.value, status: 'revoked' }
-  } catch (error) {
-    ElMessage.error(getAgentErrorMessage(error))
-  } finally {
-    if (version === session) revoking.value = false
-  }
-}
-async function copyCommand() {
-  try {
-    if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(installCommand.value)
-    else {
-      const input = document.createElement('textarea')
-      input.value = installCommand.value
-      document.body.appendChild(input)
-      input.select()
-      try {
-        if (!document.execCommand('copy')) throw new Error('copy failed')
-      } finally {
-        input.remove()
-      }
-    }
-    ElMessage.success('安装命令已复制')
-  } catch {
-    ElMessage.warning('复制失败，请手动复制命令')
-  }
-}
-async function downloadScript() {
-  if (downloading.value || !token.value?.bootstrapUrl) return
-  downloading.value = true
-  try {
-    const response = await fetch(token.value.bootstrapUrl)
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
-    const blob = await response.blob()
-    const disposition = response.headers.get('Content-Disposition') || ''
-    const match = disposition.match(/filename\*?=(?:UTF-8''|")?([^";]+)"?/i)
-    const filename =
-      match?.[1] ||
-      token.value.bootstrapUrl.split('/').pop()?.split('?')[0] ||
-      (tokenForm.targetOs === 'windows' ? 'install_agent.ps1' : 'install_agent.sh')
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = decodeURIComponent(filename)
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    URL.revokeObjectURL(url)
-  } catch {
-    ElMessage.error('下载安装脚本失败，请重试')
-  } finally {
-    downloading.value = false
-  }
 }
 async function submitBind() {
   const client = sourceClient.value
@@ -517,20 +275,13 @@ watch(gatewayHosts, async hosts => {
     if (request === gatewayRequest) gatewayLoading.value = false
   }
 })
-watch(page, value => {
-  stopPolling()
-  if (value === 'pending') fetchPending()
-})
 watch(
   visible,
   open => {
     session++
     stopPolling()
-    generating.value = false
     loadingPending.value = false
-    revoking.value = false
     binding.value = false
-    token.value = null
     pendingAgents.value = []
     selectedClient.value = null
     targetHosts.value = []
@@ -538,25 +289,11 @@ watch(
     gatewayInfo.value = null
     gatewayRequest++
     if (!open) return
-    page.value = props.mode === 'pending' ? 'pending' : 'command'
     bindMode.value = 'local'
     assetMode.value = 'new'
     targetIp.value = ''
     Object.assign(newHost, { hostname: '', ip: '', ciType: '' })
-    Object.assign(tokenForm, {
-      targetOs:
-        String(
-          props.initialAsset?.ciType || props.initialAsset?.assetType || props.defaultTargetOs
-        ).toLowerCase() === 'windows'
-          ? 'windows'
-          : 'linux',
-      ttlMinutes: 1440,
-      maxUses: preboundHostId.value ? 1 : 0,
-      remark: '',
-      node: ''
-    })
-    if (!preboundHostId.value) loadNodeOptions()
-    if (page.value === 'pending') fetchPending()
+    fetchPending()
   },
   { immediate: true }
 )
@@ -576,65 +313,6 @@ onUnmounted(() => {
   justify-content: flex-end;
   margin-top: 14px;
   margin-bottom: 12px;
-}
-.hint {
-  margin-left: 12px;
-  color: var(--el-text-color-secondary);
-  font-size: 13px;
-}
-.command-result {
-  margin-top: 16px;
-  padding: 16px;
-  border: 1px solid var(--el-border-color-lighter);
-  background: var(--el-bg-color);
-  border-radius: 8px;
-}
-.command-result__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-.command-result__meta {
-  color: var(--el-text-color-regular);
-  font-size: 13px;
-}
-.command-result__actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.command-box {
-  margin: 0;
-  padding: 14px 16px;
-  background: #1e1e2e;
-  color: #cdd6f4;
-  border: 1px solid #313244;
-  border-radius: 6px;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
-  font-size: 13px;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  word-break: break-all;
-  overflow-wrap: anywhere;
-  user-select: text;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-.command-tip {
-  margin: 10px 0 0;
-  color: var(--el-text-color-secondary);
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.command-tip i {
-  color: var(--el-color-info);
-}
-.command-alert {
-  margin-top: 12px;
 }
 .comparison {
   display: grid;

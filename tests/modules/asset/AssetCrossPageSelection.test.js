@@ -26,7 +26,8 @@ vi.mock('@/core/auth', () => ({
   authService: { hasPermission: () => true, hasRole: () => true }
 }))
 vi.mock('@/composables/useJobPolling', () => ({ pollJobStatus: vi.fn() }))
-vi.mock('vue-router', () => ({ useRoute: () => ({ query: {} }) }))
+const navigation = vi.hoisted(() => ({ replace: vi.fn() }))
+vi.mock('vue-router', () => ({ useRoute: () => ({ path: '/acm/info', query: {} }), useRouter: () => navigation }))
 
 const rows = [
   { id: 'asset-a', HOSTNAME: 'host-a', IP: '192.0.2.1' },
@@ -127,7 +128,6 @@ async function openPage() {
             'ElIcon',
             'ElRadio',
             'ElRadioGroup',
-            'ElDropdown',
             'ElDropdownMenu',
             'ElDropdownItem',
             'ElProgress',
@@ -142,9 +142,17 @@ async function openPage() {
             'BatchEditDialog',
             'AddTagDialog',
             'AgentEnrollmentDialog',
-            'AgentInstallDialog'
+            'AgentBatchCreateDialog',
+            'AgentBatchPanel'
           ].map(name => [name, true])
-        )
+        ),
+        ElDropdown: {
+          name: 'ElDropdown',
+          emits: ['command'],
+          template: '<div><slot /><slot name="dropdown" /></div>'
+        },
+        ElDropdownMenu: { template: '<div><slot /></div>' },
+        ElDropdownItem: { name: 'ElDropdownItem', props: ['command'], template: '<span><slot /></span>' }
       },
       directives: { loading() {} }
     }
@@ -184,15 +192,37 @@ afterEach(() => {
 })
 
 describe('设备清单跨页选择与原添加分组链路', () => {
-  it('保留 Agent 接入并保持待处理与安装入口隐藏，不再挂载旧统一扫描弹窗', async () => {
+  it('Agent 接入下拉菜单仅提供批量纳管和纳管批次，顶部不堆叠按钮', async () => {
     await openPage()
-    await button('Agent 接入').trigger('click')
-    expect(state().agentEnrollmentVisible).toBe(true)
-    expect(state().agentEnrollmentMode).toBe('enroll')
+    const menu = wrapper.find('.ops-action-bar').findComponent({ name: 'ElDropdown' })
+    expect(menu.findAllComponents({ name: 'ElDropdownItem' }).map(item => item.props('command'))).toEqual(['batch', 'records'])
     expect(wrapper.findAll('button').some(item => item.text() === '待处理 Agent')).toBe(false)
-    expect(wrapper.findAll('button').some(item => item.text() === '安装 Agent')).toBe(false)
+    expect(wrapper.findAll('button').some(item => item.text() === '批量安装 Agent')).toBe(false)
     expect(wrapper.findAll('button').some(item => item.text() === '扫描')).toBe(false)
     expect(wrapper.findAll('button').some(item => item.text() === '一键全选')).toBe(false)
+    menu.vm.$emit('command', 'batch')
+    await flushPromises()
+    expect(state().agentInstallVisible).toBe(true)
+    expect(state().agentInstallHosts).toEqual([])
+    menu.vm.$emit('command', 'records')
+    expect(navigation.replace).toHaveBeenCalledWith({ path: '/acm/info', query: { agentView: 'batches' } })
+  })
+
+  it('将跨页所选主机传入批量凭据弹窗，创建成功后进入对应批次详情', async () => {
+    await openPage()
+    await selectRow('host-a')
+    await page(2)
+    await selectRow('host-b')
+    expect(wrapper.find('.ops-action-bar').text()).not.toContain('批量安装 Agent')
+    expect(wrapper.find('.selection-action-bar-top__actions').text()).toContain('批量安装 Agent')
+    await button('批量安装 Agent').trigger('click')
+    await flushPromises()
+    const dialog = wrapper.findComponent({ name: 'AgentBatchCreateDialog' })
+    expect(dialog.props('modelValue')).toBe(true)
+    expect(dialog.props('hosts').map(host => host.id)).toEqual(['asset-a', 'asset-b'])
+    expect(dialog.props('defaultTargetOs')).toBe('linux')
+    dialog.vm.$emit('created', { batch: { id: 'created-batch' } })
+    expect(navigation.replace).toHaveBeenCalledWith({ path: '/acm/info', query: { agentView: 'batches', batchId: 'created-batch' } })
   })
 
   it('真实表格跨两页累计选择，当前页取消不影响其他页，返回及调整页大小恢复勾选', async () => {

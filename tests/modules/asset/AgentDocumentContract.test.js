@@ -28,13 +28,6 @@ vi.mock('@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue
 }))
 
 const wrappers = []
-const token = {
-  id: 'token-1',
-  status: 'active',
-  remainingUses: null,
-  targetOs: 'linux',
-  installCommand: 'server-command'
-}
 const state = wrapper => wrapper.vm.$.setupState
 async function open(component, props = {}) {
   const wrapper = shallowMount(component, { props: { modelValue: false, ...props } })
@@ -45,10 +38,6 @@ async function open(component, props = {}) {
 }
 beforeEach(() => {
   vi.clearAllMocks()
-  api.createEnrollmentToken.mockImplementation(async payload => ({
-    ...token,
-    targetOs: payload.targetOs
-  }))
   api.getPendingAgents.mockResolvedValue({ agents: [] })
   api.bindAgent.mockResolvedValue({ hostId: 'bound-host', hostCreated: true })
 })
@@ -58,27 +47,8 @@ afterEach(() => {
 })
 
 describe('latest Agent documents audit', () => {
-  it('预绑定凭证按 Windows 资产使用一次性凭证', async () => {
-    const wrapper = await open(Enrollment, { initialAsset: { id: 'win-host', ciType: 'windows' } })
-    await state(wrapper).generateToken()
-    expect(api.createEnrollmentToken).toHaveBeenCalledWith(
-      expect.objectContaining({ hostId: 'win-host', targetOs: 'windows', maxUses: 1 })
-    )
-    expect(state(wrapper).installCommand).toBe('server-command')
-  })
-
-  it('已有命令切换操作系统后应按清单2.1重新签发凭证', async () => {
-    const wrapper = await open(Enrollment)
-    await state(wrapper).generateToken()
-    state(wrapper).tokenForm.targetOs = 'windows'
-    state(wrapper).handleTargetOsChange()
-    await flushPromises()
-    expect(api.createEnrollmentToken).toHaveBeenCalledTimes(2)
-    expect(state(wrapper).installCommand).toBe('server-command')
-  })
-
   it('没有候选资产时默认新建并可提交空 newHost', async () => {
-    const wrapper = await open(Enrollment, { mode: 'pending' })
+    const wrapper = await open(Enrollment)
     state(wrapper).selectClient({
       clientId: 'client-1',
       agentStatus: 'online',
@@ -93,7 +63,7 @@ describe('latest Agent documents audit', () => {
   })
 
   it('跳板新建资产只填 targetIp 时应允许按接口2.4提交', async () => {
-    const wrapper = await open(Enrollment, { mode: 'pending' })
+    const wrapper = await open(Enrollment)
     state(wrapper).bindMode = 'gateway'
     state(wrapper).gatewayInfo = { agentClientId: 'gateway-client', agentStatus: 'online' }
     state(wrapper).targetIp = '10.0.0.5'
@@ -108,19 +78,10 @@ describe('latest Agent documents audit', () => {
     )
   })
 
-  it('凭证用尽后停止 pending 轮询', async () => {
-    vi.useFakeTimers()
-    const wrapper = await open(Enrollment)
-    await state(wrapper).generateToken()
-    api.getPendingAgents.mockResolvedValue({
-      token: { id: 'token-1', status: 'exhausted', remainingUses: 0 },
-      agents: []
-    })
-    state(wrapper).page = 'pending'
-    await flushPromises()
-    await vi.advanceTimersByTimeAsync(12000)
-    expect(api.getPendingAgents).toHaveBeenCalledTimes(1)
-    expect(state(wrapper).tokenUsable).toBe(false)
+  it('待处理 Agent 弹窗打开即拉取列表且不依赖凭证', async () => {
+    await open(Enrollment)
+    expect(api.getPendingAgents).toHaveBeenCalledWith()
+    expect(api.createEnrollmentToken).not.toHaveBeenCalled()
   })
 
   it('Agent 推装显示跳过原因并在上线后标记成功', async () => {

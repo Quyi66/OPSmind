@@ -143,14 +143,19 @@
               <i class="fa fa-plus" style="margin-right: 4px"></i>
               自动化设备录入
             </el-button>
-            <el-button v-if="canManageAgents" type="success" size="small" @click="openAgentEnrollment()">
-              <i class="fa fa-plug" style="margin-right: 4px"></i>
-              Agent 接入
-            </el-button>
-            <!-- 简化流程:暂时隐藏「待处理 Agent」「安装 Agent」按钮,后续可能恢复
-            <el-button v-if="canManageAgents" size="small" @click="openAgentEnrollment(null, 'pending')">待处理 Agent</el-button>
-            <el-button v-if="canManageAgents" size="small" :disabled="selectedCount === 0" @click="openAgentInstall()">安装 Agent</el-button>
-            -->
+            <el-dropdown v-if="canManageAgents" trigger="click" @command="handleAgentActionCommand">
+              <el-button type="success" size="small">
+                <i class="fa fa-plug" style="margin-right: 4px"></i>
+                Agent 接入
+                <el-icon class="dropdown-arrow"><ArrowDown /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="batch">批量纳管</el-dropdown-item>
+                  <el-dropdown-item command="records" divided>纳管批次</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
             <el-button size="small" @click="importDialogVisible = true">
               <i class="fa fa-file-import" style="margin-right: 4px"></i>
               导入设备
@@ -200,6 +205,15 @@
               </span>
             </div>
             <div class="selection-action-bar-top__actions">
+              <el-button
+                v-if="canManageAgents"
+                size="small"
+                :disabled="selectionBusy"
+                :loading="selectAllLoading"
+                @click="openAgentInstall()"
+              >
+                批量安装 Agent
+              </el-button>
               <el-button size="small" :disabled="selectionBusy" @click="handleReviewSelection">
                 查看已选
               </el-button>
@@ -518,10 +532,7 @@
             <el-table-column label="操作" width="230" fixed="right">
               <template #default="{ row }">
                 <template v-if="canManageAgents && !isAgentAsset(row)">
-                  <!-- 简化流程:暂时隐藏行内「安装Agent」按钮,后续可能恢复
                   <el-button text type="primary" size="small" :disabled="row.agentInfoUnavailable" @click="openAgentInstall(row)">安装Agent</el-button>
-                  -->
-                  <el-button text type="primary" size="small" :disabled="row.agentInfoUnavailable" @click="openAgentEnrollment(row)">生成本机安装命令</el-button>
                 </template>
                 <el-button v-if="canManageAgents && isAgentAsset(row)" text type="danger" size="small" @click="unbindAgent(row)">解绑Agent</el-button>
                 <el-button text type="primary" size="small" @click="handleEditRow(row)">
@@ -647,28 +658,46 @@
       @saved="handleAddGroupSaved"
     />
 
-    <!-- Agent 接入向导弹窗 -->
+    <!-- 待处理 Agent 绑定弹窗 -->
     <AgentEnrollmentDialog
       v-model="agentEnrollmentVisible"
-      :initial-asset="agentEnrollmentInitialAsset"
-      :default-target-os="currentType"
-      :mode="agentEnrollmentMode"
       @success="handleAgentEnrollmentSuccess"
     />
 
-    <!-- 简化流程:安装 Agent 弹窗暂时隐藏,后续可能恢复
-    <AgentInstallDialog v-model="agentInstallVisible" :hosts="agentInstallHosts" @updated="loadAssetList" />
-    -->
+    <AgentBatchCreateDialog
+      v-model="agentInstallVisible"
+      :hosts="agentInstallHosts"
+      :default-target-os="currentType"
+      @created="handleBatchCreated"
+    />
+
+    <el-drawer
+      v-model="agentBatchVisible"
+      title="纳管批次"
+      size="90%"
+      append-to-body
+      @closed="handleBatchDrawerClosed"
+    >
+      <AgentBatchPanel
+        v-if="agentBatchVisible"
+        :batch-id="agentBatchId"
+        @select-batch="openAgentBatches"
+        @create-batch="openBatchCreate"
+        @pending="openBatchPendingAgents"
+      />
+    </el-drawer>
 
   </div>
 </template>
 
 <script setup>
 import { ref, computed, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import AgentEnrollmentDialog from '../components/asset-info/AgentEnrollmentDialog.vue'
-import AgentInstallDialog from '../components/asset-info/AgentInstallDialog.vue'
+import AgentBatchCreateDialog from '../components/asset-info/AgentBatchCreateDialog.vue'
+import AgentBatchPanel from '../components/asset-info/AgentBatchPanel.vue'
+import { hasAgentManagePermission } from '../utils/agentBatch'
 import {
   Edit,
   Delete,
@@ -705,6 +734,7 @@ import { getAssetDisplayName } from '@/utils/workspacePresentation'
 
 // 路由
 const route = useRoute()
+const router = useRouter()
 
 // 设备详情弹窗
 const detailDialogVisible = ref(false)
@@ -723,21 +753,28 @@ const currentAssetIp = ref('')
 const currentTenantId = ref('')
 
 const agentEnrollmentVisible = ref(false)
-const agentEnrollmentInitialAsset = ref(null)
-const agentEnrollmentMode = ref('enroll')
 const agentInstallVisible = ref(false)
 const agentInstallHosts = ref([])
 const agentServiceError = ref('')
 
-const canManageAgents = computed(() =>
-  authService.hasPermission('agent:manage') ||
-  [
-    'admin', 'role_admin',
-    'privuser', 'role_privuser',
-    'developer', 'role_developer',
-    'free', 'role_free'
-  ].some(role => authService.hasRole(role))
-)
+const canManageAgents = computed(() => hasAgentManagePermission(authService))
+
+const agentBatchVisible = computed({
+  get: () =>
+    route.path?.replace(/\/$/, '') === '/acm/info' &&
+    route.query.agentView === 'batches' &&
+    canManageAgents.value,
+  set: value => {
+    if (value) openAgentBatches()
+    else {
+      const query = { ...route.query }
+      delete query.agentView
+      delete query.batchId
+      router.replace({ path: route.path, query })
+    }
+  }
+})
+const agentBatchId = computed(() => String(route.query.batchId || ''))
 
 // 设备类型列表
 const assetTypes = ref([])
@@ -1507,9 +1544,7 @@ const handleAgentEnrollmentSuccess = async boundHostId => {
   }
 }
 
-const openAgentEnrollment = (asset = null, mode = 'enroll') => {
-  agentEnrollmentInitialAsset.value = asset
-  agentEnrollmentMode.value = mode
+const openPendingAgentBinding = () => {
   agentEnrollmentVisible.value = true
 }
 
@@ -1519,6 +1554,47 @@ const openAgentInstall = async row => {
   agentInstallHosts.value = hosts
   agentInstallVisible.value = true
 }
+
+function openAgentBatches(id = '') {
+  if (!canManageAgents.value) return
+  const query = { ...route.query, agentView: 'batches' }
+  delete query.agentMode
+  if (id) query.batchId = id
+  else delete query.batchId
+  router.replace({ path: '/acm/info', query })
+}
+
+function openBatchCreate() {
+  if (!canManageAgents.value) return
+  agentInstallHosts.value = []
+  agentInstallVisible.value = true
+}
+
+function handleAgentActionCommand(command) {
+  if (!canManageAgents.value) return
+  if (command === 'batch') openBatchCreate()
+  if (command === 'records') openAgentBatches()
+}
+
+const handleBatchCreated = result => {
+  agentInstallVisible.value = false
+  openAgentBatches(result.batch.id)
+}
+
+function openBatchPendingAgents() {
+  const query = { ...route.query, agentMode: 'pending' }
+  delete query.agentView
+  delete query.batchId
+  router.replace({ path: '/acm/info', query })
+}
+
+function handleBatchDrawerClosed() {
+  if (route.path?.replace(/\/$/, '') === '/acm/info') handleRefresh()
+}
+
+watch([() => route.path, () => route.query.agentMode], ([path, mode]) => {
+  if (path?.replace(/\/$/, '') === '/acm/info' && mode === 'pending' && canManageAgents.value) openPendingAgentBinding()
+}, { immediate: true })
 
 const unbindAgent = async row => {
   try {

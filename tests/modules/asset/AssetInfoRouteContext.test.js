@@ -4,6 +4,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 import { ElForm, ElMessage, ElTable, ElTableColumn } from 'element-plus'
 import Page from '@/modules/asset/views/AssetInfoPage.vue'
+import { ACM_ROUTE_DEFS } from '@/modules/asset/routes'
 
 const api = vi.hoisted(() => ({
   getAssetTypes: vi.fn(),
@@ -38,6 +39,7 @@ async function open(query = {}) {
     history: createMemoryHistory(),
     routes: [
       { path: '/acm/info', component: Page },
+      { ...ACM_ROUTE_DEFS.find(def => def.key === 'batches'), path: '/acm/batches' },
       { path: '/acm/automation', component: { template: '<div>连接凭据</div>' } },
       { path: '/acm/log', component: { template: '<div>操作日志</div>' } }
     ]
@@ -104,7 +106,8 @@ async function open(query = {}) {
             'BatchEditDialog',
             'AddTagDialog',
             'AgentEnrollmentDialog',
-            'AgentInstallDialog',
+            'AgentBatchCreateDialog',
+            'AgentBatchPanel',
             'AddGroupDialog'
           ].map(name => [name, true])
         )
@@ -145,6 +148,58 @@ afterEach(() => {
 })
 
 describe('设备清单只消费自身路由IP', () => {
+  it('在设备清单内打开和关闭批次抽屉，保留筛选、页码和勾选', async () => {
+    await open({ ip: '192.0.2.1' })
+    await selectFirst()
+    const context = state()
+    context.currentPage = 3
+    const reads = api.getAssetList.mock.calls.length
+    context.openAgentBatches('batch-1')
+    await flushPromises()
+    expect(router.currentRoute.value.path).toBe('/acm/info')
+    expect(router.currentRoute.value.query).toEqual({ ip: '192.0.2.1', agentView: 'batches', batchId: 'batch-1' })
+    expect(context.agentBatchVisible).toBe(true)
+    expect(context.agentBatchId).toBe('batch-1')
+    context.openAgentBatches()
+    await flushPromises()
+    expect(context.agentBatchVisible).toBe(true)
+    expect(context.agentBatchId).toBe('')
+    expect(context.currentPage).toBe(3)
+    expect(context.selectedRows.map(row => row.id)).toEqual(['original-a'])
+    expect(api.getAssetList).toHaveBeenCalledTimes(reads)
+    context.agentBatchVisible = false
+    await flushPromises()
+    expect(context.agentBatchVisible).toBe(false)
+    expect(router.currentRoute.value.query).toEqual({ ip: '192.0.2.1' })
+    context.handleBatchDrawerClosed()
+    await flushPromises()
+    expect(context.currentPage).toBe(3)
+    expect(context.selectedRows.map(row => row.id)).toEqual(['original-a'])
+    expect(api.getAssetList).toHaveBeenCalledTimes(reads + 1)
+  })
+  it('旧批量纳管链接转入设备清单抽屉，左侧不再提供独立入口', async () => {
+    await open()
+    const definition = ACM_ROUTE_DEFS.find(def => def.key === 'batches')
+    expect(definition.navLabel).toBeUndefined()
+    await router.push({ path: '/acm/batches', query: { batchId: 'legacy-batch' } })
+    await flushPromises()
+    expect(router.currentRoute.value.path).toBe('/acm/info')
+    expect(state().agentBatchVisible).toBe(true)
+    expect(state().agentBatchId).toBe('legacy-batch')
+  })
+  it('抽屉中的冲突入口打开待处理 Agent，并保留设备选择', async () => {
+    await open({ agentView: 'batches', batchId: 'batch-1' })
+    await selectFirst()
+    state().openBatchPendingAgents()
+    await flushPromises()
+    expect(state().agentBatchVisible).toBe(false)
+    expect(state().agentEnrollmentVisible).toBe(true)
+    expect(state().selectedRows.map(row => row.id)).toEqual(['original-a'])
+  })
+  it('批次冲突链接可直接打开待处理 Agent', async () => {
+    await open({ agentMode: 'pending' })
+    expect(state().agentEnrollmentVisible).toBe(true)
+  })
   it('缓存切到带IP的凭据/日志页面不读取设备，也不清真实勾选与原搜索页码', async () => {
     await open({ ip: '192.0.2.1' })
     await selectFirst()

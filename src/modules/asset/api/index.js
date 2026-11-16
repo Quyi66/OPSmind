@@ -552,6 +552,18 @@ export const operationLogApi = {
  * Agent 管理与接入 API
  */
 export const agentApi = {
+  createBatch: (data = {}) =>
+    apiService.post(`${ACM_BASE}/agent/batches`, data).then(unwrapApiData),
+  getBatches: () =>
+    apiService.get(`${ACM_BASE}/agent/batches`).then(unwrapApiData),
+  getBatch: id =>
+    apiService.get(`${ACM_BASE}/agent/batches/${encodeURIComponent(id)}`).then(unwrapApiData),
+  retryBatch: (id, data = {}) =>
+    apiService.post(`${ACM_BASE}/agent/batches/${encodeURIComponent(id)}/retry`, data).then(unwrapApiData),
+  getBatchScript: (id, os) =>
+    apiService.get(`${ACM_BASE}/agent/batches/${encodeURIComponent(id)}/script`, { params: { os } }).then(unwrapApiData),
+  closeBatch: id =>
+    apiService.post(`${ACM_BASE}/agent/batches/${encodeURIComponent(id)}/close`).then(unwrapApiData),
   createEnrollmentToken: (data = {}) =>
     apiService.post(`${ACM_BASE}/agent/enroll-tokens`, data).then(unwrapApiData),
   revokeEnrollmentToken: tokenId =>

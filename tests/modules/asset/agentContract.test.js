@@ -12,6 +12,46 @@ beforeEach(() => {
 })
 
 describe('simplified agent management API', () => {
+  it('uses the batch endpoints and preserves BatchVO, counts and optional credentials', async () => {
+    const result = {
+      batch: { id: 'batch/1', status: 'open' },
+      counts: { total: 1, pushing: 1 },
+      scriptOs: [],
+      items: []
+    }
+    apiService.post.mockResolvedValue({ data: result })
+    apiService.get.mockResolvedValue({ data: { data: result } })
+    const payload = { hostIds: ['h1'], credentials: [], keepCredentials: false }
+    expect(await agentApi.createBatch(payload)).toEqual(result)
+    expect(apiService.post).toHaveBeenLastCalledWith('/cmdb/api/cmdb/agent/batches', payload)
+    expect(await agentApi.getBatch('batch/1')).toEqual(result)
+    expect(apiService.get).toHaveBeenLastCalledWith('/cmdb/api/cmdb/agent/batches/batch%2F1')
+    expect(await agentApi.retryBatch('batch/1', { itemIds: ['i1'] })).toEqual(result)
+    expect(apiService.post).toHaveBeenLastCalledWith(
+      '/cmdb/api/cmdb/agent/batches/batch%2F1/retry',
+      { itemIds: ['i1'] }
+    )
+    expect(await agentApi.closeBatch('batch/1')).toEqual(result)
+    expect(apiService.post).toHaveBeenLastCalledWith('/cmdb/api/cmdb/agent/batches/batch%2F1/close')
+    apiService.get.mockResolvedValue({ data: [result] })
+    expect(await agentApi.getBatches()).toEqual([result])
+    expect(apiService.get).toHaveBeenLastCalledWith('/cmdb/api/cmdb/agent/batches')
+  })
+
+  it('requests the selected OS script without altering its command or file content', async () => {
+    const script = {
+      os: 'windows',
+      installCommand: 'powershell ...',
+      fileName: 'install.cmd',
+      fileContent: '@echo off\r\n...',
+      maxUses: 3
+    }
+    apiService.get.mockResolvedValue({ data: script })
+    expect(await agentApi.getBatchScript('batch/1', 'windows')).toEqual(script)
+    expect(apiService.get).toHaveBeenCalledWith('/cmdb/api/cmdb/agent/batches/batch%2F1/script', {
+      params: { os: 'windows' }
+    })
+  })
   it('issues prebound enrollment tokens and reads status from pending', async () => {
     apiService.post.mockResolvedValue({ data: { id: 'tok', remainingUses: 1 } })
     await agentApi.createEnrollmentToken({ hostId: 'h1', targetOs: 'windows' })
@@ -34,9 +74,9 @@ describe('simplified agent management API', () => {
     }
     apiService.post.mockResolvedValue({ data: result })
 
-    expect(
-      await agentApi.createEnrollmentToken({ targetOs: 'linux', node: 'executor-a' })
-    ).toEqual(result)
+    expect(await agentApi.createEnrollmentToken({ targetOs: 'linux', node: 'executor-a' })).toEqual(
+      result
+    )
     expect(apiService.post).toHaveBeenCalledWith('/cmdb/api/cmdb/agent/enroll-tokens', {
       targetOs: 'linux',
       node: 'executor-a'

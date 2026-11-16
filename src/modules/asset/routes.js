@@ -32,6 +32,13 @@ export const ACM_ROUTE_DEFS = [
     component: () => import('./views/AssetInfoPage.vue')
   },
   {
+    key: 'batches',
+    path: 'batches',
+    name: 'acm-batches',
+    title: '批量纳管',
+    redirect: to => ({ path: '/acm/info', query: { ...to.query, agentView: 'batches' } })
+  },
+  {
     key: 'exception',
     path: 'exception',
     name: 'acm-exception',

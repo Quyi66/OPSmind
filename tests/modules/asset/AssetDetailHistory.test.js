@@ -21,7 +21,7 @@ vi.mock('@/modules/asset/api', () => ({
   dataManageApi: { getCurrentTenantId: vi.fn().mockResolvedValue('tenant') }
 }))
 vi.mock('@/composables/useJobPolling', () => ({ pollJobStatus: vi.fn() }))
-vi.mock('vue-router', () => ({ useRoute: () => ({ query: {} }) }))
+vi.mock('vue-router', () => ({ useRoute: () => ({ query: {} }), useRouter: () => ({ push: vi.fn() }) }))
 vi.mock('@/composables/useTheme', () => ({ useTheme: () => ({ isDark: ref(false) }) }))
 vi.mock('echarts', () => ({ init: vi.fn() }))
 vi.mock('@/modules/asset/components/asset-info/AssetSidebar.vue', () => ({ default: {} }))
