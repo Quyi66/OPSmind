@@ -53,7 +53,7 @@
               />
             </el-form-item>
 
-            <el-form-item label="连接方式">
+            <el-form-item label="接入通道">
               <el-select v-model="filters.connectionType" style="width: 105px" @change="handleSearch">
                 <el-option label="全部" value="all" />
                 <el-option label="Agent" value="koreops_agent" />
@@ -986,20 +986,11 @@ const getAgentStatusDetail = record => {
   return details.join('；')
 }
 
-const hasAgentLocalFilter = () =>
-  filters.value.connectionType !== 'all' || filters.value.agentStatus !== 'all'
-
-const matchesAgentFilters = record => {
-  const connectionType = getConnectionType(record)
-  if (filters.value.connectionType !== 'all' && connectionType !== filters.value.connectionType) {
-    return false
-  }
-  if (filters.value.agentStatus === 'all') return true
-  return connectionType === 'koreops_agent' && getAgentStatus(record) === filters.value.agentStatus
-}
-
+// list-asset-selector 每行已返回 connectionType（ssh / koreops_agent），
+// 这里只为 Agent 主机补充 host-info 详情（状态、版本、最后在线等）。
 const enrichAssetAgentInfo = async records => {
   const hostIds = records
+    .filter(isAgentAsset)
     .map(r => r.id || r.host_id || r.hostId)
     .filter(Boolean)
   if (hostIds.length === 0) {
@@ -1024,13 +1015,12 @@ const enrichAssetAgentInfo = async records => {
   records.forEach(record => {
     const hid = String(record.id || record.host_id || record.hostId || '')
     const agentInfo = agentMap.get(hid)
+    if (!isAgentAsset(record)) return
     if (!agentInfo) {
-      record.connectionType = 'unknown'
       record.agentStatus = 'unknown'
       record.agentInfoUnavailable = true
       return
     }
-    record.connectionType = agentInfo.connectionType || record.connectionType
     record.agentStatus = agentInfo.agentStatus ?? record.agentStatus
     record.capabilities = agentInfo.capabilities ?? record.capabilities
     record.clientId = agentInfo.agentClientId || agentInfo.clientId || record.clientId
@@ -1058,7 +1048,10 @@ const buildAssetListParams = () => ({
   CONN_LATEST_STATUS:
     filters.value.connLatestStatus === 'all' ? '' : filters.value.connLatestStatus,
   system_name: ' ',
-  os_version: filters.value.osVersion.length > 0 ? filters.value.osVersion.join(',') : ' '
+  os_version: filters.value.osVersion.length > 0 ? filters.value.osVersion.join(',') : ' ',
+  // 接入通道 / Agent 状态由服务端筛选并分页，'all' 表示不筛选，不传该参数
+  ...(filters.value.connectionType !== 'all' ? { connectionType: filters.value.connectionType } : {}),
+  ...(filters.value.agentStatus !== 'all' ? { agentStatus: filters.value.agentStatus } : {})
 })
 
 const resetSelectionState = () => {
@@ -1102,7 +1095,6 @@ const fetchAllMatchedAssets = async (query = activeListQuery || createListQuery(
   const requestParams = query.params
   const batchSize = Math.max(pageSize.value, 200)
   let page = 1
-  // total.value 在 Agent 本地筛选时是筛选后的数量，不能用于原始资产列表分页。
   let totalCount = 0
   const allRows = []
 
@@ -1127,14 +1119,7 @@ const fetchAllMatchedAssets = async (query = activeListQuery || createListQuery(
     page += 1
   }
 
-  if (!hasAgentLocalFilter()) return allRows
-  try {
-    await enrichAssetAgentInfo(allRows)
-  } catch (error) {
-    agentServiceError.value = getAgentErrorMessage(error, '无法获取 Agent 主机状态')
-    throw error
-  }
-  return allRows.filter(matchesAgentFilters)
+  return allRows
 }
 
 const handleTableSelect = selection => {
@@ -1467,33 +1452,24 @@ const loadAssetList = async ({ preserveSelection = false } = {}) => {
     activeListQuery = query
     let normalizedRecords
     let nextTotal
-    if (hasAgentLocalFilter()) {
-      // 原资产列表接口不认识 connectionType，必须先富化后在前端筛选，再自行分页。
-      const matchedRecords = await fetchAllMatchedAssets(query)
-      nextTotal = matchedRecords.length
-      const start = (currentPage.value - 1) * pageSize.value
-      normalizedRecords = matchedRecords.slice(start, start + pageSize.value)
-    } else {
-      const res = await assetApi.getAssetList(query.params, {
-        size: pageSize.value,
-        page: currentPage.value,
-        filter: query.filter
+    const res = await assetApi.getAssetList(query.params, {
+      size: pageSize.value,
+      page: currentPage.value,
+      filter: query.filter
+    })
+    normalizedRecords = res.records || []
+    try {
+      await enrichAssetAgentInfo(normalizedRecords)
+    } catch (agentErr) {
+      // Agent 富化不可用时保留原有资产列表，避免影响 SSH 主机管理。
+      console.warn('获取主机 Agent 附加信息失败（不影响主列表）:', agentErr)
+      agentServiceError.value = getAgentErrorMessage(agentErr, '无法获取 Agent 主机状态')
+      normalizedRecords.filter(isAgentAsset).forEach(record => {
+        record.agentStatus = 'unknown'
+        record.agentInfoUnavailable = true
       })
-      normalizedRecords = res.records || []
-      try {
-        await enrichAssetAgentInfo(normalizedRecords)
-      } catch (agentErr) {
-        // Agent 富化不可用时保留原有资产列表，避免影响 SSH 主机管理。
-        console.warn('获取主机 Agent 附加信息失败（不影响主列表）:', agentErr)
-        agentServiceError.value = getAgentErrorMessage(agentErr, '无法获取 Agent 主机状态')
-        normalizedRecords.forEach(record => {
-          record.connectionType = 'unknown'
-          record.agentStatus = 'unknown'
-          record.agentInfoUnavailable = true
-        })
-      }
-      nextTotal = res.total || 0
     }
+    nextTotal = res.total || 0
 
     if (requestId !== assetListRequestId) return
     total.value = nextTotal
