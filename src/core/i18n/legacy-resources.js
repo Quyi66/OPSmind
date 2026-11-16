@@ -1,5 +1,5 @@
 import { shallowRef, watch } from 'vue'
-import { currentLocale, i18n, t } from './index'
+import { currentLocale, i18n } from './index'
 
 const aliases = {
   'common.action.save': 'common.save',
@@ -12,6 +12,14 @@ const aliases = {
   'common.entity.action.view': 'common.view',
   'common.entity.action.copy': 'common.copy',
   'jao.title': 'automation.legacy.jobTitle',
+  'app_vap.menu.patch_scan.title': 'patches.actions.scan',
+  'app_vap.menu.patch_install.title': 'patches.linux.patchInstall',
+  'app_vap.menu.patch_rollback.title': 'patches.linux.patchRollback',
+  'app_vap.menu.win_patch_scan.title': 'patches.linux.windowsScan',
+  'app_vap.menu.import_patch_library_time': 'patches.linux.scheduledLibraryImport',
+  'app_vap.menu.import_patch_library.title': 'patches.linux.libraryImport',
+  'app_vap.common.tab.repo_list_scan': 'patches.linux.yumScan',
+  'app_vap.common.tab.custom_repo': 'patches.linux.customYum',
   'acm.title': 'navigation.groups.asset-management',
   'app_pms.title': 'navigation.modules.password',
   'app_spm.title': 'navigation.modules.yum-repo',
@@ -90,13 +98,12 @@ if (import.meta.hot) {
   import.meta.hot.dispose(() => stopWatchingLocale?.())
 }
 
-export function getLegacyTranslation(key) {
-  const locale = currentLocale.value
+export function getLegacyTranslation(key, locale = currentLocale.value) {
   const custom = customResources.value[locale]
   if (typeof custom?.[key] === 'string') return custom[key]
   const messages = i18n.global.getLocaleMessage(locale).legacy
   if (typeof messages?.[key] === 'string') return messages[key]
-  if (Object.hasOwn(aliases, key)) return t(aliases[key])
+  if (Object.hasOwn(aliases, key)) return i18n.global.t(aliases[key], {}, { locale })
   const fallback = customResources.value['zh-CN']
   if (typeof fallback?.[key] === 'string') return fallback[key]
   return typeof resources.value[key] === 'string' ? resources.value[key] : undefined

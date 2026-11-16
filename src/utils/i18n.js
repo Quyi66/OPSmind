@@ -139,17 +139,18 @@ export function translateI18nKey(text) {
 
 /**
  * 翻译文本（支持 #{key} 格式和普通文本）
+ * locale 可固定历史协议名称的匹配语言；省略时使用当前显示语言。
  * 如果文本包含 #{key} 格式，会替换所有匹配项
  * 例如: "【CAC】template__#{cac.common.custom_content}" -> "【CAC】template__自定义内容"
  */
-export function translateText(text) {
+export function translateText(text, locale) {
   if (!text) return ''
-  return text.replace(/#\{([^}]+)\}/g, (match, key) => resolveKey(key, match))
+  return text.replace(/#\{([^}]+)\}/g, (match, key) => resolveKey(key, match, locale))
 }
 
-function resolveKey(key, fallback) {
+function resolveKey(key, fallback, locale) {
   return (
-    getLegacyTranslation(key) ||
+    getLegacyTranslation(key, locale) ||
     (Object.hasOwn(STATIC_TRANSLATIONS, key) ? STATIC_TRANSLATIONS[key] : undefined) ||
     key.split('.').pop() ||
     fallback

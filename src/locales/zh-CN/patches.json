@@ -85,5 +85,17 @@
     "failedFiles": "部分失败文件:",
     "failureReasons": "失败原因:",
     "filteredChangelogEntries": "{filtered} / {total} 条记录"
+  },
+  "actions": {
+    "scan": "补丁扫描"
+  },
+  "linux": {
+    "patchInstall": "补丁安装",
+    "patchRollback": "补丁回滚",
+    "windowsScan": "Windows漏洞扫描",
+    "scheduledLibraryImport": "定时导入补丁库",
+    "libraryImport": "导入补丁库",
+    "yumScan": "YUM源列表扫描",
+    "customYum": "自定义YUM源"
   }
 }

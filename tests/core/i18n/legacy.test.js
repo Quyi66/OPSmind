@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
-import { setLocale } from '@/core/i18n'
+import { setLocale, t } from '@/core/i18n'
+import { getLegacyTranslation } from '@/core/i18n/legacy-resources'
 
 afterEach(async () => {
   await setLocale('zh-CN', { persist: false })
@@ -10,6 +11,13 @@ afterEach(async () => {
 })
 
 describe('legacy dictionary compatibility', () => {
+  it('resolves the semantic scan action while retaining the built-in tool ID label', async () => {
+    expect(getLegacyTranslation('app_vap.menu.patch_scan.title', 'zh-CN')).toBe('补丁扫描')
+    await setLocale('en-US', { persist: false })
+    expect(getLegacyTranslation('app_vap.menu.patch_scan.title')).toBe('Patch scan')
+    expect(t('patches.actions.scan')).toBe(t('execution.tools.0g3GfW'))
+    expect(getLegacyTranslation('app_vap.menu.patch_scan.title', 'zh-CN')).toBe('补丁扫描')
+  })
   it('retries failed modules and updates rendered legacy messages without rewriting raw text', async () => {
     let available = false
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})

@@ -1,4 +1,4 @@
-import { ref, computed, watch } from 'vue'
+import { ref, shallowRef, computed, watch } from 'vue'
 
 /**
  * 懒加载分页显示列表 Composable
@@ -11,29 +11,29 @@ import { ref, computed, watch } from 'vue'
  * @param {number}  [options.initialCount=50]  - 初始显示条目数
  * @param {number}  [options.stepCount=100]    - 每次"加载更多"增加的条目数
  * @param {Function} [options.searchFn]         - (item, keyword) => boolean，自定义搜索匹配
+ * @param {Function} [options.getSearchContext] - 搜索词变化时捕获上下文，作为 searchFn 第三个参数
  */
-export function useLazyDisplayList(source, { initialCount = 50, stepCount = 100, searchFn } = {}) {
+export function useLazyDisplayList(source, { initialCount = 50, stepCount = 100, searchFn, getSearchContext } = {}) {
   const searchText = ref('')
   const displayedCount = ref(initialCount)
 
-  // 源数据或搜索关键词变化时，重置显示数量
-  watch([source, searchText], () => {
+  const searchContext = shallowRef()
+  watch(searchText, () => {
+    searchContext.value = getSearchContext?.()
     displayedCount.value = initialCount
-  })
+  }, { immediate: true, flush: 'sync' })
+
+  // Collection changes reset pagination; item field changes only update matches.
+  watch(() => source.value.slice(), () => {
+    displayedCount.value = initialCount
+  }, { flush: 'sync' })
 
   const filteredList = computed(() => {
-    if (!searchText.value) {
-      return source.value
-    }
     const keyword = searchText.value.toLowerCase().trim()
     if (!keyword) return source.value
-
-    if (searchFn) {
-      return source.value.filter(item => searchFn(item, keyword))
-    }
-
-    // 默认：对字符串类型的 item 做 includes 匹配
-    return source.value.filter(item => item && String(item).toLowerCase().includes(keyword))
+    return source.value.filter(item => searchFn
+      ? searchFn(item, keyword, searchContext.value)
+      : item && String(item).toLowerCase().includes(keyword))
   })
 
   const displayedList = computed(() => {

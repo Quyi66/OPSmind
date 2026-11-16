@@ -85,5 +85,17 @@
     "failedFiles": "Files that failed:",
     "failureReasons": "Failure reasons:",
     "filteredChangelogEntries": "{filtered} / {total} entries"
+  },
+  "actions": {
+    "scan": "Patch scan"
+  },
+  "linux": {
+    "patchInstall": "Patch installation",
+    "patchRollback": "Patch rollback",
+    "windowsScan": "Windows vulnerability scan",
+    "scheduledLibraryImport": "Scheduled patch library import",
+    "libraryImport": "Import patch library",
+    "yumScan": "Scan YUM sources",
+    "customYum": "Custom YUM source"
   }
 }
