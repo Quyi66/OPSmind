@@ -415,17 +415,6 @@
                 <el-table-column label="操作" width="180" fixed="right">
                   <template #default="{ row }">
                     <el-button
-                      text
-                      type="primary"
-                      size="small"
-                      :disabled="!hasRebootAction(row) || !canRebootHost(row)"
-                      :loading="isRebootSubmitting(row)"
-                      :title="isRebootRecommended(row) ? '建议重启' : ''"
-                      @click="handleHostReboot(row)"
-                    >
-                      {{ getRebootButtonLabel(row) }}
-                    </el-button>
-                    <el-button
                       v-if="shouldShowRebootResultButton(row)"
                       text
                       type="primary"
