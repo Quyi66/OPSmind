@@ -3,10 +3,10 @@
     <!-- 筛选区域 -->
     <div class="ops-filter-bar">
       <el-form :inline="true" size="small" @submit.prevent>
-        <el-form-item label="关键词">
+        <el-form-item :label="t('settings.user.keyword')">
           <el-input
             v-model="taskKeyword"
-            placeholder="搜索任务"
+            :placeholder="t('settings.scheduler.search')"
             clearable
             style="width: 200px"
             maxlength="50"
@@ -21,11 +21,11 @@
         <el-form-item>
           <el-button type="primary" @click="handleSearchTasks">
             <el-icon><Search /></el-icon>
-            搜索
+            {{ t('common.search') }}
           </el-button>
           <el-button @click="handleResetTaskFilter">
             <el-icon><RefreshRight /></el-icon>
-            重置
+            {{ t('common.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -40,7 +40,7 @@
         size="small"
         :loading="loadingTasks"
         @click="loadScheduleTasks"
-        title="刷新"
+        :title="t('common.refresh')"
       >
         <el-icon v-show="!loadingTasks"><Refresh /></el-icon>
       </el-button>
@@ -51,28 +51,28 @@
       <el-table :data="paginatedTasks" v-loading="loadingTasks" max-height="calc(100vh - 304px)">
         <el-table-column
           prop="description"
-          label="任务备注"
+          :label="t('settings.scheduler.description')"
           min-width="150"
           show-overflow-tooltip
         />
-        <el-table-column prop="cronExpression" label="CRON表达式" width="140" />
-        <el-table-column prop="jobType" label="任务类型" width="100" />
-        <el-table-column prop="status" label="当前状态" width="100">
+        <el-table-column prop="cronExpression" :label="t('settings.scheduler.cron')" width="140" />
+        <el-table-column prop="jobType" :label="t('settings.scheduler.type')" width="100" />
+        <el-table-column prop="status" :label="t('settings.scheduler.status')" min-width="130">
           <template #default="{ row }">
             <el-tag :type="row.status === 'ENABLED' ? 'success' : 'info'" size="small">
-              {{ row.status === 'ENABLED' ? '启用' : '禁用' }}
+              {{ row.status === 'ENABLED' ? t('settings.scheduler.enabled') : t('settings.scheduler.disabled') }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdBy" label="创建者" width="100" />
-        <el-table-column prop="remark" label="查看" width="100" />
-        <el-table-column label="操作" width="110" fixed="right">
+        <el-table-column prop="createdBy" :label="t('settings.scheduler.creator')" width="100" />
+        <el-table-column prop="remark" :label="t('common.view')" width="100" />
+        <el-table-column :label="t('common.actions')" min-width="150" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="handleEditTask(row)">
-              编辑
+              {{ t('common.edit') }}
             </el-button>
             <el-button text type="danger" size="small" @click="handleDeleteTask(row)">
-              删除
+              {{ t('common.delete') }}
             </el-button>
           </template>
         </el-table-column>
@@ -95,6 +95,7 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
 import { ref, computed, onMounted } from 'vue'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { apiService } from '@/core/api'

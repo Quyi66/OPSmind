@@ -412,5 +412,11 @@
     "scanFailedReason": "扫描失败: {reason}",
     "addressCount": "… 共 {count} 个地址",
     "selectedRepoCount": "待配置仓库（{count}）"
+  },
+  "sqlImportStatus": {
+    "pending": "待执行",
+    "running": "执行中",
+    "success": "执行成功",
+    "failed": "执行失败"
   }
 }

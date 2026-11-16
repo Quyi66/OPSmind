@@ -412,5 +412,11 @@
     "scanFailedReason": "Scan failed: {reason}",
     "addressCount": "... {count} URLs in total",
     "selectedRepoCount": "Repositories to configure ({count})"
+  },
+  "sqlImportStatus": {
+    "pending": "Pending",
+    "running": "Running",
+    "success": "Execution succeeded",
+    "failed": "Execution failed"
   }
 }

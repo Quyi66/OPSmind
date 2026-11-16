@@ -8,7 +8,7 @@
         :loading="loading"
         @click="loadScriptEngine"
       >
-        重试读取
+        {{ t('settings.team.retryMembers') }}
       </el-button>
     </el-alert>
     <el-alert v-if="aapReadError" :title="aapReadError" type="error" :closable="false" show-icon>
@@ -19,7 +19,7 @@
         :loading="connecting"
         @click="connectAap()"
       >
-        重试连接
+        {{ t('settings.engine.retryConnect') }}
       </el-button>
     </el-alert>
     <el-card class="config-card" v-loading="loading">
@@ -30,8 +30,8 @@
         @submit.prevent
       >
         <!-- 引擎类型选择 -->
-        <el-form-item label="执行引擎">
-          <div class="engine-hint">支持 Ansible 与 Ansible Automation Platform（AAP）</div>
+        <el-form-item :label="t('settings.engine.executionEngine')">
+          <div class="engine-hint">{{ t('settings.engine.supported') }}</div>
           <el-radio-group v-model="usedEngine" @change="handleEngineChange">
             <el-radio-button
               v-for="engine in engineOptions"
@@ -45,47 +45,47 @@
 
         <!-- Ansible 配置 -->
         <template v-if="scriptEngine === 'ansible'">
-          <el-divider content-position="left">Ansible 配置</el-divider>
+          <el-divider content-position="left">{{ t('settings.engine.ansibleConfig') }}</el-divider>
 
-          <el-form-item label="启用主机并发执行">
+          <el-form-item :label="t('settings.engine.parallel')">
             <el-switch v-model="jaoParamMap.is_fork" />
           </el-form-item>
 
-          <el-form-item label="主机并发数">
+          <el-form-item :label="t('settings.engine.forks')">
             <el-input-number v-model="jaoParamMap.forks" :min="100" style="width: 200px" />
           </el-form-item>
 
-          <el-form-item label="执行前同步 Git 项目">
+          <el-form-item :label="t('settings.engine.syncProject')">
             <el-switch v-model="jaoParamMap.sync_script_git" />
           </el-form-item>
 
           <el-form-item class="form-actions">
-            <el-button type="primary" @click="saveAnsibleConfig" :loading="saving">保存</el-button>
+            <el-button type="primary" @click="saveAnsibleConfig" :loading="saving">{{ t('common.save') }}</el-button>
           </el-form-item>
         </template>
 
         <!-- AAP 配置 -->
         <template v-if="scriptEngine === 'aap'">
-          <el-divider content-position="left">AAP 配置</el-divider>
+          <el-divider content-position="left">{{ t('settings.engine.aapConfig') }}</el-divider>
 
-          <el-form-item label="清理 AAP 执行资源">
+          <el-form-item :label="t('settings.engine.clearResources')">
             <el-switch v-model="ataParamMap.tower_clear" />
           </el-form-item>
 
           <!-- AAP Web Login 配置 -->
-          <el-form-item label="AAP 连接配置">
+          <el-form-item :label="t('settings.engine.connectionConfig')">
             <el-card class="nested-card">
-              <el-form-item label="服务地址" label-width="140px">
+              <el-form-item :label="t('settings.engine.address')" label-width="140px">
                 <el-input v-model="ataParamMap.tower_host" style="width: 300px" />
-                <div class="form-help">AAP 服务器地址</div>
+                <div class="form-help">{{ t('settings.engine.addressHint') }}</div>
               </el-form-item>
 
-              <el-form-item label="登录用户" label-width="140px">
+              <el-form-item :label="t('settings.engine.loginUser')" label-width="140px">
                 <el-input v-model="loginConfig.web_login_name" style="width: 300px" />
-                <div class="form-help">AAP 登录用户名</div>
+                <div class="form-help">{{ t('settings.engine.loginUserHint') }}</div>
               </el-form-item>
 
-              <el-form-item label="登录密码" label-width="140px">
+              <el-form-item :label="t('settings.engine.loginPassword')" label-width="140px">
                 <el-input
                   v-model="loginConfig.web_login_pwd"
                   type="password"
@@ -93,32 +93,32 @@
                   autocomplete="new-password"
                   style="width: 300px"
                 />
-                <div class="form-help">AAP 登录密码</div>
+                <div class="form-help">{{ t('settings.engine.loginPasswordHint') }}</div>
               </el-form-item>
             </el-card>
           </el-form-item>
 
           <!-- AAP Servers -->
           <template v-if="isConnectAap">
-            <el-form-item label="AAP 集群节点">
-              <div class="form-help mb-2">AAP 集群服务器配置</div>
+            <el-form-item :label="t('settings.engine.clusterNodes')">
+              <div class="form-help mb-2">{{ t('settings.engine.clusterConfig') }}</div>
               <el-table :data="clusterServers" style="max-width: 800px" max-height="600px">
-                <el-table-column label="主机地址" min-width="150">
+                <el-table-column :label="t('settings.engine.hostAddress')" min-width="150">
                   <template #default="{ row }">
                     <el-input v-model="row.host" size="small" />
                   </template>
                 </el-table-column>
-                <el-table-column label="端口" width="100">
+                <el-table-column :label="t('settings.engine.port')" width="100">
                   <template #default="{ row }">
                     <el-input v-model="row.port" size="small" />
                   </template>
                 </el-table-column>
-                <el-table-column label="用户名" min-width="150">
+                <el-table-column :label="t('common.username')" min-width="150">
                   <template #default="{ row }">
                     <el-input v-model="row.username" size="small" />
                   </template>
                 </el-table-column>
-                <el-table-column label="密码" min-width="150">
+                <el-table-column :label="t('common.password')" min-width="150">
                   <template #default="{ row }">
                     <el-input
                       v-model="row.password"
@@ -128,13 +128,13 @@
                     />
                   </template>
                 </el-table-column>
-                <el-table-column label="操作" width="150">
+                <el-table-column :label="t('common.actions')" width="150">
                   <template #default="{ $index }">
                     <el-button type="danger" size="small" @click="deleteClusterServer($index)">
-                      删除
+                      {{ t('common.delete') }}
                     </el-button>
                     <el-button type="primary" size="small" @click="addClusterServer">
-                      添加
+                      {{ t('settings.engine.add') }}
                     </el-button>
                   </template>
                 </el-table-column>
@@ -142,12 +142,12 @@
             </el-form-item>
 
             <!-- AAP Execute Config -->
-            <el-form-item label="AAP 执行配置">
-              <div class="form-help mb-2">AAP 执行配置</div>
+            <el-form-item :label="t('settings.engine.executionConfig')">
+              <div class="form-help mb-2">{{ t('settings.engine.executionConfig') }}</div>
               <el-card class="nested-card">
                 <el-row :gutter="20">
                   <el-col :span="12">
-                    <el-form-item label="Git 项目" label-width="180px">
+                    <el-form-item :label="t('settings.engine.gitProject')" label-width="180px">
                       <el-select v-model="towerConfig.git_project_id" style="width: 100%">
                         <el-option
                           v-for="project in gitProjects"
@@ -159,7 +159,7 @@
                     </el-form-item>
                   </el-col>
                   <el-col :span="12">
-                    <el-form-item label="组织" label-width="180px">
+                    <el-form-item :label="t('settings.engine.organization')" label-width="180px">
                       <el-select v-model="towerConfig.organization_id" style="width: 100%">
                         <el-option
                           v-for="org in organizations"
@@ -174,7 +174,7 @@
 
                 <el-row :gutter="20">
                   <el-col :span="12">
-                    <el-form-item label="本地项目" label-width="180px">
+                    <el-form-item :label="t('settings.engine.localProject')" label-width="180px">
                       <el-select
                         v-model="towerConfig.template_project_id"
                         style="width: 100%"
@@ -190,7 +190,7 @@
                     </el-form-item>
                   </el-col>
                   <el-col :span="12">
-                    <el-form-item label="本地项目路径" label-width="180px">
+                    <el-form-item :label="t('settings.engine.projectPath')" label-width="180px">
                       <el-input v-model="towerConfig.project_path" disabled style="width: 100%" />
                     </el-form-item>
                   </el-col>
@@ -198,7 +198,7 @@
 
                 <el-row :gutter="20">
                   <el-col :span="12">
-                    <el-form-item label="连接凭据" label-width="180px">
+                    <el-form-item :label="t('settings.engine.credentials')" label-width="180px">
                       <el-select
                         v-model="towerConfig.template_credentials_id"
                         multiple
@@ -214,7 +214,7 @@
                     </el-form-item>
                   </el-col>
                   <el-col :span="12">
-                    <el-form-item label="实例组" label-width="180px">
+                    <el-form-item :label="t('settings.engine.instanceGroup')" label-width="180px">
                       <el-select v-model="towerConfig.instance_group" style="width: 100%">
                         <el-option
                           v-for="ig in instanceGroups"
@@ -229,7 +229,7 @@
 
                 <el-row :gutter="20">
                   <el-col :span="12">
-                    <el-form-item label="执行环境" label-width="180px">
+                    <el-form-item :label="t('settings.engine.environment')" label-width="180px">
                       <el-select v-model="towerConfig.execution_environment" style="width: 100%">
                         <el-option
                           v-for="ee in executionEnvironments"
@@ -246,17 +246,17 @@
 
                 <el-row :gutter="20">
                   <el-col :span="8">
-                    <el-form-item label="启用执行提权" label-width="200px">
+                    <el-form-item :label="t('settings.engine.become')" label-width="200px">
                       <el-switch v-model="towerConfig.template_become" />
                     </el-form-item>
                   </el-col>
                   <el-col :span="8">
-                    <el-form-item label="执行前同步 Git" label-width="200px">
+                    <el-form-item :label="t('settings.engine.syncGit')" label-width="200px">
                       <el-switch v-model="towerConfig.sync_git_project_before_starting_job" />
                     </el-form-item>
                   </el-col>
                   <el-col :span="8">
-                    <el-form-item label="加密主机密码" label-width="200px">
+                    <el-form-item :label="t('settings.engine.encryptHostPassword')" label-width="200px">
                       <el-switch v-model="towerConfig.encrypt_host_pass" />
                     </el-form-item>
                   </el-col>
@@ -266,7 +266,7 @@
           </template>
 
           <el-form-item class="form-actions">
-            <el-button type="primary" @click="saveAapConfig" :loading="saving">保存</el-button>
+            <el-button type="primary" @click="saveAapConfig" :loading="saving">{{ t('common.save') }}</el-button>
           </el-form-item>
         </template>
       </el-form>
@@ -275,6 +275,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { message, messageRef } from '@/core/i18n/feedback'
 import {
   ref,
   reactive,
@@ -289,8 +291,8 @@ import * as engineApi from '@/modules/settings/api/engine'
 
 const loading = ref(false)
 const saving = ref(false)
-const loadError = ref('')
-const aapReadError = ref('')
+const loadError = messageRef('')
+const aapReadError = messageRef('')
 const configReady = ref(false)
 const connecting = ref(false)
 let active = true
@@ -388,7 +390,7 @@ async function loadScriptEngine() {
     const param = await engineApi.getParamByDomainAndName('jao', 'script_engine')
     if (!isCurrentRead(request)) return
     if (!param || !['ansible', 'aap'].includes(param.value || 'ansible')) {
-      throw new Error('执行引擎参数缺失或不受支持')
+      throw new Error(t('settings.engine.invalidEngine'))
     }
     if (param) {
       scriptEngineParam.value = param
@@ -405,8 +407,8 @@ async function loadScriptEngine() {
   } catch (error) {
     if (!isCurrentRead(request)) return
     console.error('Failed to load script engine:', error)
-    loadError.value = '引擎配置未完整读取，暂不可保存，请重试读取'
-    ElMessage.error('加载引擎配置失败')
+    loadError.value = message('settings.engine.readFailed')
+    ElMessage.error(t('settings.engine.loadFailed'))
   } finally {
     if (isCurrentRead(request)) loading.value = false
   }
@@ -479,19 +481,19 @@ async function connectAap(request = readRequestId) {
   try {
     const result = await engineApi.queryProjectBaseDir()
     if (!isCurrent()) return
-    if (!result) throw new Error('AAP未返回连接信息')
+    if (!result) throw new Error(t('settings.engine.noConnectionInfo'))
     if (result) {
       await loadAapInfo(isCurrent)
       if (!isCurrent()) return
       aapProjectBaseDir.value = result.project_base_dir || ''
       isConnectAap.value = true
-      ElMessage.success('连接 AAP 成功')
+      ElMessage.success(t('settings.engine.connected'))
     }
   } catch (error) {
     if (!isCurrent()) return
     console.error('Failed to connect AAP:', error)
-    aapReadError.value = 'AAP连接或执行选项读取失败，已保留连接配置，请重试连接'
-    ElMessage.error('无法连接 AAP，请检查账号配置')
+    aapReadError.value = message('settings.engine.connectionReadFailed')
+    ElMessage.error(t('settings.engine.connectFailed'))
   } finally {
     if (isCurrent()) connecting.value = false
   }
@@ -508,7 +510,7 @@ async function loadAapInfo(isCurrent) {
   if (!isCurrent()) return
   for (const response of [projectsRes, orgsRes, credsRes, igsRes, eesRes]) {
     if (response?.results != null && !Array.isArray(response.results)) {
-      throw new Error('AAP执行选项格式无效')
+      throw new Error(t('settings.engine.invalidOptions'))
     }
   }
 
@@ -525,11 +527,11 @@ async function handleEngineChange() {
     return
   }
   try {
-    await ElMessageBox.confirm('确定要切换执行引擎吗？此操作将保存更改。', '变更操作', {
+    await ElMessageBox.confirm(t('settings.engine.switchConfirm'), t('settings.email.changeTitle'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+      confirmButtonText: t('settings.email.confirm'),
+      cancelButtonText: t('common.cancel'),
       type: 'warning'
     })
   } catch {
@@ -542,12 +544,12 @@ async function handleEngineChange() {
     try {
       scriptEngineParam.value.value = usedEngine.value
       await engineApi.updateParam(scriptEngineParam.value)
-      ElMessage.success('引擎切换成功')
+      ElMessage.success(t('settings.engine.switched'))
       scriptEngine.value = usedEngine.value
       await loadScriptEngine()
     } catch (error) {
       console.error('Failed to change engine:', error)
-      ElMessage.error('引擎切换失败')
+      ElMessage.error(t('settings.engine.switchFailed'))
       usedEngine.value = scriptEngine.value
     } finally {
       saving.value = false
@@ -573,7 +575,7 @@ function addClusterServer() {
 
 function deleteClusterServer(index) {
   if (loginConfig.cluster_servers.length <= 1) {
-    ElMessage.warning('至少保留一个服务器节点')
+    ElMessage.warning(t('settings.engine.keepOneServer'))
     return
   }
   loginConfig.cluster_servers.splice(index, 1)
@@ -582,11 +584,11 @@ function deleteClusterServer(index) {
 async function saveAnsibleConfig() {
   if (!configReady.value || loading.value || saving.value) return
   try {
-    await ElMessageBox.confirm('确定要保存 Ansible 配置吗？', '变更操作', {
+    await ElMessageBox.confirm(t('settings.engine.saveAnsibleConfirm'), t('settings.email.changeTitle'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+      confirmButtonText: t('settings.email.confirm'),
+      cancelButtonText: t('common.cancel'),
       type: 'warning'
     })
   } catch {
@@ -610,11 +612,11 @@ async function saveAnsibleConfig() {
     }
 
     await engineApi.batchUpdateParams(saveParams)
-    ElMessage.success('保存成功')
+    ElMessage.success(t('settings.user.saved'))
     await loadScriptEngine()
   } catch (error) {
     console.error('Failed to save ansible config:', error)
-    ElMessage.error('保存失败')
+    ElMessage.error(t('settings.user.saveFailed'))
   } finally {
     saving.value = false
   }
@@ -623,11 +625,11 @@ async function saveAnsibleConfig() {
 async function saveAapConfig() {
   if (!configReady.value || loading.value || saving.value) return
   try {
-    await ElMessageBox.confirm('确定要保存 AAP 配置吗？', '变更操作', {
+    await ElMessageBox.confirm(t('settings.engine.saveAapConfirm'), t('settings.email.changeTitle'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+      confirmButtonText: t('settings.email.confirm'),
+      cancelButtonText: t('common.cancel'),
       type: 'warning'
     })
   } catch {
@@ -654,11 +656,11 @@ async function saveAapConfig() {
     }
 
     await engineApi.batchUpdateParams(saveParams)
-    ElMessage.success('保存成功')
+    ElMessage.success(t('settings.user.saved'))
     await loadScriptEngine()
   } catch (error) {
     console.error('Failed to save AAP config:', error)
-    ElMessage.error('保存失败')
+    ElMessage.error(t('settings.user.saveFailed'))
   } finally {
     saving.value = false
   }
@@ -669,7 +671,7 @@ function pauseReading() {
   interrupted = loading.value || connecting.value
   if (loading.value) {
     configReady.value = false
-    loadError.value = '配置读取已中断，返回后将重新读取'
+    loadError.value = message('settings.engine.interrupted')
   }
   readRequestId += 1
   aapRequestId += 1

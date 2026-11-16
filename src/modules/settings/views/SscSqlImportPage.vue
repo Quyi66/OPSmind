@@ -7,7 +7,7 @@
           class="ops-section yum-sql-import-panel__card yum-sql-import-panel__card--control mb-0"
         >
           <div class="ops-section__header">
-            <span class="ops-section__title">执行入口</span>
+            <span class="ops-section__title">{{ t('settings.sql.entry') }}</span>
           </div>
 
           <div class="ops-section__content">
@@ -16,13 +16,13 @@
               <div class="yum-sql-import-panel__form-section">
                 <div class="form-section-title">
                   <el-icon class="section-icon"><Document /></el-icon>
-                  文件选择
+                  {{ t('settings.sql.chooseFile') }}
                 </div>
 
-                <el-form-item label="服务器文件" class="mb-0">
+                <el-form-item :label="t('settings.sql.serverFile')" class="mb-0">
                   <el-input
                     v-model.trim="form.serverFile"
-                    placeholder="请输入白名单目录内的相对文件名，例如 patch-data.sql.gz"
+                    :placeholder="t('settings.sql.filePlaceholder')"
                     clearable
                   >
                     <template #prefix>
@@ -30,23 +30,13 @@
                     </template>
                   </el-input>
                   <div class="yum-sql-import-panel__tip mt-2">
-                    文件需放置于服务器白名单目录中（未配置参数时默认：
-                    <code>/opt/sjxy/assets/gfs/fs-repos</code>
-                    ）。
+                    <I18nT keypath="settings.sql.fileHint" :i18n="i18n.global">
+                      <template #directory><code>/opt/sjxy/assets/gfs/fs-repos</code></template>
+                    </I18nT>
                     <br />
-                    支持相对路径，支持扩展名：
-                    <code>.sql</code>
-                    ,
-                    <code>.sql.gz</code>
-                    ,
-                    <code>.gz</code>
-                    ,
-                    <code>.tar</code>
-                    ,
-                    <code>.tar.gz</code>
-                    ,
-                    <code>.tgz</code>
-                    。
+                    <I18nT keypath="settings.sql.extensionsHint" :i18n="i18n.global">
+                      <template #extensions><code>.sql</code>, <code>.sql.gz</code>, <code>.gz</code>, <code>.tar</code>, <code>.tar.gz</code>, <code>.tgz</code></template>
+                    </I18nT>
                   </div>
                 </el-form-item>
               </div>
@@ -55,13 +45,13 @@
               <div class="yum-sql-import-panel__form-section">
                 <div class="form-section-title">
                   <el-icon class="section-icon"><Setting /></el-icon>
-                  配置选项
+                  {{ t('settings.sql.configuration') }}
                 </div>
 
-                <el-form-item label="附加选项" class="mb-0">
+                <el-form-item :label="t('settings.sql.options')" class="mb-0">
                   <div class="yum-sql-import-panel__option-group">
-                    <el-checkbox v-model="form.continueOnError">遇错继续</el-checkbox>
-                    <el-checkbox v-model="form.dryRun">仅解析不执行</el-checkbox>
+                    <el-checkbox v-model="form.continueOnError">{{ t('settings.sql.continue') }}</el-checkbox>
+                    <el-checkbox v-model="form.dryRun">{{ t('settings.sql.parseOnly') }}</el-checkbox>
                   </div>
                 </el-form-item>
               </div>
@@ -79,7 +69,7 @@
                   <template #icon>
                     <el-icon><VideoPlay /></el-icon>
                   </template>
-                  开始执行
+                  {{ t('settings.sql.start') }}
                 </el-button>
                 <div class="yum-sql-import-panel__secondary-actions">
                   <el-button
@@ -91,7 +81,7 @@
                     <template #icon>
                       <el-icon><Refresh /></el-icon>
                     </template>
-                    刷新当前任务
+                    {{ t('settings.sql.refresh') }}
                   </el-button>
                   <el-button
                     :disabled="!form.serverFile"
@@ -101,7 +91,7 @@
                     <template #icon>
                       <el-icon><Delete /></el-icon>
                     </template>
-                    清空输入
+                    {{ t('settings.sql.clear') }}
                   </el-button>
                 </div>
               </div>
@@ -112,7 +102,7 @@
         <!-- 右侧任务结果 -->
         <div class="ops-section yum-sql-import-panel__card yum-sql-import-panel__card--result mb-0">
           <div class="ops-section__header">
-            <span class="ops-section__title">任务结果</span>
+            <span class="ops-section__title">{{ t('settings.sql.result') }}</span>
           </div>
 
           <div class="ops-section__content result-content-wrapper">
@@ -124,11 +114,11 @@
                 :loading="refreshing"
                 @click="refreshCurrentJob"
               >
-                重试查询
+                {{ t('settings.sql.retry') }}
               </el-button>
             </el-alert>
             <div v-if="!jobResult" class="yum-sql-import-panel__empty-state">
-              <el-empty description="执行后可在这里查看进度与结果" />
+              <el-empty :description="t('settings.sql.empty')" />
             </div>
 
             <template v-else>
@@ -141,7 +131,7 @@
                   class="yum-sql-import-panel__running-hint"
                 >
                   <el-icon class="is-loading"><Loading /></el-icon>
-                  正在自动轮询任务进度...
+                  {{ t('settings.sql.polling') }}
                 </span>
               </div>
 
@@ -152,19 +142,19 @@
                 label-class-name="descriptions-label"
                 label-width="100"
               >
-                <el-descriptions-item label="任务 ID">
+                <el-descriptions-item :label="t('settings.sql.jobId')">
                   <span>{{ jobResult.jobId || '-' }}</span>
                 </el-descriptions-item>
-                <el-descriptions-item label="文件名">
+                <el-descriptions-item :label="t('settings.sql.filename')">
                   <span class="text-semibold">{{ jobResult.fileName || '-' }}</span>
                 </el-descriptions-item>
-                <el-descriptions-item label="当前条目">
+                <el-descriptions-item :label="t('settings.sql.currentEntry')">
                   <span class="text-semibold">{{ jobResult.currentEntry || '-' }}</span>
                 </el-descriptions-item>
-                <el-descriptions-item label="总语句数">
+                <el-descriptions-item :label="t('settings.sql.totalStatements')">
                   <span>{{ formatNumber(jobResult.totalStatements) }}</span>
                 </el-descriptions-item>
-                <el-descriptions-item label="失败语句数">
+                <el-descriptions-item :label="t('settings.sql.failedStatements')">
                   <span
                     :class="
                       jobResult.failedStatements > 0
@@ -177,19 +167,19 @@
                     {{ formatNumber(jobResult.failedStatements) }}
                   </span>
                 </el-descriptions-item>
-                <el-descriptions-item label="耗时">
+                <el-descriptions-item :label="t('settings.sql.elapsed')">
                   {{ formatElapsed(jobResult.elapsedMs) }}
                 </el-descriptions-item>
-                <el-descriptions-item label="开始时间">
+                <el-descriptions-item :label="t('settings.sql.startTime')">
                   {{ formatResultTime(jobResult.startTime) }}
                 </el-descriptions-item>
-                <el-descriptions-item label="结束时间">
+                <el-descriptions-item :label="t('settings.sql.endTime')">
                   {{ formatResultTime(jobResult.endTime) }}
                 </el-descriptions-item>
-                <el-descriptions-item label="执行参数">
+                <el-descriptions-item :label="t('settings.sql.executionOptions')">
                   {{ describeOptions(jobResult) }}
                 </el-descriptions-item>
-                <el-descriptions-item label="消息">
+                <el-descriptions-item :label="t('settings.sql.message')">
                   {{ jobResult.message || '-' }}
                 </el-descriptions-item>
               </el-descriptions>
@@ -197,17 +187,17 @@
               <div v-if="jobResult.entries.length" class="yum-sql-import-panel__section">
                 <div class="yum-sql-import-panel__section-title">
                   <el-icon class="section-icon text-primary"><Document /></el-icon>
-                  分文件小结
+                  {{ t('settings.sql.fileSummary') }}
                 </div>
                 <div class="ops-table-wrapper">
                   <el-table :data="jobResult.entries" size="small" class="flat-table">
                     <el-table-column
                       prop="entry"
-                      label="条目"
+                      :label="t('settings.sql.entryName')"
                       min-width="220"
                       show-overflow-tooltip
                     />
-                    <el-table-column prop="statements" label="语句数" width="120" align="right" />
+                    <el-table-column prop="statements" :label="t('settings.sql.statements')" width="120" align="right" />
                   </el-table>
                 </div>
               </div>
@@ -215,9 +205,9 @@
               <div v-if="jobResult.errors.length" class="yum-sql-import-panel__section">
                 <div class="yum-sql-import-panel__section-title">
                   <el-icon class="section-icon text-danger"><Warning /></el-icon>
-                  失败明细
+                  {{ t('settings.sql.failureDetails') }}
                   <span v-if="jobResult.errorsTruncated" class="yum-sql-import-panel__tip">
-                    仅保留前 200 条
+                    {{ t('settings.sql.retainedErrors') }}
                   </span>
                 </div>
                 <div class="ops-table-wrapper">
@@ -226,10 +216,10 @@
                     size="small"
                     class="flat-table natural-height-table"
                   >
-                    <el-table-column prop="entry" label="条目" width="150" show-overflow-tooltip />
+                    <el-table-column prop="entry" :label="t('settings.sql.entryName')" width="150" show-overflow-tooltip />
                     <el-table-column
                       prop="sql"
-                      label="SQL 片段"
+                      :label="t('settings.sql.fragment')"
                       min-width="220"
                       show-overflow-tooltip
                     >
@@ -239,7 +229,7 @@
                     </el-table-column>
                     <el-table-column
                       prop="error"
-                      label="错误信息"
+                      :label="t('settings.sql.error')"
                       min-width="220"
                       show-overflow-tooltip
                     >
@@ -274,13 +264,16 @@
         class="ops-section__content"
         style="display: flex; align-items: center; justify-content: center; min-height: 400px"
       >
-        <el-empty description="您没有权限访问此页面，仅超级管理员可使用 SQL 导入功能。" />
+        <el-empty :description="t('settings.sql.noAccess')" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { t, i18n, currentLocale } from '@/core/i18n'
+import { I18nT } from 'vue-i18n'
+import { message as localMessage, messageRef } from '@/core/i18n/feedback'
 import { computed, onBeforeUnmount, onActivated, onDeactivated, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
@@ -306,7 +299,7 @@ import { authService } from '@/core/auth'
 const isAdmin = computed(() => authService.hasPermission('admin'))
 const submitting = ref(false)
 const refreshing = ref(false)
-const readError = ref('')
+const readError = messageRef('')
 const currentJobId = ref('')
 const jobResult = ref(null)
 
@@ -406,9 +399,9 @@ function applyJobResponse(responseData, options = {}) {
 
   const failed = result.status === 'FAILED'
   const fallback = failed
-    ? 'SQL 执行失败'
+    ? t('settings.sql.failed')
     : result.status === 'SUCCESS'
-      ? 'SQL 执行完成'
+      ? t('settings.sql.completed')
       : options.fallbackMessage || ''
   const message = result.message || fallback
   if (active && options.notify !== false && message) {
@@ -441,12 +434,12 @@ async function submitServerFile() {
     })
     if (disposed) return
     applyJobResponse(unwrapResponse(response), {
-      fallbackMessage: form.async ? '任务已受理，开始查询执行进度' : 'SQL 执行完成'
+      fallbackMessage: form.async ? t('settings.sql.accepted') : t('settings.sql.completed')
     })
   } catch (error) {
     if (disposed) return
     console.error('执行服务器 SQL 文件失败:', error)
-    if (active) ElMessage.error(resolveRequestError(error, '执行服务器 SQL 文件失败'))
+    if (active) ElMessage.error(resolveRequestError(error, t('settings.sql.executeFailed')))
   } finally {
     if (!disposed) {
       submitting.value = false
@@ -486,7 +479,9 @@ async function refreshJobResult(jobId = currentJobId.value, options = {}) {
       status === 401 ||
       ['Authentication expired', 'Access denied'].includes(error?.message)
     const retrying = options.silent && !isFatal && isSqlImportRunning(jobResult.value)
-    readError.value = `${resolveRequestError(error, '查询 SQL 导入结果失败')}；${retrying ? '将自动重试，也可手动查询' : '结果未更新，请重试查询'}`
+    readError.value = localMessage(retrying ? 'settings.sql.retryingFailure' : 'settings.sql.staleFailure', () => ({
+      reason: resolveRequestError(error, t('settings.sql.readFailed'))
+    }))
 
     if (options.silent && !isFatal) {
       schedulePolling(normalizedJobId)
@@ -495,7 +490,7 @@ async function refreshJobResult(jobId = currentJobId.value, options = {}) {
     }
     if (!options.silent || isFatal) {
       console.error('查询 SQL 导入结果失败:', error)
-      ElMessage.error(resolveRequestError(error, '查询 SQL 导入结果失败'))
+      ElMessage.error(resolveRequestError(error, t('settings.sql.readFailed')))
     }
   } finally {
     if (active && !disposed && request === readRequestId) refreshing.value = false
@@ -545,25 +540,26 @@ function formatResultTime(value) {
   return formatDateTime(new Date(value))
 }
 
+const resultNumberFormatter = computed(() => new Intl.NumberFormat(currentLocale.value))
 function formatNumber(value) {
   if (value == null || String(value).trim() === '') return '-'
   const number = Number(value)
   return Number.isFinite(number) && number >= 0
-    ? new Intl.NumberFormat('zh-CN').format(number)
+    ? resultNumberFormatter.value.format(number)
     : '-'
 }
 
 function describeOptions(result) {
   const labels = []
-  labels.push(result.dryRun ? 'dryRun' : '正式执行')
-  labels.push(result.continueOnError ? '遇错继续' : '遇错即停')
+  labels.push(result.dryRun ? t('settings.sql.parseOnly') : t('settings.sql.formal'))
+  labels.push(result.continueOnError ? t('settings.sql.continue') : t('settings.sql.stop'))
   return labels.join(' / ')
 }
 
 function pauseReading() {
   active = false
   readRequestId += 1
-  if (refreshing.value) readError.value = '查询已暂停，返回后将重新读取任务进度'
+  if (refreshing.value) readError.value = localMessage('settings.sql.paused')
   refreshing.value = false
   stopPolling()
 }

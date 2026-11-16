@@ -8,74 +8,74 @@
         :disabled="saving || sending"
         @click="loadConfig"
       >
-        重试读取
+        {{ t('settings.team.retryMembers') }}
       </el-button>
     </el-alert>
     <el-card class="config-card">
       <el-form
         ref="formRef"
         :model="form"
-        :rules="rules"
+        :rules="rules" :validate-on-rule-change="false"
         label-width="120px"
         label-position="top"
         v-loading="loading"
         :disabled="loading || saving || sending || !configReady"
         @submit.prevent
       >
-        <el-form-item label="用户名" prop="username">
+        <el-form-item :label="t('common.username')" prop="username">
           <el-input
             v-model="form.username"
             type="email"
-            placeholder="输入邮箱用户名"
+            :placeholder="t('settings.email.usernamePlaceholder')"
             maxlength="100"
           />
         </el-form-item>
 
-        <el-form-item label="密码" prop="password">
+        <el-form-item :label="t('common.password')" prop="password">
           <el-input
             v-model="form.password"
             type="password"
-            placeholder="输入邮箱密码或授权码"
+            :placeholder="t('settings.email.passwordPlaceholder')"
             show-password
             autocomplete="new-password"
             maxlength="100"
           />
         </el-form-item>
 
-        <el-form-item label="邮件服务器" prop="host">
-          <el-input v-model="form.host" placeholder="如：smtp.163.com" maxlength="100" />
+        <el-form-item :label="t('settings.email.server')" prop="host">
+          <el-input v-model="form.host" :placeholder="t('settings.email.serverExample')" maxlength="100" />
         </el-form-item>
 
-        <el-form-item label="服务器端口" prop="port">
+        <el-form-item :label="t('settings.email.port')" prop="port">
           <el-input-number v-model="formPort" :min="1" :max="65535" style="width: 200px" />
         </el-form-item>
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="发件人" prop="from">
+            <el-form-item :label="t('settings.email.from')" prop="from">
               <el-input
                 v-model="form.from"
                 type="email"
-                placeholder="发件人邮箱地址（通常与用户名相同）"
+                :placeholder="t('settings.email.fromPlaceholder')"
                 maxlength="100"
               />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="收件人类型" prop="recipient_type">
+            <el-form-item :label="t('settings.email.recipientType')" prop="recipient_type">
               <el-select v-model="form.recipient_type" style="width: 200px">
-                <el-option label="TO（主送）" value="to" />
-                <el-option label="CC（抄送）" value="cc" />
-                <el-option label="BCC（密送）" value="bcc" />
+                <el-option :label="t('settings.email.to')" value="to" />
+                <el-option :label="t('settings.email.cc')" value="cc" />
+                <el-option :label="t('settings.email.bcc')" value="bcc" />
               </el-select>
             </el-form-item>
           </el-col>
         </el-row>
         <div class="switch-group">
-          <el-form-item label="调试模式">
+          <el-form-item :label="t('settings.email.debug')">
             <el-switch v-model="debugOnOff" />
           </el-form-item>
-          <el-form-item label="SSL认证">
+          <el-form-item :label="t('settings.email.ssl')">
             <el-switch v-model="sslOnOff" />
           </el-form-item>
         </div>
@@ -83,11 +83,11 @@
         <el-form-item class="form-actions">
           <el-button @click="handleTest">
             <i class="fa fa-paper-plane"></i>
-            测试发送
+            {{ t('settings.email.test') }}
           </el-button>
           <el-button type="primary" @click="handleSave" :loading="saving">
             <i class="fa fa-save"></i>
-            保存
+            {{ t('common.save') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -96,31 +96,31 @@
     <!-- 测试发送对话框 -->
     <el-dialog
       v-model="testDialogVisible"
-      title="测试发送邮件"
+      :title="t('settings.email.testTitle')"
       width="400px"
       destroy-on-close
       :close-on-click-modal="false"
       :close-on-press-escape="false"
     >
       <el-form @submit.prevent="handleSendTest">
-        <el-form-item label="收件人邮箱">
+        <el-form-item :label="t('settings.email.recipient')">
           <el-input
             v-model="testRecipient"
             type="email"
-            placeholder="输入收件人邮箱地址"
+            :placeholder="t('settings.email.recipientPlaceholder')"
             maxlength="100"
           />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="testDialogVisible = false">取消</el-button>
+        <el-button @click="testDialogVisible = false">{{ t('common.cancel') }}</el-button>
         <el-button
           type="primary"
           @click="handleSendTest"
           :loading="sending"
           :disabled="!testRecipient"
         >
-          发送
+          {{ t('settings.email.send') }}
         </el-button>
       </template>
     </el-dialog>
@@ -128,6 +128,9 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { useLocalizedValidation } from '@/core/i18n/validation'
+import { message, messageRef } from '@/core/i18n/feedback'
 import {
   ref,
   reactive,
@@ -144,7 +147,7 @@ import { apiService } from '@/core/api'
 const formRef = ref(null)
 const loading = ref(false)
 const saving = ref(false)
-const loadError = ref('')
+const loadError = messageRef('')
 const configReady = ref(false)
 let active = true
 let readRequestId = 0
@@ -189,18 +192,20 @@ const sslOnOff = computed({
 })
 
 // 表单验证规则
-const rules = {
+useLocalizedValidation(formRef)
+
+const rules = computed(() => ({
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }
+    { required: true, message: t('settings.email.enterUsername'), trigger: 'blur' },
+    { type: 'email', message: t('settings.user.validEmail'), trigger: 'blur' }
   ],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
-  host: [{ required: true, message: '请输入邮件服务器', trigger: 'blur' }],
+  password: [{ required: true, message: t('settings.email.enterPassword'), trigger: 'blur' }],
+  host: [{ required: true, message: t('settings.email.enterServer'), trigger: 'blur' }],
   from: [
-    { required: true, message: '请输入发件人', trigger: 'blur' },
-    { type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }
+    { required: true, message: t('settings.email.enterFrom'), trigger: 'blur' },
+    { type: 'email', message: t('settings.user.validEmail'), trigger: 'blur' }
   ]
-}
+}))
 
 // 测试发送
 const testDialogVisible = ref(false)
@@ -231,8 +236,8 @@ async function loadConfig() {
   } catch (error) {
     if (!active || request !== readRequestId) return
     console.error('Failed to load email config:', error)
-    loadError.value = '邮件配置读取失败，暂不可保存或测试，请重试读取'
-    ElMessage.error('加载邮件配置失败')
+    loadError.value = message('settings.email.readFailed')
+    ElMessage.error(t('settings.email.loadFailed'))
   } finally {
     if (active && request === readRequestId) loading.value = false
   }
@@ -255,11 +260,11 @@ async function handleSave() {
   }
 
   try {
-    await ElMessageBox.confirm('确定要保存邮件配置吗？', '变更操作', {
+    await ElMessageBox.confirm(t('settings.email.saveConfirm'), t('settings.email.changeTitle'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+      confirmButtonText: t('settings.email.confirm'),
+      cancelButtonText: t('common.cancel'),
       type: 'warning'
     })
   } catch {
@@ -271,14 +276,14 @@ async function handleSave() {
     const response = await apiService.post('/api/email-config', form)
 
     if (response?.code === '200' || response?.data?.code === '200') {
-      ElMessage.success('邮件配置保存成功')
+      ElMessage.success(t('settings.email.saved'))
       originalData.value = { ...form }
     } else {
-      ElMessage.error(response?.msg || response?.data?.msg || '保存失败')
+      ElMessage.error(response?.msg || response?.data?.msg || t('settings.user.saveFailed'))
     }
   } catch (error) {
     console.error('Failed to save email config:', error)
-    ElMessage.error('保存邮件配置失败')
+    ElMessage.error(t('settings.email.saveFailed'))
   } finally {
     saving.value = false
   }
@@ -288,7 +293,7 @@ async function handleSave() {
 function handleTest() {
   if (!active || !configReady.value || loading.value || saving.value || sending.value) return
   if (hasUnsavedChanges()) {
-    ElMessage.warning('请先保存配置后再进行测试')
+    ElMessage.warning(t('settings.email.saveBeforeTest'))
     return
   }
 
@@ -300,7 +305,7 @@ function handleTest() {
 async function handleSendTest() {
   if (!active || !configReady.value || loading.value || saving.value || sending.value) return
   if (!testRecipient.value) {
-    ElMessage.warning('请输入收件人邮箱')
+    ElMessage.warning(t('settings.email.enterRecipient'))
     return
   }
 
@@ -311,14 +316,14 @@ async function handleSendTest() {
     )
 
     if (response?.code === '200' || response?.data?.code === '200') {
-      ElMessage.success('测试邮件发送成功')
+      ElMessage.success(t('settings.email.sent'))
       testDialogVisible.value = false
     } else {
-      ElMessage.error(response?.msg || response?.data?.msg || '发送失败')
+      ElMessage.error(response?.msg || response?.data?.msg || t('settings.email.sendFailed'))
     }
   } catch (error) {
     console.error('Failed to send test email:', error)
-    ElMessage.error('测试邮件发送失败')
+    ElMessage.error(t('settings.email.testFailed'))
   } finally {
     sending.value = false
   }
@@ -332,7 +337,7 @@ function pauseReading() {
   active = false
   interrupted = loading.value
   readRequestId += 1
-  if (loading.value) loadError.value = '邮件配置读取已中断，返回后将重新读取'
+  if (loading.value) loadError.value = message('settings.email.interrupted')
   loading.value = false
 }
 onDeactivated(pauseReading)

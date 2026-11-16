@@ -2,14 +2,14 @@
   <div class="ops-page-layout">
     <!-- 标签页 -->
     <el-tabs v-model="activeTab" class="ops-tabs" @tab-change="handleTabChange">
-      <el-tab-pane label="系统参数配置" name="sysParams">
+      <el-tab-pane :label="t('settings.params.systemConfig')" name="sysParams">
         <!-- 筛选区 -->
         <div class="ops-filter-bar">
           <el-form :inline="true" size="small" @submit.prevent>
-            <el-form-item label="关键词">
+            <el-form-item :label="t('settings.user.keyword')">
               <el-input
                 v-model="sysSearchKeyword"
-                placeholder="搜索域/名称/参数值/描述"
+                :placeholder="t('settings.params.systemSearch')"
                 clearable
                 style="width: 220px"
                 maxlength="50"
@@ -31,7 +31,7 @@
         <div class="ops-action-bar">
           <el-button type="primary" size="small" @click="handleCreateSysParam">
             <i class="fa fa-plus"></i>
-            新建
+            {{ t('settings.params.create') }}
           </el-button>
           <span style="flex: 1"></span>
           <el-button
@@ -40,7 +40,7 @@
             size="small"
             :loading="sysLoading"
             @click="loadSysParams"
-            title="刷新"
+            :title="t('common.refresh')"
           >
             <el-icon v-show="!sysLoading"><Refresh /></el-icon>
           </el-button>
@@ -54,22 +54,22 @@
             style="width: 100%"
             max-height="calc(100vh - 364px)"
           >
-            <el-table-column prop="domain" label="域" width="100" />
-            <el-table-column prop="name" label="参数名称" min-width="120" show-overflow-tooltip />
-            <el-table-column prop="value" label="参数值" min-width="300" show-overflow-tooltip />
+            <el-table-column prop="domain" :label="t('settings.params.domain')" width="100" />
+            <el-table-column prop="name" :label="t('settings.params.name')" min-width="120" show-overflow-tooltip />
+            <el-table-column prop="value" :label="t('settings.params.value')" min-width="300" show-overflow-tooltip />
             <el-table-column
               prop="description"
-              label="描述"
+              :label="t('settings.team.description')"
               min-width="250"
               show-overflow-tooltip
             />
-            <el-table-column label="操作" width="150" fixed="right" align="left">
+            <el-table-column :label="t('common.actions')" min-width="220" fixed="right" align="left">
               <template #default="{ row }">
                 <el-button text type="primary" size="small" @click="handleViewSysParam(row)">
-                  查看
+                  {{ t('common.view') }}
                 </el-button>
                 <el-button text type="primary" size="small" @click="handleEditSysParam(row)">
-                  编辑
+                  {{ t('common.edit') }}
                 </el-button>
                 <el-button
                   v-if="!row.cannotDelete"
@@ -78,7 +78,7 @@
                   size="small"
                   @click="handleDeleteSysParam(row)"
                 >
-                  删除
+                  {{ t('common.delete') }}
                 </el-button>
               </template>
             </el-table-column>
@@ -99,14 +99,14 @@
         </div>
       </el-tab-pane>
 
-      <el-tab-pane label="应用参数配置" name="appParams">
+      <el-tab-pane :label="t('settings.params.appConfig')" name="appParams">
         <!-- 筛选区 -->
         <div class="ops-filter-bar">
           <el-form :inline="true" size="small" @submit.prevent>
-            <el-form-item label="关键词">
+            <el-form-item :label="t('settings.user.keyword')">
               <el-input
                 v-model="appSearchKeyword"
-                placeholder="搜索名称/参数值/描述"
+                :placeholder="t('settings.params.appSearch')"
                 clearable
                 style="width: 220px"
                 maxlength="50"
@@ -128,7 +128,7 @@
         <div class="ops-action-bar">
           <el-button type="primary" size="small" @click="handleCreateAppParam">
             <i class="fa fa-plus"></i>
-            新建
+            {{ t('settings.params.create') }}
           </el-button>
           <span style="flex: 1"></span>
           <el-button
@@ -137,7 +137,7 @@
             size="small"
             :loading="appLoading"
             @click="loadAppParams"
-            title="刷新"
+            :title="t('common.refresh')"
           >
             <el-icon v-show="!appLoading"><Refresh /></el-icon>
           </el-button>
@@ -151,24 +151,24 @@
             style="width: 100%"
             max-height="calc(100vh - 364px)"
           >
-            <el-table-column prop="name" label="参数名称" min-width="120" show-overflow-tooltip />
-            <el-table-column prop="value" label="参数值" min-width="350" show-overflow-tooltip />
+            <el-table-column prop="name" :label="t('settings.params.name')" min-width="120" show-overflow-tooltip />
+            <el-table-column prop="value" :label="t('settings.params.value')" min-width="350" show-overflow-tooltip />
             <el-table-column
               prop="description"
-              label="描述"
+              :label="t('settings.team.description')"
               min-width="300"
               show-overflow-tooltip
             />
-            <el-table-column label="操作" width="150" fixed="right" align="left">
+            <el-table-column :label="t('common.actions')" min-width="220" fixed="right" align="left">
               <template #default="{ row }">
                 <el-button text type="primary" size="small" @click="handleViewAppParam(row)">
-                  查看
+                  {{ t('common.view') }}
                 </el-button>
                 <el-button text type="primary" size="small" @click="handleEditAppParam(row)">
-                  编辑
+                  {{ t('common.edit') }}
                 </el-button>
                 <el-button text type="danger" size="small" @click="handleDeleteAppParam(row)">
-                  删除
+                  {{ t('common.delete') }}
                 </el-button>
               </template>
             </el-table-column>
@@ -203,66 +203,66 @@
         v-if="dialogMode !== 'view'"
         ref="sysFormRef"
         :model="sysForm"
-        :rules="sysFormRules"
-        label-width="100px"
+        :rules="sysFormRules" :validate-on-rule-change="false"
+        label-width="150px"
       >
         <!-- 提示信息 -->
-        <el-alert title="提示" type="success" :closable="true" show-icon class="mb-4">
+        <el-alert :title="t('settings.params.notice')" type="success" :closable="true" show-icon class="mb-4">
           <template #default>
-            建议配置的与部署环境相关的，不需要经常修改的参数，比如ip，文件路径，接口地址等等。
+            {{ t('settings.params.environmentHint') }}
             <br />
-            禁止配置需要频繁修改或者与安全相关的参数，比如数据库的账号密码，调用接口验证的token等等。
+            {{ t('settings.params.exclusionsHint') }}
           </template>
         </el-alert>
 
-        <el-form-item label="域" prop="domain">
+        <el-form-item :label="t('settings.params.domain')" prop="domain">
           <el-input
             v-model="sysForm.domain"
-            placeholder="请输入参数所属域，与服务端配置保持一致"
+            :placeholder="t('settings.params.domainPlaceholder')"
             :disabled="sysForm.editValueOnly"
             maxlength="30"
           />
-          <div class="help-text">域用于区分参数所属模块；已有域名需与服务端配置保持一致，请勿随意修改</div>
+          <div class="help-text">{{ t('settings.params.domainHint') }}</div>
         </el-form-item>
-        <el-form-item label="参数名称" prop="name">
+        <el-form-item :label="t('settings.params.name')" prop="name">
           <el-input
             v-model="sysForm.name"
-            placeholder="请输入参数名称"
+            :placeholder="t('settings.params.enterName')"
             :disabled="sysForm.editValueOnly"
             maxlength="50"
           />
-          <div class="help-text">参数名称需唯一，建议使用下划线命名法</div>
+          <div class="help-text">{{ t('settings.params.nameHint') }}</div>
         </el-form-item>
-        <el-form-item label="参数值" prop="value">
-          <el-input v-model="sysForm.value" type="textarea" :rows="6" placeholder="请输入参数值" />
+        <el-form-item :label="t('settings.params.value')" prop="value">
+          <el-input v-model="sysForm.value" type="textarea" :rows="6" :placeholder="t('settings.params.enterValue')" />
         </el-form-item>
-        <el-form-item label="是否加密">
+        <el-form-item :label="t('settings.params.encrypted')">
           <el-radio-group v-model="sysForm.isEncrypt">
-            <el-radio :value="1">启用</el-radio>
-            <el-radio :value="0">禁用</el-radio>
+            <el-radio :value="1">{{ t('settings.user.enable') }}</el-radio>
+            <el-radio :value="0">{{ t('settings.user.disable') }}</el-radio>
           </el-radio-group>
-          <div class="help-text">启用后参数值将以加密形式存储</div>
+          <div class="help-text">{{ t('settings.params.encryptHint') }}</div>
         </el-form-item>
-        <el-form-item label="描述" prop="description">
+        <el-form-item :label="t('settings.team.description')" prop="description">
           <el-input
             v-model="sysForm.description"
             type="textarea"
             :rows="3"
-            placeholder="请输入参数描述"
+            :placeholder="t('settings.params.descriptionPlaceholder')"
           />
         </el-form-item>
       </el-form>
       <el-descriptions v-else :column="1" border label-width="100">
-        <el-descriptions-item label="域">{{ sysForm.domain }}</el-descriptions-item>
-        <el-descriptions-item label="参数名称">{{ sysForm.name }}</el-descriptions-item>
-        <el-descriptions-item label="参数值">
+        <el-descriptions-item :label="t('settings.params.domain')">{{ sysForm.domain }}</el-descriptions-item>
+        <el-descriptions-item :label="t('settings.params.name')">{{ sysForm.name }}</el-descriptions-item>
+        <el-descriptions-item :label="t('settings.params.value')">
           <pre class="param-value-pre">{{ sysForm.value }}</pre>
         </el-descriptions-item>
-        <el-descriptions-item label="描述">{{ sysForm.description }}</el-descriptions-item>
+        <el-descriptions-item :label="t('settings.team.description')">{{ sysForm.description }}</el-descriptions-item>
       </el-descriptions>
       <template #footer>
         <el-button @click="sysDialogVisible = false">
-          {{ dialogMode === 'view' ? '关闭' : '取消' }}
+          {{ dialogMode === 'view' ? t('common.close') : t('common.cancel') }}
         </el-button>
         <el-button
           v-if="dialogMode !== 'view'"
@@ -270,7 +270,7 @@
           :loading="saving"
           @click="handleSaveSysParam"
         >
-          保存
+          {{ t('common.save') }}
         </el-button>
       </template>
     </el-dialog>
@@ -288,34 +288,34 @@
         v-if="dialogMode !== 'view'"
         ref="appFormRef"
         :model="appForm"
-        :rules="appFormRules"
-        label-width="100px"
+        :rules="appFormRules" :validate-on-rule-change="false"
+        label-width="150px"
       >
-        <el-form-item label="参数名称" prop="name">
-          <el-input v-model="appForm.name" placeholder="请输入参数名称" maxlength="50" />
+        <el-form-item :label="t('settings.params.name')" prop="name">
+          <el-input v-model="appForm.name" :placeholder="t('settings.params.enterName')" maxlength="50" />
         </el-form-item>
-        <el-form-item label="参数值" prop="value">
-          <el-input v-model="appForm.value" type="textarea" :rows="6" placeholder="请输入参数值" />
+        <el-form-item :label="t('settings.params.value')" prop="value">
+          <el-input v-model="appForm.value" type="textarea" :rows="6" :placeholder="t('settings.params.enterValue')" />
         </el-form-item>
-        <el-form-item label="描述" prop="description">
+        <el-form-item :label="t('settings.team.description')" prop="description">
           <el-input
             v-model="appForm.description"
             type="textarea"
             :rows="3"
-            placeholder="请输入参数描述"
+            :placeholder="t('settings.params.descriptionPlaceholder')"
           />
         </el-form-item>
       </el-form>
       <el-descriptions v-else :column="1" border label-width="100">
-        <el-descriptions-item label="参数名称">{{ appForm.name }}</el-descriptions-item>
-        <el-descriptions-item label="参数值">
+        <el-descriptions-item :label="t('settings.params.name')">{{ appForm.name }}</el-descriptions-item>
+        <el-descriptions-item :label="t('settings.params.value')">
           <pre class="param-value-pre">{{ appForm.value }}</pre>
         </el-descriptions-item>
-        <el-descriptions-item label="描述">{{ appForm.description }}</el-descriptions-item>
+        <el-descriptions-item :label="t('settings.team.description')">{{ appForm.description }}</el-descriptions-item>
       </el-descriptions>
       <template #footer>
         <el-button @click="appDialogVisible = false">
-          {{ dialogMode === 'view' ? '关闭' : '取消' }}
+          {{ dialogMode === 'view' ? t('common.close') : t('common.cancel') }}
         </el-button>
         <el-button
           v-if="dialogMode !== 'view'"
@@ -323,7 +323,7 @@
           :loading="saving"
           @click="handleSaveAppParam"
         >
-          保存
+          {{ t('common.save') }}
         </el-button>
       </template>
     </el-dialog>
@@ -331,6 +331,8 @@
 </template>
 
 <script setup>
+import { t } from '@/core/i18n'
+import { useLocalizedValidation } from '@/core/i18n/validation'
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
@@ -379,16 +381,20 @@ const dialogMode = ref('create') // create, edit, view
 const saving = ref(false)
 
 // 表单验证规则
-const sysFormRules = {
-  domain: [{ required: true, message: '请输入域', trigger: 'blur' }],
-  name: [{ required: true, message: '请输入参数名称', trigger: 'blur' }],
-  value: [{ required: true, message: '请输入参数值', trigger: 'blur' }]
-}
+useLocalizedValidation(sysFormRef)
 
-const appFormRules = {
-  name: [{ required: true, message: '请输入参数名称', trigger: 'blur' }],
-  value: [{ required: true, message: '请输入参数值', trigger: 'blur' }]
-}
+const sysFormRules = computed(() => ({
+  domain: [{ required: true, message: t('settings.params.enterDomain'), trigger: 'blur' }],
+  name: [{ required: true, message: t('settings.params.enterName'), trigger: 'blur' }],
+  value: [{ required: true, message: t('settings.params.enterValue'), trigger: 'blur' }]
+}))
+
+useLocalizedValidation(appFormRef)
+
+const appFormRules = computed(() => ({
+  name: [{ required: true, message: t('settings.params.enterName'), trigger: 'blur' }],
+  value: [{ required: true, message: t('settings.params.enterValue'), trigger: 'blur' }]
+}))
 
 // 过滤后的系统参数
 const filteredSysParams = computed(() => {
@@ -454,10 +460,9 @@ function handleAppReset() {
 
 // 获取对话框标题
 function getDialogTitle(type) {
-  const typeLabel = type === 'sys' ? '系统参数' : '应用参数'
-  if (dialogMode.value === 'create') return `新建${typeLabel}`
-  if (dialogMode.value === 'edit') return `编辑${typeLabel}`
-  return `${typeLabel}详情`
+  if (dialogMode.value === 'create') return type === 'sys' ? t('settings.params.createSystem') : t('settings.params.createApp')
+  if (dialogMode.value === 'edit') return type === 'sys' ? t('settings.params.editSystem') : t('settings.params.editApp')
+  return type === 'sys' ? t('settings.params.viewSystem') : t('settings.params.viewApp')
 }
 
 // 加载系统参数
@@ -468,7 +473,7 @@ async function loadSysParams() {
     sysParams.value = response?.data || response || []
   } catch (error) {
     console.error('Failed to load sys params:', error)
-    ElMessage.error('加载系统参数失败')
+    ElMessage.error(t('settings.params.systemFailed'))
   } finally {
     sysLoading.value = false
   }
@@ -482,7 +487,7 @@ async function loadAppParams() {
     appParams.value = response?.data || response || []
   } catch (error) {
     console.error('Failed to load app params:', error)
-    ElMessage.error('加载应用参数失败')
+    ElMessage.error(t('settings.params.appFailed'))
   } finally {
     appLoading.value = false
   }
@@ -538,16 +543,16 @@ async function handleSaveSysParam() {
   try {
     if (dialogMode.value === 'create') {
       await paramsApi.createSysParam(sysForm.value)
-      ElMessage.success('创建成功')
+      ElMessage.success(t('settings.params.created'))
     } else {
       await paramsApi.updateSysParam(sysForm.value)
-      ElMessage.success('保存成功')
+      ElMessage.success(t('settings.user.saved'))
     }
     sysDialogVisible.value = false
     loadSysParams()
   } catch (error) {
     console.error('Failed to save sys param:', error)
-    ElMessage.error('保存失败')
+    ElMessage.error(t('settings.user.saveFailed'))
   } finally {
     saving.value = false
   }
@@ -555,12 +560,12 @@ async function handleSaveSysParam() {
 
 async function handleDeleteSysParam(row) {
   try {
-    await ElMessageBox.confirm(`确定要删除参数"${row.name}"吗？`, '删除确认', {
+    await ElMessageBox.confirm(t('settings.params.deleteConfirm', { name: row.name }), t('settings.params.deleteTitle'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning',
-      confirmButtonText: '删除',
-      cancelButtonText: '取消'
+      confirmButtonText: t('common.delete'),
+      cancelButtonText: t('common.cancel')
     })
   } catch {
     return
@@ -568,11 +573,11 @@ async function handleDeleteSysParam(row) {
 
   try {
     await paramsApi.deleteSysParam(row.id)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('settings.user.deleted'))
     loadSysParams()
   } catch (error) {
     console.error('Failed to delete sys param:', error)
-    ElMessage.error('删除失败')
+    ElMessage.error(t('settings.user.deleteFailed'))
   }
 }
 
@@ -609,16 +614,16 @@ async function handleSaveAppParam() {
   try {
     if (dialogMode.value === 'create') {
       await paramsApi.createAppParam(appForm.value)
-      ElMessage.success('创建成功')
+      ElMessage.success(t('settings.params.created'))
     } else {
       await paramsApi.updateAppParam(appForm.value)
-      ElMessage.success('保存成功')
+      ElMessage.success(t('settings.user.saved'))
     }
     appDialogVisible.value = false
     loadAppParams()
   } catch (error) {
     console.error('Failed to save app param:', error)
-    ElMessage.error('保存失败')
+    ElMessage.error(t('settings.user.saveFailed'))
   } finally {
     saving.value = false
   }
@@ -626,12 +631,12 @@ async function handleSaveAppParam() {
 
 async function handleDeleteAppParam(row) {
   try {
-    await ElMessageBox.confirm(`确定要删除参数"${row.name}"吗？`, '删除确认', {
+    await ElMessageBox.confirm(t('settings.params.deleteConfirm', { name: row.name }), t('settings.params.deleteTitle'), {
       closeOnClickModal: false,
       closeOnPressEscape: false,
       type: 'warning',
-      confirmButtonText: '删除',
-      cancelButtonText: '取消'
+      confirmButtonText: t('common.delete'),
+      cancelButtonText: t('common.cancel')
     })
   } catch {
     return
@@ -639,11 +644,11 @@ async function handleDeleteAppParam(row) {
 
   try {
     await paramsApi.deleteAppParam(row.id)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('settings.user.deleted'))
     loadAppParams()
   } catch (error) {
     console.error('Failed to delete app param:', error)
-    ElMessage.error('删除失败')
+    ElMessage.error(t('settings.user.deleteFailed'))
   }
 }
 

@@ -62,10 +62,10 @@ export const YUM_REPO_DIFF_TYPE_TAG_TYPES = {
 }
 
 export const SQL_IMPORT_STATUS_LABELS = {
-  PENDING: '待执行',
-  RUNNING: '执行中',
-  SUCCESS: '执行成功',
-  FAILED: '执行失败'
+  get PENDING() { return t('yumRepo.sqlImportStatus.pending') },
+  get RUNNING() { return t('yumRepo.sqlImportStatus.running') },
+  get SUCCESS() { return t('yumRepo.sqlImportStatus.success') },
+  get FAILED() { return t('yumRepo.sqlImportStatus.failed') }
 }
 
 export const SQL_IMPORT_STATUS_TAG_TYPES = {
