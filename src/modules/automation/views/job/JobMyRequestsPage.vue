@@ -101,7 +101,7 @@
 
         <el-table-column :label="t('automation.list.validDuration')" width="110">
           <template #default="{ row }">
-            {{ row.approveMode !== 'limitParams' && row.validHour ? t('automation.approval.durationHours', { count: row.validHour }) : '-' }}
+            {{ row.approveMode !== 'limitParams' && row.validHour ? formatApprovalDuration(row.validHour) : '-' }}
           </template>
         </el-table-column>
 
@@ -117,7 +117,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column :label="t('automation.workbench.status')" width="100">
+        <el-table-column :label="t('automation.workbench.status')" :width="currentLocale === 'en-US' ? 180 : 100">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)">
               {{ getStatusLabel(row.status) }}
@@ -172,9 +172,10 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 
 import { getAutomationToolTitle } from '../../utils/resourcePresentation'
+import { formatApprovalDuration } from '../../utils/approvalPresentation'
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'

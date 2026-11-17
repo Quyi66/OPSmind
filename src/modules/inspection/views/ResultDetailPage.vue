@@ -363,7 +363,7 @@
             :placeholder="t('inspection.report.searchOutput')"
             clearable
             size="small"
-            style="width: 240px"
+            :style="{ width: currentLocale === 'en-US' ? '300px' : '240px' }"
           >
             <template #prefix>
               <i class="fa fa-search" aria-hidden="true"></i>
@@ -403,7 +403,7 @@
             <span class="output-snippet">{{ row.output || t('inspection.report.none') }}</span>
           </template>
         </el-table-column>
-        <el-table-column :label="t('common.actions')" width="120" fixed="right">
+        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 196 : 120" fixed="right">
           <template #default="{ row }">
             <el-button
               v-if="!isInWhitelist(row)"
@@ -515,7 +515,7 @@
 </template>
 
 <script setup>
-import { t, i18n } from '@/core/i18n'
+import { t, i18n, currentLocale } from '@/core/i18n'
 import { I18nT } from 'vue-i18n'
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'

@@ -8,7 +8,7 @@
             v-model="filters.keyword"
             :placeholder="t('automation.command.search')"
             clearable
-            style="width: 240px"
+            :style="{ width: currentLocale === 'en-US' ? '400px' : '240px' }"
             @input="handleSearch"
             @keyup.enter="handleSearch"
             @clear="handleSearch"
@@ -133,7 +133,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="status" :label="t('automation.workbench.status')" width="100" align="left" sortable="custom">
+        <el-table-column prop="status" :label="t('automation.workbench.status')" :width="currentLocale === 'en-US' ? 160 : 100" align="left" sortable="custom">
           <template #default="{ row }">
             <el-tag
               :type="getStatusTagType(row.status)"
@@ -212,7 +212,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 
 import { ref, reactive, computed, onMounted, inject, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'

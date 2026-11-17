@@ -70,6 +70,15 @@ describe('local messages and navigation', () => {
     })
     expect(item.children[0].label).toBe('配置下发')
   })
+  it('selects the English singular and plural forms from named count parameters', async () => {
+    await setLocale('en-US', { persist: false })
+    expect(t('automation.approval.durationHours', { count: 1 })).toBe('1 hour')
+    expect(t('automation.approval.durationHours', { count: 2 })).toBe('2 hours')
+    expect(t('selection.selectedCount', { count: 1 })).toBe('1 item selected')
+    expect(t('selection.selectedCount', { count: 0 })).toBe('0 items selected')
+    await setLocale('zh-CN', { persist: false })
+    expect(t('automation.approval.durationHours', { count: 1 })).toBe('1 小时')
+  })
   it('supports nested and dotted legacy keys and explicit Simplified Chinese fallback', async () => {
     expect(
       flattenTranslations({ app: { 'page.title': '标题', child: { label: '名称' } } })

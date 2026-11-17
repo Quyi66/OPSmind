@@ -94,7 +94,7 @@
                   </el-link>
                 </template>
               </el-table-column>
-              <el-table-column prop="ci_type" :label="t('asset.applicableType')" width="160" sortable="custom">
+              <el-table-column prop="ci_type" :label="t('asset.applicableType')" :width="currentLocale === 'en-US' ? 230 : 160" sortable="custom">
                 <template #default="{ row }">
                   <span class="cit-display">{{ row.ci_type || '-' }}</span>
                 </template>
@@ -102,7 +102,7 @@
               <el-table-column
                 prop="total"
                 :label="t('asset.boundHostCount')"
-                width="120"
+                :width="currentLocale === 'en-US' ? 160 : 120"
                 align="left"
                 sortable="custom"
               >
@@ -231,7 +231,7 @@
                   </el-link>
                 </template>
               </el-table-column>
-              <el-table-column prop="ci_type" :label="t('asset.applicableType')" width="160" sortable="custom">
+              <el-table-column prop="ci_type" :label="t('asset.applicableType')" :width="currentLocale === 'en-US' ? 230 : 160" sortable="custom">
                 <template #default="{ row }">
                   <span class="cit-display">{{ row.ci_type || '-' }}</span>
                 </template>
@@ -239,7 +239,7 @@
               <el-table-column
                 prop="total"
                 :label="t('asset.boundHostCount')"
-                width="120"
+                :width="currentLocale === 'en-US' ? 160 : 120"
                 align="left"
                 sortable="custom"
               >
@@ -299,7 +299,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'

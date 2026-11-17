@@ -141,7 +141,7 @@
                       />
                     </template>
                   </el-table-column>
-                  <el-table-column :label="t('common.actions')" width="68" align="center">
+                  <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 96 : 68" align="center">
                     <template #default="{ $index }">
                       <el-button
                         type="danger"
@@ -211,7 +211,7 @@
 </template>
 
 <script setup>
-import { t, i18n } from '@/core/i18n'
+import { t, i18n, currentLocale } from '@/core/i18n'
 import { useLocalizedValidation } from '@/core/i18n/validation'
 import { I18nT } from 'vue-i18n'
 import { ref, computed, watch, nextTick } from 'vue'

@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout overview-page">
+  <div class="ops-page-layout overview-page" :class="{ 'is-english': currentLocale === 'en-US' }">
     <div class="overview-toolbar">
       <span>{{ t('hostUser.userAndOperationStatistics') }}</span>
       <el-button size="small" :loading="statsLoading || chartLoading" @click="refreshOverview">
@@ -573,6 +573,23 @@ onBeforeUnmount(() => {
 .stat-cards {
   flex-shrink: 0;
   margin-bottom: 0;
+}
+
+.overview-page.is-english .stat-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (min-width: 1800px) {
+  .overview-page.is-english .stat-cards {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1100px) {
+  .overview-page.is-english .stat-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .chart-section--flex {

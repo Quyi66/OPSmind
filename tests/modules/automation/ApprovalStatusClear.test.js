@@ -3,6 +3,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { ElInput, ElOption, ElPagination, ElSelect, ElTable, ElTableColumn } from 'element-plus'
 import Requests from '@/modules/automation/views/job/JobMyRequestsPage.vue'
 import Approvals from '@/modules/automation/views/job/JobApprovalsPage.vue'
+import { setLocale } from '@/core/i18n'
 
 const api = vi.hoisted(() => ({ fetchMyApproveList: vi.fn(), fetchApproveList: vi.fn() }))
 vi.mock('@/modules/automation/api/jao', () => api)
@@ -68,17 +69,35 @@ beforeEach(() => {
     }
   )
 })
-afterEach(() => {
+afterEach(async () => {
   wrapper?.unmount()
   host?.remove()
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
+  await setLocale('zh-CN', { persist: false })
 })
 
 describe.each([
   ['我的申请', Requests, 'fetchMyApproveList'],
   ['待我审批', Approvals, 'fetchApproveList']
 ])('%s状态清除', (_, component, query) => {
+  it('normalizes English duration counts without changing backend rows or the original Chinese display', async () => {
+    const records = ['02', '0', 1, 'invalid', null, 'Infinity'].map((validHour, index) => ({
+      id: `duration-${index}`, jobId: `tool-${index}`, jobName: `Tool ${index}`,
+      status: 0, approveMode: 'unlimitedParams', validHour
+    }))
+    api[query].mockResolvedValueOnce({ data: records })
+    await setLocale('en-US', { persist: false })
+    await open(component)
+    const durations = () => wrapper.findAll('.el-table__body-wrapper tbody tr').map(row => row.findAll('td')[4].text())
+    expect(durations()).toEqual(['2 hours', '0 hours', '1 hour', '-', '-', '-'])
+    await setLocale('zh-CN', { persist: false })
+    await flushPromises()
+    expect(durations()).toEqual(['02 小时', '0 小时', '1 小时', 'invalid 小时', '-', 'Infinity 小时'])
+    expect(state().tableData).toEqual(records)
+    expect(api[query]).toHaveBeenCalledTimes(1)
+  })
+
   it('数值0正常筛出审批中，点击状态清除恢复全部状态', async () => {
     await open(component)
     await selectStatus(0)

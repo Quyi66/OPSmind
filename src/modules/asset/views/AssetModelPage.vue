@@ -17,7 +17,7 @@
               v-model="keyword"
               :placeholder="t('asset.searchModel')"
               clearable
-              style="width: 220px"
+              :style="{ width: currentLocale === 'en-US' ? '280px' : '220px' }"
               @keyup.enter="handleSearch"
               @clear="handleSearch"
             />

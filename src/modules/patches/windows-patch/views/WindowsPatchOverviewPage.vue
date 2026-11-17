@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout win-patch-page">
+  <div class="ops-page-layout win-patch-page" :class="{ 'is-english': currentLocale === 'en-US' }">
     <div class="ops-filter-bar">
       <el-form :model="filters" :inline="true" size="small" @submit.prevent>
         <el-form-item :label="t('execution.ui.host')">
@@ -37,7 +37,7 @@
             clearable
             filterable
             allow-create
-            style="width: 180px"
+            :style="{ width: currentLocale === 'en-US' ? '250px' : '180px' }"
             @change="handleFilterChange"
           >
             <el-option
@@ -141,7 +141,7 @@
             {{ pickValue(row, ['osDistro', 'os_distro'], '-') }}
           </template>
         </el-table-column>
-        <el-table-column width="80" align="center">
+        <el-table-column :width="currentLocale === 'en-US' ? 128 : 80" align="center">
           <template #header>
             <span class="win-patch-severity-header">
               {{ t('patches.catalog.critical') }}
@@ -162,7 +162,7 @@
             </button>
           </template>
         </el-table-column>
-        <el-table-column width="80" align="center">
+        <el-table-column :width="currentLocale === 'en-US' ? 128 : 80" align="center">
           <template #header>
             <span class="win-patch-severity-header">
               {{ t('patches.catalog.important') }}
@@ -183,7 +183,7 @@
             </button>
           </template>
         </el-table-column>
-        <el-table-column width="80" align="center">
+        <el-table-column :width="currentLocale === 'en-US' ? 128 : 80" align="center">
           <template #header>
             <span class="win-patch-severity-header">
               {{ t('patches.catalog.moderate') }}
@@ -204,7 +204,7 @@
             </button>
           </template>
         </el-table-column>
-        <el-table-column width="80" align="center">
+        <el-table-column :width="currentLocale === 'en-US' ? 96 : 80" align="center">
           <template #header>
             <span class="win-patch-severity-header">
               {{ t('patches.catalog.low') }}
@@ -225,7 +225,7 @@
             </button>
           </template>
         </el-table-column>
-        <el-table-column width="90" align="center">
+        <el-table-column :width="currentLocale === 'en-US' ? 144 : 90" align="center">
           <template #header>
             <span class="win-patch-severity-header">
               {{ t('patches.windows.unclassified') }}
@@ -253,12 +253,12 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column :label="t('common.version')" min-width="120">
+        <el-table-column :label="t('common.version')" :min-width="currentLocale === 'en-US' ? 180 : 120" :class-name="currentLocale === 'en-US' ? 'win-patch-version-column' : undefined">
           <template #default="{ row }">
             {{ pickValue(row, ['osVersion', 'os_version'], '-') }}
           </template>
         </el-table-column>
-        <el-table-column :label="t('patches.cve.architecture')" min-width="90">
+        <el-table-column :label="t('patches.cve.architecture')" :min-width="currentLocale === 'en-US' ? 136 : 90">
           <template #default="{ row }">
             {{ pickValue(row, ['osArch', 'os_arch'], '-') }}
           </template>
@@ -278,7 +278,7 @@
             <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
-        <el-table-column :label="t('patches.windows.memory')" width="170">
+        <el-table-column :label="t('patches.windows.memory')" :width="currentLocale === 'en-US' ? 240 : 170">
           <template #default="{ row }">
             <div v-if="row.memoryOverview" class="memory-overview">
               <div
@@ -329,7 +329,7 @@
             {{ formatDateTime(pickValue(row, ['lastScanDate', 'last_scan_date'], '')) }}
           </template>
         </el-table-column>
-        <el-table-column :label="t('common.actions')" width="110" fixed="right">
+        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 180 : 110" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="openHostDrawer(row)">
               {{ t('patches.windows.viewPatches') }}
@@ -387,7 +387,7 @@
 import { createPatchTaskError } from '@/modules/patches/utils/patchTaskFeedback'
 import { message as localMessage, messageRef } from '@/core/i18n/feedback'
 
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 import {
   computed,
   onActivated,
@@ -949,5 +949,15 @@ onBeforeUnmount(invalidateHostRequest)
 
 :deep(.win-patch-table__time-column .cell) {
   white-space: nowrap;
+}
+
+.win-patch-page.is-english {
+  .win-patch-severity-header {
+    white-space: nowrap;
+  }
+
+  :deep(.win-patch-version-column .cell) {
+    white-space: nowrap;
+  }
 }
 </style>

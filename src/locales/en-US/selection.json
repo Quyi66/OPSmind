@@ -66,7 +66,7 @@
   "selectTags": "Select tags",
   "clearTags": "Clear tags",
   "noTags": "No tags available",
-  "selectedCount": "{count} items selected",
+  "selectedCount": "{count} item selected | {count} items selected",
   "loadMoreDevices": "Load more selected devices ({shown}/{total} shown)",
   "loadMore": "Load more ({shown}/{total} shown)",
   "deviceCount": "{count} devices",

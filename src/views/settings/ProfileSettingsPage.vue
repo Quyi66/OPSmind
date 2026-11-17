@@ -90,7 +90,7 @@
                   :model="form"
                   :rules="rules"
                   :validate-on-rule-change="false"
-                  :label-width="currentLocale === 'en-US' ? '140px' : '100px'"
+                  :label-width="currentLocale === 'en-US' ? '160px' : '100px'"
                   label-position="left"
                   class="profile-form"
                 >
@@ -131,7 +131,7 @@
                   :model="passwordForm"
                   :rules="passwordRules"
                   :validate-on-rule-change="false"
-                  :label-width="currentLocale === 'en-US' ? '140px' : '100px'"
+                  :label-width="currentLocale === 'en-US' ? '160px' : '100px'"
                   label-position="left"
                   class="profile-form"
                 >

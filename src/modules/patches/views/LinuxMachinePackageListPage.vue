@@ -27,7 +27,7 @@
             v-model="filters.keyword"
             clearable
             :placeholder="t('patches.catalog.packageSearch')"
-            style="width: 150px"
+            :style="{ width: currentLocale === 'en-US' ? '310px' : '150px' }"
             @keyup.enter="handleSearch"
           @clear="handleSearch" />
         </el-form-item>
@@ -51,7 +51,7 @@
             v-model="filters.osVersion"
             clearable
             :placeholder="t('patches.catalog.osVersionExample')"
-            style="width: 120px"
+            :style="{ width: currentLocale === 'en-US' ? '160px' : '120px' }"
             @keyup.enter="handleSearch"
           @clear="handleSearch" />
         </el-form-item>
@@ -184,7 +184,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'

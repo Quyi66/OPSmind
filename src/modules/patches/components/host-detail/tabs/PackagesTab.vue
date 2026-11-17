@@ -9,7 +9,7 @@
             size="small"
             :placeholder="t('patches.linux.searchRpm')"
             clearable
-            style="width: 220px"
+            :style="{ width: currentLocale === 'en-US' ? '340px' : '220px' }"
             @input="handlePackageKeywordChange"
             @clear="handlePackageKeywordChange"
           >
@@ -132,7 +132,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 import { ref, computed, toRef } from 'vue'
 import { ElMessage } from 'element-plus'
 import { rpmInfoApi } from '../../../api'

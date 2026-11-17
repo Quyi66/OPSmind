@@ -7,7 +7,7 @@
           <el-input
             v-model="searchKeyword"
             :placeholder="t('automation.command.reviewSearch')"
-            style="width: 240px"
+            :style="{ width: currentLocale === 'en-US' ? '360px' : '240px' }"
             clearable
           @keyup.enter="handleSearch" @clear="handleSearch" />
         </el-form-item>
@@ -76,7 +76,7 @@
         <el-table-column
           prop="createdAt"
           :label="t('automation.command.createdAt')"
-          width="170"
+          :width="currentLocale === 'en-US' ? 220 : 170"
           align="left"
           sortable="custom"
         >
@@ -88,12 +88,12 @@
         <el-table-column
           prop="createdBy"
           :label="t('automation.command.createdBy')"
-          width="100"
+          :width="currentLocale === 'en-US' ? 140 : 100"
           align="left"
           sortable="custom"
         />
 
-        <el-table-column :label="t('common.actions')" width="80" fixed="right" align="left">
+        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 120 : 80" fixed="right" align="left">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="handleApprove(row)">{{ t('automation.command.review') }}</el-button>
           </template>
@@ -127,7 +127,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 
 import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'

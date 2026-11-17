@@ -259,7 +259,7 @@
     "entry": "Execution",
     "chooseFile": "File selection",
     "serverFile": "Server file",
-    "filePlaceholder": "Enter a relative file name in an allowed directory, such as patch-data.sql.gz",
+    "filePlaceholder": "Relative file name, e.g. patch-data.sql.gz",
     "configuration": "Configuration",
     "options": "Additional options",
     "parseOnly": "Parse without executing",

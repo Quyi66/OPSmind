@@ -173,6 +173,7 @@ const canScrollRight = ref(false)
 
 const scrollPane = ref(null)
 const tagRefs = ref([])
+let resizeTimer = null
 
 
 
@@ -208,7 +209,12 @@ watch(route, () => {
   moveToCurrentTag()
 })
 
-watch(currentLocale, () => nextTick(updateArrowState))
+watch(currentLocale, () => {
+  clearTimeout(resizeTimer)
+  resizeTimer = null
+  if (currentLocale.value === 'en-US') moveToCurrentTag()
+  else nextTick(updateArrowState)
+})
 
 watch(visible, value => {
   if (value) {
@@ -221,17 +227,20 @@ watch(visible, value => {
 onMounted(() => {
   initTags()
   addTags()
-  window.addEventListener('resize', updateArrowState)
+  window.addEventListener('resize', handleWindowResize)
   window.addEventListener('keydown', handleKeyDown)
+  if (currentLocale.value === 'en-US') moveToCurrentTag()
 })
 
 onBeforeUnmount(() => {
+  clearTimeout(resizeTimer)
+  resizeTimer = null
   // 退出时恢复全屏状态
   if (isFullscreen.value) {
     tagsViewStore.setFullscreen(false)
   }
   document.body.removeEventListener('click', closeMenu)
-  window.removeEventListener('resize', updateArrowState)
+  window.removeEventListener('resize', handleWindowResize)
   window.removeEventListener('keydown', handleKeyDown)
 })
 
@@ -317,7 +326,19 @@ function addTags() {
   }
 }
 
-function moveToCurrentTag() {
+function handleWindowResize() {
+  if (currentLocale.value !== 'en-US') {
+    updateArrowState()
+    return
+  }
+  clearTimeout(resizeTimer)
+  resizeTimer = setTimeout(() => {
+    resizeTimer = null
+    moveToCurrentTag({ onlyIfHidden: true })
+  }, 100)
+}
+
+function moveToCurrentTag({ onlyIfHidden = false } = {}) {
   nextTick(() => {
     for (const tagEl of tagRefs.value) {
       if (!tagEl) {
@@ -329,7 +350,9 @@ function moveToCurrentTag() {
         continue
       }
 
-      scrollPane.value?.moveToTarget(tagEl, tagRefs.value)
+      if (!onlyIfHidden || !scrollPane.value?.isTargetVisible(tagEl)) {
+        scrollPane.value?.moveToTarget(tagEl, tagRefs.value)
+      }
 
       const tagView = visitedViews.value.find(tag => tag.path === tagPath)
       if (tagView && tagView.fullPath !== route.fullPath) {

@@ -175,7 +175,7 @@
               {{ pickValue(row, ['categoryName', 'category_name', 'classification'], '-') }}
             </template>
           </el-table-column>
-          <el-table-column :label="t('patches.linux.patchStatus')" width="120">
+          <el-table-column :label="t('patches.linux.patchStatus')" :width="currentLocale === 'en-US' ? 160 : 120">
             <template #default="{ row }">
               <el-tag :type="getPatchStatusTagType(row)" size="small">
                 {{ getPatchStatusLabel(row) }}
@@ -242,7 +242,7 @@
 
 <script setup>
 import { message as localMessage, messageRef } from '@/core/i18n/feedback'
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'

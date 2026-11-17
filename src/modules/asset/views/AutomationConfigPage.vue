@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout">
+  <div class="ops-page-layout" :class="{ 'is-english': currentLocale === 'en-US' }">
     <!-- Tab 页签 -->
     <div class="type-tabs-wrapper">
       <el-tabs v-model="activeTab" @tab-change="handleTabClick" class="modern-tabs">
@@ -220,7 +220,7 @@
                   v-model="ansibleSearch"
                   :placeholder="t('asset.templateSearch')"
                   clearable
-                  style="width: 260px"
+                  :style="{ width: currentLocale === 'en-US' ? '340px' : '260px' }"
                   maxlength="50"
                   @keyup.enter="handleAnsibleSearch"
                 />
@@ -284,7 +284,7 @@
                 </template>
               </el-table-column>
 
-              <el-table-column prop="runUser" :label="t('asset.privilegedAccount')" width="120">
+              <el-table-column prop="runUser" :label="t('asset.privilegedAccount')" :width="currentLocale === 'en-US' ? 220 : 120">
                 <template #default="{ row }">
                   <span class="user-cell-item">
                     <i class="fa fa-user-shield text-warning"></i>
@@ -311,7 +311,7 @@
                 </template>
               </el-table-column>
 
-              <el-table-column prop="param" :label="t('asset.extraConnectionParams')" min-width="180">
+              <el-table-column prop="param" :label="t('asset.extraConnectionParams')" :min-width="currentLocale === 'en-US' ? 260 : 180">
                 <template #default="{ row }">
                   <el-tooltip v-if="row.param" :content="row.param" placement="top" effect="dark">
                     <span class="param-preview">{{ getParamPreview(row.param) }}</span>
@@ -326,7 +326,7 @@
                 </template>
               </el-table-column>
 
-              <el-table-column :label="t('common.actions')" width="100" fixed="right">
+              <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 168 : 100" fixed="right">
                 <template #default="{ row }">
                   <el-button text type="primary" size="small" @click="handleEditAnsible(row)">
                     {{ t('common.edit') }}
@@ -654,7 +654,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
@@ -1353,5 +1353,10 @@ function handleDeviceManageSuccess() {
   color: var(--el-text-color-secondary);
   margin-top: 4px;
   line-height: 1.4;
+}
+
+.ops-page-layout.is-english :deep(.el-table .cell) {
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 </style>

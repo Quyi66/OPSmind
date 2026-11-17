@@ -6,7 +6,7 @@
           <el-input
             v-model="filterText"
             :placeholder="t('yumRepo.searchConfigs')"
-            style="width: 240px"
+            :style="{ width: currentLocale === 'en-US' ? '360px' : '240px' }"
             clearable
             maxlength="100"
           >
@@ -91,7 +91,7 @@
             {{ formatDateTime(row.updateTime || row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column :label="t('yumRepo.collectStatus')" width="110" align="center">
+        <el-table-column :label="t('yumRepo.collectStatus')" :width="currentLocale === 'en-US' ? 190 : 110" align="center">
           <template #default="{ row }">
             <el-tag size="small" :type="getCollectStatusTagType(row)">
               {{ getCollectStatusLabel(row) }}

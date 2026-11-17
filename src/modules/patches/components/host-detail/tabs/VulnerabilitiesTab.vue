@@ -25,7 +25,7 @@
             size="small"
             :placeholder="t('patches.linux.searchVulnPatchPackage')"
             clearable
-            style="width: 260px"
+            :style="{ width: currentLocale === 'en-US' ? '400px' : '260px' }"
             @input="handleVulKeywordChange"
             @clear="handleVulKeywordChange"
           >
@@ -293,7 +293,7 @@
           </el-tooltip>
         </template>
       </el-table-column>
-      <el-table-column prop="is_kernel" :label="t('patches.linux.kernelVuln')" width="80">
+      <el-table-column prop="is_kernel" :label="t('patches.linux.kernelVuln')" :width="currentLocale === 'en-US' ? 180 : 80">
         <template #default="{ row }">
           <el-tag v-if="row.is_kernel === '是'" type="primary" size="small">
             <i class="fa fa-check"></i>
@@ -305,7 +305,7 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="patch_status" :label="t('patches.linux.fixStatus')" width="90">
+      <el-table-column prop="patch_status" :label="t('patches.linux.fixStatus')" :width="currentLocale === 'en-US' ? 160 : 90">
         <template #default="{ row }">
           <el-tag :type="getPatchStatusType(row.patch_status)" size="small">
             {{ getPatchStatusText(row.patch_status) }}
@@ -360,7 +360,7 @@
   </div>
 </template>
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 import { ref, toRef } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { rpmInfoApi } from '../../../api'

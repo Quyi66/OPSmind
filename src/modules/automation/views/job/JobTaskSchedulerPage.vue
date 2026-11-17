@@ -8,7 +8,7 @@
             v-model="searchKeyword"
             :placeholder="t('automation.list.cronSearch')"
             clearable
-            style="width: 240px"
+            :style="{ width: currentLocale === 'en-US' ? '340px' : '240px' }"
             @keyup.enter="handleSearch"
             @clear="handleSearch"
           >
@@ -106,7 +106,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 
 import { ref, reactive, defineAsyncComponent } from 'vue'
 import { Plus, Refresh, Grid, Search, RefreshRight } from '@element-plus/icons-vue'

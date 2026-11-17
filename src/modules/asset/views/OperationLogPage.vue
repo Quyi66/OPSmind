@@ -40,7 +40,7 @@
               v-model="searchKeyword"
               :placeholder="t('asset.searchNode')"
               clearable
-              style="width: 170px"
+              :style="{ width: currentLocale === 'en-US' ? '230px' : '170px' }"
               @keyup.enter="handleFilterChange"
               @input="handleSearchInput"
             />
@@ -207,7 +207,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 import { message, messageRef } from '@/core/i18n/feedback'
 
 import { ref, computed, watch, onBeforeUnmount, onDeactivated } from 'vue'

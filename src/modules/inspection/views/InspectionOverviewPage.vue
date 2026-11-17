@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout overview-dashboard">
+  <div class="ops-page-layout overview-dashboard" :class="{ 'is-english': currentLocale === 'en-US' }">
     <section class="overview-summary" :aria-label="t('inspection.overview.summaryAria')">
       <div class="summary-heading">
         <div>
@@ -62,7 +62,7 @@
           style="width: 100%"
         >
           <el-table-column prop="templateName" :label="t('inspection.templates.template')" min-width="200" show-overflow-tooltip />
-          <el-table-column :label="t('inspection.overview.resultState')" min-width="136">
+          <el-table-column :label="t('inspection.overview.resultState')" :min-width="currentLocale === 'en-US' ? 210 : 136">
             <template #default="{ row }">
               <div class="result-state">
                 <el-tag :type="getResultState(row).type" size="small">
@@ -85,7 +85,7 @@
             v-for="column in resultColumns"
             :key="column.field"
             :label="column.label"
-            :min-width="column.field === 'unreachable' ? 92 : 68"
+            :min-width="currentLocale === 'en-US' ? (column.field === 'unreachable' ? 132 : 104) : (column.field === 'unreachable' ? 92 : 68)"
             align="right"
             show-overflow-tooltip
           >
@@ -98,7 +98,7 @@
               </span>
             </template>
           </el-table-column>
-          <el-table-column :label="t('inspection.templates.configuredHosts')" min-width="104" align="right" show-overflow-tooltip>
+          <el-table-column :label="t('inspection.templates.configuredHosts')" :min-width="currentLocale === 'en-US' ? 160 : 104" align="right" show-overflow-tooltip>
             <template #default="{ row }">
               <span class="result-count">{{ row.hostLength ?? '—' }}</span>
             </template>
@@ -397,6 +397,11 @@ onMounted(() => {
 .overview-table-note {
   color: var(--el-text-color-secondary);
   font-size: 12px;
+}
+
+.overview-dashboard.is-english :deep(.el-table .cell) {
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 .summary-heading p {

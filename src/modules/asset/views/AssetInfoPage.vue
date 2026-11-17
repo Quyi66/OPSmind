@@ -112,7 +112,7 @@
                 v-model="searchText"
                 :placeholder="t('asset.keywordDevice')"
                 clearable
-                style="width: 160px"
+                :style="{ width: currentLocale === 'en-US' ? '280px' : '160px' }"
                 @keyup.enter="handleSearch"
                 @clear="handleSearch"
               />

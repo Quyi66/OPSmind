@@ -22,7 +22,7 @@
         size="small"
         :placeholder="t('patches.linux.selectSeverity')"
         @change="handleFilterChange"
-        style="min-width: 150px; max-width: 300px; width: auto"
+        :style="{ minWidth: currentLocale === 'en-US' ? '420px' : '150px', maxWidth: currentLocale === 'en-US' ? '100%' : '300px', width: currentLocale === 'en-US' ? '420px' : 'auto' }"
       >
         <el-option :label="t('patches.catalog.critical')" value="Critical">
           <!-- <el-tag type="danger" size="small">严重</el-tag> -->
@@ -47,7 +47,7 @@
         size="small"
         :placeholder="t('patches.linux.searchPatchVuln')"
         clearable
-        style="width: 260px; margin-left: 12px"
+        :style="{ width: currentLocale === 'en-US' ? '380px' : '260px', marginLeft: '12px' }"
         @input="handlePatchKeywordChange"
         @clear="handlePatchKeywordChange" @keyup.enter="handleFilterChange">
         <template #prefix>
@@ -116,7 +116,7 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="publish_date" :label="t('patches.catalog.publishedAt')" width="110" sortable>
+      <el-table-column prop="publish_date" :label="t('patches.catalog.publishedAt')" :width="currentLocale === 'en-US' ? 150 : 110" sortable>
         <template #default="{ row }">
           {{ formatDate(row.publish_date) }}
         </template>
@@ -173,7 +173,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 import { computed, ref, toRef, onMounted, watch } from 'vue'
 import {
   formatDate,

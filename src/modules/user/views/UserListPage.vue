@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout user-list-page">
+  <div class="ops-page-layout user-list-page" :class="{ 'is-english': currentLocale === 'en-US' }">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small" @submit.prevent>
@@ -8,7 +8,7 @@
             v-model="filters.types"
             multiple
             :placeholder="t('hostUser.select')"
-            style="width: 200px"
+            :style="{ width: currentLocale === 'en-US' ? '280px' : '200px' }"
             @change="handleFilterChange"
           >
             <el-option :label="t('hostUser.systemUser')" value="0" />
@@ -32,7 +32,7 @@
             v-model="filters.keyword"
             :placeholder="t('hostUser.hostIpUsernameUserGroup')"
             clearable
-            style="width: 220px"
+            :style="{ width: currentLocale === 'en-US' ? '300px' : '220px' }"
             @keyup.enter="handleSearch"
             @clear="handleSearch"
           />
@@ -124,7 +124,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column :label="t('hostUser.lockStatus')" width="100">
+        <el-table-column :label="t('hostUser.lockStatus')" :width="currentLocale === 'en-US' ? 144 : 100">
           <template #default="{ row }">
             <el-tag
               :type="getLockStatusType(row.lock_status)"
@@ -195,7 +195,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column :label="t('common.actions')" width="120" align="left" fixed="right">
+        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 180 : 120" align="left" fixed="right">
           <template #default="{ row }">
             <div class="row-actions">
               <el-button
@@ -262,7 +262,7 @@
 <script setup>
 import { message, messageRef } from '@/core/i18n/feedback'
 
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 
 import { ref, computed, onMounted, onActivated, onDeactivated, onBeforeUnmount } from 'vue'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'

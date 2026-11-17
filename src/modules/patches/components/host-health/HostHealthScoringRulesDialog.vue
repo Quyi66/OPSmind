@@ -2,7 +2,7 @@
   <el-dialog
     :model-value="modelValue"
     :title="t('asset.health.rulesTitle')"
-    width="720px"
+    :width="currentLocale === 'en-US' ? 'min(900px, calc(100vw - 32px))' : '720px'"
     destroy-on-close
     :close-on-click-modal="true"
     @update:model-value="val => emit('update:modelValue', val)"
@@ -18,7 +18,7 @@
     <div class="ops-table-wrapper">
       <el-table :data="HEALTH_SCORING_RULES" max-height="440" style="width: 100%">
         <el-table-column type="index" label="#" width="52" />
-        <el-table-column prop="label" :label="t('asset.health.checkItem')" min-width="240" show-overflow-tooltip />
+        <el-table-column prop="label" :label="t('asset.health.checkItem')" :min-width="currentLocale === 'en-US' ? 330 : 240" show-overflow-tooltip />
         <el-table-column prop="threshold" :label="t('asset.health.thresholdLabel')" min-width="160" />
         <el-table-column prop="deduction" :label="t('asset.health.deductions')" width="160" />
       </el-table>
@@ -31,7 +31,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 
 import { HEALTH_SCORING_RULES } from '../../constants/hostHealth'
 

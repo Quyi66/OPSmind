@@ -647,7 +647,7 @@
     "requestTitle": "Tool approval request",
     "resubmitUnavailable": "This request cannot be resubmitted in its current status",
     "resubmitted": "Request resubmitted",
-    "durationHours": "{count} hours",
+    "durationHours": "{count} hour | {count} hours",
     "approveConfirm": "Approve the request for tool “{name}”?",
     "toolId": "Tool ID",
     "view": "View",

@@ -82,7 +82,7 @@
             {{ formatDateTime(row.createdTime) }}
           </template>
         </el-table-column>
-        <el-table-column prop="taskType" :label="t('patches.windows.taskType')" width="120">
+        <el-table-column prop="taskType" :label="t('patches.windows.taskType')" :width="currentLocale === 'en-US' ? 220 : 120">
           <template #default="{ row }">
             <el-tag
               :type="getTaskTypeTagType(row.taskType)"
@@ -94,7 +94,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="status" :label="t('common.status')" width="150">
+        <el-table-column prop="status" :label="t('common.status')" :width="currentLocale === 'en-US' ? 180 : 150">
           <template #default="{ row }">
             <RunLogStatusTag
               :type="getTaskStatusTagType(row.status)"
@@ -162,7 +162,7 @@
 
 <script setup>
 import { message as localMessage, messageRef } from '@/core/i18n/feedback'
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 
 import {
   computed,

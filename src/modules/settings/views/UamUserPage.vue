@@ -8,7 +8,7 @@
             v-model="filters.keyword"
             :placeholder="t('settings.user.search')"
             clearable
-            style="width: 200px" @keyup.enter="handleSearch" @clear="handleSearch">
+            :style="{ width: currentLocale === 'en-US' ? '280px' : '200px' }" @keyup.enter="handleSearch" @clear="handleSearch">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
@@ -78,7 +78,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="authMode" :label="t('settings.user.authMode')" width="120" align="left">
+        <el-table-column prop="authMode" :label="t('settings.user.authMode')" :width="currentLocale === 'en-US' ? 200 : 120" align="left">
           <template #default="{ row }">
             <el-tag :type="getAuthModeType(row.authMode)" size="small">
               {{ getAuthModeLabel(row.authMode) }}

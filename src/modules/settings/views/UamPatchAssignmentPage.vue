@@ -7,7 +7,7 @@
             v-model="filters.keyword"
             :placeholder="t('settings.user.search')"
             clearable
-            style="width: 200px" @keyup.enter="handleSearch" @clear="handleSearch">
+            :style="{ width: currentLocale === 'en-US' ? '280px' : '200px' }" @keyup.enter="handleSearch" @clear="handleSearch">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>

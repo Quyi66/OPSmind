@@ -47,7 +47,7 @@
             v-model="filters.keyword"
             :placeholder="t('inspection.results.search')"
             clearable
-            style="width: 200px"
+            :style="{ width: currentLocale === 'en-US' ? '260px' : '200px' }"
             @keyup.enter="handleSearch"
             @clear="handleSearch"
           >
@@ -238,7 +238,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 import {
   ref,
   reactive,

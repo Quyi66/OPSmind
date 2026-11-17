@@ -8,7 +8,7 @@
             v-model="filters.keyword"
             :placeholder="t('settings.team.search')"
             clearable
-            style="width: 200px"
+            :style="{ width: currentLocale === 'en-US' ? '280px' : '200px' }"
             @input="handleSearch"
             @keyup.enter="handleSearch"
             @clear="handleSearch"

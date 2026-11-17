@@ -90,7 +90,7 @@
               v-model="searchParams.keyword"
               :placeholder="t('patches.cve.searchIdDescription')"
               clearable
-              style="width: 200px"
+              :style="{ width: currentLocale === 'en-US' ? '340px' : '200px' }"
               @keyup.enter="search"
             @clear="search" />
           </el-form-item>

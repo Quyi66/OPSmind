@@ -10,6 +10,7 @@
             clearable
             size="small"
             class="template-search"
+            :style="currentLocale === 'en-US' ? { width: '340px' } : undefined"
             @keyup.enter="handleSearch"
             @clear="handleSearch"
           >
@@ -178,7 +179,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'

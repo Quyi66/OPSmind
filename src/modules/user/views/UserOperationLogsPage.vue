@@ -33,7 +33,7 @@
             v-model="filters.keyword"
             :placeholder="t('hostUser.usernameExecutionNodeResult')"
             clearable
-            style="width: 220px"
+            :style="{ width: currentLocale === 'en-US' ? '320px' : '220px' }"
             @keyup.enter="handleSearch"
             @clear="handleSearch"
           >
@@ -178,7 +178,7 @@
 <script setup>
 import { message, messageRef } from '@/core/i18n/feedback'
 
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 
 import { ref, computed, watch, onMounted, onActivated, onDeactivated, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'

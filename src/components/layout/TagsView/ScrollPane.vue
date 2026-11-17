@@ -96,6 +96,16 @@ function handleScroll(e) {
   emit('updateArrows')
 }
 
+function isTargetVisible(currentTag) {
+  const element = currentTag?.$el || currentTag
+  const viewport = scrollWrapper.value
+  if (!element || !viewport || viewport.clientWidth <= 0) return false
+  const target = element.getBoundingClientRect()
+  const left = viewport.getBoundingClientRect().left + viewport.clientLeft
+  const right = left + viewport.clientWidth
+  return target.width > 0 && target.left >= left - 1 && target.right <= right + 1
+}
+
 function moveToTarget(currentTag, tagListRefs) {
   const $container = scrollContainer.value?.$el
   if (!$container) return
@@ -183,6 +193,7 @@ function getScrollState() {
 }
 
 defineExpose({
+  isTargetVisible,
   moveToTarget,
   scrollLeft,
   scrollRight,

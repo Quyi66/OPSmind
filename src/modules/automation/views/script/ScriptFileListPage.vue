@@ -1,5 +1,5 @@
 <template>
-  <div class="script-file-list" :class="[`repo-${repoType}`]">
+  <div class="script-file-list" :class="[`repo-${repoType}`, { 'is-english': currentLocale === 'en-US' }]">
     <ol class="breadcrumb">
       <li
         v-for="(crumb, index) in breadcrumbs"
@@ -439,7 +439,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 import { message, messageRef } from '@/core/i18n/feedback'
 import { getFileStatusText } from '@/modules/automation/utils/filePresentation'
 
@@ -1215,6 +1215,20 @@ defineExpose({
 
 .workspace-toolbar__search :deep(.el-input) {
   min-width: 240px;
+}
+
+.script-file-list.is-english.repo-stage .workspace-toolbar__search {
+  min-width: min(420px, 100%);
+}
+
+.script-file-list.is-english.repo-stage .workspace-toolbar__search :deep(.el-input) {
+  min-width: 360px;
+}
+
+@media (max-width: 1200px) {
+  .script-file-list.is-english.repo-stage .workspace-toolbar__search :deep(.el-input) {
+    min-width: 0;
+  }
 }
 
 /* 按钮组样式 */

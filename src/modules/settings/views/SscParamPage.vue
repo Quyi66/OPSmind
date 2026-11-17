@@ -11,7 +11,7 @@
                 v-model="sysSearchKeyword"
                 :placeholder="t('settings.params.systemSearch')"
                 clearable
-                style="width: 220px"
+                :style="{ width: currentLocale === 'en-US' ? '360px' : '220px' }"
                 maxlength="50"
                 @input="handleSysSearch"
               @keyup.enter="handleSysSearch" @clear="handleSysSearch" />
@@ -108,7 +108,7 @@
                 v-model="appSearchKeyword"
                 :placeholder="t('settings.params.appSearch')"
                 clearable
-                style="width: 220px"
+                :style="{ width: currentLocale === 'en-US' ? '360px' : '220px' }"
                 maxlength="50"
                 @input="handleAppSearch"
               />
@@ -331,7 +331,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 import { useLocalizedValidation } from '@/core/i18n/validation'
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
