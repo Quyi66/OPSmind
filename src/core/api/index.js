@@ -5,6 +5,7 @@
 
 import axios from 'axios'
 import { authService } from '@/core/auth'
+import { getBackendLanguage } from '@/core/i18n'
 import { LOGIN_REDIRECT_URL } from '@/config/route-paths'
 
 // API 配置
@@ -47,6 +48,9 @@ class ApiService {
         // 添加认证头
         const authHeaders = authService.getAuthHeaders()
         config.headers = { ...authHeaders, ...config.headers }
+        if (!Object.keys(config.headers).some(name => name.toLowerCase() === 'language')) {
+          config.headers.Language = getBackendLanguage()
+        }
 
         // 如果是 FormData 上传，移除默认的 Content-Type，让浏览器自动设置带 boundary 的 multipart/form-data
         try {
@@ -142,6 +146,10 @@ class ApiService {
 
         // 处理权限错误
         if (response?.status === 403) {
+          if (typeof data?.error === 'string' && data.error) {
+            error.message = data.error
+            return Promise.reject(error)
+          }
           return Promise.reject(new Error('Access denied'))
         }
 

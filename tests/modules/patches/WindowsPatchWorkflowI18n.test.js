@@ -139,6 +139,21 @@ describe('Windows patch workflow language changes', () => {
   })
 
   it.each([
+    ['INSTALL', useWinPatchInstallWizard, 'createInstallTask'],
+    ['ROLLBACK', useWinPatchRollbackWizard, 'createRollbackTask']
+  ])('%s preserves a submitted application without dispatching pending steps', async (kind, useWizard, createTask) => {
+    const task = { id: 'pending-task', taskType: kind, status: 'PENDING_APPROVAL' }
+    api[createTask].mockResolvedValue({ data: task })
+    api.getTaskDetail.mockResolvedValue({ data: { task, steps: [] } })
+    const state = wizard(useWizard)
+    await state.startExecution()
+    expect(state.pendingApproval.value).toBe(true)
+    expect(state.currentTaskId.value).toBe('pending-task')
+    expect(api.executeTaskStep).not.toHaveBeenCalled()
+    expect(api.skipTaskStep).not.toHaveBeenCalled()
+  })
+
+  it.each([
     ['INSTALL', useWinPatchInstallWizard, 'updateInstallOptions', 'createInstallTask'],
     ['ROLLBACK', useWinPatchRollbackWizard, 'updateRollbackOptions', 'createRollbackTask']
   ])('%s keeps scripts, file identity and backend restart confirmation after switching', async (kind, useWizard, updateOptions, createTask) => {

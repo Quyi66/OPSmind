@@ -3,9 +3,52 @@
 * 与后端 VAP (Vulnerability and Patch) 服务交互
 */
 import { apiService, getJaoOperationLogs } from '@/core/api'
+import { submitWithWindowConfirmation } from '../utils/changeControl'
 
 const VAP_API_PREFIX = '/secops/api/secops'
 const PATCH_TASK_API_PREFIX = `${VAP_API_PREFIX}/v2/patch/task`
+const CHANGE_CONTROL_PREFIX = `${VAP_API_PREFIX}/v2/patch/change-control`
+
+export const patchChangeControlApi = {
+  getConfig: () => apiService.get(`${CHANGE_CONTROL_PREFIX}/config`),
+  saveConfig: config => apiService.put(`${CHANGE_CONTROL_PREFIX}/config`, config),
+  check: plan => apiService.post(`${CHANGE_CONTROL_PREFIX}/check`, plan),
+  getMessages: lang => apiService.get(`${VAP_API_PREFIX}/v2/i18n/messages`, {
+    params: { lang },
+    headers: { Language: lang }
+  })
+}
+
+function createControlledTask(action, params, options = {}) {
+  const { planStartTime, planEndTime, scheduledTime } = params
+  const start = action === 'create-and-run' ? scheduledTime : planStartTime
+  const check = async () => {
+    try {
+      const { data } = await patchChangeControlApi.check({
+        ...(start != null && { planStartTime: start }),
+        ...(planEndTime != null && { planEndTime })
+      })
+      return data
+    } catch (error) {
+      // Older deployments have no preflight endpoint. Creation remains authoritative.
+      if (![404, 405].includes(error?.response?.status)) throw error
+    }
+  }
+  return submitWithWindowConfirmation(
+    payload => apiService.post(`${PATCH_TASK_API_PREFIX}/${action}`, payload),
+    params,
+    { ...options, check }
+  ).then(normalizePatchTaskResponse)
+}
+
+function executeControlledStep(id, step, options) {
+  const path = `${PATCH_TASK_API_PREFIX}/${id}/${step}/execute`
+  return submitWithWindowConfirmation(
+    payload => payload ? apiService.post(path, payload) : apiService.post(path),
+    undefined,
+    options
+  ).then(normalizePatchTaskResponse)
+}
 
 const VAP_DASHBOARD_BASE = `${VAP_API_PREFIX}/dashboard`
 // 这些接口原先通过 DTS 代理调用，现已迁移至 sjxy-vap 模块直接提供
@@ -386,10 +429,8 @@ export const patchInstallApi = {
    * 提交定时安装任务（scheduledTime 必填，普通用户需管理员审批）
    * POST /secops/api/secops/v2/patch/task/create-and-run
    */
-  createAndRunTask(params) {
-    return apiService
-      .post(`${PATCH_TASK_API_PREFIX}/create-and-run`, params)
-      .then(normalizePatchTaskResponse)
+  createAndRunTask(params, options) {
+    return createControlledTask('create-and-run', params, options)
   },
 
   approveTask(id, params) {
@@ -402,40 +443,43 @@ export const patchInstallApi = {
    * 创建补丁安装任务
    * POST /secops/api/secops/v2/patch/task/create
    */
-  createTask(params) {
-    return apiService
-      .post(`${PATCH_TASK_API_PREFIX}/create`, params)
-      .then(normalizePatchTaskResponse)
+  createTask(params, options) {
+    return createControlledTask('create', params, options)
   },
 
   /**
   * 创建补丁回滚任务
   * POST /secops/api/secops/v2/patch/task/create-rollback
   */
-  createRollbackTask(params) {
-    return apiService
-      .post(`${PATCH_TASK_API_PREFIX}/create-rollback`, params)
-      .then(normalizePatchTaskResponse)
+  createRollbackTask(params, options) {
+    return createControlledTask('create-rollback', params, options)
   },
 
   /**
   * 创建软件包更新任务
   * POST /secops/api/secops/v2/patch/task/create-pkg-update
   */
-  createPkgUpdateTask(params) {
-    return apiService
-      .post(`${PATCH_TASK_API_PREFIX}/create-pkg-update`, params)
-      .then(normalizePatchTaskResponse)
+  createPkgUpdateTask(params, options) {
+    return createControlledTask('create-pkg-update', params, options)
   },
 
   /**
   * 创建漏洞修复任务
   * POST /secops/api/secops/v2/patch/task/create-vuln-fix
   */
-  createVulnFixTask(params) {
-    return apiService
-      .post(`${PATCH_TASK_API_PREFIX}/create-vuln-fix`, params)
-      .then(normalizePatchTaskResponse)
+  createVulnFixTask(params, options) {
+    return createControlledTask('create-vuln-fix', params, options)
+  },
+
+  getInspection(id) {
+    return apiService.get(`${PATCH_TASK_API_PREFIX}/${encodeURIComponent(id)}/inspection`)
+  },
+
+  executeInspection(id, hostIds) {
+    return apiService.post(
+      `${PATCH_TASK_API_PREFIX}/${encodeURIComponent(id)}/inspection/execute`,
+      hostIds ? { hostIds } : {}
+    )
   },
 
   /**
@@ -602,20 +646,16 @@ export const patchInstallApi = {
   * 步骤2：执行补丁安装
   * POST /secops/api/secops/v2/patch/task/{id}/install/execute
   */
-  executeInstallTask(id) {
-    return apiService
-      .post(`${PATCH_TASK_API_PREFIX}/${id}/install/execute`)
-      .then(normalizePatchTaskResponse)
+  executeInstallTask(id, options) {
+    return executeControlledStep(id, 'install', options)
   },
 
   /**
   * 步骤2：执行补丁回滚
   * POST /secops/api/secops/v2/patch/task/{id}/rollback/execute
   */
-  executeRollbackTask(id) {
-    return apiService
-      .post(`${PATCH_TASK_API_PREFIX}/${id}/rollback/execute`)
-      .then(normalizePatchTaskResponse)
+  executeRollbackTask(id, options) {
+    return executeControlledStep(id, 'rollback', options)
   },
 
   /**
@@ -647,10 +687,8 @@ export const patchInstallApi = {
   * 步骤4：执行重启
   * POST /secops/api/secops/v2/patch/task/{id}/restart/execute
   */
-  executeRestart(id) {
-    return apiService
-      .post(`${PATCH_TASK_API_PREFIX}/${id}/restart/execute`)
-      .then(normalizePatchTaskResponse)
+  executeRestart(id, options) {
+    return executeControlledStep(id, 'restart', options)
   },
 
   /**

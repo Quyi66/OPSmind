@@ -495,6 +495,9 @@ const canExecuteCurrentStep = computed(() => {
     Boolean(currentStepValue.value) &&
     currentStepValue.value !== 'COMPLETED' &&
     ![
+      'PENDING_APPROVAL',
+      'REJECTED',
+      'EXPIRED',
       'COMPLETED',
       'SUCCESS',
       'PASS',

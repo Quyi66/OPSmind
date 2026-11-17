@@ -225,6 +225,24 @@ export function getSeverityLabel(severity) {
 }
 
 // 获取补丁状态类型
+const PATCH_STATUS_CODES = {
+  UNFIXED: '未修复', FIXED: '已修复', MANUAL_FIXED: '已修复(手动)', FIXED_MANUAL: '已修复(手动)',
+  FIXING: '修复中', FIX_FAILED: '修复失败', ROLLING_BACK: '回滚中',
+  ROLLBACK_FAILED: '回滚失败', ROLLBACK_SUCCESS: '回滚成功'
+}
+
+export function normalizePatchStatus(status) {
+  return PATCH_STATUS_CODES[String(status || '').toUpperCase()] || status
+}
+
+export function getHostPatchStatus(row) {
+  return normalizePatchStatus(row.patch_status_code ?? row.patchStatusCode ?? row.patch_status ?? row.patchStatus)
+}
+
+export function canRollbackHostPatch(row) {
+  return ['已修复', '回滚失败'].includes(getHostPatchStatus(row))
+}
+
 export function getPatchStatusType(status) {
   const typeMap = {
     未修复: 'info',
@@ -236,7 +254,7 @@ export function getPatchStatusType(status) {
     回滚失败: 'warning',
     回滚成功: 'info'
   }
-  return typeMap[status] || 'info'
+  return typeMap[normalizePatchStatus(status)] || 'info'
 }
 
 // 获取补丁状态文本
@@ -251,5 +269,5 @@ export function getPatchStatusText(status) {
     get 回滚成功() { return t('patches.linux.rollbackSucceeded') },
     get '已修复(手动)'() { return t('patches.linux.manualFixed') }
   }
-  return textMap[status] || status
+  return textMap[normalizePatchStatus(status)] || status
 }

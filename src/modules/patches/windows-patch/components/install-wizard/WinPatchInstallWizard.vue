@@ -76,6 +76,11 @@
       @view-run="openRunResult"
     />
 
+    <PatchImplementationPlan v-if="currentStepKey === 'execute' && !currentTaskId"
+      v-model="planDraft" :disabled="dialogBusy" />
+    <el-alert v-if="pendingApproval" :title="t('patches.linux.awaitApprovalHint')"
+      type="info" :closable="false" />
+
     <template #footer>
       <div class="dialog-footer win-patch-install-wizard__footer">
         <!-- <el-button v-if="!dialogBusy && pipelineStatus === 'idle'" @click="visibleModel = false">取消</el-button> -->
@@ -96,6 +101,11 @@
           @click="goNext"
         >
           {{ t('patches.linux.nextStep') }}
+        </el-button>
+
+        <el-button v-else-if="pendingApproval" tag="router-link"
+          :to="{ name: 'patches-installTasks', query: { taskId: currentTaskId } }">
+          {{ t('patches.changeControl.openApplication') }}
         </el-button>
 
         <el-button v-else-if="dialogBusy" type="primary" loading disabled>{{ t('patches.linux.executingEllipsis') }}</el-button>
@@ -123,6 +133,7 @@
 
 <script setup>
 import { t } from '@/core/i18n'
+import PatchImplementationPlan from '../../../components/change-control/PatchImplementationPlan.vue'
 import { computed, toRef } from 'vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import WinPatchInstallWizardExecuteStep from './WinPatchInstallWizardExecuteStep.vue'
@@ -168,6 +179,8 @@ const {
   currentStepKey,
   currentStepSkippable,
   currentTaskId,
+  planDraft,
+  pendingApproval,
   dialogBusy,
   goBack,
   goNext,

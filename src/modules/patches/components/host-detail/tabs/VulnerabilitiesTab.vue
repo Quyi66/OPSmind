@@ -275,7 +275,7 @@
                   <i class="fa fa-server"></i>
                   {{ t('patches.linux.serviceRestart') }}
                 </el-tag>
-                <span v-else-if="row.reboot_status !== '服务重启'" class="text-muted">-</span>
+                <span v-else-if="getRebootStatusCode(row) !== 'service'" class="text-muted">-</span>
               </span>
               <div v-if="getDisplayRebootStatus(row) === '服务重启'" class="reboot-services-list">
                 <el-tag
@@ -295,7 +295,7 @@
       </el-table-column>
       <el-table-column prop="is_kernel" :label="t('patches.linux.kernelVuln')" :width="currentLocale === 'en-US' ? 180 : 80">
         <template #default="{ row }">
-          <el-tag v-if="row.is_kernel === '是'" type="primary" size="small">
+          <el-tag v-if="isKernelVulnerability(row)" type="primary" size="small">
             <i class="fa fa-check"></i>
             {{ t('patches.catalog.yes') }}
           </el-tag>
@@ -307,7 +307,7 @@
       </el-table-column>
       <el-table-column prop="patch_status" :label="t('patches.linux.fixStatus')" :width="currentLocale === 'en-US' ? 160 : 90">
         <template #default="{ row }">
-          <el-tag :type="getPatchStatusType(row.patch_status)" size="small">
+          <el-tag :type="getPatchStatusType(getHostPatchStatus(row))" size="small">
             {{ getPatchStatusText(row.patch_status) }}
           </el-tag>
         </template>
@@ -325,7 +325,7 @@
       <el-table-column :label="t('common.actions')" width="90" fixed="right">
         <template #default="{ row }">
           <el-button
-            v-if="row.patch_status === '已修复' || row.patch_status === '回滚失败'"
+            v-if="canRollbackHostPatch(row)"
             size="small"
             text
             @click="handleRollback(row)"
@@ -371,7 +371,9 @@ import {
   getSeverityLabel,
   getSeverityType,
   getPatchStatusType,
-  getPatchStatusText
+  getPatchStatusText,
+  getHostPatchStatus,
+  canRollbackHostPatch
 } from '../../../composables/useFormatters'
 import { useVulnerabilityList } from '../../../composables/useVulnerabilityList'
 import { useTableSelectAll } from '../../../composables/useTableSelectAll'
@@ -380,6 +382,8 @@ import {
   getAffectedPackageDetailParams,
   getDisplayRebootStatus,
   getRebootServices,
+  getRebootStatusCode,
+  isKernelVulnerability,
   getRebootStatusTooltip,
   hasAffectedPackageDetail
 } from '../../../utils/vulnerabilityPackages'

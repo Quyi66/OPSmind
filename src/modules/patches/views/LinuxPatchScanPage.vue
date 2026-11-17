@@ -448,7 +448,7 @@
                         <i class="fa fa-server"></i>
                         {{ t('patches.linux.serviceRestart') }}
                       </el-tag>
-                      <span v-else-if="row.reboot_status !== '服务重启'" class="text-muted">-</span>
+                      <span v-else-if="getRebootStatusCode(row) !== 'service'" class="text-muted">-</span>
                     </span>
                     <div
                       v-if="getDisplayRebootStatus(row) === '服务重启'"
@@ -471,15 +471,15 @@
             </el-table-column>
             <el-table-column prop="is_kernel" :label="t('patches.linux.kernel')" :width="isEnglish ? undefined : 70" :min-width="isEnglish ? 96 : undefined">
               <template #default="{ row }">
-                <el-tag :type="row.is_kernel === '是' ? 'primary' : 'info'" size="small" round>
-                  <i :class="row.is_kernel === '是' ? 'fa fa-check' : 'fa fa-times'" />
+                <el-tag :type="isKernelVulnerability(row) ? 'primary' : 'info'" size="small" round>
+                  <i :class="isKernelVulnerability(row) ? 'fa fa-check' : 'fa fa-times'" />
                 </el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="patch_status" :label="t('common.status')" width="110">
               <template #default="{ row }">
                 <RunLogStatusTag
-                  :type="getPatchStatusType(row.patch_status)"
+                  :type="getPatchStatusType(getHostPatchStatus(row))"
                   size="small"
                   :clickable="!!row.run_id"
                   @click="handleViewRunResult(row)"
@@ -499,7 +499,7 @@
                   text
                   type="primary"
                   size="small"
-                  :disabled="row.patch_status !== '已修复' && row.patch_status !== '回滚失败'"
+                  :disabled="!canRollbackHostPatch(row)"
                   @click="handleRollback(row)"
                 >
                   {{ t('patches.linux.rollback') }}
@@ -738,13 +738,15 @@ import { usePatchScanCompletion } from '../composables/usePatchScanCompletion'
 import { ElMessage } from 'element-plus'
 import { Refresh, Search, RefreshRight, Warning, ArrowRight } from '@element-plus/icons-vue'
 import { patchScanApi, patchOverviewApi, rpmInfoApi, vulnerabilityApi } from '../api'
-import { getCveUrl, getSeverityClass, getSeverityLabel } from '../composables/useFormatters'
+import { canRollbackHostPatch, getCveUrl, getHostPatchStatus, getSeverityClass, getSeverityLabel } from '../composables/useFormatters'
 import {
   getAffectedPackageDetailParams,
   getDisplayRebootStatus,
   getAffectedPackageNames,
   getAffectedPackages,
   getRebootServices,
+  getRebootStatusCode,
+  isKernelVulnerability,
   getRebootStatusTooltip,
   hasAffectedPackageDetail
 } from '../utils/vulnerabilityPackages'

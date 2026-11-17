@@ -1,6 +1,7 @@
 import { t } from '@/core/i18n'
 import { patchInstallApi } from '../../../api'
 import { createPatchTaskError } from '../../../utils/patchTaskFeedback'
+import { implementationPlan, isChangeControlCancelled } from '../../../utils/changeControl'
 
 function getPatchStatusIds(patches) {
   return patches.flatMap(patch => {
@@ -36,6 +37,7 @@ function getTaskPackages(props) {
 }
 
 export function usePatchTaskTaskCreation({
+  planDraft,
   props,
   confirmedHosts,
   isRollbackTask,
@@ -58,26 +60,32 @@ export function usePatchTaskTaskCreation({
   async function createExecutionTask(isCurrent = () => true) {
     try {
       const requestPayload = buildTaskRequestPayload()
+      const plan = implementationPlan(planDraft?.value)
+      const options = { isCurrent }
       const res = isRollbackTask.value
         ? await patchInstallApi.createRollbackTask({
             ...requestPayload,
-            histUpdateIds: props.histUpdateIds
-          })
+            histUpdateIds: props.histUpdateIds,
+            ...plan
+          }, options)
         : isPackageTask.value
           ? await patchInstallApi.createPkgUpdateTask({
               hostIds: requestPayload.hostIds,
-              packages: getTaskPackages(props)
-            })
+              packages: getTaskPackages(props),
+              ...plan
+            }, options)
           : isVulnerabilityTask.value
             ? await patchInstallApi.createVulnFixTask({
                 hostIds: requestPayload.hostIds,
                 patchIds: requestPayload.patchIds,
-                patchStatusIds: requestPayload.patchStatusIds
-              })
+                patchStatusIds: requestPayload.patchStatusIds,
+                ...plan
+              }, options)
             : await patchInstallApi.createTask({
                 ...requestPayload,
-                osType: 'linux'
-              })
+                osType: 'linux',
+                ...plan
+              }, options)
 
       if (!isCurrent()) return
       const data = res?.data || null
@@ -94,6 +102,7 @@ export function usePatchTaskTaskCreation({
       }
       backendRestartReason.value = data.restartReason || ''
     } catch (error) {
+      if (isChangeControlCancelled(error)) throw error
       const failure = new Error(resolveApiErrorMessage(error, t('patches.linux.taskCreateFailed')))
       failure.localMessage = error.localMessage
       throw failure

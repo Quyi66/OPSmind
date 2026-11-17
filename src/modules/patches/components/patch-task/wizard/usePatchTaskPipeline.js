@@ -1,8 +1,9 @@
 import { t } from '@/core/i18n'
-import { nextTick, onUnmounted } from 'vue'
+import { nextTick, onUnmounted, unref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { patchInstallApi } from '../../../api'
 import { createPatchTaskError } from '../../../utils/patchTaskFeedback'
+import { isChangeControlCancelled } from '../../../utils/changeControl'
 
 export function usePatchTaskPipeline({
   createdTaskId,
@@ -122,6 +123,9 @@ export function usePatchTaskPipeline({
     }
     const execution = progress
     const steps = ['pre', 'execute', 'restart', 'validate']
+    const executionStatuses = isRollbackTask.value
+      ? ['ROLLING_BACK', 'ROLLBACK_DONE', 'ROLLBACK_FAILED']
+      : ['INSTALLING', 'INSTALL_DONE', 'INSTALL_FAILED']
     pipelineStatus.value = 'running'
     pipelineFinished.value = false
     taskErrorMessage.value = ''
@@ -143,13 +147,13 @@ export function usePatchTaskPipeline({
               ? patchInstallApi.skipPreCheck(taskId)
               : patchInstallApi.executePreCheck(taskId))
           }
-          successStatuses = ['PRE_CHECK_DONE']
+          successStatuses = ['PRE_CHECK_DONE', ...executionStatuses]
           failedStatuses = ['PRE_CHECK_FAILED', 'FAILED']
         } else if (key === 'execute') {
-          if (!execution.dispatched) {
+          if (!execution.dispatched && !executionStatuses.includes(taskStatus.value)) {
             await (isRollbackTask.value
-              ? patchInstallApi.executeRollbackTask(taskId)
-              : patchInstallApi.executeInstallTask(taskId))
+              ? patchInstallApi.executeRollbackTask(taskId, { isCurrent })
+              : patchInstallApi.executeInstallTask(taskId, { isCurrent }))
           }
           successStatuses = [isRollbackTask.value ? 'ROLLBACK_DONE' : 'INSTALL_DONE']
           failedStatuses = [isRollbackTask.value ? 'ROLLBACK_FAILED' : 'INSTALL_FAILED', 'FAILED']
@@ -163,10 +167,10 @@ export function usePatchTaskPipeline({
             await patchInstallApi.confirmRestart(
               taskId,
               !execution.skipRestart,
-              execution.skipRestart ? undefined : restartConfirmSubmitText
+              execution.skipRestart ? undefined : unref(restartConfirmSubmitText)
             )
             checkActive(token, taskId)
-            if (!execution.skipRestart) await patchInstallApi.executeRestart(taskId)
+            if (!execution.skipRestart) await patchInstallApi.executeRestart(taskId, { isCurrent })
           }
           successStatuses = ['RESTART_DONE']
           failedStatuses = ['RESTART_FAILED', 'FAILED']
@@ -207,13 +211,16 @@ export function usePatchTaskPipeline({
       ElMessage.success(t('patches.linux.pipelineCompleted'))
     } catch (error) {
       if (!isCurrent()) return
+      const cancelled = isChangeControlCancelled(error)
       pipelineFinished.value = true
-      pipelineStatus.value = error.queryInterrupted ? 'paused' : 'failed'
-      if (!error.queryInterrupted) {
+      const paused = cancelled || error.queryInterrupted || error?.response?.status === 400
+      pipelineStatus.value = paused ? 'paused' : 'failed'
+      if (!paused) {
         const runningIdx = stepStates.findIndex(state => state === 'running')
         if (runningIdx !== -1) stepStates[runningIdx] = 'failed'
       }
       taskErrorMessage.value = error.localMessage || resolveApiErrorMessage(error, t('patches.linux.stepError', { step: executeStepTitle.value }))
+      if (cancelled) return
       ElMessage.error(
         error.queryInterrupted
           ? t('patches.linux.queryPaused')

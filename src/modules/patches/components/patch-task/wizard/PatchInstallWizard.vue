@@ -222,6 +222,9 @@
 
       <!-- Step 5/6: 执行汇总 -->
       <div v-show="currentStepKey === 'execute'" class="task-step-content">
+        <PatchImplementationPlan v-if="!createdTaskId" v-model="planDraft" :disabled="executionSubmitting" />
+        <el-alert v-if="taskDetailData?.status === 'PENDING_APPROVAL'"
+          :title="t('patches.linux.awaitApprovalHint')" :closable="false" type="info" />
         <div class="task-step-editor">
           <div class="task-step-editor__title">
             <i class="fa fa-download" style="margin-right: 6px"></i>
@@ -319,6 +322,13 @@
 
       <template #footer>
         <div class="dialog-footer">
+          <el-button v-if="taskDetailData?.status === 'PENDING_APPROVAL'" tag="router-link"
+            :to="{ name: 'patches-installTasks', query: { taskId: createdTaskId } }">
+            {{ t('patches.changeControl.openApplication') }}
+          </el-button>
+          <el-button v-if="createdTaskId && inspectionAvailable" @click="inspectionVisible = true">
+            {{ t('patches.changeControl.inspection') }}
+          </el-button>
           <!-- Step 0 取消 -->
           <el-button v-if="currentStepKey === 'select'" @click="isVisible = false">{{ t('common.cancel') }}</el-button>
 
@@ -402,7 +412,8 @@
           <!-- 最后一步确认与离开按钮 -->
           <el-button
             v-else-if="
-              installStep === finalStepIndex && pipelineStatus !== 'running' && !executionSubmitting
+              installStep === finalStepIndex && pipelineStatus !== 'running' && !executionSubmitting &&
+              taskDetailData?.status !== 'PENDING_APPROVAL'
             "
             type="primary"
             @click="handlePrimaryAction"
@@ -424,6 +435,8 @@
     </el-dialog>
 
     <PatchTaskFailedHostsDialog v-model="failedHostsVisible" :task-id="createdTaskId" />
+    <TaskInspectionDialog v-if="inspectionVisible" v-model="inspectionVisible"
+      :task-id="createdTaskId" :is-admin="user?.login === 'admin'" />
 
     <ExecuteResultDialog
       v-model:visible="executeResultVisible"
@@ -462,6 +475,10 @@ import PatchTaskSummaryRow from '../PatchTaskSummaryRow.vue'
 import PatchTaskRestartStep from './PatchTaskRestartStep.vue'
 import PatchTaskScriptConfigStep from './PatchTaskScriptConfigStep.vue'
 import PatchTaskFailedHostsDialog from '../dialogs/PatchTaskFailedHostsDialog.vue'
+import PatchImplementationPlan from '../../change-control/PatchImplementationPlan.vue'
+import TaskInspectionDialog from '../../change-control/TaskInspectionDialog.vue'
+import { useAuth } from '@/core/auth'
+import { canInspectPatchTask } from '../../../utils/patchInstallSchedule'
 import { usePatchTaskTargetSelection } from './usePatchTaskTargetSelection'
 
 const props = defineProps({
@@ -477,6 +494,10 @@ const props = defineProps({
   selectionSummaryItems: { type: Array, default: () => [] }
 })
 const emit = defineEmits(['update:visible', 'success'])
+const { user } = useAuth()
+const planDraft = ref({})
+const inspectionVisible = ref(false)
+const inspectionAvailable = computed(() => canInspectPatchTask(taskDetailData.value))
 
 const isVisible = computed({
   get: () => props.visible,
@@ -627,7 +648,8 @@ const dialogBusy = computed(
   () =>
     executionSubmitting.value || stepTransitionLoading.value || pipelineStatus.value === 'running'
 )
-const configurationLocked = computed(() => dialogBusy.value || pipelineStatus.value === 'paused')
+const configurationLocked = computed(() => dialogBusy.value || pipelineStatus.value === 'paused' ||
+  taskDetailData.value?.status === 'PENDING_APPROVAL')
 
 function handleBeforeClose(done) {
   if (!dialogBusy.value) done()
@@ -673,6 +695,7 @@ const { loadRestartOptions, loadRollbackInfo } = usePatchTaskTaskPreparation({
   affectedPackages
 })
 const { createExecutionTask } = usePatchTaskTaskCreation({
+  planDraft,
   props,
   confirmedHosts,
   isRollbackTask,
@@ -791,6 +814,8 @@ watch(
     }
 
     failedHostsVisible.value = false
+    inspectionVisible.value = false
+    planDraft.value = {}
     closeTargetSelection()
     resetInstallState()
   }

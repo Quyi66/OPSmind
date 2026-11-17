@@ -20,7 +20,8 @@ export function usePatchTaskRestartAdvice({
     restartRequired: false,
     restartLabel: messageRef(''),
     restartDescription: messageRef(''),
-    restartReason: messageRef('')
+    restartReason: messageRef(''),
+    confirmText: ''
   })
 
   const smartRestartType = computed(() => {
@@ -64,9 +65,11 @@ export function usePatchTaskRestartAdvice({
   const requiresRestartConfirm = computed(
     () => restartOptions.restartRequired || installConfig.restartPolicy !== 'none'
   )
-  // The backend confirmation token is a protocol value and stays unchanged.
-  const restartConfirmSubmitText = '确认重启'
+  const restartConfirmSubmitText = computed(() => restartOptions.confirmText
+    ? restartConfirmText.value || restartOptions.confirmText
+    : '确认重启')
   const restartConfirmKeyword = computed(() => {
+    if (restartOptions.confirmText) return restartOptions.confirmText
     if (installConfig.restartPolicy === 'system') return t('patches.linux.confirmSystemRestart')
     if (installConfig.restartPolicy === 'service') return t('patches.linux.confirmServiceRestart')
     return t('patches.linux.confirmRestart')
@@ -77,10 +80,14 @@ export function usePatchTaskRestartAdvice({
     if (!shownKeywords.has(policy)) shownKeywords.set(policy, new Set())
     shownKeywords.get(policy).add(keyword)
   }, { immediate: true, flush: 'sync' })
-  const restartConfirmationValid = computed(() =>
-    restartConfirmText?.value === restartConfirmKeyword.value ||
-    Boolean(shownKeywords.get(installConfig.restartPolicy)?.has(restartConfirmText?.value))
-  )
+  const restartConfirmationValid = computed(() => {
+    const entered = restartConfirmText?.value
+    if (restartOptions.confirmText) {
+      return String(entered || '').toUpperCase() === restartOptions.confirmText.toUpperCase()
+    }
+    return entered === restartConfirmKeyword.value ||
+      Boolean(shownKeywords.get(installConfig.restartPolicy)?.has(entered))
+  })
   const restartAdviceTitle = computed(() => {
     if (restartOptions.restartLabel) return restartOptions.restartLabel
     if (installConfig.restartPolicy === 'system') return t('patches.linux.systemRestartAdvice')
@@ -144,6 +151,7 @@ export function usePatchTaskRestartAdvice({
     restartOptions.restartLabel = ''
     restartOptions.restartDescription = ''
     restartOptions.restartReason = ''
+    restartOptions.confirmText = ''
     backendRestartReason.value = ''
   }
 

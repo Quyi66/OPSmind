@@ -216,6 +216,7 @@ import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { operationLogApi } from '../api'
 import { translateI18nKey } from '@/utils/i18n'
+import { secopsAuditAction, useSecopsMessages } from '@/modules/patches/utils/secopsMessages'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { formatDateTime } from '../utils/helpers'
 import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
@@ -478,6 +479,8 @@ function showRunResult(row) {
 
 
 // 获取操作标签
+useSecopsMessages({ auditActions: true })
+
 function getActionLabel(action) {
   if (!action) return '-'
   const actionLabelMap = {
@@ -485,8 +488,7 @@ function getActionLabel(action) {
     '#{acm.job.check_conn}': t('asset.connectivityCheck'),
     '#{acm.job.collect_assert_info}': t('asset.collectInfo')
   }
-  if (actionLabelMap[action]) return actionLabelMap[action]
-  return translateI18nKey(action)
+  return secopsAuditAction(action, actionLabelMap[action] || translateI18nKey(action))
 }
 
 // 获取状态标签

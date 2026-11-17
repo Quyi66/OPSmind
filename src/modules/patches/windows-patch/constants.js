@@ -78,6 +78,9 @@ export const WIN_PATCH_TASK_TYPE_LABELS = {
 }
 
 export const WIN_PATCH_TASK_STATUS_LABELS = {
+  get PENDING_APPROVAL() { return t('patches.linux.pendingApproval') },
+  get REJECTED() { return t('patches.linux.approvalRejected') },
+  get EXPIRED() { return t('patches.linux.expired') },
   get PENDING() { return t('automation.flow.pending') },
   get CREATED() { return t('automation.flow.pending') },
   get PRE_CHECK_DONE() { return t('automation.flow.pending') },
@@ -105,6 +108,9 @@ export const WIN_PATCH_TASK_STATUS_LABELS = {
 }
 
 export const WIN_PATCH_TASK_STATUS_TAG_TYPES = {
+  PENDING_APPROVAL: 'warning',
+  REJECTED: 'danger',
+  EXPIRED: 'info',
   PENDING: 'info',
   CREATED: 'info',
   PRE_CHECK_DONE: 'info',

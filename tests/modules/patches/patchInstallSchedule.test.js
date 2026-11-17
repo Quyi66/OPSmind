@@ -7,9 +7,9 @@ vi.mock('@/core/api', () => ({ apiService: api }))
 import { patchInstallApi } from '@/modules/patches/api'
 
 describe('scheduled package installation', () => {
-  const now = new Date('2026-09-20T02:00:00').getTime()
+  const now = new Date('2026-09-20T02:00:00+08:00').getTime()
 
-  it('requires a valid future time, accepting local strings and millisecond timestamps', () => {
+  it('requires a valid future time, accepting Shanghai strings and millisecond timestamps', () => {
     for (const value of [null, undefined, '', 'invalid', now, now - 1]) {
       expect(isFutureSchedule(value, now)).toBe(false)
     }
@@ -40,9 +40,12 @@ describe('scheduled package installation', () => {
 
   it('submits the schedule and preserves approval metadata in the returned task', async () => {
     const task = { id: 'task-1', status: 'PENDING_APPROVAL', scheduledTime: now + 1000, createdBy: 'user', approvedBy: null }
-    api.post.mockResolvedValueOnce({ data: task })
+    api.post.mockResolvedValueOnce({ data: { decision: 'PASS' } }).mockResolvedValueOnce({ data: task })
     const payload = { packages: ['curl'], targets: [{ key: 'host-1' }], scheduledTime: task.scheduledTime }
     const response = await patchInstallApi.createAndRunTask(payload)
+    expect(api.post).toHaveBeenCalledWith('/secops/api/secops/v2/patch/change-control/check', {
+      planStartTime: task.scheduledTime
+    })
     expect(api.post).toHaveBeenLastCalledWith('/secops/api/secops/v2/patch/task/create-and-run', payload)
     expect(response.data).toMatchObject(task)
   })

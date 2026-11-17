@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    :title="t('patches.linux.scheduledTaskDetails')"
+    :title="t('patches.changeControl.applicationDetail')"
     width="900px"
     :close-on-click-modal="!canHandlePreCheckFailure && !actionLoading"
     :close-on-press-escape="!canHandlePreCheckFailure && !actionLoading"
@@ -72,7 +72,7 @@
               round
             >
               {{
-                taskDetail.status === 'CREATED'
+                taskDetail.status === 'CREATED' && taskDetail.scheduledTime
                   ? t('patches.linux.waitingScheduledExecution')
                   : formatTaskStatus(taskDetail.status)
               }}
@@ -94,6 +94,22 @@
           <div>
             <strong>{{ t('patches.linux.applicantLabel') }}</strong>
             {{ taskDetail.createdBy || '-' }}
+          </div>
+          <div v-if="taskDetail.planStartTime || taskDetail.planEndTime">
+            <strong>{{ t('patches.changeControl.plan') }}</strong>
+            {{ formatDateTime(taskDetail.planStartTime) }} – {{ formatDateTime(taskDetail.planEndTime) }}
+          </div>
+          <div v-if="taskDetail.applyReason" class="task-summary__full">
+            <strong>{{ t('patches.changeControl.reason') }}</strong> {{ taskDetail.applyReason }}
+          </div>
+          <div v-if="taskDetail.windowCheckResult" class="task-summary__full">
+            <strong>{{ t('patches.changeControl.windowResult') }}</strong>
+            {{ windowLabel(taskDetail.windowCheckResult) }}
+            <el-tag v-if="taskDetail.nonWindowConfirmed" type="warning" effect="plain">
+              {{ t('patches.changeControl.nonWindow') }}
+            </el-tag>
+            <span v-if="taskDetail.nonWindowConfirmedBy"> {{ taskDetail.nonWindowConfirmedBy }}
+              {{ formatDateTime(taskDetail.nonWindowConfirmedTime) }}</span>
           </div>
           <div>
             <strong>{{ t('patches.linux.approverLabel') }}</strong>
@@ -196,15 +212,21 @@
       </template>
     </div>
 
-    <template v-if="canHandlePreCheckFailure" #footer>
-      <el-button type="warning" :loading="actionLoading" @click="handleSkipPreCheck">
+    <template v-if="canHandlePreCheckFailure || manualActions.length || canInspect" #footer>
+      <el-button v-if="canInspect" @click="inspectionVisible = true">{{ t('patches.changeControl.inspection') }}</el-button>
+      <el-button v-for="action in manualActions" :key="action" :loading="actionLoading" :disabled="requestPending"
+        @click="runManualStep(action)">{{ t(`patches.changeControl.actions.${action}`) }}</el-button>
+      <el-button v-if="canHandlePreCheckFailure" type="warning" :loading="actionLoading"
+        :disabled="requestPending" @click="handleSkipPreCheck">
         {{ t('patches.linux.acknowledgeAndInstall') }}
       </el-button>
-      <el-button type="primary" :loading="actionLoading" @click="handleRetryPreCheck">
+      <el-button v-if="canHandlePreCheckFailure" type="primary" :loading="actionLoading"
+        :disabled="requestPending" @click="handleRetryPreCheck">
         {{ t('patches.linux.repeatPrecheck') }}
       </el-button>
     </template>
   </el-dialog>
+  <TaskInspectionDialog v-if="inspectionVisible" v-model="inspectionVisible" :task-id="taskId" :is-admin="isAdmin" />
 
   <ExecuteResultDialog
     v-model:visible="executeResultVisible"
@@ -222,6 +244,9 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { patchInstallApi } from '../api'
+import TaskInspectionDialog from './change-control/TaskInspectionDialog.vue'
+import { apiErrorText, isChangeControlCancelled, requestConfirmationPhrase } from '../utils/changeControl'
+import { secopsText, useSecopsMessages } from '../utils/secopsMessages'
 import {
   formatDateTime,
   formatJsonArray,
@@ -231,6 +256,7 @@ import {
   toDisplayArray
 } from '../utils/patchProcessLogs'
 import {
+  canInspectPatchTask,
   isFutureSchedule,
   isPackageInstallFinished,
   isTaskExecutionBlocked
@@ -238,6 +264,7 @@ import {
 
 const props = defineProps({
   visible: Boolean,
+  isAdmin: Boolean,
   taskId: {
     type: [String, Number],
     default: ''
@@ -256,8 +283,86 @@ const actionLoading = ref(false)
 const taskDetail = ref(null)
 const activeCollapseNames = ref([])
 const executeResultVisible = ref(false)
+const inspectionVisible = ref(false)
 let pollingTimer = null
 let requestId = 0
+let actionContext = 0
+useSecopsMessages()
+
+const canInspect = computed(() => canInspectPatchTask(taskDetail.value))
+const isRollback = computed(() => String(taskDetail.value?.taskType || '').toLowerCase() === 'rollback')
+const manualActions = computed(() => {
+  const task = taskDetail.value
+  if (isTaskExecutionBlocked(task)) return []
+  if (task.status === 'CREATED' && !task.scheduledTime) return ['precheck', 'skipPrecheck']
+  if (task.status === 'PRE_CHECK_DONE') return [isRollback.value ? 'rollback' : 'install']
+  if (['INSTALL_DONE', 'ROLLBACK_DONE', 'RESTART_PENDING'].includes(task.status)) return ['restart', 'skipRestart']
+  if (task.status === 'RESTART_DONE') return ['validate', 'skipValidate']
+  return []
+})
+
+function windowLabel(value) {
+  return secopsText(`secops.window_result.${value}`, t(`patches.changeControl.results.${value}`, {}, value))
+}
+
+function beginTaskAction() {
+  if (!dialogVisible.value || !taskDetail.value || actionLoading.value || requestPending.value) return
+  const id = taskDetail.value.id
+  const requestedTaskId = props.taskId
+  const context = actionContext
+  actionLoading.value = true
+  return {
+    id,
+    isCurrent: () => context === actionContext && dialogVisible.value &&
+      props.taskId === requestedTaskId && taskDetail.value?.id === id,
+    finish: () => {
+      if (context === actionContext) actionLoading.value = false
+    }
+  }
+}
+
+async function runManualStep(action) {
+  if (!manualActions.value.includes(action)) return
+  const taskAction = beginTaskAction()
+  if (!taskAction) return
+  const { id, isCurrent, finish } = taskAction
+  try {
+    let response
+    if (action === 'restart' || action === 'skipRestart') {
+      if (action === 'restart') {
+        const { data } = await patchInstallApi.getRestartOptions(id)
+        if (!isCurrent()) return
+        const confirmText = await requestConfirmationPhrase({
+          confirmText: data?.confirmText || t('patches.changeControl.restartPhrase'),
+          message: data?.restartReason
+        }, t('patches.linux.confirmRestart'))
+        if (!isCurrent()) return
+        await patchInstallApi.confirmRestart(id, true, confirmText)
+        if (!isCurrent()) return
+        response = await patchInstallApi.executeRestart(id, { isCurrent })
+      } else response = await patchInstallApi.confirmRestart(id, false)
+    } else {
+      const actions = {
+        precheck: () => patchInstallApi.executePreCheck(id),
+        skipPrecheck: () => patchInstallApi.skipPreCheck(id),
+        install: () => patchInstallApi.executeInstallTask(id, { isCurrent }),
+        rollback: () => patchInstallApi.executeRollbackTask(id, { isCurrent }),
+        validate: () => patchInstallApi.executeValidate(id),
+        skipValidate: () => patchInstallApi.skipValidate(id)
+      }
+      response = await actions[action]()
+    }
+    if (!isCurrent()) return
+    taskDetail.value = response?.data || taskDetail.value
+    await loadTask({ silent: true })
+    if (isCurrent() && !isPackageInstallFinished(taskDetail.value?.status)) startPolling()
+  } catch (error) {
+    if (isCurrent() && !isChangeControlCancelled(error))
+      ElMessage.error(apiErrorText(error, t('patches.linux.operationFailedRetry')))
+  } finally {
+    finish()
+  }
+}
 
 const stepStates = computed(() => {
   const states = ['success', 'idle', 'idle']
@@ -285,7 +390,9 @@ const stepStates = computed(() => {
 const statusDescription = computed(() => {
   const status = taskDetail.value?.status
   if (status === 'PENDING_APPROVAL') return t('patches.linux.awaitApprovalHint')
-  if (status === 'CREATED') return t('patches.linux.awaitScheduleHint')
+  if (status === 'CREATED') return taskDetail.value.scheduledTime
+    ? t('patches.linux.awaitScheduleHint')
+    : t('patches.changeControl.ready')
   return t('patches.linux.resubmitHint')
 })
 
@@ -403,20 +510,31 @@ function stopPolling() {
 }
 
 async function handleRetryPreCheck() {
-  actionLoading.value = true
+  if (!canHandlePreCheckFailure.value) return
+  const taskAction = beginTaskAction()
+  if (!taskAction) return
+  const { id, isCurrent, finish } = taskAction
   try {
-    const response = await patchInstallApi.executePreCheck(taskDetail.value.id)
+    const response = await patchInstallApi.executePreCheck(id)
+    if (!isCurrent()) return
     taskDetail.value = response?.data || taskDetail.value
     ElMessage.success(t('patches.linux.precheckRestarted'))
     startPolling()
   } catch (error) {
-    ElMessage.error(error?.message || t('patches.linux.precheckRetryFailed'))
+    if (isCurrent()) ElMessage.error(error?.message || t('patches.linux.precheckRetryFailed'))
   } finally {
-    actionLoading.value = false
+    finish()
   }
 }
 
 async function handleSkipPreCheck() {
+  if (!canHandlePreCheckFailure.value) return
+  const taskAction = beginTaskAction()
+  if (!taskAction) return
+  const { id, isCurrent, finish } = taskAction
+  const execute = isRollback.value
+    ? () => patchInstallApi.executeRollbackTask(id, { isCurrent })
+    : () => patchInstallApi.executeInstallTask(id, { isCurrent })
   try {
     await ElMessageBox.confirm(t('patches.linux.forceInstallConfirm'), t('patches.linux.forceInstallTitle'), {
       closeOnClickModal: false,
@@ -425,17 +543,19 @@ async function handleSkipPreCheck() {
       get cancelButtonText() { return t('common.cancel') },
       type: 'warning'
     })
-    actionLoading.value = true
-    await patchInstallApi.skipPreCheck(taskDetail.value.id)
-    const response = await patchInstallApi.executeInstallTask(taskDetail.value.id)
+    if (!isCurrent()) return
+    await patchInstallApi.skipPreCheck(id)
+    if (!isCurrent()) return
+    const response = await execute()
+    if (!isCurrent()) return
     taskDetail.value = response?.data || taskDetail.value
     ElMessage.success(t('patches.linux.precheckSkippedInstall'))
     startPolling()
   } catch (error) {
-    if (error !== 'cancel' && error !== 'close')
-      ElMessage.error(error?.message || t('patches.linux.skipPrecheckFailed'))
+    if (isCurrent() && !isChangeControlCancelled(error) && error !== 'cancel' && error !== 'close')
+      ElMessage.error(apiErrorText(error, t('patches.linux.skipPrecheckFailed')))
   } finally {
-    actionLoading.value = false
+    finish()
   }
 }
 
@@ -446,7 +566,10 @@ function openExecuteResult() {
 watch(
   () => [props.visible, props.taskId],
   ([visible, taskId]) => {
+    actionContext += 1
+    actionLoading.value = false
     if (!visible || !taskId) {
+      inspectionVisible.value = false
       stopPolling()
       requestId += 1
       requestPending.value = false
@@ -465,6 +588,7 @@ watch(
 onUnmounted(() => {
   stopPolling()
   requestId += 1
+  actionContext += 1
 })
 </script>
 

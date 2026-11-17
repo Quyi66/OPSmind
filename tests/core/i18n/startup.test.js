@@ -3,6 +3,7 @@ import { createApp } from 'vue'
 import {
   currentLocale,
   ensureLocaleMessages,
+  getBackendLanguage,
   i18n,
   language,
   setLocale,
@@ -21,6 +22,14 @@ afterEach(async () => {
 })
 
 describe('language startup fallback', () => {
+  it('publishes the backend language for the shared HTTP client and same-origin requests', async () => {
+    await setLocale('en-US', { persist: false })
+    expect(getBackendLanguage()).toBe('en')
+    expect(document.cookie).toContain('NG_TRANSLATE_LANG_KEY=en')
+    await setLocale('zh-CN', { persist: false })
+    expect(getBackendLanguage()).toBe('zh-CN')
+    expect(document.cookie).toContain('NG_TRANSLATE_LANG_KEY=zh-CN')
+  })
   it('mounts with built-in Chinese even if initialization and its fallback reject', async () => {
     const failure = new Error('fallback failed')
     vi.spyOn(language, 'initialize').mockRejectedValueOnce(failure)

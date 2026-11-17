@@ -197,7 +197,7 @@ import { ElMessage } from 'element-plus'
 import { patchScanApi } from '../api' // [Agent 功能暂停] getHostAgentInfos removed
 import { formatDateTime, getInstalledPkgsCount } from '../composables/useFormatters'
 import { useHostDetail } from '../composables/useHostDetail'
-import { getAffectedPackageNames } from '../utils/vulnerabilityPackages'
+import { getAffectedPackageNames, getRebootStatusCode } from '../utils/vulnerabilityPackages'
 import PatchesTab from '../components/host-detail/tabs/PatchesTab.vue'
 import PackagesTab from '../components/host-detail/tabs/PackagesTab.vue'
 import VulnerabilitiesTab from '../components/host-detail/tabs/VulnerabilitiesTab.vue'
@@ -465,7 +465,7 @@ function normalizeVulnerabilitySelections(vulnerabilities) {
       const existing = patchMap.get(patchId) || {
         patch_id: patchId,
         patch_name: item.vul_id || patchId,
-        rebootStatus: item.reboot_status,
+        rebootStatus: getRebootStatusCode(item),
         isKernel: item.is_kernel,
         patch_status_ids: []
       }

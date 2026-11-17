@@ -175,6 +175,7 @@ import { Refresh } from '@element-plus/icons-vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { initTranslations, translateText } from '@/utils/i18n'
 import { formatOperationLogMessage } from '@/utils/operationLogMessages'
+import { secopsAuditAction, secopsLogMessage, useSecopsMessages } from '../../utils/secopsMessages'
 import { useApi } from '@/core/api'
 import { patchLogsApi } from '../../api'
 import { authService } from '@/core/auth'
@@ -272,10 +273,12 @@ async function loadData() {
 
 
 // 格式化操作类型
+useSecopsMessages({ auditActions: true })
+
 function formatAction(action) {
   if (!action) return ''
 
-  const translated = translateText(action)
+  const translated = secopsAuditAction(action, translateText(action))
   if (translated === action && action.startsWith('#{')) {
     const staticMap = {
       get '#{app_vap.menu.patch_scan.title}'() { return t('patches.actions.scan') },
@@ -326,7 +329,7 @@ function getStatusText(status) {
 
 // 格式化消息
 function formatMessage(message) {
-  return formatOperationLogMessage(message) || '-'
+  return formatOperationLogMessage(message, secopsLogMessage) || '-'
 }
 
 // 计算耗时

@@ -19,6 +19,20 @@ const loaders = Object.fromEntries(
   ])
 )
 const loading = new Map()
+const backendLanguages = Object.fromEntries(
+  LOCALE_DEFINITIONS.map(({ value, backendLanguage }) => [value, backendLanguage || value])
+)
+
+function applyLocale(locale) {
+  const document = globalThis.document
+  if (!document) return
+  document.documentElement.setAttribute('lang', locale)
+  try {
+    document.cookie = `NG_TRANSLATE_LANG_KEY=${encodeURIComponent(getBackendLanguage(locale))}; Path=/; SameSite=Lax`
+  } catch {
+    // The HTTP client still sends the language header when cookies are unavailable.
+  }
+}
 export function ensureLocaleMessages(locale) {
   if (!Object.hasOwn(loaders, locale))
     return Promise.reject(new RangeError(`Unsupported locale: ${locale}`))
@@ -52,11 +66,15 @@ export const language = createLocaleController({
   load: ensureLocaleMessages,
   storage: getStorage(),
   languages: globalThis.navigator?.languages || [globalThis.navigator?.language].filter(Boolean),
-  apply: locale => globalThis.document?.documentElement.setAttribute('lang', locale)
+  apply: applyLocale
 })
 export const currentLocale = language.locale
 export const languagePending = language.pending
 export const setLocale = language.setLocale
+
+export function getBackendLanguage(locale = currentLocale.value) {
+  return backendLanguages[locale] || backendLanguages[DEFAULT_LOCALE]
+}
 
 export function t(key, params = {}, fallback) {
   // Explicit fallbacks are only for local, not-yet-migrated configuration labels.
@@ -77,7 +95,7 @@ export async function setupI18n(app) {
     console.warn('[i18n] Initialization failed; using built-in Simplified Chinese.', error)
     i18n.global.setLocaleMessage(DEFAULT_LOCALE, zhCN)
     i18n.global.locale.value = DEFAULT_LOCALE
-    globalThis.document?.documentElement.setAttribute('lang', DEFAULT_LOCALE)
+    applyLocale(DEFAULT_LOCALE)
   }
   app.use(i18n)
   globalThis.window?.addEventListener('storage', language.handleStorage)

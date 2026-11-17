@@ -1,8 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, shallowMount } from '@vue/test-utils'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { t } from '@/core/i18n'
 import InstallTaskDetailDialog from '@/modules/patches/components/InstallTaskDetailDialog.vue'
 
-const api = vi.hoisted(() => ({ getTask: vi.fn() }))
+const api = vi.hoisted(() => ({
+  getTask: vi.fn(),
+  skipPreCheck: vi.fn(),
+  executePreCheck: vi.fn(),
+  executeInstallTask: vi.fn(),
+  executeRollbackTask: vi.fn()
+}))
 vi.mock('@/modules/patches/api', () => ({ patchInstallApi: api }))
 vi.mock('@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue', () => ({
   default: { name: 'ExecuteResultDialog', template: '<div />' }
@@ -28,6 +36,7 @@ function mountDialog() {
             <slot /><slot name="footer" />
           </section>`
         },
+        'el-button': { template: '<button><slot /></button>' },
         'el-alert': { props: ['title'], template: '<div>{{ title }}<slot /></div>' },
         'el-tag': { template: '<span><slot /></span>' },
         'el-icon': true,
@@ -41,6 +50,7 @@ function mountDialog() {
 }
 
 beforeEach(() => {
+  vi.resetAllMocks()
   vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
   vi.setSystemTime(new Date('2026-10-28T10:00:00+08:00'))
   task = {
@@ -48,13 +58,127 @@ beforeEach(() => {
     status: 'CREATED',
     scheduledTime: new Date(Date.now() + 20000).toISOString()
   }
-  api.getTask.mockReset().mockImplementation(async () => ({ data: { ...task } }))
+  api.getTask.mockImplementation(async () => ({ data: { ...task } }))
 })
 
 afterEach(() => {
   wrapper?.unmount()
   wrapper = null
+  vi.restoreAllMocks()
   vi.useRealTimers()
+})
+
+describe('任务详情预检查操作的上下文保护', () => {
+  const skipLabel = 'patches.linux.acknowledgeAndInstall'
+  const retryLabel = 'patches.linux.repeatPrecheck'
+
+  function deferred() {
+    let resolve
+    const promise = new Promise(done => { resolve = done })
+    return { promise, resolve }
+  }
+
+  async function openFailedTask(taskType = 'install') {
+    task = { id: 'task-a', taskType, status: 'PRE_CHECK_FAILED' }
+    mountDialog()
+    await flushPromises()
+  }
+
+  async function switchTask() {
+    task = { id: 'task-b', taskType: 'rollback', status: 'PRE_CHECK_FAILED' }
+    await wrapper.setProps({ taskId: task.id })
+    await flushPromises()
+  }
+
+  function clickAction(label) {
+    return wrapper.findAll('button').find(button => button.text() === t(label)).trigger('click')
+  }
+
+  it('确认框打开期间切换任务，确认后不跳过任何任务的预检查', async () => {
+    const confirmation = deferred()
+    vi.spyOn(ElMessageBox, 'confirm').mockReturnValue(confirmation.promise)
+    await openFailedTask()
+
+    await clickAction(skipLabel)
+    await switchTask()
+    confirmation.resolve()
+    await flushPromises()
+
+    expect(api.skipPreCheck).not.toHaveBeenCalled()
+    expect(api.executeInstallTask).not.toHaveBeenCalled()
+    expect(api.executeRollbackTask).not.toHaveBeenCalled()
+  })
+
+  it.each(['切换任务', '关闭后重开同一任务'])('跳过请求发出后%s，不再下发执行请求', async change => {
+    const skip = deferred()
+    vi.spyOn(ElMessageBox, 'confirm').mockResolvedValue()
+    api.skipPreCheck.mockReturnValue(skip.promise)
+    await openFailedTask()
+
+    await clickAction(skipLabel)
+    await flushPromises()
+    expect(api.skipPreCheck).toHaveBeenCalledExactlyOnceWith('task-a')
+    if (change === '切换任务') await switchTask()
+    else {
+      await wrapper.get('[data-testid="close"]').trigger('click')
+      await wrapper.setProps({ visible: true })
+      await flushPromises()
+    }
+    skip.resolve()
+    await flushPromises()
+
+    expect(api.executeInstallTask).not.toHaveBeenCalled()
+    expect(api.executeRollbackTask).not.toHaveBeenCalled()
+  })
+
+  it('原执行响应无法覆盖新任务状态或解除它的操作锁', async () => {
+    const install = deferred()
+    const retry = deferred()
+    const success = vi.spyOn(ElMessage, 'success').mockImplementation(() => {})
+    vi.spyOn(ElMessageBox, 'confirm').mockResolvedValue()
+    api.skipPreCheck.mockResolvedValue()
+    api.executeInstallTask.mockReturnValue(install.promise)
+    api.executePreCheck.mockReturnValue(retry.promise)
+    await openFailedTask()
+
+    await clickAction(skipLabel)
+    await flushPromises()
+    expect(api.executeInstallTask).toHaveBeenCalledExactlyOnceWith('task-a', {
+      isCurrent: expect.any(Function)
+    })
+    const { isCurrent } = api.executeInstallTask.mock.lastCall[1]
+    expect(isCurrent()).toBe(true)
+    await switchTask()
+    expect(isCurrent()).toBe(false)
+    await clickAction(retryLabel)
+    expect(api.executePreCheck).toHaveBeenCalledExactlyOnceWith('task-b')
+
+    install.resolve({ data: { id: 'task-a', status: 'INSTALLING' } })
+    await flushPromises()
+    expect(wrapper.vm.$.setupState.taskDetail.id).toBe('task-b')
+    expect(wrapper.vm.$.setupState.actionLoading).toBe(true)
+    expect(success).not.toHaveBeenCalled()
+    retry.resolve({ data: { id: 'task-b', status: 'PRE_CHECKING' } })
+    await flushPromises()
+    expect(wrapper.vm.$.setupState.actionLoading).toBe(false)
+  })
+
+  it('保留当前回滚任务的执行入口和确认保护', async () => {
+    vi.spyOn(ElMessageBox, 'confirm').mockResolvedValue()
+    vi.spyOn(ElMessage, 'success').mockImplementation(() => {})
+    api.skipPreCheck.mockResolvedValue()
+    api.executeRollbackTask.mockResolvedValue({ data: { id: 'task-a', status: 'ROLLING_BACK' } })
+    await openFailedTask('rollback')
+
+    await clickAction(skipLabel)
+    await flushPromises()
+    expect(api.skipPreCheck).toHaveBeenCalledExactlyOnceWith('task-a')
+    expect(api.executeRollbackTask).toHaveBeenCalledExactlyOnceWith('task-a', {
+      isCurrent: expect.any(Function)
+    })
+    expect(api.executeInstallTask).not.toHaveBeenCalled()
+    expect(wrapper.vm.$.setupState.taskDetail.status).toBe('ROLLING_BACK')
+  })
 })
 
 describe('定时安装详情轮询', () => {

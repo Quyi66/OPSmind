@@ -22,6 +22,7 @@ export function usePatchTaskTaskPreparation({
       restartOptions.restartLabel = data.restartLabel || ''
       restartOptions.restartDescription = data.restartReason || ''
       restartOptions.restartReason = data.restartReason || ''
+      restartOptions.confirmText = data.confirmText || ''
       if (['system', 'service', 'none'].includes(restartOptions.restartType)) {
         installConfig.restartPolicy = restartOptions.restartType
       }

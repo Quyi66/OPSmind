@@ -4,6 +4,7 @@
     <InstallTaskDetailDialog
       v-model:visible="detailVisible"
       :task-id="selectedTaskId"
+      :is-admin="isAdmin"
       @update:visible="handleDetailVisibleChange"
     />
   </div>

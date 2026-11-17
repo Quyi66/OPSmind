@@ -110,7 +110,7 @@
                 {{ t('patches.linux.scheduleTimeHint') }}
               </div>
               <div class="mt-1" style="font-size: 12px; color: var(--el-text-color-secondary);">
-                {{ isAdmin ? t('patches.linux.submitAfterSchedule') : t('patches.linux.approveBeforeSchedule') }}
+                {{ isAdmin ? t('patches.linux.submitAfterSchedule') : t('patches.changeControl.scheduleApprovalHint') }}
                 {{ t('patches.linux.scheduleBehavior') }}
               </div>
             </el-form-item>
@@ -136,6 +136,7 @@
                 </span>
               </div>
             </el-form-item>
+            <PatchImplementationPlan v-model="planDraft" scheduled :disabled="submitting" />
           </el-form>
         </div>
 
@@ -294,6 +295,8 @@ import { normalizeAcmDeviceSelection } from '@/modules/automation/components/job
 import { useAuth } from '@/core/auth'
 import { isFutureSchedule } from '../utils/patchInstallSchedule'
 import { parseRawPackagesText } from '../utils/packageParser'
+import PatchImplementationPlan from '../components/change-control/PatchImplementationPlan.vue'
+import { implementationPlan, isChangeControlCancelled } from '../utils/changeControl'
 
 const { user } = useAuth()
 const isAdmin = computed(() => user.value?.login === 'admin')
@@ -473,6 +476,7 @@ const scheduleHour = ref('20')
 const scheduleMinute = ref('00')
 const scheduleHours = Array.from({ length: 24 }, (_, hour) => String(hour).padStart(2, '0'))
 const scheduleMinutes = Array.from({ length: 12 }, (_, index) => String(index * 5).padStart(2, '0'))
+const planDraft = ref({})
 const installForm = reactive({
   useCustomPackages: false,
   packageSetId: '',
@@ -553,8 +557,11 @@ async function handleStartOneClickInstall() {
 
   submitting.value = true
   try {
+    const plan = implementationPlan({ ...planDraft.value, planStartTime: payload.scheduledTime })
+    delete plan.planStartTime
+    Object.assign(payload, plan)
     await ElMessageBox.confirm(
-      t('patches.linux.scheduleConfirm', { count: targets.length, time: payload.scheduledTime, approval: isAdmin.value ? t('patches.linux.executeOnSchedule') : t('patches.linux.requiresAdminApproval') }),
+      t('patches.linux.scheduleConfirm', { count: targets.length, time: payload.scheduledTime, approval: isAdmin.value ? t('patches.linux.executeOnSchedule') : t('patches.changeControl.scheduleApprovalHint') }),
       t('patches.linux.confirmSchedule'),
       {
         closeOnClickModal: false,
@@ -571,6 +578,7 @@ async function handleStartOneClickInstall() {
     }
     const response = await patchInstallApi.createAndRunTask(payload)
     if (response?.data) {
+      planDraft.value = {}
       ElMessage.success(response.data.status === 'PENDING_APPROVAL' ? t('patches.linux.applicationSubmitted') : t('patches.linux.scheduledInstallSubmitted'))
       selectedHosts.value = []
       if (installForm.useCustomPackages) {
@@ -582,7 +590,7 @@ async function handleStartOneClickInstall() {
       ElMessage.error(t('patches.linux.batchInstallCreateFailed'))
     }
   } catch (error) {
-    if (error !== 'cancel' && error !== 'close') {
+    if (error !== 'cancel' && error !== 'close' && !isChangeControlCancelled(error)) {
       console.error('Failed to create and run task:', error)
       ElMessage.error(error?.response?.data?.message || error?.response?.data?.error || error?.message || t('patches.linux.createTaskCheckParams'))
     }

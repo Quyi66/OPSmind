@@ -2,6 +2,7 @@ import { t } from '@/core/i18n'
 import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { patchInstallApi } from '../api'
+import { secopsText, useSecopsMessages } from '../utils/secopsMessages'
 import {
   getPatchTaskDisplayConfig,
   getPatchTaskWizardSteps,
@@ -27,6 +28,7 @@ const VALIDATE_STEP = 'VALIDATE'
 const RESTART_STEP = 'RESTART'
 
 export function usePatchProcessLogDetail(sourceTask) {
+  useSecopsMessages()
   const loading = ref(false)
   const task = ref(null)
   const history = ref([])
@@ -163,7 +165,7 @@ export function usePatchProcessLogDetail(sourceTask) {
     const executeStep = taskType.value === 'rollback' ? 'ROLLBACK' : 'INSTALL'
     const errMsg = taskErrorMessage.value
 
-    return [
+    const items = [
       buildPipelineItem('pre-check', t('patches.linux.precheck'), preCheckRecords.value, {
         fallbackRunId: task.value?.preCheckRunId || '',
         stepStatus: isPreCheckFailed.value ? 'FAILED' : getStepStatus(PRE_CHECK_STEP),
@@ -196,6 +198,16 @@ export function usePatchProcessLogDetail(sourceTask) {
         taskErrorMessage: errMsg
       })
     ]
+    const inspection = findStep('INSPECT')
+    if (inspection) {
+      items.push(buildPipelineItem(
+        'inspect',
+        secopsText('secops.step.INSPECT', inspection.label || t('patches.changeControl.inspection')),
+        Array.isArray(inspection.logs) ? inspection.logs : [],
+        { stepStatus: inspection.status }
+      ))
+    }
+    return items
   })
 
   async function load() {

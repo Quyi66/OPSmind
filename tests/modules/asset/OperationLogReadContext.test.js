@@ -8,6 +8,9 @@ import { setLocale } from '@/core/i18n'
 
 const api = vi.hoisted(() => ({ getOperationLogs: vi.fn() }))
 vi.mock('@/modules/asset/api', () => ({ operationLogApi: api }))
+vi.mock('@/modules/patches/api', () => ({
+  patchChangeControlApi: { getMessages: async () => ({ data: { messages: {} } }) }
+}))
 vi.mock('@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue', () => ({
   default: { name: 'ExecuteResultDialog', props: ['visible', 'runId'], template: '<aside />' }
 }))

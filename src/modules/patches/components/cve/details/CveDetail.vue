@@ -401,7 +401,7 @@
                     <el-tag
                       size="small"
                       effect="light"
-                      :class="['patch-status-tag', 'status-' + getPatchStatusType(row.patchStatus)]"
+                      :class="['patch-status-tag', 'status-' + getPatchStatusType(row.patchStatusCode ?? row.patch_status_code ?? row.patchStatus)]"
                     >
                       {{ row.patchStatus || '-' }}
                     </el-tag>

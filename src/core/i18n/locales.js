@@ -7,6 +7,7 @@ export const LOCALE_DEFINITIONS = Object.freeze([
     label: '简体中文',
     shortLabel: '中',
     dateLocale: 'zh-cn',
+    backendLanguage: 'zh-CN',
     load: () => import('../../locales/zh-CN/index.js')
   },
   {
@@ -14,6 +15,7 @@ export const LOCALE_DEFINITIONS = Object.freeze([
     label: 'English',
     shortLabel: 'EN',
     dateLocale: 'en',
+    backendLanguage: 'en',
     load: () => import('../../locales/en-US/index.js')
   }
 ])

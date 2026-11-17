@@ -35,13 +35,19 @@ function applyTemplateParams(template, params) {
   })
 }
 
-export function formatOperationLogMessage(message) {
+export function formatOperationLogMessage(message, lookup = () => '') {
   if (!message) return ''
 
   // 先解析 JSON，防止原始说明中的翻译表达式使整个 JSON 直接显示。
   try {
-    const record = JSON.parse(message)
+    const record = typeof message === 'string' ? JSON.parse(message) : message
     if (!record || !record.msg_id || typeof record.msg_id !== 'string') return message
+    const localized = lookup(record.msg_id, record)
+    if (localized) {
+      return typeof record.msg_info === 'string' && record.msg_info.trim() && !localized.includes(record.msg_info)
+        ? `${localized} · ${record.msg_info}`
+        : localized
+    }
     if (
       [
         'app_secops.log.exec_rollback_task_fail',
@@ -64,9 +70,10 @@ export function formatOperationLogMessage(message) {
     }
     return summary
   } catch {
+    if (typeof message !== 'string') return message
     if (message.includes('#{')) {
-      return message.replace(/#\{([^}]+)\}/g, (_, key) => translateMessageKey(key))
+      return message.replace(/#\{([^}]+)\}/g, (_, key) => lookup(key) || translateMessageKey(key))
     }
-    return translateMessageKey(message) || message
+    return lookup(message) || translateMessageKey(message) || message
   }
 }

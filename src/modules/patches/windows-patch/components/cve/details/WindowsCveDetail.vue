@@ -483,7 +483,7 @@ function getHostSeverity(host) {
 function getHostPatchStatus(host) {
   return pickValue(
     host,
-    ['patchStatus', 'patch_status', 'status', 'installStatus', 'install_status'],
+    ['patchStatusCode', 'patch_status_code', 'patchStatus', 'patch_status', 'status', 'installStatus', 'install_status'],
     ''
   )
 }

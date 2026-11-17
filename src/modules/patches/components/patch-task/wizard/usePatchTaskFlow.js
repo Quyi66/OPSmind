@@ -1,6 +1,7 @@
 import { t } from '@/core/i18n'
 import { onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { isChangeControlCancelled } from '../../../utils/changeControl'
 
 export function usePatchTaskFlow({
   createdTaskId,
@@ -47,7 +48,8 @@ export function usePatchTaskFlow({
 }) {
   let session = 0
   const isBusy = () => executionSubmitting?.value || pipelineStatus.value === 'running'
-  const configurationLocked = () => isBusy() || pipelineStatus.value === 'paused'
+  const configurationLocked = () => isBusy() || pipelineStatus.value === 'paused' ||
+    taskDetailData?.value?.status === 'PENDING_APPROVAL'
 
   function resetInstallState() {
     session += 1
@@ -100,6 +102,11 @@ export function usePatchTaskFlow({
 
     const postSynced = await syncScriptConfig('post')
     if (!isCurrent() || !postSynced) return false
+
+    if (taskDetailData.value?.status === 'PENDING_APPROVAL') {
+      ElMessage.success(t('patches.linux.applicationSubmitted'))
+      return false
+    }
 
     await loadRestartOptions(isCurrent)
     if (!isCurrent()) return false
@@ -199,7 +206,8 @@ export function usePatchTaskFlow({
   }
 
   async function executeStep() {
-    if (executionSubmitting.value || pipelineStatus.value === 'running') return
+    if (executionSubmitting.value || pipelineStatus.value === 'running' ||
+      taskDetailData?.value?.status === 'PENDING_APPROVAL') return
 
     const token = session
     const isCurrent = () => token === session
@@ -213,7 +221,9 @@ export function usePatchTaskFlow({
       if (!isCurrent() || !taskPrepared) return
       await startPipeline()
     } catch (error) {
-      if (isCurrent()) ElMessage.error(resolveApiErrorMessage(error, t('patches.linux.taskPreparationFailed')))
+      if (isCurrent() && !isChangeControlCancelled(error)) {
+        ElMessage.error(resolveApiErrorMessage(error, t('patches.linux.taskPreparationFailed')))
+      }
     } finally {
       if (isCurrent()) executionSubmitting.value = false
     }

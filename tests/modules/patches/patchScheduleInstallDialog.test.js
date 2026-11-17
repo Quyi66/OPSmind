@@ -99,7 +99,7 @@ describe('PatchScheduleInstallDialog payload generation & validation', () => {
       scheduledTime: payload.scheduledTime,
       batchSize: 50
     }
-    api.post.mockResolvedValueOnce({ data: mockTask })
+    api.post.mockResolvedValueOnce({ data: { decision: 'PASS' } }).mockResolvedValueOnce({ data: mockTask })
 
     const response = await patchInstallApi.createAndRunTask(payload)
     expect(api.post).toHaveBeenCalledWith(

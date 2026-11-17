@@ -1,5 +1,6 @@
 import { t } from '@/core/i18n'
 import { formatDateTime } from '@/utils/date'
+import { secopsText } from './secopsMessages'
 export { formatDateTime }
 
 const TASK_TYPE_LABELS = {
@@ -62,7 +63,7 @@ const SUCCESSFUL_RECORD_ACTIONS = [
 ]
 
 export function formatTaskType(taskType) {
-  return TASK_TYPE_LABELS[taskType] || taskType || '-'
+  return secopsText(`secops.task_type.${taskType}`, TASK_TYPE_LABELS[taskType] || taskType || '-')
 }
 
 export function getTaskTypeTagType(taskType) {
@@ -83,7 +84,8 @@ export function getTaskTypeTagStyle(taskType) {
 }
 
 export function formatTaskStatus(status) {
-  return TASK_STATUS_LABELS[normalizeTaskStatus(status)] || status || '-'
+  const code = normalizeTaskStatus(status)
+  return secopsText(`secops.status.${code}`, TASK_STATUS_LABELS[code] || status || '-')
 }
 
 export function getTaskStatusTagType(status) {

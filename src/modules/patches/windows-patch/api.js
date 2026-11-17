@@ -1,6 +1,8 @@
 import { apiService } from '@/core/api'
 import { patchInstallApi } from '../api'
 import { createPatchTaskError } from '../utils/patchTaskFeedback'
+import { implementationPlan, requestConfirmationPhrase } from '../utils/changeControl'
+import { t } from '@/core/i18n'
 
 const WIN_PATCH_API_PREFIX = '/secops/api/secops/win-patch'
 const WIN_PATCH_ACTION_API_PREFIX = '/secops/api/secops/win/patch'
@@ -52,6 +54,20 @@ function extractResponseData(result) {
   return result.value?.data ?? result.value ?? null
 }
 
+async function executeWindowsRestart(taskId, options) {
+  const response = await patchInstallApi.getRestartOptions(taskId)
+  if (options.isCurrent?.() === false) return
+  const data = response?.data
+  const confirmText = data?.confirmText
+    ? await requestConfirmationPhrase({
+      confirmText: data.confirmText, message: data.restartReason
+    }, t('patches.linux.confirmRestart'))
+    : String(options.confirmText || '确认重启').trim() || '确认重启'
+  if (options.isCurrent?.() === false) return
+  await patchInstallApi.confirmRestart(taskId, true, confirmText)
+  return patchInstallApi.executeRestart(taskId, { isCurrent: options.isCurrent })
+}
+
 export const winPatchApi = {
   getWsusConfigs() {
     return apiService.get(`${WIN_PATCH_API_PREFIX}/wsus-config`)
@@ -73,21 +89,23 @@ export const winPatchApi = {
   },
 
   // 安装：复用 Linux 流程化向导 POST /api/vap/v2/patch/task/create，仅以 osType=windows 区分
-  createInstallTask(payload = {}) {
+  createInstallTask(payload = {}, options) {
     return patchInstallApi.createTask({
       osType: 'windows',
       hostIds: normalizeIdList(payload.hostIds),
-      patchStatusIds: normalizeIdList(payload.patchStatusIds)
-    })
+      patchStatusIds: normalizeIdList(payload.patchStatusIds),
+      ...implementationPlan(payload)
+    }, options)
   },
 
   // 回滚：复用 Linux 流程化向导 POST /api/vap/v2/patch/task/create-rollback
-  createRollbackTask(payload = {}) {
+  createRollbackTask(payload = {}, options) {
     return patchInstallApi.createRollbackTask({
       osType: 'windows',
       hostIds: normalizeIdList(payload.hostIds),
-      histUpdateIds: normalizeIdList(payload.histUpdateIds)
-    })
+      histUpdateIds: normalizeIdList(payload.histUpdateIds),
+      ...implementationPlan(payload)
+    }, options)
   },
 
   // 删除回滚历史记录（仅删前端记录，不影响目标机）
@@ -118,19 +136,15 @@ export const winPatchApi = {
     }
 
     if (stepKey === 'INSTALL') {
-      return patchInstallApi.executeInstallTask(taskId)
+      return patchInstallApi.executeInstallTask(taskId, { isCurrent: options.isCurrent })
     }
 
     if (stepKey === 'ROLLBACK') {
-      return patchInstallApi.executeRollbackTask(taskId)
+      return patchInstallApi.executeRollbackTask(taskId, { isCurrent: options.isCurrent })
     }
 
     if (stepKey === 'RESTART') {
-      // This Chinese confirmation token belongs to the backend protocol.
-      const confirmText = String(options.confirmText || '确认重启').trim() || '确认重启'
-      return patchInstallApi
-        .confirmRestart(taskId, true, confirmText)
-        .then(() => patchInstallApi.executeRestart(taskId))
+      return executeWindowsRestart(taskId, options)
     }
 
     if (stepKey === 'VALIDATE') {

@@ -3,6 +3,7 @@ import { createPatchTaskError } from '@/modules/patches/utils/patchTaskFeedback'
 
 import { message as localMessage, messageRef } from '@/core/i18n/feedback'
 import { t } from '@/core/i18n'
+import { isChangeControlCancelled } from '../../utils/changeControl'
 import { createWinPatchError, getWinPatchErrorFeedback, getWinPatchRunTitle } from '../feedback'
 import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
@@ -416,6 +417,10 @@ export function useWinPatchInstallWizard({
   const executionSubmitting = ref(false)
   const runtimeLoading = ref(false)
   const createdTask = ref(null)
+  const planDraft = ref({})
+  const pendingApproval = computed(() =>
+    pickValue(taskDetail.value || createdTask.value, ['status'], '') === 'PENDING_APPROVAL'
+  )
   const taskDetail = ref(null)
   const taskHosts = ref([])
   const taskAuditSteps = ref([])
@@ -656,7 +661,8 @@ export function useWinPatchInstallWizard({
       hostIds: selectedHostIds.value,
       patchStatusIds: selectedPatchStatusIds.value,
       reboot: installOptions.value.reboot,
-      rescanAfter: installOptions.value.rescanAfter
+      rescanAfter: installOptions.value.rescanAfter,
+      ...planDraft.value
     })
     const task = unwrapResponse(response)
     const taskId = String(pickValue(task, ['id'], '')).trim()
@@ -901,6 +907,11 @@ export function useWinPatchInstallWizard({
         await syncScriptConfig('validate', validateScriptConfig.value, () => t('patches.linux.validationScript'))
       }
 
+      if (pendingApproval.value) {
+        pipelineStatus.value = 'idle'
+        ElMessage.success(t('patches.linux.applicationSubmitted'))
+        return
+      }
       await triggerTaskStep(
         'PRE_CHECK',
         skippedSteps.value['pre-check'] || !hasConfiguredScript(preScriptConfig.value)
@@ -928,7 +939,11 @@ export function useWinPatchInstallWizard({
         onSuccess(taskDetail.value || createdTask.value || null)
       }
     } catch (error) {
-      pipelineStatus.value = 'failed'
+      if (isChangeControlCancelled(error)) {
+        pipelineStatus.value = currentTaskId.value ? 'paused' : 'idle'
+        return
+      }
+      pipelineStatus.value = !currentTaskId.value ? 'idle' : error?.response?.status === 400 ? 'paused' : 'failed'
       taskErrorMessage.value = getWinPatchErrorFeedback(error, localMessage('patches.windows.installFailed'))
       ElMessage.error(taskErrorMessage.value)
     } finally {
@@ -1018,6 +1033,7 @@ export function useWinPatchInstallWizard({
     executionSubmitting.value = false
     runtimeLoading.value = false
     createdTask.value = null
+    planDraft.value = {}
     taskDetail.value = null
     taskHosts.value = []
     taskAuditSteps.value = []
@@ -1056,6 +1072,8 @@ export function useWinPatchInstallWizard({
     showRunResultDialog,
     skipCurrentStep,
     skippedSteps,
+    planDraft,
+    pendingApproval,
     startExecution,
     taskDetail,
     taskErrorMessage,

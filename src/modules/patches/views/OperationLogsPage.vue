@@ -346,6 +346,7 @@ import { patchLogsApi } from '../api'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { initTranslations, translateText } from '@/utils/i18n'
 import { formatOperationLogMessage } from '@/utils/operationLogMessages'
+import { secopsAuditAction, secopsLogMessage, useSecopsMessages } from '../utils/secopsMessages'
 import { useApi } from '@/core/api'
 import { authService } from '@/core/auth'
 import ScanReportDialog from '../components/logs/ScanReportDialog.vue'
@@ -464,11 +465,13 @@ function formatTimestamp(timestamp) {
 }
 
 // 翻译操作类型（使用 i18n 工具）
+useSecopsMessages({ auditActions: true })
+
 function translateAction(action) {
   if (!action) return ''
 
   // 先尝试使用 i18n 翻译工具
-  const translated = translateText(action)
+  const translated = secopsAuditAction(action, translateText(action))
 
   // 如果翻译结果与原文相同，可能是没有找到翻译，尝试使用硬编码映射
   if (translated === action && action.startsWith('#{')) {
@@ -499,7 +502,7 @@ function translateAction(action) {
 
 // 翻译消息（基于 i18n 模板）
 function translateMessage(messageStr) {
-  return formatOperationLogMessage(messageStr)
+  return formatOperationLogMessage(messageStr, secopsLogMessage)
 }
 
 function parseHosts(hostsStr) {

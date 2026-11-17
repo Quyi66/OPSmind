@@ -259,11 +259,12 @@
             </el-select>
           </div>
           <div class="form-item-tip form-item-tip--highlight">
-            {{ isAdmin ? t('patches.linux.submitAfterSchedule') : t('patches.linux.approveBeforeSchedule') }}
+            {{ isAdmin ? t('patches.linux.submitAfterSchedule') : t('patches.changeControl.scheduleApprovalHint') }}
             {{ t('patches.linux.scheduleBehavior') }}
           </div>
         </el-form-item>
 
+        <PatchImplementationPlan v-model="planDraft" scheduled :disabled="submitting" />
         <!-- 分批大小 -->
         <el-form-item :label="t('patches.linux.batchSize')" required>
           <div style="display: flex; align-items: center; gap: 8px;">
@@ -337,6 +338,10 @@ import { normalizeAffectedPackages } from '../../../utils/packageParser'
 import { usePatchHostGroupFilter } from '../usePatchHostGroupFilter'
 import PatchTaskStepper from '../PatchTaskStepper.vue'
 import PatchTaskPackageList from '../PatchTaskPackageList.vue'
+import PatchImplementationPlan from '../../change-control/PatchImplementationPlan.vue'
+import { implementationPlan, isChangeControlCancelled } from '../../../utils/changeControl'
+
+const planDraft = ref({})
 
 const props = defineProps({
   visible: {
@@ -671,8 +676,11 @@ async function handleSubmit() {
 
   submitting.value = true
   try {
+    const plan = implementationPlan({ ...planDraft.value, planStartTime: payload.scheduledTime })
+    delete plan.planStartTime
+    Object.assign(payload, plan)
     await ElMessageBox.confirm(
-      t('patches.linux.scheduleConfirm', { count: targets.length, time: payload.scheduledTime, approval: isAdmin.value ? t('patches.linux.executeOnSchedule') : t('patches.linux.requiresAdminApproval') }),
+      t('patches.linux.scheduleConfirm', { count: targets.length, time: payload.scheduledTime, approval: isAdmin.value ? t('patches.linux.executeOnSchedule') : t('patches.changeControl.scheduleApprovalHint') }),
       t('patches.linux.confirmSchedule'),
       {
         closeOnClickModal: false,
@@ -701,7 +709,7 @@ async function handleSubmit() {
       ElMessage.error(t('patches.linux.scheduledTaskFailed'))
     }
   } catch (error) {
-    if (error !== 'cancel' && error !== 'close') {
+    if (error !== 'cancel' && error !== 'close' && !isChangeControlCancelled(error)) {
       console.error('Failed to create scheduled patch install task:', error)
       ElMessage.error(error?.response?.data?.message || error?.response?.data?.error || error?.message || t('patches.linux.createTaskCheckParams'))
     }
@@ -711,6 +719,7 @@ async function handleSubmit() {
 }
 
 function handleClosed() {
+  planDraft.value = {}
   hostRequestId += 1
   installDataLoading.value = false
   resetGroupFilter()

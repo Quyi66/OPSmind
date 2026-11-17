@@ -8,7 +8,7 @@ function backendErrorText(error) {
 // Keep backend messages verbatim and retain local keys across asynchronous task steps.
 export function createWinPatchError(error, key, params = {}) {
   const backendText = backendErrorText(error)
-  if (backendText) return new Error(backendText)
+  if (backendText) return Object.assign(new Error(backendText), { response: error.response })
   if (error?.localMessage || error?.message) return error
   return Object.assign(new Error(t(key, typeof params === 'function' ? params() : params)), {
     localMessage: message(key, params)
