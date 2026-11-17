@@ -197,6 +197,13 @@ export function inspectLayout() {
       ) {
         findings.push({ kind: 'text-outside-control', element: describe(element) })
       }
+      if (
+        element.matches('.el-form-item__label') &&
+        textRect.height > 0 &&
+        (textRect.top < rect.top - 2 || textRect.bottom > rect.bottom + 2)
+      ) {
+        findings.push({ kind: 'label-outside-row', element: describe(element) })
+      }
       // A button/tag can fit its own box while the table cell clips the control.
       // Only compare with its own cell; partially scrolled columns are expected.
       const cell = element.closest('.cell')
@@ -273,6 +280,109 @@ export function inspectLayout() {
       findings.push({ kind: 'active-tag-outside-view', element: describe(activeTag) })
     }
   }
+  // Review signals, not automatic failures: complete words and separate buttons can
+  // wrap without overflowing. Keep their geometry so visual review cannot miss them.
+  const tableReview = []
+  const lineTops = element => {
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT)
+    const tops = []
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      if (!node.textContent.trim()) continue
+      const range = document.createRange()
+      range.selectNodeContents(node)
+      for (const rect of range.getClientRects()) {
+        if (rect.width > 1 && rect.height > 1 && !tops.some(top => Math.abs(top - rect.top) < 4))
+          tops.push(rect.top)
+      }
+    }
+    return tops
+  }
+  if (document.documentElement.lang === 'en-US') {
+    for (const table of document.querySelectorAll('.el-table')) {
+      for (const header of table.querySelectorAll('.el-table__header th')) {
+        const cell = header.querySelector('.cell')
+        if (!cell || !visible(cell)) continue
+        const label = cell.textContent.trim().replace(/\s+/g, ' ')
+        const columnClass = [...header.classList].find(name => /^el-table_.*_column_/.test(name))
+        const rows = columnClass
+          ? [...table.querySelectorAll(`.el-table__body td.${columnClass} .cell`)].filter(visible)
+          : []
+        const textLines = lineTops(cell)
+        const sortIcon = cell.querySelector('.caret-wrapper')
+        const sortWrapped =
+          sortIcon &&
+          textLines.length &&
+          sortIcon.getBoundingClientRect().top > Math.max(...textLines) + 8
+        const wrapped = textLines.length > 1 || Boolean(sortWrapped)
+        const entry = { label, width: Math.round(header.getBoundingClientRect().width), wrapped }
+        if (wrapped) findings.push({ kind: 'header-wrap-review', element: describe(cell) })
+        const wrappedDate = rows.find(
+          row => /\b(?:AM|PM)\b/.test(row.textContent) && lineTops(row).length > 1
+        )
+        if (wrappedDate)
+          findings.push({ kind: 'date-wrap-review', element: describe(wrappedDate), header: label })
+        if (label === 'Actions') {
+          const samples = rows.map(row => {
+            // The row is visible, but an overflowing action can be wholly clipped
+            // out of its cell. Do not discard that action using viewport visibility.
+            const buttons = [...row.querySelectorAll('button,a.el-link')].filter(button => {
+              const rect = button.getBoundingClientRect()
+              const style = getComputedStyle(button)
+              return (
+                rect.width > 1 &&
+                rect.height > 1 &&
+                style.display !== 'none' &&
+                style.visibility !== 'hidden' &&
+                !button.closest('[aria-hidden="true"]')
+              )
+            })
+            const rects = buttons.map(button => button.getBoundingClientRect())
+            const column = row.closest('td').getBoundingClientRect()
+            return {
+              labels: buttons.map(button => button.textContent.trim()),
+              outsideColumn: rects.some(
+                rect => rect.left < column.left - 2 || rect.right > column.right + 2
+              ),
+              lines: new Set(rects.map(rect => Math.round(rect.top / 3) * 3)).size,
+              requiredWidth: rects.length
+                ? Math.ceil(
+                    rects.reduce((sum, rect) => sum + rect.width, 0) +
+                      Math.max(0, rects.length - 1) * 12 +
+                      24
+                  )
+                : 0
+            }
+          })
+          entry.actions = samples
+          const required = Math.max(0, ...samples.map(sample => sample.requiredWidth))
+          if (samples.some(sample => sample.lines > 1))
+            findings.push({ kind: 'action-wrap-review', element: describe(cell), samples })
+          if (samples.some(sample => sample.outsideColumn))
+            findings.push({ kind: 'action-outside-column', element: describe(cell), samples })
+          if (required && entry.width - required > Math.max(32, required * 0.3))
+            findings.push({
+              kind: 'action-width-review',
+              element: describe(cell),
+              requiredWidth: required
+            })
+        }
+        tableReview.push(entry)
+      }
+    }
+  }
+  const untranslatedTags =
+    document.documentElement.lang === 'en-US'
+      ? [...document.querySelectorAll('.tags-view-item')]
+          .filter(tag => /[\u4e00-\u9fff]/.test(tag.textContent))
+          .map(tag => ({ path: tag.dataset.path, title: tag.textContent.trim() }))
+      : []
+  const dataState = {
+    rows: document.querySelectorAll('.el-table__body tbody tr').length,
+    emptyTables: [...document.querySelectorAll('.el-table__empty-block')].filter(visible).length,
+    errors: [...document.querySelectorAll('.el-message--error,.el-alert--error')]
+      .filter(visible)
+      .map(element => describe(element).text)
+  }
   const controls = [
     ...document.querySelectorAll('.top-nav-header .nav-right > *, .el-form-item button')
   ].filter(visible)
@@ -296,6 +406,9 @@ export function inspectLayout() {
     viewport: { width: innerWidth, height: innerHeight },
     tableRows: document.querySelectorAll('.el-table__body tbody tr').length,
     checkedElements,
+    tableReview,
+    untranslatedTags,
+    dataState,
     findings
   }
 }
@@ -308,7 +421,13 @@ export function getAdditionalCaptures(capture) {
 export function hasCaptureFailure(capture) {
   return (
     capture.status !== 'captured' ||
-    Boolean(capture.error || capture.tabAudit?.error || capture.scrollAudit?.error) ||
+    Boolean(
+      capture.error ||
+      capture.tabAudit?.error ||
+      capture.scrollAudit?.error ||
+      capture.requestIssues?.length ||
+      capture.layout?.dataState?.errors.length
+    ) ||
     [...(capture.tabAudit?.states || []), ...(capture.scrollAudit?.states || [])].some(
       hasCaptureFailure
     )
@@ -341,5 +460,6 @@ export function renderAuditReport(report) {
           .join('')}</td></tr>`
     )
     .join('\n')
-  return `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>本地中英文页面巡检</title><style>body{font:14px system-ui;margin:24px;color:#263445}table{border-collapse:collapse;width:100%}td,th{padding:10px;border:1px solid #d9e1ea;text-align:left}th{background:#f3f6fa}a{color:#1677d2}p{line-height:1.7}</style><h1>本地中英文页面巡检</h1>${report.error ? `<p role="alert">采集中止：${escape(report.error)}</p>` : ''}<p>时间：${escape(report.startedAt)}。结果来自真实页面和真实接口。疑点数量包含有意省略的文字，需要人工判断；没有疑点不代表视觉验收通过。页面内纵向滚动区域只采集当前可见部分。${report.tablesRequested ? '已补充宽表格横向隐藏列截图。' : ''}${report.tabsRequested ? '已启用资产及参数页的只读标签页白名单检查。' : '未自动切换页面内部标签。'}未自动打开弹窗。</p><p>详情见同目录 report.json。截图可能含业务数据，仅保存在本地缓存。</p><table><thead><tr><th>菜单页面</th><th>语言</th><th>宽度</th><th>采集状态</th><th>排版疑点</th><th>查看</th></tr></thead><tbody>${rows}</tbody></table></html>`
+  const defaultScope = `页面内纵向滚动区域只采集当前可见部分。${report.tablesRequested ? '已补充宽表格横向隐藏列截图。' : ''}${report.tabsRequested ? '已启用资产及参数页的只读标签页白名单检查。' : '未自动切换页面内部标签。'}未自动打开弹窗。`
+  return `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>本地中英文页面巡检</title><style>body{font:14px system-ui;margin:24px;color:#263445}table{border-collapse:collapse;width:100%}td,th{padding:10px;border:1px solid #d9e1ea;text-align:left}th{background:#f3f6fa}a{color:#1677d2}p{line-height:1.7}</style><h1>本地中英文页面巡检</h1>${report.error ? `<p role="alert">采集中止：${escape(report.error)}</p>` : ''}<p>时间：${escape(report.startedAt)}。结果来自真实页面和真实接口。疑点数量包含有意省略的文字，需要人工判断；没有疑点不代表视觉验收通过。${report.scopeDescription ? escape(report.scopeDescription) : defaultScope}</p><p>详情见同目录 report.json。截图可能含业务数据，仅保存在本地缓存。</p><table><thead><tr><th>菜单页面</th><th>语言</th><th>宽度</th><th>采集状态</th><th>排版疑点</th><th>查看</th></tr></thead><tbody>${rows}</tbody></table></html>`
 }

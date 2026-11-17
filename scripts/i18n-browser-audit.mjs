@@ -57,6 +57,18 @@ try {
     timeout: 20000
   })
   const page = context.pages()[0] || (await context.newPage())
+  let requestIssues = []
+  page.on('response', response => {
+    const url = new URL(response.url())
+    if (url.origin === new URL(options.baseURL).origin && response.status() >= 400)
+      requestIssues.push({ path: url.pathname, status: response.status() })
+  })
+  page.on('requestfailed', request => {
+    const url = new URL(request.url())
+    const reason = request.failure()?.errorText
+    if (url.origin === new URL(options.baseURL).origin && reason !== 'net::ERR_ABORTED')
+      requestIssues.push({ path: url.pathname, reason })
+  })
   page.setDefaultTimeout(15000)
   const requestedURL = new URL(options.baseURL)
   const isApplicationReady = () =>
@@ -141,6 +153,7 @@ try {
       for (const locale of options.locales) {
         for (const width of options.widths) {
           const capture = { path: item.path, locale, width, status: 'failed' }
+          requestIssues = []
           try {
             await page.setViewportSize({ width, height: options.height })
             await page.locator('.top-nav-wrapper .language-switcher select').selectOption(locale)
@@ -237,6 +250,9 @@ try {
               capture.tabAudit = await auditReadOnlyTabs(page, item.path, args =>
                 captureState({ ...args, includeTables: true })
               )
+            capture.requestIssues = [...requestIssues]
+            if (requestIssues.length || capture.layout?.dataState.errors.length)
+              capture.status = 'captured-with-errors'
           } catch (error) {
             capture.status = 'failed'
             capture.error = error.message.split('\n')[0]

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { chromium } from '@playwright/test'
 import { auditReadOnlyTabs } from './i18n-browser-audit-tabs.mjs'
 import { auditHorizontalTables } from './i18n-browser-audit-scroll.mjs'
+import { findReviewedButton, parseSecondaryOptions } from './i18n-browser-audit-secondary.mjs'
 import {
   collectMenuRoutes,
   getAdditionalCaptures,
@@ -90,6 +91,74 @@ test('layout detector uses rendered geometry and distinguishes intentional clipp
     </div></div>`)
     const clippedControl = await page.evaluate(inspectLayout)
     assert.ok(clippedControl.findings.some(item => item.kind === 'control-clipped-by-cell'))
+    await page.setContent(`<label class="el-form-item__label" style="display:block;width:90px;height:20px;font:14px/20px Arial">CRON expression</label>
+      <label class="el-form-item__label" style="display:block;width:90px;height:40px;font:14px/20px Arial">CRON expression</label>`)
+    const labels = await page.evaluate(inspectLayout)
+    assert.equal(labels.findings.filter(item => item.kind === 'label-outside-row').length, 1)
+  } finally {
+    await browser.close()
+  }
+})
+
+test('table review catches whole-word wrapping, stacked actions, spare column width and historical Chinese tags', async () => {
+  const browser = await chromium.launch({ channel: 'chrome', headless: true })
+  try {
+    const page = await browser.newPage()
+    await page.setContent(`<!doctype html><html lang="en-US"><style>
+      .el-table{width:500px}table{table-layout:fixed;width:100%}th,td{text-align:left}
+      .cell{font:14px/20px Arial}button{height:24px} .stack button{display:block}
+    </style><div class="el-table"><table class="el-table__header"><tr>
+      <th class="el-table_1_column_1" style="width:70px"><div class="cell">Affected versions</div></th>
+      <th class="el-table_1_column_2"><div class="cell">Actions</div></th>
+    </tr></table><table class="el-table__body"><tr>
+      <td class="el-table_1_column_1"><div class="cell">2</div></td>
+      <td class="el-table_1_column_2"><div class="cell stack"><button>Details</button><button>Affected hosts</button></div></td>
+    </tr></table></div>
+    <span class="tags-view-item" data-path="/acm/model" style="position:absolute;left:-300px">模型定义</span>`)
+    const result = await page.evaluate(inspectLayout)
+    assert.ok(result.findings.some(item => item.kind === 'header-wrap-review'))
+    assert.ok(result.findings.some(item => item.kind === 'action-wrap-review'))
+    assert.ok(result.findings.some(item => item.kind === 'action-width-review'))
+    assert.deepEqual(result.untranslatedTags, [{ path: '/acm/model', title: '模型定义' }])
+    assert.ok(!result.findings.some(item => item.kind === 'word-broken-header'))
+    await page
+      .locator('.el-table__body button')
+      .evaluateAll(elements => elements.forEach(element => element.remove()))
+    const empty = await page.evaluate(inspectLayout)
+    assert.ok(!empty.findings.some(item => item.kind === 'action-width-review'))
+    await page.locator('.el-table__body').evaluate(table => {
+      table.innerHTML = Array.from(
+        { length: 6 },
+        (_, index) =>
+          `<tr><td class="el-table_1_column_2"><div class="cell ${index === 5 ? 'stack' : ''}"><button>Details</button>${index === 5 ? '<button>Affected hosts</button>' : ''}</div></td></tr>`
+      ).join('')
+    })
+    const laterRow = await page.evaluate(inspectLayout)
+    assert.ok(laterRow.findings.some(item => item.kind === 'action-wrap-review'))
+    await page.locator('.el-table__body').evaluate(table => {
+      table.closest('.el-table').style.overflow = 'hidden'
+      table.innerHTML =
+        '<tr><td class="el-table_1_column_2" style="position:relative"><div class="cell" style="height:32px"><button style="position:absolute;left:600px">Delete</button></div></td></tr>'
+    })
+    const clippedAction = await page.evaluate(inspectLayout)
+    assert.ok(clippedAction.findings.some(item => item.kind === 'action-outside-column'))
+    await page.locator('html').evaluate(element => {
+      element.lang = 'zh-CN'
+    })
+    const chinese = await page.evaluate(inspectLayout)
+    assert.deepEqual(chinese.tableReview, [])
+    assert.deepEqual(chinese.untranslatedTags, [])
+    await page.setContent('<div class="el-message--error">Query failed</div>')
+    const failure = await page.evaluate(inspectLayout)
+    assert.deepEqual(failure.dataState.errors, ['Query failed'])
+    assert.equal(hasCaptureFailure({ status: 'captured', layout: failure }), true)
+    assert.equal(
+      hasCaptureFailure({
+        status: 'captured',
+        requestIssues: [{ path: '/api/list', status: 503 }]
+      }),
+      true
+    )
   } finally {
     await browser.close()
   }
@@ -172,6 +241,41 @@ test('duplicated menu destinations are visited once', () => {
     { code: 'one', children: [{ path: '/jao/jobs' }, { path: '/jao/jobs' }] }
   ])
   assert.equal(routes.length, 1)
+})
+
+test('secondary audit admits only reviewed cases and uses the actual scheduler route', () => {
+  const options = parseSecondaryOptions(['--cases', 'cron-new,create-script', '--widths', '1440'])
+  assert.deepEqual(options.cases, [
+    ['create-script', '/jao/jobs'],
+    ['cron-new', '/jao/taskScheduler']
+  ])
+  assert.deepEqual(options.widths, [1440])
+  assert.equal(parseSecondaryOptions(['--list']).list, true)
+  for (const args of [
+    ['--cases', 'delete'],
+    ['--cases'],
+    ['--routes', '/flow/list'],
+    ['--base-url', 'https://example.com']
+  ]) {
+    assert.throws(() => parseSecondaryOptions(args))
+  }
+})
+
+test('reviewed button lookup ignores decorative icon names but keeps exact text and disabled guards', async () => {
+  const browser = await chromium.launch({ channel: 'chrome', headless: true })
+  try {
+    const page = await browser.newPage()
+    await page.setContent(`<style>i:before{content:'\\f002'}</style>
+      <button onclick="document.body.dataset.chosen='yes'"><i></i>Install (1)</button>
+      <button>Install (11)</button><button disabled>Install (1)</button>`)
+    const button = findReviewedButton(page, 'Install (1)')
+    assert.equal(await button.count(), 1)
+    await button.click()
+    assert.equal(await page.locator('body').getAttribute('data-chosen'), 'yes')
+    assert.throws(() => findReviewedButton(page, ''))
+  } finally {
+    await browser.close()
+  }
 })
 
 test('table audit covers hidden columns and restores scroll positions even if capture fails', async () => {
@@ -292,6 +396,7 @@ test('reject remote URLs, credentials, arbitrary routes and invalid capture argu
 test('HTML report escapes page content and distinguishes failed captures from zero findings', () => {
   const html = renderAuditReport({
     startedAt: 'now',
+    scopeDescription: 'Read-only <forms>',
     captures: [
       {
         path: '/<script>',
@@ -315,6 +420,9 @@ test('HTML report escapes page content and distinguishes failed captures from ze
   assert.ok(html.includes('&lt;img src=x'))
   assert.ok(html.includes('failed</td><td>—'))
   assert.ok(html.includes('captured</td><td>0'))
+  assert.ok(html.includes('Read-only &lt;forms&gt;'))
+  assert.ok(!html.includes('未自动切换页面内部标签'))
+  assert.ok(!html.includes('未自动打开弹窗'))
 })
 
 test('nested tab/table captures remain visible in the report and failure accounting', () => {
