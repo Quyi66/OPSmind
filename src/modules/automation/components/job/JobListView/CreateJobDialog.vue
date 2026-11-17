@@ -302,7 +302,7 @@
                         </el-select>
                       </template>
                     </el-table-column>
-                    <el-table-column :label="t('automation.job.encrypt')" width="50">
+                    <el-table-column :label="t('automation.job.encrypt')" :width="currentLocale === 'en-US' ? 100 : 50">
                       <template #default="{ row }">
                         <el-checkbox v-model="row.secret" />
                       </template>

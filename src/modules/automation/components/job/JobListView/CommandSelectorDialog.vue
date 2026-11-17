@@ -17,6 +17,7 @@
           :placeholder="t('automation.file.commandSearch')"
           clearable
           class="search-input"
+          :style="currentLocale === 'en-US' ? { width: '340px' } : undefined"
         >
           <template #prefix>
             <el-icon><Search /></el-icon>
@@ -81,7 +82,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 
 import { ref, computed, watch, nextTick } from 'vue'
 import { Search } from '@element-plus/icons-vue'

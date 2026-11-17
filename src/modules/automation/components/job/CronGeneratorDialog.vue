@@ -10,7 +10,7 @@
     <div class="cron-generator-container">
       <!-- CRON 表达式输入框 -->
       <div class="cron-input-section">
-        <el-form label-width="120px">
+        <el-form :label-width="currentLocale === 'en-US' ? '160px' : '120px'">
           <el-form-item :label="t('automation.schedule.expressionLabel')">
             <el-input
               v-model="cronExpression"
@@ -139,7 +139,7 @@
   </el-dialog>
 </template>
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'

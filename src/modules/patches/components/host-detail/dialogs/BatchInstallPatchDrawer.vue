@@ -10,7 +10,7 @@
     :close-on-press-escape="false"
   >
     <!-- 主机和补丁汇总信息 -->
-    <div class="batch-install-summary mb-3 p-3">
+    <div class="batch-install-summary mb-3 p-3" :class="{ 'is-english': currentLocale === 'en-US' }">
       <div class="summary-item mb-2">
         <span class="label font-bold">{{ t('patches.linux.selectedHostsCount', { count: hosts.length }) }}</span>
         <div class="host-tags-container mt-1">
@@ -60,7 +60,7 @@
           size="small"
           :placeholder="t('patches.linux.searchPatchSummary')"
           clearable
-          style="width: 240px; margin-left: 12px"
+          :style="{ width: currentLocale === 'en-US' ? '280px' : '240px', marginLeft: '12px' }"
           @input="handleFilterChange"
         >
           <template #prefix>
@@ -208,7 +208,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 import { message, messageRef } from '@/core/i18n/feedback'
 import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
@@ -547,6 +547,10 @@ watch(
     width: 100%;
     padding: 2px;
   }
+}
+
+.batch-install-summary.is-english .label {
+  margin-right: 8px;
 }
 
 .patch-id-text {
