@@ -219,6 +219,10 @@ export default defineConfig(({ command, mode }): UserConfig => {
       open: env.VITE_DEV_OPEN === 'true',
       cors: env.VITE_DEV_CORS === 'true',
       https: loadDevSSL(),
+      watch: {
+        // Chrome locks its session files; keep runtime caches out of Vite's watcher.
+        ignored: [/(^|[\\/])\.cache([\\/]|$)/]
+      },
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
         Pragma: 'no-cache',
