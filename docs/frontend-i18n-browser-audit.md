@@ -50,11 +50,11 @@ Vite 的 `server.watch.ignored` 显式排除 `.cache` 目录（兼容 Windows �
 # 只查看场景 ID 与实际菜单父入口，不启动浏览器
 & 'C:\nvm4w\nodejs\node.exe' scripts/i18n-browser-audit-secondary.mjs --list
 
-# 执行当前 34 个已审查场景，仅检查真实 DOM，默认中英文及 1440 / 1920 两种宽度
+# 执行当前 44 个已审查场景，仅检查真实 DOM，默认中英文及 1440 / 1920 两种宽度
 & 'C:\nvm4w\nodejs\node.exe' scripts/i18n-browser-audit-secondary.mjs --no-screenshots
 
 # 定向复查；不接受任意路由或未审查场景 ID
-& 'C:\nvm4w\nodejs\node.exe' scripts/i18n-browser-audit-secondary.mjs --cases create-script,cron-new,linux-install-drawer --locales en-US --widths 1440
+& 'C:\nvm4w\nodejs\node.exe' scripts/i18n-browser-audit-secondary.mjs --cases create-script,cron-new,linux-install-drawer --no-screenshots --locales en-US --widths 1440
 ```
 
 场景包括工具新建/编辑、文件/命令/设备选择、历史及执行参数表单、定时任务和 CRON 生成器、申请/审批详情、Linux 补丁选择、Linux/Windows 回滚配置、Windows 安装向导配置及中间件受影响主机/版本详情。父入口还需属于当前账号的实际菜单。会执行源码已核对的本地草稿操作，例如展开预定义目标、选择一条补丁、空字段失焦和向导 Next；不点击保存、确认回填、执行、审批、预检查或开始安装/回滚。Windows 的 Next 只切换本地步骤；Linux 安装仍只检查选择阶段，Linux 回滚则检查默认配置步骤及执行前摘要，Next 包含能力和重启建议的只读查询，最后的任务创建/启动按钮不点击。
@@ -66,6 +66,8 @@ Vite 的 `server.watch.ignored` 显式排除 `.cache` 目录（兼容 Windows �
 管理弹窗白名单另包含资产导入、批量编辑、设备/共享模板凭据、团队成员和巡检检查项主机对比。检查只打开既有处理函数、失焦校验及本地标签；批量编辑临时增加的设备勾选在结束后恢复。凭据检查不读取输入框值、不保存、不操作密码显示；导入不选择文件、下载模板或上传；巡检明细不修改黑名单。空报告最多尝试当前列表的前三条可查看报告，仍无数据时标记未覆盖。团队成员只查看，不变更勾选。详见[管理弹窗检查记录](./frontend-i18n-management-dialogs-review-20261117.md)。
 
 截图定向复查新增九个场景，独立存放在 `i18n-browser-audit-layout-cases.mjs`：流程编辑、Linux 按补丁列表、包集表格/表单、安装申请、Windows 批量安装、WSUS 表单、补丁及主机账户日志、平台补丁分配草稿。More 菜单只展开，不点击审批或报告下载；Windows 临时增加的主机勾选在结束后恢复；包集/流程/WSUS/分配草稿只打开，不保存。具体修复、采样和中文保留项见[截图复查记录](./frontend-i18n-screenshot-layout-review-20261117.md)。
+
+续查场景位于 `i18n-browser-audit-continuation.mjs`，覆盖已有 Windows 结果、资产批量凭据和设备/分组/标签弹窗、巡检主机筛选、平台用户、文件内容、多选预览及命令和 REST 结果。Windows 独立任务详情没有只读重开入口，组件测试使用模拟结果。每个组合的 `report.json` 记录空表、未取到的数据和同源请求错误。详见[续查记录](./frontend-i18n-continuation-review-20261117.md)。
 
 Windows 回滚选择前检查复选框状态，避免不同宽度复测时取消已有选择；没有可回滚历史时记录配置未覆盖，不视为向导通过。中间件主机弹窗最多查看当前列表的前三条实际记录，找到非空结果后停止；全为空则保留数据行未覆盖说明。版本详情优先使用确有受影响版本的实际记录，不构造后台数据。
 

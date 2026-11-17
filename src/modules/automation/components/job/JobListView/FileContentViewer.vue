@@ -381,7 +381,9 @@ const fileExtension = computed(() => fileName.value.split('.').pop()?.toLowerCas
 // 优先使用 API 返回的 downloadUri，确保路径正确
 const fileUrl = computed(() => {
   const downloadUri = fileInfo.value?.fileContent?.downloadUri
-  if (downloadUri) {
+  // 静态文件元数据可能返回缺少仓库类型和文件路径的占位地址。
+  const placeholderUri = /^\/api\/gfs\/v2\/\/r\/[^/]+\/download\/null(?:[?#]|$)/
+  if (downloadUri && !placeholderUri.test(downloadUri)) {
     // 源系统 URL 格式：/gfs/api/gfs/v2/...
     // API 返回的 downloadUri 格式：/api/gfs/v2/...
     // 需要将 /api 替换为 /gfs/api

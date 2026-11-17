@@ -24,6 +24,7 @@
   "noTemplate": "未关联模板",
   "executionNode": "执行节点",
   "aapNode": "AAP 引擎节点",
+  "aapInstanceGroup": "AAP 实例组",
   "connectionAccount": "连接账号",
   "loginUser": "登录用户",
   "lastModified": "最后修改",

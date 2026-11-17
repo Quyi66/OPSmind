@@ -157,6 +157,43 @@ describe('Windows knowledge and task detail language changes', () => {
     expect(api.taskDetail).toHaveBeenCalledTimes(1)
   })
 
+  it('gives English partial-success tags more room and preserves the selected host status', async () => {
+    api.taskDetail.mockResolvedValueOnce({
+      data: {
+        task: { id: 'raw-task', taskType: 'INSTALL', status: 'PARTIAL_SUCCESS' },
+        hosts: [
+          { hostKey: 'server-1', status: 'PARTIAL_SUCCESS', errorMessage: '原始错误详情' },
+          { hostKey: 'server-2', status: 'FAILED' }
+        ]
+      }
+    })
+    const { wrapper, vm } = await open(TaskDetail, { modelValue: true, taskId: 'raw-task' })
+    const statusColumn = wrapper
+      .findAllComponents(ElTableColumn)
+      .find(column => column.props('label') === t('common.status'))
+    const content = wrapper.get('.win-patch-task-detail')
+    vm.hostStatus = 'PARTIAL_SUCCESS'
+    expect(Number(statusColumn.props('width'))).toBe(100)
+    expect(content.classes()).not.toContain('is-english')
+
+    await setLocale('en-US', { persist: false })
+    await flushPromises()
+    expect(Number(statusColumn.props('width'))).toBe(168)
+    expect(content.classes()).toContain('is-english')
+    expect(vm.hostStatus).toBe('PARTIAL_SUCCESS')
+    expect(vm.hostStatusOptions).toContainEqual({
+      value: 'PARTIAL_SUCCESS',
+      label: 'Partially succeeded'
+    })
+    expect(wrapper.text()).toContain('原始错误详情')
+    expect(wrapper.text()).not.toContain('server-2')
+
+    await setLocale('zh-CN', { persist: false })
+    expect(Number(statusColumn.props('width'))).toBe(100)
+    expect(content.classes()).not.toContain('is-english')
+    expect(api.taskDetail).toHaveBeenCalledTimes(1)
+  })
+
   it('chooses the default download name at download time and preserves the backend filename', async () => {
     const downloads = []
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function () { downloads.push(this.download) })

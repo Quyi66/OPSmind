@@ -159,6 +159,24 @@ describe('asset enrollment localization preserves execution input', () => {
       }
     })
   })
+
+  it('translates the AAP instance group label and keeps the selected backend name', async () => {
+    api.engine.mockResolvedValueOnce({ value: 'aap' })
+    api.get.mockResolvedValueOnce({ data: { records: [{ name: '原始 AAP 实例组' }] } })
+    const wrapper = await open(DeviceManageDialog)
+    const vm = wrapper.vm.$.setupState
+    vm.passwordForm.aapInstanceGroup = '原始 AAP 实例组'
+    expect(wrapper.text()).toContain('AAP 实例组')
+    expect(vm.aapInstanceGroupOptions).toEqual([{ name: '原始 AAP 实例组' }])
+
+    await setLocale('en-US', { persist: false })
+    await flushPromises()
+    expect(wrapper.text()).toContain('AAP instance group')
+    expect(vm.passwordForm.aapInstanceGroup).toBe('原始 AAP 实例组')
+    expect(api.get.mock.calls.filter(([path]) => path.endsWith('/aap/instance_group'))).toHaveLength(1)
+    expect(api.post).not.toHaveBeenCalled()
+  })
+
   it('preserves SSH tab, original host IDs and unmodified public key contents', async () => {
     const wrapper = await open(DeviceManageDialog),
       vm = wrapper.vm.$.setupState

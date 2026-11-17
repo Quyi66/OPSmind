@@ -12,9 +12,11 @@ import {
 import { auditHorizontalTables } from './i18n-browser-audit-scroll.mjs'
 import { MANAGEMENT_CASES, auditManagementCase } from './i18n-browser-audit-management.mjs'
 import { LAYOUT_CASES, auditLayoutCase } from './i18n-browser-audit-layout-cases.mjs'
+import { CONTINUATION_CASES, auditContinuationCase } from './i18n-browser-audit-continuation.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 export const SECONDARY_CASES = Object.freeze([
+  ...CONTINUATION_CASES,
   ...MANAGEMENT_CASES,
   ...LAYOUT_CASES,
   ['create-script', '/jao/jobs'],
@@ -102,6 +104,7 @@ export async function runSecondaryAudit(argv = process.argv.slice(2)) {
     for (const namespace of [
       'automation',
       'common',
+      'execution',
       'hostUser',
       'patches',
       'asset',
@@ -127,8 +130,21 @@ export async function runSecondaryAudit(argv = process.argv.slice(2)) {
     )
     const page = context.pages()[0] || (await context.newPage())
     page.setDefaultTimeout(12000)
+    const origin = new URL(options.baseURL).origin
+    const requestIssues = []
+    page.on('response', response => {
+      const url = new URL(response.url())
+      if (url.origin === origin && response.status() >= 400)
+        requestIssues.push({ path: url.pathname, status: response.status() })
+    })
+    page.on('requestfailed', request => {
+      const url = new URL(request.url())
+      const reason = request.failure()?.errorText
+      if (url.origin === origin && reason !== 'net::ERR_ABORTED')
+        requestIssues.push({ path: url.pathname, reason })
+    })
     await page.goto(options.baseURL, { waitUntil: 'domcontentloaded' })
-    if (new URL(page.url()).origin !== new URL(options.baseURL).origin) {
+    if (new URL(page.url()).origin !== origin) {
       throw new Error('Application left the configured local origin')
     }
     const switcher = page.locator('.top-nav-wrapper .language-switcher select')
@@ -184,6 +200,7 @@ export async function runSecondaryAudit(argv = process.argv.slice(2)) {
               states: []
             }
             const m = messages[locale]
+            const issueStart = requestIssues.length
             let serial = 0
             const capture = async stateName => {
               await settle()
@@ -206,7 +223,8 @@ export async function runSecondaryAudit(argv = process.argv.slice(2)) {
             }
             const captureSurface = async (root, stateName, scope) => {
               await capture(stateName)
-              const selectors = '.el-dialog__body,.el-drawer__body,.el-scrollbar__wrap'
+              const selectors =
+                '.el-dialog__body,.el-drawer__body,.el-scrollbar__wrap,.check-item-detail-dialog .output-content pre'
               const areas = root.locator(selectors)
               for (let index = 0; index < (await areas.count()); index++) {
                 const area = areas.nth(index)
@@ -258,6 +276,7 @@ export async function runSecondaryAudit(argv = process.argv.slice(2)) {
               await root.waitFor()
               await settle()
               const tabs = root.getByRole('tab')
+              const tabIds = await tabs.evaluateAll(items => items.map(item => item.id))
               for (let tab = 0; tab < (await tabs.count()); tab++) {
                 await tabs.nth(tab).click()
                 await captureSurface(
@@ -276,6 +295,7 @@ export async function runSecondaryAudit(argv = process.argv.slice(2)) {
                 }
               }
               await close(root)
+              return tabIds
             }
             try {
               if (!allowed.has(path))
@@ -290,7 +310,21 @@ export async function runSecondaryAudit(argv = process.argv.slice(2)) {
               )
               await settle()
               const content = page.locator('.group-content__view')
-              if (LAYOUT_CASES.some(([candidate]) => name === candidate)) {
+              if (CONTINUATION_CASES.some(([candidate]) => name === candidate)) {
+                await auditContinuationCase({
+                  name,
+                  page,
+                  content,
+                  m,
+                  button,
+                  dialog,
+                  close,
+                  settle,
+                  captureSurface,
+                  captureExecutionResult,
+                  result
+                })
+              } else if (LAYOUT_CASES.some(([candidate]) => name === candidate)) {
                 await auditLayoutCase({ name, page, content, m, button, dialog, close, settle, captureSurface, result })
               } else if (MANAGEMENT_CASES.some(([candidate]) => name === candidate)) {
                 await auditManagementCase({
@@ -671,9 +705,8 @@ export async function runSecondaryAudit(argv = process.argv.slice(2)) {
                 await close(wizard)
                 await close(root)
               }
-              result.status = result.states.some(hasCaptureFailure)
-                ? 'captured-with-errors'
-                : 'captured'
+              if (!result.states.length) throw new Error('No reviewed DOM state was captured')
+              result.status = 'captured'
             } catch (error) {
               result.error = error.message
             } finally {
@@ -683,6 +716,13 @@ export async function runSecondaryAudit(argv = process.argv.slice(2)) {
                 if (await dialogs.count()) await close(dialogs.last()).catch(() => {})
                 else if (await drawers.count()) await close(drawers.last()).catch(() => {})
                 else break
+              }
+              result.requestIssues = requestIssues.slice(issueStart)
+              if (
+                result.status === 'captured' &&
+                (result.requestIssues.length || result.states.some(hasCaptureFailure))
+              ) {
+                result.status = 'captured-with-errors'
               }
             }
             results.push(result)

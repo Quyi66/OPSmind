@@ -29,9 +29,9 @@ const file = {
     downloadUri: '/api/files/raw.csv'
   }
 }
-async function open() {
+async function open(props = {}) {
   wrapper = shallowMount(Viewer, {
-    props: { path: file.path, repo: 'raw-repo' },
+    props: { path: file.path, repo: 'raw-repo', ...props },
     global: {
       stubs: {
         ElDialog: Slot,
@@ -62,6 +62,7 @@ afterEach(async () => {
 describe('file preview language boundaries', () => {
   it('keeps CSV cells and an open editor draft and saves original file metadata', async () => {
     const vm = await open()
+    expect(vm.fileUrl).toBe('/sjxy-console/gfs/api/files/raw.csv')
     expect(vm.excelData).toEqual([
       ['主机', '值'],
       ['原始主机', '中文值']
@@ -88,6 +89,25 @@ describe('file preview language boundaries', () => {
       ...draft,
       isContent: true
     })
+  })
+
+  it('uses the original static file path when the server returns a placeholder preview URL', async () => {
+    const rawPath = '目录/原始文件.pdf'
+    const url = '/sjxy-console/gfs/files/original.pdf'
+    api.getFileInfo.mockResolvedValueOnce({
+      data: {
+        repo: 'raw-repo',
+        fileContent: {
+          mime: 'application/pdf',
+          downloadUri: '/api/gfs/v2//r/raw-repo/download/null'
+        }
+      }
+    })
+    api.getFileDownloadUrl.mockReturnValueOnce(url)
+    const vm = await open({ repoType: 'staticfs', path: rawPath })
+    expect(vm.fileUrl).toBe(url)
+    expect(api.getFileDownloadUrl).toHaveBeenCalledExactlyOnceWith('staticfs', 'raw-repo', rawPath)
+    expect(api.updateFileInfo).not.toHaveBeenCalled()
   })
 
   it('translates a local read failure while leaving backend details and retries under user control', async () => {

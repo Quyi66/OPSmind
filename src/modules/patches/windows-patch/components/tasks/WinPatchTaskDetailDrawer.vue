@@ -9,7 +9,7 @@
     @close="handleClose"
     :close-on-press-escape="!showStepActions && !stepSubmitting"
   >
-    <div class="win-patch-task-detail">
+    <div class="win-patch-task-detail" :class="{ 'is-english': currentLocale === 'en-US' }">
       <div class="ops-action-bar win-patch-task-detail__actions">
         <el-switch v-model="autoPollingEnabled" :active-text="t('patches.windows.pollEveryThreeSeconds')" />
         <span style="flex: 1"></span>
@@ -155,7 +155,11 @@
             />
           </el-form-item>
           <el-form-item :label="t('common.status')">
-            <el-select v-model="hostStatus" style="width: 140px" :aria-label="t('patches.windows.filterHostExecutionStatus')">
+            <el-select
+              v-model="hostStatus"
+              :style="{ width: currentLocale === 'en-US' ? '180px' : '140px' }"
+              :aria-label="t('patches.windows.filterHostExecutionStatus')"
+            >
               <el-option :label="t('common.all')" value="all" />
               <el-option
                 v-for="option in hostStatusOptions"
@@ -189,7 +193,10 @@
               {{ pickValue(row, ['hostKey', 'host_key'], '-') }}
             </template>
           </el-table-column>
-          <el-table-column :label="t('common.status')" width="100">
+          <el-table-column
+            :label="t('common.status')"
+            :width="currentLocale === 'en-US' ? 168 : 100"
+          >
             <template #default="{ row }">
               <el-tag :type="getTaskStatusTagType(row)" size="small">
                 {{ getTaskStatusLabel(row) }}
@@ -225,7 +232,7 @@
 
 <script setup>
 import { message as localMessage, messageRef } from '@/core/i18n/feedback'
-import { t } from '@/core/i18n'
+import { currentLocale, t } from '@/core/i18n'
 import { getWinPatchRunTitle } from '../../feedback'
 
 import { computed, ref, watch } from 'vue'
@@ -896,6 +903,18 @@ watch(
   margin-top: 0;
   flex: 1 1 auto;
   min-height: 0;
+}
+
+.win-patch-task-detail.is-english {
+  overflow-y: auto;
+
+  > * {
+    flex-shrink: 0;
+  }
+
+  :deep(.el-descriptions__content) {
+    overflow-wrap: anywhere;
+  }
 }
 
 @media (max-width: 1200px) {

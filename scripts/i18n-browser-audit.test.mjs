@@ -309,6 +309,18 @@ test('secondary audit admits only reviewed cases and uses the actual scheduler r
       ['patch-failed-hosts', '/patches/processLogs']
     ]
   )
+  const continuation = parseSecondaryOptions([
+    '--cases',
+    'windows-log-results,platform-user-dialogs,file-library-content,run-record-type-results',
+    '--no-screenshots'
+  ])
+  assert.deepEqual(continuation.cases, [
+    ['windows-log-results', '/patches/logs'],
+    ['platform-user-dialogs', '/uam/user'],
+    ['file-library-content', '/gfs/fileLibrary'],
+    ['run-record-type-results', '/run-records/logs']
+  ])
+  assert.equal(continuation.screenshots, false)
   for (const args of [
     ['--cases', 'delete'],
     ['--cases'],

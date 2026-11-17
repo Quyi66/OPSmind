@@ -67,7 +67,7 @@
         </el-form-item>
 
         <!-- AAP Instance Group -->
-        <el-form-item v-if="scriptEngine === 'aap'" label="AAP instance_group">
+        <el-form-item v-if="scriptEngine === 'aap'" :label="t('asset.aapInstanceGroup')">
           <el-select
             v-model="passwordForm.aapInstanceGroup"
             :placeholder="t('asset.select')"
