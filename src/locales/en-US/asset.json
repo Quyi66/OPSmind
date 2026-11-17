@@ -488,7 +488,7 @@
   "actionFailedReason": "{action} failed: {message}",
   "totalAssets": "Total assets",
   "assetTypeCount": "{count} asset type | {count} asset types",
-  "inspectionFailuresUnit": "failed inspections",
+  "inspectionFailuresUnit": "failed device | failed devices",
   "connectionSummary": "{success} connected / {failure} failed",
   "failedLogs": "Failed runs",
   "lastSevenDays": "Last 7 days",

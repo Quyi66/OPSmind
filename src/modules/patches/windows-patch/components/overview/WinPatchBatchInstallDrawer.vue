@@ -16,7 +16,7 @@
           :column="1"
           border
           size="small"
-          label-width="80px"
+          :label-width="currentLocale === 'en-US' ? '128px' : '80px'"
           class="win-patch-descriptions"
         >
           <el-descriptions-item :label="t('patches.windows.selectedHosts')">
@@ -165,7 +165,7 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column :label="t('patches.linux.patchStatus')" width="120">
+          <el-table-column :label="t('patches.linux.patchStatus')" :width="currentLocale === 'en-US' ? 160 : 120">
             <template #default="{ row }">
               <el-tag :type="getPatchStatusTagType(row)" size="small">
                 {{ getPatchStatusLabel(row) }}
@@ -213,7 +213,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'

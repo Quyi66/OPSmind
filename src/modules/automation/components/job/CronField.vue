@@ -36,7 +36,33 @@
 
       <!-- 循环 -->
       <div class="field-option">
-        <el-radio value="interval">
+        <el-radio v-if="currentLocale === 'en-US'" value="interval">
+          <I18nT :keypath="intervalMessageKey" :plural="intervalStep" :i18n="i18n.global">
+            <template #start>
+              <el-input-number
+                v-model="intervalStart"
+                :min="minValue"
+                :max="maxValue"
+                size="small"
+                :disabled="selectedType !== 'interval'"
+                @change="handleIntervalChange"
+                :controls="false"
+              />
+            </template>
+            <template #step>
+              <el-input-number
+                v-model="intervalStep"
+                :min="1"
+                :max="maxValue"
+                size="small"
+                :disabled="selectedType !== 'interval'"
+                @change="handleIntervalChange"
+                :controls="false"
+              />
+            </template>
+          </I18nT>
+        </el-radio>
+        <el-radio v-else value="interval">
           {{ t('automation.schedule.from') }}
           <el-input-number
             v-model="intervalStart"
@@ -87,7 +113,8 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale, i18n } from '@/core/i18n'
+import { I18nT } from 'vue-i18n'
 
 import { ref, computed, watch } from 'vue'
 
@@ -118,6 +145,18 @@ const rangeStart = ref(props.minValue)
 const rangeEnd = ref(props.maxValue)
 const intervalStart = ref(props.minValue)
 const intervalStep = ref(1)
+const intervalMessageKey = computed(
+  () =>
+    ({
+      second: 'automation.schedule.intervalSecond',
+      minute: 'automation.schedule.intervalMinute',
+      hour: 'automation.schedule.intervalHour',
+      day: 'automation.schedule.intervalDay',
+      month: 'automation.schedule.intervalMonth',
+      week: 'automation.schedule.intervalWeek',
+      year: 'automation.schedule.intervalYear'
+    })[props.fieldType] || 'automation.schedule.intervalSecond'
+)
 const specificValues = ref([])
 
 // 日和周字段需要特殊处理（不能同时指定）

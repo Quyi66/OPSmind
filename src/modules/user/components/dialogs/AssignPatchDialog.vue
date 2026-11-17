@@ -20,7 +20,7 @@
       class="assignment-metadata"
       :model="assignForm"
       inline
-      label-width="80px"
+      :label-width="currentLocale === 'en-US' ? '108px' : '80px'"
       :disabled="locked"
     >
       <el-form-item :label="t('settings.patchAssignment.targetUser')"><el-input :model-value="username" disabled /></el-form-item>
@@ -33,7 +33,7 @@
         />
       </el-form-item>
       <el-form-item :label="t('settings.patchAssignment.notes')">
-        <el-input v-model="assignForm.remark" :placeholder="t('settings.patchAssignment.notesPlaceholder')" />
+        <el-input v-model="assignForm.remark" :placeholder="t('settings.patchAssignment.notesPlaceholder')" :style="{ width: currentLocale === 'en-US' ? '240px' : undefined }" />
       </el-form-item>
     </el-form>
     <div class="selected-patches" :aria-label="t('settings.patchAssignment.selectedPatches')">
@@ -118,8 +118,8 @@
               {{ severityLabels[row.severity] || row.severity || '-' }}
             </template>
           </el-table-column>
-          <el-table-column prop="effect_host_count" :label="t('settings.patchAssignment.affectedMachines')" width="90" />
-          <el-table-column :label="t('settings.patchAssignment.machineConfig')" width="120" fixed="right">
+          <el-table-column prop="effect_host_count" :label="t('settings.patchAssignment.affectedMachines')" :width="currentLocale === 'en-US' ? 156 : 90" />
+          <el-table-column :label="t('settings.patchAssignment.machineConfig')" :width="currentLocale === 'en-US' ? 196 : 120" fixed="right">
             <template #default="{ row }">
               <el-button link type="primary" :disabled="locked" @click="activatePatch(row)">
                 {{

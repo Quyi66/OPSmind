@@ -194,13 +194,13 @@ import { isActiveRunStatus, isSuccessfulRunStatus, normalizeRunStatus } from '@/
 import RunLogStatusTag from '@/components/shared/RunLogStatusTag.vue'
 import { throwIfWorkflowFailed } from '@/utils/workflowResult'
 
-const timeRangeOptions = [
+const timeRangeOptions = computed(() => [
   { label: t('common.all'), value: 'all' },
   { label: t('automation.workbench.today'), value: 'today' },
   { label: t('automation.workbench.last7Days'), value: 'last7' },
   { label: t('automation.workbench.last30Days'), value: 'last30' },
   { label: t('automation.workbench.lastYear'), value: 'lastYear' }
-]
+])
 
 const timeRangeMap = {
   all: 3650,

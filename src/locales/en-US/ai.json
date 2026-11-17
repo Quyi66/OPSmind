@@ -6,7 +6,7 @@
   "questionRequired": "Enter your question",
   "processing": "Processing your question: {question}",
   "pageTitle": "OPS assistant",
-  "bubbleTitle": "OPS assistant · Panel",
+  "bubbleTitle": "OPS assistant · Bubble",
   "loading": "Loading the OPS assistant...",
   "missingToken": "Missing token. Pass ?token=... in the URL or set DIFY_TOKEN in the runtime configuration.",
   "windowMissing": "No Dify window was detected. Click Open manually or check script loading, the network and CSP settings.",

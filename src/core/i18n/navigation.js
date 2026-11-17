@@ -3,6 +3,8 @@ import { currentLocale, t } from './index'
 // Recognized former static captions only; never translate arbitrary business titles.
 const historicalRouteTitles = {
   'navigation.pages.acm.model': ['模型定义'],
+  'navigation.pages.cac.templates': ['巡检模板'],
+  'navigation.pages.cac.resultDetail': ['结果详情'],
   'navigation.pages.cac.structuralDiagram': ['架构图']
 }
 

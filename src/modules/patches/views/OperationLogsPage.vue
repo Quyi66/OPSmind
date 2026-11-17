@@ -113,7 +113,7 @@
             {{ translateAction(row.action) }}
           </template>
         </el-table-column>
-        <el-table-column prop="status" :label="t('common.status')" width="110">
+        <el-table-column prop="status" :label="t('common.status')" :width="currentLocale === 'en-US' ? 136 : 110">
           <template #default="{ row }">
             <RunLogStatusTag
               :type="getStatusType(row.status)"
@@ -188,6 +188,17 @@
                 >
                   Windows扫描报告
                 </el-button> -->
+              <el-dropdown v-if="currentLocale === 'en-US' && (canShowScanReport(row) || canShowInstallReport(row) || canShowRollbackReport(row))" trigger="click">
+                <el-button text type="primary" size="small">{{ t('common.moreActions') }}</el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item v-if="canShowScanReport(row)" @click="handleScanReport(row)">{{ t('patches.linux.scanReport') }}</el-dropdown-item>
+                    <el-dropdown-item v-if="canShowInstallReport(row)" @click="handleInstallReport(row)">{{ t('patches.linux.installReport') }}</el-dropdown-item>
+                    <el-dropdown-item v-if="canShowRollbackReport(row)" @click="handleRollbackReport(row)">{{ t('patches.linux.rollbackReport') }}</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+              <template v-if="currentLocale !== 'en-US'">
               <el-button
                 v-if="canShowScanReport(row)"
                 text
@@ -215,6 +226,7 @@
               >
                 {{ t('patches.linux.rollbackReport') }}
               </el-button>
+              </template>
             </div>
           </template>
         </el-table-column>
@@ -386,9 +398,7 @@ const winScanReportRunId = ref('')
 
 const actionColumnWidth = computed(() => {
   if (currentLocale.value === 'en-US') {
-    if (tableData.value.some(row => canShowInstallReport(row))) return 208
-    if (tableData.value.some(row => canShowRollbackReport(row))) return 196
-    if (tableData.value.some(row => canShowScanReport(row))) return 176
+    if (tableData.value.some(row => canShowInstallReport(row) || canShowRollbackReport(row) || canShowScanReport(row))) return 128
     return 80
   }
   const hasWindows = tableData.value.some(row => canShowWindowsScanReport(row))

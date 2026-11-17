@@ -10,7 +10,7 @@
       </el-button>
     </div>
 
-    <el-form ref="formRef" :model="flow" label-width="120px" class="flow-form flow-form--inline">
+    <el-form ref="formRef" :model="flow" :label-width="currentLocale === 'en-US' ? '188px' : '120px'" class="flow-form flow-form--inline">
       <FlowEditorFields
         :flow="flow"
         :is-instance="isInstance"
@@ -48,7 +48,7 @@
     :close-on-press-escape="false"
   >
     <div class="flow-editor-drawer__body">
-      <el-form ref="formRef" :model="flow" label-width="120px" class="flow-form flow-form--drawer">
+      <el-form ref="formRef" :model="flow" :label-width="currentLocale === 'en-US' ? '188px' : '120px'" class="flow-form flow-form--drawer">
         <FlowEditorFields
           :flow="flow"
           :is-instance="isInstance"
@@ -77,7 +77,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'

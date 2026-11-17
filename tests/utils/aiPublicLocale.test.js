@@ -63,9 +63,13 @@ describe('standalone AI shell locales', () => {
   })
   it('matches browser languages, migrates inactive traditional preferences and leaves unrelated storage alone', () => {
     const english = open({ stored: '', languages: ['ja-JP', 'en-GB'], bubble: true })
-    expect(english.document.title).toBe('OPS assistant · Panel')
+    expect(english.document.title).toBe('OPS assistant · Bubble')
     english.dispatchEvent(new english.StorageEvent('storage', { key: 'other', newValue: 'zh-CN' }))
     expect(english.opsAiI18n.locale).toBe('en-US')
+    switchLocale(english, 'zh-CN')
+    expect(english.document.title).toBe('OPS智能助手 · 气泡')
+    switchLocale(english, 'en-US')
+    expect(english.document.title).toBe('OPS assistant · Bubble')
     const chinese = open({ stored: 'zh-TW' })
     expect(chinese.opsAiI18n.locale).toBe('zh-CN')
     const backend = '后端中文 #{key} {{value}} <tag>'

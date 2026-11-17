@@ -5,19 +5,21 @@ export const LOCALE_DEFINITIONS = Object.freeze([
   {
     value: 'zh-CN',
     label: '简体中文',
+    shortLabel: '中',
     dateLocale: 'zh-cn',
     load: () => import('../../locales/zh-CN/index.js')
   },
   {
     value: 'en-US',
     label: 'English',
+    shortLabel: 'EN',
     dateLocale: 'en',
     load: () => import('../../locales/en-US/index.js')
   }
 ])
 export const SUPPORTED_LOCALES = Object.freeze(LOCALE_DEFINITIONS.map(item => item.value))
 export const LANGUAGE_OPTIONS = Object.freeze(
-  LOCALE_DEFINITIONS.map(({ value, label }) => ({ value, label }))
+  LOCALE_DEFINITIONS.map(({ value, label, shortLabel }) => ({ value, label, shortLabel }))
 )
 
 export function normalizeLocale(value) {

@@ -154,6 +154,9 @@ describe('asset workbench language changes', () => {
     expect(t('asset.teamCount', { count: 1 })).toBe('1 team')
     expect(t('asset.teamCount', { count: 0 })).toBe('0 teams')
     expect(t('asset.teamCount', { count: 2 })).toBe('2 teams')
+    expect(t('asset.inspectionFailuresUnit', { count: 0 })).toBe('failed devices')
+    expect(t('asset.inspectionFailuresUnit', { count: 1 })).toBe('failed device')
+    expect(t('asset.inspectionFailuresUnit', { count: 2 })).toBe('failed devices')
   })
 
   it('keeps workbench selection, drawer search and raw operation codes when switching language', async () => {

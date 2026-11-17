@@ -1,5 +1,5 @@
 <template>
-  <div class="task-step-content">
+  <div class="task-step-content" :class="{ 'is-english': currentLocale === 'en-US' }">
     <div class="task-step-editor">
       <div class="task-step-editor__title">
         <i class="fa fa-refresh" style="margin-right: 6px"></i>
@@ -25,11 +25,11 @@
             <template v-if="confirmMode">
               <div class="win-patch-restart-step__confirm">
                 <div class="win-patch-restart-step__confirm-label">
-                  {{ t('automation.flow.enterValue') }}
-                  <span class="win-patch-restart-step__confirm-keyword">
-                    {{ displayProps.rebootConfirmKeyword }}
-                  </span>
-                  {{ t('patches.windows.confirmSuffix') }}
+                  <I18nT keypath="patches.windows.confirmPrompt" :i18n="i18n.global">
+                    <template #keyword>
+                      <span class="win-patch-restart-step__confirm-keyword">{{ displayProps.rebootConfirmKeyword }}</span>
+                    </template>
+                  </I18nT>
                 </div>
                 <el-input
                   :model-value="rebootConfirmText"
@@ -54,11 +54,11 @@
             <template v-if="confirmMode">
               <div class="win-patch-restart-step__confirm">
                 <div class="win-patch-restart-step__confirm-label">
-                  {{ t('automation.flow.enterValue') }}
-                  <span class="win-patch-restart-step__confirm-keyword">
-                    {{ displayProps.rescanConfirmKeyword }}
-                  </span>
-                  {{ t('patches.windows.confirmSuffix') }}
+                  <I18nT keypath="patches.windows.confirmPrompt" :i18n="i18n.global">
+                    <template #keyword>
+                      <span class="win-patch-restart-step__confirm-keyword">{{ displayProps.rescanConfirmKeyword }}</span>
+                    </template>
+                  </I18nT>
                 </div>
                 <el-input
                   :model-value="rescanConfirmText"
@@ -82,7 +82,8 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale, i18n } from '@/core/i18n'
+import { I18nT } from 'vue-i18n'
 import { computed, reactive, ref, watch } from 'vue'
 
 const props = defineProps({
@@ -290,6 +291,11 @@ function updateConfirmField(field, value) {
 .win-patch-restart-step__summary-text {
   display: block;
   line-height: 1.6;
+}
+
+.is-english .win-patch-restart-step__summary-text {
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 .win-patch-restart-step__confirm {

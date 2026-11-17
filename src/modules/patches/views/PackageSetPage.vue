@@ -199,8 +199,8 @@
       <div class="ops-table-wrapper">
         <el-table v-loading="loadingSets" :data="packageSets" height="100%">
           <el-table-column prop="name" :label="t('patches.linux.packageSetName')" min-width="180" show-overflow-tooltip />
-          <el-table-column prop="osType" :label="t('patches.linux.applicableOs')" width="100" />
-          <el-table-column prop="source" :label="t('patches.linux.packageSetSource')" width="100">
+          <el-table-column prop="osType" :label="t('patches.linux.applicableOs')" :width="currentLocale === 'en-US' ? 140 : 100" />
+          <el-table-column prop="source" :label="t('patches.linux.packageSetSource')" :width="currentLocale === 'en-US' ? 208 : 100">
             <template #default="{ row }">
               <el-tag :type="row.source === 'headquarters' ? 'warning' : 'info'" size="small" round>
                 {{ row.source === 'headquarters' ? t('patches.linux.headquartersDistributed') : t('patches.linux.branchCustom') }}
@@ -208,12 +208,13 @@
             </template>
           </el-table-column>
           <el-table-column prop="description" :label="t('patches.linux.setDescription')" min-width="200" show-overflow-tooltip />
-          <el-table-column prop="packages" :label="t('patches.linux.includedPackageCount')" width="120">
+          <el-table-column prop="packages" :label="t('patches.linux.includedPackageCount')" :width="currentLocale === 'en-US' ? 152 : 120">
             <template #default="{ row }">
-              {{ countPackages(row.packages) }} {{ t('patches.linux.itemUnit') }}
+              <template v-if="currentLocale === 'en-US'">{{ t('patches.linux.packageSetItemCount', { count: countPackages(row.packages) }) }}</template>
+              <template v-else>{{ countPackages(row.packages) }} {{ t('patches.linux.itemUnit') }}</template>
             </template>
           </el-table-column>
-          <el-table-column prop="updatedTime" :label="t('automation.command.updatedAt')" width="180">
+          <el-table-column prop="updatedTime" :label="t('automation.command.updatedAt')" :width="currentLocale === 'en-US' ? 240 : 180">
             <template #default="{ row }">
               {{ formatDateTime(row.updatedTime) }}
             </template>
@@ -242,11 +243,11 @@
     <el-dialog
       v-model="editDialogVisible"
       :title="editForm.id ? t('patches.linux.editPackageSet') : t('patches.linux.newPackageSetTitle')"
-      width="600px"
+      :width="currentLocale === 'en-US' ? '700px' : '600px'"
       :close-on-click-modal="false"
       :close-on-press-escape="false"
     >
-      <el-form ref="editFormRef" :model="editForm" :rules="editRules" :validate-on-rule-change="false" label-width="100px" size="small">
+      <el-form ref="editFormRef" :model="editForm" :rules="editRules" :validate-on-rule-change="false" :label-width="currentLocale === 'en-US' ? '160px' : '100px'" size="small">
         <el-form-item :label="t('patches.linux.packageSetName')" prop="name">
           <el-input v-model="editForm.name" :placeholder="t('patches.linux.enterPackageSetName')" />
         </el-form-item>

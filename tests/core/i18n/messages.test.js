@@ -54,6 +54,8 @@ describe('local messages and navigation', () => {
   })
   it.each([
     ['navigation.pages.acm.model', '模型定义', '资产类型', 'Asset types'],
+    ['navigation.pages.cac.templates', '巡检模板', '模板管理', 'Templates'],
+    ['navigation.pages.cac.resultDetail', '结果详情', '巡检报告', 'Inspection report'],
     ['navigation.pages.cac.structuralDiagram', '架构图', '业务拓扑分析', 'Business topology']
   ])('translates the recognized historical caption for %s without changing stored data or Chinese presentation', async (titleKey, oldTitle, title, expected) => {
     const cached = { path: '/fixture', fullPath: '/fixture?raw=1', title: oldTitle, meta: { title: oldTitle } }

@@ -86,6 +86,21 @@ export function parseAuditOptions(argv) {
   return options
 }
 
+export async function waitForLayoutAnimations(page, timeout = 4000) {
+  await page.waitForFunction(
+    () =>
+      !document
+        .getAnimations()
+        .some(
+          animation =>
+            (animation.playState === 'running' || animation.pending) &&
+            Number.isFinite(animation.effect?.getComputedTiming().endTime)
+        ),
+    undefined,
+    { timeout, polling: 'raf' }
+  )
+}
+
 // Runs inside the actual application document. No DOM mutation or network mocking.
 export function inspectLayout() {
   const findings = []
@@ -230,7 +245,11 @@ export function inspectLayout() {
       }
     }
   }
-  for (const cell of document.querySelectorAll('.el-table th .cell')) {
+  const wordReviewSelector =
+    document.documentElement.lang === 'en-US'
+      ? '.el-table th .cell,.win-patch-restart-step__summary-text'
+      : '.el-table th .cell'
+  for (const cell of document.querySelectorAll(wordReviewSelector)) {
     if (!visible(cell)) continue
     const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT)
     let brokenWord = ''
@@ -246,7 +265,11 @@ export function inspectLayout() {
       }
     }
     if (brokenWord)
-      findings.push({ kind: 'word-broken-header', word: brokenWord, element: describe(cell) })
+      findings.push({
+        kind: cell.matches('.el-table th .cell') ? 'word-broken-header' : 'word-broken-copy',
+        word: brokenWord,
+        element: describe(cell)
+      })
   }
   const canvas = document.createElement('canvas')
   const measure = canvas.getContext('2d')
@@ -403,6 +426,13 @@ export function inspectLayout() {
   }
   return {
     language: document.documentElement.lang,
+    activeAnimations: document
+      .getAnimations()
+      .filter(
+        animation =>
+          (animation.playState === 'running' || animation.pending) &&
+          Number.isFinite(animation.effect?.getComputedTiming().endTime)
+      ).length,
     viewport: { width: innerWidth, height: innerHeight },
     tableRows: document.querySelectorAll('.el-table__body tbody tr').length,
     checkedElements,

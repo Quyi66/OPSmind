@@ -10,7 +10,8 @@ import {
   hasCaptureFailure,
   inspectLayout,
   parseAuditOptions,
-  renderAuditReport
+  renderAuditReport,
+  waitForLayoutAnimations
 } from './i18n-browser-audit-core.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -190,9 +191,13 @@ try {
                 settled = false
               })
             await page.waitForTimeout(700)
+            await waitForLayoutAnimations(page).catch(() => {
+              settled = false
+            })
             if (!(await isApplicationReady())) throw new Error('Session expired before capture')
             // Capture rendered geometry as well as pixels; neither one alone is a visual pass.
             capture.layout = await page.evaluate(inspectLayout)
+            if (capture.layout.activeAnimations) settled = false
             capture.screenshot = `${item.path.slice(1).replace(/[^a-zA-Z0-9_-]/g, '_')}-${locale}-${width}.png`
             await page.screenshot({
               path: resolve(run, capture.screenshot),
@@ -218,9 +223,13 @@ try {
                     ready = false
                   })
                 await page.waitForTimeout(700)
+                await waitForLayoutAnimations(page).catch(() => {
+                  ready = false
+                })
                 if (!(await isApplicationReady()))
                   throw new Error('Session expired before additional capture')
                 state.layout = await page.evaluate(inspectLayout)
+                if (state.layout.activeAnimations) ready = false
                 state.screenshot = capture.screenshot.replace(/\.png$/, `-${suffix}.png`)
                 await page.screenshot({
                   path: resolve(run, state.screenshot),

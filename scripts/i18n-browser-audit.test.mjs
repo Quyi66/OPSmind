@@ -10,7 +10,8 @@ import {
   hasCaptureFailure,
   inspectLayout,
   parseAuditOptions,
-  renderAuditReport
+  renderAuditReport,
+  waitForLayoutAnimations
 } from './i18n-browser-audit-core.mjs'
 
 test('layout detector uses rendered geometry and distinguishes intentional clipping', async () => {
@@ -71,6 +72,15 @@ test('layout detector uses rendered geometry and distinguishes intentional clipp
     const headers = await page.evaluate(inspectLayout)
     assert.equal(headers.findings.filter(item => item.kind === 'word-broken-header').length, 1)
     assert.equal(headers.findings.find(item => item.kind === 'word-broken-header').word, 'Manual')
+    await page.locator('body').evaluate(element => {
+      document.documentElement.lang = 'en-US'
+      element.insertAdjacentHTML(
+        'beforeend',
+        '<span class="win-patch-restart-step__summary-text" style="display:block;width:28px;font:14px/20px Arial;word-break:break-all">restart</span>'
+      )
+    })
+    const copy = await page.evaluate(inspectLayout)
+    assert.equal(copy.findings.filter(item => item.kind === 'word-broken-copy').length, 1)
 
     await page.setContent(`<button style="position:relative;width:200px;overflow:hidden">
       <span style="position:absolute;left:180px;width:100px;height:100px"></span>
@@ -164,6 +174,42 @@ test('table review catches whole-word wrapping, stacked actions, spare column wi
   }
 })
 
+test('layout settling waits for finite movement, ignores infinite decoration and preserves real overflow findings', async () => {
+  const browser = await chromium.launch({ channel: 'chrome', headless: true })
+  try {
+    const page = await browser.newPage()
+    await page.setContent(`<style>
+      @keyframes enter{from{transform:translateY(100px)}to{transform:translateY(0)}}
+      @keyframes pulse{to{opacity:.5}}
+      button{width:160px;height:40px} .content{display:block} .number{display:inline-block;animation:enter 2s linear paused}
+      .decoration{animation:pulse 1s infinite}
+    </style><button><div class="content"><span class="number">1</span></div></button><span class="decoration">Ready</span>`)
+    await page.locator('.number').evaluate(element => {
+      const animation = element.getAnimations()[0]
+      animation.currentTime = 0
+      animation.playbackRate = 10
+      animation.play()
+    })
+    const moving = await page.evaluate(inspectLayout)
+    assert.ok(moving.activeAnimations > 0)
+    assert.ok(moving.findings.some(item => item.kind === 'text-outside-control'))
+    // Leave scheduling headroom when other checks share a busy Windows runner.
+    await waitForLayoutAnimations(page, 10000)
+    const settled = await page.evaluate(inspectLayout)
+    assert.equal(settled.activeAnimations, 0)
+    assert.ok(!settled.findings.some(item => item.kind === 'text-outside-control'))
+    await page.locator('.number').evaluate(element => {
+      element.style.animation = 'none'
+      element.style.transform = 'translateY(100px)'
+    })
+    await waitForLayoutAnimations(page, 1000)
+    const permanent = await page.evaluate(inspectLayout)
+    assert.ok(permanent.findings.some(item => item.kind === 'text-outside-control'))
+  } finally {
+    await browser.close()
+  }
+})
+
 test('menu discovery keeps actual nested leaves and excludes inactive/unregistered-only destinations', () => {
   const menu = [
     {
@@ -251,6 +297,18 @@ test('secondary audit admits only reviewed cases and uses the actual scheduler r
   ])
   assert.deepEqual(options.widths, [1440])
   assert.equal(parseSecondaryOptions(['--list']).list, true)
+  assert.equal(options.screenshots, true)
+  assert.equal(parseSecondaryOptions(['--no-screenshots']).screenshots, false)
+  assert.deepEqual(parseSecondaryOptions(['--cases', 'run-record-result']).cases, [
+    ['run-record-result', '/run-records/logs']
+  ])
+  assert.deepEqual(
+    parseSecondaryOptions(['--cases', 'patch-process-detail,patch-failed-hosts']).cases,
+    [
+      ['patch-process-detail', '/patches/processLogs'],
+      ['patch-failed-hosts', '/patches/processLogs']
+    ]
+  )
   for (const args of [
     ['--cases', 'delete'],
     ['--cases'],
@@ -259,6 +317,22 @@ test('secondary audit admits only reviewed cases and uses the actual scheduler r
   ]) {
     assert.throws(() => parseSecondaryOptions(args))
   }
+})
+
+test('management dialogs keep actual parent menus and exclude unused user linking', () => {
+  assert.deepEqual(
+    parseSecondaryOptions([
+      '--cases',
+      'asset-import,asset-credentials,inspection-item-hosts,team-members'
+    ]).cases,
+    [
+      ['asset-import', '/acm/info'],
+      ['asset-credentials', '/acm/automation'],
+      ['team-members', '/uam/team'],
+      ['inspection-item-hosts', '/cac/results']
+    ]
+  )
+  assert.throws(() => parseSecondaryOptions(['--cases', 'link-tenant-user']))
 })
 
 test('reviewed button lookup ignores decorative icon names but keeps exact text and disabled guards', async () => {

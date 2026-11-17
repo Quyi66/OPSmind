@@ -2,8 +2,8 @@
   <label class="language-switcher">
     <span class="sr-only">{{ t('common.language') }}</span>
     <select :value="locale" :aria-label="t('common.language')" :disabled="pending" @change="change">
-      <option v-for="option in LANGUAGE_OPTIONS" :key="option.value" :value="option.value">
-        {{ option.label }}
+      <option v-for="option in LANGUAGE_OPTIONS" :key="option.value" :value="option.value" :title="option.label" :aria-label="option.label">
+        {{ option.shortLabel || option.label }}
       </option>
     </select>
     <span v-if="error" role="alert" class="language-error">{{ error }}</span>
@@ -37,8 +37,9 @@ async function change(event) {
   align-items: center;
 }
 .language-switcher select {
-  max-width: 140px;
-  padding: 5px 8px;
+  width: 64px;
+  height: 30px;
+  padding: 4px 6px;
   border: 1px solid var(--el-border-color, #dcdfe6);
   border-radius: 6px;
   color: var(--el-text-color-primary, #303133);

@@ -390,7 +390,7 @@
             <el-input
               v-model="filters.keyword"
               :placeholder="t('patches.linux.patchSearch')"
-              style="width: 240px"
+              :style="{ width: isEnglish ? '380px' : '240px' }"
               clearable
               @keyup.enter="handleSearch"
               @clear="handleSearch"
@@ -486,7 +486,7 @@
             </template>
           </el-table-column>
           <el-table-column prop="title" :label="t('patches.catalog.summary')" min-width="220" show-overflow-tooltip />
-          <el-table-column prop="severity" :label="t('patches.linux.severityAlt')" width="100" sortable>
+          <el-table-column prop="severity" :label="t('patches.linux.severityAlt')" :width="isEnglish ? 128 : 100" sortable>
             <template #default="{ row }">
               <el-tag
                 effect="dark"
@@ -497,7 +497,7 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="publish_date" :label="t('patches.catalog.publishedAt')" width="120" sortable>
+          <el-table-column prop="publish_date" :label="t('patches.catalog.publishedAt')" :width="isEnglish ? 160 : 120" sortable>
             <template #default="{ row }">
               {{ formatDate(row.publish_date) }}
             </template>

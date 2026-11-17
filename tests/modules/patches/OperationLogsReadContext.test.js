@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h, KeepAlive } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
+import { setLocale } from '@/core/i18n'
 import {
   ElForm,
   ElFormItem,
@@ -106,6 +107,9 @@ async function open(routed = false) {
           template: '<div v-if="modelValue"><slot /><slot name="footer" /></div>'
         },
         'el-scrollbar': { template: '<div><slot /></div>' },
+        'el-dropdown': { template: '<div><slot /><slot name="dropdown" /></div>' },
+        'el-dropdown-menu': { template: '<div><slot /></div>' },
+        'el-dropdown-item': { template: '<button><slot /></button>' },
         'el-empty': true,
         'el-alert': { props: ['title'], template: '<div role="alert">{{ title }}<slot /></div>' }
       },
@@ -129,8 +133,9 @@ beforeEach(() => {
     }
   )
 })
-afterEach(() => {
+afterEach(async () => {
   wrapper?.unmount()
+  await setLocale('zh-CN', { persist: false })
   vi.useRealTimers()
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
@@ -295,6 +300,23 @@ describe('补丁变更日志读取交互', () => {
     expect(state().scanReportRunId).toBe('initial')
     await page().get('.host-tags-wrapper').trigger('click')
     expect(state().hostsDialogList).toEqual(['host-a', 'host-b'])
+  })
+
+  it('英文紧凑菜单保留当前行的扫描报告和详情，切回中文不重新查询', async () => {
+    await setLocale('en-US', { persist: false })
+    await open()
+    expect(state().actionColumnWidth).toBe(128)
+    expect(button('More')).toBeDefined()
+    await button('Scan report').trigger('click')
+    expect(state().scanReportRunId).toBe('initial')
+    await button('Details').trigger('click')
+    expect(state().selectedRunId).toBe('initial')
+    const reads = api.getLogs.mock.calls.length
+    await setLocale('zh-CN', { persist: false })
+    await flushPromises()
+    expect(button('More')).toBeUndefined()
+    expect(button('扫描报告')).toBeDefined()
+    expect(api.getLogs).toHaveBeenCalledTimes(reads)
   })
 
   it.each([

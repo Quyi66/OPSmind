@@ -67,7 +67,9 @@ async function open(component, props) {
         ElRadioGroup: Slot,
         ElRadio: Slot,
         ElCheckboxGroup: Slot,
-        ElCheckbox: Slot
+        ElCheckbox: Slot,
+        I18nT: false,
+        ElInputNumber: { props: ['modelValue'], template: '<span>{{ modelValue }}</span>' }
       },
       directives: { loading() {} }
     }
@@ -189,6 +191,31 @@ describe('scheduled task language changes', () => {
     expect(field.wrapper.emitted()).toEqual(events)
     expect(wrapper.emitted('confirm')).toBeUndefined()
     expect(api.queryNextExecutionTime).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['second', 'second', 'seconds'], ['minute', 'minute', 'minutes'],
+    ['hour', 'hour', 'hours'], ['day', 'day', 'days'], ['month', 'month', 'months'],
+    ['week', 'week', 'weeks'], ['year', 'year', 'years']
+  ])('renders complete %s intervals with singular/plural units and preserves Quartz values', async (fieldType, singular, plural) => {
+    const { wrapper, vm } = await open(CronField, { fieldType, modelValue: '1/1', minValue: 1 })
+    const text = () => wrapper.findAll('.field-option')[2].text().replace(/\s+/g, ' ').trim()
+    expect(text()).toContain('执行一次')
+    await setLocale('en-US', { persist: false })
+    await flushPromises()
+    expect(text()).toBe(`From 1, every 1 ${singular}`)
+    expect(vm.generateValue()).toBe('1/1')
+    vm.intervalStep = 2
+    await flushPromises()
+    expect(text()).toBe(`From 1, every 2 ${plural}`)
+    vm.handleIntervalChange()
+    expect(wrapper.emitted('update:modelValue').at(-1)).toEqual(['1/2'])
+    const events = raw(wrapper.emitted())
+    await setLocale('zh-CN', { persist: false })
+    await flushPromises()
+    expect(text()).toContain('执行一次')
+    expect(vm.generateValue()).toBe('1/2')
+    expect(wrapper.emitted()).toEqual(events)
   })
 
   it('translates a persisted preview failure without issuing another request', async () => {

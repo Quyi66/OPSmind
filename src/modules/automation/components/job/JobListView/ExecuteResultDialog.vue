@@ -340,7 +340,7 @@
                       v-model="listKeyword"
                       :placeholder="t('execution.ui.searchRows')"
                       clearable
-                      style="width: 240px"
+                      :style="{ width: currentLocale === 'en-US' ? '264px' : '240px' }"
                     >
                       <template #prefix>
                         <i class="fa fa-search" />
@@ -512,7 +512,7 @@ import { translateText } from '@/utils/i18n'
 import { getAutomationRunTitle } from '@/modules/automation/utils/resourcePresentation'
 import AnsibleLogViewer from '../AnsibleLogViewer.vue'
 import JobUpgradeOverview from './JobUpgradeOverview.vue'
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 
 const ANSIBLE_JOB_TYPES = ['script', 'command', 'process']
 const TASK_STATUS_TAGS = {

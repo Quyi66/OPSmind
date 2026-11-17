@@ -108,7 +108,7 @@
             {{ translateAction(row.action) }}
           </template>
         </el-table-column>
-        <el-table-column prop="status" :label="t('common.status')" width="100">
+        <el-table-column prop="status" :label="t('common.status')" :width="currentLocale === 'en-US' ? 136 : 100">
           <template #default="{ row }">
             <RunLogStatusTag
               :type="getStatusType(row.status)"

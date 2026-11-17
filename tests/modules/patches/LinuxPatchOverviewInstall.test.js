@@ -84,7 +84,7 @@ vi.mock('@/modules/patches/components/host-detail/dialogs/HostSeverityPatchDialo
 }))
 
 const hosts = [
-  { host_id: 'host/A', host_key: '192.0.2.1', num_critical: 2 },
+  { host_id: 'host/A', host_key: '192.0.2.1', num_critical: 2, need_reboot: 1 },
   { host_id: 'host/B', host_key: '192.0.2.2' }
 ]
 const patch = { patch_id: 'patch/A', effect_host_count: 1 }
@@ -294,6 +294,7 @@ describe('Linux 默认概览直接安装', () => {
     const drawer = workbench().findComponent({ name: 'BatchInstallPatchDrawer' })
     expect(drawer.props('visible')).toBe(true)
     expect(drawer.props('hosts').map(host => host.host_id)).toEqual(['host/A'])
+    expect(drawer.props('hosts')[0].need_reboot).toBe(1)
     expect(api.push).not.toHaveBeenCalled()
     expect(api.replace).not.toHaveBeenCalled()
     expect(workbench().findComponent({ name: 'PatchInstallWizard' }).props('visible')).toBe(false)

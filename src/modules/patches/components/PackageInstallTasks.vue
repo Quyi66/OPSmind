@@ -35,21 +35,38 @@
         </template>
       </el-table-column>
       <el-table-column prop="errorMessage" :label="t('patches.linux.errorReason')" min-width="160" show-overflow-tooltip />
-      <el-table-column :label="t('common.actions')" width="270" fixed="right">
+      <el-table-column :label="t('common.actions')" :width="actionColumnWidth" fixed="right">
         <template #default="{ row }">
-          <el-button text type="primary" size="small" @click="$emit('detail', row)">{{ t('automation.records.details') }}</el-button>
-          <el-button
-            v-if="row.taskType !== 'rollback'"
-            text
-            type="primary"
-            size="small"
-            @click="openFailedHosts(row)"
-          >
-            {{ t('patches.linux.failedHosts') }}
-          </el-button>
-          <template v-if="isAdmin && row.status === 'PENDING_APPROVAL'">
-            <el-button text type="success" size="small" :disabled="approving || !isFutureSchedule(row.scheduledTime)" @click="approve(row, true)">{{ t('automation.workbench.approve') }}</el-button>
-            <el-button text type="danger" size="small" :disabled="approving" @click="approve(row, false)">{{ t('patches.linux.reject') }}</el-button>
+          <div v-if="currentLocale === 'en-US'" class="package-task-actions is-english">
+            <el-button text type="primary" size="small" @click="$emit('detail', row)">{{ t('automation.records.details') }}</el-button>
+            <el-dropdown v-if="row.taskType !== 'rollback' || (isAdmin && row.status === 'PENDING_APPROVAL')" trigger="click">
+              <el-button text type="primary" size="small">{{ t('common.moreActions') }}</el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item v-if="row.taskType !== 'rollback'" @click="openFailedHosts(row)">{{ t('patches.linux.failedHosts') }}</el-dropdown-item>
+                  <template v-if="isAdmin && row.status === 'PENDING_APPROVAL'">
+                    <el-dropdown-item :disabled="approving || !isFutureSchedule(row.scheduledTime)" @click="approve(row, true)">{{ t('automation.workbench.approve') }}</el-dropdown-item>
+                    <el-dropdown-item :disabled="approving" @click="approve(row, false)">{{ t('patches.linux.reject') }}</el-dropdown-item>
+                  </template>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
+          <template v-else>
+            <el-button text type="primary" size="small" @click="$emit('detail', row)">{{ t('automation.records.details') }}</el-button>
+            <el-button
+              v-if="row.taskType !== 'rollback'"
+              text
+              type="primary"
+              size="small"
+              @click="openFailedHosts(row)"
+            >
+              {{ t('patches.linux.failedHosts') }}
+            </el-button>
+            <template v-if="isAdmin && row.status === 'PENDING_APPROVAL'">
+              <el-button text type="success" size="small" :disabled="approving || !isFutureSchedule(row.scheduledTime)" @click="approve(row, true)">{{ t('automation.workbench.approve') }}</el-button>
+              <el-button text type="danger" size="small" :disabled="approving" @click="approve(row, false)">{{ t('patches.linux.reject') }}</el-button>
+            </template>
           </template>
         </template>
       </el-table-column>
@@ -62,8 +79,8 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
-import { onMounted, onUnmounted, ref } from 'vue'
+import { t, currentLocale } from '@/core/i18n'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import { patchInstallApi } from '../api'
@@ -81,6 +98,13 @@ const statuses = [
   { value: 'EXPIRED', get label() { return t('patches.linux.expired') } }
 ]
 const rows = ref([])
+const actionColumnWidth = computed(() => {
+  if (currentLocale.value !== 'en-US') return 270
+  const hasMoreActions = rows.value.some(row =>
+    row.taskType !== 'rollback' || (props.isAdmin && row.status === 'PENDING_APPROVAL')
+  )
+  return hasMoreActions ? 128 : 88
+})
 const page = ref(1)
 const total = ref(0)
 const loading = ref(false)
@@ -156,3 +180,11 @@ onUnmounted(() => {
   requestId += 1
 })
 </script>
+<style scoped>
+.package-task-actions.is-english {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+</style>

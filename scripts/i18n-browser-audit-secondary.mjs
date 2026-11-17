@@ -2,22 +2,40 @@ import { chromium } from '@playwright/test'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { inspectLayout, parseAuditOptions, renderAuditReport } from './i18n-browser-audit-core.mjs'
+import {
+  hasCaptureFailure,
+  inspectLayout,
+  parseAuditOptions,
+  renderAuditReport,
+  waitForLayoutAnimations
+} from './i18n-browser-audit-core.mjs'
 import { auditHorizontalTables } from './i18n-browser-audit-scroll.mjs'
+import { MANAGEMENT_CASES, auditManagementCase } from './i18n-browser-audit-management.mjs'
+import { LAYOUT_CASES, auditLayoutCase } from './i18n-browser-audit-layout-cases.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 export const SECONDARY_CASES = Object.freeze([
+  ...MANAGEMENT_CASES,
+  ...LAYOUT_CASES,
   ['create-script', '/jao/jobs'],
   ['create-command', '/jao/jobs'],
   ['create-rest', '/jao/jobs'],
   ['edit-tool', '/jao/jobs'],
   ['tool-history', '/jao/jobs'],
+  ['tool-history-result', '/jao/jobs'],
+  ['run-record-result', '/run-records/logs'],
   ['execute-parameters', '/jao/jobs'],
   ['cron-new', '/jao/taskScheduler'],
   ['cron-edit', '/jao/taskScheduler'],
   ['request-detail', '/jao/requests'],
   ['approval-detail', '/jao/approvals'],
   ['linux-install-drawer', '/patches/machineScan'],
+  ['linux-rollback-config', '/patches/changeRollback'],
+  ['patch-process-detail', '/patches/processLogs'],
+  ['patch-failed-hosts', '/patches/processLogs'],
+  ['windows-rollback-config', '/patches/windowsRollback'],
+  ['middleware-hosts', '/patches/middlewareCveList'],
+  ['middleware-cve-info', '/patches/middlewareCveList'],
   ['windows-install-wizard', '/patches/windowsVulnerability']
 ])
 
@@ -25,6 +43,7 @@ export function parseSecondaryOptions(argv) {
   const rest = []
   let selected
   let list = false
+  let screenshots = true
   for (let index = 0; index < argv.length; index++) {
     const flag = argv[index]
     if (flag === '--cases') {
@@ -32,6 +51,7 @@ export function parseSecondaryOptions(argv) {
       if (!value || value.startsWith('--')) throw new Error('Missing --cases value')
       selected = value.split(',')
     } else if (flag === '--list') list = true
+    else if (flag === '--no-screenshots') screenshots = false
     else if (['--all', '--routes', '--tabs', '--tables', '--prepare'].includes(flag))
       throw new Error(`Unsupported secondary option: ${flag}`)
     else rest.push(flag)
@@ -40,7 +60,12 @@ export function parseSecondaryOptions(argv) {
   const names = selected || SECONDARY_CASES.map(([name]) => name)
   if (names.some(name => !SECONDARY_CASES.some(([candidate]) => candidate === name)))
     throw new Error('Unknown reviewed secondary case')
-  return { ...options, list, cases: SECONDARY_CASES.filter(([name]) => names.includes(name)) }
+  return {
+    ...options,
+    list,
+    screenshots,
+    cases: SECONDARY_CASES.filter(([name]) => names.includes(name))
+  }
 }
 
 export function findReviewedButton(scope, name) {
@@ -56,7 +81,7 @@ export async function runSecondaryAudit(argv = process.argv.slice(2)) {
   const options = parseSecondaryOptions(argv)
   if (options.help) {
     console.log(
-      'Read-only reviewed secondary audit: --list; --cases create-script,cron-new; --locales zh-CN,en-US; --widths 1440,1920. Prepare login with the main audit --prepare first. Never starts Vite/build or submits business actions.'
+      'Read-only reviewed secondary audit: --list; --cases create-script,cron-new; --locales zh-CN,en-US; --widths 1440,1920; --no-screenshots for DOM measurements only. Prepare login with the main audit --prepare first. Never starts Vite/build or submits business actions.'
     )
     return
   }
@@ -74,7 +99,15 @@ export async function runSecondaryAudit(argv = process.argv.slice(2)) {
   const messages = {}
   for (const locale of options.locales) {
     messages[locale] = {}
-    for (const namespace of ['automation', 'common', 'hostUser', 'patches'])
+    for (const namespace of [
+      'automation',
+      'common',
+      'hostUser',
+      'patches',
+      'asset',
+      'settings',
+      'inspection'
+    ])
       messages[locale][namespace] = JSON.parse(
         await readFile(resolve(root, `src/locales/${locale}/${namespace}.json`), 'utf8')
       )
@@ -125,6 +158,7 @@ export async function runSecondaryAudit(argv = process.argv.slice(2)) {
         .first()
         .waitFor({ state: 'hidden' })
       await page.waitForTimeout(450)
+      await waitForLayoutAnimations(page)
       if (!(await switcher.isVisible())) throw new Error('Authenticated application unavailable')
     }
     const button = findReviewedButton
@@ -140,7 +174,15 @@ export async function runSecondaryAudit(argv = process.argv.slice(2)) {
       for (const [name, path] of scenarios)
         for (const locale of options.locales)
           for (const width of options.widths) {
-            const result = { name, path, locale, width, status: 'failed', states: [] }
+            const result = {
+              name,
+              path,
+              locale,
+              width,
+              screenshots: options.screenshots,
+              status: 'failed',
+              states: []
+            }
             const m = messages[locale]
             let serial = 0
             const capture = async stateName => {
@@ -148,14 +190,17 @@ export async function runSecondaryAudit(argv = process.argv.slice(2)) {
               const state = {
                 name: stateName,
                 status: 'captured',
-                screenshot: `${name}-${locale}-${width}-${serial++}.png`,
                 layout: await page.evaluate(inspectLayout)
               }
-              await page.screenshot({
-                path: resolve(run, state.screenshot),
-                fullPage: true,
-                animations: 'disabled'
-              })
+              if (state.layout.activeAnimations) state.status = 'captured-with-loading'
+              if (options.screenshots) {
+                state.screenshot = `${name}-${locale}-${width}-${serial++}.png`
+                await page.screenshot({
+                  path: resolve(run, state.screenshot),
+                  fullPage: true,
+                  animations: 'disabled'
+                })
+              }
               result.states.push(state)
               return state
             }
@@ -208,6 +253,30 @@ export async function runSecondaryAudit(argv = process.argv.slice(2)) {
                   scope
                 )
             }
+            const captureExecutionResult = async label => {
+              const root = page.locator('.execute-result-dialog-wrapper:visible')
+              await root.waitFor()
+              await settle()
+              const tabs = root.getByRole('tab')
+              for (let tab = 0; tab < (await tabs.count()); tab++) {
+                await tabs.nth(tab).click()
+                await captureSurface(
+                  root,
+                  `${label}-tab-${tab}`,
+                  '.execute-result-dialog-wrapper:visible'
+                )
+                const hosts = root.locator('.el-tree-node.is-leaf .tree-node.is-host')
+                if (await hosts.count()) {
+                  await hosts.first().click()
+                  await captureSurface(
+                    root,
+                    `${label}-host`,
+                    '.execute-result-dialog-wrapper:visible'
+                  )
+                }
+              }
+              await close(root)
+            }
             try {
               if (!allowed.has(path))
                 throw new Error(`Scenario parent is absent from the current actual menu: ${path}`)
@@ -221,7 +290,22 @@ export async function runSecondaryAudit(argv = process.argv.slice(2)) {
               )
               await settle()
               const content = page.locator('.group-content__view')
-              if (name.startsWith('create-') || name === 'edit-tool') {
+              if (LAYOUT_CASES.some(([candidate]) => name === candidate)) {
+                await auditLayoutCase({ name, page, content, m, button, dialog, close, settle, captureSurface, result })
+              } else if (MANAGEMENT_CASES.some(([candidate]) => name === candidate)) {
+                await auditManagementCase({
+                  name,
+                  page,
+                  content,
+                  m,
+                  button,
+                  dialog,
+                  close,
+                  settle,
+                  captureSurface,
+                  result
+                })
+              } else if (name.startsWith('create-') || name === 'edit-tool') {
                 if (name === 'edit-tool')
                   await content.locator('.el-table__body').getByRole('button').first().click()
                 else {
@@ -264,10 +348,124 @@ export async function runSecondaryAudit(argv = process.argv.slice(2)) {
                   await close(dialog())
                 }
                 await close(root)
+              } else if (name === 'run-record-result') {
+                const statuses = content.locator('.el-table__body .run-log-status-tag--clickable')
+                if (!(await statuses.count())) throw new Error('No historical run result available')
+                const failedIndex = await statuses.evaluateAll(items =>
+                  items.findIndex(item => /failed|失败/i.test(item.textContent))
+                )
+                const records = failedIndex > 0 ? [0, failedIndex] : [0]
+                result.recordIndices = records
+                if (failedIndex < 0)
+                  result.notCovered = ['No failed execution in the current run list']
+                for (const record of records) {
+                  await statuses.nth(record).click()
+                  await captureExecutionResult(`run-record-${record}`)
+                }
+              } else if (name === 'patch-process-detail') {
+                const rows = content.locator('.el-table__body tbody tr')
+                // Read a completed and a failed historical task where available.
+                const indices = await rows.evaluateAll(rows => {
+                  const chosen = [0]
+                  const failed = rows.findIndex(row =>
+                    /failed|失败/i.test(row.querySelectorAll('td')[2]?.textContent || '')
+                  )
+                  if (failed > 0) chosen.push(failed)
+                  return chosen
+                })
+                result.recordIndices = indices
+                for (const index of indices) {
+                  await button(rows.nth(index), m.automation.records.details).click()
+                  const root = page.locator('.process-log-dialog:visible')
+                  await root.waitFor()
+                  await settle()
+                  const steps = root.locator('.patch-task-stepper__item')
+                  for (let step = 0; step < (await steps.count()); step++) {
+                    await steps.nth(step).click()
+                    await captureSurface(
+                      root,
+                      `process-${index}-step-${step}`,
+                      '.process-log-dialog:visible'
+                    )
+                  }
+                  await close(root)
+                }
+              } else if (name === 'patch-failed-hosts') {
+                const rows = content.locator('.el-table__body tbody tr')
+                const indices = await rows.evaluateAll(rows =>
+                  rows
+                    .flatMap((row, index) =>
+                      /failed|失败/i.test(row.querySelectorAll('td')[2]?.textContent || '')
+                        ? [index]
+                        : []
+                    )
+                    .slice(0, 3)
+                )
+                result.dataCoverage = []
+                if (!indices.length) {
+                  await capture('no-failed-task-in-current-list')
+                  throw new Error(
+                    'No failed task in the current list; failure rows remain uncovered'
+                  )
+                }
+                for (const index of indices) {
+                  await button(rows.nth(index), m.patches.linux.failedHosts).click()
+                  const root = dialog()
+                  await root.waitFor()
+                  await captureSurface(root, `failed-hosts-${index}`, '.el-dialog:visible')
+                  const rowCount = await root.locator('.el-table__body tbody tr').count()
+                  result.dataCoverage.push({ recordIndex: index, rows: rowCount })
+                  await close(root)
+                  if (rowCount) break
+                }
+                if (!result.dataCoverage.some(item => item.rows))
+                  result.notCovered = [
+                    'Failure rows: sampled live records returned no failed hosts'
+                  ]
+              } else if (name === 'tool-history-result') {
+                const histories = button(
+                  content.locator('.el-table__body'),
+                  m.automation.workbench.history
+                )
+                result.dataCoverage = []
+                let found = false
+                for (let index = 0; index < Math.min(3, await histories.count()); index++) {
+                  await histories.nth(index).click()
+                  const history = dialog()
+                  await history.locator('.history-dialog').waitFor()
+                  await history.locator('.el-select').first().click()
+                  await page
+                    .locator('.el-select-dropdown:visible')
+                    .getByText(m.automation.workbench.last30Days, { exact: true })
+                    .click()
+                  await captureSurface(history, `history-${index}`, '.el-dialog:visible')
+                  const statuses = history.locator('.el-table__body .run-log-status-tag--clickable')
+                  const count = await statuses.count()
+                  result.dataCoverage.push({ recordIndex: index, rows: count })
+                  if (!count) {
+                    await close(history)
+                    continue
+                  }
+                  const failedIndex = await statuses.evaluateAll(items =>
+                    items.findIndex(item => /failed|失败/i.test(item.textContent))
+                  )
+                  const records = failedIndex > 0 ? [0, failedIndex] : [0]
+                  for (const record of records) {
+                    await statuses.nth(record).click()
+                    await captureExecutionResult(`execution-${index}-${record}`)
+                  }
+                  await close(history)
+                  found = true
+                  break
+                }
+                if (!found)
+                  throw new Error(
+                    'Sampled tools have no historical result; execution tabs remain uncovered'
+                  )
               } else if (name === 'tool-history' || name === 'execute-parameters') {
                 await button(
                   content.locator('.el-table__body'),
-                  name === 'tool-history'
+                  name !== 'execute-parameters'
                     ? m.automation.workbench.history
                     : m.automation.workbench.execute
                 )
@@ -275,7 +473,7 @@ export async function runSecondaryAudit(argv = process.argv.slice(2)) {
                   .click()
                 await dialog().waitFor()
                 await dialog()
-                  .locator(name === 'tool-history' ? '.history-dialog' : '.execute-dialog')
+                  .locator(name !== 'execute-parameters' ? '.history-dialog' : '.execute-dialog')
                   .waitFor()
                 await captureSurface(dialog(), name, '.el-dialog:visible')
                 await close(dialog())
@@ -310,11 +508,118 @@ export async function runSecondaryAudit(argv = process.argv.slice(2)) {
                 }
                 await close(generator)
                 await close(root)
+              } else if (name === 'middleware-hosts') {
+                const actions = button(
+                  content.locator('.el-table__body'),
+                  m.patches.linux.affectedHostsTitle
+                )
+                result.dataCoverage = []
+                for (let index = 0; index < Math.min(3, await actions.count()); index++) {
+                  await actions.nth(index).click()
+                  const root = dialog()
+                  await root.waitFor()
+                  await captureSurface(
+                    root,
+                    `middleware-affected-hosts-${index}`,
+                    '.el-dialog:visible'
+                  )
+                  const rows = await root.locator('.el-table__body tbody tr').count()
+                  result.dataCoverage.push({ recordIndex: index, rows })
+                  await close(root)
+                  if (rows > 0) break
+                }
+                if (!result.dataCoverage.some(item => item.rows > 0))
+                  result.notCovered = [
+                    'Affected host rows: sampled live records returned no matches'
+                  ]
+              } else if (name === 'middleware-cve-info') {
+                const versionRecord = await content
+                  .locator('.el-table__body tbody tr')
+                  .evaluateAll(rows =>
+                    rows.findIndex(
+                      row => Number(row.querySelectorAll('td')[5]?.textContent.trim()) > 0
+                    )
+                  )
+                result.recordIndex = Math.max(0, versionRecord)
+                await button(content.locator('.el-table__body'), m.automation.records.details)
+                  .nth(result.recordIndex)
+                  .click()
+                const root = content.locator('.cve-detail')
+                await root.waitFor()
+                await settle()
+                await root.locator('.cve-content-wrapper').waitFor()
+                const tabs = root.getByRole('tab')
+                for (let index = 0; index < (await tabs.count()); index++) {
+                  await tabs.nth(index).click()
+                  await captureSurface(root, `middleware-tab-${index}`, '.cve-detail')
+                }
+              } else if (name === 'windows-rollback-config') {
+                const selectable = content.locator('.el-table__body .el-checkbox:not(.is-disabled)')
+                if (!(await selectable.count())) {
+                  await capture('no-rollback-eligible-history')
+                  throw new Error(
+                    'No rollback-eligible historical record; wizard configuration remains uncovered'
+                  )
+                }
+                const checkbox = selectable.first()
+                if (!(await checkbox.locator('input[type="checkbox"]').isChecked()))
+                  await checkbox.click()
+                await button(content, m.patches.windows.rollbackSelected).click()
+                const wizard = page.locator('.win-patch-rollback-wizard:visible')
+                await wizard.waitFor()
+                for (let step = 0; step < 6; step++) {
+                  await captureSurface(
+                    wizard,
+                    `windows-rollback-config-${step}`,
+                    '.win-patch-rollback-wizard:visible'
+                  )
+                  const next = button(wizard, m.patches.linux.nextStep)
+                  if (!(await next.count()) || !(await next.isVisible())) break
+                  if (step === 5)
+                    throw new Error('Unexpected extra Windows rollback configuration step')
+                  await next.click()
+                }
+                await close(wizard)
               } else if (name.endsWith('-detail')) {
                 await content.locator('.el-table__body').getByRole('button').first().click()
                 await dialog().waitFor()
                 await captureSurface(dialog(), name)
                 await close(dialog())
+              } else if (name === 'linux-rollback-config') {
+                await button(content.locator('.el-table__body'), m.patches.linux.rollback)
+                  .first()
+                  .click()
+                const wizard = page.locator('.install-dialog:visible')
+                await wizard.waitFor()
+                // The reviewed Next handler configures local steps and reads
+                // capability/restart advice. Only the separate final action
+                // prepares a task and starts the execution pipeline.
+                for (let step = 0; step < 5; step++) {
+                  const active = wizard.locator('.patch-task-stepper__item.is-active')
+                  const label = (await active.innerText()).trim()
+                  await captureSurface(wizard, `rollback-config-${step}`, '.install-dialog:visible')
+                  const next = button(wizard, m.patches.linux.nextStep)
+                  if (!(await next.count()) || !(await next.isVisible())) break
+                  if (await next.isDisabled()) {
+                    result.notCovered = [
+                      'Following steps require an additional configuration or confirmation'
+                    ]
+                    break
+                  }
+                  if (step === 4) throw new Error('Unexpected extra rollback configuration step')
+                  await next.click()
+                  await page.waitForFunction(
+                    previous => {
+                      const current = document.querySelector(
+                        '.install-dialog .patch-task-stepper__item.is-active'
+                      )
+                      return current?.innerText.trim() !== previous
+                    },
+                    label,
+                    { timeout: 15000 }
+                  )
+                }
+                await close(wizard)
               } else if (name === 'linux-install-drawer') {
                 await button(content.locator('.el-table__body'), m.patches.linux.installPatches)
                   .first()
@@ -366,7 +671,9 @@ export async function runSecondaryAudit(argv = process.argv.slice(2)) {
                 await close(wizard)
                 await close(root)
               }
-              result.status = 'captured'
+              result.status = result.states.some(hasCaptureFailure)
+                ? 'captured-with-errors'
+                : 'captured'
             } catch (error) {
               result.error = error.message
             } finally {
@@ -402,8 +709,7 @@ export async function runSecondaryAudit(argv = process.argv.slice(2)) {
                   results.length < planned
                     ? '采集中或已中止，尚未覆盖本轮全部计划场景。'
                     : undefined,
-                scopeDescription:
-                  '本轮打开已审查的二级界面，包含表单滚动和本地标签/步骤；未保存、创建执行任务或开始执行。表格纵向区域只覆盖可见行。',
+                scopeDescription: `本轮打开已审查的二级界面，包含表单滚动和本地标签/步骤；未保存、创建执行任务或开始执行。表格纵向区域只覆盖可见行。${options.screenshots ? '包含截图。' : '仅采集真实 DOM 几何信息，未截图，不代表视觉验收。'}`,
                 captures: results.map(result => ({
                   ...result,
                   path: `${result.path} · ${result.name}`,

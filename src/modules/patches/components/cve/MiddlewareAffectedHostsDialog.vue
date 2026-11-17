@@ -48,7 +48,7 @@
         <el-table-column prop="fixedVersion" :label="t('patches.cve.fixedVersion')" min-width="140" show-overflow-tooltip>
           <template #default="{ row }">{{ row.fixedVersion || '-' }}</template>
         </el-table-column>
-        <el-table-column prop="osScanStatus" :label="t('patches.cve.osScanStatus')" min-width="150">
+        <el-table-column prop="osScanStatus" :label="t('patches.cve.osScanStatus')" :min-width="currentLocale === 'en-US' ? 184 : 150">
           <template #default="{ row }">{{ row.osScanStatus ?? '-' }}</template>
         </el-table-column>
       </el-table>
@@ -60,7 +60,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 import { message, messageRef } from '@/core/i18n/feedback'
 import { onBeforeUnmount, ref, watch } from 'vue'
 import { middlewareCveApi } from '../../api'

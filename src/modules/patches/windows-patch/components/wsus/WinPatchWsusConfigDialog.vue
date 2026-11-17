@@ -7,7 +7,7 @@
     :close-on-click-modal="false"
     :close-on-press-escape="false"
   >
-    <el-form ref="formRef" :model="form" :rules="rules" :validate-on-rule-change="false" label-width="110px" @submit.prevent>
+    <el-form ref="formRef" :model="form" :rules="rules" :validate-on-rule-change="false" :label-width="currentLocale === 'en-US' ? '150px' : '110px'" @submit.prevent>
       <el-form-item :label="t('patches.windows.wsusAddress')" prop="wsusUrl">
         <el-input v-model="form.wsusUrl" :placeholder="t('patches.windows.enterWsusAddress')" clearable />
       </el-form-item>
@@ -42,7 +42,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 import { useLocalizedValidation } from '@/core/i18n/validation'
 
 import { computed, reactive, ref, watch } from 'vue'

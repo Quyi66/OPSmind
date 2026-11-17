@@ -66,7 +66,7 @@
   "unixServers": "Unix servers",
   "linuxServers": "Linux servers",
   "inspectionTitle": "Inspection overview",
-  "monthlyInspections": "This month",
+  "monthlyInspections": "Inspections this month",
   "normal": "Normal",
   "abnormal": "Abnormal",
   "inspectionRecent": "Inspection results over the last 10 days",

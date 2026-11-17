@@ -185,7 +185,7 @@ describe('reachable dashboard components', () => {
     const ids = vm.inspectionStats.map(stat => stat.id)
     await setLocale('en-US', { persist: false })
     await flushPromises()
-    expect(wrapper.text()).toContain('This month')
+    expect(wrapper.text()).toContain('Inspections this month')
     expect(vm.chartOption.series.map(series => series.name)).toEqual(['Normal', 'Abnormal'])
     expect(vm.chartOption.series.map(series => series.data)).toEqual([[8], [4]])
     expect(vm.chartData).toBe(data)

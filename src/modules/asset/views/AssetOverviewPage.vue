@@ -22,7 +22,7 @@
           <span class="aw-metric-item__label">{{ t('asset.connectivityInspection') }}</span>
           <div class="aw-metric-item__value-group" :class="{ 'is-danger': exceptionDeviceTotal > 0 }">
             <WbFlipNumber class="aw-metric-item__value" :value="exceptionDeviceTotal" />
-            <span class="aw-metric-item__sub">{{ t('asset.inspectionFailuresUnit') }}</span>
+            <span class="aw-metric-item__sub">{{ t('asset.inspectionFailuresUnit', { count: Number(exceptionDeviceTotal) }) }}</span>
           </div>
         </button>
 

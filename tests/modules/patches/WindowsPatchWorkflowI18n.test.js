@@ -16,7 +16,7 @@ const { ElForm, ElFormItem } = createRequire(import.meta.url)('element-plus/lib/
 const Slot = { template: '<div><slot /><slot name="footer" /></div>' }
 const wrappers = []
 function open(component, props = {}, extra = {}) {
-  const wrapper = shallowMount(component, { props, global: { stubs: { 'el-dialog': Slot, 'el-form': Slot, 'el-form-item': Slot, 'el-button': Slot, ...extra }, directives: { loading() {} } } })
+  const wrapper = shallowMount(component, { props, global: { stubs: { 'el-dialog': Slot, 'el-form': Slot, 'el-form-item': Slot, 'el-button': Slot, I18nT: false, ...extra }, directives: { loading() {} } } })
   wrappers.push(wrapper)
   return { wrapper, vm: wrapper.vm.$.setupState }
 }
@@ -69,8 +69,32 @@ describe('Windows patch workflow language changes', () => {
     await flushPromises()
     expect(vm.resolvedValue).toEqual({ reboot: true, rescanAfter: true })
     expect(vm.rebootConfirmText).toBe(vm.displayProps.rebootConfirmKeyword)
-    expect(vm.rescanConfirmText).toBe('CONFIRM RESCAN')
+    expect(vm.rescanConfirmText).toBe('Confirm rescan')
     expect(wrapper.emitted('update:modelValue')).toBeUndefined()
+  })
+
+  it('renders complete confirmation sentences and keeps rescan matching exact across locales', async () => {
+    const { wrapper, vm } = open(Restart, { modelValue: { reboot: false, rescanAfter: false }, confirmMode: true })
+    const labels = () => wrapper.findAll('.win-patch-restart-step__confirm-label').map(label => label.text().replace(/\s+/g, ' ').trim())
+    expect(labels()).toEqual(['请输入 确认重启 进行确认', '请输入 确认重扫 进行确认'])
+    await setLocale('en-US', { persist: false })
+    await flushPromises()
+    expect(labels()).toEqual(['Enter "Confirm restart" to confirm', 'Enter "Confirm rescan" to confirm'])
+    vm.updateConfirmField('rescanAfter', 'CONFIRM RESCAN')
+    expect(wrapper.emitted('update:modelValue')).toBeUndefined()
+    vm.updateConfirmField('rescanAfter', 'Confirm rescan')
+    expect(wrapper.emitted('update:modelValue').at(-1)[0]).toEqual({ reboot: false, rescanAfter: true })
+    await wrapper.setProps({ modelValue: { reboot: false, rescanAfter: true } })
+    const events = wrapper.emitted('update:modelValue').length
+    await setLocale('zh-CN', { persist: false })
+    await flushPromises()
+    expect(vm.rescanConfirmText).toBe('确认重扫')
+    vm.updateConfirmField('rescanAfter', 'Confirm rescan')
+    expect(wrapper.emitted('update:modelValue')).toHaveLength(events)
+    await wrapper.setProps({ modelValue: { reboot: false, rescanAfter: false }, rescanConfirmKeyword: 'CONFIRM RESCAN' })
+    vm.updateConfirmField('rescanAfter', 'CONFIRM RESCAN')
+    expect(vm.rescanConfirmText).toBe('CONFIRM RESCAN')
+    expect(wrapper.emitted('update:modelValue').at(-1)[0]).toEqual({ reboot: false, rescanAfter: true })
   })
 
   it('retains caller-provided restart copy', async () => {

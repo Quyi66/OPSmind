@@ -17,7 +17,7 @@
         style="margin-bottom: 20px"
       />
 
-      <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top">
+      <el-form ref="formRef" :model="formData" :rules="formRules" :validate-on-rule-change="false" label-position="top">
         <el-form-item :label="t('asset.attrField')" prop="code">
           <el-select
             v-model="formData.code"
@@ -56,6 +56,7 @@
 
 <script setup>
 import { t } from '@/core/i18n'
+import { useLocalizedValidation } from '@/core/i18n/validation'
 
 import { ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
@@ -85,15 +86,16 @@ const visible = computed({
 })
 
 const formRef = ref()
+useLocalizedValidation(formRef)
 const formData = ref({
   code: '',
   value: ''
 })
 
-const formRules = {
+const formRules = computed(() => ({
   code: [{ required: true, message: t('asset.selectModelAttr'), trigger: 'change' }],
   value: [{ required: true, message: t('asset.enterAttrValue'), trigger: 'blur' }]
-}
+}))
 
 const loadingAttrs = ref(false)
 const editableAttrs = ref([])
