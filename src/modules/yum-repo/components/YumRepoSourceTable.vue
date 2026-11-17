@@ -103,7 +103,7 @@
             {{ row.packageCount ?? '-' }}
           </template>
         </el-table-column>
-        <el-table-column :label="t('common.actions')" width="230" fixed="right">
+        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 224 : 230" :class-name="currentLocale === 'en-US' ? 'i18n-actions-inline' : undefined" fixed="right">
           <template #default="{ row }">
             <el-button
               text
@@ -123,7 +123,7 @@
             >
               {{ t('yumRepo.inventory') }}
             </el-button>
-            <el-button
+            <el-button v-if="currentLocale !== 'en-US'"
               text
               type="primary"
               size="small"
@@ -132,12 +132,24 @@
             >
               {{ t('yumRepo.compare') }}
             </el-button>
-            <el-button text type="primary" size="small" @click.stop="handleEditConfig(row)">
+            <el-button v-if="currentLocale !== 'en-US'" text type="primary" size="small" @click.stop="handleEditConfig(row)">
               {{ t('common.edit') }}
             </el-button>
-            <el-button text type="danger" size="small" @click.stop="handleDeleteConfig(row)">
+            <el-button v-if="currentLocale !== 'en-US'" text type="danger" size="small" @click.stop="handleDeleteConfig(row)">
               {{ t('common.delete') }}
             </el-button>
+            <el-dropdown v-if="currentLocale === 'en-US'" trigger="click" @command="command => handleConfigAction(command, row)">
+              <el-button text type="primary" size="small">
+                {{ t('common.moreActions') }} <el-icon><ArrowDown /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="compare" :disabled="!canOpenCompare(row)">{{ t('yumRepo.compare') }}</el-dropdown-item>
+                  <el-dropdown-item command="edit">{{ t('common.edit') }}</el-dropdown-item>
+                  <el-dropdown-item command="delete" divided>{{ t('common.delete') }}</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </template>
         </el-table-column>
       </el-table>
@@ -249,7 +261,7 @@ import { useLocalizedValidation } from '@/core/i18n/validation'
 
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Delete, Plus, Refresh, Search } from '@element-plus/icons-vue'
+import { ArrowDown, Delete, Plus, Refresh, Search } from '@element-plus/icons-vue'
 import { YUM_REPO_ARCH_OPTIONS, YUM_REPO_OS_FAMILY_OPTIONS } from '../constants'
 import { yumRepoApi } from '../api'
 import {
@@ -418,6 +430,12 @@ function handlePageSizeChange() {
 
 function getSourceId(row) {
   return resolveYumRepoId(findYumRepoSourceByConfig(row, props.sources))
+}
+
+function handleConfigAction(command, row) {
+  if (command === 'compare' && canOpenCompare(row)) emit('open-compare', row)
+  if (command === 'edit') handleEditConfig(row)
+  if (command === 'delete') handleDeleteConfig(row)
 }
 
 function canOpenCompare(row) {

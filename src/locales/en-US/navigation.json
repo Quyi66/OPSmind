@@ -1,4 +1,7 @@
 {
+  "historical": {
+    "urgencyAssessment": "Urgency assessment"
+  },
   "groups": {
     "asset-management": "Asset management",
     "automation": "Automation",

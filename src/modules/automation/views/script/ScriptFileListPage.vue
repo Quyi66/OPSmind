@@ -298,7 +298,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column :label="t('automation.library.modifiedDate')" prop="lastModified" width="120" sortable="custom">
+        <el-table-column :label="t('automation.library.modifiedDate')" prop="lastModified" :width="currentLocale === 'en-US' ? 160 : 120" sortable="custom">
           <template #default="{ row }">
             <a
               v-if="row.lastModified && !row.directory && !row._isParentDir && repoType === 'git'"

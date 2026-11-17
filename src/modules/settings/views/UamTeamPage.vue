@@ -76,12 +76,12 @@
             {{ row.tenantName || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="updatedAt" :label="t('settings.team.updatedAt')" width="180">
+        <el-table-column prop="updatedAt" :label="t('settings.team.updatedAt')" :width="currentLocale === 'en-US' ? 216 : 180">
           <template #default="{ row }">
             {{ formatTime(row.updatedAt) }}
           </template>
         </el-table-column>
-        <el-table-column :label="t('common.actions')" min-width="150" fixed="right" align="left">
+        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 120 : undefined" :min-width="currentLocale === 'en-US' ? undefined : 150" fixed="right" align="left">
           <template #default="{ row }">
             <el-button size="small" text type="primary" @click="handleEdit(row)">{{ t('common.edit') }}</el-button>
             <el-button

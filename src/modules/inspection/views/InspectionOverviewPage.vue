@@ -110,7 +110,7 @@
               </span>
             </template>
           </el-table-column>
-          <el-table-column :label="t('common.actions')" min-width="260" align="left" fixed="right">
+          <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 208 : undefined" :min-width="currentLocale === 'en-US' ? undefined : 260" align="left" fixed="right">
             <template #default="{ row }">
               <div class="overview-row-actions">
                 <el-button

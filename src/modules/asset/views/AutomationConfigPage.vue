@@ -153,7 +153,7 @@
               </el-table-column>
 
               <!-- 5. 登录与执行用户 -->
-              <el-table-column prop="loginUser" :label="t('asset.connectionAccount')" width="130">
+              <el-table-column prop="loginUser" :label="t('asset.connectionAccount')" :width="currentLocale === 'en-US' ? 160 : 130">
                 <template #default="{ row }">
                   <div class="credentials-cell">
                     <span class="cred-item" :title="t('asset.loginUser')">
@@ -326,7 +326,7 @@
                 </template>
               </el-table-column>
 
-              <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 168 : 100" fixed="right">
+              <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 120 : 100" fixed="right">
                 <template #default="{ row }">
                   <el-button text type="primary" size="small" @click="handleEditAnsible(row)">
                     {{ t('common.edit') }}

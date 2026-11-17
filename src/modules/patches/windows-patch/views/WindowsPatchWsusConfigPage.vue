@@ -56,7 +56,7 @@
             }}
           </template>
         </el-table-column>
-        <el-table-column :label="t('common.actions')" width="150" fixed="right">
+        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 120 : 150" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="openEditDialog(row)">
               {{ t('common.edit') }}
@@ -82,7 +82,7 @@
 import { createPatchTaskError } from '@/modules/patches/utils/patchTaskFeedback'
 import { message as localMessage, messageRef } from '@/core/i18n/feedback'
 
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'

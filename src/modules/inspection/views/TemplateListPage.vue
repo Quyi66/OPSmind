@@ -67,7 +67,7 @@
         <el-table-column
           prop="hostCount"
           :label="t('inspection.templates.configuredHosts')"
-          min-width="120"
+          :min-width="currentLocale === 'en-US' ? 176 : 120"
           align="right"
           sortable="custom"
           show-overflow-tooltip
@@ -98,7 +98,7 @@
           <template #default="{ row }">{{ formatDateTime(row.executedAt) }}</template>
         </el-table-column>
         <el-table-column prop="executedBy" :label="t('inspection.templates.operator')" min-width="120" show-overflow-tooltip />
-        <el-table-column :label="t('common.actions')" min-width="320" align="left" fixed="right">
+        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 280 : undefined" :min-width="currentLocale === 'en-US' ? undefined : 320" align="left" fixed="right">
           <template #default="{ row }">
             <div class="template-row-actions" :title="rowActionReason">
               <el-button text type="primary" size="small" @click="goToJobList(row)">

@@ -119,7 +119,7 @@
           show-overflow-tooltip
           sortable="custom"
         />
-        <el-table-column :label="t('inspection.templates.configuredHosts')" min-width="110" align="right" show-overflow-tooltip>
+        <el-table-column :label="t('inspection.templates.configuredHosts')" :min-width="currentLocale === 'en-US' ? 160 : 110" align="right" show-overflow-tooltip>
           <template #default="{ row }">
             <span class="configuration-count" :title="configurationCounts.get(row).summary">
               {{ configurationCounts.get(row).hostCount ?? '—' }}
@@ -156,7 +156,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="createdBy" :label="t('inspection.templates.operator')" min-width="110" show-overflow-tooltip />
-        <el-table-column :label="t('inspection.results.executionStatus')" min-width="110" align="left">
+        <el-table-column :label="t('inspection.results.executionStatus')" :min-width="currentLocale === 'en-US' ? 160 : 110" align="left">
           <template #default="{ row }">
             <RunLogStatusTag
               :type="getStatusType(row.jobStatus)"
@@ -167,7 +167,7 @@
             </RunLogStatusTag>
           </template>
         </el-table-column>
-        <el-table-column :label="t('common.actions')" min-width="240" align="left" fixed="right">
+        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 200 : undefined" :min-width="currentLocale === 'en-US' ? undefined : 240" align="left" fixed="right">
           <template #default="{ row }">
             <div
               class="result-row-actions"

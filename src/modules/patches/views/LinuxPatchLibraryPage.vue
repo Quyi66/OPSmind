@@ -170,7 +170,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="publish_date" :label="t('patches.catalog.publishedAt')" width="120" sortable>
+        <el-table-column prop="publish_date" :label="t('patches.catalog.publishedAt')" :width="currentLocale === 'en-US' ? 152 : 120" sortable>
           <template #default="{ row }">
             {{ formatDate(row.publish_date) }}
           </template>

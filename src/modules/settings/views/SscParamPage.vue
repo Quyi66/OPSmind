@@ -63,7 +63,7 @@
               min-width="250"
               show-overflow-tooltip
             />
-            <el-table-column :label="t('common.actions')" min-width="220" fixed="right" align="left">
+            <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 164 : undefined" :min-width="currentLocale === 'en-US' ? undefined : 220" fixed="right" align="left">
               <template #default="{ row }">
                 <el-button text type="primary" size="small" @click="handleViewSysParam(row)">
                   {{ t('common.view') }}
@@ -159,7 +159,7 @@
               min-width="300"
               show-overflow-tooltip
             />
-            <el-table-column :label="t('common.actions')" min-width="220" fixed="right" align="left">
+            <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 164 : undefined" :min-width="currentLocale === 'en-US' ? undefined : 220" fixed="right" align="left">
               <template #default="{ row }">
                 <el-button text type="primary" size="small" @click="handleViewAppParam(row)">
                   {{ t('common.view') }}

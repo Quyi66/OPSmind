@@ -167,7 +167,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column :label="t('hostUser.signInErrors')" width="90">
+        <el-table-column :label="t('hostUser.signInErrors')" :width="currentLocale === 'en-US' ? 128 : 90">
           <template #default="{ row }">
             <el-tag
               v-if="row.login_fail_message"
@@ -195,7 +195,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 180 : 120" align="left" fixed="right">
+        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 140 : 120" align="left" fixed="right">
           <template #default="{ row }">
             <div class="row-actions">
               <el-button

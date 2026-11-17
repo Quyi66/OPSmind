@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout">
+  <div class="ops-page-layout" :class="{ 'middleware-cve-english': currentLocale === 'en-US' }">
     <MiddlewareCveDetail
       v-if="currentView === 'detail'"
       :cve-id="selectedCveId"
@@ -95,7 +95,7 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="cvss3Score" :label="t('patches.cve.cvssScore')" width="120" sortable="custom">
+          <el-table-column prop="cvss3Score" :label="t('patches.cve.cvssScore')" :width="currentLocale === 'en-US' ? 144 : 120" sortable="custom">
             <template #default="{ row }">
               <span v-if="toKnownNumber(row.cvss3Score, { max: 10 }) !== null" style="font-weight: 600">
                 {{ formatCvssScore(row.cvss3Score) }}
@@ -108,14 +108,14 @@
               {{ row.description || '-' }}
             </template>
           </el-table-column>
-          <el-table-column prop="affectedCount" :label="t('patches.cve.affectedVersionCount')" width="120" />
+          <el-table-column prop="affectedCount" :label="t('patches.cve.affectedVersionCount')" :width="currentLocale === 'en-US' ? 144 : 120" />
           <el-table-column prop="fixedCount" :label="t('patches.cve.fixedVersionCount')" width="120" />
-          <el-table-column prop="publicDate" :label="t('patches.catalog.publishDate')" width="180" sortable="custom">
+          <el-table-column prop="publicDate" :label="t('patches.catalog.publishDate')" :width="currentLocale === 'en-US' ? 216 : 180" sortable="custom" :class-name="currentLocale === 'en-US' ? 'middleware-date' : undefined">
             <template #default="{ row }">
               <span class="text-muted">{{ formatDate(row.publicDate) }}</span>
             </template>
           </el-table-column>
-          <el-table-column :label="t('common.actions')" width="170" fixed="right">
+          <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 200 : 170" :class-name="currentLocale === 'en-US' ? 'middleware-actions' : undefined" fixed="right">
             <template #default="{ row }">
               <el-button link type="primary" @click="viewDetail(row)">{{ t('automation.records.details') }}</el-button>
               <el-button link type="primary" @click="viewAffectedHosts(row)">{{ t('patches.linux.affectedHostsTitle') }}</el-button>
@@ -400,5 +400,13 @@ watch(
 <style scoped lang="scss">
 :deep(.el-date-editor) {
   height: 32px !important;
+}
+
+.middleware-cve-english {
+  :deep(th .cell),
+  :deep(.middleware-date .cell),
+  :deep(.middleware-actions .cell) {
+    white-space: nowrap;
+  }
 }
 </style>

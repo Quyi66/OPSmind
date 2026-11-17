@@ -93,13 +93,13 @@
           </template>
         </el-table-column>
 
-        <el-table-column :label="t('automation.approval.executionPolicy')" width="130">
+        <el-table-column :label="t('automation.approval.executionPolicy')" :width="currentLocale === 'en-US' ? 160 : 130">
           <template #default="{ row }">
             {{ getApproveModeLabel(row.approveMode) }}
           </template>
         </el-table-column>
 
-        <el-table-column :label="t('automation.list.validDuration')" width="110">
+        <el-table-column :label="t('automation.list.validDuration')" :width="currentLocale === 'en-US' ? 144 : 110">
           <template #default="{ row }">
             {{ row.approveMode !== 'limitParams' && row.validHour ? formatApprovalDuration(row.validHour) : '-' }}
           </template>

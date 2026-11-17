@@ -32,7 +32,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column :label="t('automation.list.currentStatus')" width="100" align="left">
+      <el-table-column :label="t('automation.list.currentStatus')" :width="currentLocale === 'en-US' ? 128 : 100" align="left">
         <template #default="{ row }">
           <el-tag
             :type="row.triggerStatus === '1' ? 'success' : 'danger'"
@@ -66,7 +66,7 @@
         </template>
       </el-table-column> -->
 
-      <el-table-column :label="t('common.actions')" width="260" align="left" fixed="right">
+      <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 164 : 260" :class-name="currentLocale === 'en-US' ? 'i18n-actions-inline' : undefined" align="left" fixed="right">
         <template #default="{ row }">
           <el-button
             text
@@ -86,7 +86,7 @@
           >
             {{ t('automation.workbench.edit') }}
           </el-button>
-          <el-button
+          <el-button v-if="currentLocale !== 'en-US'"
             text
             type="primary"
             size="small"
@@ -95,7 +95,7 @@
           >
             {{ t('automation.workbench.copy') }}
           </el-button>
-          <el-button
+          <el-button v-if="currentLocale !== 'en-US'"
             type="primary"
             size="small"
             text
@@ -105,7 +105,7 @@
           >
             {{ t('automation.schedule.nextTimes') }}
           </el-button>
-          <el-button
+          <el-button v-if="currentLocale !== 'en-US'"
             text
             type="danger"
             size="small"
@@ -114,6 +114,18 @@
           >
             {{ t('common.delete') }}
           </el-button>
+          <el-dropdown v-if="currentLocale === 'en-US'" trigger="click" :disabled="unavailable" @command="command => $emit(command, row)">
+            <el-button text type="primary" size="small" :disabled="unavailable">
+              {{ t('common.moreActions') }} <el-icon><ArrowDown /></el-icon>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="copy" :disabled="unavailable">{{ t('automation.workbench.copy') }}</el-dropdown-item>
+                <el-dropdown-item command="query-next-time" :disabled="unavailable">{{ t('automation.schedule.nextTimes') }}</el-dropdown-item>
+                <el-dropdown-item command="delete" :disabled="unavailable" divided>{{ t('common.delete') }}</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </template>
       </el-table-column>
       <template #empty>
@@ -138,9 +150,9 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 
-import { Edit, Delete, CopyDocument, VideoPlay, Clock } from '@element-plus/icons-vue'
+import { Edit, Delete, CopyDocument, VideoPlay, Clock, ArrowDown } from '@element-plus/icons-vue'
 import { computed, ref, watch } from 'vue'
 import {
   getCronTaskConfirmation,

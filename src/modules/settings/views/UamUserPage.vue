@@ -105,7 +105,7 @@
             {{ formatTime(row.lastModifiedDate) }}
           </template>
         </el-table-column>
-        <el-table-column :label="t('common.actions')" min-width="320" fixed="right">
+        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 224 : undefined" :min-width="currentLocale === 'en-US' ? undefined : 320" fixed="right">
           <template #default="{ row }">
             <el-button size="small" text type="primary" @click="handleView(row)">{{ t('common.view') }}</el-button>
             <el-button size="small" text type="primary" @click="handleEdit(row)">{{ t('common.edit') }}</el-button>

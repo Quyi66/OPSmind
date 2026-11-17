@@ -235,7 +235,7 @@
         </el-table-column>
 
         <!-- 5. 操作 -->
-        <el-table-column :label="t('common.actions')" width="100" align="center" fixed="right">
+        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 144 : 100" align="center" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="viewCredentials(row)">
               {{ t('asset.viewCredentials') }}

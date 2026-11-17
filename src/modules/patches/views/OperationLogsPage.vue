@@ -125,7 +125,7 @@
             </RunLogStatusTag>
           </template>
         </el-table-column>
-        <el-table-column prop="executor_node" :label="t('automation.records.executionNodes')" width="120" />
+        <el-table-column prop="executor_node" :label="t('automation.records.executionNodes')" :width="currentLocale === 'en-US' ? 152 : 120" />
         <el-table-column prop="target_hosts" :label="t('patches.logs.targetNodes')" width="240">
           <template #default="{ row }">
             <div v-if="row.target_hosts" class="host-tags-wrapper" @click="handleShowAllHosts(row)">
@@ -175,7 +175,7 @@
         </el-table-column>
         <el-table-column :width="actionColumnWidth" fixed="right" :label="t('common.actions')">
           <template #default="{ row }">
-            <div class="action-buttons">
+            <div class="action-buttons" :class="{ 'is-english': currentLocale === 'en-US' }">
               <el-button text type="primary" size="small" @click="handleViewRunResult(row)">
                 {{ t('automation.records.details') }}
               </el-button>
@@ -318,7 +318,7 @@
 import { createPatchTaskError } from '@/modules/patches/utils/patchTaskFeedback'
 import { message as localMessage, messageRef } from '@/core/i18n/feedback'
 
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 import {
   ref,
   reactive,
@@ -385,6 +385,12 @@ const winScanReportVisible = ref(false)
 const winScanReportRunId = ref('')
 
 const actionColumnWidth = computed(() => {
+  if (currentLocale.value === 'en-US') {
+    if (tableData.value.some(row => canShowInstallReport(row))) return 208
+    if (tableData.value.some(row => canShowRollbackReport(row))) return 196
+    if (tableData.value.some(row => canShowScanReport(row))) return 176
+    return 80
+  }
   const hasWindows = tableData.value.some(row => canShowWindowsScanReport(row))
   const hasOther = tableData.value.some(
     row => canShowScanReport(row) || canShowInstallReport(row) || canShowRollbackReport(row)
@@ -963,6 +969,14 @@ onActivated(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+.action-buttons.is-english {
+  flex-wrap: nowrap;
+
+  :deep(.el-button + .el-button) {
+    margin-left: 0;
+  }
 }
 
 .hosts-dialog-header {

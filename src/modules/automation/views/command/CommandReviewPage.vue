@@ -93,7 +93,7 @@
           sortable="custom"
         />
 
-        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 120 : 80" fixed="right" align="left">
+        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 88 : 80" fixed="right" align="left">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="handleApprove(row)">{{ t('automation.command.review') }}</el-button>
           </template>

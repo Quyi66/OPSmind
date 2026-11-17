@@ -103,7 +103,7 @@
           </el-table-column>
 
           <!-- 3. 状态 -->
-          <el-table-column prop="status" :label="t('asset.executionStatus')" width="105" align="left" sortable>
+          <el-table-column prop="status" :label="t('asset.executionStatus')" :width="currentLocale === 'en-US' ? 168 : 105" align="left" sortable>
             <template #default="{ row }">
               <RunLogStatusTag
                 :type="getStatusType(row.status)"

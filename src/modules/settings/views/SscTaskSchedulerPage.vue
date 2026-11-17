@@ -66,7 +66,7 @@
         </el-table-column>
         <el-table-column prop="createdBy" :label="t('settings.scheduler.creator')" width="100" />
         <el-table-column prop="remark" :label="t('common.view')" width="100" />
-        <el-table-column :label="t('common.actions')" min-width="150" fixed="right">
+        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 120 : undefined" :min-width="currentLocale === 'en-US' ? undefined : 150" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="handleEditTask(row)">
               {{ t('common.edit') }}
@@ -95,7 +95,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 import { ref, computed, onMounted } from 'vue'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { apiService } from '@/core/api'

@@ -74,7 +74,7 @@
         </el-table-column>
         <el-table-column prop="os_distro" label="OS" min-width="120" show-overflow-tooltip />
         <el-table-column prop="os_version" :label="t('yumRepo.software.osVersion')" width="150" show-overflow-tooltip />
-        <el-table-column prop="repo_count" :label="t('yumRepo.software.configuredRepo')" width="120" />
+        <el-table-column prop="repo_count" :label="t('yumRepo.software.configuredRepo')" :width="currentLocale === 'en-US' ? 196 : 120" />
         <el-table-column prop="installed_pkgs_count" :label="t('yumRepo.software.installedPackages')" width="140">
           <template #default="{ row }">
             {{ row.installed_pkgs_count }}
@@ -130,7 +130,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'

@@ -73,7 +73,7 @@
             <span class="time-text">{{ formatDateTime(row.executed_at) || '—' }}</span>
           </template>
         </el-table-column>
-        <el-table-column :label="t('inspection.email.notificationStatus')" width="150">
+        <el-table-column :label="t('inspection.email.notificationStatus')" :width="currentLocale === 'en-US' ? 196 : 150">
           <template #default>
             <span
               class="channel-pill"
@@ -83,7 +83,7 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column :label="t('common.actions')" min-width="260" align="left" fixed="right">
+        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 224 : undefined" :min-width="currentLocale === 'en-US' ? undefined : 260" align="left" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="showRecipientDialog(row)">
               {{ t('inspection.email.recipients') }}
@@ -300,7 +300,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 import { useLocalizedValidation } from '@/core/i18n/validation'
 
 import { ref, computed, onMounted, watch } from 'vue'

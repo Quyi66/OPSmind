@@ -98,7 +98,7 @@
             {{ formatTime(row.lastModifiedDate) }}
           </template>
         </el-table-column> -->
-        <el-table-column :label="t('common.actions')" min-width="300" fixed="right">
+        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 276 : undefined" :min-width="currentLocale === 'en-US' ? undefined : 300" fixed="right">
           <template #default="{ row }">
             <el-button size="small" text type="primary" @click="handleAssignPatch(row)">
               {{ t('settings.patchAssignment.assign') }}

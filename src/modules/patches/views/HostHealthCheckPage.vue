@@ -201,7 +201,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 196 : 140" fixed="right">
+        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 172 : 140" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="openHostDetail(row)">
               {{ t('asset.health.details') }}

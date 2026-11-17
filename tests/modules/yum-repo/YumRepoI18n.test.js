@@ -102,6 +102,19 @@ afterEach(async () => {
 })
 
 describe('Yum repository i18n and stable request values', () => {
+  it('routes compact English menu actions without submitting requests or enabling unavailable comparisons', async () => {
+    const { vm, wrapper } = await open(SourceTable, { configs: [config], sources: [] })
+    await setLocale('en-US', { persist: false })
+    vm.handleConfigAction('compare', config)
+    vm.handleConfigAction('unknown', config)
+    expect(wrapper.emitted('open-compare')).toBeUndefined()
+    expect(yumRepoApi.deleteConfig).not.toHaveBeenCalled()
+    vm.handleConfigAction('edit', config)
+    expect(vm.dialogVisible).toBe(true)
+    expect(vm.editingConfig.id).toBe(config.id)
+    expect(yumRepoApi.updateConfig).not.toHaveBeenCalled()
+    expect(yumRepoApi.collectPackages).not.toHaveBeenCalled()
+  })
   it('translates local status labels and OS options without rewriting codes or backend messages', async () => {
     const codes = YUM_REPO_OS_FAMILY_OPTIONS.map(item => item.value)
     expect(getCollectStatusLabel('SUCCESS')).toBe('采集成功')

@@ -95,9 +95,9 @@
       <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 294px)">
         <el-table-column prop="hostKey" :label="t('patches.catalog.hostIp')" width="130" show-overflow-tooltip />
         <el-table-column prop="osDistro" :label="t('yumRepo.os')" width="140" show-overflow-tooltip />
-        <el-table-column prop="osVersion" :label="t('yumRepo.software.systemVersion')" width="100" show-overflow-tooltip />
+        <el-table-column prop="osVersion" :label="t('yumRepo.software.systemVersion')" :width="currentLocale === 'en-US' ? 144 : 100" show-overflow-tooltip />
         <el-table-column prop="osSpVersion" :label="t('patches.catalog.spVersion')" width="100" show-overflow-tooltip />
-        <el-table-column prop="osArch" :label="t('patches.catalog.osArchitecture')" width="120" />
+        <el-table-column prop="osArch" :label="t('patches.catalog.osArchitecture')" :width="currentLocale === 'en-US' ? 176 : 120" />
         <el-table-column
           prop="currentPackage"
           :label="t('yumRepo.fullPackageName')"
@@ -114,10 +114,10 @@
         <el-table-column
           prop="pkgVersion"
           :label="t('patches.catalog.packageVersionRelease')"
-          min-width="160"
+          :min-width="currentLocale === 'en-US' ? 216 : 160"
           show-overflow-tooltip
         />
-        <el-table-column prop="pkgArch" :label="t('patches.catalog.packageArchitecture')" width="120" />
+        <el-table-column prop="pkgArch" :label="t('patches.catalog.packageArchitecture')" :width="currentLocale === 'en-US' ? 184 : 120" />
         <el-table-column :label="t('patches.catalog.affectedServices')" min-width="320">
           <template #default="{ row }">
             <div class="service-cell">

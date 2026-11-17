@@ -308,7 +308,7 @@
               {{ formatDateTime(row.scan_timestamp) }}
             </template>
           </el-table-column>
-          <el-table-column :label="t('common.actions')" :width="isEnglish ? 200 : 130" fixed="right">
+          <el-table-column :label="t('common.actions')" :width="isEnglish ? 180 : 130" fixed="right">
             <template #default="{ row }">
               <div v-if="isEnglish" class="host-row-actions">
                 <el-button
@@ -632,7 +632,7 @@ import { ElMessage } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { getCveUrl } from '../composables/useFormatters'
 import { patchInstallApi, patchScanApi, vulnerabilityApi } from '../api'
-import { assetApi, dataManageApi } from '@/modules/asset/api'
+import { dataManageApi } from '@/modules/asset/api'
 import { parseOsVersionFilter } from '../utils/linuxPatchScan'
 import { formatDateTime } from '@/utils/date'
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
@@ -773,8 +773,6 @@ async function loadHostData() {
       : Array.isArray(data.content)
         ? data.content
         : []
-    await enrichRebootStatus(records)
-    if (requestId !== hostLoadRequestId) return
     // [Agent 功能暂停] try {
     //   await enrichHostAgentInfo(records)
     // } catch (error) {
@@ -803,29 +801,6 @@ async function loadHostData() {
       hostLoading.value = false
       hostDataLoaded.value = true
     }
-  }
-}
-
-// 沿用原概览的资产查询补充重启要求；资产信息不可用时不猜测状态。
-async function enrichRebootStatus(records) {
-  try {
-    const assetParams = {
-      hostKeys: '@@',
-      assetType: 'linux',
-      permission: 'r',
-      status: 'all',
-      CONN_LATEST_STATUS: '',
-      system_name: ' ',
-      os_version: ' '
-    }
-    const response = await assetApi.getAssetList(assetParams, { size: 1000 })
-    const byIp = new Map((response?.records || []).map(asset => [asset.IP, asset]))
-    records.forEach(host => {
-      const asset = byIp.get(host.host_key)
-      if (asset) host.need_reboot = asset.needReboot
-    })
-  } catch (error) {
-    console.warn('Failed to load reboot status:', error)
   }
 }
 

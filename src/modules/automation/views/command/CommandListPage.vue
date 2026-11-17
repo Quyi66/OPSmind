@@ -122,12 +122,12 @@
         <el-table-column
           prop="createdBy"
           :label="t('automation.command.createdBy')"
-          width="100"
+          :width="currentLocale === 'en-US' ? 140 : 100"
           align="left"
           sortable="custom"
         />
 
-        <el-table-column prop="checkBy" :label="t('automation.command.reviewer')" width="100" align="left" sortable="custom">
+        <el-table-column prop="checkBy" :label="t('automation.command.reviewer')" :width="currentLocale === 'en-US' ? 144 : 100" align="left" sortable="custom">
           <template #default="{ row }">
             {{ row.checkBy || '' }}
           </template>
@@ -146,7 +146,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column :label="t('common.actions')" width="176" fixed="right" align="left">
+        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 208 : 176" :class-name="currentLocale === 'en-US' ? 'i18n-actions-inline' : undefined" fixed="right" align="left">
           <template #default="{ row }">
             <el-button
               text

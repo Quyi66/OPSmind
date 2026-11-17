@@ -85,7 +85,7 @@
           </el-table-column>
 
           <!-- 3. 已纳管设备数 -->
-          <el-table-column prop="count" :label="t('asset.managedDeviceCount')" width="150" align="left" sortable>
+          <el-table-column prop="count" :label="t('asset.managedDeviceCount')" :width="currentLocale === 'en-US' ? 176 : 150" align="left" sortable>
             <template #default="{ row }">
               <el-tag
                 size="small"
@@ -101,7 +101,7 @@
           </el-table-column>
 
           <!-- 4. 自动化纳管 -->
-          <el-table-column prop="is_auto" :label="t('asset.automatedEnrollment')" width="150" align="left">
+          <el-table-column prop="is_auto" :label="t('asset.automatedEnrollment')" :width="currentLocale === 'en-US' ? 172 : 150" align="left">
             <template #default="{ row }">
               <el-tag
                 :type="row.is_auto === 1 ? 'success' : 'info'"
@@ -126,7 +126,7 @@
           </el-table-column>
 
           <!-- 6. 操作 -->
-          <el-table-column :label="t('common.actions')" width="170" align="left" fixed="right">
+          <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 208 : 170" align="left" fixed="right">
             <template #default="{ row }">
               <div class="action-cell">
                 <el-button text type="primary" size="small" @click="handleViewModel(row)">

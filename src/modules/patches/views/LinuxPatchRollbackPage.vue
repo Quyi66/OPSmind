@@ -166,7 +166,7 @@
             {{ formatDateTime(row.update_time) }}
           </template>
         </el-table-column>
-        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 180 : 120" :class-name="currentLocale === 'en-US' ? 'rollback-actions-cell' : undefined" fixed="right">
+        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 156 : 120" :class-name="currentLocale === 'en-US' ? 'rollback-actions-cell' : undefined" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="handleRollback(row)">
               {{ t('patches.linux.rollback') }}

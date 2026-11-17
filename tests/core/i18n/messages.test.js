@@ -52,6 +52,32 @@ describe('local messages and navigation', () => {
     expect(getViewTitle(cached, router)).toBe('旧版主机用户页面')
     expect(cached.title).toBe('旧版主机用户页面')
   })
+  it.each([
+    ['navigation.pages.acm.model', '模型定义', '资产类型', 'Asset types'],
+    ['navigation.pages.cac.structuralDiagram', '架构图', '业务拓扑分析', 'Business topology']
+  ])('translates the recognized historical caption for %s without changing stored data or Chinese presentation', async (titleKey, oldTitle, title, expected) => {
+    const cached = { path: '/fixture', fullPath: '/fixture?raw=1', title: oldTitle, meta: { title: oldTitle } }
+    const original = JSON.stringify(cached)
+    const router = { resolve: () => ({ meta: { title, titleKey } }) }
+    expect(getViewTitle(cached, router)).toBe(oldTitle)
+    await setLocale('en-US', { persist: false })
+    expect(getViewTitle(cached, router)).toBe(expected)
+    expect(getViewTitle({ ...cached, title: '客户自定义标题' }, router)).toBe('客户自定义标题')
+    expect(getViewTitle(cached, { resolve: () => ({ meta: { title: '其他页面', titleKey: 'navigation.pages.users.users' } }) })).toBe(oldTitle)
+    expect(JSON.stringify(cached)).toBe(original)
+    await setLocale('zh-CN', { persist: false })
+    expect(getViewTitle(cached, router)).toBe(oldTitle)
+  })
+  it('translates only the known cached caption of a removed branch page without adding a route', async () => {
+    const view = { path: '/patches/urgencyDashboard', title: '紧急度评估' }
+    const router = { resolve: () => ({ meta: {} }) }
+    await setLocale('en-US', { persist: false })
+    expect(getViewTitle(view, router)).toBe('Urgency assessment')
+    expect(getViewTitle({ ...view, title: '自定义评估标题' }, router)).toBe('自定义评估标题')
+    expect(getViewTitle({ ...view, path: '/another-page' }, router)).toBe('紧急度评估')
+    await setLocale('zh-CN', { persist: false })
+    expect(getViewTitle(view, router)).toBe('紧急度评估')
+  })
   it('translates nested cross-module navigation without changing routes, codes or source objects', async () => {
     const item = {
       key: 'yumRepoManage',

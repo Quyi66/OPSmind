@@ -147,6 +147,17 @@
 
 // Long English labels need room to wrap within the shared inline toolbars.
 html[lang='en-US'] {
+  .el-table .i18n-actions-inline .cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+
+    > .el-button + .el-button {
+      margin-left: 0;
+    }
+  }
+
   .ops-filter-bar {
     min-width: 0;
 

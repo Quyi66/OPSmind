@@ -329,7 +329,7 @@
             {{ formatDateTime(pickValue(row, ['lastScanDate', 'last_scan_date'], '')) }}
           </template>
         </el-table-column>
-        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 180 : 110" fixed="right">
+        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 124 : 110" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="openHostDrawer(row)">
               {{ t('patches.windows.viewPatches') }}

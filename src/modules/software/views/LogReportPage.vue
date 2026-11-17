@@ -111,7 +111,7 @@
             </RunLogStatusTag>
           </template>
         </el-table-column>
-        <el-table-column prop="executor_node" :label="t('yumRepo.software.executionNodes')" min-width="130" sortable />
+        <el-table-column prop="executor_node" :label="t('yumRepo.software.executionNodes')" :min-width="currentLocale === 'en-US' ? 176 : 130" sortable />
         <el-table-column prop="message" :label="t('yumRepo.software.result')" min-width="200" sortable show-overflow-tooltip>
           <template #default="{ row }">
             {{ formatMessage(row.message) }}
@@ -155,7 +155,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 
 import { ref, computed, onMounted } from 'vue'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'

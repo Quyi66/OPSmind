@@ -159,7 +159,7 @@
                 </template>
               </el-table-column>
 
-              <el-table-column :label="t('automation.workbench.status')" width="100">
+              <el-table-column :label="t('automation.workbench.status')" :width="currentLocale === 'en-US' ? 152 : 100">
                 <template #default="{ row }">
                   <RunLogStatusTag :type="getStatusType(row.status)" @click="handleViewResult(row)">
                     {{ getStatusLabel(row.status) }}
@@ -229,7 +229,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { t, currentLocale } from '@/core/i18n'
 import { message, messageRef } from '@/core/i18n/feedback'
 
 import { ref, onMounted, onBeforeUnmount, onActivated, onDeactivated, watch } from 'vue'

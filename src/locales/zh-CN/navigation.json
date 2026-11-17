@@ -1,4 +1,7 @@
 {
+  "historical": {
+    "urgencyAssessment": "紧急度评估"
+  },
   "groups": {
     "asset-management": "资产管理",
     "automation": "自动化管理",

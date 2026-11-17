@@ -5,6 +5,9 @@ import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 import {
   ElForm,
   ElFormItem,
+  ElDropdown,
+  ElDropdownItem,
+  ElDropdownMenu,
   ElInput,
   ElMessage,
   ElPagination,
@@ -13,6 +16,7 @@ import {
 } from 'element-plus'
 import Page from '@/modules/automation/views/job/JobTaskSchedulerPage.vue'
 import CronTable from '@/modules/automation/components/job/components/CronJobTable.vue'
+import { setLocale } from '@/core/i18n'
 
 const api = vi.hoisted(() => ({ fetchCronJobs: vi.fn(), fetchApplets: vi.fn() }))
 const actions = vi.hoisted(() =>
@@ -92,6 +96,9 @@ async function open(routed = false) {
         'el-input': ElInput,
         'el-table': ElTable,
         'el-table-column': ElTableColumn,
+        'el-dropdown': ElDropdown,
+        'el-dropdown-menu': ElDropdownMenu,
+        'el-dropdown-item': ElDropdownItem,
         'el-pagination': ElPagination,
         'el-tag': { template: '<span><slot /></span>' },
         'el-icon': true,
@@ -120,13 +127,31 @@ beforeEach(() => {
     }
   )
 })
-afterEach(() => {
+afterEach(async () => {
   wrapper?.unmount()
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
+  await setLocale('zh-CN', { persist: false })
 })
 
 describe('定时任务列表搜索/读取与分页', () => {
+  it('英文收起的操作仍传递原任务，并沿用查询下次执行时间的本地入口', async () => {
+    await setLocale('en-US', { persist: false })
+    await open()
+    const row = tableState().pagedData[0]
+    const dropdown = page().find('.el-table__body').findComponent(ElDropdown)
+    expect(dropdown.exists()).toBe(true)
+    expect(dropdown.text()).toContain('More')
+    dropdown.vm.$emit('command', 'copy')
+    expect(actions.handleCopy).toHaveBeenCalledWith(row)
+    dropdown.vm.$emit('command', 'query-next-time')
+    await flushPromises()
+    expect(state().nextTimeVisible).toBe(true)
+    expect(actions.handleExecuteOnce).not.toHaveBeenCalled()
+    dropdown.vm.$emit('command', 'delete')
+    expect(actions.handleDelete).toHaveBeenCalledWith(row)
+    expect(api.fetchCronJobs).toHaveBeenCalledTimes(1)
+  })
   it('真实分页后实时搜索trim并回首页，Enter/清除复位页码，不重新读取', async () => {
     await open()
     await page().get('.el-pagination .btn-next').trigger('click')

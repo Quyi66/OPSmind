@@ -208,7 +208,7 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="cvss3Score" :label="t('patches.cve.cvssScore')" width="120" sortable="custom">
+          <el-table-column prop="cvss3Score" :label="t('patches.cve.cvssScore')" :width="currentLocale === 'en-US' ? 144 : 120" sortable="custom">
             <template #default="{ row }">
               <span v-if="toKnownNumber(row.cvss3Score, { max: 10 }) !== null" style="font-weight: 600">
                 {{ formatCvssScore(row.cvss3Score) }}
@@ -244,7 +244,7 @@
               <span v-else class="text-muted">-</span>
             </template>
           </el-table-column>
-          <el-table-column prop="publicDate" :label="t('patches.catalog.publishDate')" width="180" sortable="custom">
+          <el-table-column prop="publicDate" :label="t('patches.catalog.publishDate')" :width="currentLocale === 'en-US' ? 216 : 180" sortable="custom">
             <template #default="{ row }">
               <span class="text-muted">{{ formatDate(row.publicDate) }}</span>
             </template>
