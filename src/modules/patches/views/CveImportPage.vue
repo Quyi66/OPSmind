@@ -349,6 +349,10 @@
         <div class="toolbar-wrapper">
           <h3 class="toolbar-title">漏洞文件比对导入批次</h3>
           <div class="toolbar-actions">
+            <el-button @click="downloadTemplate">
+              <el-icon><Download /></el-icon>
+              下载模板
+            </el-button>
             <el-button type="primary" @click="openUploadDialog">
               <el-icon><Upload /></el-icon>
               导入漏洞排查模板 (.xlsx)
@@ -607,7 +611,7 @@
 import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { formatDateTime } from '@/utils/date'
-import { Upload, UploadFilled } from '@element-plus/icons-vue'
+import { Upload, UploadFilled, Download } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { cveImportApi } from '../api'
 import CveDetail from '../components/cve/details/CveDetail.vue'
@@ -793,6 +797,16 @@ function handleCveClickFromHostDialog(cveId) {
   setTimeout(() => {
     showCveDetail(cveId)
   }, 200)
+}
+
+// 下载漏洞排查模板
+function downloadTemplate() {
+  const link = document.createElement('a')
+  link.href = `${import.meta.env.BASE_URL}templates/${encodeURIComponent('漏洞排查模版.xlsx')}`
+  link.download = '漏洞排查模版.xlsx'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
 }
 
 // 文件上传
