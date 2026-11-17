@@ -16,6 +16,7 @@ const api = vi.hoisted(() => ({
   tags: vi.fn(),
   execute: vi.fn(),
   agentInfo: vi.fn(),
+  assets: vi.fn(),
   route: { name: 'patches-machineScan', query: {} },
   push: vi.fn(),
   replace: vi.fn()
@@ -46,9 +47,7 @@ vi.mock('@/modules/patches/api', () => ({
 }))
 vi.mock('@/modules/asset/api', () => ({
   agentApi: { getHostAgentInfo: api.agentInfo },
-  assetApi: {
-    getAssetList: vi.fn().mockResolvedValue({ records: [{ IP: '192.0.2.1', needReboot: 1 }] })
-  },
+  assetApi: { getAssetList: api.assets },
   dataManageApi: { getAllTags: api.tags }
 }))
 vi.mock('@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue', () => ({
@@ -85,8 +84,14 @@ vi.mock('@/modules/patches/components/host-detail/dialogs/HostSeverityPatchDialo
 }))
 
 const hosts = [
-  { host_id: 'host/A', host_key: '192.0.2.1', num_critical: 2, connectionType: 'ssh' },
-  { host_id: 'host/B', host_key: '192.0.2.2', connectionType: 'ssh' }
+  {
+    host_id: 'host/A',
+    host_key: '192.0.2.1',
+    num_critical: 2,
+    connectionType: 'ssh',
+    need_reboot: 1
+  },
+  { host_id: 'host/B', host_key: '192.0.2.2', connectionType: 'ssh', need_reboot: 0 }
 ]
 const patch = { patch_id: 'patch/A', effect_host_count: 1 }
 const Dialog = {
@@ -154,6 +159,8 @@ beforeEach(() => {
   )
   vi.clearAllMocks()
   api.route.query = {}
+  api.assets.mockReset().mockResolvedValue({ records: [] })
+  api.agentInfo.mockReset().mockResolvedValue([])
   api.execute.mockReset().mockResolvedValue({ data: [{ runId: 'scan/run-1' }] })
   api.hosts.mockReset().mockResolvedValue({ data: { records: hosts.map(host => ({ ...host })) } })
   api.patches.mockReset().mockResolvedValue({ data: { records: [patch] } })
@@ -170,6 +177,59 @@ afterEach(() => {
 })
 
 describe('Linux 默认概览直接安装', () => {
+  it('重启状态直接使用 machine-list，资产接口中的重启字段不覆盖或补全它', async () => {
+    api.hosts.mockResolvedValue({
+      data: {
+        records: [...hosts, { host_id: 'host/C', host_key: '192.0.2.3', connectionType: 'ssh' }]
+      }
+    })
+    api.assets.mockResolvedValue({
+      records: [
+        { id: 'host/A', IP: '192.0.2.1', connectionType: 'ssh', needReboot: 0, need_reboot: 0 },
+        { id: 'host/B', IP: '192.0.2.2', connectionType: 'ssh', needReboot: 1, need_reboot: 1 },
+        { id: 'host/C', IP: '192.0.2.3', connectionType: 'ssh', needReboot: 1, need_reboot: 1 }
+      ]
+    })
+    await open()
+    expect(state().allHostData.map(host => host.need_reboot)).toEqual([1, 0, undefined])
+    expect(wrapper.text()).toContain('需重启')
+    expect(wrapper.text()).toContain('无需重启')
+    expect(wrapper.text()).toContain('未知')
+  })
+
+  it('有资产 ID 时严格匹配 ID，不从同 IP 的其他资产补充接入通道', async () => {
+    api.hosts.mockResolvedValue({
+      data: {
+        records: hosts.map(host => ({ ...host, host_key: '192.0.2.1', connectionType: undefined }))
+      }
+    })
+    api.assets.mockResolvedValue({
+      records: [
+        { id: 'host/A', IP: '192.0.2.1', connectionType: 'ssh' },
+        {
+          id: 'other-asset',
+          IP: '192.0.2.1',
+          connectionType: 'koreops_agent',
+          agentMode: 'gateway'
+        }
+      ]
+    })
+    await open()
+    expect(state().allHostData[0].connectionType).toBe('ssh')
+    expect(state().getConnectionType(state().allHostData[1])).toBe('unknown')
+    expect(state().allHostData[1].agentMode).toBeUndefined()
+    expect(api.agentInfo).toHaveBeenCalledWith(['host/B'])
+
+    state().hostFilters.connectionType = 'ssh'
+    state().handleConnectionTypeFilter()
+    await nextTick()
+    expect(state().hostFilteredData.map(host => host.host_id)).toEqual(['host/A'])
+    state().hostFilters.connectionType = 'koreops_agent'
+    state().handleConnectionTypeFilter()
+    await nextTick()
+    expect(state().hostFilteredData).toEqual([])
+  })
+
   it('离线 Agent 禁用安装与扫描，批量选择不静默排除该主机', async () => {
     api.hosts.mockResolvedValue({
       data: {

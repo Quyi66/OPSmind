@@ -190,6 +190,7 @@ describe('Windows 主机概览列表交互', () => {
     await changeFilter(0, 'Windows Server')
     await changeFilter(1, '20348')
     await changeFilter(2, ['生产'])
+    await changeFilter(3, 'koreops_agent')
     const pager = page().findComponent(Pagination)
     pager.vm.$emit('update:current-page', 3)
     await flushPromises()
@@ -201,7 +202,8 @@ describe('Windows 主机概览列表交互', () => {
       keyword: 'host-a',
       os: 'Windows Server',
       osVersion: '20348',
-      tags: ['生产']
+      tags: ['生产'],
+      connectionType: 'koreops_agent'
     })
     await input.trigger('keyup', { key: 'Enter' })
     await flushPromises()
@@ -229,6 +231,52 @@ describe('Windows 主机概览列表交互', () => {
     expect(event.defaultPrevented).toBe(true)
     expect(api.getHosts).toHaveBeenCalledTimes(calls + 1)
   })
+
+  it.each(['koreops_agent', 'ssh'])(
+    '按 %s 通道查询服务端，翻页刷新保留筛选，全部和重置取消筛选',
+    async connectionType => {
+      await open()
+      expect(api.getHosts.mock.calls.at(-1)[0]).not.toHaveProperty('connectionType')
+      await changeFilter(0, 'Windows Server')
+      state().handlePageChange(3)
+      await flushPromises()
+      await selectHosts()
+      api.getHosts.mockResolvedValue(response([{ ...host, connectionType }], 37))
+
+      const calls = api.getHosts.mock.calls.length
+      await changeFilter(3, connectionType)
+      expect(api.getHosts).toHaveBeenCalledTimes(calls + 1)
+      expect(api.getHosts).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          page: 0,
+          os: 'Windows Server',
+          connectionType
+        })
+      )
+      expect(state().selectedHostRows).toEqual([])
+      expect(state().pagination.page).toBe(1)
+      expect(page().findComponent(Pagination).props('total')).toBe(37)
+
+      state().handlePageChange(2)
+      await flushPromises()
+      await page().find('[aria-label="刷新主机列表"]').trigger('click')
+      await flushPromises()
+      expect(api.getHosts).toHaveBeenLastCalledWith(
+        expect.objectContaining({ page: 1, connectionType })
+      )
+
+      await changeFilter(3, 'all')
+      expect(api.getHosts.mock.calls.at(-1)[0]).not.toHaveProperty('connectionType')
+      expect(state().pagination.page).toBe(1)
+      await changeFilter(3, connectionType)
+      const beforeReset = api.getHosts.mock.calls.length
+      await button('重置').trigger('click')
+      await flushPromises()
+      expect(api.getHosts).toHaveBeenCalledTimes(beforeReset + 1)
+      expect(state().filters.connectionType).toBe('all')
+      expect(api.getHosts.mock.calls.at(-1)[0]).not.toHaveProperty('connectionType')
+    }
+  )
 
   it('连续搜索旧成功不能覆盖新结果/总数/选择，旧失败不能结束新加载', async () => {
     await open()

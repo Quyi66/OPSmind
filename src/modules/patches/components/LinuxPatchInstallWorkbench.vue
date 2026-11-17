@@ -80,6 +80,17 @@
               />
             </el-select>
           </el-form-item>
+          <el-form-item label="接入通道">
+            <el-select
+              v-model="hostFilters.connectionType"
+              style="width: 105px"
+              @change="handleConnectionTypeFilter"
+            >
+              <el-option label="全部" value="all" />
+              <el-option label="Agent" value="koreops_agent" />
+              <el-option label="SSH" value="ssh" />
+            </el-select>
+          </el-form-item>
           <el-form-item label="关键词">
             <el-input
               v-model="hostFilters.keyword"
@@ -282,6 +293,14 @@
             </template>
           </el-table-column>
           <el-table-column prop="hostname" label="主机名" min-width="120" show-overflow-tooltip />
+          <el-table-column label="接入通道" min-width="100">
+            <template #default="{ row }">
+              <el-tag size="small" :type="getConnectionTypeTag(row)">
+                {{ getConnectionTypeLabel(row) }}
+                <span v-if="isAgentAsset(row) && row.agentMode === 'gateway'">（跳板）</span>
+              </el-tag>
+            </template>
+          </el-table-column>
           <el-table-column prop="tags" label="标签" min-width="140">
             <template #default="{ row }">
               <div v-if="Array.isArray(row.tags) && row.tags.length" class="host-list-tags">
@@ -345,7 +364,7 @@
           v-model:current-page="hostPagination.page"
           v-model:page-size="hostPagination.pageSize"
           :page-sizes="[10, 20, 50, 100]"
-          :total="hostPagination.total"
+          :total="hostFilteredData.length"
           layout="total, sizes, prev, pager, next, jumper"
           background
           @size-change="handleHostSizeChange"
@@ -678,6 +697,7 @@ const hostFilters = reactive({
   os_version: '',
   os_sp_version: '',
   tags: [],
+  connectionType: 'all',
   keyword: ''
 })
 
@@ -697,8 +717,35 @@ let hostLoadRequestId = 0
 
 const getHostSelectionKey = host => host.host_id || host.id || host.host_key || ''
 
+const isAgentConnection = connectionType => connectionType === 'koreops_agent'
+const isAgentAsset = record => isAgentConnection(record?.connectionType || record?.connection_type)
+
+const getConnectionType = record => {
+  const connectionType = record?.connectionType || record?.connection_type
+  if (isAgentConnection(connectionType)) return 'koreops_agent'
+  if (connectionType === 'ssh') return 'ssh'
+  return 'unknown'
+}
+
+const getConnectionTypeLabel = record => {
+  const connectionType = getConnectionType(record)
+  if (connectionType === 'koreops_agent') return 'Agent'
+  if (connectionType === 'ssh') return 'SSH'
+  return '未知'
+}
+
+const getConnectionTypeTag = record => {
+  const connectionType = getConnectionType(record)
+  if (connectionType === 'koreops_agent') return 'success'
+  if (connectionType === 'ssh') return 'info'
+  return 'warning'
+}
+
 const hostFilteredData = computed(() => {
-  return allHostData.value
+  if (hostFilters.connectionType === 'all') {
+    return allHostData.value
+  }
+  return allHostData.value.filter(host => getConnectionType(host) === hostFilters.connectionType)
 })
 
 const hostTableData = computed(() => {
@@ -764,7 +811,7 @@ async function loadHostData() {
       : Array.isArray(data.content)
         ? data.content
         : []
-    await enrichRebootStatus(records)
+    await enrichConnectionChannel(records)
     if (requestId !== hostLoadRequestId) return
     const resolvedRecords = await resolveAgentCapabilityHosts(records)
     if (requestId !== hostLoadRequestId) return
@@ -795,8 +842,9 @@ async function loadHostData() {
   }
 }
 
-// 沿用原概览的资产查询补充重启要求；资产信息不可用时不猜测状态。
-async function enrichRebootStatus(records) {
+// 从 list-asset-selector 补充接入通道信息；need_reboot 直接使用 machine-list 返回值。
+async function enrichConnectionChannel(records) {
+  if (!Array.isArray(records) || records.length === 0) return
   try {
     const assetParams = {
       hostKeys: '@@',
@@ -807,14 +855,42 @@ async function enrichRebootStatus(records) {
       system_name: ' ',
       os_version: ' '
     }
-    const response = await assetApi.getAssetList(assetParams, { size: 1000 })
-    const byIp = new Map((response?.records || []).map(asset => [asset.IP, asset]))
+    const batchSize = 1000
+    let page = 1
+    let totalCount = 0
+    const assets = []
+
+    while (true) {
+      const response = await assetApi.getAssetList(assetParams, { size: batchSize, page })
+      const pageRows = Array.isArray(response?.records) ? response.records : []
+      assets.push(...pageRows)
+      if (!totalCount) {
+        totalCount = Number(response?.total || 0)
+      }
+      if (pageRows.length < batchSize || (totalCount > 0 && assets.length >= totalCount)) {
+        break
+      }
+      page += 1
+    }
+
+    const byId = new Map()
+    const byIp = new Map()
+    assets.forEach(asset => {
+      if (asset?.id) byId.set(String(asset.id), asset)
+      if (asset?.IP) byIp.set(asset.IP, asset)
+    })
+
     records.forEach(host => {
-      const asset = byIp.get(host.host_key)
-      if (asset) host.need_reboot = asset.needReboot
+      const hostId = String(host.host_id || host.hostId || host.id || '')
+      // 已有资产 ID 时只按 ID 关联，避免复用 IP 的其他资产提供错误通道。
+      const asset = hostId ? byId.get(hostId) : byIp.get(host.host_key)
+      if (!asset) return
+      const connectionType = asset.connectionType || asset.connection_type
+      if (connectionType) host.connectionType = connectionType
+      if (asset.agentMode) host.agentMode = asset.agentMode
     })
   } catch (error) {
-    console.warn('Failed to load reboot status:', error)
+    console.warn('Failed to load connection channel:', error)
   }
 }
 
@@ -886,6 +962,14 @@ function handleHostFilter() {
   loadHostData()
 }
 
+function handleConnectionTypeFilter() {
+  resetHostAllSelected()
+  hostPagination.page = 1
+  nextTick(() => {
+    restoreHostPageSelection()
+  })
+}
+
 function handleHostVersionChange(value) {
   const option = hostOsVersionOptions.value.find(item => item.value === value)
   const parsedValue = parseOsVersionFilter(value)
@@ -901,6 +985,7 @@ function handleHostReset() {
   hostFilters.os_sp_version = ''
   hostFilters.tags = []
   hostVersionFilter.value = ''
+  hostFilters.connectionType = 'all'
   hostFilters.keyword = ''
   hostPagination.page = 1
   hostPagination.pageSize = 20

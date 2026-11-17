@@ -5,9 +5,9 @@
         <el-form-item label="主机">
           <el-input
             v-model="filters.hostKeyword"
-            placeholder="主机地址或主机 ID"
+            placeholder="主机地址或主机ID"
             clearable
-            style="width: 190px"
+            style="width: 150px"
             @keyup.enter="handleSearch"
             @clear="handleSearch"
           />
@@ -19,7 +19,7 @@
             clearable
             filterable
             allow-create
-            style="width: 290px"
+            style="width: 180px"
             @change="handleFilterChange"
           >
             <el-option
@@ -37,7 +37,7 @@
             clearable
             filterable
             allow-create
-            style="width: 180px"
+            style="width: 160px"
             @change="handleFilterChange"
           >
             <el-option
@@ -58,10 +58,21 @@
             clearable
             filterable
             :loading="tagLoading"
-            style="width: 180px"
+            style="width: 140px"
             @change="handleFilterChange"
           >
             <el-option v-for="tag in tagOptions" :key="tag" :label="tag" :value="tag" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="接入通道">
+          <el-select
+            v-model="filters.connectionType"
+            style="width: 100px"
+            @change="handleFilterChange"
+          >
+            <el-option label="全部" value="all" />
+            <el-option label="Agent" value="koreops_agent" />
+            <el-option label="SSH" value="ssh" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -144,13 +155,17 @@
         <el-table-column label="接入方式 / Agent 状态" min-width="180">
           <template #default="{ row }">
             <template v-if="row.connectionType === 'koreops_agent'">
-              <el-tag :type="row.agentStatus === 'online' ? 'success' : 'danger'" size="small">Agent {{ row.agentStatus === 'online' ? '在线' : '离线' }}</el-tag>
+              <el-tag :type="row.agentStatus === 'online' ? 'success' : 'danger'" size="small">
+                Agent {{ row.agentStatus === 'online' ? '在线' : '离线' }}
+              </el-tag>
               <div>{{ getAgentPlatformLabel(row) }} / {{ row.agentVersion || '-' }}</div>
               <div>{{ row.agentIp || '-' }}</div>
               <div>节点：{{ row.agentNode || '平台直连' }}</div>
-              <el-tag v-if="row.ipMismatch" type="warning" size="small">资产 IP 不一致（仅提示）</el-tag>
+              <el-tag v-if="row.ipMismatch" type="warning" size="small">
+                资产 IP 不一致（仅提示）
+              </el-tag>
             </template>
-            <span v-else>{{ row.connectionType === 'ssh' ? 'SSH / WinRM' : '-' }}</span>
+            <span v-else>{{ row.connectionType === 'ssh' ? 'SSH' : '-' }}</span>
           </template>
         </el-table-column>
         <el-table-column width="80" align="center">
@@ -462,14 +477,16 @@ const filters = reactive({
   hostKeyword: '',
   osDistro: '',
   osVersion: '',
-  tags: []
+  tags: [],
+  connectionType: 'all'
 })
 
 const appliedFilters = reactive({
   hostKeyword: '',
   osDistro: '',
   osVersion: '',
-  tags: []
+  tags: [],
+  connectionType: 'all'
 })
 
 const severityCountFields = {
@@ -510,7 +527,10 @@ async function loadPageData() {
     keyword: appliedFilters.hostKeyword,
     os: appliedFilters.osDistro,
     osVersion: appliedFilters.osVersion,
-    tags: [...appliedFilters.tags]
+    tags: [...appliedFilters.tags],
+    ...(appliedFilters.connectionType !== 'all'
+      ? { connectionType: appliedFilters.connectionType }
+      : {})
   }
   const isCurrentRequest = () => pageActive.value && requestId === loadRequestId
   loading.value = true
@@ -616,6 +636,7 @@ function handleReset() {
   filters.osDistro = ''
   filters.osVersion = ''
   filters.tags = []
+  filters.connectionType = 'all'
   applyFilters()
   pagination.page = 1
   pagination.pageSize = 20
@@ -627,6 +648,7 @@ function applyFilters(includeKeyword = true) {
   appliedFilters.osDistro = filters.osDistro
   appliedFilters.osVersion = filters.osVersion
   appliedFilters.tags = [...filters.tags]
+  appliedFilters.connectionType = filters.connectionType
 }
 
 function openHostDrawer(row, initialFilters = null) {

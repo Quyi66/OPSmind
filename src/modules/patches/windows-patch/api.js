@@ -165,7 +165,8 @@ export const winPatchApi = {
     const optionalFilters = {
       os: params.os,
       osVersion: params.osVersion,
-      keyword: params.keyword
+      keyword: params.keyword,
+      connectionType: params.connectionType
     }
 
     Object.entries(optionalFilters).forEach(([key, value]) => {
