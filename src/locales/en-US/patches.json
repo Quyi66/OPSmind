@@ -134,6 +134,7 @@
     "highImpact": "High impact",
     "vulnDetails": "Vulnerability details",
     "exportVulns": "Export vulnerability report",
+    "exportHostList": "Export list",
     "backToInstall": "Back to patch installation",
     "vulnId": "Vulnerability ID",
     "enterVulnId": "Enter a vulnerability ID",

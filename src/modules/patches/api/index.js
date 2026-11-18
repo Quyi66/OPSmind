@@ -322,6 +322,25 @@ export const patchScanApi = {
   },
 
   /**
+  * 导出主机列表
+  * GET /secops/api/secops/v2/cve/machine-list/export
+  * 过滤参数与列表接口一致，不带 page/size；返回 Blob
+  */
+  exportMachineList(params = {}) {
+    const query = buildGenericQuery({
+      os_distro: params.os_distro,
+      os_version: params.os_version,
+      os_sp_version: params.os_sp_version,
+      tags: params.tags,
+      keyword: params.keyword
+    })
+
+    return apiService.get(`${VAP_API_PREFIX}/v2/cve/machine-list/export${query}`, {
+      responseType: 'blob'
+    })
+  },
+
+  /**
   * 获取主机补丁扫描详情
   * @param {string} hostId - 主机ID
   * @returns {Promise}

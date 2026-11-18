@@ -131,6 +131,10 @@
           </el-button>
         </slot>
         <slot name="host-export-action" />
+        <el-button size="small" :loading="hostExporting" @click="handleExportHostList">
+          <i class="fa fa-download" />
+          {{ t('patches.linux.exportHostList') }}
+        </el-button>
         <el-button
           size="small"
           :type="hostAllSelected ? 'default' : 'primary'"
@@ -751,6 +755,35 @@ const runResultDialogVisible = ref(false)
 const runResultRunId = ref('')
 const operationLogsVisible = ref(false)
 const lastSubmittedRunId = ref('')
+
+const hostExporting = ref(false)
+
+async function handleExportHostList() {
+  hostExporting.value = true
+  try {
+    const res = await patchScanApi.exportMachineList({
+      os_distro: hostFilters.os_distro,
+      os_version: hostFilters.os_version,
+      os_sp_version: hostFilters.os_sp_version,
+      tags: hostFilters.tags,
+      keyword: hostFilters.keyword
+    })
+    const blob = new Blob([res?.data || res], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `${t('patches.linux.exportHostList')}_${new Date().toISOString().slice(0, 10)}.xlsx`
+    a.click()
+    URL.revokeObjectURL(a.href)
+    ElMessage.success(t('patches.linux.exported'))
+  } catch (error) {
+    console.error('导出主机列表失败:', error)
+    ElMessage.error(t('patches.linux.exportFailed'))
+  } finally {
+    hostExporting.value = false
+  }
+}
 
 async function loadHostData() {
   const requestId = ++hostLoadRequestId

@@ -134,6 +134,7 @@
     "highImpact": "严重影响",
     "vulnDetails": "漏洞明细",
     "exportVulns": "导出漏洞报表",
+    "exportHostList": "导出列表",
     "backToInstall": "返回补丁安装",
     "vulnId": "漏洞编号",
     "enterVulnId": "输入漏洞编号",
