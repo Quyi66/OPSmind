@@ -64,7 +64,7 @@ export function usePatchProcessLogDetail(sourceTask) {
     sortedHistory.value.filter(record => ['INSTALL', 'ROLLBACK'].includes(record.step))
   )
 
-  const selectionItems = computed(() => buildDetailSelectionItems(task.value, history.value))
+  const selectionItems = computed(() => buildDetailSelectionItems(task.value, history.value, taskType.value))
   const hosts = computed(() => toDisplayArray(task.value?.hostIds))
   const affectedPackages = computed(() => buildAffectedPackageList(task.value, history.value))
   const preCheckScript = computed(

@@ -141,35 +141,32 @@ export function sortAuditHistory(history = []) {
   })
 }
 
-export function buildDetailSelectionItems(task, history = []) {
+export function buildDetailSelectionItems(task, history = [], taskType = task?.taskType) {
   if (!task) return []
 
-  if (task.taskType === 'pkg_update') {
+  if (taskType === 'pkg_update') {
     return toDisplayArray(task.packages).map((entry, index) => ({
       key: `pkg-${index}-${entry}`,
       ...parsePackageEntry(entry)
     }))
   }
 
-  if (task.taskType === 'rollback') {
-    const historyUpdateIds = toDisplayArray(task.histUpdateIds)
-    if (historyUpdateIds.length > 0) {
-      const patchIds = toDisplayArray(task.patchIds).join(', ')
-      return historyUpdateIds.map((item, index) => ({
-        key: `hist-${index}-${item}`,
-        primary: item,
-        secondary: patchIds
-      }))
-    }
-  }
-
+  const isRollback = String(taskType || '').trim().toLowerCase() === 'rollback'
   const patchIds = toDisplayArray(task.patchIds)
   if (patchIds.length > 0) {
-    return patchIds.map((item, index) => ({
+    const displayedPatchIds = isRollback ? [...new Set(patchIds)] : patchIds
+    return displayedPatchIds.map((item, index) => ({
       key: `patch-${index}-${item}`,
       primary: item,
-      secondary: task.taskType === 'vuln_fix' ? t('patches.linux.fixByPatchTask') : ''
+      secondary: taskType === 'vuln_fix' ? t('patches.linux.fixByPatchTask') : ''
     }))
+  }
+
+  if (isRollback) {
+    const count = new Set(toDisplayArray(task.histUpdateIds)).size
+    return count
+      ? [{ key: 'rollback-record-count', primary: t('patches.linux.rollbackRecordCount', { count }) }]
+      : []
   }
 
   const latestRecord = getLatestRecord(history, record => Boolean(record.remark))

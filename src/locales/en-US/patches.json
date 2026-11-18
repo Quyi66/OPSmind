@@ -293,6 +293,7 @@
     "vulnSuccessDescription": "Vulnerability remediation and subsequent scripts completed successfully on all target devices.",
     "rollbackWizard": "Change rollback wizard",
     "rollbackRecords": "Records to roll back",
+    "rollbackRecordCount": "{count} record to roll back | {count} records to roll back",
     "changeRollback": "Change rollback",
     "rollbackPackages": "Packages to roll back",
     "rollbackHosts": "Hosts to roll back",

@@ -1,5 +1,6 @@
 import { effectScope, nextTick, ref } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { t } from '@/core/i18n'
 import { useActiveTaskListPolling } from '@/composables/useActiveTaskListPolling'
 
 const api = vi.hoisted(() => ({
@@ -46,6 +47,35 @@ describe('process detail background refresh', () => {
     })
     return { detail, visible, source }
   }
+
+  it('uses distinct patch numbers for rollback records instead of internal history IDs', async () => {
+    const { detail } = setup()
+    api.getAuditDetail.mockResolvedValueOnce({ data: { task: {
+      id: 'task-1',
+      taskType: 'rollback',
+      histUpdateIds: '["internal-1", "internal-2", "internal-3"]',
+      patchIds: '["RHSA-2026:95212", "RHSA-2026:95212", "RHSA-2026:95213"]'
+    } } })
+    await detail.load()
+
+    expect(detail.selectionItems.value.map(item => item.primary))
+      .toEqual(['RHSA-2026:95212', 'RHSA-2026:95213'])
+    expect(JSON.stringify(detail.selectionItems.value)).not.toContain('internal-')
+  })
+
+  it('shows only the record count for rollback details without public patch numbers', async () => {
+    const { detail, source } = setup()
+    source.value = { id: 'task-1', taskType: 'rollback' }
+    api.getAuditDetail.mockResolvedValueOnce({ data: {
+      task: { id: 'task-1', histUpdateIds: ['internal-1', 'internal-2'] },
+      logs: [{ remark: 'internal-1' }]
+    } })
+    await detail.load()
+
+    expect(detail.selectionItems.value).toEqual([
+      { key: 'rollback-record-count', primary: t('patches.linux.rollbackRecordCount', { count: 2 }) }
+    ])
+  })
 
   it('keeps the selected step and current data while refreshing, then stops at completion', async () => {
     const { detail } = setup()

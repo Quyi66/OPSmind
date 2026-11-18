@@ -293,6 +293,7 @@
     "vulnSuccessDescription": "漏洞修复及其后续脚本配置已全部在目标设备上成功执行完毕。",
     "rollbackWizard": "变更回滚向导",
     "rollbackRecords": "待回滚记录",
+    "rollbackRecordCount": "共 {count} 条待回滚记录",
     "changeRollback": "变更回滚",
     "rollbackPackages": "待回滚软件包",
     "rollbackHosts": "回滚主机",
