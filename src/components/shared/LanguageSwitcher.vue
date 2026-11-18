@@ -37,7 +37,7 @@ async function change(event) {
   align-items: center;
 }
 .language-switcher select {
-  width: 64px;
+  min-width: 88px;
   height: 30px;
   padding: 4px 6px;
   border: 1px solid var(--el-border-color, #dcdfe6);

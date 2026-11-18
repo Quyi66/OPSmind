@@ -19,7 +19,7 @@ describe('language switch control', () => {
         '<main><input v-model="draft" /><LanguageSwitcher /><p>{{ t("common.profile") }}</p></main>'
     })
     const wrapper = mount(Parent)
-    expect(wrapper.findAll('option').map(option => option.text())).toEqual(['中', 'EN'])
+    expect(wrapper.findAll('option').map(option => option.text())).toEqual(['中文', 'English'])
     expect(wrapper.findAll('option').map(option => option.attributes('aria-label'))).toEqual(['简体中文', 'English'])
     await wrapper.find('select').setValue('en-US')
     await vi.waitFor(() => expect(currentLocale.value).toBe('en-US'))
