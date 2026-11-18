@@ -1,5 +1,5 @@
 <template>
-  <div class="recently-selector">
+  <div class="recently-selector" :class="{ 'is-english': isEnglish }">
     <!-- 搜索栏 -->
     <div class="search-toolbar">
       <el-input
@@ -26,7 +26,7 @@
         <el-table-column
           prop="jobTitle"
           :label="t('selection.tool')"
-          min-width="280"
+          :min-width="isEnglish ? 200 : 280"
           show-overflow-tooltip
           sortable
         >
@@ -41,7 +41,7 @@
         </el-table-column>
         <el-table-column
           :label="t('selection.executionHost')"
-          width="120"
+          :width="isEnglish ? 152 : 120"
           show-overflow-tooltip
           sortable
         >
@@ -55,7 +55,7 @@
         <el-table-column
           prop="jobType"
           :label="t('selection.type')"
-          width="80"
+          :width="isEnglish ? 128 : 80"
           align="left"
           sortable
         >
@@ -76,7 +76,12 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column :label="t('common.status')" width="90" align="left" sortable>
+        <el-table-column
+          :label="t('common.status')"
+          :width="isEnglish ? 156 : 90"
+          align="left"
+          sortable
+        >
           <template #default="{ row }">
             <RunLogStatusTag
               :type="getStatusStyle(row.status)"
@@ -87,7 +92,7 @@
             </RunLogStatusTag>
           </template>
         </el-table-column>
-        <el-table-column :label="t('hostUser.details')" width="60" align="left">
+        <el-table-column :label="t('hostUser.details')" :width="isEnglish ? 76 : 60" align="left">
           <template #default="{ row }">
             <span class="detail-count" v-if="row.statsJson" @click="handleViewResult(row)">
               {{ getHostCount(row.statsJson) }}
@@ -123,7 +128,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { currentLocale, t } from '@/core/i18n'
 
 import { ref, watch, computed, nextTick } from 'vue'
 import { Search, Refresh } from '@element-plus/icons-vue'
@@ -143,6 +148,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue'])
 
+const isEnglish = computed(() => currentLocale.value === 'en-US')
 const tableRef = ref(null)
 const loading = ref(false)
 const tableData = ref([])
@@ -440,6 +446,14 @@ function handlePageSizeChange() {
 
 .search-toolbar .el-input {
   width: 200px;
+}
+
+.recently-selector.is-english .search-toolbar .el-input {
+  width: 248px;
+}
+
+.recently-selector.is-english :deep(th.el-table__cell .cell) {
+  white-space: nowrap;
 }
 
 .recently-selector .table-wrapper {

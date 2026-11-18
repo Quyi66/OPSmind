@@ -197,7 +197,7 @@
               </el-link>
             </template> -->
           </el-table-column>
-          <el-table-column prop="severity" :label="t('patches.cve.severity')" width="90">
+          <el-table-column prop="severity" :label="t('patches.cve.severity')" :width="currentLocale === 'en-US' ? 112 : 90">
             <template #default="{ row }">
               <el-tag
                 :type="getSeverityType(row.severity)"

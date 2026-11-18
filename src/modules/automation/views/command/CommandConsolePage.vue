@@ -70,7 +70,9 @@
     <el-dialog
       v-model="historyDialogVisible"
       :title="t('automation.records.records')"
-      width="1200px"
+      :width="isEnglish ? 'min(1200px, calc(100vw - 32px))' : '1200px'"
+      class="console-history-dialog"
+      :class="{ 'is-english': isEnglish }"
       :close-on-click-modal="true"
     >
       <div class="history-toolbar">
@@ -91,13 +93,13 @@
         :default-sort="historySort"
         @sort-change="handleHistorySortChange"
       >
-        <el-table-column prop="cmd" :label="t('automation.command.commands')" show-overflow-tooltip>
+        <el-table-column prop="cmd" :label="t('automation.command.commands')" :min-width="isEnglish ? 144 : undefined" show-overflow-tooltip>
           <template #default="{ row }">
             <span class="text-ellipsis">{{ row.cmd }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="type" :label="t('automation.command.syntax')" width="80" />
-        <el-table-column prop="hostname" :label="t('automation.command.host')" show-overflow-tooltip>
+        <el-table-column prop="hostname" :label="t('automation.command.host')" :min-width="isEnglish ? 132 : undefined" show-overflow-tooltip>
           <template #default="{ row }">
             <span class="text-ellipsis">{{ row.hostname?.join(',') }}</span>
           </template>
@@ -105,8 +107,8 @@
         <el-table-column prop="createdAt" :label="t('automation.command.createdAt')" width="180" sortable="custom" />
         <el-table-column prop="createdBy" :label="t('automation.command.createdBy')" width="100" />
         <el-table-column prop="lastRunTime" :label="t('automation.command.lastExecutedAt')" width="180" sortable="custom" />
-        <el-table-column prop="runNumber" :label="t('automation.command.executionCount')" width="110" sortable="custom" />
-        <el-table-column :label="t('common.actions')" width="100" fixed="right" align="left">
+        <el-table-column prop="runNumber" :label="t('automation.command.executionCount')" :width="isEnglish ? 134 : 110" sortable="custom" />
+        <el-table-column :label="t('common.actions')" :width="isEnglish ? 160 : 100" fixed="right" align="left">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="handleUseHistory(row)">
               {{ t('automation.command.fillConsole') }}
@@ -173,7 +175,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { currentLocale, t } from '@/core/i18n'
 
 import { ref, computed, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
@@ -191,6 +193,7 @@ const executing = ref(false)
 const lineCount = ref(1)
 
 // 运行记录
+const isEnglish = computed(() => currentLocale.value === 'en-US')
 const historyDialogVisible = ref(false)
 const historyData = ref([])
 const historyCurrentPage = ref(1)
@@ -593,6 +596,17 @@ onUnmounted(() => {
   display: flex;
   justify-content: flex-end;
   padding: 16px 0 0;
+}
+
+.console-history-dialog.is-english {
+  :deep(th.el-table__cell .cell) {
+    white-space: nowrap;
+  }
+
+  .history-pagination :deep(.el-pagination) {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
 }
 
 // 日志查看器样式

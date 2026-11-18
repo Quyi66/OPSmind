@@ -365,7 +365,12 @@
                     </a>
                   </template>
                 </el-table-column>
-                <el-table-column prop="osDistro" :label="t('patches.cve.osDistribution')" width="120">
+                <el-table-column
+                  prop="osDistro"
+                  :label="t('patches.cve.osDistribution')"
+                  :width="currentLocale === 'en-US' ? 148 : 120"
+                  :label-class-name="currentLocale === 'en-US' ? 'os-distribution-heading' : undefined"
+                >
                   <template #default="{ row }">
                     <el-tag size="small" effect="plain" :type="getSourceType(row.osDistro)">
                       {{ getSourceLabel(row.osDistro) }}
@@ -1316,6 +1321,10 @@ watch(isDark, () => {
 </script>
 
 <style scoped lang="scss">
+:deep(.os-distribution-heading .cell) {
+  white-space: nowrap;
+}
+
 .cve-detail {
   display: flex;
   flex-direction: column;

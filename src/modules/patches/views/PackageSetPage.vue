@@ -8,9 +8,9 @@
 
     <!-- 一键分批安装 Tab -->
     <template v-if="activeTab === 'install'">
-      <div style="display: flex; gap: 20px; height: calc(100vh - 180px); overflow: hidden;">
+      <div class="package-install-layout" :class="{ 'is-english': currentLocale === 'en-US' }" style="display: flex; gap: 20px; height: calc(100vh - 180px); overflow: hidden;">
         <!-- 左侧配置区 -->
-        <div style="flex: 2; display: flex; flex-direction: column; gap: 16px; background: var(--el-bg-color); border: 1px solid var(--el-border-color-light); border-radius: 8px; padding: 20px; min-width: 0;">
+        <div class="package-install-config" style="display: flex; flex-direction: column; gap: 16px; background: var(--el-bg-color); border: 1px solid var(--el-border-color-light); border-radius: 8px; padding: 20px; min-width: 0;">
           <h3 class="m-0 mb-3" style="font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
             <i class="fa fa-sliders-h" style="color: var(--el-color-primary);" />
             {{ t('patches.linux.installConfigStep') }}
@@ -141,7 +141,7 @@
         </div>
 
         <!-- 右侧资产选择器 -->
-        <div style="flex: 3; display: flex; flex-direction: column; background: var(--el-bg-color); border: 1px solid var(--el-border-color-light); border-radius: 8px; padding: 20px; min-width: 0;">
+        <div class="package-install-targets" style="display: flex; flex-direction: column; background: var(--el-bg-color); border: 1px solid var(--el-border-color-light); border-radius: 8px; padding: 20px; min-width: 0;">
           <h3 class="m-0 mb-3" style="font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
             <i class="fa fa-server" style="color: var(--el-color-primary);" />
             {{ t('patches.linux.selectHostsStep') }}
@@ -609,6 +609,24 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+.package-install-config {
+  flex: 2;
+}
+
+.package-install-targets {
+  flex: 3;
+}
+
+.package-install-layout.is-english {
+  .package-install-config {
+    flex: 11;
+  }
+
+  .package-install-targets {
+    flex: 9;
+  }
+}
+
 .package-host-selector {
   flex: 1;
   min-height: 0;

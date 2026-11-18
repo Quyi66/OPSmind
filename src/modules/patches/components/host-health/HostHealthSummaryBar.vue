@@ -1123,7 +1123,12 @@ function handleCardClick(value) {
   }
 
   .status-metrics-row {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 112px), 1fr));
+    gap: 8px;
+  }
+
+  .metric-filter-pill {
+    padding-inline: 8px;
   }
 
   .pill-top-row,

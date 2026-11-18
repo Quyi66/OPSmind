@@ -175,7 +175,7 @@
         </el-table-column>
         <el-table-column :width="actionColumnWidth" fixed="right" :label="t('common.actions')">
           <template #default="{ row }">
-            <div class="action-buttons" :class="{ 'is-english': currentLocale === 'en-US' }">
+            <div class="action-buttons">
               <el-button text type="primary" size="small" @click="handleViewRunResult(row)">
                 {{ t('automation.records.details') }}
               </el-button>
@@ -188,17 +188,6 @@
                 >
                   Windows扫描报告
                 </el-button> -->
-              <el-dropdown v-if="currentLocale === 'en-US' && (canShowScanReport(row) || canShowInstallReport(row) || canShowRollbackReport(row))" trigger="click">
-                <el-button text type="primary" size="small">{{ t('common.moreActions') }}</el-button>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item v-if="canShowScanReport(row)" @click="handleScanReport(row)">{{ t('patches.linux.scanReport') }}</el-dropdown-item>
-                    <el-dropdown-item v-if="canShowInstallReport(row)" @click="handleInstallReport(row)">{{ t('patches.linux.installReport') }}</el-dropdown-item>
-                    <el-dropdown-item v-if="canShowRollbackReport(row)" @click="handleRollbackReport(row)">{{ t('patches.linux.rollbackReport') }}</el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
-              <template v-if="currentLocale !== 'en-US'">
               <el-button
                 v-if="canShowScanReport(row)"
                 text
@@ -226,7 +215,6 @@
               >
                 {{ t('patches.linux.rollbackReport') }}
               </el-button>
-              </template>
             </div>
           </template>
         </el-table-column>
@@ -398,16 +386,12 @@ const winScanReportVisible = ref(false)
 const winScanReportRunId = ref('')
 
 const actionColumnWidth = computed(() => {
-  if (currentLocale.value === 'en-US') {
-    if (tableData.value.some(row => canShowInstallReport(row) || canShowRollbackReport(row) || canShowScanReport(row))) return 128
-    return 80
-  }
-  const hasWindows = tableData.value.some(row => canShowWindowsScanReport(row))
-  const hasOther = tableData.value.some(
+  const hasReports = tableData.value.some(
     row => canShowScanReport(row) || canShowInstallReport(row) || canShowRollbackReport(row)
   )
-  if (!hasWindows && !hasOther) return 80
-  return hasWindows ? 190 : 130
+  if (currentLocale.value === 'en-US') return hasReports ? 200 : 80
+  if (tableData.value.some(canShowWindowsScanReport)) return 190
+  return hasReports ? 130 : 80
 })
 
 // 目标节点对话框
@@ -982,14 +966,6 @@ onActivated(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-}
-
-.action-buttons.is-english {
-  flex-wrap: nowrap;
-
-  :deep(.el-button + .el-button) {
-    margin-left: 0;
-  }
 }
 
 .hosts-dialog-header {

@@ -1,7 +1,7 @@
 <template>
-  <div class="win-patch-yum-compare">
+  <div class="win-patch-yum-compare" :class="{ 'is-english': isEnglish }">
     <div class="win-patch-yum-form-card">
-      <el-form label-width="60px" class="win-patch-filter-form" @submit.prevent>
+      <el-form :label-width="isEnglish ? 'auto' : '60px'" class="win-patch-filter-form" @submit.prevent>
         <div class="win-patch-filter-row">
           <el-form-item :label="t('yumRepo.repository')" class="win-patch-filter-item">
             <el-select
@@ -98,7 +98,7 @@
                 {{ pickValue(row, ['patchId', 'patch_id'], '-') }}
               </template>
             </el-table-column>
-            <el-table-column :label="t('yumRepo.patchTitle')" min-width="260" show-overflow-tooltip>
+            <el-table-column :label="t('yumRepo.patchTitle')" :min-width="isEnglish ? 224 : 260" show-overflow-tooltip>
               <template #default="{ row }">
                 {{ pickValue(row, ['patchTitle', 'patch_title'], '-') }}
               </template>
@@ -121,12 +121,12 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column :label="t('yumRepo.affectedHosts')" width="110" align="center">
+            <el-table-column :label="t('yumRepo.affectedHosts')" :width="isEnglish ? 126 : 110" align="center">
               <template #default="{ row }">
                 {{ pickValue(row, ['affectedHostCount', 'affected_host_count'], 0) }}
               </template>
             </el-table-column>
-            <el-table-column :label="t('yumRepo.totalPackages')" width="90" align="center">
+            <el-table-column :label="t('yumRepo.totalPackages')" :width="isEnglish ? 132 : 90" align="center">
               <template #default="{ row }">
                 {{ pickValue(row, ['totalPkgs', 'total_pkgs'], 0) }}
               </template>
@@ -146,7 +146,7 @@
                 {{ pickValue(row, ['outdatedCount', 'outdated_count'], 0) }}
               </template>
             </el-table-column>
-            <el-table-column :label="t('yumRepo.releaseMismatch')" width="130" align="center">
+            <el-table-column :label="t('yumRepo.releaseMismatch')" :width="isEnglish ? 148 : 130" align="center">
               <template #default="{ row }">
                 {{ pickValue(row, ['releaseMismatchCount', 'release_mismatch_count'], 0) }}
               </template>
@@ -187,7 +187,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { currentLocale, t } from '@/core/i18n'
 
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
@@ -200,6 +200,8 @@ import {
   pickValue
 } from '@/modules/patches/windows-patch/utils.js'
 import { YUM_REPO_PAGE_SIZE_OPTIONS } from '../constants'
+
+const isEnglish = computed(() => currentLocale.value === 'en-US')
 import { yumRepoApi } from '../api'
 import {
   getCollectStatusLabel,
@@ -674,6 +676,24 @@ watch(
 
 .win-patch-filter-status {
   margin-bottom: 10px;
+}
+
+.win-patch-yum-compare.is-english {
+  .win-patch-filter-item {
+    max-width: 100%;
+  }
+
+  .win-patch-filter-item :deep(.el-form-item__content) {
+    min-width: 0;
+  }
+
+  .win-patch-filter-item :deep(.el-select) {
+    max-width: 100%;
+  }
+
+  .natural-height-table :deep(th.el-table__cell .cell) {
+    white-space: nowrap;
+  }
 }
 
 .win-patch-yum-empty {

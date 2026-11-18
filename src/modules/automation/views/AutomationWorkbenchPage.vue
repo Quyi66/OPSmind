@@ -3,7 +3,7 @@
     <!-- ── 数据指标 ── -->
     <section class="wb-header">
       <!-- ── 数据指标条 ── -->
-      <div class="wb-metrics-bar">
+      <div class="wb-metrics-bar" :class="{ 'is-english': currentLocale === 'en-US' }">
         <button
           class="wb-metric-item"
           @click="openTodayRunsDrawer"
@@ -786,7 +786,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { currentLocale, t } from '@/core/i18n'
 import { message, messageRef } from '@/core/i18n/feedback'
 
 import {
@@ -1990,6 +1990,21 @@ onBeforeUnmount(() => {
     align-items: center;
     gap: 4px;
     margin-left: 2px;
+  }
+}
+
+.wb-metrics-bar.is-english {
+  .wb-metric-item {
+    min-width: max-content;
+    padding-inline: 12px;
+  }
+
+  .wb-metric-item__label {
+    white-space: nowrap;
+  }
+
+  .wb-metric-item__value-group {
+    flex-wrap: nowrap;
   }
 }
 

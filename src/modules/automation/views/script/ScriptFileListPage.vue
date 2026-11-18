@@ -36,7 +36,7 @@
             </el-button>
           </div>
 
-          <div class="action-group">
+          <div class="action-group action-group--selection">
             <el-button :disabled="!hasSelection" @click="handleDelete">
               <i class="fa fa-fw fa-trash-alt" />
               {{ t('common.delete') }}
@@ -47,7 +47,7 @@
             </el-button>
           </div>
 
-          <div v-if="repoType === 'git'" class="action-group">
+          <div v-if="repoType === 'git'" class="action-group action-group--repository">
             <el-button @click="goBaseRepo">
               <i class="fa fa-fw fa-scroll" />
               {{ t('automation.library.builtinAppScripts') }}
@@ -1255,6 +1255,75 @@ defineExpose({
 .action-caret {
   margin-left: 8px;
   font-size: 10px;
+}
+
+.script-file-list.is-english.repo-git {
+  .workspace-toolbar {
+    flex-flow: row wrap;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px 16px;
+  }
+
+  .workspace-toolbar__groups {
+    display: contents;
+  }
+
+  .action-group {
+    gap: 6px;
+  }
+
+  .workspace-toolbar__groups :deep(.el-button) {
+    min-height: 34px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .workspace-toolbar__groups :deep(.el-button + .el-button) {
+    margin-left: 0;
+  }
+
+  .workspace-toolbar__groups :deep(.el-button > span) {
+    gap: 5px;
+  }
+
+  .action-caret {
+    margin-left: 2px;
+  }
+
+  .workspace-toolbar__search {
+    flex: 0 1 300px;
+    min-width: 0;
+    margin-inline-start: auto;
+  }
+
+  .workspace-toolbar__search :deep(.el-input) {
+    min-width: 0;
+  }
+}
+
+@media (min-width: 1160px) and (max-width: 1650px) {
+  .script-file-list.is-english.repo-git {
+    .workspace-toolbar {
+      display: grid;
+      grid-template-columns: max-content max-content minmax(0, 1fr);
+      grid-template-areas:
+        'create selection .'
+        'repository more search';
+      justify-items: start;
+    }
+
+    .action-group--primary { grid-area: create; }
+    .action-group--selection { grid-area: selection; }
+    .action-group--repository { grid-area: repository; }
+    .utility-menu { grid-area: more; }
+
+    .workspace-toolbar__search {
+      grid-area: search;
+      width: min(300px, 100%);
+      justify-self: end;
+    }
+  }
 }
 
 .dir-link,

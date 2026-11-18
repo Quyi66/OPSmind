@@ -107,9 +107,6 @@ async function open(routed = false) {
           template: '<div v-if="modelValue"><slot /><slot name="footer" /></div>'
         },
         'el-scrollbar': { template: '<div><slot /></div>' },
-        'el-dropdown': { template: '<div><slot /><slot name="dropdown" /></div>' },
-        'el-dropdown-menu': { template: '<div><slot /></div>' },
-        'el-dropdown-item': { template: '<button><slot /></button>' },
         'el-empty': true,
         'el-alert': { props: ['title'], template: '<div role="alert">{{ title }}<slot /></div>' }
       },
@@ -302,11 +299,28 @@ describe('补丁变更日志读取交互', () => {
     expect(state().hostsDialogList).toEqual(['host-a', 'host-b'])
   })
 
-  it('英文紧凑菜单保留当前行的扫描报告和详情，切回中文不重新查询', async () => {
+  it('英文与中文按同一顺序直接显示详情和可用报告，切换语言不重新查询', async () => {
+    api.getLogs.mockResolvedValueOnce({
+      records: [
+        record(),
+        record('install', { action: '补丁安装' }),
+        record('rollback', { action: '补丁回滚' }),
+        record('running', { action: '补丁安装', status: 'RUNNING' })
+      ],
+      total: 4
+    })
+    const rowActions = () => page().findAll('.action-buttons').map(row =>
+      row.findAll('button').map(item => item.text())
+    )
     await setLocale('en-US', { persist: false })
     await open()
-    expect(state().actionColumnWidth).toBe(128)
-    expect(button('More')).toBeDefined()
+    expect(state().actionColumnWidth).toBe(200)
+    expect(rowActions()).toEqual([
+      ['Details', 'Scan report'],
+      ['Details', 'Installation report'],
+      ['Details', 'Rollback report'],
+      ['Details']
+    ])
     await button('Scan report').trigger('click')
     expect(state().scanReportRunId).toBe('initial')
     await button('Details').trigger('click')
@@ -314,8 +328,13 @@ describe('补丁变更日志读取交互', () => {
     const reads = api.getLogs.mock.calls.length
     await setLocale('zh-CN', { persist: false })
     await flushPromises()
-    expect(button('More')).toBeUndefined()
-    expect(button('扫描报告')).toBeDefined()
+    expect(state().actionColumnWidth).toBe(130)
+    expect(rowActions()).toEqual([
+      ['详情', '扫描报告'],
+      ['详情', '安装报告'],
+      ['详情', '回滚报告'],
+      ['详情']
+    ])
     expect(api.getLogs).toHaveBeenCalledTimes(reads)
   })
 

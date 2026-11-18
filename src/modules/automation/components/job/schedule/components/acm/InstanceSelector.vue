@@ -1,5 +1,5 @@
 <template>
-  <div class="instance-selector">
+  <div class="instance-selector" :class="{ 'is-english': isEnglish }">
     <!-- 筛选工具栏 -->
     <div class="filter-toolbar">
       <strong class="filter-label">{{ t('selection.filter') }}</strong>
@@ -111,7 +111,7 @@
         <el-table-column
           prop="os_distro"
           :label="t('selection.operatingSystem')"
-          min-width="120"
+          :min-width="isEnglish ? 140 : 120"
           show-overflow-tooltip
         />
         <el-table-column
@@ -145,7 +145,7 @@
         <el-table-column
           prop="CONN_RATE"
           :label="t('selection.connectionRate')"
-          width="100"
+          :width="isEnglish ? 138 : 100"
           align="left"
         >
           <template #default="{ row }">
@@ -172,7 +172,7 @@
 </template>
 
 <script setup>
-import { t } from '@/core/i18n'
+import { currentLocale, t } from '@/core/i18n'
 
 import { ref, watch, nextTick, computed, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
@@ -186,6 +186,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue'])
 
+const isEnglish = computed(() => currentLocale.value === 'en-US')
 const tableRef = ref(null)
 const groupTreeRef = ref(null)
 const loading = ref(false)
@@ -649,6 +650,10 @@ async function handleToggleSelectAll() {
   flex: 1;
   min-height: 0;
   overflow: hidden;
+}
+
+.instance-selector.is-english :deep(th.el-table__cell .cell) {
+  white-space: nowrap;
 }
 
 .instance-selector .filter-toolbar {
