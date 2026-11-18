@@ -308,15 +308,15 @@ function getGroupBadgeCount(group) {
   display: flex;
   flex-direction: column;
   height: 100%;
-  width: 200px;
-  min-width: 180px;
+  width: var(--module-side-menu-width);
+  min-width: var(--module-side-menu-width);
   background-color: var(--el-bg-color);
   transition:
     width 0.3s ease,
     min-width 0.3s ease;
   position: relative;
   border-right: 1px solid var(--el-border-color-light);
-  margin-right: 12px;
+  margin-right: var(--module-side-menu-gap);
 
   // 右侧灰色隔断条
   &::after {
@@ -329,15 +329,7 @@ function getGroupBadgeCount(group) {
     background-color: var(--el-bg-color-page);
   }
 
-  &.is-collapsed {
-    width: 64px;
-    min-width: 64px;
-  }
-
   &.is-english:not(.is-collapsed) {
-    width: 256px;
-    min-width: 256px;
-
     .module-side-menu :deep(.el-menu-item),
     .module-side-menu :deep(.el-sub-menu__title) {
       height: auto;

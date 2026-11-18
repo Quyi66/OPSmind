@@ -124,11 +124,11 @@
             {{ formatJsonArray(row.patchPkgs) || '-' }}
           </template>
         </el-table-column>
-        <el-table-column :label="t('common.actions')" width="170" fixed="right">
+        <el-table-column :label="t('common.actions')" :width="actionColumnWidth" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="openDetail(row)">{{ t('automation.records.details') }}</el-button>
             <el-button
-              v-if="row.taskType !== 'rollback'"
+              v-if="canViewPatchTaskFailedHosts(row)"
               text
               type="primary"
               size="small"
@@ -192,6 +192,7 @@ import {
   getTaskTypeTagType,
   getTaskTypeTagStyle
 } from '../utils/patchProcessLogs'
+import { canViewPatchTaskFailedHosts } from '../utils/patchInstallSchedule'
 
 const DEFAULT_PAGE_SIZE = 20
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100]
@@ -203,6 +204,11 @@ let listRequest = 0
 let lastQueryKey = ''
 const tableData = ref([])
 const visibleRows = computed(() => (loading.value || loadError.value ? [] : tableData.value))
+const actionColumnWidth = computed(() => {
+  const isEnglish = currentLocale.value === 'en-US'
+  if (tableData.value.some(canViewPatchTaskFailedHosts)) return isEnglish ? 160 : 128
+  return isEnglish ? 88 : 72
+})
 const detailVisible = ref(false)
 const selectedTask = ref(null)
 const failedHostsVisible = ref(false)

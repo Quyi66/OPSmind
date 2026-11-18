@@ -187,6 +187,7 @@ describe('定时安装详情轮询', () => {
     await flushPromises()
     expect(api.getTask).toHaveBeenCalledExactlyOnceWith(task.id)
     expect(wrapper.text()).toContain('等待定时执行')
+    expect(wrapper.text()).toContain(t('patches.linux.scheduledTimeLabel'))
 
     await vi.advanceTimersByTimeAsync(19999)
     expect(api.getTask).toHaveBeenCalledTimes(1)
@@ -229,5 +230,69 @@ describe('定时安装详情轮询', () => {
 
     await vi.advanceTimersByTimeAsync(60000)
     expect(api.getTask).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('获批的普通安装申请', () => {
+  it('从待审批轮询至等待实施、预检查完成和正在安装，只读取后端状态', async () => {
+    task = {
+      id: 'install-application',
+      taskType: 'install',
+      status: 'PENDING_APPROVAL',
+      planStartTime: '2026-10-28 10:00:15',
+      planEndTime: '2026-10-28 10:30:00'
+    }
+    mountDialog()
+    await flushPromises()
+    expect(wrapper.text()).toContain(t('patches.changeControl.plan'))
+    expect(wrapper.text()).not.toContain(t('patches.linux.scheduledTimeLabel'))
+
+    task.status = 'CREATED'
+    task.approvedBy = 'admin'
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(wrapper.text()).toContain(t('patches.changeControl.awaitImplementation'))
+    expect(wrapper.text()).not.toContain(t('patches.changeControl.actions.precheck'))
+    expect(wrapper.text()).not.toContain(t('patches.changeControl.actions.skipPrecheck'))
+
+    task.status = 'PRE_CHECK_DONE'
+    await vi.advanceTimersByTimeAsync(15000)
+    expect(wrapper.text()).not.toContain(t('patches.changeControl.actions.install'))
+
+    task.status = 'INSTALLING'
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(wrapper.text()).toContain(t('patches.linux.batchInstalling'))
+    expect(api.getTask).toHaveBeenCalledTimes(6)
+    expect(api.executePreCheck).not.toHaveBeenCalled()
+    expect(api.skipPreCheck).not.toHaveBeenCalled()
+    expect(api.executeInstallTask).not.toHaveBeenCalled()
+  })
+
+  it.each(['PRE_CHECK_FAILED', 'RESTART_PENDING', 'RESTART_DONE'])(
+    '在 %s 保留状态展示但隐藏手动执行操作',
+    async status => {
+      task = {
+        id: 'approved-install',
+        taskType: 'install',
+        status,
+        approvedTime: '2026-10-28 09:59:00',
+        errorMessage: '原始任务说明'
+      }
+      mountDialog()
+      await flushPromises()
+      expect(wrapper.text()).toContain('原始任务说明')
+      const actions = wrapper.findAll('button').map(button => button.text())
+      const executionActions = ['restart', 'skipRestart', 'validate', 'skipValidate']
+        .map(action => t(`patches.changeControl.actions.${action}`))
+        .concat(t('patches.linux.repeatPrecheck'), t('patches.linux.acknowledgeAndInstall'))
+      expect(actions.some(action => executionActions.includes(action))).toBe(false)
+    }
+  )
+
+  it('保留直接创建的手动安装任务在预检查完成后的执行入口', async () => {
+    task = { id: 'direct-install', taskType: 'install', status: 'PRE_CHECK_DONE' }
+    mountDialog()
+    await flushPromises()
+    expect(wrapper.findAll('button').some(button =>
+      button.text() === t('patches.changeControl.actions.install'))).toBe(true)
   })
 })

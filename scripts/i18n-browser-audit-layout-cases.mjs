@@ -50,11 +50,6 @@ export async function auditLayoutCase({
       .getByText(m.patches.linux.allTasks, { exact: true })
       .click()
     await captureSurface(content, 'installation-requests', '.group-content__view')
-    if (await button(content.locator('.el-table__body'), m.common.moreActions).count()) {
-      await button(content.locator('.el-table__body'), m.common.moreActions).first().click()
-      await captureSurface(content, 'request-more-menu', '.group-content__view')
-      await page.keyboard.press('Escape')
-    }
   } else if (name === 'windows-batch-layout') {
     const checkboxes = content.locator('.el-table__body .el-checkbox:not(.is-disabled)')
     const changed = []

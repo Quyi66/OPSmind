@@ -105,7 +105,7 @@
             {{ formatTime(row.lastModifiedDate) }}
           </template>
         </el-table-column>
-        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 224 : undefined" :min-width="currentLocale === 'en-US' ? undefined : 320" fixed="right">
+        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 208 : 176" class-name="user-actions" fixed="right">
           <template #default="{ row }">
             <el-button size="small" text type="primary" @click="handleView(row)">{{ t('common.view') }}</el-button>
             <el-button size="small" text type="primary" @click="handleEdit(row)">{{ t('common.edit') }}</el-button>
@@ -423,6 +423,18 @@ async function handleDelete(row) {
 
 <style scoped lang="scss">
 // 仅保留组件特定样式，布局类由全局 element-ui.scss 提供
+:deep(td.user-actions .cell) {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0 8px;
+  white-space: nowrap;
+
+  > .el-button {
+    margin-left: 0;
+  }
+}
+
 .roles-cell {
   display: flex;
   flex-wrap: wrap;

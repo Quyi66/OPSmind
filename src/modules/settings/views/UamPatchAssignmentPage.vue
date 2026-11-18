@@ -98,7 +98,7 @@
             {{ formatTime(row.lastModifiedDate) }}
           </template>
         </el-table-column> -->
-        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 276 : undefined" :min-width="currentLocale === 'en-US' ? undefined : 300" fixed="right">
+        <el-table-column :label="t('common.actions')" :width="currentLocale === 'en-US' ? 252 : 152" class-name="assignment-actions" fixed="right">
           <template #default="{ row }">
             <el-button size="small" text type="primary" @click="handleAssignPatch(row)">
               {{ t('settings.patchAssignment.assign') }}
@@ -316,6 +316,18 @@ function handleViewPatchRecords(row) {
 </script>
 
 <style scoped lang="scss">
+:deep(td.assignment-actions .cell) {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0 8px;
+  white-space: nowrap;
+
+  > .el-button {
+    margin-left: 0;
+  }
+}
+
 .roles-cell {
   display: flex;
   flex-wrap: wrap;

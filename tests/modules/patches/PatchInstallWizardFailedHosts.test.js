@@ -57,6 +57,7 @@ describe('PatchInstallWizard failed host entry', () => {
       expect(failedHostsButton(wrapper)).toBeUndefined()
 
       wrapper.vm.createdTaskId = 'active-task'
+      wrapper.vm.taskDetailData = { status: 'PRE_CHECK_FAILED' }
       wrapper.vm.pipelineStatus = 'failed'
       wrapper.vm.stepStates[1] = 'failed'
       await nextTick()
@@ -69,16 +70,33 @@ describe('PatchInstallWizard failed host entry', () => {
     }
   )
 
+  it.each(['PENDING_APPROVAL', 'CREATED', 'REJECTED', 'EXPIRED'])(
+    'hides failed hosts for a task in %s',
+    async status => {
+      const wrapper = mountWizard()
+      wrapper.vm.installStep = 4
+      wrapper.vm.createdTaskId = 'submitted-task'
+      wrapper.vm.taskDetailData = { status }
+      await nextTick()
+      expect(failedHostsButton(wrapper)).toBeUndefined()
+      if (status === 'PENDING_APPROVAL') {
+        expect(wrapper.findAll('button').some(button => button.text() === '查看申请')).toBe(true)
+      }
+    }
+  )
+
   it('keeps the entry available after execution and closes it on task replacement or wizard close', async () => {
     const wrapper = mountWizard()
     wrapper.vm.installStep = 4
     wrapper.vm.createdTaskId = 'task-1'
     wrapper.vm.pipelineStatus = 'success'
+    wrapper.vm.taskDetailData = { status: 'COMPLETED' }
     await nextTick()
     await failedHostsButton(wrapper).trigger('click')
     expect(failedHostsDialog(wrapper).props('modelValue')).toBe(true)
 
     wrapper.vm.createdTaskId = 'task-2'
+    wrapper.vm.taskDetailData = { status: 'INSTALL_FAILED' }
     await nextTick()
     expect(failedHostsDialog(wrapper).props()).toMatchObject({
       modelValue: false,
@@ -94,6 +112,7 @@ describe('PatchInstallWizard failed host entry', () => {
     const wrapper = mountWizard({ taskMode: 'rollback' })
     wrapper.vm.installStep = 4
     wrapper.vm.createdTaskId = 'rollback-task'
+    wrapper.vm.taskDetailData = { status: 'PRE_CHECK_FAILED' }
     await nextTick()
     expect(failedHostsButton(wrapper)).toBeUndefined()
   })

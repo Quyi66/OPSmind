@@ -1,5 +1,16 @@
 import { changeControlTimestamp } from './changeControl'
 
+const failedHostResultStatuses = new Set([
+  'PRE_CHECKING', 'PRE_CHECK_DONE', 'PRE_CHECK_FAILED',
+  'INSTALLING', 'INSTALL_DONE', 'INSTALL_FAILED',
+  'RESTART_PENDING', 'RESTARTING', 'RESTART_DONE', 'RESTART_FAILED',
+  'VALIDATING', 'VALIDATE_FAILED', 'COMPLETED', 'FAILED'
+])
+
+export function canViewPatchTaskFailedHosts(task) {
+  return Boolean(task && task.taskType !== 'rollback' && failedHostResultStatuses.has(task.status))
+}
+
 export function canInspectPatchTask(task) {
   return Boolean(task && !String(task.osType || task.os_type || '').toLowerCase().includes('win') &&
     ['INSTALL_DONE', 'INSTALL_FAILED', 'ROLLBACK_DONE', 'ROLLBACK_FAILED', 'RESTART_PENDING',
@@ -9,6 +20,12 @@ export function canInspectPatchTask(task) {
 export function isApprovalExpired(task, now = Date.now()) {
   return [task.scheduledTime, task.planEndTime]
     .some(value => changeControlTimestamp(value) <= now)
+}
+
+export function isApprovedInstallApplication(task) {
+  return Boolean(task && !task.scheduledTime &&
+    String(task.taskType || '').toLowerCase() !== 'rollback' &&
+    (task.approvedBy || task.approvedTime))
 }
 
 export function isFutureSchedule(value, now = Date.now()) {

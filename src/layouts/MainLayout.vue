@@ -3,6 +3,7 @@
     class="main-layout"
     :class="{
       'is-home': isHomeRoute,
+      'is-english': currentLocale === 'en-US',
       'has-side-menu': showSideMenu,
       'side-menu-collapsed': sideMenuCollapsed,
       'fullscreen-mode': isFullscreen
@@ -56,7 +57,7 @@ import { useDashboardStore } from '@/stores/dashboard'
 import { useMenuStore } from '@/stores/menu.js'
 import { useTagsViewStore } from '@/stores/tagsView'
 import { storeToRefs } from 'pinia'
-import { t } from '@/core/i18n'
+import { currentLocale, t } from '@/core/i18n'
 
 const dashboardStore = useDashboardStore()
 const router = useRouter()
@@ -158,12 +159,23 @@ onUnmounted(() => {
 <style scoped lang="scss">
 // 主布局容器
 .main-layout {
+  --module-side-menu-width: 200px;
+  --module-side-menu-gap: 12px;
+
   display: flex;
   flex-direction: column;
   height: 100vh;
   height: 100dvh;
   background-color: var(--el-bg-color-page);
   overflow: hidden;
+}
+
+.main-layout.is-english {
+  --module-side-menu-width: 256px;
+}
+
+.main-layout.side-menu-collapsed {
+  --module-side-menu-width: 64px;
 }
 
 // 首页容器与顶部导航随视口展开，避免高分辨率下固定宽度产生大面积留白
@@ -307,26 +319,18 @@ onUnmounted(() => {
   transform: translateX(-8px);
 }
 
-// 侧边栏与标签栏布局尺寸变量
-$side-menu-width: 212px;
-$side-menu-collapsed-width: 76px;
 $tags-bar-height: 34px;
 
 // 当有侧边栏时，调整标签导航栏的左边距，并使侧边栏向上通顶
 .main-layout.has-side-menu {
+  --tags-bar-offset: calc(var(--module-side-menu-width) + var(--module-side-menu-gap));
+
   :deep(.tags-view-container) {
-    margin-left: $side-menu-width;
-    width: calc(100% - #{$side-menu-width});
+    margin-left: var(--tags-bar-offset);
+    width: calc(100% - var(--tags-bar-offset));
     transition:
       margin-left 0.3s ease,
       width 0.3s ease;
-  }
-
-  &.side-menu-collapsed {
-    :deep(.tags-view-container) {
-      margin-left: $side-menu-collapsed-width;
-      width: calc(100% - #{$side-menu-collapsed-width});
-    }
   }
 
   :deep(.group-side-menu) {

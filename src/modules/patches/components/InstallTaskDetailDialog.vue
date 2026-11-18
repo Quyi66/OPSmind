@@ -87,7 +87,7 @@
               {{ t('patches.linux.viewExecutionResult') }}
             </el-button>
           </div>
-          <div>
+          <div v-if="taskDetail.scheduledTime">
             <strong>{{ t('patches.linux.scheduledTimeLabel') }}</strong>
             {{ formatDateTime(taskDetail.scheduledTime) }}
           </div>
@@ -257,6 +257,7 @@ import {
 } from '../utils/patchProcessLogs'
 import {
   canInspectPatchTask,
+  isApprovedInstallApplication,
   isFutureSchedule,
   isPackageInstallFinished,
   isTaskExecutionBlocked
@@ -291,9 +292,11 @@ useSecopsMessages()
 
 const canInspect = computed(() => canInspectPatchTask(taskDetail.value))
 const isRollback = computed(() => String(taskDetail.value?.taskType || '').toLowerCase() === 'rollback')
+const isAutomaticApplication = computed(() => isApprovedInstallApplication(taskDetail.value))
+const canRunManualSteps = computed(() => !isAutomaticApplication.value && !isTaskExecutionBlocked(taskDetail.value))
 const manualActions = computed(() => {
+  if (!canRunManualSteps.value) return []
   const task = taskDetail.value
-  if (isTaskExecutionBlocked(task)) return []
   if (task.status === 'CREATED' && !task.scheduledTime) return ['precheck', 'skipPrecheck']
   if (task.status === 'PRE_CHECK_DONE') return [isRollback.value ? 'rollback' : 'install']
   if (['INSTALL_DONE', 'ROLLBACK_DONE', 'RESTART_PENDING'].includes(task.status)) return ['restart', 'skipRestart']
@@ -390,9 +393,11 @@ const stepStates = computed(() => {
 const statusDescription = computed(() => {
   const status = taskDetail.value?.status
   if (status === 'PENDING_APPROVAL') return t('patches.linux.awaitApprovalHint')
-  if (status === 'CREATED') return taskDetail.value.scheduledTime
-    ? t('patches.linux.awaitScheduleHint')
-    : t('patches.changeControl.ready')
+  if (status === 'CREATED') {
+    if (isAutomaticApplication.value) return t('patches.changeControl.awaitImplementation')
+    if (taskDetail.value.scheduledTime) return t('patches.linux.awaitScheduleHint')
+    return t('patches.changeControl.ready')
+  }
   return t('patches.linux.resubmitHint')
 })
 
@@ -418,7 +423,7 @@ const parsedPreCheckResult = computed(() => {
 })
 
 const canHandlePreCheckFailure = computed(
-  () => taskDetail.value?.status === 'PRE_CHECK_FAILED' && !isTaskExecutionBlocked(taskDetail.value)
+  () => taskDetail.value?.status === 'PRE_CHECK_FAILED' && canRunManualSteps.value
 )
 
 const checkTitles = {

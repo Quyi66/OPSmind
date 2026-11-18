@@ -104,6 +104,21 @@ afterEach(() => {
 })
 
 describe('流程操作记录查询与轮询上下文', () => {
+  it('待执行记录只显示详情，出现执行记录后才提供失败主机入口', async () => {
+    api.getAuditLogs.mockResolvedValueOnce(receipt('waiting', 'CREATED'))
+    await open()
+    expect(button('详情')).toBeDefined()
+    expect(button('失败主机')).toBeUndefined()
+    expect(state().actionColumnWidth).toBe(72)
+
+    api.getAuditLogs.mockResolvedValueOnce(receipt('executed', 'PRE_CHECK_DONE'))
+    await state().loadData()
+    await flushPromises()
+    expect(state().actionColumnWidth).toBe(128)
+    await button('失败主机').trigger('click')
+    expect(state().failedHostsTaskId).toBe('executed')
+  })
+
   it('真实列表轮询沿已应用条件，操作人草稿不自动应用，完成后停止轮询', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
     api.getAuditLogs

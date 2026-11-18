@@ -339,7 +339,7 @@
           </el-button>
 
           <el-button
-            v-if="currentStepKey === 'execute' && createdTaskId && !isRollbackTask"
+            v-if="currentStepKey === 'execute' && createdTaskId && !isRollbackTask && canViewPatchTaskFailedHosts(taskDetailData)"
             type="primary"
             plain
             @click="failedHostsVisible = true"
@@ -478,7 +478,7 @@ import PatchTaskFailedHostsDialog from '../dialogs/PatchTaskFailedHostsDialog.vu
 import PatchImplementationPlan from '../../change-control/PatchImplementationPlan.vue'
 import TaskInspectionDialog from '../../change-control/TaskInspectionDialog.vue'
 import { useAuth } from '@/core/auth'
-import { canInspectPatchTask } from '../../../utils/patchInstallSchedule'
+import { canInspectPatchTask, canViewPatchTaskFailedHosts } from '../../../utils/patchInstallSchedule'
 import { usePatchTaskTargetSelection } from './usePatchTaskTargetSelection'
 
 const props = defineProps({
