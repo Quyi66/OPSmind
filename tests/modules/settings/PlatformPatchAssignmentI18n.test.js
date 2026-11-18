@@ -4,10 +4,10 @@ import { setLocale, t } from '@/core/i18n'
 import Assign from '@/modules/user/components/dialogs/AssignPatchDialog.vue'
 import Records from '@/modules/user/components/dialogs/PatchRecordsDialog.vue'
 
-const api=vi.hoisted(()=>({get:vi.fn(),post:vi.fn(),delete:vi.fn(),confirm:vi.fn(),success:vi.fn(),warning:vi.fn(),error:vi.fn()}))
+const api=vi.hoisted(()=>({get:vi.fn(),post:vi.fn(),delete:vi.fn(),confirm:vi.fn(),info:vi.fn(),success:vi.fn(),warning:vi.fn(),error:vi.fn()}))
 vi.mock('@/core/api',()=>({apiService:api}))
 vi.mock('@/core/auth',()=>({authService:{getCurrentUser:()=>({tenantId:'raw-tenant'})}}))
-vi.mock('element-plus',()=>({ElMessage:{success:api.success,warning:api.warning,error:api.error},ElMessageBox:{confirm:api.confirm}}))
+vi.mock('element-plus',()=>({ElMessage:{info:api.info,success:api.success,warning:api.warning,error:api.error},ElMessageBox:{confirm:api.confirm}}))
 const Slot={template:'<div><slot /><slot name="footer" /></div>'}
 const Table={props:['data'],template:'<div><slot /></div>',methods:{clearSelection(){},toggleRowSelection(){}}}
 const wrappers=[]
@@ -46,6 +46,17 @@ afterEach(async()=>{
 })
 
 describe('Platform patch assignment language changes',()=>{
+ it('treats untouched historical assignments as unchanged after switching to English',async()=>{
+  api.get.mockResolvedValueOnce({data:{content:[record],totalElements:1}})
+  const{wrapper,vm}=await open()
+  await setLocale('en-US',{persist:false})
+  await vm.submitAssign()
+  expect(api.info).toHaveBeenCalledExactlyOnceWith('No patch assignment changes to submit')
+  expect(api.warning).not.toHaveBeenCalled()
+  expect(api.post).not.toHaveBeenCalled()
+  expect(wrapper.emitted('update:visible')).toEqual([[false]])
+ })
+
  it('keeps selected patches, hosts, form drafts and paging while submitting original IDs',async()=>{
   const{vm}=await open()
   await vm.activatePatch(vm.availablePatches[0])

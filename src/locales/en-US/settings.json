@@ -201,6 +201,7 @@
     "revoke": "Revoke",
     "cleaned": "Cleaned up {count} assignment | Cleaned up {count} assignments",
     "reconfirm": "Confirm at least one machine for patch {patch} again",
+    "noChanges": "No patch assignment changes to submit",
     "assigned": "Assigned successfully: {count} record processed | Assigned successfully: {count} records processed",
     "removePatch": "Remove patch {patch}",
     "editHosts": "{count} machine · Edit | {count} machines · Edit",

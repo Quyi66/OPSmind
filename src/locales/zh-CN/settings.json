@@ -201,6 +201,7 @@
     "revoke": "撤销",
     "cleaned": "清理成功，共清理了 {count} 条记录",
     "reconfirm": "请为补丁 {patch} 重新确认机器选择，至少选择一台机器",
+    "noChanges": "没有需要提交的分配变更",
     "assigned": "分配成功，共处理 {count} 条记录",
     "removePatch": "移除补丁 {patch}",
     "editHosts": "{count} 台 · 修改",

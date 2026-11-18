@@ -10,7 +10,7 @@ vi.mock('@/core/api', () => ({ apiService: { get: vi.fn(), post: vi.fn() } }))
 vi.mock('@/core/auth', () => ({ authService: { getCurrentUser: vi.fn() } }))
 vi.mock('element-plus', async importOriginal => ({
   ...(await importOriginal()),
-  ElMessage: { success: vi.fn(), warning: vi.fn(), error: vi.fn() }
+  ElMessage: { info: vi.fn(), success: vi.fn(), warning: vi.fn(), error: vi.fn() }
 }))
 
 const baseUrl = '/secops/api/secops/v2/patch/assignment'
@@ -144,6 +144,93 @@ describe('补丁分配工作区（API为mock，无真实授权写入）', () => 
     expect(wrapper.findAllComponents({ name: 'DrawerShell' })).toHaveLength(1)
     expect(wrapper.findAll('.assignment-workspace')).toHaveLength(1)
     expect(apiService.post).not.toHaveBeenCalled()
+  })
+
+  it.each([false, true])('搜索后勾选新补丁即打开正确的机器列表（此前打开历史补丁：%s）', async openedHistory => {
+    records = [{ id: 'old-record', patchId: 'patch-b', hostKey: '192.0.2.14' }]
+    const state = await open({ realTables: true })
+    const hostPane = () => wrapper.get('.host-pane')
+    if (openedHistory) {
+      await button('patch-b · 1 台').trigger('click')
+      await flushPromises()
+      expect(hostPane().get('strong').text()).toBe('patch-b')
+      expect(hostPane().get('.selected-hosts').text()).toContain('192.0.2.14')
+      expect(hostPane().text()).not.toContain('需重新确认机器')
+    }
+
+    state.patchFilters.keyword = 'patch-a'
+    await button('搜索').trigger('click')
+    await flushPromises()
+    const rows = wrapper.get('.patch-pane').findAll('tbody tr')
+    expect(rows).toHaveLength(1)
+    await rows[0].get('input[type="checkbox"]').setValue(true)
+    await flushPromises()
+
+    expect(hostPane().get('strong').text()).toBe('patch-a')
+    expect(hostPane().text()).not.toContain('需重新确认机器')
+    expect(hostPane().text()).not.toContain('192.0.2.14')
+    expect(state.pendingPatchCount).toBe(1)
+    await hostPane().get('tbody tr input[type="checkbox"]').setValue(true)
+    await flushPromises()
+    expect(state.pendingPatchCount).toBe(0)
+    await button('确定分配').trigger('click')
+    await flushPromises()
+
+    expect(ElMessage.warning).not.toHaveBeenCalled()
+    expect(apiService.post).toHaveBeenCalledTimes(1)
+    expect(apiService.post.mock.calls[0][1].items).toEqual([{ patchId: 'patch-a', hostIds: ['host-a'] }])
+  })
+
+  it('历史分配仅有地址时回显六个唯一匹配，重新勾选仍保留原记录', async () => {
+    rows[0].hosts = Array.from({ length: 6 }, (_, index) =>
+      host(`candidate-${index}`, `192.0.2.${index + 20}`)
+    )
+    records = rows[0].hosts.map(candidate => ({ patchId: 'patch-a', hostKey: candidate.host_key }))
+    const state = await open({ realTables: true })
+    await button('patch-a · 6 台').trigger('click')
+    await flushPromises()
+
+    const checkboxes = wrapper.get('.host-pane').findAll('tbody input[type="checkbox"]')
+    expect(checkboxes.map(box => box.element.checked)).toEqual(Array(6).fill(true))
+    await checkboxes[0].setValue(false)
+    await flushPromises()
+    expect(state.activePatch.selectedHosts).toHaveLength(5)
+    await checkboxes[0].setValue(true)
+    await flushPromises()
+    expect(state.activePatch.selectedHosts).toHaveLength(6)
+    expect(state.activePatch.selectedHosts.every(machine => !machine.host_id)).toBe(true)
+    await button('确定分配').trigger('click')
+    expect(apiService.post).not.toHaveBeenCalled()
+  })
+
+  it('同一补丁的两个候选使用相同地址时保持未勾选，即使当前页只有一个候选', async () => {
+    rows[0].hosts = [host('one', '192.0.2.20'), host('two', '192.0.2.20')]
+    records = [{ patchId: 'patch-a', hostKey: '192.0.2.20' }]
+    const state = await open({ realTables: true })
+    await button('patch-a · 1 台').trigger('click')
+    state.hostPagination.pageSize = 1
+    await state.syncHostSelection()
+    await flushPromises()
+
+    expect(wrapper.get('.host-pane tbody input[type="checkbox"]').element.checked).toBe(false)
+    expect(state.activePatch.selectedHosts).toEqual([host('', '192.0.2.20')])
+    expect(apiService.post).not.toHaveBeenCalled()
+  })
+
+  it('补充一台新机器时，只提交新选中的 ID', async () => {
+    records = [{ patchId: 'patch-a', hostKey: '192.0.2.11' }]
+    await open({ realTables: true })
+    await button('patch-a · 1 台').trigger('click')
+    await flushPromises()
+
+    const checkboxes = wrapper.get('.host-pane').findAll('tbody input[type="checkbox"]')
+    expect(checkboxes[0].element.checked).toBe(true)
+    await checkboxes[1].setValue(true)
+    await flushPromises()
+    await button('确定分配').trigger('click')
+    await flushPromises()
+    expect(apiService.post).toHaveBeenCalledTimes(1)
+    expect(apiService.post.mock.calls[0][1].items).toEqual([{ patchId: 'patch-a', hostIds: ['host-b'] }])
   })
 
   it.each(['候选不同', '候选相同'])(
@@ -384,7 +471,7 @@ describe('补丁分配工作区（API为mock，无真实授权写入）', () => 
     }
   )
 
-  it('同IP不同ID不复用，不将分配记录id或hostKey猜为机器ID', async () => {
+  it('同IP不同ID不复用，缺失ID的旧分配不影响提交已确认的新组合', async () => {
     records = [{ id: 'record-only', patchId: 'patch-b', hostKey: 'shared-address' }]
     rows[0].hosts = [host('id-a', 'shared-address')]
     rows[1].hosts = [host('id-b', 'shared-address')]
@@ -396,7 +483,10 @@ describe('补丁分配工作区（API为mock，无真实授权写入）', () => 
     expect(state.reusePreview[0].matched).toEqual([])
     state.clearPreview()
     await state.submitAssign()
-    expect(apiService.post).not.toHaveBeenCalled()
+    expect(apiService.post).toHaveBeenCalledTimes(1)
+    expect(apiService.post.mock.calls[0][1].items).toEqual([
+      { patchId: 'patch-a', hostIds: ['id-a'] }
+    ])
   })
 
   it('已有分配读取失败/不完整禁配置和提交，重试恢复', async () => {
@@ -421,9 +511,90 @@ describe('补丁分配工作区（API为mock，无真实授权写入）', () => 
     ]
     const state = await open()
     expect(state.selectedPatches[0].selectedHosts).toEqual([host('real-host', 'address')])
+    state.assignForm.remark = '更新分配说明'
     await state.submitAssign()
     expect(apiService.post.mock.calls[0][1].items).toEqual([
       { patchId: 'existing', hostIds: ['real-host'] }
+    ])
+  })
+
+  it.each(['只有地址', '有机器ID'])('回填已有分配%s时，未修改直接确认只关闭草稿', async hostShape => {
+    records = [
+      { id: 'record-1', patchId: 'patch-a', hostKey: '192.0.2.11' },
+      { id: 'record-2', patchId: 'patch-a', hostKey: '192.0.2.12' },
+      { id: 'record-3', patchId: 'patch-b', hostKey: '192.0.2.13' }
+    ]
+    if (hostShape === '有机器ID') records = records.map((record, index) => ({
+      ...record, hostId: ['host-a', 'host-b', 'host-c'][index]
+    }))
+    const state = await open()
+    expect(state.pendingPatchCount).toBe(0)
+    const reads = apiService.get.mock.calls.length
+    await button('确定分配').trigger('click')
+    await flushPromises()
+
+    expect(ElMessage.info).toHaveBeenCalledWith('没有需要提交的分配变更')
+    expect(ElMessage.warning).not.toHaveBeenCalled()
+    expect(apiService.get).toHaveBeenCalledTimes(reads)
+    expect(apiService.post).not.toHaveBeenCalled()
+    expect(wrapper.emitted('success')).toBeUndefined()
+    expect(wrapper.emitted('update:visible')).toEqual([[false]])
+  })
+
+  it('机器或补丁的顺序变化不算改动，修改备注后仍校验缺失的机器ID', async () => {
+    records = [
+      { patchId: 'patch-a', hostKey: '192.0.2.11' },
+      { patchId: 'patch-a', hostKey: '192.0.2.12' },
+      { patchId: 'patch-b', hostId: 'host-c', hostKey: '192.0.2.13' }
+    ]
+    const state = await open()
+    state.selectedPatches.reverse()
+    state.selectedPatches[1].selectedHosts.reverse()
+    expect(state.assignmentItems).toEqual([])
+
+    state.assignForm.remark = '变更备注'
+    await state.submitAssign()
+    expect(state.pendingPatchCount).toBe(1)
+    expect(ElMessage.warning).toHaveBeenCalledWith('请为补丁 patch-a 重新确认机器选择，至少选择一台机器')
+    expect(wrapper.get('.selected-hosts').text()).toContain('需重新确认机器')
+    expect(apiService.post).not.toHaveBeenCalled()
+  })
+
+  it('打开已有分配后新增一条补丁，只提交新补丁的机器和本次过期时间及备注', async () => {
+    records = [
+      { id: 'old-address-only', patchId: 'patch-b', hostKey: '192.0.2.12' },
+      { id: 'old-known', patchId: 'patch-c', hostId: 'host-c', hostKey: '192.0.2.13' }
+    ]
+    const state = await open()
+    await choose(state, 0, [0])
+    state.assignForm = { expireTime: '2099-01-01 12:00:00', remark: '仅新增分配' }
+    expect(state.pendingPatchCount).toBe(0)
+    await button('确定分配').trigger('click')
+    await flushPromises()
+
+    expect(ElMessage.warning).not.toHaveBeenCalled()
+    expect(apiService.post).toHaveBeenCalledExactlyOnceWith(baseUrl, {
+      userLogin: 'platform-fixture',
+      items: [{ patchId: 'patch-a', hostIds: ['host-a'] }],
+      expireTime: '2099-01-01 12:00:00',
+      remark: '仅新增分配'
+    })
+  })
+
+  it('给已有补丁增加机器时，仅提交新增机器并保留历史记录', async () => {
+    records = [
+      { patchId: 'patch-a', hostId: 'host-a', hostKey: '192.0.2.11' },
+      { patchId: 'patch-a', hostKey: '192.0.2.14' }
+    ]
+    const state = await open()
+    await choose(state, 0, [0, 1])
+    expect(state.activePatch.selectedHosts).toContainEqual(host('', '192.0.2.14'))
+    await state.submitAssign()
+
+    expect(ElMessage.warning).not.toHaveBeenCalled()
+    expect(apiService.post).toHaveBeenCalledTimes(1)
+    expect(apiService.post.mock.calls[0][1].items).toEqual([
+      { patchId: 'patch-a', hostIds: ['host-b'] }
     ])
   })
 

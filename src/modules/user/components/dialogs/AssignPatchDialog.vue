@@ -155,11 +155,11 @@
               v-for="(host, index) in activePatch.selectedHosts"
               :key="host.host_id || `unresolved-${index}`"
               :closable="!locked"
-              :type="host.host_id ? 'info' : 'warning'"
+              :type="unconfirmedActiveHosts.has(host) ? 'warning' : 'info'"
               :title="hostLabel(host)"
               @close="removeHost(index)"
             >
-              {{ hostLabel(host) }}{{ host.host_id ? '' : t('settings.patchAssignment.confirmMachines') }}
+              {{ hostLabel(host) }}{{ unconfirmedActiveHosts.has(host) ? t('settings.patchAssignment.confirmMachines') : '' }}
             </el-tag>
           </div>
           <div class="pane-toolbar">
@@ -297,6 +297,7 @@ const hostSearchLocale = ref(currentLocale.value)
 watch(() => hostFilters.keyword, () => { hostSearchLocale.value = currentLocale.value }, { flush: 'sync' })
 const hostPagination = reactive({ page: 1, pageSize: 20 })
 const assignForm = ref(defaultForm())
+const initialAssignment = ref(null)
 const reuseTargetIds = ref([])
 const reusePreview = ref([])
 const previewLoading = ref(false)
@@ -321,12 +322,49 @@ const saveDisabled = computed(
 const activePatch = computed(() =>
   selectedPatches.value.find(patch => patch.patch_id === activePatchId.value)
 )
-const pendingPatchCount = computed(
-  () =>
-    selectedPatches.value.filter(
-      patch => !patch.selectedHosts.length || patch.selectedHosts.some(host => !host.host_id)
-    ).length
-)
+const legacyHostMatches = computed(() => {
+  const byCandidateId = new Map()
+  const byLabel = new Map()
+  const patch = activePatch.value
+  const originalHosts = initialAssignment.value?.hostsByPatch.get(patch?.patch_id)?.hosts
+  if (patch && originalHosts?.some(host => !host.host_id)) {
+    const originalByLabel = uniqueHostsByLabel(originalHosts)
+    const candidatesByLabel = uniqueHostsByLabel(patch.availableHosts)
+    const originalIds = new Set(originalHosts.map(host => host.host_id))
+    for (const [label, host] of originalByLabel) {
+      const candidateId = candidatesByLabel.get(label)?.host_id
+      if (!host || host.host_id || !candidateId || originalIds.has(candidateId)) continue
+      byCandidateId.set(candidateId, host)
+      byLabel.set(label, candidateId)
+    }
+  }
+  return { byCandidateId, byLabel }
+})
+const assignmentItems = computed(() => {
+  const initial = initialAssignment.value
+  if (!initial) return []
+
+  const additions = []
+  for (const patch of selectedPatches.value) {
+    const previous = initial.hostsByPatch.get(patch.patch_id)
+    const hosts = previous
+      ? patch.selectedHosts.filter(host => !previous.keys.has(hostDraftKey(host)))
+      : patch.selectedHosts
+    if (!previous || hosts.length || !patch.selectedHosts.length) additions.push({ patch, hosts })
+  }
+
+  const metadataChanged = (assignForm.value.expireTime || '') !== initial.expireTime ||
+    (assignForm.value.remark || '') !== initial.remark
+  // When adding assignments, the form metadata applies to the submitted additions.
+  if (additions.length || !metadataChanged) return additions
+  return selectedPatches.value.map(patch => ({ patch, hosts: patch.selectedHosts }))
+})
+const needsMachines = item => !item.hosts.length || item.hosts.some(host => !host.host_id)
+const pendingPatchCount = computed(() => assignmentItems.value.filter(needsMachines).length)
+const unconfirmedActiveHosts = computed(() => {
+  const item = assignmentItems.value.find(({ patch }) => patch.patch_id === activePatchId.value)
+  return new Set(item?.hosts.filter(host => !host.host_id))
+})
 const reuseTargets = computed(() =>
   selectedPatches.value.filter(patch => patch.patch_id !== activePatchId.value)
 )
@@ -391,6 +429,22 @@ function rawHostLabel(host) {
 }
 function hostLabel(host) {
   return rawHostLabel(host) || t('settings.patchAssignment.noHost')
+}
+function hostDraftKey(host) {
+  // A historical label can recognize an unchanged entry. Only IDs go into requests.
+  return host.host_id ? `id:${host.host_id}` : `label:${host.host_key}`
+}
+function uniqueHostsByLabel(hosts) {
+  const byLabel = new Map()
+  for (const host of hosts) {
+    const label = rawHostLabel(host)
+    if (label) byLabel.set(label, byLabel.has(label) ? null : host)
+  }
+  return byLabel
+}
+function hostTableId(host) {
+  // Address matches are only used for checkbox display and draft selection.
+  return host.host_id || legacyHostMatches.value.byLabel.get(rawHostLabel(host))
 }
 function normalizeHost(host, assigned = false) {
   // 已有分配记录的id是记录ID，不能当作机器ID；显示地址不能替代真实身份。
@@ -464,6 +518,7 @@ watch(
     loadingAssigned.value = false
     assignedError.value = ''
     selectedPatches.value = []
+    initialAssignment.value = null
     availablePatches.value = []
     activePatchId.value = ''
     reuseTargetIds.value = []
@@ -512,6 +567,14 @@ async function loadAssignedPatches() {
       ...patch,
       selectedHosts: uniqueHosts(patch.selectedHosts)
     }))
+    initialAssignment.value = {
+      expireTime: assignForm.value.expireTime || '',
+      remark: assignForm.value.remark || '',
+      hostsByPatch: new Map(selectedPatches.value.map(patch => [
+        patch.patch_id,
+        { hosts: [...patch.selectedHosts], keys: new Set(patch.selectedHosts.map(hostDraftKey)) }
+      ]))
+    }
     await syncPatchSelection()
   } catch {
     if (isCurrent(token))
@@ -580,13 +643,16 @@ function onPatchSelectionChange(selection) {
   if (syncingPatches || !canSelectPatch()) return
   const pageIds = new Set(availablePatches.value.map(patch => patch.patch_id))
   const previous = new Map(selectedPatches.value.map(patch => [patch.patch_id, patch]))
+  const checkedPatches = selection.filter(patch => pageIds.has(patch.patch_id))
+  const newlyChecked = checkedPatches.find(patch => !previous.has(patch.patch_id))
   selectedPatches.value = [
     ...selectedPatches.value.filter(patch => !pageIds.has(patch.patch_id)),
-    ...selection
-      .filter(patch => pageIds.has(patch.patch_id))
+    ...checkedPatches
       .map(patch => previous.get(patch.patch_id) || { ...patch, selectedHosts: [] })
   ]
-  if (!activePatch.value) {
+  if (newlyChecked) {
+    activatePatch(newlyChecked)
+  } else if (!activePatch.value) {
     activePatchId.value = ''
     const first = selectedPatches.value[0]
     if (first) activatePatch(first)
@@ -598,12 +664,12 @@ async function activatePatch(row) {
   if (!patch) {
     selectedPatches.value.push({ ...row, selectedHosts: [] })
     patch = selectedPatches.value.find(item => item.patch_id === row.patch_id)
+    syncPatchSelection()
   }
   activePatchId.value = patch.patch_id
   reuseTargetIds.value = []
   hostFilters.keyword = ''
   Object.assign(hostPagination, { page: 1, pageSize: 20 })
-  syncPatchSelection()
   await ensureHosts(patch)
   if (activePatch.value === patch) await syncHostSelection()
 }
@@ -668,8 +734,9 @@ async function syncHostSelection() {
   syncingHosts = true
   await nextTick()
   hostTableRef.value?.clearSelection()
+  const checkedIds = new Set(activePatch.value?.selectedHosts.map(hostTableId))
   paginatedHosts.value.forEach(row => {
-    if (activePatch.value?.selectedHosts.some(host => host.host_id === row.host_id))
+    if (checkedIds.has(row.host_id))
       hostTableRef.value?.toggleRowSelection(row, true)
   })
   await nextTick()
@@ -680,10 +747,17 @@ function onHostSelectionChange(selection) {
   if (syncingHosts || !canSelectHost()) return
   const patch = activePatch.value
   const pageIds = new Set(paginatedHosts.value.map(host => host.host_id))
-  patch.selectedHosts = uniqueHosts([
-    ...patch.selectedHosts.filter(host => !pageIds.has(host.host_id)),
-    ...selection.filter(host => pageIds.has(host.host_id)).map(host => normalizeHost(host))
-  ])
+  const checkedOnPage = selection.filter(host => pageIds.has(host.host_id))
+  const checkedIds = new Set(checkedOnPage.map(host => host.host_id))
+  const retained = patch.selectedHosts.filter(host => {
+    const tableId = hostTableId(host)
+    return !pageIds.has(tableId) || checkedIds.has(tableId)
+  })
+  const retainedIds = new Set(retained.map(hostTableId))
+  const added = checkedOnPage
+    .filter(host => !retainedIds.has(host.host_id))
+    .map(host => legacyHostMatches.value.byCandidateId.get(host.host_id) || normalizeHost(host))
+  patch.selectedHosts = uniqueHosts([...retained, ...added])
 }
 function removeHost(index) {
   if (!activePatch.value || locked.value) return
@@ -770,20 +844,24 @@ async function submitAssign() {
     ElMessage.warning(t('settings.patchAssignment.selectPatchFirst'))
     return
   }
-  const invalid = selectedPatches.value.find(
-    patch => !patch.selectedHosts.length || patch.selectedHosts.some(host => !host.host_id)
-  )
+  const items = assignmentItems.value
+  if (!items.length) {
+    ElMessage.info(t('settings.patchAssignment.noChanges'))
+    closeDialog()
+    return
+  }
+  const invalid = items.find(needsMachines)
   if (invalid) {
-    ElMessage.warning(t('settings.patchAssignment.reconfirm', { patch: invalid.patch_id }))
-    await activatePatch(invalid)
+    ElMessage.warning(t('settings.patchAssignment.reconfirm', { patch: invalid.patch.patch_id }))
+    await activatePatch(invalid.patch)
     return
   }
   const token = session
   const payload = {
     userLogin: context.username,
-    items: selectedPatches.value.map(patch => ({
+    items: items.map(({ patch, hosts }) => ({
       patchId: patch.patch_id,
-      hostIds: Array.from(new Set(patch.selectedHosts.map(host => host.host_id)))
+      hostIds: Array.from(new Set(hosts.map(host => host.host_id)))
     })),
     expireTime: assignForm.value.expireTime || undefined,
     remark: assignForm.value.remark || undefined
