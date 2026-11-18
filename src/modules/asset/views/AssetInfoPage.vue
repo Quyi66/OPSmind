@@ -529,7 +529,7 @@
                 <span class="selection-scope">{{ row.IP || t('asset.ipNotCollected') }}</span>
               </template>
             </el-table-column>
-            <el-table-column :label="t('common.actions')" width="80">
+            <el-table-column :label="t('common.actions')" width="120">
               <template #default="{ row }">
                 <el-button link type="primary" @click="removeSelectedAsset(row)">{{ t('common.remove') }}</el-button>
               </template>
