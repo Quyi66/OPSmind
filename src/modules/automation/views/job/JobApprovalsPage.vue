@@ -81,7 +81,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column :label="t('automation.job.toolType')" width="100">
+        <el-table-column :label="t('automation.job.toolType')" width="110">
           <template #default="{ row }">
             {{ getJobTypeLabel(row.jobType) }}
           </template>
